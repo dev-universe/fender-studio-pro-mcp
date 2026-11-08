@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClassFactory>
+	<Version name="fender-studio-pro-mcp" version="0.1" vendor="fender-studio-pro-mcp" url="https://github.com/dev-universe/fender-studio-pro-mcp"/>
+	<!-- Shows up as the command "Musical Functions/MCP Edit" (checked on 5.5.2). -->
+	<ScriptClass
+		classID="{C9C91127-EE69-4FD5-AF09-C8B435B11831}"
+		category="EditTask"
+		subCategory="MusicEdit"
+		name="Fender MCP Edit"
+		sourceFile="McpEdit.js"
+		functionName="createMcpEdit">
+	</ScriptClass>
+	<!-- Expected as "Track/MCP Track Edit", like the built-in TrackEdit tasks. -->
+	<ScriptClass
+		classID="{C9C91127-EE69-4FD5-AF09-C8B435B11832}"
+		category="EditTask"
+		subCategory="TrackEdit"
+		name="Fender MCP Track Edit"
+		sourceFile="McpTrackEdit.js"
+		functionName="createMcpTrackEdit">
+	</ScriptClass>
+</ClassFactory>

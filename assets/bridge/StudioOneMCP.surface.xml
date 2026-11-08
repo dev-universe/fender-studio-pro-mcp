@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- bridgeTick is the bridge's doorbell: after writing request.json the client
+     presses note 119 on the device's input port (e.g. the IAC bus). Same shape
+     as the CC121's lock button: a trigger control toggling a component param, so
+     every press lands in the component's paramChanged. <Value> would be the
+     wrong element here: it maps param -> control (LEDs), not control -> param.
+     The mixer mapping gives the script every console channel,
+     with its insert slots and sends. -->
+<ControlSurface>
+	<Controls>
+		<Control name="bridgeTick" type="trigger" options="receive">
+			<MidiMessage status="#90" address="#77"/>
+		</Control>
+	</Controls>
+	<Mappings>
+		<!-- Component-param mappings only take effect inside <Global> (cf. CC121). -->
+		<Global>
+			<Toggle control="bridgeTick" param="bridgeTick"/>
+			<Timer interval="250" onTick="onTick_bridgeTimer"/>
+		</Global>
+		<DeviceMapping device="MixerConsole" name="mixer">
+			<ScrollBank target="AllBank" pagesize="256" name="channels">
+				<foreach variable="$ch" count="256">
+					<Strip>
+						<!-- Per channel: plug-in slots (names via @owner/deviceName) and sends. -->
+						<Bank target="Inserts" name="inserts">
+							<foreach variable="$i" count="16"><Strip/></foreach>
+						</Bank>
+						<Bank target="Sends" name="sends">
+							<foreach variable="$s" count="8"><Strip/></foreach>
+						</Bank>
+						<Bank target="AudioBusMixFX" name="mixfx"><Strip/></Bank>
+					</Strip>
+				</foreach>
+			</ScrollBank>
+		</DeviceMapping>
+		<DeviceMapping device="MusicTrackDevice" name="music">
+			<Bank target="FocusInstrument" name="instrument"><Strip/></Bank>
+			<Bank target="FocusChannel" name="noteChannel">
+				<Strip><Bank target="Inserts" name="noteInserts"><foreach variable="$n" count="16"><Strip/></foreach></Bank></Strip>
+			</Bank>
+		</DeviceMapping>
+	</Mappings>
+</ControlSurface>

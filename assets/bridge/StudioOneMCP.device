@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- studio-one-mcp bridge: a portless control surface whose only job is to answer
+     requests dropped in a local mailbox folder. See README.md. -->
+<DeviceDefinition
+	vendor="fender-studio-pro-mcp"
+	name="Fender MCP Bridge"
+	classID="{4DB85BDD-ED5D-42AC-A05F-D83C101CF109}"
+	category="Surface"
+	nativeCode="JSControlSurfaceDevice"
+	deviceScriptFile="BridgeDevice.js"
+	deviceScriptFile.functionName="createBridgeDevice"
+	surfaceFile="StudioOneMCP.surface.xml"
+	componentScriptFile="BridgeComponent.js"
+	componentScriptFile.functionName="createBridgeComponent"
+/>

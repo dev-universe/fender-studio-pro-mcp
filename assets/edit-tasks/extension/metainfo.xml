@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaInformation>
+	<Attribute id="Package:ID" value="fender-studio-pro-mcp.edittasks"/>
+	<Attribute id="Package:Name" value="Fender MCP Edit Tasks"/>
+	<Attribute id="Package:Description" value="Fender Studio Pro MCP editing bridge"/>
+	<Attribute id="Package:Version" value="0.1.0.0"/>
+	<Attribute id="Package:Vendor" value="fender-studio-pro-mcp"/>
+	<Attribute id="Package:Website" value="https://github.com/dev-universe/fender-studio-pro-mcp"/>
+</MetaInformation>
