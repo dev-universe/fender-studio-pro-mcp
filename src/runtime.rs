@@ -339,6 +339,8 @@ fn has_applied_evidence(value: &Value) -> bool {
 fn verify(operation: &Operation, result: &Value) -> bool {
     match operation {
         Operation::SetChannel(change) => equivalent(&change.value, &result["after"]),
+        Operation::SetPanner(change) => equivalent(&json!(change.value), &result["after"]["value"]),
+        Operation::SetInsertBypass(change) => equivalent(&json!(change.bypassed), &result["after"]),
         Operation::SetPluginParam(change) => {
             if let Some(value) = change.value {
                 equivalent(&json!(value), &result["after"]["value"])
@@ -417,6 +419,26 @@ mod tests {
         assert!(!equivalent(&json!(true), &json!(0)));
         assert!(equivalent(&json!(0.5), &json!(0.50000001)));
         assert!(!equivalent(&json!(0.5), &json!(0.6)));
+    }
+
+    #[test]
+    fn panner_and_bypass_verification_require_matching_readback() {
+        let panner = Operation::from_parts(
+            "setPanner",
+            json!({"channel":"Scratch","param":"panWidth","value":0.5}),
+        )
+        .unwrap();
+        assert!(verify(&panner, &json!({"after":{"value":0.5}})));
+        assert!(!verify(&panner, &json!({"after":{"value":0.6}})));
+        assert!(!verify(&panner, &json!({"requested":true})));
+        let bypass = Operation::from_parts(
+            "setInsertBypass",
+            json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","bypassed":true}),
+        )
+        .unwrap();
+        assert!(verify(&bypass, &json!({"after":true})));
+        assert!(!verify(&bypass, &json!({"after":false})));
+        assert!(!verify(&bypass, &json!({"after":null})));
     }
 
     #[test]

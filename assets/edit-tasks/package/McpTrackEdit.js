@@ -10,6 +10,7 @@
 // Every host member is checked before use: a throw, or a call on a missing
 // member, pops a modal Scripting Error dialog in Studio One.
 include_file("McpEditConfig.js");
+include_file("McpTaskGuard.js");
 include_file("McpTrackOps.js");
 
 function mteUrl(name) { return Host.Url(McpEditConfig.mailbox + name); }
@@ -28,9 +29,10 @@ function mteRead(name) {
 
 function mteWrite(name, value) {
 	var f = Host.IO.createTextFile(mteUrl(name), "utf-8");
-	if (!f) return;
+	if (!f) return false;
 	f.writeString(JSON.stringify(value) + "\n");
 	f.close();
+	return true;
 }
 
 function mteFn(obj, key) { return !!obj && typeof obj[key] === "function"; }
@@ -125,7 +127,41 @@ function mteApply(context, ops) {
 			for (var c = 0; c < chans.length && c < 4; c++) r.firstChannels.push(chans[c].label);
 			r.channel = chans.length ? mteShape(chans[0].channel, ["label", "name", "input", "getDestinationChannel", "connectTo"]) : null;
 			var dev = root && mteFn(root, "createFunctions") ? root.createFunctions("DeviceEditFunctions") : null;
-			r.deviceFunctions = mteShape(dev, ["connectChannel"]);
+			r.deviceFunctions = mteShape(dev, ["connectChannel", "insertDevice", "removeDevice"]);
+			var graphFunctions = root && mteFn(root, "createFunctions") ? root.createFunctions("AudioFXGraphEditFunctions") : null;
+			r.graphFunctions = mteShape(graphFunctions, ["graph", "root", "addSplitter", "insertNode", "removeNode", "modifySplitCount", "modifySplitMode", "setSplitCount", "setSplitMode"]);
+			r.commandArguments = {};
+			var commandNames = ["Select Mix FX", "Select Panner"];
+			for (var cmd = 0; cmd < commandNames.length; cmd++) {
+				var command = Host.GUI.Commands.findCommand("Console", commandNames[cmd]);
+				r.commandArguments[commandNames[cmd]] = command ? mteDescribe(command.arguments, 2) : null;
+			}
+			if (op.channel) {
+				var matches = chans.filter(function (c) { return c.label === op.channel; });
+				if (matches.length !== 1) r.error = "probe needs a unique audio channel";
+				else {
+					var channel = matches[0].channel;
+					r.target = { label: op.channel, children: {} };
+					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
+					r.target.pannerParameters = [];
+					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];
+					for (var pn = 0; pn < pannerNames.length; pn++) {
+						var pp = mteFn(panner, "findParameter") ? panner.findParameter(pannerNames[pn]) : null;
+						if (pp) r.target.pannerParameters.push({ name: pannerNames[pn], value: pp.value, text: typeof pp.string === "string" ? pp.string : null, min: pp.min, max: pp.max });
+					}
+					var methods = ["name", "numItems", "count", "find", "findParameter", "getDevice", "insertDeviceClass", "newIterator", "createIterator", "createFunctions"];
+					var children = ["Panner", "AudioBusMixFX", "MixFXRack", "MixFX", "MixFx", "MixFxFolder", "MixFXFolder", "MixEffects", "Inserts", "Graph", "FXGraph"];
+					for (var z = 0; z < children.length; z++) {
+						var child = mteFn(channel, "find") ? channel.find(children[z]) : null;
+						var info = { members: mteShape(child, methods), children: {} };
+					var nested = ["PanRack", "PanFX", "Graph", "FXGraph", "Combinator", "Device", "FX01"];
+						for (var y = 0; y < nested.length; y++) info.children[nested[y]] = mteShape(mteFn(child, "find") ? child.find(nested[y]) : null, methods);
+						var combinator = mteFn(child, "find") ? child.find("Combinator") : null;
+						info.combinatorGraph = mteShape(mteFn(combinator, "find") ? combinator.find("Graph") : null, methods);
+						r.target.children[children[z]] = info;
+					}
+				}
+			}
 			var tracks = mteTracks(context);
 			r.trackCount = tracks.length;
 			r.track = tracks.length ? mteShape(tracks[0], ["name", "isFolder", "parentFolderID", "channel"]) : null;
@@ -150,7 +186,17 @@ function mteApply(context, ops) {
 			// drop out of the track list that scripts see.
 			var ts = mteTracks(context);
 			var folder = null;
-			for (var b = 0; b < ts.length; b++) if (ts[b].name === op.folder && ts[b].isFolder) folder = ts[b];
+			var folderCount = 0;
+			for (var b = 0; b < ts.length; b++) if (ts[b].name === op.folder && ts[b].isFolder) { folder = ts[b]; folderCount++; }
+			if (folderCount > 1) { r.error = "folder name is ambiguous: " + op.folder; results.push(r); continue; }
+			var names = op.tracks && op.tracks.length ? op.tracks : [];
+			var ambiguous = null;
+			for (var u = 0; u < names.length; u++) {
+				var count = 0;
+				for (var v = 0; v < ts.length; v++) if (ts[v].name === names[u] && ts[v] !== folder) count++;
+				if (count > 1) { ambiguous = names[u]; break; }
+			}
+			if (ambiguous !== null) { r.error = "track name is ambiguous: " + ambiguous; results.push(r); continue; }
 			if (!folder && op.create && mteFn(fns, "addTrack")) {
 				fns.executeImmediately = true;
 				var tl = context.mainTrackList;
@@ -165,7 +211,6 @@ function mteApply(context, ops) {
 				if (folders && mteFn(folders, "isExpanded") && mteFn(folders, "toggleExpand") && !folders.isExpanded(folder)) folders.toggleExpand(folder);
 				r.moved = [];
 				r.missing = [];
-				var names = op.tracks && op.tracks.length ? op.tracks : [];
 				for (var d = 0; d < names.length; d++) {
 					var hit = null;
 					for (var e = 0; e < ts.length; e++) if (ts[e].name === names[d] && ts[e] !== folder) hit = ts[e];
@@ -211,9 +256,10 @@ function McpTrackEditTask() {
 	this.interfaces = [Host.Interfaces.IEditTask];
 	this.prepareEdit = function (context) { return Host.Results.kResultOk; };
 	this.performEdit = function (context) {
-		var req = mteRead("track-edit-request.json");
-		if (!req || !req.id || !req.ops || typeof req.ops.length !== "number") {
-			mteWrite("track-edit-result.json", { id: req && req.id ? req.id : null, error: "no track edit request" });
+		var claim = mcpClaimTask(mteRead, mteWrite, "track-edit-request.json", "track");
+		var req = claim.request;
+		if (claim.error) {
+			mteWrite("track-edit-result.json", { id: req && req.id ? req.id : null, error: claim.error });
 			return Host.Results.kResultOk;
 		}
 		mteWrite("track-edit-result.json", { id: req.id, results: mteApply(context, req.ops) });

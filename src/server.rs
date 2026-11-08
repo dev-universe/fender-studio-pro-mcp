@@ -27,7 +27,7 @@ struct ToolSpec {
 
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-struct SongPath {
+struct FileQuery {
     path: std::path::PathBuf,
 }
 
@@ -62,6 +62,18 @@ impl McpServer {
                 "channels",
                 "Read mixer channels and their actual state. Track and audio channel names may differ.",
                 false,
+            ),
+            named::<PannerQuery>(
+                "panner_get",
+                "panner",
+                "Read the five supported standard channel panner parameters and their native ranges. This does not inspect a Surround Panner plugin.",
+                false,
+            ),
+            named::<PannerSet>(
+                "panner_set",
+                "setPanner",
+                "Set one standard channel panner parameter using its native raw range and read it back. This does not control a Surround Panner plugin.",
+                true,
             ),
             named::<ChannelSet>(
                 "channel_set",
@@ -123,6 +135,12 @@ impl McpServer {
                 "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution.",
                 false,
             ),
+            named::<PluginEditor>(
+                "plugin_editor_open",
+                "pluginEditorOpen",
+                "Request the expected plugin editor to open. The acknowledgment does not verify window visibility.",
+                true,
+            ),
             named::<PluginSet>(
                 "plugin_parameter_set",
                 "setPluginParam",
@@ -163,10 +181,14 @@ impl McpServer {
         let empty = json!({"type":"object","properties":{},"additionalProperties":false});
         specs.push(ToolSpec { operation: None, tool: Tool::new("operations_list", "Get the finite operation schema, including less common operations. No arbitrary eval or raw bridge escape hatch is available.", empty.as_object().unwrap().clone()) });
         specs.push(ToolSpec { operation: None, tool: Tool::new("operation_run", "Run a typed operation from operations_list. Supply expected_document for mutations. Receipts distinguish observed, verified, unverified, partial and unknown outcomes.", schema().as_object().unwrap().clone()) });
-        let saved_schema = serde_json::to_value(schemars::schema_for!(SongPath)).unwrap();
+        let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
         specs.push(ToolSpec {
             operation: None,
             tool: Tool::new("song_read", "Read a saved .song archive without editing it. Results are saved state, not unsaved live state; plugin parameter snapshots may be partial.", saved_schema.as_object().unwrap().clone()),
+        });
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("audio_analyze", "Analyze a WAV file with native Rust loudness, peak, RMS and stereo measurements. Loudness requires known mono/stereo layout; results include format and measurement limitations.", saved_schema.as_object().unwrap().clone()),
         });
         specs
     }
@@ -234,7 +256,7 @@ impl ServerHandler for McpServer {
             return Ok(CallToolResult::structured(json!({"schema":schema(),"provenance":"server implementation; live support is version dependent","arbitrary_eval":false})).into());
         }
         if request.name == "song_read" {
-            let query: SongPath = serde_json::from_value(Value::Object(args))
+            let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
             let result = tokio::task::spawn_blocking(move || crate::song::read_song(&query.path))
                 .await
@@ -246,6 +268,18 @@ impl ServerHandler for McpServer {
                 ),
             }
             .into());
+        }
+        if request.name == "audio_analyze" {
+            let query: FileQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result =
+                tokio::task::spawn_blocking(move || crate::audio::analyze_file(&query.path))
+                    .await
+                    .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(analysis) => CallToolResult::structured(serde_json::to_value(analysis).unwrap()),
+                Err(message) => CallToolResult::structured_error(json!({"source":"file","error":{"code":"audio_analyze_failed","message":message}})),
+            }.into());
         }
         let operation = if let Some(name) = spec.operation {
             let expected_document = args
@@ -289,17 +323,15 @@ mod tests {
     #[test]
     fn named_mutations_require_the_document_token() {
         let specs = McpServer::specs();
-        let tool = &specs
-            .iter()
-            .find(|s| s.tool.name == "channel_set")
-            .unwrap()
-            .tool;
-        assert!(
-            tool.input_schema["required"]
-                .as_array()
-                .unwrap()
-                .contains(&json!("expected_document"))
-        );
+        for name in ["channel_set", "plugin_editor_open", "panner_set"] {
+            let tool = &specs.iter().find(|s| s.tool.name == name).unwrap().tool;
+            assert!(
+                tool.input_schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!("expected_document"))
+            );
+        }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
     }

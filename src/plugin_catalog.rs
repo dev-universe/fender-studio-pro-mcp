@@ -65,11 +65,34 @@ pub struct CatalogWarning {
 
 impl LocalCatalog {
     pub fn candidate_names(&self, plugin_name: &str, class_id: Option<&str>) -> Vec<String> {
-        self.matching(plugin_name, class_id)
+        let mut names = self
+            .matching(plugin_name, class_id)
             .flat_map(|p| p.candidates.iter().map(|c| c.name.clone()))
-            .collect::<BTreeSet<_>>()
-            .into_iter()
-            .collect()
+            .collect::<BTreeSet<_>>();
+        if matches!(
+            normalize(plugin_name).as_str(),
+            "externaleffectmono" | "externaleffectstereo"
+        ) {
+            names.extend(
+                [
+                    "sendPort",
+                    "receivePort",
+                    "latencyOffset",
+                    "latencyTotal",
+                    "inputGain",
+                    "outputGain",
+                    "wetdry",
+                    "bypass",
+                    "phase",
+                    "pingMode",
+                    "autoLatency",
+                    "sensitivity",
+                ]
+                .into_iter()
+                .map(str::to_owned),
+            );
+        }
+        names.into_iter().collect()
     }
 
     pub fn matching<'a>(

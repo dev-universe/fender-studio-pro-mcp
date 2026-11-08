@@ -10,6 +10,7 @@
 // note.startTime.time reads). Nothing here may throw or call an unchecked host
 // member: in Studio One that pops a modal Scripting Error dialog.
 include_file("McpEditConfig.js");
+include_file("McpTaskGuard.js");
 
 function mcpUrl(name) {
 	return Host.Url(McpEditConfig.mailbox + name);
@@ -29,9 +30,10 @@ function mcpRead(name) {
 
 function mcpWrite(name, value) {
 	var f = Host.IO.createTextFile(mcpUrl(name), "utf-8");
-	if (!f) return;
+	if (!f) return false;
 	f.writeString(JSON.stringify(value) + "\n");
 	f.close();
+	return true;
 }
 
 function mcpHas(obj, key) {
@@ -160,9 +162,10 @@ function McpEditTask() {
 	};
 
 	this.performEdit = function (context) {
-		var req = mcpRead("edit-request.json");
-		if (!req || !req.id || !req.ops || typeof req.ops.length !== "number") {
-			mcpWrite("edit-result.json", { id: req && req.id ? req.id : null, error: "no edit request" });
+		var claim = mcpClaimTask(mcpRead, mcpWrite, "edit-request.json", "notes");
+		var req = claim.request;
+		if (claim.error) {
+			mcpWrite("edit-result.json", { id: req && req.id ? req.id : null, error: claim.error });
 			return Host.Results.kResultOk;
 		}
 		var r = mcpApply(context, req.ops);

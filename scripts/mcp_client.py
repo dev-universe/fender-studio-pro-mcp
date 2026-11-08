@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Development probe for the real Rust stdio MCP binary. Uses only stdlib."""
 
 import argparse
 import json

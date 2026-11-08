@@ -1,3 +1,4 @@
+mod audio;
 mod bridge;
 mod config;
 mod install;
@@ -63,6 +64,8 @@ enum Command {
     Schema,
     /// Inspect a saved song without changing it or connecting to the DAW.
     SongRead { path: std::path::PathBuf },
+    /// Analyze a WAV file's loudness, peaks and stereo measurements in Rust.
+    AudioAnalyze { path: std::path::PathBuf },
     /// Discover partial parameter candidates from installed plugin metadata.
     LocalCatalog {
         #[arg(long, default_value = "/Applications/Studio Pro 8.app/Contents")]
@@ -101,6 +104,10 @@ async fn main() -> Result<()> {
         Command::SongRead { path } => {
             let saved = song::read_song(&path).map_err(anyhow::Error::msg)?;
             print_json(&serde_json::to_value(saved)?)?;
+        }
+        Command::AudioAnalyze { path } => {
+            let analysis = audio::analyze_file(&path).map_err(anyhow::Error::msg)?;
+            print_json(&serde_json::to_value(analysis)?)?;
         }
         Command::LocalCatalog {
             app,

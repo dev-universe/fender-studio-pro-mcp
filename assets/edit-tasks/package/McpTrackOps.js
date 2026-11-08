@@ -86,15 +86,16 @@ function mtoIn(context, seconds, format) {
 	return t && mtoFn(t, "as") ? t.as(typeof format === "number" ? format : 0) : null;
 }
 
-// op.event: 1-based number in time order, or an event name (first match).
 function mtoPickEvent(list, which, what) {
 	if (typeof which === "number") {
-		if (which < 1 || which > list.length) return { error: what + " " + which + " does not exist (there are " + list.length + ")" };
+        if (which % 1 !== 0 || which < 1 || which > list.length) return { error: what + " " + which + " does not exist (there are " + list.length + ")" };
 		return { event: list[which - 1], number: which };
 	}
 	if (typeof which === "string") {
-		for (var i = 0; i < list.length; i++) if (list[i].name === which) return { event: list[i], number: i + 1 };
-		return { error: "no " + what + " named " + which };
+        var matches = [];
+        for (var i = 0; i < list.length; i++) if (list[i].name === which) matches.push({ event: list[i], number: i + 1 });
+        if (matches.length !== 1) return { error: matches.length ? what + " name is ambiguous: " + which : "no " + what + " named " + which };
+        return matches[0];
 	}
 	return { error: what + " is required (number or name)" };
 }
@@ -163,8 +164,8 @@ function mtoDeviceFunctions(context) {
 }
 
 // { channel, plugin, folder: "Inserts" | "Sends" }
-function mtoInsertInto(context, op, folderName) {
-	var p = mtoPluginClass(op.plugin, "AudioEffect");
+function mtoInsertInto(context, op, folderName, category) {
+	var p = mtoPluginClass(op.plugin, category || "AudioEffect");
 	if (p.error) return p;
 	var c = mtoChannel(context, op.channel);
 	if (c.error) return c;
@@ -178,6 +179,7 @@ function mtoInsertInto(context, op, folderName) {
 }
 
 mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "Inserts"); };
+mtoOps.addMixFx = function (context, op) { return mtoInsertInto(context, op, "AudioBusMixFX", "AudioMixEffect"); };
 mtoOps.addFxSend = function (context, op) { return mtoInsertInto(context, op, "Sends"); };
 
 // { name, instrument }: an instrument track playing a new instance of the instrument.

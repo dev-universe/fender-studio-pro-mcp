@@ -16,13 +16,17 @@ pub enum Operation {
     #[serde(rename = "context")]
     Context(Empty),
     #[serde(rename = "hostProbe", alias = "host_probe")]
-    HostProbe(Empty),
+    HostProbe(HostProbeArgs),
     #[serde(rename = "song", alias = "session_get")]
     Song(Empty),
     #[serde(rename = "tracks", alias = "tracks_list")]
     Tracks(TrackQuery),
     #[serde(rename = "channels", alias = "channels_list")]
     Channels(Empty),
+    #[serde(rename = "panner", alias = "panner_get")]
+    Panner(PannerQuery),
+    #[serde(rename = "setPanner", alias = "panner_set")]
+    SetPanner(PannerSet),
     #[serde(rename = "meters")]
     Meters(Empty),
     #[serde(rename = "notes")]
@@ -53,6 +57,8 @@ pub enum Operation {
     PluginParams(PluginParams),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
+    #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
+    PluginEditorOpen(PluginEditor),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -103,6 +109,12 @@ pub struct TrackQuery {
     pub max_events: Option<u32>,
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct HostProbeArgs {
+    pub channel: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct NotesQuery {
@@ -151,6 +163,30 @@ pub struct ChannelQuery {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct PannerQuery {
+    pub channel: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PannerSet {
+    pub channel: String,
+    pub param: PannerField,
+    pub value: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub enum PannerField {
+    PannerType,
+    StereoMode,
+    PanX1,
+    PanX2,
+    PanWidth,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct SendSet {
     pub channel: String,
     pub index: u32,
@@ -163,6 +199,7 @@ pub struct SendSet {
 pub struct InsertBypass {
     pub channel: String,
     pub slot: InsertSlot,
+    pub plugin: Option<String>,
     pub bypassed: bool,
 }
 
@@ -278,12 +315,22 @@ pub struct PluginParams {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct PluginEditor {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct PluginSet {
     pub channel: Option<String>,
     pub slot: Option<u32>,
     pub kind: Option<PluginKind>,
     pub track: Option<String>,
-    pub plugin: Option<String>,
+    pub plugin: String,
     pub param: String,
     pub value: Option<f64>,
     pub normalized: Option<f64>,
@@ -436,7 +483,9 @@ pub struct TrackTask {
     deny_unknown_fields
 )]
 pub enum TrackEdit {
-    Probe {},
+    Probe {
+        channel: Option<String>,
+    },
     Route {
         channel: String,
         to: String,
@@ -452,6 +501,10 @@ pub enum TrackEdit {
         numbered: Option<bool>,
     },
     AddPlugin {
+        channel: String,
+        plugin: String,
+    },
+    AddMixFx {
         channel: String,
         plugin: String,
     },
@@ -687,6 +740,7 @@ impl Operation {
             | Self::Song(_)
             | Self::Tracks(_)
             | Self::Channels(_)
+            | Self::Panner(_)
             | Self::Meters(_)
             | Self::Notes(_)
             | Self::Plugins(_)
@@ -714,7 +768,34 @@ impl Operation {
             return Err(invalid("Operation arguments exceed the supported size"));
         }
         match self {
+            Self::Panner(p) if p.channel.trim().is_empty() => {
+                return Err(invalid(
+                    "A channel name is required for standard panner access",
+                ));
+            }
+            Self::SetPanner(p) if p.channel.trim().is_empty() || !p.value.is_finite() => {
+                return Err(invalid(
+                    "A channel name and finite raw panner value are required",
+                ));
+            }
+            Self::SetInsertBypass(p) => {
+                if let InsertSlot::Index(index) = p.slot
+                    && (index >= 16
+                        || p.plugin
+                            .as_deref()
+                            .is_none_or(|name| name.trim().is_empty()))
+                {
+                    return Err(invalid(
+                        "A slot from 0 to 15 and expected plugin class or instance are required",
+                    ));
+                }
+            }
             Self::SetPluginParam(p) => {
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid(
+                        "An expected plugin class or instance name is required",
+                    ));
+                }
                 validate_plugin_target(
                     p.channel.as_deref(),
                     p.slot,
@@ -734,6 +815,19 @@ impl Operation {
                 {
                     return Err(invalid("Parameter value is outside its supported range"));
                 }
+            }
+            Self::PluginEditorOpen(p) => {
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid(
+                        "An expected plugin class or instance name is required",
+                    ));
+                }
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
             }
             Self::PluginParams(p) | Self::PluginInspect(p) => {
                 validate_plugin_target(
@@ -806,8 +900,8 @@ impl Operation {
             Self::EditNotes(task) if task.ops.is_empty() || task.ops.len() > 100 => {
                 return Err(invalid("Note edits require between 1 and 100 operations"));
             }
-            Self::Undo(s) | Self::Redo(s) if s.steps.is_some_and(|v| v == 0 || v > 100) => {
-                return Err(invalid("Undo or redo steps must be between 1 and 100"));
+            Self::Undo(s) | Self::Redo(s) if s.steps.is_some_and(|v| v == 0 || v > 50) => {
+                return Err(invalid("Undo or redo steps must be between 1 and 50"));
             }
             _ => {}
         }
@@ -846,14 +940,25 @@ fn validate_plugin_target(
                 "Instrument or note-effect parameter access requires track",
             ));
         }
+        if matches!(kind, Some(PluginKind::Instrument)) && slot.is_some_and(|v| v != 0) {
+            return Err(invalid("The focused instrument supports only slot 0"));
+        }
+        if matches!(kind, Some(PluginKind::NoteEffect)) && slot.is_some_and(|v| v >= 16) {
+            return Err(invalid("Note-effect slots must be between 0 and 15"));
+        }
     } else if matches!(kind, Some(PluginKind::MixFx | PluginKind::Panner)) {
         if channel.is_none_or(str::is_empty) {
             return Err(invalid(
                 "Mix FX or panner parameter access requires channel",
             ));
         }
-    } else if channel.is_none_or(str::is_empty) || slot.is_none() {
-        return Err(invalid("Insert parameter access requires channel and slot"));
+        if matches!(kind, Some(PluginKind::MixFx)) && slot.is_some_and(|v| v != 0) {
+            return Err(invalid("The native Mix FX rack supports only slot 0"));
+        }
+    } else if channel.is_none_or(str::is_empty) || slot.is_none_or(|v| v >= 16) {
+        return Err(invalid(
+            "Insert access requires channel and an explicit slot from 0 to 15",
+        ));
     }
     Ok(())
 }
@@ -934,16 +1039,135 @@ mod tests {
     fn plugin_write_needs_one_value_and_normalized_range() {
         let op = Operation::from_parts(
             "setPluginParam",
-            json!({"channel":"a","slot":0,"param":"gain","normalized":2.0}),
+            json!({"channel":"a","slot":0,"plugin":"Limiter","param":"gain","normalized":2.0}),
         )
         .unwrap();
         assert!(op.validate().is_err());
         let op = Operation::from_parts(
             "setPluginParam",
-            json!({"channel":"a","slot":0,"param":"gain","normalized":0.5,"value":1.0}),
+            json!({"channel":"a","slot":0,"plugin":"Limiter","param":"gain","normalized":0.5,"value":1.0}),
         )
         .unwrap();
         assert!(op.validate().is_err());
+    }
+
+    #[test]
+    fn plugin_write_requires_an_expected_class_or_instance() {
+        assert!(
+            Operation::from_parts(
+                "setPluginParam",
+                json!({"channel":"a","slot":0,"param":"gain","value":0})
+            )
+            .is_err()
+        );
+        let blank = Operation::from_parts(
+            "setPluginParam",
+            json!({"channel":"a","slot":0,"plugin":"  ","param":"gain","value":0}),
+        )
+        .unwrap();
+        assert!(blank.validate().is_err());
+    }
+
+    #[test]
+    fn plugin_editor_open_is_a_guarded_finite_mutation() {
+        let operation = Operation::from_parts(
+            "plugin_editor_open",
+            json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter"}),
+        )
+        .unwrap();
+        assert!(operation.validate().is_ok());
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().0, "pluginEditorOpen");
+        for args in [
+            json!({"channel":"Scratch","slot":0,"plugin":"  "}),
+            json!({"channel":"Scratch","plugin":"Phase Meter"}),
+            json!({"kind":"instrument","plugin":"Mojito"}),
+        ] {
+            let invalid = Operation::from_parts("pluginEditorOpen", args).unwrap();
+            assert!(invalid.validate().is_err());
+        }
+        assert!(
+            Operation::from_parts("pluginEditorOpen", json!({"channel":"Scratch","slot":0}))
+                .is_err()
+        );
+        assert!(
+            Operation::from_parts(
+                "pluginEditorOpen",
+                json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","method":"arbitrary"})
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn standard_panner_operations_accept_only_the_five_native_fields() {
+        let read = Operation::from_parts("panner_get", json!({"channel":"Scratch"})).unwrap();
+        assert!(read.validate().is_ok());
+        assert!(read.is_read_only());
+        assert_eq!(read.wire().0, "panner");
+        for param in ["pannerType", "stereoMode", "panX1", "panX2", "panWidth"] {
+            let write = Operation::from_parts(
+                "panner_set",
+                json!({"channel":"Scratch","param":param,"value":0.5}),
+            )
+            .unwrap();
+            assert!(write.validate().is_ok());
+            assert!(!write.is_read_only());
+            assert_eq!(write.wire().0, "setPanner");
+            assert_eq!(write.wire().1["param"], param);
+        }
+        for args in [
+            json!({"channel":"Scratch","param":"gain","value":0.5}),
+            json!({"channel":"Scratch","param":"panWidth","value":"0.5"}),
+            json!({"channel":"Scratch","param":"panWidth","value":0.5,"method":"arbitrary"}),
+        ] {
+            assert!(Operation::from_parts("panner_set", args).is_err());
+        }
+        let blank = Operation::from_parts("panner", json!({"channel":"  "})).unwrap();
+        assert!(blank.validate().is_err());
+        let nonfinite = Operation::SetPanner(PannerSet {
+            channel: "Scratch".into(),
+            param: PannerField::PanWidth,
+            value: f64::NAN,
+        });
+        assert!(nonfinite.validate().is_err());
+    }
+
+    #[test]
+    fn plugin_target_slots_match_the_native_bank_boundaries() {
+        let cases = [
+            (None, None, false),
+            (None, Some(0), true),
+            (None, Some(15), true),
+            (None, Some(16), false),
+            (Some("effect"), None, false),
+            (Some("effect"), Some(15), true),
+            (Some("effect"), Some(16), false),
+            (Some("note_effect"), None, true),
+            (Some("note_effect"), Some(15), true),
+            (Some("note_effect"), Some(16), false),
+            (Some("mix_fx"), None, true),
+            (Some("mix_fx"), Some(0), true),
+            (Some("mix_fx"), Some(1), false),
+            (Some("instrument"), None, true),
+            (Some("instrument"), Some(0), true),
+            (Some("instrument"), Some(1), false),
+        ];
+        for name in ["pluginInspect", "pluginEditorOpen", "setPluginParam"] {
+            for (kind, slot, valid) in cases {
+                let mut args = json!({"channel":"Scratch","track":"Keys","kind":kind,"slot":slot,"plugin":"Expected class"});
+                if name == "setPluginParam" {
+                    args["param"] = json!("gain");
+                    args["value"] = json!(0.5);
+                }
+                let operation = Operation::from_parts(name, args).unwrap();
+                assert_eq!(
+                    operation.validate().is_ok(),
+                    valid,
+                    "{name}, {kind:?}, {slot:?}"
+                );
+            }
+        }
     }
 
     #[test]

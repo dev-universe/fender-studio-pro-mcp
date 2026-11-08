@@ -29,6 +29,7 @@
 						<Bank target="Sends" name="sends">
 							<foreach variable="$s" count="8"><Strip/></foreach>
 						</Bank>
+						<Bank target="AudioBusMixFX" name="mixfx"><Strip/></Bank>
 					</Strip>
 				</foreach>
 			</ScrollBank>

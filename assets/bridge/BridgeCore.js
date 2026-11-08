@@ -84,6 +84,8 @@ class Bridge {
         this.replies = [];
         this.documentObject = undefined;
         this.documentEpoch = 0;
+        this.internalTaskDispatch = false;
+        this.requestContext = null;
         this.lastBeat = 0;
         this.clocks = {};       // tick counts per clock source, for diagnostics
         this.clockErrors = {};
@@ -105,6 +107,7 @@ class Bridge {
     }
 
     tick(source) {
+        if (this.requestContext) return;
         if (source) this.clocks[source] = (this.clocks[source] || 0) + 1;
         const now = Date.now();
         this.beat(false);
@@ -120,8 +123,9 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
-        const reads = ["ping", "context", "song", "tracks", "channels", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "channels", "panner", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
+        this.requestContext = context;
         try {
             if (req.protocol !== kProtocol) {
                 code = "protocol_mismatch";
@@ -141,9 +145,11 @@ class Bridge {
         } catch (e) {
             result = fail(e && e.message || e); // only reachable for plain-JS errors
         }
+        this.requestContext = null;
+        const afterContext = this.context();
         const reply = isFail(result)
-            ? { protocol: kProtocol, id: req.id, session: this.session, document: context.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
-            : { protocol: kProtocol, id: req.id, session: this.session, document: context.document, ok: true, result: result };
+            ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
+            : { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: true, result: result };
         reply.ms = Date.now() - now;
         this.replies.push(reply);
         if (this.replies.length > 32) this.replies.shift();
@@ -179,6 +185,8 @@ class Bridge {
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
             case "context": return this.context();
             case "channels": return this.fromComponent(c => c.channels());
+            case "panner": return this.fromComponent(c => c.panner(args));
+            case "setPanner": return this.fromComponent(c => c.setPanner(args));
             case "setChannel": return this.fromComponent(c => c.setChannel(args));
             case "command": return this.command(args);
             case "editorCommand": return this.editorCommand(args);
@@ -217,8 +225,9 @@ class Bridge {
             case "setAutomation": return this.fromComponent(c => c.setAutomation(args));
             case "pluginParams": return this.fromComponent(c => c.pluginParams(args));
             case "setPluginParam": return this.fromComponent(c => c.setPluginParam(args));
-            case "hostProbe": return this.hostProbe();
+            case "hostProbe": return this.hostProbe(args);
             case "pluginInspect": return this.fromComponent(c => c.pluginInspect(args));
+            case "pluginEditorOpen": return this.fromComponent(c => c.pluginEditorOpen(args));
             default: return fail("unknown op: " + op);
         }
     }
@@ -237,6 +246,8 @@ class Bridge {
     // The editor object takes them whatever is focused.
     editorCommand(args) {
         if (!args.category || !args.name) return fail("category and name are required");
+        if (args.checkOnly) return this.command(args);
+        if (!args.checkOnly && !this.internalTaskDispatch && (args.name === "Fender MCP Edit" || args.name === "Fender MCP Track Edit")) return fail("internal EditTask commands require a fresh bridge lease");
         const ed = docObject("Editor");
         if (!ed || !has(ed, "interpretCommand", "function")) return this.command(args);
         return { executed: !!ed.interpretCommand(String(args.category), String(args.name)), via: "editor" };
@@ -246,12 +257,19 @@ class Bridge {
     // (the same query Studio One makes to grey out menu items).
     command(args) {
         if (!args.category || !args.name) return fail("category and name are required");
+        if (!args.checkOnly && !this.internalTaskDispatch && (args.name === "Fender MCP Edit" || args.name === "Fender MCP Track Edit")) return fail("internal EditTask commands require a fresh bridge lease");
         const cmds = Host.GUI.Commands;
         if (!cmds.findCommand(String(args.category), String(args.name)))
             return fail("unknown command: " + args.category + "/" + args.name + " (see listCommands)");
         if (args.checkOnly) return { enabled: !!cmds.interpretCommand(args.category, args.name, true) };
-        const ok = args.args
-            ? cmds.interpretCommand(args.category, args.name, false, Host.Attributes(args.args))
+        let attributes = null;
+        if (args.args) {
+            attributes = Host.Attributes();
+            if (!attributes || !has(attributes, "setAttribute", "function")) return fail("command attributes are not available");
+            for (const key of Object.keys(args.args)) attributes.setAttribute(key, args.args[key]);
+        }
+        const ok = attributes
+            ? cmds.interpretCommand(args.category, args.name, false, attributes)
             : cmds.interpretCommand(args.category, args.name);
         return { executed: !!ok };
     }
@@ -306,13 +324,36 @@ class Bridge {
         if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit")) return fail("the MCP Track Edit task is not installed: reinstall the device, then restart Studio One");
         const id = newSession();
         this.mailbox.write("track-edit-result.json", { id: null });
-        this.mailbox.write("track-edit-request.json", { id: id, ops: args.ops });
-        const r = this.run("Track", "Fender MCP Track Edit");
+        const armed = this.armTask("track", "track-edit-request.json", id, args.ops);
+        if (isFail(armed)) return armed;
+        const r = this.runArmedTask("Track", "Fender MCP Track Edit", "track-edit-request.json");
         if (isFail(r)) return r;
         const res = this.mailbox.read("track-edit-result.json");
         if (!res || res.id !== id) return fail("the track edit task did not report back");
         if (res.error) return fail(res.error);
         return { results: res.results };
+    }
+
+    armTask(kind, filename, id, ops) {
+        const context = this.context();
+        if (!this.requestContext || context.document !== this.requestContext.document || !context.open) return fail("the task document changed before dispatch");
+        const lease = { id: id, kind: kind, session: this.session, document: context.document, fileUrl: context.fileUrl, title: context.title, expiresAt: Date.now() + 10000 };
+        if (!this.mailbox.write(filename, { id: id, ops: ops, expectedSession: lease.session, expectedDocument: lease.document })) return fail("cannot write the task request");
+        if (!this.mailbox.write("task-lease.json", lease)) {
+            this.mailbox.write(filename, { id: null, ops: [] });
+            return fail("cannot arm the task lease");
+        }
+        return { armed: true };
+    }
+
+    runArmedTask(category, name, filename) {
+        this.internalTaskDispatch = true;
+        try { return this.run(category, name); }
+        finally {
+            this.internalTaskDispatch = false;
+            this.mailbox.write(filename, { id: null, ops: [] });
+            this.mailbox.write("task-lease.json", { id: null });
+        }
     }
 
     song() {
@@ -457,7 +498,7 @@ class Bridge {
     }
 
     pluginCatalog(args) {
-        const categories = ["AudioEffect", "AudioSynth", "MusicEffect", "AudioPanner", "MixEffect"];
+        const categories = ["AudioEffect", "AudioSynth", "MusicEffect", "AudioPanner", "AudioMixEffect"];
         const category = String(args.category || "AudioEffect");
         if (categories.indexOf(category) < 0) return fail("unsupported plugin category");
         const menu = this.pluginMenu(category);
@@ -526,22 +567,50 @@ class Bridge {
     editNotes(args) {
         if (!Array.isArray(args.ops) || !args.ops.length) return fail("ops: one or more edit operations");
         if (!Host.GUI.Commands.findCommand("Musical Functions", "Fender MCP Edit")) return fail("the MCP Edit task is not installed: reinstall the device, then restart Studio One");
-        const id = newSession();
-        this.mailbox.write("edit-result.json", { id: null });
-        this.mailbox.write("edit-request.json", { id: id, ops: args.ops });
+        const initial = this.notes({ track: args.track, maxNotes: 1 });
+        if (isFail(initial)) return initial;
+        if (initial.mediaType !== "Music") return fail("note edits require an instrument track");
+        if (initial.parts.length > 128) return fail("note edits support at most 128 parts in one request");
+        const events = this.trackTask({ ops: [{ op: "events", track: args.track }] });
+        if (isFail(events)) return events;
+        const listed = events.results && events.results[0];
+        if (!listed || listed.error || !Array.isArray(listed.events)) return fail(listed && listed.error || "could not enumerate the target parts");
+        const ordered = initial.parts.slice().sort((a, b) => a.start - b.start);
+        if (listed.events.length !== ordered.length) return fail("the target part list changed");
+        if (args.ops.some(op => op.op === "add") && ordered.some(part => !part.noteCount)) return fail("use trackTask addNotes with an explicit part to add notes to empty parts");
+        const applied = [], errors = [], results = [];
+        let notesBefore = 0;
         const r = this.withTrack(args.track, () => {
-            const sel = this.command({ category: "Edit", name: "Select All on Tracks" });
-            if (isFail(sel)) return sel;
-            const done = this.run("Musical Functions", "Fender MCP Edit");
-            this.command({ category: "Edit", name: "Deselect All" });
-            return done;
+            try {
+                for (let i = 0; i < ordered.length; i++) {
+                    const part = ordered[i], expected = listed.events[i];
+                    if (Math.abs(part.start - expected.start) > 0.001 || Math.abs(part.end - expected.end) > 0.001 || part.name !== expected.name) { errors.push("the target part ordering changed"); break; }
+                    if (!part.noteCount) { results.push({ part: i + 1, skipped: "empty part" }); continue; }
+                    const selected = this.trackTask({ ops: [{ op: "selectEvent", track: args.track, event: i + 1 }] });
+                    const selection = !isFail(selected) && selected.results && selected.results[0];
+                    const actual = selection && selection.selected;
+                    if (!selection || selection.error || !actual) { errors.push(isFail(selected) ? selected.bridgeError : "could not select the target part"); break; }
+                    if (Math.abs(actual.start - expected.start) > 0.001 || Math.abs(actual.end - expected.end) > 0.001 || actual.name !== expected.name) { errors.push("the selected part changed before edit dispatch"); break; }
+                    const id = newSession();
+                    this.mailbox.write("edit-result.json", { id: null });
+                    const armed = this.armTask("notes", "edit-request.json", id, args.ops);
+                    if (isFail(armed)) { errors.push(armed.bridgeError); break; }
+                    const done = this.runArmedTask("Musical Functions", "Fender MCP Edit", "edit-request.json");
+                    if (isFail(done)) { errors.push(done.bridgeError); break; }
+                    const res = this.mailbox.read("edit-result.json");
+                    if (!res || res.id !== id || res.error) { errors.push(res && res.error || "the edit task did not report back; this part's outcome is unknown"); break; }
+                    notesBefore += res.notesBefore || 0;
+                    for (const item of res.applied || []) applied.push(item);
+                    for (const error of res.errors || []) errors.push(error);
+                    results.push({ part: i + 1, applied: res.applied, errors: res.errors });
+                    if (errors.length) break;
+                }
+                return { completed: !errors.length };
+            } finally { this.command({ category: "Edit", name: "Deselect All" }); }
         });
         if (isFail(r)) return r;
-        const res = this.mailbox.read("edit-result.json");
-        if (!res || res.id !== id) return fail("the edit task did not report back (is the track's part empty of notes and not selectable?)");
-        if (res.error) return fail(res.error);
         const after = this.notes({ track: args.track });
-        return { track: args.track, applied: res.applied, errors: res.errors, notesBefore: res.notesBefore, parts: isFail(after) ? null : after.parts };
+        return { track: args.track, applied: applied, errors: errors, results: results, notesBefore: notesBefore, parts: isFail(after) ? null : after.parts };
     }
 
     selectTrack(args) {
@@ -748,10 +817,11 @@ class Bridge {
         const before = selectedTracks(list);
         const sel = this.selectTrack({ name: name });
         if (isFail(sel)) return sel;
-        const result = fn(list);
-        if (has(list, "unselectAll", "function")) list.unselectAll();
-        for (const t of before) list.selectTrack(t, true, false);
-        return result;
+        try { return fn(list); }
+        finally {
+            if (has(list, "unselectAll", "function")) list.unselectAll();
+            for (const t of before) list.selectTrack(t, true, false);
+        }
     }
 
     trackInfo(name) {
@@ -774,8 +844,16 @@ class Bridge {
             const count = info.takes || 1;
             if (typeof args.take !== "number" || args.take < 1 || args.take > count) return fail("take must be 1 to " + count);
             const r = this.withTrack(args.track, () => {
-                for (let i = 1; i < count; i++) this.command({ category: "Track", name: actions.previous });
-                for (let i = 1; i < args.take; i++) this.command({ category: "Track", name: actions.next });
+                for (let i = 1; i < count; i++) {
+                    const previous = this.command({ category: "Track", name: actions.previous });
+                    if (isFail(previous)) return previous;
+                    if (!previous.executed) break;
+                }
+                for (let i = 1; i < args.take; i++) {
+                    const next = this.command({ category: "Track", name: actions.next });
+                    if (isFail(next)) return next;
+                    if (!next.executed) return fail("take navigation was not accepted; the current take is unknown");
+                }
                 return { ok: true };
             });
             if (isFail(r)) return r;
@@ -787,7 +865,7 @@ class Bridge {
         }
         const t = this.trackInfo(args.track);
         const out = { track: args.track, action: action, takes: t ? t.takes : null, activeEvents: t ? t.events.map(e => e.name) : [] };
-        if (action === "goto") out.active = args.take;
+        if (action === "goto") { out.requestedTake = args.take; out.active = null; out.verified = false; }
         return out;
     }
 
@@ -849,18 +927,34 @@ class Bridge {
         return { added: added, trackCount: uniqueTracks(list).length };
     }
 
-    hostProbe() {
+    hostProbe(args) {
         const root = docObject("");
         const env = docObject("Environment");
         const synths = env && has(env, "find", "function") ? env.find("Synths") : null;
-        return { context: this.context(), root: memberTypes(root), environment: memberTypes(env), synths: memberTypes(synths) };
+        const result = { context: this.context(), root: memberTypes(root), environment: memberTypes(env), synths: memberTypes(synths) };
+        if (args && args.channel) {
+            const target = this.mixerChannel(args.channel);
+            if (isFail(target)) return target;
+            const channel = target;
+            result.channel = { name: args.channel, members: memberTypes(channel), children: {} };
+            for (const name of ["Panner", "MixFXRack", "Inserts", "Graph", "FXGraph"]) {
+                const child = has(channel, "find", "function") ? channel.find(name) : null;
+                const info = { members: memberTypes(child), children: {} };
+                for (const nested of ["PanRack", "PanFX", "Graph", "FXGraph", "Device", "FX01"]) {
+                    const node = child && has(child, "find", "function") ? child.find(nested) : null;
+                    info.children[nested] = memberTypes(node);
+                }
+                result.channel.children[name] = info;
+            }
+        }
+        return result;
     }
 }
 
 function memberTypes(obj) {
     if (!obj) return null;
     const out = {};
-    const names = ["self", "name", "title", "uniqueID", "classID", "paramList", "params", "count", "length", "numItems", "numParameters", "getParameterCount", "countParameters", "getParameter", "getParameterAt", "findParameter", "at", "get", "newIterator", "createIterator", "getChild", "countChildren", "getElement", "getElementCount", "find", "queryInterface"];
+    const names = ["self", "name", "title", "uniqueID", "classID", "paramList", "params", "count", "length", "numItems", "numParameters", "getParameterCount", "countParameters", "getParameter", "getParameterAt", "findParameter", "at", "get", "newIterator", "createIterator", "getChild", "countChildren", "getElement", "getElementCount", "insertDeviceClass", "getDevice", "createFunctions", "find", "queryInterface"];
     for (const name of names) {
         try { out[name] = typeof obj[name]; } catch (_) { out[name] = "unavailable"; }
     }

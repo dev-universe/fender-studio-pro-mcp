@@ -6,6 +6,7 @@ include_file("BridgeConfig.js");
 include_file("BridgeCore.js");
 
 const AUTOMATION_MODES = ["off", "read", "touch", "latch", "write"];
+const PANNER_FIELDS = ["pannerType", "stereoMode", "panX1", "panX2", "panWidth"];
 
 class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     onInit(hostComponent) {
@@ -23,7 +24,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         } catch (e) {
             Host.Console.writeLine("studio-one-mcp: bridge init failed: " + e);
         }
-        // Clock: the client's MIDI CC on the bridgeTick control (see the surface file).
+        // The client's note 119 wakes the bridgeTick control.
         // Do NOT use Host.GUI.addIdleTask with a script object here: on Studio One
         // 5.5.2 that crashed the app at launch (EXC_BAD_ACCESS in cclgui's timer).
         if (this.bridge) this.bridge.beat(true); // publish clockErrors even if no clock fires
@@ -113,12 +114,48 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return els.map(c => ({ label: c.label, left: this.readParam(c.el, "level1"), right: this.readParam(c.el, "level2") }));
     }
 
+    pannerOf(channelName) {
+        if (typeof channelName !== "string" || !channelName.trim()) return { error: "a channel name is required for standard panner access" };
+        if (!this.bridge || typeof this.bridge.mixerChannel !== "function") return { error: "the native mixer is not available" };
+        const channel = this.bridge.mixerChannel(channelName);
+        if (channel && typeof channel.bridgeError === "string") return { error: channel.bridgeError };
+        const panner = channel && typeof channel.find === "function" ? channel.find("Panner") : null;
+        if (!panner || typeof panner.findParameter !== "function") return { error: "the standard channel panner is not available" };
+        return { panner: panner };
+    }
+
+    panner(args) {
+        const target = this.pannerOf(args.channel);
+        if (target.error) return target;
+        const params = [], missing = [];
+        for (const name of PANNER_FIELDS) {
+            const parameter = target.panner.findParameter(name);
+            if (parameter) params.push(this.paramInfo(parameter));
+            else missing.push(name);
+        }
+        return { channel: args.channel, params: params, missing: missing };
+    }
+
+    setPanner(args) {
+        if (PANNER_FIELDS.indexOf(args.param) < 0) return { error: "unsupported standard panner parameter" };
+        if (typeof args.value !== "number" || !isFinite(args.value)) return { error: "a finite raw panner value is required" };
+        const target = this.pannerOf(args.channel);
+        if (target.error) return target;
+        const parameter = target.panner.findParameter(args.param);
+        if (!parameter || typeof parameter.setValue !== "function" || typeof parameter.value !== "number" || !isFinite(parameter.value)) return { error: "the standard panner parameter is not writable" };
+        if (typeof parameter.min !== "number" || !isFinite(parameter.min) || typeof parameter.max !== "number" || !isFinite(parameter.max) || parameter.min > parameter.max) return { error: "the standard panner parameter has no supported native range" };
+        if (args.value < parameter.min || args.value > parameter.max) return { error: "raw panner value is outside the supported range" };
+        const before = this.paramInfo(parameter);
+        parameter.setValue(args.value, true);
+        return { channel: args.channel, param: args.param, before: before, after: this.paramInfo(parameter) };
+    }
+
     // ---- inserts and sends ----------------------------------------------------
     //
     // Each channel strip carries two sub-banks from the surface file. Names come
     // from the bank element (@owner/deviceName, as Studio One's SDK names it);
-    // bypass is the channel's own "Inserts/[i]/@bypass" parameter (used by the
-    // built-in Mackie script). Every host member is checked before it is called.
+    // Bypass is the native slot component's parameter. The parent channel path
+    // does not resolve on Studio Pro 8.1.1.
 
     subBank(el, name) {
         if (!el || typeof el.find !== "function") return null;
@@ -143,7 +180,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             if (!slot || typeof slot.isConnected !== "function" || !slot.isConnected()) continue;
             const name = this.readParam(slot, PreSonus.ParamID.kInsertName);
             if (name === null || String(name) === "") continue;
-            out.push({ slot: i, name: String(name), bypassed: !!this.readParam(el, "Inserts/[" + i + "]/@bypass") });
+            const p = slot.component && typeof slot.component.findParameter === "function" ? slot.component.findParameter("bypass") : null;
+            out.push({ slot: i, name: String(name), bypassed: p ? !!p.value : null });
         }
         return out;
     }
@@ -165,14 +203,22 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     setInsertBypass(args) {
         const c = this.channelByLabel(args.channel);
         if (c.error) return c;
-        const param = args.slot === "all" ? PreSonus.ParamID.kInsertBypass : "Inserts/[" + args.slot + "]/@bypass";
         if (args.slot !== "all") {
-            const slot = this.insertsOf(c.el).find(x => x.slot === args.slot);
-            if (!slot) return { error: "no plug-in in slot " + args.slot + " on " + args.channel };
+            if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
+            const plug = this.pluginOf(args);
+            if (plug.error) return plug;
+            const p = plug.component && typeof plug.component.findParameter === "function" ? plug.component.findParameter("bypass") : null;
+            if (!p || typeof p.setValue !== "function" || typeof p.value !== "number") return { error: "slot bypass is not available" };
+            const before = !!p.value;
+            p.setValue(args.bypassed ? 1 : 0, true);
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, before: before, after: !!p.value };
         }
+        const param = PreSonus.ParamID.kInsertBypass;
         const before = this.readParam(c.el, param);
+        if (before === null) return { error: "rack bypass is not available" };
         c.el.setParamValue(param, args.bypassed ? 1 : 0);
-        return { channel: args.channel, slot: args.slot, before: !!before, after: !!this.readParam(c.el, param) };
+        const after = this.readParam(c.el, param);
+        return { channel: args.channel, slot: args.slot, before: !!before, after: after === null ? null : !!after };
     }
 
     displayOf(el, paramName) {
@@ -265,16 +311,28 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
 
     pluginOf(args) {
         if (args.kind === "instrument") return this.instrumentOf(args);
+        if (args.kind === "note_effect") return this.noteEffectOf(args);
+        if (args.kind && args.kind !== "effect" && args.kind !== "mix_fx") return { error: "this plugin kind has no verified live parameter path yet" };
         const c = this.channelByLabel(args.channel);
         if (c.error) return c;
-        const slot = this.insertsOf(c.el).find(x => x.slot === args.slot);
-        if (!slot) return { error: "no plug-in in slot " + args.slot + " on " + args.channel };
-        const el = this.subBank(c.el, "inserts").getElement(args.slot);
+        const bank = this.subBank(c.el, args.kind === "mix_fx" ? "mixfx" : "inserts");
+        const el = bank ? bank.getElement(args.slot || 0) : null;
+        if (!el || typeof el.isConnected !== "function" || !el.isConnected()) return { error: "no plug-in in slot " + args.slot + " on " + args.channel };
+        const label = this.readParam(el, PreSonus.ParamID.kInsertName);
+        if (!label && !args.plugin) return { error: "the slot has no plugin identity" };
         const comp = el ? el.component : null;
         const dev = comp && typeof comp.find === "function" ? comp.find("Device") : null;
         if (!dev || typeof dev.findParameter !== "function") return { error: "cannot reach the plug-in in slot " + args.slot + " on " + args.channel };
-        if (args.plugin && String(args.plugin) !== String(slot.name)) return { error: "plugin instance changed" };
-        return { name: slot.name, device: dev, component: comp, element: el };
+        const identity = this.pluginIdentity(el, label, args.plugin);
+        if (identity.error) return identity;
+        return { name: identity.name, instanceName: label, device: dev, component: comp, element: el };
+    }
+
+    pluginIdentity(el, label, expected) {
+        const className = el && typeof el.getPlugInClassName === "function" ? el.getPlugInClassName() : null;
+        const matches = !expected || String(expected) === String(label) || String(expected) === String(className)
+            || (el && typeof el.matchesPlugInClass === "function" && el.matchesPlugInClass(String(expected)));
+        return matches ? { name: typeof className === "string" && className ? className : String(label) } : { error: "plugin class or instance identity does not match" };
     }
 
     instrumentOf(args) {
@@ -296,8 +354,32 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (!device) return { error: "the focused instrument device is not reachable" };
         const label = this.readParam(el, "deviceName");
         const name = typeof label === "string" && label ? label : (typeof device.name === "string" ? device.name : "focused instrument");
-        if (args.plugin && String(args.plugin) !== name) return { error: "focused instrument identity does not match" };
-        return { name: name, device: device, component: comp, element: el, track: wanted };
+        const identity = this.pluginIdentity(el, name, args.plugin);
+        if (identity.error) return identity;
+        return { name: identity.name, instanceName: name, device: device, component: comp, element: el, track: wanted };
+    }
+
+    noteEffectOf(args) {
+        const wanted = String(args.track || args.channel || "");
+        const tracks = this.bridge ? this.bridge.tracks({ events: false }) : null;
+        if (!Array.isArray(tracks)) return { error: "track state is unavailable" };
+        const selected = tracks.filter(t => t.selected && t.mediaType === "Music");
+        if (selected.length !== 1 || selected[0].name !== wanted) return { error: "select the unique target instrument track first" };
+        const model = this.hostComponent && this.hostComponent.model;
+        const root = model && model.root;
+        const music = root && typeof root.find === "function" ? root.find("music") : null;
+        const focus = music && typeof music.find === "function" ? music.find("noteChannel") : null;
+        const channel = focus && typeof focus.getElement === "function" ? focus.getElement(0) : null;
+        const bank = this.subBank(channel, "noteInserts");
+        const el = bank ? bank.getElement(args.slot === undefined ? 0 : args.slot) : null;
+        if (!el || typeof el.isConnected !== "function" || !el.isConnected()) return { error: "the Note FX slot is not connected" };
+        const comp = el.component;
+        const dev = comp && typeof comp.find === "function" ? comp.find("Device") : null;
+        if (!dev || typeof dev.findParameter !== "function") return { error: "the Note FX device is not reachable" };
+        const label = this.readParam(el, PreSonus.ParamID.kInsertName);
+        const identity = this.pluginIdentity(el, label, args.plugin);
+        if (identity.error) return identity;
+        return { name: identity.name, instanceName: label, device: dev, component: comp, element: el, track: wanted };
     }
 
     paramInfo(p) {
@@ -311,6 +393,12 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         };
     }
 
+    pluginParameter(plug, name) {
+        const parameter = plug.device.findParameter(name);
+        if (parameter) return parameter;
+        return plug.component && typeof plug.component.findParameter === "function" ? plug.component.findParameter(name) : null;
+    }
+
     pluginParams(args) {
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
@@ -318,7 +406,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const params = [];
         const missing = [];
         for (const n of names) {
-            const p = plug.device.findParameter(String(n));
+            const p = this.pluginParameter(plug, String(n));
             if (p) params.push(this.paramInfo(p));
             else missing.push(String(n));
         }
@@ -332,6 +420,13 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         for (const name of ["getParamCount", "getParamTitle", "getParamTitleWithName", "getParamValue", "setParamValue", "getProperty", "getPlugInClassName", "getPlugInInterface"]) {
             element[name] = plug.element ? typeof plug.element[name] : "undefined";
         }
+        if (plug.element && typeof plug.element.getProperty === "function") {
+            element.identityProperties = {};
+            for (const name of ["deviceUID", "slotUID", "uniqueID", "classID", "deviceClassID"]) {
+                const value = plug.element.getProperty(name);
+                element.identityProperties[name] = typeof value === "string" || typeof value === "number" ? value : null;
+            }
+        }
         if (plug.element && typeof plug.element.getParamCount === "function") {
             const count = plug.element.getParamCount();
             element.parameterCount = count;
@@ -342,14 +437,31 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 }
             }
         }
+        element.slotControls = {};
+        for (const name of ["bypass", "@bypass", "active", "@active", "@owner/bypass", "@owner/active"]) {
+            const p = plug.component && typeof plug.component.findParameter === "function" ? plug.component.findParameter(name) : null;
+            element.slotControls[name] = { mapped: this.readParam(plug.element, name), component: p ? this.paramInfo(p) : null };
+        }
         return { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
+    }
+
+    pluginEditorOpen(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        if (!plug.element || typeof plug.element.invokeMethod !== "function") return { error: "the plugin editor is not available" };
+        if (args.kind === "instrument") plug.element.invokeMethod("openEditor", "Instrument", false);
+        else if (args.kind === "note_effect") plug.element.invokeMethod("openEditor", "Note FX", false);
+        else plug.element.invokeMethod("openEditor");
+        return { requested: true, plugin: plug.name, verified: false };
     }
 
     // One of: text (display text, e.g. "4.0:1" or "-12 dB"), normalized (0..1), value (raw).
     setPluginParam(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
-        const p = plug.device.findParameter(String(args.param));
+        const p = this.pluginParameter(plug, String(args.param));
         if (!p) return { error: "no parameter " + args.param + " on " + plug.name + " (live_plugin_params lists them)" };
         const before = this.paramInfo(p);
         if (args.text !== undefined) {
@@ -360,6 +472,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             if (typeof p.setNormalized !== "function") return { error: "parameter " + args.param + " has no normalised value" };
             p.setNormalized(args.normalized, true);
         } else if (args.value !== undefined) {
+            if (typeof args.value !== "number" || !isFinite(args.value) || (typeof p.min === "number" && args.value < p.min) || (typeof p.max === "number" && args.value > p.max)) return { error: "raw parameter value is outside the supported range" };
             if (typeof p.setValue !== "function") return { error: "parameter " + args.param + " cannot be set" };
             p.setValue(args.value, true);
         } else {

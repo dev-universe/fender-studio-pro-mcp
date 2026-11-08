@@ -23,7 +23,7 @@ export function memoryHost() {
       },
     },
     Objects: { getObjectByUrl: (url) => url === '://studioapp/DocumentManager' ? manager : null },
-    Attributes: (value) => value,
+    Attributes: () => ({ setAttribute(key, value) { this[key] = value; } }),
     GUI: { Commands: {
       findCommand: (category, name) => category === 'Contract' && name === 'Increment' ? {} : null,
       interpretCommand: (category, name, checkOnly) => {
@@ -67,7 +67,7 @@ export function bridgeHarness() {
   return { ...host, bridge, request, current, writeRequest };
 }
 
-export function editTaskHarness() {
+export function editTaskHarness(kind = 'track') {
   const host = memoryHost();
   const context = vm.createContext({ Host: host.Host, McpEditConfig: { mailbox, allowEval: true } });
   context.include_file = (name) => {
@@ -75,18 +75,39 @@ export function editTaskHarness() {
       vm.runInContext(asset(`edit-tasks/package/${name}`), context, { filename: name });
     }
   };
-  vm.runInContext(asset('edit-tasks/package/McpTrackEdit.js'), context, { filename: 'McpTrackEdit.js' });
-  const task = vm.runInContext('createMcpTrackEdit()', context);
+  const filename = kind === 'track' ? 'McpTrackEdit.js' : 'McpEdit.js';
+  const requestFilename = kind === 'track' ? 'track-edit-request.json' : 'edit-request.json';
+  const resultFilename = kind === 'track' ? 'track-edit-result.json' : 'edit-result.json';
+  vm.runInContext(asset(`edit-tasks/package/${filename}`), context, { filename });
+  const task = vm.runInContext(kind === 'track' ? 'createMcpTrackEdit()' : 'createMcpEdit()', context);
   let serial = 0;
-  const run = (ops, editContext) => {
+  const arm = (ops, overrides = {}) => {
     const id = `edit-${++serial}`;
-    host.write('track-edit-request.json', { id, ops });
+    const session = 'edit-session';
+    const document = `${session}:1`;
+    const active = host.manager.activeDocument;
+    host.write('status.json', { protocol: 2, session, ...overrides.status });
+    host.write('task-lease.json', {
+      id, kind, session, document,
+      title: typeof active?.title === 'string' ? active.title : null,
+      fileUrl: typeof active?.path?.url === 'string' ? active.path.url : null,
+      expiresAt: Date.now() + 10_000,
+      ...overrides.lease,
+    });
+    host.write(requestFilename, { id, ops, expectedSession: session, expectedDocument: document, ...overrides.request });
+    return id;
+  };
+  const invoke = (editContext) => {
     task.performEdit(editContext);
-    const result = host.read('track-edit-result.json');
+    return host.read(resultFilename);
+  };
+  const run = (ops, editContext) => {
+    const id = arm(ops);
+    const result = invoke(editContext);
     if (result.id !== id) throw new Error('EditTask returned an unrelated request ID');
     return result;
   };
-  return { ...host, task, run };
+  return { ...host, task, run, arm, invoke, requestFilename, resultFilename };
 }
 
 export function musicContext() {

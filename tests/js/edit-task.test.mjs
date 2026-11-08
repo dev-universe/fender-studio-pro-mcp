@@ -1,6 +1,109 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { editTaskHarness, musicContext } from './host.mjs';
+import { editTaskHarness, mailbox, musicContext } from './host.mjs';
+
+function mutation(kind) {
+  if (kind === 'track') {
+    const song = musicContext();
+    return {
+      context: song.context,
+      ops: [{ op: 'createPart', track: 'Keys', start: 0, end: 8 }],
+      count: () => song.keys.events.length,
+    };
+  }
+  const note = { pitch: 60 };
+  let index = 0;
+  return {
+    context: {
+      iterator: { done: () => index > 0, next: () => { index++; return note; } },
+      functions: { modifyPitch: (target, pitch) => { target.pitch = pitch; } },
+    },
+    ops: [{ op: 'transpose', semitones: 1 }],
+    count: () => note.pitch - 60,
+  };
+}
+
+for (const kind of ['track', 'notes']) {
+  test(`${kind} EditTask consumes request and lease before applying it and cannot replay`, () => {
+    const task = editTaskHarness(kind);
+    const edit = mutation(kind);
+    const id = task.arm(edit.ops);
+    const original = task.read(task.requestFilename);
+    const originalCreate = task.Host.IO.createTextFile;
+    const writes = [];
+    task.Host.IO.createTextFile = (url) => {
+      writes.push(url.url);
+      assert.equal(edit.count(), url.url.endsWith(task.resultFilename) ? 1 : 0);
+      return originalCreate(url);
+    };
+    assert.equal(task.invoke(edit.context).id, id);
+    assert.equal(edit.count(), 1);
+    assert.deepEqual(writes.slice(0, 2), [mailbox + task.requestFilename, mailbox + 'task-lease.json']);
+    assert.deepEqual(task.read(task.requestFilename), { id: null, ops: [] });
+    assert.deepEqual(task.read('task-lease.json'), { id: null });
+    task.Host.IO.createTextFile = originalCreate;
+    assert.match(task.invoke(edit.context).error, /no edit request/);
+    task.write(task.requestFilename, original);
+    assert.match(task.invoke(edit.context).error, /no matching EditTask lease/);
+    assert.equal(edit.count(), 1);
+  });
+
+  const rejected = [
+    ['missing lease', {}, (task) => task.files.delete(mailbox + 'task-lease.json'), /matching EditTask lease/],
+    ['stale request ID', { lease: { id: 'previous-request' } }, null, /matching EditTask lease/],
+    ['wrong task kind', { lease: { kind: kind === 'track' ? 'notes' : 'track' } }, null, /matching EditTask lease/],
+    ['expired lease', { lease: { expiresAt: Date.now() - 1 } }, null, /lease expired/],
+    ['non-numeric expiry', { lease: { expiresAt: 'later' } }, null, /lease expired/],
+    ['older protocol', { status: { protocol: 1 } }, null, /session is not current/],
+    ['closed bridge', { status: { closed: true } }, null, /session is not current/],
+    ['different bridge session', { status: { session: 'new-session' } }, null, /session is not current/],
+    ['wrong requested session', { request: { expectedSession: 'old-session' } }, null, /context does not match/],
+    ['wrong requested document', { request: { expectedDocument: 'another-document' } }, null, /context does not match/],
+    ['different song path', {}, (task) => { task.manager.activeDocument.path.url = 'file:///other/song.song'; }, /active document does not match/],
+    ['different song title', {}, (task) => { task.manager.activeDocument.title = 'Other'; }, /active document does not match/],
+    ['closed document', {}, (task) => { task.manager.activeDocument = null; }, /active document does not match/],
+    ['invalid document object', { lease: { title: null, fileUrl: null } }, (task) => { task.manager.activeDocument = 'unavailable'; }, /active document does not match/],
+    ['unavailable document API', {}, (task) => { task.Host.Objects.getObjectByUrl = null; }, /active document is not available/],
+    ['omitted title', { lease: { title: undefined } }, null, /no document identity/],
+    ['omitted file URL', { lease: { fileUrl: undefined } }, null, /no document identity/],
+    ['malformed operations', { request: { ops: { length: 1 } } }, null, /no edit request/],
+  ];
+  for (const [reason, overrides, change, expected] of rejected) {
+    test(`${kind} EditTask rejects ${reason} without applying operations`, () => {
+      const task = editTaskHarness(kind);
+      const edit = mutation(kind);
+      const id = task.arm(edit.ops, overrides);
+      if (change) change(task);
+      const result = task.invoke(edit.context);
+      assert.equal(result.id, id);
+      assert.match(result.error, expected);
+      assert.equal(edit.count(), 0);
+      assert.deepEqual(task.read(task.requestFilename), { id: null, ops: [] });
+      assert.deepEqual(task.read('task-lease.json'), { id: null });
+      assert.match(task.invoke(edit.context).error, /no edit request/);
+      assert.equal(edit.count(), 0);
+    });
+  }
+
+  test(`${kind} EditTask preserves explicit null identities for unsaved documents`, () => {
+    const task = editTaskHarness(kind);
+    const edit = mutation(kind);
+    task.manager.activeDocument = {};
+    const result = task.run(edit.ops, edit.context);
+    assert.equal(result.error, undefined);
+    assert.equal(edit.count(), 1);
+  });
+
+  test(`${kind} EditTask refuses to apply when lease consumption cannot be written`, () => {
+    const task = editTaskHarness(kind);
+    const edit = mutation(kind);
+    task.arm(edit.ops);
+    const originalCreate = task.Host.IO.createTextFile;
+    task.Host.IO.createTextFile = (url) => url.url.endsWith('task-lease.json') ? null : originalCreate(url);
+    assert.match(task.invoke(edit.context).error, /could not consume/);
+    assert.equal(edit.count(), 0);
+  });
+}
 
 test('createPart creates an empty instrument part and addNotes writes the requested part', () => {
   const task = editTaskHarness();
@@ -80,4 +183,44 @@ test('missing music-edit functions reject before adding a part', () => {
   ], song.context).results[0];
   assert.match(result.error, /notes cannot be added here/);
   assert.deepEqual(song.keys.events, []);
+});
+
+test('duplicate event names and fractional part indices reject without changing notes', () => {
+  const task = editTaskHarness();
+  const song = musicContext();
+  task.run([
+    { op: 'createPart', track: 'Keys', start: 0, end: 8 },
+    { op: 'createPart', track: 'Keys', start: 16, end: 24 },
+  ], song.context);
+  const notes = [{ pitch: 60, beat: 0, length: 1 }];
+  const result = task.run([
+    { op: 'addNotes', track: 'Keys', part: 'Keys', notes },
+    { op: 'addNotes', track: 'Keys', part: 1.5, notes },
+    { op: 'editEvent', track: 'Keys', event: 'Keys', to: 4 },
+  ], song.context).results;
+  assert.match(result[0].error, /part name is ambiguous/);
+  assert.match(result[1].error, /part 1\.5 does not exist/);
+  assert.match(result[2].error, /event name is ambiguous/);
+  assert.deepEqual(song.keys.events.map((event) => event.notes), [[], []]);
+  assert.deepEqual(song.keys.events.map((event) => event.startTime.seconds), [0, 16]);
+});
+
+test('ambiguous folder and track names reject before creating or moving tracks', () => {
+  for (const tracks of [
+    [{ name: 'Group', isFolder: true }, { name: 'Group', isFolder: true }, { name: 'Keys' }],
+    [{ name: 'Keys' }, { name: 'Keys' }],
+  ]) {
+    const task = editTaskHarness();
+    const effects = [];
+    const context = {
+      mainTrackList: { numTracks: tracks.length, getTrack: (index) => tracks[index] },
+      functions: {
+        addTrack: () => { effects.push('created'); return { name: 'Group', isFolder: true }; },
+        moveToFolder: () => effects.push('moved'),
+      },
+    };
+    const result = task.run([{ op: 'folder', tracks: ['Keys'], folder: 'Group', create: true }], context).results[0];
+    assert.match(result.error, /name is ambiguous/);
+    assert.deepEqual(effects, []);
+  }
 });
