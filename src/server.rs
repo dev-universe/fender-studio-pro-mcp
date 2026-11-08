@@ -1,0 +1,306 @@
+use rmcp::{
+    ErrorData, RoleServer, ServerHandler,
+    model::{
+        CallToolRequestParams, CallToolResponse, CallToolResult, Implementation, ListToolsResult,
+        PaginatedRequestParams, ServerCapabilities, ServerConfig, Tool,
+    },
+    service::RequestContext,
+};
+use schemars::JsonSchema;
+use serde::Deserialize;
+use serde_json::{Value, json};
+
+use crate::{
+    operation::{self, Operation, Request, schema},
+    runtime::RuntimeHandle,
+};
+
+#[derive(Clone)]
+pub struct McpServer {
+    runtime: RuntimeHandle,
+}
+
+struct ToolSpec {
+    tool: Tool,
+    operation: Option<&'static str>,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct SongPath {
+    path: std::path::PathBuf,
+}
+
+impl McpServer {
+    pub fn new(runtime: RuntimeHandle) -> Self {
+        Self { runtime }
+    }
+
+    fn specs() -> Vec<ToolSpec> {
+        use operation::*;
+        let mut specs = vec![
+            named::<Empty>(
+                "host_status",
+                "context",
+                "Read the current bridge session and document epoch. Call before editing.",
+                false,
+            ),
+            named::<Empty>(
+                "session_get",
+                "song",
+                "Read the active live session and transport, including unsaved state.",
+                false,
+            ),
+            named::<TrackQuery>(
+                "tracks_list",
+                "tracks",
+                "Read tracks, selection, layers and events from the active session.",
+                false,
+            ),
+            named::<Empty>(
+                "channels_list",
+                "channels",
+                "Read mixer channels and their actual state. Track and audio channel names may differ.",
+                false,
+            ),
+            named::<ChannelSet>(
+                "channel_set",
+                "setChannel",
+                "Set a channel's target state. Volume is linear gain, pan is 0..1 with 0.5 center; switches are booleans.",
+                true,
+            ),
+            named::<TransportSet>(
+                "transport_set",
+                "setTransport",
+                "Set BPM, seconds or bar position and loop/precount/preroll target state.",
+                true,
+            ),
+            named::<TransportAction>(
+                "transport_action",
+                "transport",
+                "Execute a transport action. Record writes a take; toggles are explicit non-idempotent actions.",
+                true,
+            ),
+            named::<NotesQuery>(
+                "notes_read",
+                "notes",
+                "Read MIDI notes and part positions. Beat positions use quarter-note beats.",
+                false,
+            ),
+            named::<EditNotes>(
+                "notes_edit",
+                "editNotes",
+                "Edit selected track notes through the in-DAW EditTask. Filters limit the target notes.",
+                true,
+            ),
+            named::<TrackTask>(
+                "tracks_edit",
+                "trackTask",
+                "Run finite EditTask operations for parts, routing, instruments, events and arranger sections. Results are per item and batches are not atomic.",
+                true,
+            ),
+            named::<PluginQuery>(
+                "plugins_list",
+                "plugins",
+                "Discover names of host-exposed effects or instruments. Installed, licensed and tested sets may differ.",
+                false,
+            ),
+            named::<PluginCatalogQuery>(
+                "plugin_catalog",
+                "pluginCatalog",
+                "Discover live plugin class IDs and names by host category.",
+                false,
+            ),
+            named::<PluginParams>(
+                "plugin_parameters",
+                "pluginParams",
+                "Read named parameters of an insert or selected instrument. Candidate-name lookup does not establish exhaustive enumeration.",
+                false,
+            ),
+            named::<PluginParams>(
+                "plugin_inspect",
+                "pluginInspect",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution.",
+                false,
+            ),
+            named::<PluginSet>(
+                "plugin_parameter_set",
+                "setPluginParam",
+                "Set exactly one raw, normalized or display-text value on the expected plugin instance. Readback determines verification.",
+                true,
+            ),
+            named::<InsertBypass>(
+                "plugin_bypass",
+                "setInsertBypass",
+                "Set insert or entire insert-rack bypass to a target state.",
+                true,
+            ),
+            named::<SendSet>(
+                "send_set",
+                "setSend",
+                "Set an existing send's normalized level and mute target state.",
+                true,
+            ),
+            named::<AutomationSet>(
+                "automation_mode_set",
+                "setAutomation",
+                "Set channel automation mode. Write mode can replace existing automation during playback.",
+                true,
+            ),
+            named::<CommandQuery>(
+                "commands_search",
+                "listCommands",
+                "Discover actual command names and optional current enabled state.",
+                false,
+            ),
+            named::<Command>(
+                "command_run",
+                "command",
+                "Run a discovered contextual command or check its enabled state. Acknowledgment does not prove its workflow completed.",
+                true,
+            ),
+        ];
+        let empty = json!({"type":"object","properties":{},"additionalProperties":false});
+        specs.push(ToolSpec { operation: None, tool: Tool::new("operations_list", "Get the finite operation schema, including less common operations. No arbitrary eval or raw bridge escape hatch is available.", empty.as_object().unwrap().clone()) });
+        specs.push(ToolSpec { operation: None, tool: Tool::new("operation_run", "Run a typed operation from operations_list. Supply expected_document for mutations. Receipts distinguish observed, verified, unverified, partial and unknown outcomes.", schema().as_object().unwrap().clone()) });
+        let saved_schema = serde_json::to_value(schemars::schema_for!(SongPath)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("song_read", "Read a saved .song archive without editing it. Results are saved state, not unsaved live state; plugin parameter snapshots may be partial.", saved_schema.as_object().unwrap().clone()),
+        });
+        specs
+    }
+}
+
+fn named<T: JsonSchema>(
+    name: &'static str,
+    operation: &'static str,
+    description: &'static str,
+    mutation: bool,
+) -> ToolSpec {
+    let mut schema = serde_json::to_value(schemars::schema_for!(T)).expect("tool schema");
+    if mutation {
+        schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
+        let object = schema.as_object_mut().unwrap();
+        object
+            .entry("required")
+            .or_insert_with(|| json!([]))
+            .as_array_mut()
+            .unwrap()
+            .push(json!("expected_document"));
+    }
+    ToolSpec {
+        operation: Some(operation),
+        tool: Tool::new(name, description, schema.as_object().unwrap().clone()),
+    }
+}
+
+impl ServerHandler for McpServer {
+    fn get_info(&self) -> ServerConfig {
+        ServerConfig::new(ServerCapabilities::builder().enable_tools().build())
+            .with_server_info(Implementation::new(env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION")))
+            .with_instructions("Read host_status before editing and pass its document token. Volume uses linear gain, normalized plugin values use 0..1. Treat applied_unverified and outcome_unknown honestly; never retry ambiguous non-idempotent operations automatically. Only real live reports establish host-version and plugin support.")
+    }
+
+    fn get_tool(&self, name: &str) -> Option<Tool> {
+        Self::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == name)
+            .map(|spec| spec.tool)
+    }
+
+    async fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<ListToolsResult, ErrorData> {
+        Ok(ListToolsResult {
+            tools: Self::specs().into_iter().map(|spec| spec.tool).collect(),
+            ..Default::default()
+        })
+    }
+
+    async fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> Result<CallToolResponse, ErrorData> {
+        let mut args = request.arguments.unwrap_or_default();
+        let spec = Self::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == request.name)
+            .ok_or_else(|| ErrorData::invalid_params("Unknown tool", None))?;
+        if request.name == "operations_list" {
+            return Ok(CallToolResult::structured(json!({"schema":schema(),"provenance":"server implementation; live support is version dependent","arbitrary_eval":false})).into());
+        }
+        if request.name == "song_read" {
+            let query: SongPath = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result = tokio::task::spawn_blocking(move || crate::song::read_song(&query.path))
+                .await
+                .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(saved) => CallToolResult::structured(serde_json::to_value(saved).unwrap()),
+                Err(message) => CallToolResult::structured_error(
+                    json!({"source":"saved","error":{"code":"song_read_failed","message":message}}),
+                ),
+            }
+            .into());
+        }
+        let operation = if let Some(name) = spec.operation {
+            let expected_document = args
+                .remove("expected_document")
+                .map(|v| {
+                    v.as_str().map(str::to_owned).ok_or_else(|| {
+                        ErrorData::invalid_params("expected_document must be a string", None)
+                    })
+                })
+                .transpose()?;
+            Request {
+                operation: Operation::from_parts(name, Value::Object(args))
+                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?,
+                expected_document,
+            }
+        } else {
+            serde_json::from_value::<Request>(Value::Object(args))
+                .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?
+        };
+        if !operation.operation.is_read_only() && operation.expected_document.is_none() {
+            return Ok(CallToolResult::structured_error(json!({"outcome":"not_applied","error":{"code":"missing_precondition","message":"Read host_status and supply expected_document for mutations"}})).into());
+        }
+        let result = match self.runtime.execute(operation).await {
+            Ok(receipt) => serde_json::to_value(receipt).unwrap(),
+            Err(error) => json!({"outcome":"not_applied","error":error}),
+        };
+        let failed = result.get("error").is_some_and(|error| !error.is_null());
+        Ok(if failed {
+            CallToolResult::structured_error(result)
+        } else {
+            CallToolResult::structured(result)
+        }
+        .into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn named_mutations_require_the_document_token() {
+        let specs = McpServer::specs();
+        let tool = &specs
+            .iter()
+            .find(|s| s.tool.name == "channel_set")
+            .unwrap()
+            .tool;
+        assert!(
+            tool.input_schema["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("expected_document"))
+        );
+        let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
+        assert_eq!(names.len(), specs.len());
+    }
+}
