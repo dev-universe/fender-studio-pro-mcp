@@ -2,3 +2,6 @@ ts	phase	decision	why	evidence	result
 2026-11-08T15:20:00Z	start	Begin autonomous implementation and real DAW validation	User authorized implementation and a public repository	Current chat request	open
 2026-11-08T15:22:00Z	repository	Create public dev-universe/fender-studio-pro-mcp	User requested this name and visibility	https://github.com/dev-universe/fender-studio-pro-mcp	created
 2026-11-08T15:23:00Z	validation	Use a separate MCP Validation Scratch session	Preserve the existing user session	Native Studio Pro window title	open
+2026-11-08T15:19:26+00:00	correction	Supersede approximate timestamps in the first three rows	Their events are real but the timestamps were not read from a clock	git log and current chat	Use this observed timestamp for the initial checkpoint
+2026-11-08T15:26:51+00:00	design	Use one native owner thread and a finite typed operation enum	Both independent designs converged and the judge preferred the smaller enum boundary	docs/ARCHITECTURE.md	implementation in progress
+2026-11-08T15:26:51+00:00	bridge	Adapt MIT bridge protocol and keep newer empty-part operations	Cross-process targeting and first-note creation need explicit support	assets/bridge/BridgeCore.js and assets/edit-tasks/package/McpTrackOps.js	JS syntax checks passed

@@ -3,6 +3,7 @@
 /artifacts/
 /.audit/
 .DS_Store
+__pycache__/
 *.song
 *.song.autosave
 *.wav
