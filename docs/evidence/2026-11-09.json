@@ -1,0 +1,634 @@
+{
+  "generated_at": "2026-11-08T17:16:03.002130+00:00",
+  "validated_source_revision": "afff1fa289e96f6d6ac507776c755bb1708554f2",
+  "binary_sha256": "33990df00d8c44e64e4f614ffa513449e3d5da6f3424927dbc80c4c766040e14",
+  "source_sha256": "3254043159bd443f4a54fdba90982754338946950235dc3d59a9d06224492102",
+  "source_dirty_during_run": false,
+  "installed_assets_match_manifest": true,
+  "host": {
+    "reported_version": "8.1.1",
+    "reported_build": "113103",
+    "platform": "macOS",
+    "architecture": "arm64",
+    "scope": "one installed app on one Apple Silicon Mac; synthetic scratch session",
+    "macos_version": "26.7.1",
+    "observed_session_sample_rate_hz": 48000
+  },
+  "checks": {
+    "rust_tests": 38,
+    "javascript_tests": 99,
+    "msrv": "1.88.0",
+    "build_compiler": "1.99.0",
+    "fmt": "passed",
+    "clippy": "passed",
+    "release_build": "passed",
+    "remote_ci": "not_run_workflow_authorization_unavailable"
+  },
+  "session": {
+    "status": "passed",
+    "tracks": 64,
+    "second_owner": "passed",
+    "stale_document": "passed",
+    "note_parts": 3,
+    "notes": 4,
+    "note_change_readback": true,
+    "note_restore_readback": true,
+    "home_no_document": "bridge_timeout_observed"
+  },
+  "midi_wakeup_recording": {
+    "status": "passed",
+    "note_fx_absent": true,
+    "recording_observed": true,
+    "stopped": true,
+    "recorded_note_count": 0,
+    "fixture_restored": true
+  },
+  "performance": {
+    "method": "one warm run, complete MCP roundtrip, p50 median and p95 nearest rank, no baseline ratio or throughput claim",
+    "ping": {
+      "requested_samples": 100,
+      "successful_samples": 100,
+      "failed_samples": 0,
+      "timeouts": 0,
+      "wall_ms": {
+        "samples": 100,
+        "p50_ms": 72.14293749999999,
+        "p95_ms": 78.309583,
+        "min_ms": 59.64775,
+        "max_ms": 81.536333
+      }
+    },
+    "tracks": {
+      "requested_samples": 20,
+      "successful_samples": 20,
+      "failed_samples": 0,
+      "timeouts": 0,
+      "wall_ms": {
+        "samples": 20,
+        "p50_ms": 67.79320799999999,
+        "p95_ms": 75.406459,
+        "min_ms": 57.091375,
+        "max_ms": 83.662375
+      }
+    }
+  },
+  "tools": [
+    "host_status",
+    "session_get",
+    "tracks_list",
+    "channels_list",
+    "panner_get",
+    "panner_set",
+    "channel_set",
+    "transport_set",
+    "transport_action",
+    "notes_read",
+    "notes_edit",
+    "tracks_edit",
+    "plugins_list",
+    "plugin_catalog",
+    "plugin_parameters",
+    "plugin_inspect",
+    "plugin_editor_open",
+    "plugin_parameter_set",
+    "plugin_bypass",
+    "send_set",
+    "automation_mode_set",
+    "commands_search",
+    "command_run",
+    "operations_list",
+    "operation_run",
+    "song_read",
+    "audio_analyze"
+  ],
+  "plugin_acceptance": {
+    "parameter_roundtrips": 55,
+    "bypass_roundtrips": 3,
+    "pending_classes": 2,
+    "meaning": "one finite changed parameter or bypass observed and original value restored per listed class; partial candidate discovery, not all controls/actions",
+    "classes": [
+      {
+        "name": "Splitter",
+        "kind": "effect",
+        "readable_candidates": 0,
+        "missing_candidates": 0,
+        "tested_parameter": null,
+        "status": "unsupported_graph_control"
+      },
+      {
+        "name": "External Effect Mono",
+        "kind": "effect",
+        "readable_candidates": 1,
+        "missing_candidates": 11,
+        "tested_parameter": null,
+        "status": "bypass_changed_readback_restored"
+      },
+      {
+        "name": "External Effect Stereo",
+        "kind": "effect",
+        "readable_candidates": 1,
+        "missing_candidates": 11,
+        "tested_parameter": null,
+        "status": "bypass_changed_readback_restored"
+      },
+      {
+        "name": "Channel Strip",
+        "kind": "effect",
+        "readable_candidates": 14,
+        "missing_candidates": 0,
+        "tested_parameter": "autogain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Mixtool",
+        "kind": "effect",
+        "readable_candidates": 7,
+        "missing_candidates": 0,
+        "tested_parameter": "gain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Binaural Pan",
+        "kind": "effect",
+        "readable_candidates": 4,
+        "missing_candidates": 0,
+        "tested_parameter": "stereowidth",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Dual Pan",
+        "kind": "effect",
+        "readable_candidates": 8,
+        "missing_candidates": 0,
+        "tested_parameter": "linkedwidth",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Limiter",
+        "kind": "effect",
+        "readable_candidates": 10,
+        "missing_candidates": 6,
+        "tested_parameter": "ingain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Expander",
+        "kind": "effect",
+        "readable_candidates": 13,
+        "missing_candidates": 2,
+        "tested_parameter": "attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Gate",
+        "kind": "effect",
+        "readable_candidates": 16,
+        "missing_candidates": 0,
+        "tested_parameter": "attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Tricomp",
+        "kind": "effect",
+        "readable_candidates": 15,
+        "missing_candidates": 2,
+        "tested_parameter": "ingain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Multiband Dynamics",
+        "kind": "effect",
+        "readable_candidates": 65,
+        "missing_candidates": 0,
+        "tested_parameter": "attackband1",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "RedlightDist",
+        "kind": "effect",
+        "readable_candidates": 10,
+        "missing_candidates": 0,
+        "tested_parameter": "drive",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Bitcrusher",
+        "kind": "effect",
+        "readable_candidates": 11,
+        "missing_candidates": 0,
+        "tested_parameter": "autoGain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Phaser",
+        "kind": "effect",
+        "readable_candidates": 12,
+        "missing_candidates": 0,
+        "tested_parameter": "lfoWidth",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Flanger",
+        "kind": "effect",
+        "readable_candidates": 8,
+        "missing_candidates": 0,
+        "tested_parameter": "lfowidth",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Chorus",
+        "kind": "effect",
+        "readable_candidates": 13,
+        "missing_candidates": 0,
+        "tested_parameter": "hifreq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "X-Trem",
+        "kind": "effect",
+        "readable_candidates": 24,
+        "missing_candidates": 0,
+        "tested_parameter": "depth",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Autofilter",
+        "kind": "effect",
+        "readable_candidates": 40,
+        "missing_candidates": 2,
+        "tested_parameter": "cutoff",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Beat Delay",
+        "kind": "effect",
+        "readable_candidates": 13,
+        "missing_candidates": 1,
+        "tested_parameter": "mix",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Groove Delay",
+        "kind": "effect",
+        "readable_candidates": 53,
+        "missing_candidates": 1,
+        "tested_parameter": "cutoff1",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Surround Delay",
+        "kind": "effect",
+        "readable_candidates": 76,
+        "missing_candidates": 1,
+        "tested_parameter": "drive",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Analog Delay",
+        "kind": "effect",
+        "readable_candidates": 20,
+        "missing_candidates": 1,
+        "tested_parameter": "lfotime",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Room Reverb",
+        "kind": "effect",
+        "readable_candidates": 16,
+        "missing_candidates": 1,
+        "tested_parameter": "mix",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Mixverb",
+        "kind": "effect",
+        "readable_candidates": 9,
+        "missing_candidates": 1,
+        "tested_parameter": "mix",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Open AIR",
+        "kind": "effect",
+        "readable_candidates": 51,
+        "missing_candidates": 18,
+        "tested_parameter": "gain",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "IR Maker",
+        "kind": "effect",
+        "readable_candidates": 4,
+        "missing_candidates": 0,
+        "tested_parameter": "irlen",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Spectrum Meter",
+        "kind": "effect",
+        "readable_candidates": 8,
+        "missing_candidates": 13,
+        "tested_parameter": "maxfreq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Phase Meter",
+        "kind": "effect",
+        "readable_candidates": 0,
+        "missing_candidates": 0,
+        "tested_parameter": null,
+        "status": "bypass_changed_readback_restored"
+      },
+      {
+        "name": "Level Meter",
+        "kind": "effect",
+        "readable_candidates": 5,
+        "missing_candidates": 7,
+        "tested_parameter": "togglesize",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Scope",
+        "kind": "effect",
+        "readable_candidates": 31,
+        "missing_candidates": 0,
+        "tested_parameter": "crossLevel",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Tone Generator",
+        "kind": "effect",
+        "readable_candidates": 10,
+        "missing_candidates": 0,
+        "tested_parameter": "freq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Ampire",
+        "kind": "effect",
+        "readable_candidates": 68,
+        "missing_candidates": 47,
+        "tested_parameter": "cab.micmixA",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Pedalboard",
+        "kind": "effect",
+        "readable_candidates": 21,
+        "missing_candidates": 46,
+        "tested_parameter": "input.level",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Mustang Native",
+        "kind": "effect",
+        "readable_candidates": 31,
+        "missing_candidates": 2,
+        "tested_parameter": "input.level",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Rumble Native",
+        "kind": "effect",
+        "readable_candidates": 31,
+        "missing_candidates": 2,
+        "tested_parameter": "input.level",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Studio Verb",
+        "kind": "effect",
+        "readable_candidates": 19,
+        "missing_candidates": 2,
+        "tested_parameter": "algoreverb.centerlevel",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Fat Channel",
+        "kind": "effect",
+        "readable_candidates": 49,
+        "missing_candidates": 36,
+        "tested_parameter": "comp.attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Pro EQ",
+        "kind": "effect",
+        "readable_candidates": 53,
+        "missing_candidates": 40,
+        "tested_parameter": "highcut.hcfreq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Compressor",
+        "kind": "effect",
+        "readable_candidates": 20,
+        "missing_candidates": 22,
+        "tested_parameter": "studiocomp.attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Tuner",
+        "kind": "effect",
+        "readable_candidates": 3,
+        "missing_candidates": 0,
+        "tested_parameter": "calibration",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Voice FX",
+        "kind": "effect",
+        "readable_candidates": 1,
+        "missing_candidates": 0,
+        "tested_parameter": "voicefxopt.fxmodel",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Rotor",
+        "kind": "effect",
+        "readable_candidates": 13,
+        "missing_candidates": 0,
+        "tested_parameter": "drive",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "De-Esser",
+        "kind": "effect",
+        "readable_candidates": 7,
+        "missing_candidates": 0,
+        "tested_parameter": "freq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Vocoder",
+        "kind": "effect",
+        "readable_candidates": 74,
+        "missing_candidates": 0,
+        "tested_parameter": "carrierfreq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "VU Meter",
+        "kind": "effect",
+        "readable_candidates": 3,
+        "missing_candidates": 0,
+        "tested_parameter": "scale",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Vocal Tune",
+        "kind": "effect",
+        "readable_candidates": 19,
+        "missing_candidates": 0,
+        "tested_parameter": "a",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Multi Instrument",
+        "kind": "instrument",
+        "readable_candidates": 20,
+        "missing_candidates": 0,
+        "tested_parameter": "bool-1",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Mai Tai",
+        "kind": "instrument",
+        "readable_candidates": 219,
+        "missing_candidates": 17,
+        "tested_parameter": "adsr2.attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "SampleOne",
+        "kind": "instrument",
+        "readable_candidates": 146,
+        "missing_candidates": 20,
+        "tested_parameter": "adsrMain.attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Impact",
+        "kind": "instrument",
+        "readable_candidates": 36,
+        "missing_candidates": 43,
+        "tested_parameter": "midi-cc.bendRange",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Presence",
+        "kind": "instrument",
+        "readable_candidates": 131,
+        "missing_candidates": 2,
+        "tested_parameter": "adsr2.attack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "CV Instrument",
+        "kind": "instrument",
+        "readable_candidates": 106,
+        "missing_candidates": 23,
+        "tested_parameter": "cvGate.time",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Mojito",
+        "kind": "instrument",
+        "readable_candidates": 36,
+        "missing_candidates": 2,
+        "tested_parameter": "ampEnvAttack",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Input Filter",
+        "kind": "note_effect",
+        "readable_candidates": 4,
+        "missing_candidates": 3,
+        "tested_parameter": "hiKey",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Arpeggiator",
+        "kind": "note_effect",
+        "readable_candidates": 108,
+        "missing_candidates": 3,
+        "tested_parameter": "gateTime",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Chorder",
+        "kind": "note_effect",
+        "readable_candidates": 12,
+        "missing_candidates": 7,
+        "tested_parameter": "chorder.autofill",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Repeater",
+        "kind": "note_effect",
+        "readable_candidates": 13,
+        "missing_candidates": 4,
+        "tested_parameter": "timeFreq",
+        "status": "changed_readback_restored"
+      },
+      {
+        "name": "Console Shaper",
+        "kind": "mix_fx",
+        "readable_candidates": 6,
+        "missing_candidates": 0,
+        "tested_parameter": "drive",
+        "status": "changed_readback_restored",
+        "evidence": "MCP native AudioBusMixFX insertion and explicit raw/normalized readback receipts"
+      },
+      {
+        "name": "Surround Panner",
+        "kind": "panner",
+        "readable_candidates": null,
+        "missing_candidates": null,
+        "tested_parameter": null,
+        "status": "not_verified_multichannel_fixture_required"
+      }
+    ],
+    "numeric_readback_tolerance": "abs(a-b) <= 1e-6 * (1 + abs(original))"
+  },
+  "asset_sha256": {
+    "assets/bridge/BridgeComponent.js": "1e2ad4762e159db5c8e3506bf39ee9b77b8a4ec803747f5a57bc8eca7ca96826",
+    "assets/bridge/BridgeCore.js": "b80b087c179d5457e791d7a96551b919866c586e911fb2e0957718ebd9e409a9",
+    "assets/bridge/BridgeDevice.js": "48e2fae1757547f26e12e253c06293fe66ee36faa8730ad7f80f33bda3159f0b",
+    "assets/bridge/StudioOneMCP.device": "c4a2dd556f32cae6fdb3e2f27b49204dd2875898d5db72517bddce188d2b4610",
+    "assets/bridge/StudioOneMCP.surface.xml": "f3bc601db79f4e1154cb31feff7c93724b8db2b947d76c60e0d6c0a9309cb79e",
+    "assets/edit-tasks/extension/installdata.xml": "f5f11c0866fc2b6535c4e5d4d5444973d24af202cfbb77ee8a8c529c58d9c28a",
+    "assets/edit-tasks/extension/metainfo.xml": "b46bc7ce855daf6c98f3b7a8d1e59a15395741c71959dca5b44f0504fa9e7ec4",
+    "assets/edit-tasks/package/McpEdit.js": "60722038e3afe40560a18060fb08a21dbbdcc5b471bdb4a14ae6d9865b07416d",
+    "assets/edit-tasks/package/McpTaskGuard.js": "d90ddbe0a5a0a35f4bedb35298a95b5b2723031bd713961850d37f129d0da937",
+    "assets/edit-tasks/package/McpTrackEdit.js": "8a8be25890965f80edbdf69ec320173c8e294df804a1bb61ba3a4a397e9905c1",
+    "assets/edit-tasks/package/McpTrackOps.js": "5bc780cc096168f9645c77a0d0bdf69432ee40bc3af85012a015c8e986f33dc4",
+    "assets/edit-tasks/package/classfactory.xml": "5d37f661c7aed853b793890672a0968dacc621e8905a16537a84dbdcee9380d7",
+    "assets/edit-tasks/package/metainfo.xml": "2fb74b27515e85e8f2a44b784a8a0a47676db780c53bc3a534edd39149b389c6"
+  },
+  "limits": [
+    "Splitter graph editing remains unverified",
+    "Surround Panner multichannel creation and control remain unverified",
+    "External Effect gain/mix/routing remains unverified; only slot bypass was roundtripped",
+    "All plugin parameter enumeration and nested/sampler actions are incomplete",
+    "Task document epoch and same-class instance replacement limitations remain",
+    "No dedicated capture, recording-job or export-job implementation",
+    "No Windows or Intel Mac live validation"
+  ],
+  "standard_panner": {
+    "status": "passed",
+    "read_only_label": "pannerType",
+    "changed_readback_restored_fields": [
+      "panX1",
+      "panX2",
+      "panWidth",
+      "stereoMode"
+    ],
+    "all_original_descriptors_restored": true
+  },
+  "diagnostic": {
+    "installation_current": true,
+    "live_verified": true,
+    "stale_or_missing_files": []
+  }
+}

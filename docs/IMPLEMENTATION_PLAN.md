@@ -4,14 +4,17 @@ macOS에서 LLM이 세션을 이해하고, 음악을 편집하고, 믹싱과 출
 Rust 서버와 작은 DAW 내부 JavaScript control-surface 및 EditTask 확장을 함께 제공한다.
 지원 범위는 명령 개수보다 실제 작업 완료와 결과 검증으로 판단한다.
 사용자가 선택한 우선 플랫폼은 macOS다. 로컬 기준 앱은 Studio Pro 8.1.1 Build 113103이다.
-P0부터 P5까지 순서대로 진행한다. 현재 완료된 것은 소스 조사와 이 계획 작성이다.
+P0부터 실제 호스트 증거를 쌓는다. Rust 서버, 브리지와 EditTask를 구현했고 실제 8.1.1에서
+연결, 트랙/노트 편집, 내장 효과·악기·Note FX·Mix FX의 대표 제어를 검증했다.
+단계 전체의 완료와 개별 기능의 통과를 구분한다. 현재 증거와 제한은
+[실환경 검증](VALIDATION.md)과 [내장 플러그인 지원표](BUILTIN_PLUGINS.md)를 기준으로 읽는다.
 참고 프로젝트의 버전과 한계는 [조사 문서](RESEARCH.md)에 기록했다.
 
 ## How to read this
 
 One box is one unit of work. Every box names the evidence that checks it. Check a box only when its evidence exists. 체크되지 않은 항목은 앞으로 수행할 작업이다.
 
-실행할 때는 `/Users/fd2/.local/share/pstack/current/upstream/skills/poteto-mode/playbooks/autopilot-stack.md`를 Codex adapter와 함께 적용한다. 이 문서는 실행 지시나 merge 권한을 부여하지 않는다. P0부터 실제 환경의 증거를 쌓고, 구현 범위가 커지면 같은 단계 안에서도 검증 가능한 작은 PR로 나눈다. 아래 P0부터 P5는 계획상의 작업 ID이며 아직 생성한 GitHub PR이 아니다.
+실행할 때는 `$HOME/.local/share/pstack/current/upstream/skills/poteto-mode/playbooks/autopilot-stack.md`를 Codex adapter와 함께 적용한다. 이 문서는 실행 지시나 merge 권한을 부여하지 않는다. P0부터 실제 환경의 증거를 쌓고, 구현 범위가 커지면 같은 단계 안에서도 검증 가능한 작은 PR로 나눈다. 아래 P0부터 P5는 계획상의 작업 ID이며 아직 생성한 GitHub PR이 아니다.
 
 Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
@@ -23,16 +26,16 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 - [x] 사용자의 범위와 macOS 우선을 반영한다. 근거는 현재 대화와 이 계획이다.
 - [x] 세 참고 저장소를 고정 커밋에서 조사한다. 근거는 `docs/RESEARCH.md`다.
-- [ ] 구현 시작 시 로컬과 remote의 저장소 상태, `AGENTS.md`, 라이선스와 작업 기준점을 확인한다. 현재 작업 폴더에는 기존 코드와 Git 저장소가 없다.
-- [ ] Git이 준비된 뒤 계획과 실행 규칙을 현재 trunk에서 다시 읽는다. `git show origin/main:docs/IMPLEMENTATION_PLAN.md`를 사용할 수 있는지 확인하고, 설치형 pstack 경로는 실제 로컬 파일에서 읽는다. 저장소에 없는 pstack 파일을 있다고 가정하지 않는다.
+- [x] 초기 빈 폴더에 저장소와 실행 규칙을 만들고 MIT 출처를 보존했다. 공개 remote는 `dev-universe/fender-studio-pro-mcp`다.
+- [x] Git 기준 계획, `AGENTS.md`, 설치된 pstack와 Codex adapter를 읽고 실제 도구에 맞게 실행했다.
 - [ ] skip. `/loop 1h` 감사 자동화는 이번 범위에 없다. Codex adapter에도 해당 실행기가 없다. 자동화를 만들지 않는다.
 - [ ] 작업 중 status message는 새 증거, 실패, 범위 변경 또는 완료를 알린다. 권한이나 구현 동의를 반복해서 묻지 않는다.
 
 ### Spawn owners
 
 - [ ] P0 → P1 → P2 → P3 → P4 → P5 순서를 지킨다. P0가 실패하면 해당 기능을 가능한 것으로 계획하지 말고 결과에 따라 수정한다.
-- [ ] 초기에는 한 작업자가 전체 DAW 제어 큐를 소유한다. 별도 조사와 리뷰는 분리할 수 있지만 같은 실행 중 DAW에 병렬 쓰기를 하지 않는다.
-- [ ] 여러 agent를 사용할 때는 각 PR의 파일 범위를 배정하고 현재 모델 설정을 유지한다. 실환경 테스트는 별도의 scratch 세션에서 직렬 실행한다.
+- [x] 한 native owner가 DAW 제어 큐를 소유하며 profile OS lock으로 다른 프로세스를 차단한다. 실제 두 번째 프로세스도 `controller_busy`로 거절됐다.
+- [x] agent별 파일 범위와 동일 모델 상속을 유지했다. 실제 앱 조작은 부모 작업자가 전용 scratch 세션에서 직렬 수행했다.
 - [ ] 상호작용을 바꾸는 P1부터 P5는 merge 전에 도구 입출력과 DAW 화면 증거를 리뷰한다. 이번 계획 작성에는 앱 설치와 제어가 포함되지 않는다.
 
 ### PR mechanics, for every PR
@@ -41,7 +44,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 - [ ] `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`를 실행한다. Node는 JS 개발 테스트에만 사용하며 사용자 runtime 의존성으로 요구하지 않는다.
 - [ ] 브리지 변경에는 실제 JS 파일을 실행하는 fake-host 계약 테스트를 추가한다. host API 존재 검사, 오류 값 반환, 스키마와 패키지 버전을 검사한다.
 - [ ] Rust와 JS의 protocol schema를 하나의 기준에서 검증한다. 생성기를 미리 만들기보다 공통 fixture와 계약 테스트부터 둔다.
-- [ ] 가져온 MIT 코드와 자산의 출처, 커밋과 저작권 표시를 보존한다. 불필요한 compatibility layer와 임의 eval을 추가하지 않는다.
+- [x] `THIRD_PARTY_NOTICES.md`와 `licenses/`에 MIT 출처를 보존하고 임의 eval을 제거했다.
 
 ### Verdict and merge, for every PR
 
@@ -72,8 +75,8 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 **Build.**
 
-- [ ] 최소 control-surface와 EditTask만 사용해 Host, 파일 IO, MIDI callback, command 조회와 MediaTime의 실제 동작을 확인한다.
-- [ ] 8.1.1 profile과 User Devices 및 Extensions 경로를 탐지한다. 검증용 자산과 기존 사용자 파일을 구분한다.
+- [x] 실제 8.1.1에서 Host, 파일 IO, MIDI 및 timer callback, 명령 검색, MediaTime을 이용한 빈 part와 첫 노트 생성을 확인했다.
+- [x] 8.1.1 profile의 User Devices/Extensions에 전용 자산을 설치했다. 설치 manifest/hash, 백업과 소유 파일 검사로 기존 파일을 구분한다.
 - [ ] wakeup 전용 MIDI source를 control-surface 입력에만 연결한다. instrument와 All Inputs 경로로 흘러 note 119가 재생되거나 녹음되지 않는지 검사한다.
 - [ ] callback에서 가능한 작업, EditTask가 필요한 작업, 불가능하거나 미확인인 작업을 capability 목록에 기록한다.
 - [ ] host UID의 안정성, 선택과 focus 복원, 빈 MIDI part에 첫 노트를 넣는 경로를 확인한다. 객체 수명 이후 host handle을 재사용하지 않는다.
@@ -84,7 +87,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 **Verify, unit.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
-- [ ] probe 요청과 결과 형식, 잘못된 입력, JS 오류 반환을 fixture로 검증한다. 개발 시 추가할 `node --test tests/js/*.test.mjs`를 실행한다.
+- [x] 실제 JS 자산을 VM에서 실행하는 계약 테스트로 요청/결과, 오류, 문서 검사, 일회성 EditTask, 여러 part와 플러그인 식별을 검증했다. 실행법은 `scripts/check.sh`다.
 
 **Verify, live.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked. Ten lanes on `inherit-parent` at the PR head. 공통 boot recipe를 따른다.
 
@@ -101,10 +104,10 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 **Verify, perf.** Tests alone are not sufficient verification. A PR is verified only when its unit, live, and perf boxes are all checked.
 
-- [ ] Metric. warm ping과 64-track snapshot의 p50, p95, timeout 수를 기록한다.
+- [x] Metric. 실제 64-track 세션에서 warm ping 100회와 snapshot 20회의 p50/p95/timeout을 기록했다. `docs/VALIDATION.md`를 참조한다.
 - [ ] Probe. 준비된 프로세스에서 ping 100회와 snapshot 20회를 trunk와 head에 번갈아 실행한다. 실제 명령은 P0 probe와 함께 고정한다.
-- [ ] Baseline. trunk에 기능이 없으면 absent로 기록한다. MIDI 전송과 host callback 및 파일 응답 시간을 나눠 측정한다.
-- [ ] Rule. 초기 기준은 warm ping p95 750ms 이하, 64-track snapshot p95 2초 이하, 요청 유실 0회다. 부재와 속도 비율을 비교하지 않는다.
+- [ ] Baseline. 초기 trunk는 구현이 없어 absent로 기록했다. 전체 MCP 왕복은 측정했으며, MIDI/host callback/파일 응답의 개별 프로파일링은 미완료다.
+- [x] Rule. 단일 warm run에서 ping p95 78.31ms, 64-track snapshot p95 75.41ms, 오류와 timeout 0회로 제안 기준을 통과했다. 다른 머신이나 대규모 세션의 보장은 아니다.
 
 **Review gate.** None. P0 is not review-gated. 실험 결과와 한계가 다음 단계의 설계를 결정한다.
 
@@ -122,9 +125,9 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 **Build.**
 
-- [ ] 공식 `rmcp`, Tokio, Serde, JSON schema, tracing 기반 stdio 서버를 만든다. stdout에는 MCP만, 진단은 stderr로 보낸다. 의존 버전과 MSRV를 고정한다.
-- [ ] `serve`, `doctor`, `install`, `uninstall` CLI와 versioned bridge 자산을 제공한다. 설치 파일 목록과 hash를 기록하고 제거할 때 해당 파일만 다룬다.
-- [ ] profile별 OS lock, bounded queue, session과 document precondition, request ID, timeout 상태와 reconnect를 구현한다. 첫 버전은 제어 프로세스 하나만 허용한다.
+- [x] 공식 `rmcp`, Tokio, Serde/schema, tracing 기반 stdio 서버와 Cargo.lock/MSRV를 제공한다. 실제 MCP 초기화와 도구 호출을 확인했다.
+- [x] `serve`, `doctor`, `install`, `uninstall`과 embedded 자산, 설치 manifest/hash와 보존 검사를 구현하고 단위 테스트했다.
+- [x] profile OS lock, bounded native owner queue, session/document 사전조건, request ID와 timeout의 unknown 결과를 구현했다. 제어 프로세스는 하나다. 재연결 제한은 검증 문서에 남겼다.
 - [ ] CoreMIDI 가상 source를 만들고 재시작 후 연결을 확인한다. IAC 설정을 기본 설치 조건으로 요구하지 않는다. 포트 이름만으로 identity 유지가 된다고 가정하지 않는다.
 - [ ] live snapshot과 capability 조회, 명령 검색을 제공한다. `.song` ZIP, XML과 UBJSON 읽기와 autosave 비교는 live와 별도 출처로 반환한다.
 - [ ] 비정상 archive의 entry 수, 압축 해제 총량과 입력 크기를 제한한다. 파일은 읽기 전용으로 다루고 저장 파일을 직접 수정하는 쓰기 경로를 만들지 않는다.
@@ -518,7 +521,7 @@ Rust는 MCP, 입력 검증, 모델, 큐, timeout, 파일 파싱, 작업 결과, 
 - [공식 Rust MCP SDK](https://github.com/modelcontextprotocol/rust-sdk)는 P1에서 release와 feature flags를 확인한다.
 - [Fender Control Link](https://fenderstudiopromanual.fender.com/en/Content/Control_Link_Topics/Chapter-Control_Link.htm), [Mackie Control](https://fenderstudiopromanual.fender.com/en/Content/Control_Link_Topics/Mackie_Control.htm)과 [Macro Toolbar](https://fenderstudiopromanual.fender.com/en/Content/Editing_Topics/Macro_Toolbar.htm)를 P0와 P2에서 읽는다.
 - [Apple Core Audio taps](https://developer.apple.com/documentation/CoreAudio/capturing-system-audio-with-core-audio-taps)를 P5에서 읽고 SDK availability를 확인한다.
-- pstack adapter는 `/Users/fd2/.agents/skills/pstack/references/codex.md`다. upstream root는 `/Users/fd2/.local/share/pstack/current/upstream/`다.
+- pstack adapter는 `$HOME/.agents/skills/pstack/references/codex.md`다. upstream root는 `$HOME/.local/share/pstack/current/upstream/`다.
 - `skills/how/SKILL.md`는 P0의 제어 경로와 새로운 subsystem 조사에 적용한다. `skills/interrogate/SKILL.md`는 P0 결과 이후에도 제어 방식이 충돌하거나 설계 판단이 해결되지 않을 때 적용한다. 합의된 결정을 다시 심의하기 위해 반복 실행하지 않는다.
 - 이번 계획은 `Sequence work into verifiable units`에 따라 실환경 연결 증명과 기본 제어 및 고급 편집을 나눴다. `Prove It Works`에 따라 소스, mock, 실제 DAW readback과 출력 파일을 다른 증거로 취급한다.
 - 실행 trail은 PR별 `artifacts/`와 compatibility 문서에 남긴다. 녹음이나 사용자 원본 미디어를 별도 요청 없이 외부 서비스에 업로드하지 않는다.

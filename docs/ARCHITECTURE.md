@@ -11,9 +11,15 @@ Rust domain operations are finite. A raw arbitrary script endpoint is not part
 of the API.
 
 Bridge protocol 2 carries the request ID, expected bridge session and document
-token. The DAW checks the context immediately before edits. A document token
-tracks the active document's lifetime. Reopening a saved path does not revive
-old references. A response must match the request and bridge session.
+token. The bridge checks the active object before dispatch and after the
+operation. A document token tracks observed active-document object changes.
+A response must match the request and bridge session.
+
+An EditTask consumes a short-lived request and lease before applying work and
+independently checks session, path and title. This task boundary cannot prove
+the document lifetime if a same-path reopen occurs during synchronous dispatch;
+the outer bridge detects the changed object afterward and reports an unknown
+outcome. See [validation limits](VALIDATION.md).
 
 A timeout after dispatch can mean the host edited the session but the reply was
 lost. The executor reports an unknown outcome and does not repeat non-idempotent
