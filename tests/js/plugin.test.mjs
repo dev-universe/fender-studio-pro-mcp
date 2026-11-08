@@ -269,6 +269,7 @@ test('standard panner reads only the five named native channel parameters', () =
   assert.equal(result.error, undefined);
   assert.equal(result.channel, 'Scratch channel');
   assert.deepEqual(Array.from(result.params, (parameter) => parameter.name), expected);
+  assert.equal(result.params[0].writable, false);
   assert.deepEqual(Array.from(result.missing), []);
   assert.deepEqual(host.parameterLookups, expected);
   assert.deepEqual(host.nativeFinds, ['Panner']);
@@ -299,7 +300,7 @@ test('standard panner writes and restores the native value without changing inse
 
 test('unsupported standard panner names and raw values reject before a native write', () => {
   const host = pannerHarness();
-  for (const param of ['gain', 'Panner/panWidth', 'arbitrary']) {
+  for (const param of ['pannerType', 'gain', 'Panner/panWidth', 'arbitrary']) {
     assert.match(host.component.setPanner({ channel: 'Scratch channel', param, value: 0.5 }).error, /unsupported standard panner parameter/);
   }
   for (const value of [-0.1, 1.1, NaN, Infinity, '0.5']) {

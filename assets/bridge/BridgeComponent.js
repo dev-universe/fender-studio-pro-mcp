@@ -130,14 +130,18 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const params = [], missing = [];
         for (const name of PANNER_FIELDS) {
             const parameter = target.panner.findParameter(name);
-            if (parameter) params.push(this.paramInfo(parameter));
+            if (parameter) {
+                const info = this.paramInfo(parameter);
+                info.writable = name !== "pannerType" && typeof parameter.value === "number" && typeof parameter.setValue === "function";
+                params.push(info);
+            }
             else missing.push(name);
         }
         return { channel: args.channel, params: params, missing: missing };
     }
 
     setPanner(args) {
-        if (PANNER_FIELDS.indexOf(args.param) < 0) return { error: "unsupported standard panner parameter" };
+        if (args.param === "pannerType" || PANNER_FIELDS.indexOf(args.param) < 0) return { error: "unsupported standard panner parameter or read-only label" };
         if (typeof args.value !== "number" || !isFinite(args.value)) return { error: "a finite raw panner value is required" };
         const target = this.pannerOf(args.channel);
         if (target.error) return target;

@@ -66,7 +66,7 @@ impl McpServer {
             named::<PannerQuery>(
                 "panner_get",
                 "panner",
-                "Read the five supported standard channel panner parameters and their native ranges. This does not inspect a Surround Panner plugin.",
+                "Read standard channel panner values and native ranges. The pannerType label is read-only. This does not inspect a Surround Panner plugin.",
                 false,
             ),
             named::<PannerSet>(

@@ -178,7 +178,6 @@ pub struct PannerSet {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub enum PannerField {
-    PannerType,
     StereoMode,
     PanX1,
     PanX2,
@@ -1100,12 +1099,12 @@ mod tests {
     }
 
     #[test]
-    fn standard_panner_operations_accept_only_the_five_native_fields() {
+    fn standard_panner_operations_accept_only_the_four_writable_native_fields() {
         let read = Operation::from_parts("panner_get", json!({"channel":"Scratch"})).unwrap();
         assert!(read.validate().is_ok());
         assert!(read.is_read_only());
         assert_eq!(read.wire().0, "panner");
-        for param in ["pannerType", "stereoMode", "panX1", "panX2", "panWidth"] {
+        for param in ["stereoMode", "panX1", "panX2", "panWidth"] {
             let write = Operation::from_parts(
                 "panner_set",
                 json!({"channel":"Scratch","param":param,"value":0.5}),
@@ -1117,6 +1116,7 @@ mod tests {
             assert_eq!(write.wire().1["param"], param);
         }
         for args in [
+            json!({"channel":"Scratch","param":"pannerType","value":0.5}),
             json!({"channel":"Scratch","param":"gain","value":0.5}),
             json!({"channel":"Scratch","param":"panWidth","value":"0.5"}),
             json!({"channel":"Scratch","param":"panWidth","value":0.5,"method":"arbitrary"}),
