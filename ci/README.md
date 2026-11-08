@@ -13,6 +13,6 @@ Node.js and Python are validation tools. The installed MCP server runs in Rust, 
 
 [rust.yml](rust.yml) is a workflow template. It lives outside `.github/workflows`, so GitHub Actions does not run it. The current OAuth credential lacks `workflow` authorization, and the connected integration returned HTTP 403 for workflow updates. No remote CI pass is claimed.
 
-When an authorized credential can publish workflows, place the template in `.github/workflows/rust.yml`. The current template contains Rust checks on macOS and Ubuntu. Add Node.js and the JavaScript contract command before treating the workflow as equivalent to `scripts/check.sh`.
+When an authorized credential can publish workflows, place the template in `.github/workflows/rust.yml`. The template runs Rust and JavaScript contract checks on macOS and Ubuntu and expects Cargo and Node.js on those runner images. Publishing it still requires workflow authorization; its existence is not a remote validation result.
 
 Actual host results and remaining gaps belong in the [validation report](../docs/VALIDATION.md) and [plugin matrix](../docs/BUILTIN_PLUGINS.md). A compile or VM test pass does not verify Studio Pro integration on another operating system or host version.
