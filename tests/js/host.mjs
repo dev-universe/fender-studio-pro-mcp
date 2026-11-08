@@ -141,6 +141,7 @@ export function musicContext() {
   };
   const functions = {
     newMediaTime: () => ({ seconds: 0 }),
+    renameEvent: (event, name) => { event.name = name; },
     root: {
       createIterator: () => iterator(tracks),
       createFunctions: (name) => name === 'MusicPartFunctions' ? parts : name === 'MusicFunctions' ? music : null,

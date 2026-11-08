@@ -307,6 +307,7 @@ mtoOps.createPart = function (context, op) {
 	if (t.error) return t;
 	if (t.track.mediaType && t.track.mediaType !== "Music") return { error: op.track + " is not an instrument track" };
 	if (typeof op.start !== "number" || typeof op.end !== "number" || op.start < 0 || op.end <= op.start) return { error: "start and end are seconds, end after start" };
+	if (typeof op.name === "string" && op.name && !mtoFn(f, "renameEvent")) return { error: "part naming is not available" };
 	var mp = root && mtoFn(root, "createFunctions") ? root.createFunctions("MusicPartFunctions") : null;
 	if (!mtoFn(mp, "addMusicPart")) return { error: "parts cannot be made here" };
 	var notes = mtoNoteList(op);
@@ -318,6 +319,11 @@ mtoOps.createPart = function (context, op) {
 	var part = mp.addMusicPart(s, e, t.track);
 	mp.executeImmediately = false;
 	if (!part) return { error: "Studio One did not make the part" };
+	if (typeof op.name === "string" && op.name) {
+		f.executeImmediately = true;
+		try { f.renameEvent(part, op.name); }
+		finally { f.executeImmediately = false; }
+	}
 	var r = notes.length ? mtoInsertNotes(mf, part, notes) : { added: 0, errors: [] };
 	var list = mtoEvents(t.track), number = 0;
 	for (var i = 0; i < list.length; i++) if (list[i] === part) number = i + 1;

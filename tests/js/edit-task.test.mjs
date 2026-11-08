@@ -122,6 +122,24 @@ test('createPart creates an empty instrument part and addNotes writes the reques
   assert.deepEqual(song.drums.events, []);
 });
 
+test('createPart applies the requested name to the created native part', () => {
+  const task = editTaskHarness();
+  const song = musicContext();
+  const result = task.run([{ op: 'createPart', track: 'Keys', start: 0, end: 4, name: 'Named part' }], song.context).results[0];
+  assert.equal(result.part.name, 'Named part');
+  assert.equal(song.keys.events[0].name, 'Named part');
+  assert.equal(song.context.functions.executeImmediately, false);
+});
+
+test('unavailable part naming rejects before creating an unnamed part', () => {
+  const task = editTaskHarness();
+  const song = musicContext();
+  delete song.context.functions.renameEvent;
+  const result = task.run([{ op: 'createPart', track: 'Keys', start: 0, end: 4, name: 'Named part' }], song.context).results[0];
+  assert.match(result.error, /part naming is not available/);
+  assert.equal(song.keys.events.length, 0);
+});
+
 test('createPart accepts initial notes with beat relative to the new part', () => {
   const task = editTaskHarness();
   const song = musicContext();
