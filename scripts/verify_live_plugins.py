@@ -222,6 +222,10 @@ def main():
             checkpoint()
             print(f"[{index}/{len(inventory)}] {plugin['kind']} {plugin['name']}", flush=True)
             try:
+                if plugin["kind"] == "effect" and plugin["name"] == "Splitter":
+                    row["status"] = "unsupported_graph_control"
+                    row["error"] = "Splitter is a graph node; its native edit methods have not been verified. No additional graph node was inserted."
+                    continue
                 if plugin["kind"] == "effect":
                     channel = unique_audio_track("FSP Verify FX " + re.sub(r"[^A-Za-z0-9]+", " ", plugin["name"]).strip())
                     operation("setChannel", {"channel": channel, "field": "mute", "value": True}, True)
