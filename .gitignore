@@ -1,0 +1,17 @@
+/target/
+/.local/
+/artifacts/
+/.audit/
+.DS_Store
+*.song
+*.song.autosave
+*.wav
+*.aiff
+*.aif
+*.flac
+*.mp3
+*.log
+.env
+.env.*
+!.env.example
+
