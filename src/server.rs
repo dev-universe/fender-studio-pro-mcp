@@ -177,6 +177,12 @@ impl McpServer {
                 "Read fresh native schema and value digests for the expected plugin's exposed parameter projection. Requires expected_instance and an explicit dsp or controller source. Native scan errors return no digest. Compare only digests with matching version, source, instance and scope. This is a sequential observation, not an atomic snapshot or complete plugin state; opaque contents remain unverified.",
                 false,
             ),
+            named::<PluginModels>(
+                "plugin_models",
+                "pluginModels",
+                "Read bounded current-selector category or effect model titles for an expected Mustang Native or Rumble Native instance. Requires the matching native extension. Follow next_offset with the same expected_document, expected_instance and catalog. Lists may be filtered by category/edit context; they do not establish every model, an atomic snapshot or mutation authority. No selection, preview or confirmation occurs.",
+                false,
+            ),
             named::<PluginAction>(
                 "plugin_action",
                 "pluginAction",
@@ -270,6 +276,7 @@ fn named<T: JsonSchema>(
                 | "pluginParameterDetails"
                 | "pluginParameterFormat"
                 | "pluginParameterDigest"
+                | "pluginModels"
         )
     {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
@@ -413,7 +420,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 37);
+        assert_eq!(specs.len(), 38);
     }
 
     #[test]
@@ -492,6 +499,51 @@ mod tests {
                 "plugin",
                 "source",
                 "expected_instance",
+                "expected_document"
+            ])
+        );
+    }
+
+    #[test]
+    fn model_lists_expose_a_finite_readonly_target_and_catalog_schema() {
+        let specs = McpServer::specs();
+        let spec = specs
+            .iter()
+            .find(|spec| spec.tool.name == "plugin_models")
+            .unwrap();
+        assert_eq!(spec.operation, Some("pluginModels"));
+        let schema = &spec.tool.input_schema;
+        let required = schema["required"].as_array().unwrap();
+        for field in ["plugin", "expected_instance", "catalog"] {
+            assert!(required.contains(&json!(field)));
+        }
+        assert!(!required.contains(&json!("expected_document")));
+        assert_eq!(schema["additionalProperties"], json!(false));
+        assert_eq!(
+            schema["$defs"]["ModelCatalog"]["enum"],
+            json!(["categories", "effects"])
+        );
+        assert_eq!(schema["properties"]["offset"]["maximum"], 4096);
+        assert_eq!(schema["properties"]["limit"]["minimum"], 1);
+        assert_eq!(schema["properties"]["limit"]["maximum"], 32);
+        let fields: std::collections::BTreeSet<_> = schema["properties"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect();
+        assert_eq!(
+            fields,
+            std::collections::BTreeSet::from([
+                "channel",
+                "slot",
+                "kind",
+                "track",
+                "plugin",
+                "expected_instance",
+                "catalog",
+                "offset",
+                "limit",
                 "expected_document"
             ])
         );

@@ -13,6 +13,7 @@ use std::{
 mod action;
 #[path = "request/alias_controller.rs"]
 mod alias_controller;
+use alias_controller::catalog;
 #[path = "request/capabilities.rs"]
 mod capabilities;
 #[path = "request/details.rs"]
@@ -122,6 +123,14 @@ enum Request {
         action: action::Action,
         expected_instance: String,
     },
+    ModelCatalog {
+        catalog: catalog::Kind,
+        #[serde(default)]
+        offset: u32,
+        #[serde(default = "catalog::default_limit")]
+        limit: u32,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -166,6 +175,7 @@ impl Request {
     fn source(&self) -> Source {
         match self {
             Self::ParameterAction { .. } => Source::Dsp,
+            Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
             | Self::Choices { source, .. }
@@ -186,6 +196,9 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::ParameterAction {
+                expected_instance, ..
+            }
+            | Self::ModelCatalog {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::Inspect {
@@ -238,6 +251,7 @@ impl Request {
             }
         }
         match self {
+            Self::ModelCatalog { offset, limit, .. } => catalog::validate_page(*offset, *limit),
             Self::ParameterDigest {
                 expected_instance: None,
                 ..
@@ -1113,6 +1127,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
             };
         }
         Request::ParameterAction { .. }
+        | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
         | Request::StateRelease { .. }
@@ -1137,6 +1152,7 @@ fn error(code: &str, message: &str, outcome: &str) -> Value {
     json!({"ok":false,"error":{"code":code,"message":message},"outcome":outcome})
 }
 pub(crate) struct ReceiptLease {
+    _catalog: Option<catalog::Catalog>,
     _action: Option<action::ActionLease>,
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
@@ -1147,6 +1163,7 @@ pub(crate) struct ReceiptLease {
 }
 pub(super) struct Reply {
     value: Value,
+    catalog: Option<catalog::Catalog>,
     action: Option<action::ActionLease>,
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
@@ -1160,6 +1177,7 @@ impl Reply {
     pub(super) fn unbound(value: Value) -> Self {
         Self {
             value,
+            catalog: None,
             action: None,
             presets: None,
             owner: None,
@@ -1188,6 +1206,7 @@ impl Reply {
             .remove("verified");
         digest::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
+        catalog::invalidate(&mut self.value);
         if self
             .nodes
             .as_ref()
@@ -1240,6 +1259,14 @@ impl Reply {
                             ctx.check()
                         })
                     })
+                })
+                .and_then(|_| {
+                    self.catalog.as_ref().map_or(Ok(()), |catalog| {
+                        catalog.check(&mut || {
+                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                            ctx.check()
+                        })
+                    })
                 }),
             None => {
                 let service = unsafe { &*service };
@@ -1264,6 +1291,7 @@ impl Reply {
     }
     pub(super) fn take_receipt(&mut self) -> Option<ReceiptLease> {
         self.context.take().map(|context| ReceiptLease {
+            _catalog: self.catalog.take(),
             _action: self.action.take(),
             _presets: self.presets.take(),
             _owner: self.owner.take(),
@@ -1274,6 +1302,7 @@ impl Reply {
         })
     }
     pub(super) fn release_context(&mut self) {
+        drop(self.catalog.take());
         drop(self.action.take());
         drop(self.presets.take());
         drop(self.owner.take());
@@ -1357,6 +1386,7 @@ pub(super) fn dispatch(
     {
         return Reply {
             value: error("context_guard_failed", &reason, "not_applied"),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -1383,6 +1413,7 @@ pub(super) fn dispatch(
         };
         let mut reply = Reply {
             value,
+            catalog: None,
             action: None,
             presets: None,
             auxiliary,
@@ -1404,6 +1435,7 @@ pub(super) fn dispatch(
         value["source"] = json!("native_slot_preset_catalog");
         return Reply {
             value,
+            catalog: None,
             action: None,
             presets: catalog,
             auxiliary: None,
@@ -1412,6 +1444,31 @@ pub(super) fn dispatch(
             provider: None,
             context: Some(ctx),
             mutation,
+        };
+    }
+    if let Request::ModelCatalog {
+        catalog: kind,
+        offset,
+        limit,
+        ..
+    } = request
+    {
+        let (mut value, catalog) = match catalog::capture(&ctx, kind, offset, limit) {
+            Ok(catalog) => (catalog.value(), Some(catalog)),
+            Err(reason) => (error("model_catalog_failed", &reason, "not_applied"), None),
+        };
+        value["instance"] = json!(ctx.instance);
+        return Reply {
+            value,
+            catalog,
+            action: None,
+            presets: None,
+            owner: None,
+            auxiliary: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: false,
         };
     }
     let state_result = match &request {
@@ -1435,6 +1492,7 @@ pub(super) fn dispatch(
         value["source"] = json!("component_alias_storable");
         return Reply {
             value,
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -1516,6 +1574,7 @@ pub(super) fn dispatch(
     value["instance"] = json!(ctx.instance);
     Reply {
         value,
+        catalog: None,
         action,
         presets: None,
         auxiliary: None,
@@ -2385,6 +2444,7 @@ mod guard_tests {
         retain_receipt(
             fixture.service,
             ReceiptLease {
+                _catalog: None,
                 _action: None,
                 _presets: None,
                 _owner: None,
@@ -2416,6 +2476,7 @@ mod guard_tests {
         let context = fixture.context();
         let reply = Reply {
             value: json!({"ok":true,"verified":true,"outcome":"observed","instance":context.instance,"source":"controller"}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2456,6 +2517,7 @@ mod guard_tests {
         let report = inspection.value();
         let reply = Reply {
             value: json!({"ok":true,"node_report":report,"instance":context.instance,"source":"dsp"}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2494,6 +2556,7 @@ mod guard_tests {
         let inspection = inspection_for(&context);
         let mut reply = Reply {
             value: json!({"ok":true,"instance":context.instance,"source":"dsp"}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2526,6 +2589,7 @@ mod guard_tests {
         assert!(report.get("instance").is_none());
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","auxiliary_report":report}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
@@ -2555,6 +2619,7 @@ mod guard_tests {
         let auxiliary = inspection_for(&context).into_auxiliary();
         let mut reply = Reply {
             value: json!({"ok":true,"outcome":"observed"}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
@@ -2577,6 +2642,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","hash_format_version":"fsp-parameter-digest-v1",
                 "schema_sha256":"a".repeat(64),"all_values_sha256":"b".repeat(64),"non_read_only_values_sha256":"c".repeat(64),"access_complete":true}),
+            catalog: None,
             action: None,
             presets: None,
             auxiliary: None,

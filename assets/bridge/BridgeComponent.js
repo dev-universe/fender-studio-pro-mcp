@@ -555,6 +555,37 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, native, { plugin: plug.name });
     }
 
+    pluginModels(args) {
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "catalog", "offset", "limit"];
+        const uid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
+        const integer = (value, min, max) => typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
+        if (Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !uid.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || (args.catalog !== "categories" && args.catalog !== "effects")
+            || (args.offset !== undefined && !integer(args.offset, 0, 4096))
+            || (args.limit !== undefined && !integer(args.limit, 1, 32))
+            || (args.channel !== undefined && (typeof args.channel !== "string" || !args.channel))
+            || (args.track !== undefined && (typeof args.track !== "string" || !args.track))
+            || (args.kind !== undefined && ["effect", "instrument", "note_effect", "mix_fx", "panner"].indexOf(args.kind) < 0)
+            || (args.slot !== undefined && !integer(args.slot, 0, 15)))
+            return { error: "model lists require a finite catalog, expected plugin, canonical native instance and bounded target/page", native_outcome: "not_applied" };
+        if ((args.kind === "instrument" || args.kind === "note_effect") ?
+            !args.track || (args.kind === "instrument" && args.slot !== undefined && args.slot !== 0) :
+            !args.channel || ((args.kind === "mix_fx" || args.kind === "panner") ? args.slot !== undefined && args.slot !== 0 : args.slot === undefined))
+            return { error: "model lists require the standard explicit plugin target", native_outcome: "not_applied" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "model_catalog", catalog: args.catalog,
+            offset: args.offset === undefined ? 0 : args.offset, limit: args.limit === undefined ? 32 : args.limit,
+            expected_instance: args.expected_instance });
+        if (!native) return { error: "model lists require the matching native extension", native_outcome: "not_applied" };
+        if (!native.ok) return { error: native.error && native.error.message || "native model list unavailable", native_outcome: native.outcome === "not_applied" ? "not_applied" : "unknown",
+            atomic_snapshot: false, mutation_capability: false };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
     focusedTrackState() {
         const model = this.hostComponent && this.hostComponent.model;
         const music = model && model.root && typeof model.root.find === "function" ? model.root.find("music") : null;

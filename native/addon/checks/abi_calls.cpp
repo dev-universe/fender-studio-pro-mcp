@@ -12,6 +12,7 @@
 #include "ccl/public/base/iobject.h"
 #include "ccl/public/base/istream.h"
 #include "ccl/public/gui/icontroller.h"
+#include "ccl/public/gui/framework/iitemmodel.h"
 #include "ccl/public/gui/iparameter.h"
 #include "ccl/public/gui/idatatarget.h"
 #include "ccl/public/gui/framework/iuserinterface.h"
@@ -50,6 +51,27 @@ static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetMediator>);
 static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetMetaDataProvider>);
 static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IDataTarget>);
 static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetManager>);
+
+struct ExposedItemIndex: CCL::ItemIndex {
+    static constexpr size_t tagOffset() { return offsetof(ExposedItemIndex,type); }
+    static constexpr size_t payloadOffset() { return offsetof(ExposedItemIndex,index); }
+};
+static_assert(sizeof(CCL::ItemIndex)==16 && alignof(CCL::ItemIndex)==8);
+static_assert(std::is_standard_layout_v<CCL::ItemIndex> && std::is_trivially_copyable_v<CCL::ItemIndex> && std::is_trivially_destructible_v<CCL::ItemIndex>);
+static_assert(ExposedItemIndex::tagOffset()==0 && ExposedItemIndex::payloadOffset()==8);
+static_assert(sizeof(CCL::IntPtr)==8 && std::is_signed_v<CCL::IntPtr>);
+static_assert(std::is_same_v<CCL::StringID,const CCL::CString&>);
+static_assert(sizeof(CCL::String)==16 && alignof(CCL::String)==8);
+static_assert(sizeof(CCL::CString)==16 && alignof(CCL::CString)==8);
+static_assert(sizeof(CCL::PlainString)==16 && alignof(CCL::PlainString)==8);
+static_assert(offsetof(CCL::PlainString,theString)==0 && offsetof(CCL::PlainString,__private)==8);
+static_assert(sizeof(CCL::tbool)==1 && sizeof(CCL::UIDBytes)==16 && alignof(CCL::UIDBytes)==4);
+extern "C" CCL::IUnknown* abi_catalog_object(CCL::IController* p,const CCL::CString* name,const CCL::UIDBytes* iid) { return p->getObject(*name,*iid); }
+extern "C" int abi_catalog_count(CCL::IItemModel* p) { return p->countFlatItems(); }
+extern "C" CCL::tbool abi_catalog_title(CCL::IItemModel* p,CCL::String* out,const CCL::ItemIndex* index) { return p->getItemTitle(*out,*index); }
+extern "C" void abi_catalog_index(void* out,int row) { new(out) CCL::ItemIndex(row); }
+extern "C" const CCL::CString* abi_catalog_cstring(const char* p) { return &CCL::System::GetConstantCString(p); }
+extern "C" const CCL::String* abi_catalog_string(const char* p) { return &CCL::System::GetConstantString(p); }
 
 extern "C" int abi_controller_count(CCL::IController* p) { return p->countParameters(); }
 extern "C" CCL::IController* abi_controller_provider(CCL::IControllerProvider* p) { return p->getController(); }

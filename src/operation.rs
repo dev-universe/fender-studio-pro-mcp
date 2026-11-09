@@ -69,6 +69,8 @@ pub enum Operation {
     PluginParameterFormat(PluginParameterFormat),
     #[serde(rename = "pluginParameterDigest", alias = "plugin_parameter_digest")]
     PluginParameterDigest(PluginParameterDigest),
+    #[serde(rename = "pluginModels", alias = "plugin_models")]
+    PluginModels(PluginModels),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
@@ -470,6 +472,29 @@ pub struct PluginParameterDigest {
 pub enum ParameterDigestSource {
     Dsp,
     Controller,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginModels {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub catalog: ModelCatalog,
+    #[schemars(range(min = 0, max = 4096))]
+    pub offset: Option<u32>,
+    #[schemars(range(min = 1, max = 32))]
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelCatalog {
+    Categories,
+    Effects,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -983,6 +1008,7 @@ impl Operation {
             | Self::PluginParameterDetails(_)
             | Self::PluginParameterFormat(_)
             | Self::PluginParameterDigest(_)
+            | Self::PluginModels(_)
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
             Self::Command(command) => command.check_only == Some(true),
@@ -1303,6 +1329,27 @@ impl Operation {
                     return Err(invalid("An expected plugin class or instance is required"));
                 }
             }
+            Self::PluginModels(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                    || p.offset.is_some_and(|offset| offset > 4096)
+                    || p.limit.is_some_and(|limit| !(1..=32).contains(&limit))
+                {
+                    return Err(invalid(
+                        "Model lists require an expected plugin, canonical nonzero native instance, offset 0..4096 and limit 1..32",
+                    ));
+                }
+            }
             Self::PluginChoices(p) => {
                 validate_plugin_target(
                     p.channel.as_deref(),
@@ -1561,6 +1608,99 @@ mod tests {
                     .validate()
                     .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn model_catalogs_are_read_only_finite_and_bound_to_the_standard_target() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Mustang Native",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","catalog":"effects"});
+        for catalog in ["categories", "effects"] {
+            let mut args = base.clone();
+            args["catalog"] = json!(catalog);
+            let operation = Operation::from_parts("plugin_models", args).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            assert_eq!(operation.wire().0, "pluginModels");
+            assert_eq!(operation.wire().1["catalog"], catalog);
+            assert!(operation.wire().1.get("source").is_none());
+        }
+        for field in [
+            "source",
+            "token",
+            "path",
+            "model_name",
+            "method",
+            "classID",
+            "native_address",
+            "selection",
+        ] {
+            let mut bad = base.clone();
+            bad[field] = json!("unchecked");
+            assert!(Operation::from_parts("plugin_models", bad).is_err());
+        }
+        for key in ["catalog", "plugin", "expected_instance"] {
+            let mut bad = base.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("plugin_models", bad).is_err());
+        }
+        for (key, value) in [
+            ("catalog", json!("cabinet")),
+            ("plugin", json!(" ")),
+            ("expected_instance", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+            ("offset", json!(4097)),
+            ("limit", json!(0)),
+            ("limit", json!(33)),
+            ("slot", json!(16)),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_models", bad)
+                    .map_or(true, |op| op.validate().is_err())
+            );
+        }
+        let mut bounded = base.clone();
+        bounded["offset"] = json!(4096);
+        bounded["limit"] = json!(32);
+        Operation::from_parts("plugin_models", bounded)
+            .unwrap()
+            .validate()
+            .unwrap();
+        for key in ["channel", "slot"] {
+            let mut bad = base.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(
+                Operation::from_parts("plugin_models", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for target in [
+            json!({"kind":"instrument","track":"Scratch"}),
+            json!({"kind":"note_effect","track":"Scratch","slot":15}),
+            json!({"kind":"mix_fx","channel":"Scratch"}),
+            json!({"kind":"panner","channel":"Scratch","slot":0}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove("channel");
+            args.as_object_mut().unwrap().remove("slot");
+            args.as_object_mut()
+                .unwrap()
+                .extend(target.as_object().unwrap().clone());
+            Operation::from_parts("plugin_models", args)
+                .unwrap()
+                .validate()
+                .unwrap();
         }
     }
 

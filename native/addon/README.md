@@ -29,6 +29,7 @@ nonzero native object UID returned in a prior response.
 | Operation | Fields |
 | --- | --- |
 | `inspect` | `source`, `expected_instance`, optional `include_nodes`, finite `node_scope` of `target`, `graph` or `plugin_controller` |
+| `model_catalog` | finite `catalog` of `categories` or `effects`, `offset`0..4096, `limit`1..32 (default32), required `expected_instance` |
 | `parameters` | `offset` (default0), `limit` (default64,1..128), `source`, `expected_instance` |
 | `parameter` | `param`, `source`, `expected_instance` |
 | `parameter_details` | `param`, required explicit `source` of `dsp` or `controller`, required `expected_instance` |
@@ -100,6 +101,31 @@ context guards and borrowed attachment checks. They do not certify a
 continuously current GUI graph, a model catalog or any subsequent mutation.
 Future model selection must acquire and revalidate its own binding. Callers
 cannot choose native paths, methods or model names through this inspection.
+
+`model_catalog` uses its own retained fixed
+`workspaceroot/plugInUnknown/signalchain/effectSelector` binding for those same
+two observed Device classes. `categories` maps to `categoryModel`; `effects`
+maps to `effectListModel`. The selector's public `IController.getObject` result
+is borrowed, retained immediately and independently queried for `IItemModel`.
+Only flat item count and title reads are allowed. No selection, focus, open,
+view attachment, preview or confirmation is performed, and no token is issued.
+
+Responses return `catalog`, `model_name`, `count`, `offset`,
+`rows:[{index,title,title_available}]`, `next_offset`, `complete` and
+`all_flat_rows_observed`. A false title result remains explicit, even when the
+producer wrote text. A missing route/model is an error; an observed zero count
+is an empty current flat model. Count is limited to4096, pages to32 rows, titles
+to512 UTF-16 units and aggregate title text to16384 units. `complete` covers the
+requested page's titles; `all_flat_rows_observed` additionally requires offset0
+and every observed flat row. Neither claims the union of all model categories.
+
+The reply labels `scope:current_selector_flat_model`, `atomic_snapshot:false`
+and `mutation_capability:false`. Rows and count are reread to reject detected
+content changes; canonical interfaces, each fixed attachment and named model
+are checked after existing context/provider/instance guards. All native owners
+remain pinned through output and the receipt. A changed attachment/content
+removes catalog rows/count from the failed response. Stable identity and two
+matching reads cannot certify an atomic snapshot or a future selection.
 
 `source` is `auto` (default), `dsp` or `controller`. For indexed metadata, `auto`
 selects a positive direct Device DSP provider first, then a controller. For value

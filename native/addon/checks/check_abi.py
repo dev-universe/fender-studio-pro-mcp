@@ -5,6 +5,7 @@ import sys
 
 assembly = Path(sys.argv[1]).read_text()
 expected = {
+    "catalog_object":56,"catalog_count":40,"catalog_title":96,
     "controller_count": 24, "controller_parameter": 32,
     "controller_provider": 24,
     "parameter_type": 24, "parameter_name": 32, "parameter_tag": 104,
@@ -39,6 +40,12 @@ for name, offset in expected.items():
     if actual != [str(offset)]:
         raise SystemExit(f"ABI offset mismatch for {name}: {actual}, expected {offset}")
 value_body = functions["capture_parameter_value"]
+for pattern in [r"strh\s+wzr, \[x0\]",r"sxtw\s+x8, w1",r"str\s+x8, \[x0, #8\]"]:
+    if not re.search(pattern,functions["catalog_index"]):
+        raise SystemExit("Integer ItemIndex constructor encoding changed")
+for name,symbol in [("catalog_cstring","CCLGetConstantCString"),("catalog_string","CCLGetConstantString")]:
+    if symbol not in functions[name]:
+        raise SystemExit(f"Model lookup/title reference export changed: {name}")
 if "mov\tx8, x1" not in value_body:
     raise SystemExit("C++ nontrivial Variant return evidence changed; review required")
 for name,registers in {"scripting_startup":["x3","w4"],"scripting_shutdown":["w2"]}.items():

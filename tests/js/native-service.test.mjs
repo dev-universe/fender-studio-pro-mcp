@@ -24,6 +24,146 @@ const actionResult = () => ({ ok: true, instance, action: 'swap_filter_frequenci
   upper_dispatched: true, reset_dispatched: true, reset_verified: true,
   before: { value: 0 }, after: { value: 0 }, effect_parameters: ['filterlow', 'filterhigh'] });
 
+const modelBase = { channel: 'Scratch', slot: 0, plugin: 'Expected', expected_instance: instance.object_uid, catalog: 'effects' };
+const modelResult = (extra = {}) => ({ ok: true, outcome: 'observed',
+  instance: { ...instance, class_uid: '11B8AA91-9BED-4A7F-90F4-02C6A6C7AF34' },
+  catalog: 'effects', model_name: 'effectListModel', count: 2, offset: 0,
+  rows: [{ index: 0, title: 'Clean', title_available: true }, { index: 1, title: 'Delay', title_available: true }],
+  next_offset: null, complete: true, all_flat_rows_observed: true,
+  scope: 'current_selector_flat_model', atomic_snapshot: false, mutation_capability: false, ...extra });
+
+test('model lists forward only finite native catalogs with default and explicit bounded pages', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device);
+    const request = JSON.parse(body); calls.push(request);
+    if (request.offset === 2) return JSON.stringify(modelResult({ offset: 2, count: 4,
+      rows: [{ index: 2, title: 'Missing title', title_available: false }], next_offset: 3, complete: false, all_flat_rows_observed: false }));
+    return JSON.stringify(modelResult(request.catalog === 'categories' ? { catalog: 'categories', model_name: 'categoryModel' } : {}));
+  }); } });
+  h.device.findParameter = () => { throw new Error('no script fallback or selection'); };
+  for (const catalog of ['effects', 'categories']) {
+    const result = h.component.pluginModels({ ...modelBase, catalog });
+    assert.equal(result.ok, true); assert.equal(result.catalog, catalog);
+    assert.equal(result.atomic_snapshot, false); assert.equal(result.mutation_capability, false);
+    assert.equal(result.scope, 'current_selector_flat_model'); assert.equal(result.token, undefined);
+  }
+  const page = h.component.pluginModels({ ...modelBase, offset: 2, limit: 1 });
+  assert.equal(page.complete, false); assert.equal(page.rows[0].title_available, false); assert.equal(page.next_offset, 3);
+  assert.deepEqual(calls, [
+    { operation: 'model_catalog', catalog: 'effects', offset: 0, limit: 32, expected_instance: instance.object_uid },
+    { operation: 'model_catalog', catalog: 'categories', offset: 0, limit: 32, expected_instance: instance.object_uid },
+    { operation: 'model_catalog', catalog: 'effects', offset: 2, limit: 1, expected_instance: instance.object_uid },
+  ]);
+});
+
+test('model list selectors and invalid targets refuse before Device resolution or native lookup', () => {
+  let resolutions = 0;
+  const h = harness({ getObjectByName() { throw new Error('no native lookup'); } });
+  h.component.pluginOf = () => { resolutions++; throw new Error('no Device resolution'); };
+  for (const extra of [{ source: 'controller' }, { token: 'issued' }, { path: 'signalchain' }, { model_name: 'categoryModel' },
+    { method: 'invoke' }, { classID: 'arbitrary' }, { native_address: 12 }, { selection: 0 },
+    { catalog: 'cabinet' }, { catalog: undefined }, { plugin: '' }, { expected_instance: '' },
+    { expected_instance: '00000000-0000-0000-0000-000000000000' }, { expected_instance: instance.object_uid.toLowerCase() },
+    { offset: -1 }, { offset: 4097 }, { offset: 0.5 }, { limit: 0 }, { limit: 33 }, { limit: '1' },
+    { channel: undefined }, { slot: undefined }, { slot: 16 }, { kind: 'arbitrary' }, { kind: 'instrument' },
+    { kind: 'instrument', track: 'Scratch', slot: 1 }, { kind: 'mix_fx', slot: 1 }])
+    assert.equal(h.component.pluginModels({ ...modelBase, ...extra }).native_outcome, 'not_applied');
+  assert.equal(resolutions, 0);
+  const internal = h.component.nativePluginRequest(h.device, { operation: 'model_catalog', catalog: 'effects', offset: 0, limit: 32,
+    expected_instance: instance.object_uid, source: 'controller' });
+  assert.equal(internal.ok, false); assert.equal(internal.outcome, 'not_applied');
+});
+
+test('model list targeting accepts standard track and single-slot targets without forwarding selectors', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((_, body) => { calls.push(JSON.parse(body)); return JSON.stringify(modelResult()); }); } });
+  for (const target of [{ kind: 'instrument', track: 'Scratch' }, { kind: 'note_effect', track: 'Scratch', slot: 15 },
+    { kind: 'mix_fx', channel: 'Scratch' }, { kind: 'panner', channel: 'Scratch', slot: 0 }]) {
+    const { channel, slot, ...base } = modelBase;
+    assert.equal(h.component.pluginModels({ ...base, ...target }).ok, true);
+  }
+  assert.equal(calls.length, 4);
+  assert.ok(calls.every(request => !('kind' in request) && !('track' in request) && !('channel' in request) && !('slot' in request)));
+});
+
+test('malformed successful model lists lose all catalog rows and certification without fallback', () => {
+  const mutations = [
+    value => { value.catalog = 'categories'; }, value => { value.model_name = 'categoryModel'; },
+    value => { value.count = -1; }, value => { value.count = 4097; }, value => { value.count = 2.5; },
+    value => { value.offset = 1; }, value => { value.rows.pop(); }, value => { value.rows[0].index = 1; },
+    value => { value.rows[1].index = 0; }, value => { value.rows[0].title = 'x'.repeat(513); },
+    value => { value.rows[0].title = '🎸'.repeat(257); }, value => { value.rows[0].title = null; },
+    value => { value.rows[0].title_available = 'true'; }, value => { value.rows[0].token = 'issued'; },
+    value => { value.next_offset = 2; }, value => { delete value.next_offset; }, value => { value.complete = false; },
+    value => { value.complete = 'true'; }, value => { value.all_flat_rows_observed = false; },
+    value => { value.scope = 'all_models'; }, value => { value.atomic_snapshot = true; },
+    value => { value.mutation_capability = true; }, value => { value.outcome = 'applied_verified'; },
+    value => { value.instance.object_uid = '87654321-4321-4321-4321-CBA987654321'; },
+    value => { value.instance.class_uid = instance.class_uid; }, value => { value.token = 'future-write'; },
+    value => { value.verified = true; }, value => { value.source = 'controller'; },
+  ];
+  for (const mutate of mutations) {
+    let calls = 0;
+    const h = harness({ getObjectByName() { return native(() => { calls++; const result = modelResult(); mutate(result); return JSON.stringify(result); }); } });
+    h.device.findParameter = () => { throw new Error('no fallback'); };
+    const result = h.component.pluginModels(modelBase);
+    assert.notEqual(result.ok, true); assert.equal(result.native_outcome, 'unknown'); assert.equal(typeof result.error, 'string');
+    for (const key of ['rows', 'count', 'complete', 'all_flat_rows_observed', 'token', 'verified']) assert.equal(result[key], undefined);
+    assert.equal(result.mutation_capability, false); assert.equal(calls, 1);
+  }
+});
+
+test('model lists preserve empty counts, false titles, and inclusive page/text bounds', () => {
+  let result = modelResult({ count: 0, rows: [] });
+  const h = harness({ getObjectByName() { return native(() => JSON.stringify(result)); } });
+  assert.equal(h.component.pluginModels(modelBase).all_flat_rows_observed, true);
+  result = modelResult({ rows: [{ index: 0, title: '', title_available: false }, { index: 1, title: 'Delay', title_available: true }], complete: false, all_flat_rows_observed: false });
+  assert.equal(h.component.pluginModels(modelBase).rows[0].title_available, false);
+  result = modelResult({ count: 4096, offset: 4096, rows: [], all_flat_rows_observed: false });
+  assert.equal(h.component.pluginModels({ ...modelBase, offset: 4096, limit: 32 }).ok, true);
+  result = modelResult({ count: 32, rows: Array.from({ length: 32 }, (_, index) => ({ index, title: '🎸'.repeat(256), title_available: true })) });
+  assert.equal(h.component.pluginModels(modelBase).rows.length, 32);
+  result = modelResult({ count: 1, rows: [{ index: 0, title: '', title_available: true }], instance: { ...result.instance, class_uid: 'B9D7536C-A010-457D-A182-36E5531164C9' } });
+  assert.equal(h.component.pluginModels(modelBase).rows[0].title, '');
+});
+
+test('model lists require a live document lease and native extension without fallback or retry', () => {
+  assert.match(harness().component.pluginModels(modelBase).error, /native extension/);
+  const context = { open: true, document: 'models:1', session: 'models' };
+  let calls = 0;
+  const h = harness({ getObjectByName() { return native(() => {
+    calls++;
+    if (calls === 1) return JSON.stringify({ ...modelResult(), ok: false, error: { message: 'named model absent' }, outcome: 'not_applied' });
+    context.document = 'models:2'; return JSON.stringify(modelResult());
+  }); } });
+  h.device.findParameter = () => { throw new Error('no fallback'); };
+  h.component.bridge = { requestContext: { ...context }, context() { return { ...context }; } };
+  const absent = h.component.pluginModels(modelBase);
+  assert.match(absent.error, /named model absent/); assert.equal(absent.count, undefined);
+  const changed = h.component.pluginModels(modelBase);
+  assert.match(changed.error, /document changed/); assert.equal(changed.native_outcome, 'unknown'); assert.equal(changed.rows, undefined);
+  assert.equal(calls, 2);
+  h.component.bridge.requestContext = { ...context, open: false };
+  assert.equal(h.component.pluginModels(modelBase).native_outcome, 'not_applied'); assert.equal(calls, 2);
+  const failed = harness({ getObjectByName() { return native(() => JSON.stringify({ ok: false, outcome: 'applied_verified',
+    rows: modelResult().rows, error: { message: 'invalid read receipt' } })); } }).component.pluginModels(modelBase);
+  assert.equal(failed.native_outcome, 'unknown'); assert.equal(failed.rows, undefined); assert.equal(failed.mutation_capability, false);
+});
+
+test('BridgeCore dispatches model lists as reads and refuses stale explicit document intents', () => {
+  const host = bridgeHarness(); let calls = 0;
+  const h = harness({ getObjectByName() { return native(() => { calls++; return JSON.stringify(modelResult()); }); } });
+  h.component.bridge = host.bridge; host.bridge.component = h.component;
+  const observed = host.request({ op: 'pluginModels', args: modelBase });
+  assert.equal(observed.ok, true); assert.equal(observed.result.catalog, 'effects'); assert.equal(observed.result.mutation_capability, false);
+  assert.equal(host.request({ op: 'pluginModels', args: modelBase, expectedDocument: 'stale' }).code, 'document_changed');
+  assert.equal(calls, 1);
+  host.manager.activeDocument = null;
+  const closed = host.request({ op: 'pluginModels', args: modelBase });
+  assert.equal(closed.ok, false); assert.equal(closed.result && closed.result.rows, undefined); assert.equal(calls, 1);
+});
+
 test('registered button actions use one finite native request and never certify their effects', () => {
   const calls = [];
   const h = harness({ getObjectByName() { return native((target, body) => {

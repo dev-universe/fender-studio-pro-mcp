@@ -5,6 +5,8 @@ use super::*;
 #[cfg(test)]
 use fender_native_node_api::Report;
 use fender_native_node_api::{Inspection, Limits, NodeInspector, TextApi};
+#[path = "alias_controller/catalog.rs"]
+pub(super) mod catalog;
 
 const CONTROLLER_PROVIDER: Uid = Uid {
     a: 0x16ad4d2a,
@@ -176,6 +178,22 @@ impl AliasBinding {
 }
 
 impl ControllerBinding {
+    fn capture<G: FnMut() -> Result<(), String>>(
+        alias: AliasBinding,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        guard()?;
+        let controller = pin(borrowed(alias.provider.0, 3), guard)?;
+        let identity = interface(controller.0, &UNKNOWN, guard)?;
+        let binding = Self {
+            identity,
+            controller,
+            alias,
+        };
+        binding.check(guard)?;
+        Ok(binding)
+    }
+
     fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), String> {
         let canonical = interface(self.controller.0, &UNKNOWN, guard);
         let matches = canonical

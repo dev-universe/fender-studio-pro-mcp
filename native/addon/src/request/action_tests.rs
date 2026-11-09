@@ -453,6 +453,7 @@ fn reply(
 ) -> Reply {
     Reply {
         value,
+        catalog: None,
         action: Some(lease),
         presets: None,
         owner: None,
