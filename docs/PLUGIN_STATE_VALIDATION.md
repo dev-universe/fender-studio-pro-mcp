@@ -263,6 +263,21 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
+The ongoing Impact sweep has confirmed 640 distinct direct scalar roundtrips
+against its complete 4,262-record provider. This count accepts only the last
+complete public checkpoint from the interrupted initial run and disjoint later
+cases whose fixture-end checkpoints passed. Every case required two fresh native
+full writable-projection matches before advancing. The remaining Impact fields
+are not included in this count.
+
+The opt-in Music fixture context route also passed actual read-only preflight,
+four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
+native inspection with fresh document, stopped transport, complete empty-track,
+exclusive-selection and mute/arm/monitor observations. The independent write
+guard additionally observed the scratch Main fader at zero before each setter.
+This is a sequence of fresh observations, not an atomic snapshot or continuous
+output guarantee. The legacy separate-read guards remain the default.
+
 ## Exact values and settlement
 
 Native Float reads include `native_value.data.bits_hex`. An explicit
