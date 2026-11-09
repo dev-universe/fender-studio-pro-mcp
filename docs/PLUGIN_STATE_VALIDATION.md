@@ -188,6 +188,13 @@ covers the current fixture's exposed values, including the advertised speaker
 mute fields; it does not establish every physical output layout or audible
 speaker behavior.
 
+Further direct-digest checks passed 71 selected scalar cases: Scope (29),
+Console Shaper (7), IR Maker (5), Level Meter (4), Phase Meter (1), Spectrum
+Meter (8), Tone Generator (10), Tuner (4) and VU Meter (3). Each restoration
+required two complete fresh native writable-projection matches and independent
+public-page checkpoints. Two Scope trigger controls and two Level Meter reset
+controls were explicitly withheld from these scalar cases.
+
 The finite-model verifier passed all current choices for Fat Channel's EQ and
 compressor selectors and Voice FX's selector: three baseline choices were
 observed, and nine other choices were changed and restored. Every choice reused
@@ -267,6 +274,12 @@ issued recalls with changed writable values, complete-provider restoration,
 token release and released-catalog refusal. The latter two establish instrument
 and Note FX acceptance on these fixtures. Other family members and panner/Mix FX
 preset routes still need their own observations.
+Mustang Native subsequently exposed a 227-entry issued preset catalog. Two
+recalls changed its exposed output-level value and restored its complete
+writable projection. Current category/effect model counts remained zero after
+recall and restoration; two further complete projections matched the original
+schema and writable values. This does not establish internal Fender model
+selection or audible/opaque preset behavior.
 
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
