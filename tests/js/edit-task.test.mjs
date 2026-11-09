@@ -42,6 +42,108 @@ function nativeReadHelper(helper, stage, patch, omitOutcome = false) {
   return { result, calls, device, auxiliary: helper === 'legacy' ? auxiliary : inserts };
 }
 
+function presetPreflightHelper({ identity = {}, result = {}, capability = {}, absentOutcome = false } = {}) {
+  const { Host } = memoryHost();
+  const calls = [], device = {}, instance = {
+    object_uid: '12345678-1234-1234-1234-123456789ABC',
+    class_uid: '12345678-1234-1234-1234-123456789ABD', native_class: 'AudioEffectDevice', object_id: 'Device',
+  };
+  const inserts = { find: name => name === 'FX01' ? { find: name => name === 'Device' ? device : null } : null };
+  const channel = { find: name => name === 'Inserts' ? inserts : null };
+  const environment = { status: 'observed', ancestor_matches: true, scope: 'fixed_active_document_controller_environment', mutation_capability: false, atomic_snapshot: false };
+  const observed = { ok: true, outcome: 'observed', instance,
+    scope: 'insert_folder_preset_preflight_observation', status: 'observed', mutation_capability: false, atomic_snapshot: false,
+    anchor_slot_bound: true, folder: { id: 'Inserts', native_class: 'AudioInsertFolder', object_uid: '12345678-1234-1234-1234-123456789ABE', class_uid: null },
+    document_environment_observation: environment, target_flags: 3,
+    metadata: { attribute_count: 3, class_name: 'FX Chains', class_vendor: 'Fender', class_category: null } };
+  Host.Objects.getObjectByName = () => ({
+    capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1', insert_folder_preset_preflight_observation: true, ...capability }),
+    request(...args) {
+      calls.push(args);
+      const first = JSON.parse(args[1]).operation === 'inspect';
+      const value = first ? { ok: true, instance, ...identity } : { ...observed, ...result };
+      if (absentOutcome && !first) delete value.outcome;
+      return JSON.stringify(value);
+    },
+  });
+  const context = vm.createContext({ Host, McpEditConfig: { mailbox }, channel });
+  context.include_file = name => { if (name !== 'McpEditConfig.js') vm.runInContext(asset(`edit-tasks/package/${name}`), context); };
+  vm.runInContext(asset('edit-tasks/package/McpTrackEdit.js'), context);
+  return { result: vm.runInContext('mteInsertFolderPresetPreflight(channel)', context), calls, device, inserts };
+}
+
+test('folder preset preflight observes only the fixed bound read-only route', () => {
+  const { result, calls, device, inserts } = presetPreflightHelper();
+  assert.equal(result.status, 'observed');
+  assert.equal(result.target_flags, 3);
+  assert.equal(result.folder.class_uid, null);
+  assert.equal(result.document_environment_observation.ancestor_matches, true);
+  assert.equal(result.mutation_capability, false);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1][0], device);
+  assert.equal(calls[1][2], inserts);
+  assert.equal(JSON.parse(calls[1][1]).operation, 'inspect_insert_folder_preset_preflight');
+});
+
+test('folder preset preflight distinguishes absent capability and unavailable backend without fallback', () => {
+  for (const flag of [false, null, undefined]) {
+    const { result, calls } = presetPreflightHelper({ capability: { insert_folder_preset_preflight_observation: flag } });
+    assert.equal(result.status, 'unavailable');
+    assert.equal(result.target_flags, undefined);
+    assert.equal(calls.length, 0);
+  }
+  const { result, calls } = presetPreflightHelper({ result: {
+    status: 'unavailable', reason: 'metadata unavailable', anchor_slot_bound: undefined, folder: undefined,
+    document_environment_observation: undefined, target_flags: undefined, metadata: undefined,
+  } });
+  assert.equal(result.status, 'unavailable');
+  assert.equal(result.folder, undefined);
+  assert.equal(calls.length, 2);
+});
+
+test('folder preset preflight refuses unknown read evidence and never makes a second call after uncertain identity', () => {
+  for (const field of ['outcome', 'native_outcome']) {
+    for (const value of ['unknown', 'applied_verified', 'not_applied', null, {}, true]) {
+      for (const stage of ['identity', 'result']) {
+        const { result, calls } = presetPreflightHelper({ [stage]: { [field]: value } });
+        assert.equal(typeof result.error, 'string');
+        assert.equal(result.folder, undefined);
+        assert.equal(calls.length, stage === 'identity' ? 1 : 2);
+      }
+    }
+  }
+  assert.equal(typeof presetPreflightHelper({ absentOutcome: true }).result.error, 'string');
+  for (const field of ['error', 'native_error', 'errors']) {
+    const { result, calls } = presetPreflightHelper({ identity: { [field]: ['bad'] } });
+    assert.equal(typeof result.error, 'string');
+    assert.equal(calls.length, 1);
+  }
+});
+
+test('folder preset preflight refuses foreign, unbound or malformed success data', () => {
+  const known = presetPreflightHelper().result;
+  const patches = [
+    { ok: false }, { status: 'unknown' }, { status: null }, { mutation_capability: true }, { atomic_snapshot: true },
+    { scope: 'auxiliary_type_observation' }, { instance: { ...known.instance, object_uid: 'foreign' } },
+    { instance: { ...known.instance, class_uid: 'foreign' } }, { instance: { ...known.instance, native_class: 'foreign' } },
+    { anchor_slot_bound: false }, { folder: null }, { folder: { ...known.folder, id: 'Other' } },
+    { folder: { ...known.folder, object_uid: 'bad' } }, { folder: { ...known.folder, class_uid: 'bad' } },
+    { folder: { ...known.folder, native_class: 'DeviceFolder' } }, { folder: { ...known.folder, path: 'untrusted' } },
+    { document_environment_observation: { ...known.document_environment_observation, ancestor_matches: false } },
+    { document_environment_observation: null }, { target_flags: 1 }, { target_flags: 3.5 }, { target_flags: 2147483648 },
+    { metadata: { ...known.metadata, attribute_count: -1 } }, { metadata: { ...known.metadata, attribute_count: 65 } },
+    { metadata: { ...known.metadata, class_name: {} } }, { metadata: { ...known.metadata, class_vendor: 'x'.repeat(257) } },
+    { metadata: { ...known.metadata, class_category: 'bad\0text' } }, { path: 'untrusted' },
+    { native_error: {} }, { errors: ['failure'] },
+  ];
+  for (const patch of patches) {
+    const { result } = presetPreflightHelper({ result: patch });
+    assert.equal(typeof result.error, 'string', JSON.stringify(patch));
+    assert.equal(result.folder, undefined);
+    assert.equal(result.target_flags, undefined);
+  }
+});
+
 test('document Environment observations preserve separate known match and unavailable states', () => {
   for (const environment of [
     { status: 'observed', ancestor_matches: true },

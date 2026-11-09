@@ -340,6 +340,18 @@ enum AuxiliaryRole {
     InsertFolderAncestry,
 }
 impl Auxiliary {
+    pub(super) fn document_environment_matched(&self) -> bool {
+        matches!(
+            self,
+            Self::InsertFolderAncestry {
+                document_environment: DocumentEnvironmentObservation::Observed {
+                    ancestor_matches: true,
+                    ..
+                },
+                ..
+            }
+        )
+    }
     fn inspection(&self) -> &Inspection {
         match self {
             Self::TypeMetadata(inspection) | Self::InsertFolderAncestry { inspection, .. } => {

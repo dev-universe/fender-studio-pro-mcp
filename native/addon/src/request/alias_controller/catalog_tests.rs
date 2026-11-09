@@ -681,6 +681,7 @@ fn reply(context: Box<Context<'static>>, catalog: Catalog) -> Reply {
         presets: None,
         owner: None,
         auxiliary: None,
+        folder_preflight: None,
         nodes: None,
         provider: None,
         context: Some(context),

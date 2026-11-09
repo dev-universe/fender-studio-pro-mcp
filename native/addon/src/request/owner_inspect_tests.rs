@@ -136,6 +136,7 @@ fn reply(context: Box<Context<'static>>, owner: OwnerInspection) -> Reply {
         presets: None,
         owner: Some(owner),
         auxiliary: None,
+        folder_preflight: None,
         nodes: None,
         provider: None,
         context: Some(context),

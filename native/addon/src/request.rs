@@ -25,6 +25,8 @@ mod digest;
 mod direct_tests;
 #[path = "request/format.rs"]
 mod format;
+#[path = "request/insert_folder.rs"]
+mod insert_folder;
 #[path = "request/node_inspect.rs"]
 mod node_inspect;
 #[path = "request/owner_inspect.rs"]
@@ -173,6 +175,9 @@ enum Request {
     InspectInsertFolderAncestry {
         expected_instance: Option<String>,
     },
+    InspectInsertFolderPresetPreflight {
+        expected_instance: Option<String>,
+    },
 }
 impl Request {
     fn source(&self) -> Source {
@@ -194,7 +199,8 @@ impl Request {
             | Self::PresetApply { .. }
             | Self::PresetRelease { .. }
             | Self::InspectAux { .. }
-            | Self::InspectInsertFolderAncestry { .. } => Source::Auto,
+            | Self::InspectInsertFolderAncestry { .. }
+            | Self::InspectInsertFolderPresetPreflight { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -246,7 +252,8 @@ impl Request {
                 expected_instance, ..
             }
             | Self::InspectAux { expected_instance }
-            | Self::InspectInsertFolderAncestry { expected_instance } => {
+            | Self::InspectInsertFolderAncestry { expected_instance }
+            | Self::InspectInsertFolderPresetPreflight { expected_instance } => {
                 expected_instance.as_deref()
             }
         }
@@ -336,6 +343,9 @@ impl Request {
             }
             | Self::InspectInsertFolderAncestry {
                 expected_instance: None,
+            }
+            | Self::InspectInsertFolderPresetPreflight {
+                expected_instance: None,
             } => Err("state, preset and auxiliary operations require expected_instance".into()),
             Self::Presets { limit, .. } if !(1..=presets::MAX_PAGE).contains(limit) => {
                 Err("preset limit must be between 1 and 64".into())
@@ -401,6 +411,7 @@ impl Request {
                 ..
             } | Self::InspectAux { .. }
                 | Self::InspectInsertFolderAncestry { .. }
+                | Self::InspectInsertFolderPresetPreflight { .. }
         )
     }
 }
@@ -577,6 +588,23 @@ impl<'a> Context<'a> {
         } else {
             Ok(())
         }
+    }
+    fn check_document(&self) -> Result<(), String> {
+        self.service_active()?;
+        if !on_main(self.api) {
+            return Err("request left the host GUI thread".into());
+        }
+        if self.started.elapsed() > Duration::from_secs(2) {
+            return Err("native request exceeded its two second budget".into());
+        }
+        let active: Borrowed = unsafe { method(self.document.manager.0, 9) };
+        let model: Borrowed = unsafe { method(self.document.document.0, 6) };
+        if unsafe { active(self.document.manager.0) } != self.document.document.0
+            || unsafe { model(self.document.document.0) } != self.document.model.0
+        {
+            return Err("active document/model changed".into());
+        }
+        self.service_active()
     }
     fn check(&self) -> Result<(), String> {
         self.service_active()?;
@@ -1146,7 +1174,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::PresetApply { .. }
         | Request::PresetRelease { .. }
         | Request::InspectAux { .. }
-        | Request::InspectInsertFolderAncestry { .. } => {
+        | Request::InspectInsertFolderAncestry { .. }
+        | Request::InspectInsertFolderPresetPreflight { .. } => {
             Err("request requires its own dispatcher".into())
         }
     };
@@ -1171,6 +1200,7 @@ pub(crate) struct ReceiptLease {
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
     _auxiliary: Option<node_inspect::Auxiliary>,
+    _folder_preflight: Option<insert_folder::InsertFolderPreflight>,
     _nodes: Option<node_inspect::Inventory>,
     _provider: Option<Provider>,
     _context: Box<Context<'static>>,
@@ -1182,6 +1212,7 @@ pub(super) struct Reply {
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
     auxiliary: Option<node_inspect::Auxiliary>,
+    folder_preflight: Option<insert_folder::InsertFolderPreflight>,
     nodes: Option<node_inspect::Inventory>,
     provider: Option<Provider>,
     context: Option<Box<Context<'static>>>,
@@ -1196,6 +1227,7 @@ impl Reply {
             presets: None,
             owner: None,
             auxiliary: None,
+            folder_preflight: None,
             nodes: None,
             provider: None,
             context: None,
@@ -1222,6 +1254,7 @@ impl Reply {
         owner_inspect::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
         presets::invalidate(&mut self.value);
+        insert_folder::invalidate(&mut self.value);
         if self.value["scope"] == "insert_folder_ancestry_observation" {
             let object = self.value.as_object_mut().expect("object response");
             object.remove("insert_folder_ancestry_report");
@@ -1288,6 +1321,11 @@ impl Reply {
                             ctx.check()
                         })
                     })
+                })
+                .and_then(|_| {
+                    self.folder_preflight
+                        .as_ref()
+                        .map_or(Ok(()), |preflight| preflight.check(ctx))
                 }),
             None => {
                 let service = unsafe { &*service };
@@ -1317,6 +1355,7 @@ impl Reply {
             _presets: self.presets.take(),
             _owner: self.owner.take(),
             _auxiliary: self.auxiliary.take(),
+            _folder_preflight: self.folder_preflight.take(),
             _nodes: self.nodes.take(),
             _provider: self.provider.take(),
             _context: context,
@@ -1327,6 +1366,7 @@ impl Reply {
         drop(self.action.take());
         drop(self.presets.take());
         drop(self.owner.take());
+        drop(self.folder_preflight.take());
         drop(self.auxiliary.take());
         drop(self.nodes.take());
         drop(self.provider.take());
@@ -1385,7 +1425,7 @@ pub(super) fn dispatch(
     if request.needs_auxiliary() != auxiliary.is_some() {
         return Reply::error(
             "invalid_arguments",
-            "only initial presets, inspect_aux and inspect_insert_folder_ancestry require exactly one auxiliary native object",
+            "initial presets and fixed auxiliary observations require exactly one auxiliary native object",
             "not_applied",
         );
     }
@@ -1411,6 +1451,7 @@ pub(super) fn dispatch(
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -1438,6 +1479,34 @@ pub(super) fn dispatch(
             action: None,
             presets: None,
             auxiliary,
+            folder_preflight: None,
+            owner: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: false,
+        };
+        reply.value["instance"] = json!(reply.context.as_ref().expect("bound context").instance);
+        return reply;
+    }
+    if let Request::InspectInsertFolderPresetPreflight { .. } = request {
+        let (value, folder_preflight) = match insert_folder::InsertFolderPreflight::capture(
+            &ctx,
+            auxiliary.expect("validated Inserts auxiliary"),
+        ) {
+            Ok(preflight) => (preflight.value(), Some(preflight)),
+            Err(reason) => (
+                error("insert_folder_preflight_failed", &reason, "not_applied"),
+                None,
+            ),
+        };
+        let mut reply = Reply {
+            value,
+            catalog: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight,
             owner: None,
             nodes: None,
             provider: None,
@@ -1474,6 +1543,7 @@ pub(super) fn dispatch(
             action: None,
             presets: None,
             auxiliary,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -1496,6 +1566,7 @@ pub(super) fn dispatch(
             action: None,
             presets: catalog,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -1522,6 +1593,7 @@ pub(super) fn dispatch(
             presets: None,
             owner: None,
             auxiliary: None,
+            folder_preflight: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1553,6 +1625,7 @@ pub(super) fn dispatch(
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider,
@@ -1635,6 +1708,7 @@ pub(super) fn dispatch(
         action,
         presets: None,
         auxiliary: None,
+        folder_preflight: None,
         owner,
         nodes,
         provider,
@@ -1889,6 +1963,7 @@ mod tests {
             ),
             ("inspect_aux", json!({}), true),
             ("inspect_insert_folder_ancestry", json!({}), true),
+            ("inspect_insert_folder_preset_preflight", json!({}), true),
         ] {
             let mut value = json!({"operation":operation,"expected_instance":expected});
             value
@@ -2317,7 +2392,7 @@ mod guard_tests {
     unsafe extern "C" fn inspection_text(_: *const c_char) -> *const c_void {
         ptr::null()
     }
-    fn inspection_for(context: &Context<'_>) -> node_inspect::Inventory {
+    pub(super) fn inspection_for(context: &Context<'_>) -> node_inspect::Inventory {
         let target = hold(context.target.0).unwrap();
         let pointer = NonNull::new(target.0).unwrap();
         std::mem::forget(target);
@@ -2437,26 +2512,34 @@ mod guard_tests {
             api: &a,
         };
         assert!(ctx.check().is_ok());
+        assert!(ctx.check_document().is_ok());
         manager.active = ptr::null_mut();
         assert!(ctx.check().unwrap_err().contains("document/model"));
+        assert!(ctx.check_document().unwrap_err().contains("document/model"));
         manager.active = doc_ptr;
         document.model = ptr::null_mut();
         assert!(ctx.check().unwrap_err().contains("document/model"));
+        assert!(ctx.check_document().unwrap_err().contains("document/model"));
         document.model = model_ptr;
         device.uid = UNKNOWN;
         assert!(ctx.check().unwrap_err().contains("target identity"));
+        assert!(ctx.check_document().is_ok());
         device.uid = SERVICE_CID;
         device.class = UNKNOWN;
         assert!(ctx.check().unwrap_err().contains("target identity"));
+        assert!(ctx.check_document().is_ok());
         device.class = API_CLASS;
         service.terminated.store(true, Ordering::Release);
         assert!(ctx.check().unwrap_err().contains("service"));
+        assert!(ctx.check_document().unwrap_err().contains("service"));
         service.terminated.store(false, Ordering::Release);
         READY.store(false, Ordering::Release);
         assert!(ctx.check().is_err());
+        assert!(ctx.check_document().is_err());
         READY.store(true, Ordering::Release);
         ctx.started = Instant::now() - Duration::from_secs(3);
         assert!(ctx.check().unwrap_err().contains("budget"));
+        assert!(ctx.check_document().unwrap_err().contains("budget"));
         drop(ctx);
         for value in [&manager, &document, &model, &device] {
             assert_eq!(value.refs.load(Ordering::Acquire), 1);
@@ -2587,6 +2670,7 @@ mod guard_tests {
                 _presets: None,
                 _owner: None,
                 _auxiliary: None,
+                _folder_preflight: None,
                 _nodes: None,
                 _provider: None,
                 _context: old,
@@ -2618,6 +2702,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -2659,6 +2744,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: Some(inspection),
             provider: None,
@@ -2698,6 +2784,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: Some(inspection),
             provider: None,
@@ -2731,6 +2818,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -2761,6 +2849,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -2809,6 +2898,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,
@@ -2867,6 +2957,7 @@ mod guard_tests {
             action: None,
             presets: None,
             auxiliary: None,
+            folder_preflight: None,
             owner: None,
             nodes: None,
             provider: None,

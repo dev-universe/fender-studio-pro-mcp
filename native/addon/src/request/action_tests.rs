@@ -458,6 +458,7 @@ fn reply(
         presets: None,
         owner: None,
         auxiliary: None,
+        folder_preflight: None,
         nodes: None,
         provider: Some(provider),
         context: Some(context),

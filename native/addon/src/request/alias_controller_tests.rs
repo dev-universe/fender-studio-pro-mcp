@@ -361,6 +361,7 @@ fn reply(context: Box<Context<'static>>, inventory: Inventory) -> Reply {
         presets: None,
         owner: None,
         auxiliary: None,
+        folder_preflight: None,
         nodes: Some(nodes),
         provider: None,
         context: Some(context),
