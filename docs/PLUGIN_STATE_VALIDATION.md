@@ -190,6 +190,14 @@ matches, with complete public pages bracketing each fixture. The overall run
 remains partial because coupled modes, dedicated roles and unsupported fields
 are handled separately; it does not certify every writable External record.
 
+The exact-role literal verifier then passed `deviceName` and `deviceNotes`
+on both External variants, four cases with eight actual writes. A fixed Korean
+suffix was read back twice, then the captured original text was sent once. Two
+further full typed reads matched all 24 original records and their schema.
+No mode, latency, port, calibration, unit-label or capsule write was made by
+this workflow. These instance annotation checks do not establish global
+settings safety or physical hardware behavior.
+
 The stronger Surround Panner direct check stopped after five confirmed cases:
 restoring `soloLfe` itself left `sendLfe` and two speaker-mute values changed.
 Its unsaved changes were discarded. A fresh capability observation established
