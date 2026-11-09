@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Run a fixed Chorder learning pilot in a guarded disposable Music fixture.
 
-The default is a read-only selector preflight. A pilot requires separately
-observed, context-bound selector binding evidence. No MIDI events are sent.
+The default is a read-only selector preflight. One pilot uses separately observed
+binding evidence. An explicit candidate experiment proves its binding from
+changed model status before loading the original state. No MIDI events are sent.
 Raw labels, values, receipts and capsule metadata remain below .local.
 """
 import argparse
 from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from enum import Enum
 import hashlib
 import json
 from pathlib import Path
@@ -82,6 +84,18 @@ class LearningBinding:
         require(hexadecimal(value["selector_map_sha256"], 64), "Selector map hash is malformed")
         return cls(*(value[key] for key in
                      ("value", "label", "selector_map_sha256", "document", "session", "object_uid")))
+
+
+class BindingEvidence(Enum):
+    EXTERNAL_GUI = "separately_observed_gui_binding"
+    CANDIDATE = "unverified_lowest_formatted_candidate"
+
+
+@dataclass(frozen=True)
+class LearningIntent:
+    value: int
+    label: str
+    evidence: BindingEvidence
 
 
 def value_key(parameter):
@@ -270,7 +284,7 @@ class LearningRunner(ModelRunner):
         super().release(provider, capsule)
         del self.live_capsules[capsule.token]
 
-    def capsule_pair(self, provider, retained=None):
+    def capsule_pair(self, provider, retained=None, different_from=None):
         first = self.capture(provider)
         second = self.capture(provider)
         require(first.token != second.token and (first.byte_count, first.sha256) ==
@@ -278,6 +292,9 @@ class LearningRunner(ModelRunner):
         if retained is not None:
             require((first.byte_count, first.sha256) == (retained.byte_count, retained.sha256),
                     "Fresh serialization did not match the immutable original capsule")
+        if different_from is not None:
+            require((first.byte_count, first.sha256) != (different_from.byte_count, different_from.sha256),
+                    "The candidate model edit did not change its prepared serialization")
         self.exact_pair(provider)
         self.release(provider, second)
         if retained is not None:
@@ -379,6 +396,29 @@ class LearningRunner(ModelRunner):
                 (self.document, self.session, baseline.instance["object_uid"])
                 and selector_map.rows[1] == (binding.value, binding.label),
                 "The separately observed lowest-key binding does not match this exact live context")
+        return self._pilot(baseline, selector_map,
+                           LearningIntent(binding.value, binding.label, BindingEvidence.EXTERNAL_GUI))
+
+    def candidate_pilot(self, baseline, selector_map):
+        require(isinstance(selector_map, SelectorMap) and len(selector_map.rows) == 129
+                and tuple(row[0] for row in selector_map.rows) == tuple(range(129))
+                and hashlib.sha256(encoded(selector_map.rows)).hexdigest() == selector_map.sha256,
+                "The candidate requires the complete observed finite selector map")
+        records = quiet(baseline)
+        require(raw_value(records[MODE]) == 0 and raw_value(records[SELECTOR]) == 0
+                and raw_value(records[ASSIGNED]) == 0
+                and all(raw_value(records[name]) == 0 for name in LEARN),
+                "The candidate starts from the original empty pitch1 chord and quiet sentinel view")
+        value, label = selector_map.rows[1]
+        self.summary.update(mode="chorder_candidate_binding_experiment", candidate_binding_verified=False,
+                            candidate_core_pitch_index=0, external_gui_binding_observed=False,
+                            binding_proof="pending_two_complete_changed_model_status_observations")
+        self.phase("chorder-fixed-pilot", "CandidateBindingPending", selector_value=value,
+                   selector_label=label, expected_core_pitch_index=0, selector_map_sha256=selector_map.sha256)
+        return self._pilot(baseline, selector_map, LearningIntent(value, label, BindingEvidence.CANDIDATE))
+
+    def _pilot(self, baseline, selector_map, intent):
+        candidate = intent.evidence is BindingEvidence.CANDIDATE
         self.phase("chorder-fixed-pilot", "OriginalProtection")
         original = self.capsule_pair(baseline)
         prepared = self.set_role(baseline, MODE, 1)
@@ -387,15 +427,15 @@ class LearningRunner(ModelRunner):
         require(raw_value(parameters(prepared)[SELECTOR]) in range(1, 129)
                 and parameters(prepared)[SELECTOR]["text"] == selector_map.rows[
                     int(raw_value(parameters(prepared)[SELECTOR]))][1], "Mode auto-selection is not formatter-bound")
-        if raw_value(parameters(prepared)[SELECTOR]) != binding.value:
-            selected = self.set_role(prepared, SELECTOR, binding.value)
+        if raw_value(parameters(prepared)[SELECTOR]) != intent.value:
+            selected = self.set_role(prepared, SELECTOR, intent.value)
             require(changed_names(prepared, selected) <= {SELECTOR, *LEARN},
                     "Key selection changed an unrelated value or model status")
             prepared = selected
         records = parameters(prepared)
-        require(records[SELECTOR]["text"] == binding.label and raw_value(records[ASSIGNED]) == 0
+        require(records[SELECTOR]["text"] == intent.label and raw_value(records[ASSIGNED]) == 0
                 and all(raw_value(records[name]) == 0 for name in LEARN),
-                "The separately bound originally empty chord did not yield an empty refreshed learning view")
+                "The selected originally empty chord did not yield an empty refreshed learning view")
         prep_capsule = self.capsule_pair(prepared)
         self.release(prepared, prep_capsule)
         self.phase("chorder-fixed-pilot", "PrimaryBitChange")
@@ -403,7 +443,13 @@ class LearningRunner(ModelRunner):
         require(changed_names(prepared, changed) == {BIT, ASSIGNED}
                 and raw_value(parameters(changed)[ASSIGNED]) == 1,
                 "The fixed learning bit did not change exactly its independent explicit-chord model status")
-        changed_capsule = self.capsule_pair(changed)
+        if candidate:
+            self.summary.update(candidate_binding_verified=True,
+                                binding_proof="two_complete_changed_model_status_observations")
+            self.phase("chorder-fixed-pilot", "CandidateBindingConfirmed", observations=2,
+                       selector_value=intent.value, selector_label=intent.label, core_pitch_index=0,
+                       independent_model_status=ASSIGNED, other_model_statuses_unchanged=True)
+        changed_capsule = self.capsule_pair(changed, different_from=prep_capsule if candidate else None)
         require((changed_capsule.byte_count, changed_capsule.sha256) !=
                 (prep_capsule.byte_count, prep_capsule.sha256),
                 "The learning edit did not change the prepared protected serialization")
@@ -442,7 +488,8 @@ class LearningRunner(ModelRunner):
         require(not self.live_capsules, "The successful pilot still owns live state tokens")
         self.phase("chorder-fixed-pilot", "StateConfirmed", complete_typed_reads=2,
                    fresh_serialized_matches=2, model_status_restored_before_gui_cleanup=True)
-        self.summary.update(status="fixed_learning_bit_roundtrip_verified", completed_at=utc_now(),
+        self.summary.update(status=("fixed_candidate_binding_and_learning_roundtrip_verified" if candidate
+                                    else "fixed_learning_bit_roundtrip_verified"), completed_at=utc_now(),
                             learning_bits_verified=1, full_learning_sweep_verified=False,
                             serialized_model_claim="one_empty_input_chord_changed_and_restored_with_independent_status")
         self.progress()
@@ -455,7 +502,10 @@ def main(argv=None):
     parser.add_argument("--fixture", required=True, help="Private JSON with one exact Chorder target")
     parser.add_argument("--scratch-title", required=True)
     parser.add_argument("--output-dir", default=".local/live/chorder-learning-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
-    parser.add_argument("--binding-file", help="Private separately observed binding evidence; enables ONE fixed bit pilot")
+    pilot = parser.add_mutually_exclusive_group()
+    pilot.add_argument("--binding-file", help="Private separately observed binding evidence; enables ONE fixed bit pilot")
+    pilot.add_argument("--candidate-pilot", action="store_true",
+                       help="Experiment on one fixed lowest-key candidate; model status must prove its binding before load")
     parser.add_argument("--pause", action="store_true", help="Start the owner before opening the scratch song")
     args = parser.parse_args(argv)
     target = json.loads(private_path(args.fixture).read_text())
@@ -465,7 +515,9 @@ def main(argv=None):
     try:
         binary = Path(args.binary).resolve()
         journal.append("run_started", mode="chorder_fixed_learning_pilot", schema=1,
-                       binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(), pilot_requested=binding is not None,
+                       binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+                       pilot_requested=binding is not None or args.candidate_pilot,
+                       candidate_pilot_requested=args.candidate_pilot,
                        source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
         client = McpClient([str(binary), "serve"], timeout=45)
         if args.pause:
@@ -473,7 +525,9 @@ def main(argv=None):
         runner = LearningRunner(client, journal, args.scratch_title)
         runner.initialize()
         baseline, mapping = runner.preflight(target)
-        if binding is None:
+        if args.candidate_pilot:
+            runner.candidate_pilot(baseline, mapping)
+        elif binding is None:
             runner.summary.update(status="selector_preflight_only", selector_map_sha256=mapping.sha256,
                                   learning_bits_verified=0, completed_at=utc_now())
             runner.progress()

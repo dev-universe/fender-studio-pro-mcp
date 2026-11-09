@@ -6,13 +6,14 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from test_verify_all_parameter_states import DigestSweepClient
 from test_verify_all_parameters import number
 from verify_all_parameters import AcceptanceFailure, ContextChanged, Journal, PRIVATE_ROOT, UnknownMutation, encoded, decode_float_bits
 from verify_chorder_learning import (
     ACTIONS, ALL_NAMES, ARTIFACT_SHA256, ASSIGNED, BIT, CLASS_UID, HELD, LEARN, MODE, SELECTOR,
-    LearningBinding, LearningRunner,
+    LearningBinding, LearningRunner, SelectorMap,
 )
 
 
@@ -583,6 +584,123 @@ class LearningDescriptionBoundaryTests(unittest.TestCase):
                 with self.assertRaises((ContextChanged, UnknownMutation)):
                     runner.set_role(baseline, MODE, 1)
                 self.assertEqual(client.mutation_log, [MODE])
+
+
+class CandidatePilotTests(unittest.TestCase):
+    setUp = LearningPilotTests.setUp
+    tearDown = LearningPilotTests.tearDown
+    preflight = LearningPilotTests.preflight
+
+    def test_candidate_proves_one_binding_and_restores_with_other_assigned_keys_unchanged(self):
+        client = ChorderClient()
+        client.update("chorder.pitch2.chordAssigned", 1)
+        client.update("chorder.pitch3.chordAssigned", 2)
+        client, runner, baseline, mapping, _ = self.preflight(client)
+        result = runner.candidate_pilot(baseline, mapping)
+        self.assertEqual(result["status"], "fixed_candidate_binding_and_learning_roundtrip_verified")
+        self.assertTrue(result["candidate_binding_verified"])
+        self.assertEqual(result["candidate_core_pitch_index"], 0)
+        self.assertEqual(result["binding_proof"], "two_complete_changed_model_status_observations")
+        self.assertFalse(result["external_gui_binding_observed"])
+        self.assertFalse(result["full_learning_sweep_verified"])
+        self.assertEqual(client.find("chorder.pitch2.chordAssigned")["value"], 1)
+        self.assertEqual(client.find("chorder.pitch3.chordAssigned")["value"], 2)
+        self.assertEqual([write["param"] for write in client.writes], [MODE, SELECTOR, BIT, MODE, SELECTOR])
+        self.assertEqual(client.restore_count, 1)
+        self.assertEqual(client.tokens, {})
+        self.assertEqual(client.post_load_assigned_reads[:2], [(0.0, 3), (0.0, 3)])
+
+    def test_wrong_candidate_mapping_or_missing_assigned_change_stops_without_load_or_cleanup(self):
+        for mode in ("wrong_key", "no_assigned"):
+            with self.subTest(mode=mode):
+                self.journal.close()
+                self.journal = Journal(Path(self.temp.name) / mode)
+                client = ChorderClient()
+                if mode == "no_assigned":
+                    client.omit_assigned_refresh = True
+                else:
+                    def other_key(current, role, result):
+                        if role == BIT:
+                            current.update(ASSIGNED, 0)
+                            current.update("chorder.pitch2.chordAssigned", 1)
+                    client.fault_after_dispatch = other_key
+                client, runner, baseline, mapping, _ = self.preflight(client)
+                with self.assertRaises(AcceptanceFailure):
+                    runner.candidate_pilot(baseline, mapping)
+                self.assertFalse(runner.summary["candidate_binding_verified"])
+                self.assertEqual(client.restore_count, 0)
+                self.assertEqual(client.mutation_log[-1], BIT)
+
+    def test_candidate_proof_stays_pending_during_both_changed_full_observations(self):
+        class ObservedClient(ChorderClient):
+            def call(self, name, args):
+                if name == "plugin_parameters" and args.get("offset") == 0 and self.model and not self.restore_count:
+                    self.binding_claims.append(self.runner.summary.get("candidate_binding_verified"))
+                return super().call(name, args)
+        client = ObservedClient()
+        client.binding_claims = []
+        client, runner, baseline, mapping, _ = self.preflight(client)
+        client.runner = runner
+        result = runner.candidate_pilot(baseline, mapping)
+        self.assertEqual(client.binding_claims[:2], [False, False])
+        self.assertTrue(result["candidate_binding_verified"])
+
+    def test_unstable_second_model_observation_never_confirms_candidate_or_loads(self):
+        class UnstableClient(ChorderClient):
+            changed_reads = 0
+            def call(self, name, args):
+                if name == "plugin_parameters" and args.get("offset") == 0 and self.model and not self.restore_count:
+                    self.changed_reads += 1
+                    if self.changed_reads == 2:
+                        self.update(ASSIGNED, 0)
+                return super().call(name, args)
+        client, runner, baseline, mapping, _ = self.preflight(UnstableClient())
+        with self.assertRaises(AcceptanceFailure):
+            runner.candidate_pilot(baseline, mapping)
+        self.assertFalse(runner.summary["candidate_binding_verified"])
+        self.assertEqual(client.restore_count, 0)
+        self.assertEqual(client.mutation_log[-1], BIT)
+
+    def test_candidate_serializer_must_restore_model_before_gui_cleanup(self):
+        client = ChorderClient()
+        client.serialize_model = False
+        client.serialize_gui = True
+        client, runner, baseline, mapping, _ = self.preflight(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.candidate_pilot(baseline, mapping)
+        self.assertTrue(runner.summary["candidate_binding_verified"])
+        self.assertEqual(client.restore_count, 1)
+        self.assertEqual([write["param"] for write in client.writes], [MODE, SELECTOR, BIT])
+        self.assertEqual(client.mutation_log[-1], "restore")
+
+    def test_unchanged_changed_serialization_stops_before_release_load_or_cleanup(self):
+        client = ChorderClient()
+        client.serial_changes = False
+        client, runner, baseline, mapping, _ = self.preflight(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.candidate_pilot(baseline, mapping)
+        self.assertEqual(client.restore_count, 0)
+        self.assertEqual(client.mutation_log[-2:], ["capture", "capture"])
+        self.assertEqual([write["param"] for write in client.writes], [MODE, SELECTOR, BIT])
+
+    def test_candidate_cli_cannot_accept_an_external_binding_file(self):
+        from verify_chorder_learning import main
+        with patch("verify_chorder_learning.McpClient") as client:
+            with self.assertRaises(SystemExit) as error:
+                main(["--fixture", "unread.json", "--scratch-title", "MCP Validation Scratch",
+                      "--candidate-pilot", "--binding-file", "unread-binding.json"])
+            self.assertEqual(error.exception.code, 2)
+            client.assert_not_called()
+
+    def test_candidate_cannot_take_a_different_selector_or_unobserved_map(self):
+        client, runner, baseline, mapping, _ = self.preflight()
+        rows = list(mapping.rows)
+        rows[1] = (2, rows[1][1])
+        wrong = SelectorMap(tuple(rows), hashlib.sha256(encoded(rows)).hexdigest())
+        for value in (wrong, SelectorMap(mapping.rows, "0" * 64)):
+            with self.subTest(value=value.sha256), self.assertRaises(AcceptanceFailure):
+                runner.candidate_pilot(baseline, value)
+        self.assertEqual(client.mutation_log, [])
 
 
 if __name__ == "__main__":
