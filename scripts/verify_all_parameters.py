@@ -4,6 +4,8 @@
 Raw values and receipts are written only below this repository's .local tree.
 Model changes, commands and other coupled actions require a separately proved
 state restore workflow and remain explicit incomplete cases in this runner.
+The opt-in direct digest mode verifies two fresh complete exposed projections
+after every exact original-value restoration, with full-page checkpoints.
 """
 import argparse
 from collections import Counter
@@ -14,12 +16,14 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import struct
 import sys
 import time
 import uuid
 
 from mcp_client import McpClient
+from parameter_digest import DigestProjectionError, HASH_FIELDS, project_snapshot
 from verify_live_plugins import structured
 
 
@@ -27,6 +31,7 @@ REPOSITORY = Path(__file__).resolve().parent.parent
 PRIVATE_ROOT = REPOSITORY / ".local"
 MAX_SAFE_INTEGER = 9_007_199_254_740_991
 MAX_OBSERVED_JSON_FLOAT_ULPS = 1
+MAX_DIRECT_DIGEST_CASES_BETWEEN_FULL_CHECKS = 32
 UNKNOWN_OUTCOMES = frozenset(("outcome_unknown", "unknown"))
 NUMERIC_KINDS = {"Toggle", "Integer", "Float", "List", "Scroll"}
 EXTERNAL_ACTIONS = {"pingAgain", "pingMode", "zoomOut", "latencyTotal", "ms", "samples", "deviceName"}
@@ -251,6 +256,31 @@ class ProviderSnapshot:
                 "schema_sha256": self.schema, "records": self.records}
 
 
+@dataclass(frozen=True)
+class DirectDigestBaseline:
+    provider: ProviderSnapshot
+    projection: dict
+
+
+def native_digest_matches(expected, native, read_only_observations=False):
+    require(isinstance(native, dict) and native.get("ok") is True
+            and native.get("outcome") == "observed" and "error" not in native,
+            "Native parameter digest is not a successful observed result")
+    for key in HASH_FIELDS:
+        require(isinstance(native.get(key), str) and re.fullmatch(r"[0-9a-f]{64}", native[key]) is not None,
+                "Native parameter digest lacks an exact " + key)
+    for key, value in expected.items():
+        if key in HASH_FIELDS[1:]:
+            continue
+        actual = native.get(key)
+        equal = type(actual) is type(value) and actual == value
+        if not equal and key in ("instance", "source", "count", "schema_sha256"):
+            raise ContextChanged("Native parameter digest changed the bound provider " + key)
+        require(equal, "Native parameter digest contract differs: " + key)
+    fields = ("non_read_only_values_sha256",) if read_only_observations else HASH_FIELDS[1:]
+    return all(native[key] == expected[key] for key in fields)
+
+
 def classification(plugin, parameter):
     """Access facts precede semantic categories; an unknown is never writable."""
     required = ("enabled", "readOnly", "writable", "native_kind", "support", "native_value")
@@ -326,10 +356,15 @@ def candidate(parameter):
 
 class Runner:
     def __init__(self, client, journal, scratch_title, prepare_midi=False, block_size=16,
-                 read_only_observations=False):
+                 read_only_observations=False, use_parameter_digest=False):
+        require(type(use_parameter_digest) is bool, "Parameter digest verification requires an explicit boolean mode")
+        require(not use_parameter_digest or (type(block_size) is int and block_size == 1),
+                "Direct parameter digest verification requires block_size=1")
         self.client, self.journal, self.scratch_title = client, journal, scratch_title
         self.prepare_midi, self.block_size = prepare_midi, block_size
         self.read_only_observations = read_only_observations
+        self.direct_digest_mode = use_parameter_digest
+        self.direct_digest_baseline = None
         self.document = self.session = None
         self.call_count = 0
         self.summary = {"schema": 1, "started_at": utc_now(), "status": "running", "classes": [],
@@ -338,6 +373,12 @@ class Runner:
         self.counts = Counter()
         self.requested_parameter_names = set()
         self.matched_parameter_names = set()
+        if use_parameter_digest:
+            self.summary.update(parameter_verification="direct_restoration_with_native_parameter_digest",
+                                before_next_parameter="two_fresh_complete_native_parameter_digest_matches",
+                                full_page_checkpoint_max_cases=MAX_DIRECT_DIGEST_CASES_BETWEEN_FULL_CHECKS,
+                                restoration="direct_exact_original_value", atomic_snapshot=False,
+                                opaque_contents_verified=False)
 
     def track_parameter_filter(self, parameters, records=()):
         if parameters:
@@ -350,6 +391,10 @@ class Runner:
         self.journal.progress(self.summary)
 
     def finish(self, write_roundtrips):
+        if self.direct_digest_mode and write_roundtrips:
+            require(all(not row.get("selected_for_write") or row.get("digest_fixture_complete") is True
+                        for row in self.summary["classes"]),
+                    "Direct digest fixture end or full-page checkpoint is incomplete")
         selected = sum(row.get("selected_for_write", 0) for row in self.summary["classes"])
         unmatched = sorted(self.requested_parameter_names - self.matched_parameter_names)
         self.summary["unmatched_parameters"] = unmatched
@@ -628,6 +673,23 @@ class Runner:
                 "quantized": observed is not None and raw_value(observed) != requested_value(change_args)}
 
     def confirm_block(self, baseline, transactions):
+        if self.direct_digest_mode:
+            require(len(transactions) == 1, "Direct digest verification cannot batch parameter transactions")
+            require(self.direct_digest_baseline is not None and self.direct_digest_baseline.provider is baseline,
+                    "Direct parameter digest baseline was not initialized for this fixture")
+            item = transactions[0]
+            self.direct_digest_pair(baseline, self.direct_digest_baseline.projection,
+                                    item["transaction"], "direct_restore")
+            if item["status"] != "write_rejected":
+                self.phase(item["transaction"], "StateConfirmed", status=item["status"],
+                           whole_provider_comparison="exact_typed_exposed_parameter_projection",
+                           consecutive_fresh_digest_matches=2, atomic_snapshot=False,
+                           read_only_values=self.summary["read_only_values"],
+                           opaque_contents_verified=False)
+            self.counts[item["status"]] += 1
+            self.journal.append("parameter_result", **item)
+            self.progress()
+            return
         self.fixture_check(baseline.target)
         current = self.snapshot(baseline.target, baseline)
         changed, observations = [], []
@@ -661,6 +723,70 @@ class Runner:
             self.counts[item["status"]] += 1
             self.journal.append("parameter_result", **item)
         self.progress()
+
+    def direct_projection(self, provider):
+        try:
+            return project_snapshot(provider)
+        except DigestProjectionError as error:
+            raise AcceptanceFailure("Complete exact parameter digest projection is unavailable: " + str(error)) from error
+
+    def direct_digest_read(self, baseline):
+        self.fixture_check(baseline.target)
+        receipt = self.call("plugin_parameter_digest", {**baseline.target, "source": baseline.source,
+                            "expected_instance": baseline.instance["object_uid"]})
+        require(receipt.get("outcome") == "observed" and not receipt.get("error"),
+                "Native parameter digest receipt is not an observed read")
+        return receipt.get("result")
+
+    def direct_digest_pair(self, baseline, expected, transaction, checkpoint):
+        for attempt in (1, 2):
+            native = self.direct_digest_read(baseline)
+            matches = native_digest_matches(expected, native, self.read_only_observations)
+            if matches and self.read_only_observations and native["all_values_sha256"] != expected["all_values_sha256"]:
+                self.counts["read_only_digest_difference_observations"] += 1
+            self.journal.append("direct_parameter_digest_observation", transaction=transaction,
+                                checkpoint=checkpoint, attempt=attempt, fresh_rpc=self.call_count,
+                                matches=matches, consecutive_matches=attempt if matches else 0,
+                                all_values_equal=native["all_values_sha256"] == expected["all_values_sha256"],
+                                read_only_values=self.summary["read_only_values"],
+                                **{key: native[key] for key in HASH_FIELDS},
+                                atomic_snapshot=False, opaque_contents_verified=False)
+            if not matches:
+                current = self.snapshot(baseline.target, baseline)
+                projection = self.direct_projection(current)
+                diagnosis = self.direct_digest_read(baseline)
+                parity = native_digest_matches(projection, diagnosis)
+                frozen = self.direct_digest_baseline.projection
+                value_field = "non_read_only_values_sha256" if self.read_only_observations else "all_values_sha256"
+                baseline_matches = (projection["schema_sha256"] == frozen["schema_sha256"]
+                                    and projection[value_field] == frozen[value_field])
+                self.journal.append("direct_parameter_digest_mismatch_diagnosis", transaction=transaction,
+                                    checkpoint=checkpoint, diagnostic_only=True, full_pages_read=True,
+                                    native_parity_matches=parity,
+                                    native_parity_reference="current_diagnostic_projection",
+                                    diagnostic_projection_matches_frozen_baseline=baseline_matches,
+                                    read_only_values=self.summary["read_only_values"],
+                                    **{key: projection[key] for key in HASH_FIELDS},
+                                    atomic_snapshot=False, opaque_contents_verified=False)
+                raise DependencyFailure("Direct restoration did not preserve the frozen complete exposed provider projection")
+
+    def direct_full_checkpoint(self, baseline, transaction, checkpoint):
+        require(self.direct_digest_baseline is not None and self.direct_digest_baseline.provider is baseline,
+                "Direct parameter digest baseline was not initialized for this fixture")
+        self.fixture_check(baseline.target)
+        current = self.snapshot(baseline.target, baseline)
+        projection = self.direct_projection(current)
+        require(native_digest_matches(self.direct_digest_baseline.projection,
+                                      {**projection, "ok": True, "outcome": "observed"},
+                                      self.read_only_observations),
+                "Full direct-restoration checkpoint differs from the frozen baseline")
+        self.direct_digest_pair(baseline, projection, transaction, checkpoint)
+        self.journal.append("direct_parameter_digest_full_checkpoint", transaction=transaction,
+                            checkpoint=checkpoint, full_pages_verified=True, count=len(current.records),
+                            consecutive_fresh_digest_matches=2,
+                            read_only_values=self.summary["read_only_values"],
+                            **{key: projection[key] for key in HASH_FIELDS},
+                            atomic_snapshot=False, opaque_contents_verified=False)
 
     def run_fixture(self, target, write_roundtrips=False, parameters=None):
         if write_roundtrips:
@@ -699,7 +825,19 @@ class Runner:
         self.progress()
         if not write_roundtrips:
             return
+        if self.direct_digest_mode:
+            projection = self.direct_projection(baseline)
+            self.direct_digest_baseline = DirectDigestBaseline(baseline, projection)
+            row.update(parameter_verification="direct_restoration_with_native_parameter_digest",
+                       consecutive_fresh_digest_matches_required=2, digest_fixture_complete=False,
+                       full_page_checkpoint_max_cases=MAX_DIRECT_DIGEST_CASES_BETWEEN_FULL_CHECKS,
+                       atomic_snapshot=False, opaque_contents_verified=False)
+            self.direct_digest_pair(baseline, projection, key, "initial_full_baseline")
+            self.direct_full_checkpoint(baseline, key, "before_first_write")
         if not eligible:
+            if self.direct_digest_mode:
+                self.direct_full_checkpoint(baseline, key, "fixture_end_no_eligible_scalars")
+                row["digest_fixture_complete"] = True
             row["status"] = "no_selected_eligible_scalars"
             self.progress()
             return
@@ -708,9 +846,15 @@ class Runner:
             transaction = f"{key}-{provider_index(parameter):06d}"
             result = self.roundtrip(baseline, parameter, transaction)
             pending.append(result)
-            if len(pending) >= self.block_size or index == len(eligible) - 1:
+            if self.direct_digest_mode or len(pending) >= self.block_size or index == len(eligible) - 1:
                 self.confirm_block(baseline, pending)
                 pending.clear()
+            if (self.direct_digest_mode and (index + 1) % MAX_DIRECT_DIGEST_CASES_BETWEEN_FULL_CHECKS == 0
+                    and index + 1 < len(eligible)):
+                self.direct_full_checkpoint(baseline, key, "completed_cases_" + str(index + 1))
+        if self.direct_digest_mode:
+            self.direct_full_checkpoint(baseline, key, "fixture_end")
+            row["digest_fixture_complete"] = True
         row["status"] = "eligible_scalar_roundtrips_completed"
         self.progress()
 
@@ -729,11 +873,15 @@ def main(argv=None):
     parser.add_argument("--block-size", type=int, default=16, help="Whole-provider state comparison interval, from 1 to 64")
     parser.add_argument("--read-only-observations", action="store_true",
                         help="Observe drifting native read-only values without claiming their restoration; requires complete native access proof before and after")
+    parser.add_argument("--use-parameter-digest", action="store_true",
+                        help="With --block-size 1, verify each direct restoration by two fresh native digests and periodic complete public pages")
     parser.add_argument("--plugin", action="append", help="Limit to an exact plugin name; repeat to select more")
     parser.add_argument("--parameter", action="append", help="Limit writes to an exact parameter name; all records are still audited")
     args = parser.parse_args(argv)
     if not 1 <= args.block_size <= 64:
         parser.error("--block-size must be from 1 to 64")
+    if args.use_parameter_digest and args.block_size != 1:
+        parser.error("--use-parameter-digest requires --block-size 1")
     fixtures = json.loads(Path(args.fixtures).read_text())
     require(isinstance(fixtures, list) and 0 < len(fixtures) <= 128, "Expected 1..128 fixture targets")
     targets = []
@@ -752,13 +900,14 @@ def main(argv=None):
                        binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                        scope={"plugins": args.plugin, "parameters": args.parameter},
                        guarantee="independent parameter roundtrip plus whole-provider block comparison; no coupled-state workflow",
+                       parameter_verification="direct_restoration_with_native_parameter_digest" if args.use_parameter_digest else "full_pages",
                        read_only_values="observed_not_restored" if args.read_only_observations else "exact_comparison")
         client = McpClient([str(binary), "serve"], timeout=45)
         print("MCP owner ready", flush=True)
         if args.pause:
             input("Open exactly the named scratch song, then press Enter: ")
         runner = Runner(client, journal, args.scratch_title, args.prepare_midi_fixtures, args.block_size,
-                        args.read_only_observations)
+                        args.read_only_observations, args.use_parameter_digest)
         runner.summary["scope"] = {"plugins": args.plugin, "parameters": args.parameter}
         runner.summary["mode"] = "audit" if args.audit_only else "write_roundtrips"
         runner.initialize()

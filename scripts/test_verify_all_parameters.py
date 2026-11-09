@@ -7,6 +7,9 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+from unittest.mock import patch
+
+from parameter_digest import HASH_FIELDS, project_snapshot
 
 from verify_all_parameters import (AcceptanceFailure, ContextChanged, DependencyFailure,
                                    Journal, PRIVATE_ROOT, RestorationFailure, Runner,
@@ -565,6 +568,362 @@ class AcceptanceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(AcceptanceFailure):
                 Journal(Path(directory) / "run")
+
+
+class DigestDeviceClient(DeviceClient):
+    def __init__(self, parameters=None):
+        super().__init__(parameters)
+        self.digest_calls = 0
+        self.digest_hook = self.page_hook = None
+        self.receipt_hook = None
+        self.digest_readonly_drift = False
+
+    def description(self, parameter):
+        value = copy.deepcopy(parameter)
+        value.pop("native", None)
+
+        def exact(scalar):
+            if type(scalar) is int:
+                return {"variant_tag": 1, "data": {"kind": "integer", "value": scalar}}
+            return {"variant_tag": 2, "data": {"kind": "float", "value": scalar,
+                    "bits_hex": struct.pack(">d", scalar).hex().upper()}}
+
+        value.setdefault("title", value["name"])
+        value.setdefault("default", 0.0)
+        for field in ("min", "max", "default"):
+            value.setdefault("native_" + field, exact(value[field]))
+        value.setdefault("native_support", {"raw_number": value["support"].get("raw", False),
+                         "normalized": value["support"].get("normalized", False),
+                         "display_text": value["support"].get("text", False)})
+        value["support"] = {"raw": value["native_support"]["raw_number"],
+                            "normalized": value["native_support"]["normalized"],
+                            "text": value["native_support"]["display_text"]}
+        bits = struct.pack(">f", value["normalized"])
+        value["normalized"] = struct.unpack(">f", bits)[0]
+        value.setdefault("native_normalized", {"kind": "float32", "bits_hex": bits.hex().upper()})
+        return value
+
+    def indexed(self, parameter, index):
+        description = self.description(parameter)
+        return {**copy.deepcopy(description), "access_metadata_complete": True,
+                "native": {"index": index, "name": description["name"], "tag": index + 100,
+                           "title": description["name"], "folder": 0, "raw_flags": 0,
+                           "native_description": description}}
+
+    def call(self, name, args):
+        if name == "plugin_parameter_digest":
+            self.calls.append((name, copy.deepcopy(args)))
+            self.assert_source(args)
+            self.digest_calls += 1
+            if self.digest_readonly_drift and len(self.writes) >= 2:
+                self.parameters[1].update(number("meter", 0.99, readonly=True))
+            records = [self.indexed(parameter, index) for index, parameter in enumerate(self.parameters)]
+            body = {**project_snapshot({"source": "dsp", "instance": dict(self.instance), "records": records}),
+                    "ok": True, "outcome": "observed"}
+            if self.digest_hook:
+                self.digest_hook(self, body)
+            result = self.receipt(body)
+            if self.receipt_hook:
+                self.receipt_hook(self, result["structuredContent"])
+            return result
+        result = super().call(name, args)
+        body = result["structuredContent"]["result"]
+        if name == "plugin_parameters":
+            if args.get("names"):
+                body["params"] = [self.description(parameter) for parameter in body["params"]]
+            else:
+                body["params"] = [self.indexed(parameter, parameter["native"]["index"]) for parameter in body["params"]]
+                if self.page_hook:
+                    self.page_hook(self, body)
+        elif name == "plugin_parameter_set":
+            for field in ("before", "after"):
+                body[field] = self.description(body[field])
+        return result
+
+
+class DirectDigestTests(unittest.TestCase):
+    def setUp(self):
+        PRIVATE_ROOT.mkdir(exist_ok=True)
+        self.temporary = tempfile.TemporaryDirectory(prefix="direct-digest-unit-", dir=PRIVATE_ROOT)
+        self.journal = Journal(Path(self.temporary.name) / "run")
+        self.no_sleep = patch("verify_all_parameters.time.sleep")
+        self.no_sleep.start()
+
+    def tearDown(self):
+        self.no_sleep.stop()
+        self.journal.close()
+        self.temporary.cleanup()
+
+    def reset_journal(self, name):
+        self.journal.close()
+        self.journal = Journal(Path(self.temporary.name) / name)
+
+    def runner(self, client, read_only_observations=False):
+        runner = Runner(client, self.journal, "MCP Validation Scratch", block_size=1,
+                        read_only_observations=read_only_observations, use_parameter_digest=True)
+        runner.initialize()
+        return runner
+
+    def events(self):
+        return [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
+
+    def test_each_direct_restore_needs_two_fresh_digests_and_a_complete_fixture_end(self):
+        client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.finish(True), 0)
+        row = runner.summary["classes"][0]
+        self.assertTrue(row["digest_fixture_complete"])
+        self.assertEqual(runner.counts["changed_readback_restored"], 2)
+        observations = [event for event in self.events()
+                        if event["event"] == "direct_parameter_digest_observation" and event["checkpoint"] == "direct_restore"]
+        self.assertEqual([event["attempt"] for event in observations], [1, 2, 1, 2])
+        self.assertEqual(len({event["fresh_rpc"] for event in observations}), 4)
+        checkpoints = [event["checkpoint"] for event in self.events()
+                       if event["event"] == "direct_parameter_digest_full_checkpoint"]
+        self.assertEqual(checkpoints, ["before_first_write", "fixture_end"])
+        self.assertEqual(len(client.writes), 4)
+        self.assertFalse(any(name == "plugin_state" for name, _ in client.calls))
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
+    def test_explicit_mode_never_allows_parameter_batches_or_implicit_truthy_flags(self):
+        for block in (True, 0, 2, 16, 64, 1.0):
+            with self.assertRaises(AcceptanceFailure):
+                Runner(None, self.journal, "Scratch", block_size=block, use_parameter_digest=True)
+        for flag in (None, 0, 1, "true"):
+            with self.assertRaises(AcceptanceFailure):
+                Runner(None, self.journal, "Scratch", block_size=1, use_parameter_digest=flag)
+
+    def test_a_second_digest_disagreement_stops_after_direct_restore_without_more_writes(self):
+        client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        client.digest_hook = lambda client, body: body.update(non_read_only_values_sha256="0" * 64) if client.digest_calls == 6 else None
+        runner = self.runner(client)
+        runner.block_size = 64
+        with self.assertRaises(DependencyFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.writes), 2)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        diagnosis = next(event for event in self.events() if event["event"] == "direct_parameter_digest_mismatch_diagnosis")
+        self.assertTrue(diagnosis["diagnostic_only"])
+        self.assertTrue(diagnosis["native_parity_matches"])
+        self.assertEqual(diagnosis["native_parity_reference"], "current_diagnostic_projection")
+        self.assertTrue(diagnosis["diagnostic_projection_matches_frozen_baseline"])
+        self.assertTrue(Journal.pending(self.journal.ledger_path))
+        with self.assertRaises(AcceptanceFailure):
+            runner.finish(True)
+
+    def test_coupled_state_changes_are_not_repaired_or_rebased(self):
+        client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        client.side_effect = True
+        runner = self.runner(client)
+        with self.assertRaises(DependencyFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual([write["param"] for write in client.writes], ["gain", "gain"])
+        self.assertEqual(client.parameters[1]["value"], 0.99)
+        self.assertFalse(any(name == "plugin_state" for name, _ in client.calls))
+        diagnosis = next(event for event in self.events() if event["event"] == "direct_parameter_digest_mismatch_diagnosis")
+        self.assertTrue(diagnosis["native_parity_matches"])
+        self.assertFalse(diagnosis["diagnostic_projection_matches_frozen_baseline"])
+
+    def test_readonly_drift_requires_the_explicit_mode_and_preserves_exact_schema(self):
+        for allowed in (False, True):
+            self.reset_journal("readonly-" + str(allowed))
+            client = DigestDeviceClient([number("gain", 0.25), number("meter", 0.1, readonly=True)])
+            client.digest_readonly_drift = True
+            runner = self.runner(client, read_only_observations=allowed)
+            if allowed:
+                runner.run_fixture(TARGET, write_roundtrips=True)
+                self.assertEqual(runner.finish(True), 0)
+                self.assertEqual(runner.summary["read_only_values"], "observed_not_restored")
+                self.assertEqual(runner.counts["read_only_digest_difference_observations"], 2)
+            else:
+                with self.assertRaises(DependencyFailure):
+                    runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(len(client.writes), 2)
+
+    def test_readonly_access_and_typed_default_support_drift_are_not_excluded(self):
+        for field in ("read_only", "default", "support"):
+            self.reset_journal("schema-" + field)
+            client = DigestDeviceClient([number("gain", 0.25), number("meter", 0.1, readonly=True)])
+
+            def drift(client, body):
+                if len(client.writes) >= 2:
+                    if field == "read_only":
+                        client.parameters[1]["readOnly"] = False
+                    elif field == "default":
+                        client.parameters[1]["default"] = 0.5
+                    else:
+                        client.parameters[1]["support"]["raw"] = True
+                        client.parameters[1]["writable"] = True
+                    records = [client.indexed(parameter, index) for index, parameter in enumerate(client.parameters)]
+                    body.update(project_snapshot({"source": "dsp", "instance": dict(client.instance), "records": records}))
+
+            client.digest_hook = drift
+            runner = self.runner(client, read_only_observations=True)
+            with self.assertRaises(AcceptanceFailure):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(len(client.writes), 2)
+
+    def test_every_native_contract_field_and_hash_encoding_is_required_before_writes(self):
+        exemplar = DigestDeviceClient()
+        value = exemplar.call("plugin_parameter_digest", {"source": "dsp", "expected_instance": INSTANCE["object_uid"]})["structuredContent"]["result"]
+        for field in value:
+            self.reset_journal("missing-" + field)
+            client = DigestDeviceClient()
+            client.digest_hook = lambda _, body, field=field: body.pop(field)
+            runner = self.runner(client)
+            with self.assertRaises(AcceptanceFailure, msg=field):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(client.writes, [])
+        for field in HASH_FIELDS:
+            self.reset_journal("malformed-" + field)
+            client = DigestDeviceClient()
+            client.digest_hook = lambda _, body, field=field: body.update({field: "F" * 64})
+            runner = self.runner(client)
+            with self.assertRaises(AcceptanceFailure):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(client.writes, [])
+
+    def test_wrong_native_identity_provider_count_and_schema_cannot_begin_writes(self):
+        replacements = {"instance": {**INSTANCE, "object_uid": "ABCDEFAB-1234-1234-1234-123456789ABC"},
+                        "source": "controller", "count": 2, "schema_sha256": "0" * 64,
+                        "access_complete": False, "atomic_snapshot": True,
+                        "coverage": "cached", "opaque_contents_verified": True}
+        for field, value in replacements.items():
+            self.reset_journal("wrong-" + field)
+            client = DigestDeviceClient()
+            client.digest_hook = lambda _, body, field=field, value=value: body.update({field: value})
+            runner = self.runner(client)
+            with self.assertRaises(AcceptanceFailure):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(client.writes, [])
+
+    def test_error_or_unknown_native_read_cannot_reuse_supplied_hashes(self):
+        for change in ({"ok": False}, {"outcome": "unknown"}, {"error": {"message": "read failed"}}):
+            self.reset_journal("read-" + next(iter(change)))
+            client = DigestDeviceClient()
+            client.digest_hook = lambda _, body: body.update(change)
+            runner = self.runner(client)
+            with self.assertRaises(AcceptanceFailure):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(client.writes, [])
+
+    def test_complete_public_metadata_is_required_for_independent_initial_projection(self):
+        client = DigestDeviceClient()
+
+        def missing(_, body):
+            body["params"][0].pop("native_min")
+            body["params"][0]["native"]["native_description"].pop("native_min")
+
+        client.page_hook = missing
+        runner = self.runner(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(client.digest_calls, 0)
+        self.assertEqual(client.writes, [])
+
+    def test_nonselected_display_and_normalized_changes_are_detected_after_raw_restoration(self):
+        for field, value in (("text", "changed display"), ("normalized", 0.75)):
+            self.reset_journal("changed-" + field)
+            client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+
+            def drift(client, body):
+                if len(client.writes) >= 2:
+                    client.parameters[1][field] = value
+                    records = [client.indexed(parameter, index) for index, parameter in enumerate(client.parameters)]
+                    body.update(project_snapshot({"source": "dsp", "instance": dict(client.instance), "records": records}))
+
+            client.digest_hook = drift
+            runner = self.runner(client)
+            with self.assertRaises(DependencyFailure):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(len(client.writes), 2)
+
+    def test_checkpoint_at_case_32_stops_before_the_next_parameter(self):
+        client = DigestDeviceClient([number("gain" + str(index), 0.25) for index in range(33)])
+        client.page_hook = lambda client, body: body["params"][0]["native"].update(raw_flags=1) if client.pages == 3 else None
+        runner = self.runner(client)
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.writes), 64)
+        self.assertEqual(runner.counts["changed_readback_restored"], 32)
+        with self.assertRaises(AcceptanceFailure):
+            runner.finish(True)
+
+    def test_successful_33_case_run_includes_the_periodic_full_page_checkpoint(self):
+        client = DigestDeviceClient([number("gain" + str(index), 0.25) for index in range(33)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.finish(True), 0)
+        checkpoints = [event["checkpoint"] for event in self.events()
+                       if event["event"] == "direct_parameter_digest_full_checkpoint"]
+        self.assertEqual(checkpoints, ["before_first_write", "completed_cases_32", "fixture_end"])
+        self.assertEqual(len(client.writes), 66)
+
+    def test_missing_fixture_end_cannot_pass_even_after_every_selected_scalar_was_confirmed(self):
+        client = DigestDeviceClient()
+        client.page_hook = lambda client, body: body["params"][0]["native"].update(raw_flags=1) if client.pages == 3 else None
+        runner = self.runner(client)
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        with self.assertRaises(AcceptanceFailure):
+            runner.finish(True)
+
+    def test_unknown_change_or_changed_document_never_gets_a_restore_or_next_write(self):
+        for field, error in (("unknown_change", UnknownMutation), ("change_document", ContextChanged)):
+            self.reset_journal("unknown-" + field)
+            client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+            setattr(client, field, True)
+            runner = self.runner(client)
+            with self.assertRaises(error):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(len(client.writes), 1)
+            self.assertEqual(client.digest_calls, 4)
+
+    def test_a_lied_about_direct_restore_stops_before_digest_confirmation(self):
+        client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        client.fail_restore = client.lie_about_restore = True
+        runner = self.runner(client)
+        with self.assertRaises(RestorationFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.writes), 2)
+        self.assertEqual(client.digest_calls, 4)
+
+    def test_outer_digest_context_error_or_unknown_receipt_stops_with_no_later_write(self):
+        for field, value, error in (("document", "other:1", ContextChanged),
+                                    ("outcome", "outcome_unknown", AcceptanceFailure),
+                                    ("error", {"message": "read failed"}, AcceptanceFailure)):
+            self.reset_journal("outer-" + field)
+            client = DigestDeviceClient([number("gain", 0.25), number("mix", 0.5)])
+
+            def change(client, receipt):
+                if client.digest_calls == 6:
+                    receipt[field] = value
+
+            client.receipt_hook = change
+            runner = self.runner(client)
+            with self.assertRaises(error):
+                runner.run_fixture(TARGET, write_roundtrips=True)
+            self.assertEqual(len(client.writes), 2)
+            self.assertEqual(runner.counts["changed_readback_restored"], 0)
+
+    def test_exact_negative_zero_is_restored_without_capsule_calls(self):
+        client = DigestDeviceClient([number("gain", -0.0)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.finish(True), 0)
+        self.assertEqual(client.writes[1]["float_bits"], "8000000000000000")
+        self.assertEqual(value_identity(client.parameters[0])[2], "8000000000000000")
+
+    def test_unmatched_filters_and_zero_selected_controls_never_gain_a_digest_pass(self):
+        client = DigestDeviceClient([number("meter", 0.1, readonly=True)])
+        runner = self.runner(client, read_only_observations=True)
+        runner.run_fixture(TARGET, write_roundtrips=True, parameters={"missing"})
+        self.assertEqual(runner.finish(True), 2)
+        self.assertFalse(runner.summary["eligible_roundtrips_verified"])
+        self.assertEqual(runner.summary["unmatched_parameters"], ["missing"])
+        self.assertEqual(client.writes, [])
 
 
 if __name__ == "__main__":
