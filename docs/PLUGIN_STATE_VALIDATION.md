@@ -263,7 +263,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 640 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 896 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
@@ -351,6 +351,20 @@ Its object UID was present and class UID absent. The bounded auxiliary report
 was partial; it did not establish whole topology, active-document ownership or
 successful collection save/load. Two fresh Pro EQ native projections matched
 its original full schema and writable values after the metadata observations.
+
+The next native build observed the Inserts parent chain through its audio
+channel, channel groups and AudioMixer to SongEnvironment. The six-node report
+completed within its fixed eight-ancestor bound. No ancestor matched the active
+document model's canonical identity. Two fresh complete Pro EQ projections again
+matched its 199-record schema and every writable value. This establishes the
+read-only parent route; a separate document-to-environment witness is still
+required before whole-folder preset operations can be authorized.
+
+Chorder's learn-input selector also returned all 129 explicit input labels in
+five read-only formatter calls. Two complete native projections matched all 908
+original typed records and schema afterward. This establishes the formatter
+route, without claiming that the selector-to-core-pitch binding or learning
+model restoration has been verified.
 
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
