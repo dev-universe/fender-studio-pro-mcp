@@ -237,6 +237,7 @@ class Bridge {
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginPresets": return this.fromComponent(c => c.pluginPresets(args));
+            case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
             default: return fail("unknown op: " + op);
         }
     }

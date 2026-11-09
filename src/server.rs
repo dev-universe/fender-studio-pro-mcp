@@ -177,6 +177,12 @@ impl McpServer {
                 "Read fresh native schema and value digests for the expected plugin's exposed parameter projection. Requires expected_instance and an explicit dsp or controller source. Native scan errors return no digest. Compare only digests with matching version, source, instance and scope. This is a sequential observation, not an atomic snapshot or complete plugin state; opaque contents remain unverified.",
                 false,
             ),
+            named::<PluginAction>(
+                "plugin_action",
+                "pluginAction",
+                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. The native pulse resets its own value but leaves musical effects unverified. Independently read both filter values and the whole provider; do not retry an unknown outcome.",
+                true,
+            ),
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
@@ -393,6 +399,7 @@ mod tests {
             "channel_set",
             "plugin_editor_open",
             "plugin_presets",
+            "plugin_action",
             "panner_set",
             "splitter_set",
         ] {
@@ -406,7 +413,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 36);
+        assert_eq!(specs.len(), 37);
     }
 
     #[test]

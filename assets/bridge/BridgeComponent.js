@@ -612,6 +612,21 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { requested: true, plugin: plug.name, verified: false };
     }
 
+    pluginAction(args) {
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
+        if (Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !args.expected_instance
+            || args.action !== "swap_filter_frequencies")
+            return { native_outcome: "not_applied", errors: [{ code: "invalid_action", message: "a fixed action, expected plugin and native instance are required" }] };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "parameter_action",
+            action: args.action, expected_instance: args.expected_instance });
+        if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_required", message: "plugin actions require the matching native extension" }] };
+        return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+    }
+
     pluginState(args) {
         if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
             return { error: "an expected plugin and native instance are required" };

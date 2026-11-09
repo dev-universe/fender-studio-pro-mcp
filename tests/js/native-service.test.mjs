@@ -19,6 +19,65 @@ function native(request) {
   return { capabilities() { return '{"ok":true,"api":"fender-mcp-native-v1"}'; }, request };
 }
 
+const actionResult = () => ({ ok: true, instance, action: 'swap_filter_frequencies', source: 'dsp',
+  outcome: 'applied_unverified', verified: false, effects_verified: false,
+  upper_dispatched: true, reset_dispatched: true, reset_verified: true,
+  before: { value: 0 }, after: { value: 0 }, effect_parameters: ['filterlow', 'filterhigh'] });
+
+test('registered button actions use one finite native request and never certify their effects', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device);
+    calls.push(JSON.parse(body));
+    return JSON.stringify(actionResult());
+  }); } });
+  h.device.findParameter = () => { throw new Error('no script action fallback'); };
+  const args = { plugin: 'Expected', expected_instance: instance.object_uid, action: 'swap_filter_frequencies' };
+  const result = h.component.pluginAction(args);
+  assert.deepEqual(calls, [{ operation: 'parameter_action', action: args.action, expected_instance: instance.object_uid }]);
+  assert.equal(result.native_outcome, 'applied_unverified');
+  assert.equal(result.effects_verified, false);
+  assert.equal(result.verified, false);
+  const host = bridgeHarness();
+  host.bridge.component = { pluginAction() { return result; } };
+  assert.equal(host.request({ op: 'pluginAction', args }).code, 'context_required');
+  assert.equal(host.writeRequest({ op: 'pluginAction', args }).result.effects_verified, false);
+});
+
+test('unknown actions and client-selected parameters refuse before resolving any Device', () => {
+  const h = harness();
+  h.component.pluginOf = () => { throw new Error('no Device resolution'); };
+  const base = { plugin: 'Expected', expected_instance: instance.object_uid, action: 'swap_filter_frequencies' };
+  for (const extra of [{ action: 'reset_anything' }, { source: 'dsp' }, { param: 'swapfreqs' },
+    { value: 1 }, { method: 'invoke' }, { path: '/unchecked' }, { plugin: '' }, { expected_instance: '' }])
+    assert.equal(h.component.pluginAction({ ...base, ...extra }).native_outcome, 'not_applied');
+});
+
+test('uncertain or malformed button receipts preserve unknown outcomes without retries', () => {
+  const base = { plugin: 'Expected', expected_instance: instance.object_uid, action: 'swap_filter_frequencies' };
+  for (const field of ['effects_verified', 'verified', 'reset_verified', 'upper_dispatched', 'source', 'action']) {
+    let calls = 0;
+    const h = harness({ getObjectByName() { return native(() => {
+      calls++;
+      const value = actionResult();
+      value[field] = field === 'effects_verified' || field === 'verified' ? true : null;
+      return JSON.stringify(value);
+    }); } });
+    h.device.findParameter = () => { throw new Error('no retry'); };
+    const result = h.component.pluginAction(base);
+    assert.equal(result.native_outcome, 'unknown');
+    assert.equal(result.effects_verified, false);
+    assert.equal(result.reset_verified, false);
+    assert.equal(calls, 1);
+  }
+  const h = harness({ getObjectByName() { return native(() => JSON.stringify({ ok: false, outcome: 'unknown',
+    upper_dispatched: true, reset_dispatched: false, effects_verified: false, error: { message: 'context changed' } })); } });
+  const result = h.component.pluginAction(base);
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.upper_dispatched, true);
+  assert.equal(result.reset_dispatched, false);
+});
+
 test('parameter details preserve finite native facts without inferring model choices', () => {
   let calls = 0;
   const h = harness({ getObjectByName() { return native((target, body) => {

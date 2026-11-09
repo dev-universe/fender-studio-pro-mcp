@@ -77,6 +77,8 @@ pub enum Operation {
     PluginState(PluginState),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
+    #[serde(rename = "pluginAction", alias = "plugin_action")]
+    PluginAction(PluginAction),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -498,6 +500,24 @@ pub enum PluginStateAction {
     Capture,
     Restore,
     Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginAction {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginButtonAction,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginButtonAction {
+    SwapFilterFrequencies,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1098,6 +1118,18 @@ impl Operation {
                     p.track.as_deref(),
                 )?;
             }
+            Self::PluginAction(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+            }
             Self::PluginState(p) => {
                 validate_instance_uid(Some(&p.expected_instance))?;
                 validate_plugin_target(
@@ -1493,6 +1525,35 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn button_actions_accept_only_a_bound_finite_action() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Expander",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"swap_filter_frequencies"});
+        let operation = Operation::from_parts("plugin_action", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().0, "pluginAction");
+        for field in ["source", "param", "value", "method", "path", "token"] {
+            let mut invalid = args.clone();
+            invalid[field] = json!("unchecked");
+            assert!(Operation::from_parts("plugin_action", invalid).is_err());
+        }
+        let mut invalid = args.clone();
+        invalid["action"] = json!("reset_anything");
+        assert!(Operation::from_parts("plugin_action", invalid).is_err());
+        for (field, value) in [("plugin", ""), ("expected_instance", "")] {
+            let mut invalid = args.clone();
+            invalid[field] = json!(value);
+            assert!(
+                Operation::from_parts("plugin_action", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+    }
 
     #[test]
     fn native_details_require_a_bound_target_and_explicit_provider() {

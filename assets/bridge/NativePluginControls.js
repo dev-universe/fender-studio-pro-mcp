@@ -47,10 +47,27 @@ class NativePluginControls {
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
             if (result.ok && request.operation === "set_parameter" && (typeof result.verified !== "boolean" || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object")) throw new Error("native mutation readback unavailable");
+            if (result.ok && request.operation === "parameter_action"
+                && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
+                    || result.verified !== false || result.effects_verified !== false || result.upper_dispatched !== true
+                    || result.reset_dispatched !== true || result.reset_verified !== true
+                    || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object"
+                    || !Array.isArray(result.effect_parameters) || result.effect_parameters.length !== 2
+                    || result.effect_parameters.some(name => typeof name !== "string" || !name || name.length > 512)))
+                throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
-            return { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: { code: "native_request_failed", message: String(error).slice(0, 512) },
+            const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: { code: "native_request_failed", message: String(error).slice(0, 512) },
                 before: parsed && parsed.before, after: parsed && parsed.after, instance: parsed && parsed.instance, source: parsed && parsed.source };
+            if (request.operation === "parameter_action") {
+                failure.action = request.action;
+                failure.effects_verified = false;
+                failure.verified = false;
+                failure.reset_verified = false;
+                for (const phase of ["upper_dispatched", "reset_dispatched"])
+                    if (parsed && typeof parsed[phase] === "boolean") failure[phase] = parsed[phase];
+            }
+            return failure;
         }
     }
 }

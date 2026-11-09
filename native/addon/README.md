@@ -35,6 +35,7 @@ nonzero native object UID returned in a prior response.
 | `format_values` | `param`, required explicit `source` of `dsp` or `controller`, `values` with 1..32 finite numbers, required `expected_instance` |
 | `choices` | `param`, `offset` (default0), `limit` (default64,1..128), `source`, `expected_instance` |
 | `set_parameter` | `param`, `mode`, `value`, `source`, `expected_instance` |
+| `parameter_action` | `action` of `swap_filter_frequencies`, required `expected_instance`; fixed direct DSP source |
 | `state_capture` | required `expected_instance` |
 | `state_restore` | issued `token`, required `expected_instance` |
 | `state_release` | issued `token`, required `expected_instance` |
@@ -93,6 +94,18 @@ The separate `controller` lookup uses the actual Device, its normal component
 alias, or the exact-device External Effect editor resolver. The External editor
 must already be open. The add-on never opens it or matches a device by title,
 selection or first-window position.
+
+`parameter_action` accepts only the source-backed Swap Filter Frequencies button
+on the exact registered Expander, Gate and Compressor classes. The caller cannot
+supply a parameter, value, source or native method. It sends the native button
+sequence of maximum with notification, then minimum without notification. The
+same parameter and its controller association remain pinned through publication.
+The reply reports each dispatch and reset observation separately. Success is
+always `applied_unverified`, with `verified:false` and `effects_verified:false`.
+Independent reads of the two reported `effect_parameters` and the full provider
+must establish the actual swap and any reversal. A lost context, changed binding
+or owner, or failed reset after upper dispatch yields `unknown`; it never retries
+the pulse or completes a reset after an earlier failure.
 
 `parameter_details` observes one named parameter and its bounded original chain.
 The response includes the current `parameter` and `details`, plus

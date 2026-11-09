@@ -9,6 +9,8 @@ use std::{
     ptr::NonNull,
     time::{Duration, Instant},
 };
+#[path = "request/action.rs"]
+mod action;
 #[path = "request/capabilities.rs"]
 mod capabilities;
 #[path = "request/details.rs"]
@@ -114,6 +116,10 @@ enum Request {
         values: Vec<f64>,
         expected_instance: Option<String>,
     },
+    ParameterAction {
+        action: action::Action,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -157,6 +163,7 @@ enum Request {
 impl Request {
     fn source(&self) -> Source {
         match self {
+            Self::ParameterAction { .. } => Source::Dsp,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
             | Self::Choices { source, .. }
@@ -176,6 +183,9 @@ impl Request {
     }
     fn expected(&self) -> Option<&str> {
         match self {
+            Self::ParameterAction {
+                expected_instance, ..
+            } => Some(expected_instance.as_str()),
             Self::Inspect {
                 expected_instance, ..
             }
@@ -1095,7 +1105,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 ),
             };
         }
-        Request::StateCapture { .. }
+        Request::ParameterAction { .. }
+        | Request::StateCapture { .. }
         | Request::StateRestore { .. }
         | Request::StateRelease { .. }
         | Request::Presets { .. }
@@ -1119,6 +1130,7 @@ fn error(code: &str, message: &str, outcome: &str) -> Value {
     json!({"ok":false,"error":{"code":code,"message":message},"outcome":outcome})
 }
 pub(crate) struct ReceiptLease {
+    _action: Option<action::ActionLease>,
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
     _auxiliary: Option<node_inspect::Auxiliary>,
@@ -1128,6 +1140,7 @@ pub(crate) struct ReceiptLease {
 }
 pub(super) struct Reply {
     value: Value,
+    action: Option<action::ActionLease>,
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
     auxiliary: Option<node_inspect::Auxiliary>,
@@ -1140,6 +1153,7 @@ impl Reply {
     pub(super) fn unbound(value: Value) -> Self {
         Self {
             value,
+            action: None,
             presets: None,
             owner: None,
             auxiliary: None,
@@ -1195,7 +1209,20 @@ impl Reply {
                     })
                 })
                 .and_then(|_| self.provider.as_ref().map_or(Ok(()), Provider::check))
-                .and_then(|_| ctx.check()),
+                .and_then(|_| ctx.check())
+                .and_then(|_| {
+                    self.action.as_ref().map_or(Ok(()), |action| {
+                        let provider = self
+                            .provider
+                            .as_ref()
+                            .and_then(Provider::scalar)
+                            .ok_or("action scalar provider unavailable")?;
+                        action.check(provider, &mut || {
+                            provider.check()?;
+                            ctx.check()
+                        })
+                    })
+                }),
             None => {
                 let service = unsafe { &*service };
                 if READY.load(Ordering::Acquire)
@@ -1219,6 +1246,7 @@ impl Reply {
     }
     pub(super) fn take_receipt(&mut self) -> Option<ReceiptLease> {
         self.context.take().map(|context| ReceiptLease {
+            _action: self.action.take(),
             _presets: self.presets.take(),
             _owner: self.owner.take(),
             _auxiliary: self.auxiliary.take(),
@@ -1228,6 +1256,7 @@ impl Reply {
         })
     }
     pub(super) fn release_context(&mut self) {
+        drop(self.action.take());
         drop(self.presets.take());
         drop(self.owner.take());
         drop(self.auxiliary.take());
@@ -1299,7 +1328,10 @@ pub(super) fn dispatch(
     let source = request.source();
     let mutation = matches!(
         request,
-        Request::SetParameter { .. } | Request::StateRestore { .. } | Request::PresetApply { .. }
+        Request::SetParameter { .. }
+            | Request::ParameterAction { .. }
+            | Request::StateRestore { .. }
+            | Request::PresetApply { .. }
     );
     if let Err(reason) = release_previous(&ctx)
         .and_then(|_| state::expire(&ctx))
@@ -1307,6 +1339,7 @@ pub(super) fn dispatch(
     {
         return Reply {
             value: error("context_guard_failed", &reason, "not_applied"),
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,
@@ -1332,6 +1365,7 @@ pub(super) fn dispatch(
         };
         let mut reply = Reply {
             value,
+            action: None,
             presets: None,
             auxiliary,
             owner: None,
@@ -1352,6 +1386,7 @@ pub(super) fn dispatch(
         value["source"] = json!("native_slot_preset_catalog");
         return Reply {
             value,
+            action: None,
             presets: catalog,
             auxiliary: None,
             owner: None,
@@ -1382,6 +1417,7 @@ pub(super) fn dispatch(
         value["source"] = json!("component_alias_storable");
         return Reply {
             value,
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,
@@ -1396,6 +1432,7 @@ pub(super) fn dispatch(
         Request::Parameter { .. }
             | Request::Choices { .. }
             | Request::SetParameter { .. }
+            | Request::ParameterAction { .. }
             | Request::ParameterDetails { .. }
             | Request::FormatValues { .. }
     );
@@ -1407,24 +1444,29 @@ pub(super) fn dispatch(
         } => Some(*node_scope),
         _ => None,
     };
-    let (mut value, provider, owner) = match provider(&ctx, source, scalar) {
+    let (mut value, provider, owner, action) = match provider(&ctx, source, scalar) {
         Ok(provider) => {
-            let (mut value, owner) = match request {
+            let (mut value, owner, action) = match request {
                 Request::ParameterDetails {
                     param,
                     include_owner: true,
                     ..
                 } => match details::inspect_owner(&ctx, &provider, &param) {
-                    Ok(read) => (read.value, Some(read.owner)),
+                    Ok(read) => (read.value, Some(read.owner), None),
                     Err(reason) => (
                         error("parameter_owner_inspection_failed", &reason, "not_applied"),
                         None,
+                        None,
                     ),
                 },
-                request => (execute(&ctx, request, &provider), None),
+                Request::ParameterAction { action, .. } => {
+                    let (value, lease) = action::execute(&ctx, &provider, action);
+                    (value, None, lease)
+                }
+                request => (execute(&ctx, request, &provider), None, None),
             };
             value["source"] = json!(provider.source());
-            (value, Some(provider), owner)
+            (value, Some(provider), owner, action)
         }
         Err(e) => {
             let mut value = error("provider_unavailable", &e, "not_applied");
@@ -1433,7 +1475,7 @@ pub(super) fn dispatch(
                 Source::Controller => json!("controller"),
                 Source::Auto => Value::Null,
             };
-            (value, None, None)
+            (value, None, None, None)
         }
     };
     let nodes = if let Some(scope) = node_scope.filter(|_| value["ok"] == true) {
@@ -1456,6 +1498,7 @@ pub(super) fn dispatch(
     value["instance"] = json!(ctx.instance);
     Reply {
         value,
+        action,
         presets: None,
         auxiliary: None,
         owner,
@@ -2324,6 +2367,7 @@ mod guard_tests {
         retain_receipt(
             fixture.service,
             ReceiptLease {
+                _action: None,
                 _presets: None,
                 _owner: None,
                 _auxiliary: None,
@@ -2354,6 +2398,7 @@ mod guard_tests {
         let context = fixture.context();
         let reply = Reply {
             value: json!({"ok":true,"verified":true,"outcome":"observed","instance":context.instance,"source":"controller"}),
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,
@@ -2393,6 +2438,7 @@ mod guard_tests {
         let report = inspection.value();
         let reply = Reply {
             value: json!({"ok":true,"node_report":report,"instance":context.instance,"source":"dsp"}),
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,
@@ -2430,6 +2476,7 @@ mod guard_tests {
         let inspection = inspection_for(&context);
         let mut reply = Reply {
             value: json!({"ok":true,"instance":context.instance,"source":"dsp"}),
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,
@@ -2461,6 +2508,7 @@ mod guard_tests {
         assert!(report.get("instance").is_none());
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","auxiliary_report":report}),
+            action: None,
             presets: None,
             auxiliary: Some(auxiliary),
             owner: None,
@@ -2489,6 +2537,7 @@ mod guard_tests {
         let auxiliary = inspection_for(&context).into_auxiliary();
         let mut reply = Reply {
             value: json!({"ok":true,"outcome":"observed"}),
+            action: None,
             presets: None,
             auxiliary: Some(auxiliary),
             owner: None,
@@ -2510,6 +2559,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","hash_format_version":"fsp-parameter-digest-v1",
                 "schema_sha256":"a".repeat(64),"all_values_sha256":"b".repeat(64),"non_read_only_values_sha256":"c".repeat(64),"access_complete":true}),
+            action: None,
             presets: None,
             auxiliary: None,
             owner: None,

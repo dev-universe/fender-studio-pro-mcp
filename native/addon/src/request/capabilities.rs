@@ -30,11 +30,18 @@ const PRESET_MANAGER: Uid = Uid {
     c: 0x457c,
     d: [0xac, 0xcd, 0x8b, 0x35, 0xdf, 0xcc, 0xea, 0x9d],
 };
-const INTERFACES: [(&str, &Uid); 4] = [
+const CONTROLLER_PROVIDER: Uid = Uid {
+    a: 0x16ad4d2a,
+    b: 0x9e14,
+    c: 0x42e1,
+    d: [0x9d, 0xa5, 0x72, 0xde, 0x99, 0x2b, 0xf5, 0x16],
+};
+const INTERFACES: [(&str, &Uid); 5] = [
     ("storable", &STORABLE),
     ("preset_mediator", &PRESET_MEDIATOR),
     ("preset_metadata", &PRESET_METADATA),
     ("data_target", &DATA_TARGET),
+    ("controller_provider", &CONTROLLER_PROVIDER),
 ];
 
 fn object(object: *mut c_void) -> Value {
@@ -156,12 +163,13 @@ mod tests {
         assert_eq!(value["preset_metadata"], true);
         assert_eq!(value["preset_mediator"], false);
         assert_eq!(value["data_target"], false);
+        assert_eq!(value["controller_provider"], false);
         assert!(value["identity"].is_null());
         assert!(value["identity_error"].is_string());
         assert_eq!(mock.refs.load(Ordering::Relaxed), 1);
         assert!(mock.queries.borrow().iter().all(|iid| {
             *iid == OBJECT || *iid == NODE || INTERFACES.iter().any(|(_, known)| **known == *iid)
         }));
-        assert_eq!(mock.queries.borrow().len(), 6);
+        assert_eq!(mock.queries.borrow().len(), 7);
     }
 }
