@@ -263,7 +263,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 896 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 1,152 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
@@ -357,8 +357,16 @@ channel, channel groups and AudioMixer to SongEnvironment. The six-node report
 completed within its fixed eight-ancestor bound. No ancestor matched the active
 document model's canonical identity. Two fresh complete Pro EQ projections again
 matched its 199-record schema and every writable value. This establishes the
-read-only parent route; a separate document-to-environment witness is still
-required before whole-folder preset operations can be authorized.
+read-only parent route.
+
+A subsequent native build resolved the fixed active-document controller and its
+Environment child. In the actual host, that retained Environment's canonical
+identity matched the Inserts ancestor chain. The original document-model
+comparison remained false. Pro EQ's complete schema and all writable values
+again matched twice after this separate read-only witness. Whole-folder preset
+operations still require an integrated binding that revalidates these exact
+attachments on every operation; handler discovery and store/load acceptance
+remain separate gates.
 
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
