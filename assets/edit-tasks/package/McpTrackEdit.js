@@ -167,6 +167,8 @@ function mteApply(context, ops) {
 					r.target = { label: op.channel, children: {} };
 					r.graphReflection = mteGraphReflection(channel, graphFunctions);
 					r.contextEditorReflection = mteGraphReflection(channel, context.editor);
+					var insertFolder = mteFn(channel, "find") ? channel.find("Inserts") : null;
+					r.insertFolderReflection = mteGraphReflection(channel, insertFolder);
 					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
 					r.target.pannerParameters = [];
 					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];

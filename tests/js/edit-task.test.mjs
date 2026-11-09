@@ -2,13 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { editTaskHarness, mailbox, musicContext } from './host.mjs';
 
-test('graph probe reflects the fixed factory object and task editor using the observed Device identity', () => {
+test('graph probe reflects only the fixed factory, task editor and actual Inserts folder', () => {
   const task = editTaskHarness('track');
   const device = {}, graphFunctions = {}, contextEditor = {}, calls = [], factoryCalls = [];
   const uid = '12345678-1234-1234-1234-123456789ABC';
-  const channel = { label: 'Fixture', mediaType: 'Audio', find(name) {
-    return name === 'Inserts' ? { find(id) { return id === 'FX01' ? { find(child) { return child === 'Device' ? device : null; } } : null; } } : null;
-  } };
+  const insertFolder = { find(id) { return id === 'FX01' ? { find(child) { return child === 'Device' ? device : null; } } : null; } };
+  const channel = { label: 'Fixture', mediaType: 'Audio', find: name => name === 'Inserts' ? insertFolder : null };
   task.Host.Objects.getObjectByName = (name) => name === 'FenderMcpNative' ? {
     capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1' }),
     request(...args) {
@@ -16,7 +15,7 @@ test('graph probe reflects the fixed factory object and task editor using the ob
       const request = JSON.parse(args[1]);
       return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
         ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: {
-          nodes: [{ identity: null, reflection: { available: true, types: [{ name: args[2] === contextEditor ? 'FixtureEditView' : 'EditFunctions' }] } }],
+          nodes: [{ identity: null, reflection: { available: true, types: [{ name: args[2] === contextEditor ? 'FixtureEditView' : args[2] === insertFolder ? 'FixtureInsertFolder' : 'EditFunctions' }] } }],
         } } : {}) });
     },
   } : null;
@@ -33,7 +32,9 @@ test('graph probe reflects the fixed factory object and task editor using the ob
   assert.equal(result.results[0].contextEditorReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'FixtureEditView');
   assert.equal(result.results[0].contextEditorReflection.auxiliary_report.nodes[0].identity, null);
   assert.equal(result.results[0].graphReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'EditFunctions');
-  assert.equal(calls.length, 4);
+  assert.equal(result.results[0].insertFolderReflection.mutation_capability, false);
+  assert.equal(result.results[0].insertFolderReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'FixtureInsertFolder');
+  assert.equal(calls.length, 6);
   assert.equal(calls[0].length, 2);
   assert.equal(calls[1].length, 3);
   assert.equal(calls[1][0], device);
@@ -46,6 +47,13 @@ test('graph probe reflects the fixed factory object and task editor using the ob
   assert.equal(calls[3][0], device);
   assert.equal(calls[3][2], contextEditor);
   assert.deepEqual(JSON.parse(calls[3][1]), { operation: 'inspect_aux', expected_instance: uid });
+  assert.equal(calls[4].length, 2);
+  assert.equal(calls[4][0], device);
+  assert.deepEqual(JSON.parse(calls[4][1]), { operation: 'inspect' });
+  assert.equal(calls[5].length, 3);
+  assert.equal(calls[5][0], device);
+  assert.equal(calls[5][2], insertFolder);
+  assert.deepEqual(JSON.parse(calls[5][1]), { operation: 'inspect_aux', expected_instance: uid });
   assert.deepEqual(factoryCalls.map(call => call.name), ['DeviceEditFunctions', 'AudioFXGraphEditFunctions']);
   assert.ok(factoryCalls.every(call => call.receiver === context.functions.root && call.argumentCount === 1));
 });
@@ -81,7 +89,7 @@ for (const [label, editorResponse] of [
     assert.equal(row.graphReflection.mutation_capability, false);
     assert.equal(typeof row.contextEditorReflection.error, 'string');
     assert.equal(row.contextEditorReflection.auxiliary_report, undefined);
-    assert.equal(calls.length, 4);
+    assert.equal(calls.length, 6);
     assert.equal(calls[3][2], editor);
   });
 }

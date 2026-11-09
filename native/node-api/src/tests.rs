@@ -13,10 +13,16 @@ struct Interface {
 }
 #[repr(C)]
 struct Mock {
-    interfaces: [Interface; 5],
+    interfaces: [Interface; 8],
     refs: Cell<u32>,
     node_supported: bool,
     object_supported: bool,
+    declared_supported: [bool; 3],
+    declared_queries: Cell<[usize; 3]>,
+    declared_releases: Cell<[usize; 3]>,
+    lose_on_declared_query: Cell<Option<usize>>,
+    lose_on_declared_release: Cell<Option<usize>>,
+    declared_reply: Cell<Option<(usize, i32, bool)>>,
     text: Vec<u16>,
     text_repr: PlainString,
     uid: Uid,
@@ -58,6 +64,19 @@ unsafe extern "C" fn retain(p: *mut c_void) -> u32 {
 unsafe extern "C" fn release(p: *mut c_void) -> u32 {
     let m = unsafe { mock(p) };
     m.refs.set(m.refs.get() - 1);
+    for index in 0..3 {
+        if p == (&m.interfaces[index + 5] as *const Interface)
+            .cast_mut()
+            .cast()
+        {
+            let mut released = m.declared_releases.get();
+            released[index] += 1;
+            m.declared_releases.set(released);
+            if m.lose_on_declared_release.get() == Some(index) {
+                m.lost.set(true);
+            }
+        }
+    }
     if m.fail_on_release.get() {
         m.lost.set(true);
     }
@@ -66,12 +85,46 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
 unsafe extern "C" fn query(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) -> i32 {
     let m = unsafe { mock(p) };
     let iid = unsafe { *iid };
+    let declared = DECLARED_INTERFACE_IIDS
+        .iter()
+        .position(|known| *known == iid);
+    if let Some(index) = declared {
+        let mut queried = m.declared_queries.get();
+        queried[index] += 1;
+        m.declared_queries.set(queried);
+        if m.lose_on_declared_query.get() == Some(index) {
+            m.lost.set(true);
+        }
+        if let Some((at, status, nonnull)) = m.declared_reply.get() {
+            if at == index {
+                unsafe { *out = std::ptr::null_mut() };
+                if nonnull {
+                    if status == 0 {
+                        let raw = (&m.interfaces[index + 5] as *const Interface)
+                            .cast_mut()
+                            .cast();
+                        unsafe {
+                            retain(raw);
+                            *out = raw;
+                        }
+                    } else {
+                        // Failure has no ownership contract: this must never be
+                        // adopted, retained, released or otherwise dereferenced.
+                        unsafe { *out = std::ptr::dangling_mut::<c_void>() };
+                    }
+                }
+                return status;
+            }
+        }
+    }
     let slot = if iid == ffi::UNKNOWN {
         Some(0)
     } else if iid == ffi::NODE && m.node_supported {
         Some(1)
     } else if iid == ffi::OBJECT && m.object_supported {
         Some(2)
+    } else if let Some(index) = declared {
+        m.declared_supported[index].then_some(index + 5)
     } else {
         None
     };
@@ -83,6 +136,8 @@ unsafe extern "C" fn query(p: *mut c_void, iid: *const Uid, out: *mut *mut c_voi
             *out = raw;
         }
         0
+    } else if declared.is_some() {
+        0x80004002u32 as i32 // SDK kResultNoInterface.
     } else {
         -1
     }
@@ -189,11 +244,11 @@ unsafe extern "C" fn constant(text: *const c_char) -> *const c_void {
 }
 
 struct Tables {
-    values: [[*const c_void; 11]; 5],
+    values: [[*const c_void; 11]; 8],
 }
 impl Tables {
     fn new() -> Self {
-        let mut values = [[std::ptr::null(); 11]; 5];
+        let mut values = [[std::ptr::null(); 11]; 8];
         for table in &mut values {
             table[0] = query as *const c_void;
             table[1] = retain as *const c_void;
@@ -227,6 +282,12 @@ impl Tables {
             refs: Cell::new(1),
             node_supported: true,
             object_supported: true,
+            declared_supported: [false; 3],
+            declared_queries: Cell::new([0; 3]),
+            declared_releases: Cell::new([0; 3]),
+            lose_on_declared_query: Cell::new(None),
+            lose_on_declared_release: Cell::new(None),
+            declared_reply: Cell::new(None),
             text: id.encode_utf16().collect(),
             text_repr: PlainString {
                 object: std::ptr::null_mut(),
@@ -325,6 +386,205 @@ fn inventories_native_identity_and_reflected_signatures_without_class_uid() {
     assert_eq!(root.refs.get(), 1);
     drop(api);
     assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn fixed_interface_observations_are_per_canonical_node_and_release_query_owners() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    root.declared_supported = [true, false, true];
+    let mut child = tables.object("Presets");
+    child.declared_supported = [false, true, false];
+    root.children.borrow_mut().push(&mut *child);
+    root.delegates
+        .borrow_mut()
+        .insert("Presets".into(), &mut *child);
+    let api = inspector(&mut root);
+    let result = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    assert_eq!(result.nodes.len(), 2);
+    assert_eq!(
+        result.nodes[0].declared_interfaces,
+        Some(DeclaredInterfaces {
+            preset_collector: true,
+            preset_mediator: false,
+            storable: true,
+        })
+    );
+    assert_eq!(
+        result.nodes[1].declared_interfaces,
+        Some(DeclaredInterfaces {
+            preset_collector: false,
+            preset_mediator: true,
+            storable: false,
+        })
+    );
+    assert_eq!(root.declared_queries.get(), [1, 1, 1]);
+    assert_eq!(child.declared_queries.get(), [1, 1, 1]);
+    assert_eq!(root.declared_releases.get(), [1, 0, 1]);
+    assert_eq!(child.declared_releases.get(), [0, 1, 0]);
+    assert!(
+        result.nodes[0]
+            .identity
+            .as_ref()
+            .unwrap()
+            .class_uid
+            .is_none()
+    );
+    drop(result);
+    assert_eq!(root.refs.get(), 1);
+    assert_eq!(child.refs.get(), 1);
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn interface_queries_do_not_require_node_object_or_class_uid_metadata() {
+    let tables = Tables::new();
+    let mut root = tables.object("UnknownCompatible");
+    root.node_supported = false;
+    root.object_supported = false;
+    root.declared_supported = [true; 3];
+    let api = inspector(&mut root);
+    let result = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    assert!(result.nodes[0].identity.is_none());
+    assert!(!result.nodes[0].reflection.available);
+    assert_eq!(
+        result.nodes[0].declared_interfaces,
+        Some(DeclaredInterfaces {
+            preset_collector: true,
+            preset_mediator: true,
+            storable: true,
+        })
+    );
+    assert_eq!(root.declared_releases.get(), [1; 3]);
+    drop(result);
+    assert_eq!(root.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn guard_loss_during_each_declared_query_cannot_publish_partial_presence() {
+    for index in 0..3 {
+        let tables = Tables::new();
+        let mut root = tables.object("Inserts");
+        root.declared_supported = [true; 3];
+        root.lose_on_declared_query.set(Some(index));
+        let lost = root.lost.clone();
+        let api = inspector(&mut root);
+        assert!(matches!(
+            api.inspect(minimal(), &mut || if lost.get() {
+                Err("query reentry detached target".into())
+            } else {
+                Ok(())
+            }),
+            Err(Error::Guard(_))
+        ));
+        assert_eq!(root.declared_releases.get()[index], 1);
+        assert_eq!(root.refs.get(), 1);
+        drop(api);
+    }
+}
+
+#[test]
+fn guard_loss_during_each_temporary_interface_release_cannot_publish_presence() {
+    for index in 0..3 {
+        let tables = Tables::new();
+        let mut root = tables.object("Inserts");
+        root.declared_supported = [true; 3];
+        root.lose_on_declared_release.set(Some(index));
+        let lost = root.lost.clone();
+        let api = inspector(&mut root);
+        assert!(matches!(
+            api.inspect(minimal(), &mut || if lost.get() {
+                Err("release reentry detached target".into())
+            } else {
+                Ok(())
+            }),
+            Err(Error::Guard(_))
+        ));
+        assert_eq!(root.declared_releases.get()[index], 1);
+        assert_eq!(root.refs.get(), 1);
+        drop(api);
+    }
+}
+
+#[test]
+fn indeterminate_declared_queries_abort_without_publishing_false_absence() {
+    let unknown = 0x80004005u32 as i32; // SDK kResultFailed, not no-interface.
+    let no_interface = 0x80004002u32 as i32;
+    for (status, nonnull) in [
+        (unknown, false),
+        (unknown, true),
+        (-1, true),
+        (1, false),
+        (0, false),
+        (no_interface, true),
+    ] {
+        for at in 0..3 {
+            let tables = Tables::new();
+            let mut root = tables.object("Inserts");
+            root.declared_supported = [true; 3];
+            root.declared_reply.set(Some((at, status, nonnull)));
+            let api = inspector(&mut root);
+            let result = api.inspect(minimal(), &mut || Ok(()));
+            assert!(
+                matches!(result, Err(Error::InvalidData(_))),
+                "status={status:#x}, nonnull={nonnull}, position={at} must be unobserved/error"
+            );
+            let mut expected_queries = [0; 3];
+            expected_queries[..=at].fill(1);
+            assert_eq!(root.declared_queries.get(), expected_queries);
+            let mut expected_releases = [0; 3];
+            expected_releases[..at].fill(1);
+            expected_releases[at] = usize::from(status == 0 && nonnull);
+            assert_eq!(root.declared_releases.get(), expected_releases);
+            assert_eq!(root.refs.get(), 1);
+            drop(api);
+        }
+    }
+}
+
+#[test]
+fn malformed_query_context_drift_is_checked_without_dereferencing_output() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    root.declared_reply.set(Some((0, -1, true)));
+    root.lose_on_declared_query.set(Some(0));
+    let lost = root.lost.clone();
+    let api = inspector(&mut root);
+    assert!(matches!(
+        api.inspect(minimal(), &mut || if lost.get() {
+            Err("malformed query detached target".into())
+        } else {
+            Ok(())
+        }),
+        Err(Error::Guard(_))
+    ));
+    assert_eq!(root.declared_queries.get(), [1, 0, 0]);
+    assert_eq!(root.declared_releases.get(), [0, 0, 0]);
+    assert_eq!(root.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn documented_no_interface_and_null_is_a_completed_negative_observation() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let api = inspector(&mut root);
+    let result = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    assert_eq!(
+        result.nodes[0].declared_interfaces,
+        Some(DeclaredInterfaces {
+            preset_collector: false,
+            preset_mediator: false,
+            storable: false,
+        })
+    );
+    assert_eq!(root.declared_queries.get(), [1; 3]);
+    assert_eq!(root.declared_releases.get(), [0; 3]);
+    drop(result);
+    assert_eq!(root.refs.get(), 1);
+    drop(api);
 }
 #[test]
 fn children_and_fixed_delegates_share_one_canonical_record() {

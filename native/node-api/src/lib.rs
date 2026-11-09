@@ -22,6 +22,30 @@ const MAX_TYPE_DEPTH: usize = 16;
 const MAX_METHODS: usize = 256;
 const MAX_PROPERTIES: usize = 256;
 
+// Declared by the pinned CCL 5.1.2 ipreset.h and istorage.h. No caller IID input.
+const PRESET_COLLECTOR_IID: Uid = Uid {
+    a: 0x30802b95,
+    b: 0x7bce,
+    c: 0x481d,
+    d: [0xa1, 0x38, 0x4b, 0xd0, 0x65, 0x1c, 0x71, 0xbb],
+};
+const PRESET_MEDIATOR_IID: Uid = Uid {
+    a: 0x25e340af,
+    b: 0xd6e6,
+    c: 0x49cf,
+    d: [0xb2, 0x58, 0x87, 0x47, 0x6e, 0x4a, 0x27, 0x3a],
+};
+const STORABLE_IID: Uid = Uid {
+    a: 0xb131b242,
+    b: 0xbff4,
+    c: 0x446f,
+    d: [0x96, 0xe4, 0xec, 0x19, 0xdf, 0xad, 0x11, 0xe6],
+};
+const DECLARED_INTERFACE_IIDS: [Uid; 3] = [PRESET_COLLECTOR_IID, PRESET_MEDIATOR_IID, STORABLE_IID];
+// IUnknown's documented QI outcomes, pinned against the SDK declarations.
+const QI_RESULT_OK: i32 = 0x00000000;
+const QI_RESULT_NO_INTERFACE: i32 = 0x80004002u32 as i32;
+
 #[derive(Clone, Copy)]
 pub struct TextApi {
     pub get_constant_string: unsafe extern "C" fn(*const c_char) -> *const c_void,
@@ -178,12 +202,26 @@ pub struct TypeInventory {
     pub types: Vec<TypeInfo>,
     pub issues: Vec<MetadataIssue>,
 }
+/// Completed, read-only QI observations, not permission to invoke an interface.
+///
+/// A false field means the query returned the documented no-interface status
+/// with a null output. Unknown or malformed results abort the inspection. This
+/// is not an exhaustive catalog,
+/// a continuous capability guarantee, or authority for a later mutation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DeclaredInterfaces {
+    pub preset_collector: bool,
+    pub preset_mediator: bool,
+    pub storable: bool,
+}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NodeRecord {
     pub index: usize,
     pub identity: Option<NodeIdentity>,
     pub child_count: Option<u32>,
     pub reflection: TypeInventory,
+    /// None means unobserved, never an implied set of three negative results.
+    pub declared_interfaces: Option<DeclaredInterfaces>,
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Diagnostic {
@@ -387,6 +425,40 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             return Err(error);
         }
         Ok(result)
+    }
+    fn declared_interfaces(&mut self, raw: *mut c_void) -> Result<DeclaredInterfaces, Error> {
+        let mut observed = [false; 3];
+        for (present, iid) in observed.iter_mut().zip(&DECLARED_INTERFACE_IIDS) {
+            self.check()?;
+            let query: unsafe extern "C" fn(*mut c_void, *const Uid, *mut *mut c_void) -> i32 =
+                unsafe { ffi::method(raw, 0) };
+            let mut pointer = std::ptr::null_mut();
+            let status = unsafe { query(raw, iid, &mut pointer) };
+            // Only a documented successful QI transfers an owned reference.
+            // A failed call's malformed nonnull output may be an invalid sentinel;
+            // never adopt, dereference, retain, release or export that pointer.
+            let owner = if status == QI_RESULT_OK {
+                NonNull::new(pointer).map(|pointer| unsafe { Owned::take(pointer) })
+            } else {
+                None
+            };
+            let after_query = self.check();
+            // Successful QI owners cannot escape or authorize a method call.
+            // Release can reenter, so it must precede the fresh context check.
+            drop(owner);
+            self.check()?;
+            after_query?;
+            *present = match (status, pointer.is_null()) {
+                (QI_RESULT_OK, false) => true,
+                (QI_RESULT_NO_INTERFACE, true) => false,
+                _ => return Err(Error::InvalidData("indeterminate declared interface query")),
+            };
+        }
+        Ok(DeclaredInterfaces {
+            preset_collector: observed[0],
+            preset_mediator: observed[1],
+            storable: observed[2],
+        })
     }
     fn charge(&mut self, text: &str) -> Result<(), Error> {
         self.budget.bytes = self
@@ -675,6 +747,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             .map(|raw| self.child_count(raw))
             .transpose()?;
         let reflection = self.reflection(object.raw())?;
+        let declared_interfaces = Some(self.declared_interfaces(object.raw())?);
         let index = self.pins.len();
         self.seen.insert(canonical.raw() as usize, index);
         self.pins.push(Pin {
@@ -687,6 +760,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             identity,
             child_count,
             reflection,
+            declared_interfaces,
         });
         Ok(Some(index))
     }

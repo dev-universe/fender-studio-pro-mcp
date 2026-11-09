@@ -354,6 +354,11 @@ pub(super) fn report(report: &Report, scope: Scope) -> Value {
             "index":node.index,
             "identity":node.identity.as_ref().map(|identity|json!({"id":identity.id,"object_uid":identity.object_uid,"class_uid":identity.class_uid})),
             "child_count":node.child_count,
+            "declared_interfaces":node.declared_interfaces.as_ref().map(|observed|json!({
+                "preset_collector":observed.preset_collector,
+                "preset_mediator":observed.preset_mediator,
+                "storable":observed.storable,
+            })),
             "reflection":{
                 "available":node.reflection.available,
                 "types":node.reflection.types.iter().map(|info|json!({
@@ -637,7 +642,7 @@ mod tests {
 
     #[test]
     fn bounded_node_report_keeps_missing_class_ids_and_partial_metadata_explicit() {
-        let source = Report {
+        let mut source = Report {
             nodes: vec![NodeRecord {
                 index: 0,
                 identity: Some(NodeIdentity {
@@ -646,6 +651,7 @@ mod tests {
                     class_uid: None,
                 }),
                 child_count: Some(2),
+                declared_interfaces: None,
                 reflection: TypeInventory {
                     available: true,
                     types: vec![TypeInfo {
@@ -683,6 +689,7 @@ mod tests {
         assert_eq!(value["complete"], false);
         assert_eq!(value["limits"]["nodes"], 48);
         assert!(value["nodes"][0]["identity"]["class_uid"].is_null());
+        assert!(value["nodes"][0]["declared_interfaces"].is_null());
         assert_eq!(
             value["nodes"][0]["reflection"]["types"][0]["methods"][0]["arguments"],
             "value"
@@ -695,6 +702,15 @@ mod tests {
         assert_eq!(
             value["diagnostics"][0],
             json!({"kind":"node_cycle","from":0,"to":0})
+        );
+        source.nodes[0].declared_interfaces = Some(fender_native_node_api::DeclaredInterfaces {
+            preset_collector: true,
+            preset_mediator: false,
+            storable: true,
+        });
+        assert_eq!(
+            report(&source, Scope::Target)["nodes"][0]["declared_interfaces"],
+            json!({"preset_collector":true,"preset_mediator":false,"storable":true})
         );
     }
 }

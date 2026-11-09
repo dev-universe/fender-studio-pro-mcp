@@ -6,7 +6,8 @@ if len(sys.argv) != 2:
     raise SystemExit("Usage: check_abi.py /path/to/compiled-arm64.s")
 assembly = Path(sys.argv[1]).read_text()
 expected = {
-    "query": 0, "retain": 8, "release": 16, "object_type": 24,
+    "query": 0, "query_preset_collector": 0, "query_preset_mediator": 0,
+    "query_storable": 0, "retain": 8, "release": 16, "object_type": 24,
     "type_parent": 24, "type_flags": 32, "type_name": 40,
     "type_namespace": 48, "type_id": 56, "type_methods": 64,
     "type_properties": 72, "node_id": 24, "node_uid": 32,
@@ -27,4 +28,9 @@ for name, offset in expected.items():
         raise SystemExit(f"ABI offset mismatch for {name}: {offsets} != {offset}")
 if "CCLGetConstantString" not in functions["constant_string"]:
     raise SystemExit("Unexpected public constant String export ABI")
+for name, interface in {"query_preset_collector": "IPresetCollector",
+                        "query_preset_mediator": "IPresetMediator",
+                        "query_storable": "IStorable"}.items():
+    if interface not in functions[name]:
+        raise SystemExit(f"Compiler query uses an unexpected interface IID: {name}")
 print(f"PASS: {len(expected)} exact CCL5.1.2 virtual calls, reflection/UID/String layouts and reference export")

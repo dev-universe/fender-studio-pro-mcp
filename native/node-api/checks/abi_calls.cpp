@@ -5,7 +5,12 @@
 #include "ccl/public/base/iobjectnode.h"
 #include "ccl/public/text/istring.h"
 #include "ccl/public/textservices.h"
+#include "ccl/public/app/ipreset.h"
+#include "ccl/public/storage/istorage.h"
 static_assert(sizeof(CCL::UIDBytes)==16 && alignof(CCL::UIDBytes)==4);
+static_assert(sizeof(CCL::tresult)==4);
+static_assert(static_cast<unsigned>(CCL::kResultOk)==0x00000000u);
+static_assert(static_cast<unsigned>(CCL::kResultNoInterface)==0x80004002u);
 static_assert(sizeof(CCL::PlainString)==16 && alignof(CCL::PlainString)==8);
 static_assert(sizeof(CCL::DataType)==4 && sizeof(CCL::tbool)==1);
 static_assert(sizeof(CCL::ITypeInfo::MethodDefinition)==24 && alignof(CCL::ITypeInfo::MethodDefinition)==8);
@@ -14,6 +19,9 @@ static_assert(sizeof(CCL::ITypeInfo::PropertyDefinition)==32 && alignof(CCL::ITy
 static_assert(offsetof(CCL::ITypeInfo::PropertyDefinition,name)==0 && offsetof(CCL::ITypeInfo::PropertyDefinition,type)==8 && offsetof(CCL::ITypeInfo::PropertyDefinition,typeName)==16 && offsetof(CCL::ITypeInfo::PropertyDefinition,typeInfo)==24);
 static_assert(std::is_same_v<CCL::StringRef,const CCL::String&>);
 extern "C" CCL::tresult abi_query(CCL::IUnknown* p,const CCL::UIDBytes* iid,void** out){return p->queryInterface(*iid,out);}
+extern "C" CCL::tresult abi_query_preset_collector(CCL::IUnknown* p,void** out){return p->queryInterface(CCL::ccl_iid<CCL::IPresetCollector>(),out);}
+extern "C" CCL::tresult abi_query_preset_mediator(CCL::IUnknown* p,void** out){return p->queryInterface(CCL::ccl_iid<CCL::IPresetMediator>(),out);}
+extern "C" CCL::tresult abi_query_storable(CCL::IUnknown* p,void** out){return p->queryInterface(CCL::ccl_iid<CCL::IStorable>(),out);}
 extern "C" unsigned abi_retain(CCL::IUnknown* p){return p->retain();}
 extern "C" unsigned abi_release(CCL::IUnknown* p){return p->release();}
 extern "C" const CCL::ITypeInfo* abi_object_type(CCL::IObject* p){return &p->getTypeInfo();}

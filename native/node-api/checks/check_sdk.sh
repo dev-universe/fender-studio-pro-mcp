@@ -7,6 +7,7 @@ fi
 checks_root="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 sdk_root="$(CDPATH= cd -- "$1" && pwd)"
 python3 "$checks_root/verify_sdk.py" "$sdk_root"
+python3 "$checks_root/check_declared_iids.py" "$sdk_root"
 check_tmp="$(mktemp -d "${TMPDIR:-/tmp}/fender-node-abi.XXXXXX")"
 trap 'rm -rf "$check_tmp"' EXIT HUP INT TERM
 clang++ -std=c++20 -arch arm64 -I"$sdk_root" -Werror -Wno-return-type-c-linkage \
