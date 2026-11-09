@@ -77,6 +77,8 @@ pub enum Operation {
     PluginEditorOpen(PluginEditor),
     #[serde(rename = "pluginState", alias = "plugin_state")]
     PluginState(PluginState),
+    #[serde(rename = "insertChainState", alias = "insert_chain_state")]
+    InsertChainState(InsertChainState),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
@@ -537,6 +539,35 @@ pub struct PluginState {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PluginStateAction {
+    Capture,
+    Restore,
+    Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertChainState {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub action: InsertChainStateAction,
+    #[serde(default, deserialize_with = "supplied_optional_string")]
+    #[schemars(with = "String")]
+    pub token: Option<String>,
+    #[serde(default, deserialize_with = "supplied_optional_string")]
+    #[schemars(with = "String")]
+    pub expected_folder: Option<String>,
+}
+
+fn supplied_optional_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    String::deserialize(deserializer).map(Some)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum InsertChainStateAction {
     Capture,
     Restore,
     Release,
@@ -1195,6 +1226,47 @@ impl Operation {
                     _ => {
                         return Err(invalid(
                             "Capture takes no token; restore and release require an issued state token",
+                        ));
+                    }
+                }
+            }
+            Self::InsertChainState(p) => {
+                if p.channel.trim().is_empty()
+                    || p.channel.encode_utf16().count() > 256
+                    || p.channel.chars().any(char::is_control)
+                {
+                    return Err(invalid(
+                        "Insert-chain channel must contain 1 to 256 UTF-16 units without control characters",
+                    ));
+                }
+                if p.expected_folder.as_ref().is_some_and(|uid| {
+                    uid.len() != 36
+                        || uid == "00000000-0000-0000-0000-000000000000"
+                        || uid.bytes().enumerate().any(|(index, byte)| {
+                            if [8, 13, 18, 23].contains(&index) {
+                                byte != b'-'
+                            } else {
+                                !byte.is_ascii_digit() && !(b'A'..=b'F').contains(&byte)
+                            }
+                        })
+                }) {
+                    return Err(invalid(
+                        "expected_folder must be a canonical nonzero uppercase native UUID",
+                    ));
+                }
+                let issued_token = p.token.as_ref().is_some_and(|token| {
+                    token.len() == 64
+                        && token
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+                });
+                match p.action {
+                    InsertChainStateAction::Capture if p.token.is_none() => {}
+                    InsertChainStateAction::Restore | InsertChainStateAction::Release
+                        if issued_token => {}
+                    _ => {
+                        return Err(invalid(
+                            "Capture forbids a token; restore and release require an issued uppercase 64-hex token",
                         ));
                     }
                 }
@@ -2155,6 +2227,65 @@ mod tests {
             let mut args = base.clone();
             args[field] = json!("untrusted");
             assert!(Operation::from_parts("plugin_state", args).is_err());
+        }
+    }
+
+    #[test]
+    fn insert_chain_state_has_its_own_finite_folder_lifecycle_contract() {
+        let token = "ABCDEF0123456789".repeat(4);
+        let folder = "12345678-1234-1234-1234-123456789ABC";
+        for action in ["capture", "restore", "release"] {
+            let mut args = json!({"channel":"Scratch","action":action,"expected_folder":folder});
+            if action != "capture" {
+                args["token"] = json!(token);
+            }
+            let operation = Operation::from_parts("insert_chain_state", args.clone()).unwrap();
+            assert!(operation.validate().is_ok());
+            assert!(!operation.is_read_only());
+            assert_eq!(operation.wire(), ("insertChainState".into(), args));
+        }
+        for extra in [
+            json!({"channel":""}),
+            json!({"channel":"x".repeat(257)}),
+            json!({"channel":"🎸".repeat(129)}),
+            json!({"channel":"bad\nchannel"}),
+            json!({"expected_folder":"00000000-0000-0000-0000-000000000000"}),
+            json!({"expected_folder":folder.to_lowercase()}),
+            json!({"expected_folder":"foreign"}),
+            json!({"token":token}),
+            json!({"token":null}),
+            json!({"expected_folder":null}),
+            json!({"action":"restore"}),
+            json!({"action":"release","token":"a".repeat(64)}),
+            json!({"action":"release","token":"A".repeat(63)}),
+            json!({"action":"load"}),
+        ] {
+            let mut args = json!({"channel":"Scratch","action":"capture"});
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("insert_chain_state", args)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+        for field in [
+            "slot",
+            "plugin",
+            "kind",
+            "expected_instance",
+            "path",
+            "url",
+            "bytes",
+            "xml",
+            "script",
+            "bridge_session",
+            "document_epoch",
+        ] {
+            let mut args = json!({"channel":"Scratch","action":"capture"});
+            args[field] = json!("untrusted");
+            assert!(Operation::from_parts("insert_chain_state", args).is_err());
         }
     }
 

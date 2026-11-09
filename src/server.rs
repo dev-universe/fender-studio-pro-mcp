@@ -195,6 +195,12 @@ impl McpServer {
                 "Capture, restore or release a bounded in-memory plugin state using the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
+            named::<InsertChainState>(
+                "insert_chain_state",
+                "insertChainState",
+                "Capture, restore or release the whole Inserts folder of one exact mixer channel with the matching native extension. Every action requires expected_document. Capture issues a private opaque token; restore and release require that same token. Optional expected_folder pins its native folder UUID. A successful load remains applied_unverified and requires independent graph and per-part parameter/model readback. No caller file path, URL, bytes or plugin slot is accepted.",
+                true,
+            ),
             named::<PluginPresets>(
                 "plugin_presets",
                 "pluginPresets",
@@ -407,6 +413,7 @@ mod tests {
             "plugin_editor_open",
             "plugin_presets",
             "plugin_action",
+            "insert_chain_state",
             "panner_set",
             "splitter_set",
         ] {
@@ -420,7 +427,44 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 38);
+        assert_eq!(specs.len(), 39);
+    }
+
+    #[test]
+    fn insert_chain_state_requires_document_and_a_separate_folder_payload() {
+        let specs = McpServer::specs();
+        let spec = specs
+            .iter()
+            .find(|spec| spec.tool.name == "insert_chain_state")
+            .unwrap();
+        assert_eq!(spec.operation, Some("insertChainState"));
+        let required = spec.tool.input_schema["required"].as_array().unwrap();
+        for field in ["channel", "action", "expected_document"] {
+            assert!(required.contains(&json!(field)));
+        }
+        for field in ["token", "expected_folder"] {
+            assert!(!required.contains(&json!(field)));
+            assert_eq!(
+                spec.tool.input_schema["properties"][field]["type"],
+                json!("string")
+            );
+        }
+        assert_eq!(spec.tool.input_schema["additionalProperties"], json!(false));
+        for field in [
+            "plugin",
+            "slot",
+            "kind",
+            "expected_instance",
+            "path",
+            "url",
+            "bytes",
+            "xml",
+            "script",
+            "bridge_session",
+            "document_epoch",
+        ] {
+            assert!(spec.tool.input_schema["properties"].get(field).is_none());
+        }
     }
 
     #[test]

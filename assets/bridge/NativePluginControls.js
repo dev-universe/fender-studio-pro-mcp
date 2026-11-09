@@ -61,6 +61,100 @@ class NativePluginControls {
             && result.all_flat_rows_observed === (complete && result.offset === 0 && end === result.count);
     }
 
+    insertChainUid(value) {
+        return typeof value === "string" && /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(value)
+            && value !== "00000000-0000-0000-0000-000000000000";
+    }
+
+    insertChainArguments(args) {
+        return args && typeof args === "object" && !Array.isArray(args)
+            && Object.keys(args).every(key => ["channel", "action", "token", "expected_folder"].indexOf(key) >= 0)
+            && typeof args.channel === "string" && !!args.channel.trim() && args.channel.length <= 256
+            && !/[\x00-\x1f\x7f-\x9f]/.test(args.channel)
+            && ["capture", "restore", "release"].indexOf(args.action) >= 0
+            && (args.action === "capture" ? !Object.prototype.hasOwnProperty.call(args, "token")
+                : typeof args.token === "string" && /^[0-9A-F]{64}$/.test(args.token))
+            && (args.expected_folder === undefined || this.insertChainUid(args.expected_folder));
+    }
+
+    insertChainResult(result, args) {
+        const exact = (value, fields) => value && typeof value === "object" && !Array.isArray(value)
+            && Object.keys(value).length === fields.length && fields.every(key => Object.prototype.hasOwnProperty.call(value, key));
+        const integer = (value, min, max) => typeof value === "number" && isFinite(value)
+            && Math.floor(value) === value && value >= min && value <= max;
+        if (!result.ok)
+            return exact(result, ["ok", "outcome", "error"]) && result.ok === false
+                && ["not_applied", "unknown"].indexOf(result.outcome) >= 0
+                && exact(result.error, ["code", "message"]) && typeof result.error.code === "string"
+                && /^[a-zA-Z0-9_]{1,64}$/.test(result.error.code)
+                && typeof result.error.message === "string" && result.error.message.length <= 512;
+        const common = ["ok", "outcome", "scope", "format", "version", "folder", "verified", "effects_verified", "atomic_snapshot", "token"];
+        const fields = args.action === "release" ? ["released"] : ["byte_count", "sha256", "part_count"];
+        if (args.action === "restore") fields.push("load_accepted");
+        return exact(result, common.concat(fields)) && result.ok === true
+            && result.outcome === (args.action === "capture" ? "observed" : "applied_unverified")
+            && result.scope === "insert_chain_state" && result.format === "host_multipreset_v1" && result.version === 1
+            && result.verified === false && result.effects_verified === false && result.atomic_snapshot === false
+            && exact(result.folder, ["object_uid", "class_uid", "native_class", "object_id"])
+            && this.insertChainUid(result.folder.object_uid)
+            && (result.folder.class_uid === null || this.insertChainUid(result.folder.class_uid))
+            && result.folder.native_class === "AudioInsertFolder" && result.folder.object_id === "Inserts"
+            && (args.expected_folder === undefined || result.folder.object_uid === args.expected_folder)
+            && typeof result.token === "string" && /^[0-9A-F]{64}$/.test(result.token)
+            && (args.action === "capture" || result.token === args.token)
+            && (args.action === "release" ? result.released === true
+                : integer(result.byte_count, 1, 16777216) && integer(result.part_count, 0, 128)
+                    && typeof result.sha256 === "string" && /^[0-9A-Fa-f]{64}$/.test(result.sha256)
+                    && (args.action !== "restore" || result.load_accepted === true));
+    }
+
+    insertChainRequest(args) {
+        let dispatched = false;
+        const failure = outcome => ({ ok: false, outcome: outcome, error: {
+            code: "native_insert_chain_failed", message: "The guarded native insert-chain request did not complete" } });
+        try {
+            if (!this.insertChainArguments(args)) return failure("not_applied");
+            const bridge = this.component.bridge;
+            const before = bridge && bridge.requestContext;
+            const finite = value => typeof value === "string" && value.length > 0 && value.length <= 128
+                && !/[\x00-\x1f\x7f-\x9f]/.test(value);
+            if (!before || !finite(before.session) || !finite(before.document) || !this.sameContext(before)
+                || typeof bridge.mixerChannel !== "function") return failure("not_applied");
+            const channel = bridge.mixerChannel(args.channel);
+            if (!this.sameContext(before) || !channel || channel.bridgeError !== undefined
+                || typeof channel.find !== "function") return failure("not_applied");
+            const folder = channel.find("Inserts");
+            if (!this.sameContext(before) || !folder || typeof folder !== "object") return failure("not_applied");
+            if (typeof Host === "undefined" || !Host.Objects) return failure("not_applied");
+            const objects = Host.Objects;
+            let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
+            if (!this.sameContext(before)) return failure("not_applied");
+            if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
+            if (!this.sameContext(before) || !service || typeof service.capabilities !== "function"
+                || typeof service.request !== "function") return failure("not_applied");
+            const capability = this.parse(service.capabilities());
+            if (!this.sameContext(before) || !capability.ok || capability.api !== "fender-mcp-native-v1"
+                || capability.insert_chain_api !== "guarded_folder_collection_v1") return failure("not_applied");
+            const request = { operation: "insert_chain_" + args.action, bridge_session: before.session, document_epoch: before.document };
+            if (args.expected_folder !== undefined) request.expected_folder = args.expected_folder;
+            if (args.action !== "capture") request.token = args.token;
+            let auxiliary;
+            if (args.action === "capture") {
+                if (typeof Host.Url !== "function") return failure("not_applied");
+                auxiliary = Host.Url("");
+                if (!auxiliary || typeof auxiliary !== "object") return failure("not_applied");
+            }
+            if (!this.sameContext(before)) return failure("not_applied");
+            const body = JSON.stringify(request);
+            dispatched = true;
+            const result = this.parse(args.action === "capture" ? service.request(folder, body, auxiliary) : service.request(folder, body));
+            if (!this.sameContext(before) || !this.insertChainResult(result, args)) return failure("unknown");
+            return result.ok ? result : failure(result.outcome);
+        } catch (_) {
+            return failure(dispatched ? "unknown" : "not_applied");
+        }
+    }
+
     request(device, request, auxiliary) {
         let dispatched = false;
         let parsed = null;

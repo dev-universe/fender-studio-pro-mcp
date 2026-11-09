@@ -147,6 +147,13 @@ class Bridge {
         }
         this.requestContext = null;
         const afterContext = this.context();
+        if (!isFail(result) && req.op === "insertChainState"
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, outcome: outcome, native_outcome: outcome,
+                error: { code: "insert_chain_context_changed", message: "The insert-chain document lease changed before publication" } };
+        }
         if (!isFail(result) && req.op === "pluginInspect" && req.args && req.args.include_context === true
             && (!result.fixture_context || !result.fixture_context.after
                 || !sameFixtureContext(result.fixture_context.after.context, afterContext)))
@@ -239,6 +246,7 @@ class Bridge {
             case "pluginInspect": return this.pluginInspect(args);
             case "pluginEditorOpen": return this.fromComponent(c => c.pluginEditorOpen(args));
             case "pluginState": return this.fromComponent(c => c.pluginState(args));
+            case "insertChainState": return this.fromComponent(c => c.insertChainState(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
