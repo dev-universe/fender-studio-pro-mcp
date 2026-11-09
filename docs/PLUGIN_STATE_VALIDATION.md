@@ -263,7 +263,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 1,920 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 2,048 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
@@ -363,16 +363,37 @@ A subsequent native build resolved the fixed active-document controller and its
 Environment child. In the actual host, that retained Environment's canonical
 identity matched the Inserts ancestor chain. The original document-model
 comparison remained false. Pro EQ's complete schema and all writable values
-again matched twice after this separate read-only witness. Whole-folder preset
-operations still require an integrated binding that revalidates these exact
-attachments on every operation; handler discovery and store/load acceptance
-remain separate gates.
+again matched twice after this separate read-only witness.
+
+Native20 then passed the fixed Inserts preset preflight in the actual host.
+The exact Device/slot/folder/channel attachments and current document Environment
+witness were observed together with the actual target handler. Its flags were
+3, and its retained metadata identified FX Chains, Fender and FXChain. The
+folder object UID was present and its optional class UID absent. Pro EQ's 199
+records again matched the original schema and all writable values twice.
+This preflight performed no whole-folder file capture or restore; those calls
+and independent graph restoration remain separate acceptance gates.
 
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
 original typed records and schema afterward. This establishes the formatter
 route, without claiming that the selector-to-core-pitch binding or learning
 model restoration has been verified.
+Two subsequent learning pilots, including one with the normal editor visibly
+open, stopped after enabling Learn mode: the fresh selector stayed at the valid
+formatted sentinel row zero. The verifier had incorrectly required automatic
+selection of a non-sentinel row. Neither pilot dispatched a learning-bit setter
+or state load; their scratch changes were discarded. A minimal verifier fix
+accepts the formatter-bound sentinel and retains the explicit key selection,
+model-status and full restoration requirements. Its live acceptance is pending.
+
+A separate Impact focus-alias pilot observed stable, equal Float32 normalized
+values but different exact Float64 raw projections for a generic test value.
+Only the focus cutoff and its selected pad peer changed; both complete original
+projections matched after the one original-alias restore. The original strict
+alias equality gate therefore failed. A scoped verifier correction chooses an
+exactly representable binary fraction for this cutoff profile and preserves
+that equality gate. Fresh live binding acceptance remains pending.
 
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
