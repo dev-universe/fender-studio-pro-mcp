@@ -4,6 +4,19 @@ This follow-up extends the [previous 60-class validation](VALIDATION.md). It is
 still in progress. Current-provider enumeration and representative controls do
 not establish complete model, preset, nested-graph or writable-parameter coverage.
 
+| Area | Actual host evidence | Remaining scope |
+|---|---|---|
+| Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
+| Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
+| Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
+| Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
+| Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
+| Impact | 2,560 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
+| Nested graph | 42 Splitter controls and inner/sibling state restoration | Whole-folder capture/load and topology editing |
+
+Each completed live unit is counted only after its final full-provider
+restoration checkpoint. In-progress cases and offline source tests are excluded.
+
 ## Actual 8.1.1 observations
 
 The tests use Fender Studio Pro 8.1.1 Build 113103 on macOS arm64, one stopped
@@ -263,7 +276,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 2,048 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 2,560 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
