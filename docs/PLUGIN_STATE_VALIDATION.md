@@ -216,6 +216,15 @@ required two complete fresh native writable-projection matches and independent
 public-page checkpoints. Two Scope trigger controls and two Level Meter reset
 controls were explicitly withheld from these scalar cases.
 
+The subsequent Note FX direct-digest sweeps passed 257 selected controls:
+Input Filter (4), Chorder (5), Arpeggiator (107) and Repeater (141). The latter
+two include their persistent GUI page selectors and every currently exposed
+writable field on those two fixtures. Every candidate required exact captured
+value restoration and two complete writable-projection matches before advancing.
+Independent full public pages bracketed each fixture. The 256 keyboard note-event
+carriers and 135 Chorder learning, audition and command controls remain separate
+workflows; these results do not establish their event or chord-state behavior.
+
 The finite-model verifier passed all current choices for Fat Channel's EQ and
 compressor selectors and Voice FX's selector: three baseline choices were
 observed, and nine other choices were changed and restored. Every choice reused
