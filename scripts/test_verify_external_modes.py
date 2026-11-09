@@ -18,7 +18,8 @@ from verify_external_modes import CLASSES, ExternalModeRunner, main
 
 
 class ExternalClient(DigestSweepClient):
-    def __init__(self, plugin="External Effect Mono", availability=True, offset=0, math_mode=0, zoom=0):
+    def __init__(self, plugin="External Effect Mono", availability=True, offset=0, math_mode=0, zoom=0,
+                 device_name="기본 라벨", device_notes="연주 메모 🎸"):
         parameters = [number(name, value, "Toggle", lower=0, upper=1)
                       for name, value in (("pingMode", 0), ("scopeMode", 0), ("showImage", 1))]
         parameters += [number("latencyOffset", offset, "Integer", lower=-32000, upper=32000),
@@ -37,7 +38,18 @@ class ExternalClient(DigestSweepClient):
             parameter = number(name, value, "Toggle", lower=0, upper=1)
             parameter.update(tag=tag, default=0, support={key: True for key in ("raw", "normalized", "text")})
             parameters.append(parameter)
-        parameters += [number("other" + str(index), 0.25) for index in range(14)]
+        for name, tag, text in (("deviceName", 100, device_name), ("deviceNotes", 101, device_notes)):
+            parameters.append({"name": name, "tag": tag, "title": name, "native_kind": "String",
+                               "value": text, "text": text, "default": "", "min": 0, "max": 0,
+                               "normalized": None, "enabled": True, "writable": True, "readOnly": False,
+                               "display_parser": "LiteralString", "support": {"raw": False, "normalized": False, "text": True},
+                               "native_support": {"raw_number": False, "normalized": False, "display_text": True},
+                               "native_normalized": {"kind": "not_applicable"},
+                               "native_value": {"variant_tag": 19, "data": {"kind": "text", "value": text}},
+                               "native_default": {"variant_tag": 19, "data": {"kind": "text", "value": ""}},
+                               "native_min": {"variant_tag": 1, "data": {"kind": "integer", "value": 0}},
+                               "native_max": {"variant_tag": 1, "data": {"kind": "integer", "value": 0}}})
+        parameters += [number("other" + str(index), 0.25) for index in range(12)]
         super().__init__(parameters)
         self.target = {**TARGET, "plugin": plugin}
         self.live_class = CLASSES[plugin]
@@ -53,6 +65,14 @@ class ExternalClient(DigestSweepClient):
 
     def indexed(self, parameter, index):
         return {**self.description(parameter), "index": index}
+
+    def description(self, parameter):
+        if parameter.get("native_kind") == "String":
+            result = copy.deepcopy(parameter)
+            result.pop("native", None)
+            result.pop("index", None)
+            return result
+        return super().description(parameter)
 
     def find(self, name):
         return next(p for p in self.parameters if p["name"] == name)
@@ -87,6 +107,8 @@ class ExternalClient(DigestSweepClient):
             self.calls.append((name, copy.deepcopy(args)))
             self.writes.append(copy.deepcopy(args))
             name, value = args["param"], args.get("value")
+            if "text" in args:
+                value = args["text"]
             if "float_bits" in args:
                 value = decode_float_bits(args["float_bits"])
             before = self.description(self.find(name))
@@ -112,6 +134,11 @@ class ExternalClient(DigestSweepClient):
                     self.update(name, value)
                     self.update("latencyOffset", 7)
                     self.update("latencyTotal", 0.75)
+                elif name in ("deviceName", "deviceNotes"):
+                    assert "text" in args and "value" not in args and "float_bits" not in args
+                    mode = None
+                    self.find(name).update(value=value, text=value,
+                                           native_value={"variant_tag": 19, "data": {"kind": "text", "value": value}})
                 else:
                     raise AssertionError("Forbidden write: " + name)
                 if mode is not None:
@@ -138,6 +165,11 @@ class ExternalClient(DigestSweepClient):
                 self.update("pingMode", 0)
             elif fault == "schema":
                 self.find("other0")["default"] = 0.75
+            elif fault == "literal_wrong_value":
+                self.find(name).update(value="다른 문자열", text="다른 문자열",
+                                       native_value={"variant_tag": 19, "data": {"kind": "text", "value": "다른 문자열"}})
+            elif fault == "literal_bad_display":
+                self.find(name)["text"] = "다른 표시"
             elif fault == "document":
                 self.document = "test:2"
             elif fault == "session":
@@ -255,6 +287,186 @@ class ExternalModeTests(unittest.TestCase):
                 self.assertFalse(runner.summary["audio_emission_verified"])
                 self.assertFalse(runner.summary["all_writable_parameters_verified"])
                 self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_two_literal_roles_restore_all_classes_and_availability_profiles_with_text_only_writes(self):
+        for index, (plugin, enabled) in enumerate((name, enabled) for name in CLASSES for enabled in (True, False)):
+            with self.subTest(plugin=plugin, enabled=enabled):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-" + str(index)))
+                client = ExternalClient(plugin, availability=enabled)
+                originals = {name: client.find(name)["value"] for name in ("deviceName", "deviceNotes")}
+                runner = self.runner(client)
+                row = runner.run_literals(client.target)
+                self.assertEqual(row["status"], "two_disconnected_literals_verified")
+                self.assertEqual([case["parameter"] for case in row["cases"]], ["deviceName", "deviceNotes"])
+                self.assertEqual([(write["param"], write["text"]) for write in client.writes], [
+                    ("deviceName", originals["deviceName"] + " MCP 검증"), ("deviceName", originals["deviceName"]),
+                    ("deviceNotes", originals["deviceNotes"] + " MCP 검증"), ("deviceNotes", originals["deviceNotes"])])
+                self.assertTrue(all(not {"value", "float_bits", "normalized"} & set(write) for write in client.writes))
+                self.assertEqual(len([event for event in self.events("external_mode_observation") if event["stage"] == "literal-changed"]), 4)
+                self.assertEqual(len([event for event in self.events("external_baseline_comparison")
+                                      if event["stage"] == "literal-restored" and event["full_baseline_equal"]]), 4)
+                self.assertEqual(len(list(self.journal.baselines.glob("*.json"))), 1)
+                self.assertEqual(runner.finish(), 0)
+                self.assertFalse(runner.summary["all_writable_parameters_verified"])
+                self.assertFalse(runner.summary["global_settings_safety_verified"])
+                self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_literals_count_supplementary_unicode_as_two_utf16_units_at_the_exact_limit(self):
+        text = "한" * 4087 + "🎸"
+        client = ExternalClient(device_name=text, device_notes="")
+        row = self.runner(client).run_literals(client.target)
+        self.assertEqual(row["status"], "two_disconnected_literals_verified")
+        self.assertEqual(len(client.writes[0]["text"].encode("utf-16-le")) // 2, 4096)
+        self.assertEqual(client.writes[1]["text"], text)
+        self.assertEqual(client.writes[3]["text"], "")
+
+    def test_literal_oversize_or_invalid_unicode_is_refused_before_either_role_writes(self):
+        for index, text in enumerate(("한" * 4090, "한" * 4097, "bad\ud800", "bad\0text")):
+            with self.subTest(index=index):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-size-" + str(index)))
+                client = ExternalClient(device_notes=text)
+                with self.assertRaises(AcceptanceFailure):
+                    self.runner(client).run_literals(client.target)
+                self.assertEqual(client.writes, [])
+
+    def test_literal_wrong_tag_kind_carrier_flags_parser_bounds_or_default_never_write(self):
+        faults = (("tag", 0), ("tag", 101), ("native_kind", "Integer"), ("display_parser", "PlainNumeric"),
+                  ("enabled", False), ("writable", False), ("readOnly", True),
+                  ("native_value", {"variant_tag": 3, "data": {"kind": "text", "value": "기본 라벨"}}),
+                  ("native_default", {"variant_tag": 3, "data": {"kind": "text", "value": ""}}),
+                  ("native_default", {"variant_tag": 19, "data": {"kind": "text", "value": "nonempty"}}),
+                  ("native_min", {"variant_tag": 2, "data": {"kind": "float", "value": 0.0, "bits_hex": "0000000000000000"}}),
+                  ("max", 1), ("default", "other"),
+                  ("support", {"raw": True, "normalized": False, "text": True}),
+                  ("native_support", {"raw_number": False, "normalized": True, "display_text": True}))
+        for index, (field, value) in enumerate(faults):
+            with self.subTest(field=field, value=value):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-shape-" + str(index)))
+                client = ExternalClient()
+                client.find("deviceName")[field] = copy.deepcopy(value)
+                with self.assertRaises(AcceptanceFailure):
+                    self.runner(client).run_literals(client.target)
+                self.assertEqual(client.writes, [])
+
+    def test_literal_unknown_at_each_change_and_restore_stops_without_next_write(self):
+        for index, (step, fault) in enumerate(((1, "unknown"), (2, "timeout"), (3, "nested_unknown"), (4, "unknown"),
+                                               (1, "missing_outcome"), (2, "nested_malformed"))):
+            with self.subTest(step=step, fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-unknown-" + str(index)))
+                client = ExternalClient()
+                client.faults[step] = fault
+                with self.assertRaises(UnknownMutation):
+                    self.runner(client).run_literals(client.target)
+                self.assertEqual(len(client.writes), step)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_literal_context_loss_or_mode_profile_drift_gets_no_restoration_write(self):
+        for index, fault in enumerate(("document", "session", "instance", "schema", "mode_drift", "wrong_availability")):
+            with self.subTest(fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-context-" + str(index)))
+                client = ExternalClient()
+                client.faults[1] = fault
+                with self.assertRaises(ContextChanged):
+                    self.runner(client).run_literals(client.target)
+                self.assertEqual(len(client.writes), 1)
+
+    def test_literal_unobserved_read_after_change_cannot_trigger_restore(self):
+        client = ExternalClient()
+        def unknown(client, receipt):
+            if client.writes:
+                receipt["outcome"] = {}
+        client.read_fault = unknown
+        with self.assertRaises(UnknownMutation):
+            self.runner(client).run_literals(client.target)
+        self.assertEqual(len(client.writes), 1)
+
+    def test_literal_known_failed_text_or_display_gets_one_captured_restore_then_stops(self):
+        for index, fault in enumerate(("ignore", "literal_wrong_value", "literal_bad_display", "refuse")):
+            with self.subTest(fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-readback-" + str(index)))
+                client = ExternalClient()
+                original = client.find("deviceName")["value"]
+                client.faults[1] = fault
+                runner = self.runner(client)
+                with self.assertRaises(AcceptanceFailure):
+                    runner.run_literals(client.target)
+                self.assertEqual(len(client.writes), 2)
+                self.assertEqual(client.writes[1]["text"], original)
+                self.assertEqual(runner.summary["fixtures"][0]["cases"][0]["status"], "literal_unconfirmed_restored")
+                self.assertEqual(runner.counts["literal_changed_readback_restored"], 0)
+                self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_literal_unrelated_raw_normalized_display_or_latency_change_cannot_be_restored_or_excluded(self):
+        for index, fault in enumerate(("extra_raw", "extra_normalized", "extra_text", "latency")):
+            with self.subTest(fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-peer-" + str(index)))
+                client = ExternalClient()
+                if fault == "latency":
+                    def latency(client, _):
+                        if len(client.writes) == 1:
+                            client.update("latencyTotal", 0.75)
+                    client.read_fault = latency
+                else:
+                    client.faults[1] = fault
+                runner = self.runner(client)
+                with self.assertRaises(RestorationFailure):
+                    runner.run_literals(client.target)
+                self.assertEqual([write["param"] for write in client.writes], ["deviceName", "deviceName"])
+                self.assertEqual(runner.counts["literal_changed_readback_restored"], 0)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+                self.assertEqual(len(list(self.journal.baselines.glob("*.json"))), 1)
+
+    def test_literal_ignored_or_refused_restore_never_retries_or_advances(self):
+        for index, fault in enumerate(("ignore", "refuse", "false_after", "literal_bad_display")):
+            with self.subTest(fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("literal-restore-" + str(index)))
+                client = ExternalClient()
+                client.faults[2] = fault
+                with self.assertRaises(AcceptanceFailure):
+                    self.runner(client).run_literals(client.target)
+                self.assertEqual(len(client.writes), 2)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_literal_restore_requires_fresh_empty_choices_and_captured_image_mode(self):
+        client = ExternalClient()
+        def connected(client, page):
+            if len(client.writes) == 1:
+                page.update(reported_count=1, choices=[{"index": 0, "text": "route"}])
+        client.choice_fault = connected
+        with self.assertRaises(AcceptanceFailure):
+            self.runner(client).run_literals(client.target)
+        self.assertEqual(len(client.writes), 1)
+
+    def test_literals_do_not_replay_or_mix_into_numeric_or_mode_workflows(self):
+        client = ExternalClient()
+        runner = self.runner(client)
+        runner.run_literals(client.target)
+        writes = len(client.writes)
+        for run in (runner.run_literals, runner.run_controls, runner.run_fixture):
+            with self.assertRaises(AcceptanceFailure):
+                run(client.target)
+        self.assertEqual(len(client.writes), writes)
+
+    def test_literal_sender_is_not_a_generic_string_or_path_url_script_state_writer(self):
+        client = ExternalClient()
+        runner = self.runner(client)
+        baseline = runner.snapshot(client.target)
+        expected = runner.projection(baseline)
+        for name, desired in (("ms", "unit"), ("samples", "unit"), ("deviceName", "/tmp/example"),
+                              ("deviceName", "https://example.invalid"), ("deviceNotes", "<script>test</script>"),
+                              ("deviceNotes", '{"state_bytes":"example"}')):
+            with self.subTest(name=name, desired=desired):
+                with self.assertRaises(AcceptanceFailure):
+                    runner.dispatch_literal(baseline, expected, "unsupported", name, desired, "LiteralChange")
+        self.assertEqual(client.writes, [])
 
     def test_controls_choose_adjacent_integer_at_offset_bounds_and_invert_captured_on_toggles(self):
         for offset, desired in ((-32000, -31999), (32000, 31999)):
@@ -792,6 +1004,25 @@ class ExternalModeTests(unittest.TestCase):
         self.assertEqual(summary["mode"], "disconnected_external_controls")
         self.assertFalse(summary["all_writable_parameters_verified"])
         self.assertFalse(summary["audio_emission_verified"])
+
+    def test_cli_literals_send_only_the_two_fixed_text_roles(self):
+        client = ExternalClient()
+        fixtures = Path(self.temporary.name) / "fixtures-literals.json"
+        fixtures.write_text(json.dumps([client.target]))
+        binary = Path(self.temporary.name) / "binary-literals"
+        binary.write_bytes(b"synthetic")
+        output = Path(self.temporary.name) / "cli-literals"
+        with patch("verify_external_modes.McpClient", return_value=client), patch("verify_external_modes.time.sleep"), \
+                redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.assertEqual(main(["--fixtures", str(fixtures), "--scratch-title", "MCP Validation Scratch",
+                                   "--binary", str(binary), "--output-dir", str(output),
+                                   "--plugin", "External Effect Mono", "--run-literals"]), 0)
+        self.assertTrue(client.closed)
+        self.assertEqual([write["param"] for write in client.writes], ["deviceName", "deviceName", "deviceNotes", "deviceNotes"])
+        summary = json.loads((output / "progress.json").read_text())
+        self.assertEqual(summary["mode"], "disconnected_external_literals")
+        self.assertFalse(summary["all_writable_parameters_verified"])
+        self.assertFalse(summary["global_settings_safety_verified"])
 
 
 if __name__ == "__main__":

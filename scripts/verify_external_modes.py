@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify fixed External Effect modes or coupled controls in disconnected fixtures.
+"""Verify fixed External Effect modes, coupled controls or literal annotations.
 
 This checks exposed state, not physical ping emission or hardware calibration.
 Each case restores the original complete typed projection before the next case.
@@ -65,6 +65,13 @@ CONTROL_SPECS = {
     "mathMode": ControlSpec(114, "Toggle", 0, 1),
     "zoomOut": ControlSpec(115, "Toggle", 0, 1),
 }
+LITERAL_TAGS = {"deviceName": 100, "deviceNotes": 101}
+LITERAL_SUFFIX = " MCP 검증"
+WORKFLOW_STATUSES = {
+    "disconnected_external_modes": ("six_disconnected_mode_transitions_verified", "disconnected_external_modes_verified", "external_modes_not_verified"),
+    "disconnected_external_controls": ("three_disconnected_controls_verified", "disconnected_external_controls_verified", "external_controls_not_verified"),
+    "disconnected_external_literals": ("two_disconnected_literals_verified", "disconnected_external_literals_verified", "external_literals_not_verified"),
+}
 
 
 CASES = (
@@ -93,6 +100,17 @@ def numeric_write(parameter, desired):
     return {"float_bits": bits}, (tag, kind, bits)
 
 
+def literal_units(value):
+    require(isinstance(value, str) and "\0" not in value, "External annotation must be literal Unicode text without NUL")
+    try:
+        units = len(value.encode("utf-16-le")) // 2
+        value.encode("utf-8")
+    except UnicodeError as error:
+        raise AcceptanceFailure("External annotation has malformed Unicode") from error
+    require(units <= 4096, "External annotation exceeds the4096 UTF-16 unit bound")
+    return units
+
+
 class ExternalModeRunner(Runner):
     def __init__(self, client, journal, scratch_title, settle_interval=0.15):
         require(type(settle_interval) in (int, float) and math.isfinite(settle_interval)
@@ -104,6 +122,7 @@ class ExternalModeRunner(Runner):
                             restoration="conditional_captured_availability_then_image_then_conditional_offset",
                             all_writable_parameters_verified=False,
                             hardware_route_verified=False, hardware_calibration_verified=False,
+                            global_settings_safety_verified=False,
                             audio_emission_verified=False, opaque_contents_verified=False,
                             atomic_snapshot=False, settle_attempts=SETTLE_ATTEMPTS)
 
@@ -279,6 +298,99 @@ class ExternalModeRunner(Runner):
                 raise ContextChanged("Coordinated External control bounds or default changed")
         return parameter
 
+    def literal_parameter(self, provider, name):
+        require(name in LITERAL_TAGS, "Only deviceName and deviceNotes are authorized literal roles")
+        matches = [p for p in provider.records if p["name"] == name]
+        if len(matches) != 1:
+            raise ContextChanged("External literal role is unavailable")
+        parameter = matches[0]
+        value = parameter.get("value")
+        literal_units(value)
+        literal_units(parameter.get("text"))
+        if not (parameter.get("native_kind") == "String" and type(parameter.get("tag")) is int
+                and parameter["tag"] == LITERAL_TAGS[name] and parameter.get("display_parser") == "LiteralString"
+                and parameter.get("enabled") is True and parameter.get("writable") is True and parameter.get("readOnly") is False
+                and parameter.get("default") == ""
+                and encoded(parameter.get("native_default")) == encoded({"variant_tag": 19, "data": {"kind": "text", "value": ""}})
+                and encoded(parameter.get("native_value")) == encoded({"variant_tag": 19, "data": {"kind": "text", "value": value}})
+                and parameter.get("normalized") is None
+                and encoded(parameter.get("native_normalized")) == encoded({"kind": "not_applicable"})
+                and encoded(parameter.get("support")) == encoded({"raw": False, "normalized": False, "text": True})
+                and encoded(parameter.get("native_support")) == encoded({"raw_number": False, "normalized": False, "display_text": True})):
+            raise ContextChanged("External literal role lost its exact String carrier, parser or text-only capability")
+        for key in ("min", "max"):
+            if not (type(parameter.get(key)) is int and parameter[key] == 0
+                    and encoded(parameter.get("native_" + key)) == encoded({"variant_tag": 1, "data": {"kind": "integer", "value": 0}})):
+                raise ContextChanged("External literal bounds changed")
+        return parameter
+
+    def literal_candidate(self, parameter):
+        value = parameter["value"] + LITERAL_SUFFIX
+        literal_units(value)
+        return value
+
+    def observe_literal(self, baseline, expected, transaction, stage, attempt):
+        current, projected = self.observe(baseline, expected, transaction, stage, attempt)
+        if projected["schema_sha256"] != expected["schema_sha256"]:
+            raise ContextChanged("External literal operation requires the complete captured metadata schema")
+        if self.mode({p["name"]: p for p in current.records}) is not Mode.IMAGE:
+            raise ContextChanged("External literal operation requires the captured Image mode")
+        return current, projected
+
+    def dispatch_literal(self, baseline, expected, transaction, name, desired, phase):
+        require(phase in ("LiteralChange", "LiteralRestore"), "Use one fixed literal change or captured restoration")
+        original = self.literal_parameter(baseline, name)
+        require(desired == (self.literal_candidate(original) if phase == "LiteralChange" else original["value"]),
+                "Literal write must be the fixed suffix candidate or the captured original text")
+        literal_units(desired)
+        current, projected = self.observe_literal(baseline, expected, transaction, "guard-" + phase, 1)
+        self.empty_choices(baseline)
+        parameter = self.literal_parameter(current, name)
+        if phase == "LiteralChange" and projected["all_values_sha256"] != expected["all_values_sha256"]:
+            raise ContextChanged("External literal change requires the original full baseline at dispatch")
+        self.phase(transaction, phase + "InFlight", parameter=name)
+        self.counts["mutation_attempts"] += 1
+        receipt = self.write(baseline, parameter, {"text": desired})
+        result = receipt.get("result")
+        require(isinstance(result, dict), "External literal setter lacks its native receipt")
+        if result.get("instance") != baseline.instance or result.get("source") != baseline.source:
+            raise ContextChanged("External literal setter resolved a different native provider")
+        require(receipt.get("outcome") in ("applied_verified", "applied_unverified") and not receipt.get("error")
+                and result.get("param") == name, "External literal write was not accepted for its fixed role")
+        after = result.get("after")
+        identity = (19, "text", desired)
+        require(isinstance(after, dict) and parameter_schema(after) == parameter_schema(parameter)
+                and value_identity(after) == identity and after.get("text") == desired,
+                "External literal setter did not establish its exact requested text and display")
+        self.phase(transaction, phase + "Accepted", parameter=name)
+        return identity
+
+    def confirm_literal(self, baseline, expected, transaction, name, identity):
+        originals = {p["name"]: p for p in baseline.records}
+        for attempt in (1, 2):
+            if attempt == 2 and self.settle_interval:
+                time.sleep(self.settle_interval)
+            current, _ = self.observe_literal(baseline, expected, transaction, "literal-changed", attempt)
+            parameter = self.literal_parameter(current, name)
+            require(value_identity(parameter) == identity and parameter["text"] == identity[2],
+                    "Independent literal readback did not match exact requested text and display")
+            require(all(observation(p) == observation(originals[p["name"]]) for p in current.records if p["name"] != name),
+                    "External literal write changed an unrelated exposed value")
+
+    def restore_literal(self, baseline, expected, transaction, name):
+        original = self.literal_parameter(baseline, name)
+        self.dispatch_literal(baseline, expected, transaction, name, original["value"], "LiteralRestore")
+        for attempt in (1, 2):
+            if attempt == 2 and self.settle_interval:
+                time.sleep(self.settle_interval)
+            _, projected = self.observe_literal(baseline, expected, transaction, "literal-restored", attempt)
+            equal = (projected["schema_sha256"] == expected["schema_sha256"]
+                     and projected["all_values_sha256"] == expected["all_values_sha256"])
+            self.journal.append("external_baseline_comparison", transaction=transaction, stage="literal-restored",
+                                attempt=attempt, full_baseline_equal=equal, consecutive_matches=attempt if equal else 0)
+            if not equal:
+                raise RestorationFailure("External literal restoration did not match the complete original typed baseline")
+
     def observe(self, baseline, expected, transaction, stage, attempt):
         self.fixture_check(baseline.target)
         current = self.snapshot(baseline.target, baseline)
@@ -437,11 +549,12 @@ class ExternalModeRunner(Runner):
         require(len(self.summary["fixtures"]) < len(CLASSES)
                 and all(row["plugin"] != target["plugin"] for row in self.summary["fixtures"]),
                 "Each registered External fixture may run only once")
-        require(all(row["status"] in ("six_disconnected_mode_transitions_verified", "three_disconnected_controls_verified")
+        require(all(row["status"] in {statuses[0] for statuses in WORKFLOW_STATUSES.values()}
                     for row in self.summary["fixtures"]),
                 "An incomplete External fixture stops the run; use a fresh guarded scratch run")
         require(not self.summary["fixtures"] or self.summary["mode"] == workflow,
                 "Use a fresh run for each fixed External workflow")
+        require(workflow in WORKFLOW_STATUSES, "Use one of the three fixed External workflows")
         self.summary["mode"] = workflow
         target = dict(target)
         self.fixture_check(target)
@@ -463,6 +576,11 @@ class ExternalModeRunner(Runner):
         if workflow == "disconnected_external_controls":
             for name in CONTROL_SPECS:
                 self.control_parameter(baseline, name)
+        if workflow == "disconnected_external_literals":
+            for name in LITERAL_TAGS:
+                parameter = self.literal_parameter(baseline, name)
+                require(parameter["text"] == parameter["value"], "Captured literal display must equal its exact text value")
+                self.literal_candidate(parameter)
         self.empty_choices(baseline)
         fixture_index = len(self.summary["fixtures"])
         reference = self.journal.baseline("external-" + str(fixture_index), baseline.serialized())
@@ -595,13 +713,70 @@ class ExternalModeRunner(Runner):
         self.progress()
         return row
 
+    def run_literals(self, target):
+        baseline, expected, row, fixture_index, reference = self.prepare_fixture(target, "disconnected_external_literals")
+        for index, name in enumerate(LITERAL_TAGS):
+            original = self.literal_parameter(baseline, name)
+            desired = self.literal_candidate(original)
+            transaction = f"external-literal-{fixture_index}-{index}"
+            result = {"parameter": name, "status": "prepared", "complete_provider_projection_restored": False}
+            row["cases"].append(result)
+            self.phase(transaction, "Prepared", baseline=reference, case=index, parameter=name)
+            mutation_count = self.counts["mutation_attempts"]
+            restoring = False
+            try:
+                self.confirm_baseline(baseline, expected, transaction, "before-case")
+                identity = self.dispatch_literal(baseline, expected, transaction, name, desired, "LiteralChange")
+                self.confirm_literal(baseline, expected, transaction, name, identity)
+                result["literal_verified"] = True
+                self.phase(transaction, "ChangedReadbackConfirmed", consecutive_full_reads=2)
+                restoring = True
+                self.restore_literal(baseline, expected, transaction, name)
+            except (UnknownMutation, ContextChanged):
+                result["status"] = "unknown_or_context_changed"
+                self.phase(transaction, "UnknownAfterDispatch" if self.counts["mutation_attempts"] > mutation_count else "FailedBeforeDispatch")
+                row["status"] = "failed"
+                self.progress()
+                raise
+            except Exception as error:
+                wrote = self.counts["mutation_attempts"] > mutation_count
+                result["status"] = "restoration_failed" if restoring else "literal_unconfirmed"
+                if wrote and not restoring:
+                    try:
+                        restoring = True
+                        self.restore_literal(baseline, expected, transaction, name)
+                    except (UnknownMutation, ContextChanged):
+                        self.phase(transaction, "UnknownAfterDispatch")
+                        row["status"] = "failed"
+                        self.progress()
+                        raise
+                    except Exception as restore_error:
+                        self.phase(transaction, "RestorationFailed", error_type=type(restore_error).__name__)
+                        row["status"] = "failed"
+                        self.progress()
+                        raise RestorationFailure("Single captured External literal restoration failed; no retry is permitted") from restore_error
+                    result.update(status="literal_unconfirmed_restored", complete_provider_projection_restored=True)
+                    self.phase(transaction, "StateConfirmed", literal_verified=False, complete_provider_projection_restored=True)
+                else:
+                    self.phase(transaction, "RestorationFailed" if wrote else "FailedBeforeDispatch")
+                row["status"] = "failed"
+                self.progress()
+                raise error
+            result.update(status="literal_changed_readback_restored", complete_provider_projection_restored=True,
+                          consecutive_changed_reads=2, consecutive_restored_reads=2)
+            self.phase(transaction, "StateConfirmed", literal_verified=True, complete_provider_projection_restored=True)
+            self.counts["literal_changed_readback_restored"] += 1
+            self.journal.append("external_literal_case_result", **result)
+            self.progress()
+        row["status"] = "two_disconnected_literals_verified"
+        self.progress()
+        return row
+
     def finish(self):
-        controls = self.summary["mode"] == "disconnected_external_controls"
-        status = "three_disconnected_controls_verified" if controls else "six_disconnected_mode_transitions_verified"
+        status, success, failure = WORKFLOW_STATUSES[self.summary["mode"]]
         verified = bool(self.summary["fixtures"]) and all(row["status"] == status
                                                        for row in self.summary["fixtures"])
-        self.summary.update(status=("disconnected_external_controls_verified" if controls else "disconnected_external_modes_verified")
-                            if verified else ("external_controls_not_verified" if controls else "external_modes_not_verified"),
+        self.summary.update(status=success if verified else failure,
                             completed_at=utc_now())
         self.progress()
         self.journal.append("run_completed", summary=self.summary)
@@ -617,6 +792,7 @@ def main(argv=None):
     workflow = parser.add_mutually_exclusive_group(required=True)
     workflow.add_argument("--run-modes", action="store_true")
     workflow.add_argument("--run-controls", action="store_true")
+    workflow.add_argument("--run-literals", action="store_true")
     parser.add_argument("--output-dir", default=".local/live/external-modes-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--pause", action="store_true")
     args = parser.parse_args(argv)
@@ -632,7 +808,8 @@ def main(argv=None):
     client = runner = None
     try:
         binary = Path(args.binary).resolve()
-        journal.append("run_started", schema=1, mode="disconnected_external_controls" if args.run_controls else "disconnected_external_modes",
+        mode = "disconnected_external_literals" if args.run_literals else ("disconnected_external_controls" if args.run_controls else "disconnected_external_modes")
+        journal.append("run_started", schema=1, mode=mode,
                        binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(), plugins=plugins)
         client = McpClient([str(binary), "serve"], timeout=45)
         print("MCP owner ready", flush=True)
@@ -641,7 +818,9 @@ def main(argv=None):
         runner = ExternalModeRunner(client, journal, args.scratch_title)
         runner.initialize()
         for target in targets:
-            if args.run_controls:
+            if args.run_literals:
+                runner.run_literals(target)
+            elif args.run_controls:
                 runner.run_controls(target)
             else:
                 runner.run_fixture(target)

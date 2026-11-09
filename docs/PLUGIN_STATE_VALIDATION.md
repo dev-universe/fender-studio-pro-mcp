@@ -176,6 +176,19 @@ permitted temporary metadata change is that exact button's consistent all-on
 or all-off availability group. Unrelated metadata drift still stops the run.
 These 12 cases establish the tested disconnected transitions, not physical
 routing, ping emission or hardware latency calibration.
+The separate coordinated-control run then passed `latencyOffset`, `mathMode`
+and `zoomOut` on both Mono and Stereo, six further cases. Each own value changed
+in two complete fresh reads and returned to the exact original full 24-record
+projection twice after finite captured-value restoration. These runs made no
+derived-total, port, calibration or state-stream writes. Physical ping behavior
+and audible effects remain outside these disconnected observations.
+
+A subsequent ordinary-control run passed all 18 selected candidates across
+Mono and Stereo: eight numeric controls and the literal notes field on each.
+Every direct restoration required two fresh complete native writable-projection
+matches, with complete public pages bracketing each fixture. The overall run
+remains partial because coupled modes, dedicated roles and unsupported fields
+are handled separately; it does not certify every writable External record.
 
 The stronger Surround Panner direct check stopped after five confirmed cases:
 restoring `soloLfe` itself left `sendLfe` and two speaker-mute values changed.
@@ -280,6 +293,13 @@ release and released-token list refusal each required two complete typed
 provider matches, six observations per fixture. Console Shaper also passed two
 issued preset recalls with changed writable values and full restoration. No
 panner preset recall is inferred from an empty current catalog.
+The catalog-only verifier subsequently passed 59 class fixtures: 44 ordinary
+audio effects, the panner and Mix FX fixtures, all seven instruments, all four
+Note FX, and both External Effect variants. All three catalog lifecycle stages
+required two complete typed provider matches each, including after the expected
+released-token refusal. Empty current catalogs are explicit observations, not
+preset-recall acceptance. The Splitter graph fixture has no ordinary Device
+in insert slot zero and is excluded from this catalog result.
 Mustang Native subsequently exposed a 227-entry issued preset catalog. Two
 recalls changed its exposed output-level value and restored its complete
 writable projection. Current category/effect model counts remained zero after
