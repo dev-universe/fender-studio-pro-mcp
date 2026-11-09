@@ -45,6 +45,7 @@ class PresetClient(StateClient):
         self.expire_before_apply = self.writable_proof_late = False
         self.restore_ulp_drift = False
         self.preset_value = 0.75
+        self.main_channels = [{"label": "메인", "volume": 0, "output": None}]
 
     def select_target(self, args):
         super().select_target(args)
@@ -67,6 +68,8 @@ class PresetClient(StateClient):
             self.active_preset = False
         if name != "plugin_presets":
             result = super().call(name, args)
+            if name == "operation_run" and args["operation"] == "channels":
+                result["structuredContent"]["result"].extend(copy.deepcopy(self.main_channels))
             if name == "plugin_state" and args["action"] == "restore" and self.restore_ulp_drift:
                 self.parameters[0].update(writable("gain", math.nextafter(0.25, math.inf)))
             return result
@@ -203,6 +206,24 @@ class CatalogClient(PresetClient):
         return result
 
 
+class MainGuardClient(PresetClient):
+    def __init__(self):
+        super().__init__()
+        self.requests = []
+        self.channels_hook = None
+
+    def extra_channels_read(self):
+        return (len(self.requests) >= 2 and self.requests[-2][0] == "operation_run"
+                and self.requests[-2][1]["operation"] == "channels")
+
+    def call(self, name, args):
+        self.requests.append((name, copy.deepcopy(args)))
+        result = super().call(name, args)
+        if name == "operation_run" and args["operation"] == "channels" and self.channels_hook:
+            self.channels_hook(self, result["structuredContent"])
+        return result
+
+
 class PresetAcceptanceTests(unittest.TestCase):
     def setUp(self):
         PRIVATE_ROOT.mkdir(exist_ok=True)
@@ -234,6 +255,161 @@ class PresetAcceptanceTests(unittest.TestCase):
         self.assertFalse(client.writes)
         self.assertEqual(client.applies, 0)
         self.assertFalse(any(name in ("plugin_editor_open", "plugin_parameter_digest") for name, _ in client.calls))
+
+    def test_main_guard_blocks_invalid_output_before_first_preset_apply_without_cleanup(self):
+        valid = {"label": "메인", "volume": 0, "output": None}
+        cases = {"missing": [], "ambiguous": [valid, valid],
+                 "nonzero": [{**valid, "volume": 0.01}],
+                 "negative": [{**valid, "volume": -1}],
+                 "boolean": [{**valid, "volume": False}],
+                 "true": [{**valid, "volume": True}],
+                 "nan": [{**valid, "volume": math.nan}],
+                 "infinity": [{**valid, "volume": math.inf}],
+                 "negative_infinity": [{**valid, "volume": -math.inf}],
+                 "text_zero": [{**valid, "volume": "0"}],
+                 "missing_volume": [{"label": "메인", "output": None}],
+                 "missing_output": [{"label": "메인", "volume": 0}],
+                 "routed_output": [{**valid, "output": "Audio Device"}],
+                 "false_output": [{**valid, "output": False}],
+                 "empty_output": [{**valid, "output": ""}]}
+        for label, channels in cases.items():
+            with self.subTest(label=label):
+                client = MainGuardClient()
+                def invalid_main(c, receipt):
+                    if c.extra_channels_read():
+                        receipt["result"] = receipt["result"][:-1] + copy.deepcopy(channels)
+                client.channels_hook = invalid_main
+                with self.assertRaises(ContextChanged):
+                    self.runner(client).run_preset_case(TARGET, [1, 2])
+                self.assertEqual(client.applies, 0)
+                self.assertEqual(client.restore_count, 0)
+                self.assertEqual([args["action"] for args in client.preset_calls], ["list"])
+                self.assertEqual([args["action"] for args in client.state_calls], ["capture"])
+
+    def test_main_guard_is_fresh_after_catalog_and_before_every_apply_and_restore(self):
+        for volume in (0, 0.0):
+            with self.subTest(volume=volume):
+                client = MainGuardClient()
+                client.main_channels[0]["volume"] = volume
+                row = self.runner(client).run_preset_case(TARGET, [1, 2])
+                self.assertEqual(row["status"], "preset_case_verified")
+                guarded = []
+                for i, (name, args) in enumerate(client.requests):
+                    if ((name == "plugin_presets" and args["action"] == "apply")
+                            or (name == "plugin_state" and args["action"] == "restore")):
+                        guarded.append((name, args))
+                        for previous in client.requests[i - 2:i]:
+                            self.assertEqual(previous[0], "operation_run")
+                            self.assertEqual(previous[1]["operation"], "channels")
+                            self.assertEqual(previous[1]["expected_document"], "test:1")
+                self.assertEqual(len(guarded), 5)  # two recalls, two loads and expired-catalog apply
+                self.assertEqual(client.applies, 2)
+                self.assertEqual(client.restore_count, 2)
+
+        client = MainGuardClient()
+        client.channels_hook = lambda c, receipt: receipt["result"][-1].update(volume=1) if c.catalog_count else None
+        with self.assertRaises(ContextChanged):
+            self.runner(client).run_preset_case(TARGET)
+        self.assertEqual(client.applies, 0)
+        self.assertEqual(client.restore_count, 0)
+
+    def test_main_guard_loss_after_known_apply_stops_before_capsule_restore_or_cleanup(self):
+        for fault in ("volume", "missing", "ambiguous", "output", "timeout", "unknown", "document", "session"):
+            with self.subTest(fault=fault):
+                client = MainGuardClient()
+                def lose_main(c, receipt):
+                    if not c.applies or not c.extra_channels_read():
+                        return
+                    if fault == "volume":
+                        receipt["result"][-1]["volume"] = 1
+                    elif fault == "missing":
+                        receipt["result"].pop()
+                    elif fault == "ambiguous":
+                        receipt["result"].append(copy.deepcopy(receipt["result"][-1]))
+                    elif fault == "output":
+                        receipt["result"][-1]["output"] = "Audio Device"
+                    elif fault == "timeout":
+                        raise TimeoutError("offline channels read timeout")
+                    elif fault == "unknown":
+                        receipt["outcome"] = "unknown"
+                    else:
+                        receipt[fault] = "foreign"
+                client.channels_hook = lose_main
+                with self.assertRaises((ContextChanged, UnknownMutation)):
+                    self.runner(client).run_preset_case(TARGET, [1, 2])
+                self.assertEqual(client.applies, 1)
+                self.assertEqual(client.restore_count, 0)
+                self.assertEqual([args["action"] for args in client.preset_calls], ["list", "apply"])
+                self.assertEqual([args["action"] for args in client.state_calls], ["capture"])
+                self.assertEqual(client.requests[-1][0], "operation_run")
+                self.assertEqual(client.requests[-1][1]["operation"], "channels")
+
+    def test_main_guard_rechecks_after_restoration_and_before_expired_catalog_apply(self):
+        for stage in ("next_apply", "released_apply"):
+            with self.subTest(stage=stage):
+                client = MainGuardClient()
+                def lose_main(c, receipt):
+                    if ((stage == "next_apply" and c.restore_count)
+                            or (stage == "released_apply" and c.released_catalogs)):
+                        receipt["result"][-1]["volume"] = 1
+                client.channels_hook = lose_main
+                with self.assertRaises(ContextChanged):
+                    self.runner(client).run_preset_case(TARGET, [1, 2] if stage == "next_apply" else [1])
+                self.assertEqual(client.applies, 1)
+                self.assertEqual(client.restore_count, 1)
+                self.assertEqual([args["action"] for args in client.preset_calls],
+                                 ["list", "apply"] + (["release"] if stage == "released_apply" else []))
+
+    def test_main_guard_rejects_unbound_context_and_malformed_channels_before_direct_dispatch(self):
+        for fault in ("document", "session", "not_list", "invalid_row", "read_error", "refused"):
+            with self.subTest(fault=fault):
+                client = MainGuardClient()
+                runner = self.runner(client)
+                baseline = runner.snapshot(TARGET)
+                if fault in ("document", "session"):
+                    setattr(runner, fault, None)
+                else:
+                    def malformed(c, receipt):
+                        if fault == "not_list":
+                            receipt["result"] = {"label": "메인", "volume": 0, "output": None}
+                        elif fault == "invalid_row":
+                            receipt["result"].append(None)
+                        elif fault == "read_error":
+                            receipt["error"] = "offline unavailable"
+                        else:
+                            receipt["outcome"] = "not_applied"
+                    client.channels_hook = malformed
+                client.requests.clear()
+                with self.assertRaises(ContextChanged):
+                    runner.preset_call(baseline, "apply", token="F" * 64, index=1, allow_error=True)
+                self.assertFalse(client.preset_calls)
+                self.assertFalse(client.state_calls)
+                self.assertFalse(any(name.startswith("plugin_") for name, _ in client.requests))
+
+    def test_main_guard_applies_to_direct_capsule_restore_but_not_capture_or_release(self):
+        for released in (False, True):
+            with self.subTest(released=released):
+                client = MainGuardClient()
+                runner = self.runner(client)
+                baseline = runner.snapshot(TARGET)
+                client.main_channels[0]["volume"] = 1
+                capsule = runner.capture(baseline)
+                if released:
+                    runner.release(baseline, capsule)
+                with self.assertRaises(ContextChanged):
+                    runner.state_call(baseline, "restore", capsule.token, allow_error=True)
+                self.assertEqual(client.restore_count, 0)
+                self.assertEqual([args["action"] for args in client.state_calls],
+                                 ["capture", "release"] if released else ["capture"])
+
+    def test_main_guard_does_not_add_reads_to_catalog_only_lifecycle(self):
+        client = CatalogClient()
+        client.main_channels = []
+        runner = self.runner(client)
+        with patch.object(runner, "require_main_zero", side_effect=AssertionError("catalog-only Main guard called"), create=True):
+            row = runner.run_catalog_case(TARGET)
+        self.assertEqual(row["status"], "catalog_case_verified")
+        self.assert_catalog_only_calls(client, ["list", "release", "list"])
 
     def test_catalog_only_inventory_never_captures_applies_or_writes(self):
         client = CatalogClient(count=130)

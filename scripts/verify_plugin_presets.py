@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
 import sys
 import time
@@ -73,6 +74,30 @@ class PresetRunner(StateRunner):
                             preset_display_verified=False, opaque_contents_verified=False,
                             all_writable_parameters_verified=False)
 
+    def require_main_zero(self):
+        try:
+            require(isinstance(self.document, str) and bool(self.document)
+                    and isinstance(self.session, str) and bool(self.session),
+                    "Main output guard requires a bound document and session")
+            channels = self.operation("channels")
+            require(isinstance(channels, list) and all(isinstance(row, dict) for row in channels),
+                    "Main output guard requires a fresh channels observation")
+            main = [row for row in channels if row.get("label") == "메인"]
+            require(len(main) == 1, "Main output guard requires one unique 메인 channel")
+            volume = main[0].get("volume")
+            require(type(volume) in (int, float) and math.isfinite(volume) and volume == 0
+                    and "output" in main[0] and main[0]["output"] is None,
+                    "Main output must have finite numeric volume exactly zero and explicit output null")
+        except (UnknownMutation, ContextChanged):
+            raise
+        except Exception as error:
+            raise ContextChanged("Fresh blocked Main output was not established; no follow-on mutation is permitted") from error
+
+    def state_call(self, provider, action, token=None, allow_error=False):
+        if action == "restore":
+            self.require_main_zero()
+        return super().state_call(provider, action, token, allow_error)
+
     def preset_call(self, provider, action, *, token=None, index=None, offset=None, allow_error=False):
         args = {**provider.target, "action": action,
                 "expected_instance": provider.instance["object_uid"]}
@@ -82,6 +107,8 @@ class PresetRunner(StateRunner):
             args["index"] = index
         if action == "list":
             args.update(offset=offset, limit=64)
+        if action == "apply":
+            self.require_main_zero()
         return self.call("plugin_presets", args, mutation=True, allow_error=allow_error)
 
     def preset_result(self, provider, receipt, *, token=None, index=None):
