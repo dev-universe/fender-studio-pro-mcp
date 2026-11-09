@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaInformation>
+  <Attribute id="Package:ID" value="fender-studio-pro-mcp.native.mac"/>
+  <Attribute id="Package:Name" value="Fender MCP Native"/>
+  <Attribute id="Package:Description" value="Bounded DSP parameter enumeration and guarded native parameter control"/>
+  <Attribute id="Package:Version" value="0.1.0.0"/>
+  <Attribute id="Package:Vendor" value="fender-studio-pro-mcp"/>
+  <Attribute id="Package:Website" value="https://github.com/dev-universe/fender-studio-pro-mcp"/>
+</MetaInformation>

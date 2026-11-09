@@ -61,6 +61,8 @@ pub enum Operation {
     EditEvents(EditEvents),
     #[serde(rename = "pluginParams", alias = "plugin_parameters")]
     PluginParams(PluginParams),
+    #[serde(rename = "pluginChoices", alias = "plugin_parameter_choices")]
+    PluginChoices(PluginChoices),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
@@ -258,6 +260,7 @@ pub struct InsertBypass {
     pub slot: InsertSlot,
     pub plugin: Option<String>,
     pub bypassed: bool,
+    pub expected_instance: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -368,6 +371,36 @@ pub struct PluginParams {
     pub plugin: Option<String>,
     #[serde(default)]
     pub names: Vec<String>,
+    /// Native enumeration offset when names is empty.
+    pub offset: Option<u32>,
+    /// Native enumeration page size, from 1 to 128 (default 64).
+    pub limit: Option<u32>,
+    pub source: Option<ParameterSource>,
+    /// Bind subsequent pages to the native instance returned by the first page.
+    pub expected_instance: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ParameterSource {
+    Auto,
+    Dsp,
+    Controller,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginChoices {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: Option<String>,
+    pub param: String,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
+    pub source: Option<ParameterSource>,
+    pub expected_instance: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -392,6 +425,7 @@ pub struct PluginSet {
     pub value: Option<f64>,
     pub normalized: Option<f64>,
     pub text: Option<String>,
+    pub expected_instance: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -811,6 +845,7 @@ impl Operation {
             | Self::Inserts(_)
             | Self::Sends(_)
             | Self::PluginParams(_)
+            | Self::PluginChoices(_)
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
             Self::Command(command) => command.check_only == Some(true),
@@ -875,6 +910,12 @@ impl Operation {
                 }
             }
             Self::SetInsertBypass(p) => {
+                validate_instance_uid(p.expected_instance.as_deref())?;
+                if matches!(p.slot, InsertSlot::All(_)) && p.expected_instance.is_some() {
+                    return Err(invalid(
+                        "An instance guard applies to one insert slot, not the entire rack",
+                    ));
+                }
                 if let InsertSlot::Index(index) = p.slot
                     && (index >= 16
                         || p.plugin
@@ -887,6 +928,7 @@ impl Operation {
                 }
             }
             Self::SetPluginParam(p) => {
+                validate_instance_uid(p.expected_instance.as_deref())?;
                 if p.plugin.trim().is_empty() {
                     return Err(invalid(
                         "An expected plugin class or instance name is required",
@@ -907,7 +949,8 @@ impl Operation {
                 }
                 if p.normalized
                     .is_some_and(|v| !v.is_finite() || !(0.0..=1.0).contains(&v))
-                    || p.value.is_some_and(|v| !v.is_finite())
+                    || p.value
+                        .is_some_and(|v| !v.is_finite() || v.abs() > 9_007_199_254_740_991.0)
                 {
                     return Err(invalid("Parameter value is outside its supported range"));
                 }
@@ -926,6 +969,7 @@ impl Operation {
                 )?;
             }
             Self::PluginParams(p) | Self::PluginInspect(p) => {
+                validate_instance_uid(p.expected_instance.as_deref())?;
                 validate_plugin_target(
                     p.channel.as_deref(),
                     p.slot,
@@ -935,6 +979,37 @@ impl Operation {
                 if p.names.len() > 10_000 {
                     return Err(invalid(
                         "At most 10,000 parameter names are supported per lookup",
+                    ));
+                }
+                if p.limit.is_some_and(|limit| !(1..=128).contains(&limit))
+                    || p.offset.is_some_and(|offset| offset > 1_000_000)
+                {
+                    return Err(invalid(
+                        "Native parameter pages require offset 0..1000000 and limit 1..128",
+                    ));
+                }
+                if !p.names.is_empty() && (p.offset.is_some() || p.limit.is_some()) {
+                    return Err(invalid(
+                        "Pagination applies only when parameter names is empty",
+                    ));
+                }
+            }
+            Self::PluginChoices(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(p.expected_instance.as_deref())?;
+                if p.param.is_empty()
+                    || p.param.len() > 512
+                    || p.param.contains('\0')
+                    || p.limit.is_some_and(|limit| !(1..=128).contains(&limit))
+                    || p.offset.is_some_and(|offset| offset > 1_000_000)
+                {
+                    return Err(invalid(
+                        "A bounded parameter name and native page are required",
                     ));
                 }
             }
@@ -1041,6 +1116,22 @@ fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError
         return Err(invalid(format!(
             "Splitter {field} must contain 1 to 256 UTF-8 bytes without control characters"
         )));
+    }
+    Ok(())
+}
+
+fn validate_instance_uid(uid: Option<&str>) -> Result<(), OperationError> {
+    if let Some(uid) = uid
+        && (uid.len() != 36
+            || uid.bytes().enumerate().any(|(i, b)| {
+                if [8, 13, 18, 23].contains(&i) {
+                    b != b'-'
+                } else {
+                    !b.is_ascii_hexdigit()
+                }
+            }))
+    {
+        return Err(invalid("expected_instance must be a native instance UUID"));
     }
     Ok(())
 }
@@ -1455,6 +1546,79 @@ mod tests {
     fn null_optional_arguments_do_not_reach_host() {
         let op = Operation::from_parts("setTransport", json!({"tempo":120})).unwrap();
         assert_eq!(op.wire().1, json!({"tempo":120.0}));
+    }
+
+    #[test]
+    fn native_pages_and_instance_guards_are_bounded_before_dispatch() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ"});
+        for extra in [
+            json!({"limit":0}),
+            json!({"limit":129}),
+            json!({"offset":1000001}),
+            json!({"names":["gain"],"limit":64}),
+            json!({"expected_instance":"not-a-uuid"}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("pluginParams", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut valid = base;
+        valid["limit"] = json!(128);
+        valid["offset"] = json!(64);
+        valid["source"] = json!("dsp");
+        valid["expected_instance"] = json!("12345678-1234-1234-1234-123456789ABC");
+        assert!(
+            Operation::from_parts("pluginParams", valid)
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        assert!(
+            Operation::from_parts(
+                "pluginParams",
+                json!({"channel":"Scratch","slot":0,"source":"arbitrary_interface"})
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn choices_are_read_only_and_reject_unbounded_or_arbitrary_calls() {
+        let op = Operation::from_parts("plugin_parameter_choices", json!({"channel":"Scratch","slot":0,"plugin":"External Effect Mono","param":"sendPort","limit":64})).unwrap();
+        assert!(op.is_read_only());
+        assert!(op.validate().is_ok());
+        assert_eq!(op.wire().0, "pluginChoices");
+        for extra in [
+            json!({"limit":129}),
+            json!({"param":""}),
+            json!({"param":"x\0y"}),
+            json!({"offset":1000001}),
+        ] {
+            let mut args = op.wire().1;
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("pluginChoices", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        assert!(
+            Operation::from_parts(
+                "pluginChoices",
+                json!({"channel":"Scratch","slot":0,"param":"sendPort","method":"arbitrary"})
+            )
+            .is_err()
+        );
     }
 
     #[test]

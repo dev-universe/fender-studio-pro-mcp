@@ -168,6 +168,7 @@ fn execute(
             .and_then(Value::as_array)
             .is_some_and(Vec::is_empty)
         && response.result.get("complete") != Some(&Value::Bool(true))
+        && response.result.get("parameter_discovery").is_none()
     {
         if local_catalog.is_none() {
             let app = std::env::var_os("FSP_APP")
@@ -270,6 +271,10 @@ fn execute(
                 "outcome_unknown",
                 "The host reported failures without proving that no changes applied",
             )),
+            Outcome::NotApplied if has_failure(&response.result) => Some(OperationError::new(
+                "native_rejected",
+                "The native request was rejected before applying a change; inspect the result errors",
+            )),
             _ => None,
         };
     }
@@ -285,6 +290,13 @@ fn execute(
 }
 
 fn mutation_outcome(value: &Value) -> Outcome {
+    if let Some(outcome) = value.get("native_outcome").and_then(Value::as_str) {
+        match outcome {
+            "not_applied" => return Outcome::NotApplied,
+            "unknown" => return Outcome::Unknown,
+            _ => {}
+        }
+    }
     if has_failure(value) {
         if has_applied_evidence(value)
             || value
@@ -345,6 +357,9 @@ fn verify(operation: &Operation, result: &Value) -> bool {
         }
         Operation::SetInsertBypass(change) => equivalent(&json!(change.bypassed), &result["after"]),
         Operation::SetPluginParam(change) => {
+            if let Some(verified) = result.get("native_verified").and_then(Value::as_bool) {
+                return verified;
+            }
             if let Some(value) = change.value {
                 equivalent(&json!(value), &result["after"]["value"])
             } else if let Some(value) = change.normalized {
@@ -422,6 +437,30 @@ mod tests {
         assert!(!equivalent(&json!(true), &json!(0)));
         assert!(equivalent(&json!(0.5), &json!(0.50000001)));
         assert!(!equivalent(&json!(0.5), &json!(0.6)));
+    }
+
+    #[test]
+    fn native_plugin_verification_and_unknown_outcomes_are_authoritative() {
+        let operation = Operation::from_parts("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"External Effect Mono","param":"inputGain","value":0.5})).unwrap();
+        assert!(!verify(
+            &operation,
+            &json!({"after":{"value":0.50000001},"native_verified":false})
+        ));
+        let text = Operation::from_parts("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"External Effect Mono","param":"inputGain","text":"-6db"})).unwrap();
+        assert!(verify(
+            &text,
+            &json!({"after":{"text":"-6.0 dB"},"native_verified":true})
+        ));
+        assert_eq!(
+            mutation_outcome(&json!({"native_outcome":"not_applied","errors":["read only"]})),
+            Outcome::NotApplied
+        );
+        assert_eq!(
+            mutation_outcome(
+                &json!({"native_outcome":"unknown","before":{"value":1},"after":{"value":0.5}})
+            ),
+            Outcome::Unknown
+        );
     }
 
     #[test]

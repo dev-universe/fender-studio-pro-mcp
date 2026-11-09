@@ -123,7 +123,7 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -227,6 +227,7 @@ class Bridge {
             case "setChannelColor": return this.fromComponent(c => c.setChannelColor(args));
             case "setAutomation": return this.fromComponent(c => c.setAutomation(args));
             case "pluginParams": return this.fromComponent(c => c.pluginParams(args));
+            case "pluginChoices": return this.fromComponent(c => c.pluginChoices(args));
             case "setPluginParam": return this.fromComponent(c => c.setPluginParam(args));
             case "hostProbe": return this.hostProbe(args);
             case "pluginInspect": return this.fromComponent(c => c.pluginInspect(args));

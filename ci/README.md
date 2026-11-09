@@ -1,6 +1,6 @@
 # Run local checks
 
-Run the complete local development checks from the repository root.
+Run the root server and embedded-script checks from the repository root.
 
 ```sh
 rustup component add rustfmt clippy
@@ -8,6 +8,18 @@ rustup component add rustfmt clippy
 ```
 
 The script requires Cargo and Node.js. It fails if either is missing. It checks Rust formatting, runs Clippy with warnings as errors, runs Rust tests, builds the release binary, and runs the actual bridge and EditTask assets in Node.js VM contract tests. Those VM tests simulate host objects. They do not establish actual DAW behavior. Python supports the separate scratch-session live plugin verification script.
+
+The optional native extension has separate crates. On the supported macOS arm64 host, run their Rust 1.88 checks too:
+
+```sh
+for native_crate in parameter-api dsp-api editor-api addon; do
+  cargo +1.88.0 fmt --manifest-path "native/$native_crate/Cargo.toml" -- --check
+  cargo +1.88.0 clippy --manifest-path "native/$native_crate/Cargo.toml" --all-targets -- -D warnings
+  cargo +1.88.0 test --manifest-path "native/$native_crate/Cargo.toml"
+done
+```
+
+The first three crates use portable mocks; the add-on links macOS services. Normal Cargo checks need no vendor SDK. Optional exact-CCL header/compiler checks and package construction are described in the [native guide](../native/addon/README.md); do not substitute CCL 5.2 headers for the pinned 5.1.2 ABI. Building does not install or launch Studio Pro. The actual final run used 53 root Rust tests, 131 script tests, 60 native mocks and six native compile-fail documentation checks.
 
 Node.js and Python are validation tools. The installed MCP server runs in Rust, and embedded JavaScript executes inside Studio Pro.
 

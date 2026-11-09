@@ -4,6 +4,7 @@ mod config;
 mod install;
 mod midi;
 mod model;
+mod native_install;
 mod operation;
 mod plugin_catalog;
 mod runtime;
@@ -43,6 +44,14 @@ enum Command {
     },
     /// Remove unchanged managed assets while preserving user modifications.
     Uninstall,
+    /// Install a locally built native extension for the supported macOS host.
+    NativeInstall {
+        extension: std::path::PathBuf,
+        #[arg(long)]
+        force: bool,
+    },
+    /// Remove unchanged native extension files; restart Studio Pro afterward.
+    NativeUninstall,
     /// Inspect installation and optionally check the live DAW connection.
     Doctor {
         #[arg(long)]
@@ -100,6 +109,10 @@ async fn main() -> Result<()> {
     match cli.command {
         Command::Install { force } => print_json(&install::install(&cli.config, force)?)?,
         Command::Uninstall => print_json(&install::uninstall(&cli.config)?)?,
+        Command::NativeInstall { extension, force } => {
+            print_json(&native_install::install(&cli.config, &extension, force)?)?;
+        }
+        Command::NativeUninstall => print_json(&native_install::uninstall(&cli.config)?)?,
         Command::Schema => print_json(&operation::schema())?,
         Command::SongRead { path } => {
             let saved = song::read_song(&path).map_err(anyhow::Error::msg)?;

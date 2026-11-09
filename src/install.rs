@@ -176,6 +176,7 @@ pub fn doctor(config: &Config) -> Value {
         "profile_exists":config.profile().is_dir(),
         "device_installed":device.join("StudioOneMCP.device").is_file(),
         "edit_tasks_installed":extension.is_file(),"status_file":status,
+        "native_extension":crate::native_install::doctor(config),
         "installation_current":installation_current,"stale_or_missing_files":stale_files,
         "live_verified":false,
         "note":"status.json reports a previous load only. Use doctor --live for a current request/response check."
@@ -200,7 +201,7 @@ fn planned_files(config: &Config) -> Result<BTreeMap<PathBuf, Vec<u8>>, Operatio
     let host_config = json!({"mailbox": file_url(&config.mailbox()), "allowEval": false});
     files.insert(
         device.join("BridgeConfig.js"),
-        format!("var BridgeConfig = {};\n", host_config).into_bytes(),
+        format!("var BridgeConfig = {host_config};\n").into_bytes(),
     );
     let extension_assets = ASSETS.get_dir("edit-tasks/extension").ok_or_else(|| {
         OperationError::new("missing_asset", "Embedded EditTask extension is missing")
@@ -238,7 +239,7 @@ fn edit_package(config: &Value) -> Result<Vec<u8>, OperationError> {
         .start_file("McpEditConfig.js", options)
         .map_err(|e| OperationError::new("package_error", e.to_string()))?;
     writer
-        .write_all(format!("var McpEditConfig = {};\n", config).as_bytes())
+        .write_all(format!("var McpEditConfig = {config};\n").as_bytes())
         .map_err(io_error)?;
     writer
         .finish()
@@ -246,11 +247,11 @@ fn edit_package(config: &Value) -> Result<Vec<u8>, OperationError> {
         .map_err(|e| OperationError::new("package_error", e.to_string()))
 }
 
-fn digest(bytes: &[u8]) -> String {
+pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
 
-fn write_complete_file(path: &Path, bytes: &[u8]) -> Result<(), OperationError> {
+pub(crate) fn write_complete_file(path: &Path, bytes: &[u8]) -> Result<(), OperationError> {
     let temporary = path.with_file_name(format!(
         ".{}.{}.tmp",
         path.file_name().unwrap().to_string_lossy(),

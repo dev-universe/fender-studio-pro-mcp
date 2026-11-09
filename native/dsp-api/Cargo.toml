@@ -1,0 +1,11 @@
+[package]
+name = "fender-native-dsp-api"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "Bounded parameter enumeration for the validated Fender Studio Pro 8.1.1 DSP ABI"
+repository = "https://github.com/dev-universe/fender-studio-pro-mcp"
+readme = "README.md"
+
+[dependencies]

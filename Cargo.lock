@@ -403,6 +403,7 @@ dependencies = [
  "fs2",
  "hound",
  "include_dir",
+ "libc",
  "quick-xml",
  "rmcp",
  "schemars",

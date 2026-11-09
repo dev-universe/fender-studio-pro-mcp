@@ -10,6 +10,12 @@ P0부터 실제 호스트 증거를 쌓는다. Rust 서버, 브리지와 EditTas
 [실환경 검증](VALIDATION.md)과 [내장 플러그인 지원표](BUILTIN_PLUGINS.md)를 기준으로 읽는다.
 참고 프로젝트의 버전과 한계는 [조사 문서](RESEARCH.md)에 기록했다.
 
+## Current implementation checkpoint — 2026-11-09
+
+macOS 8.1.1 실제 검증을 계속 진행해 Rust MCP 31개 도구, 브리지, EditTask와 선택 설치형 Rust CCL 확장을 구현했다. 최신 실행에서 내장 60종을 확인했고, 59개 현재 제공자의 8,668개 인덱스와 별도 Splitter 16개 고정 컨트롤을 읽었다. 59종의 파라미터/그래프 변경·읽기·복원과 Phase Meter 바이패스가 통과했다. External Effect 양 모드의 게인·믹스·수동 지연·위상·한글 메모, 공간 제어 36개 사례와 같은 빌드의 P0 회귀도 확인했다.
+
+아래 P0–P5는 최초 계획과 아직 남은 게이트를 함께 보존한 문서다. 완료 여부는 [최신 검증](VALIDATION.md), [내장 플러그인 표](BUILTIN_PLUGINS.md), [정제한 증거](evidence/2026-11-09-native-provider.json)를 기준으로 읽는다. 하드웨어 포트 목록은 현재 노출된 항목이 0개였으며, 실제 라우팅·핑·오디오 신호, 전체 GUI/파일 동작과 모든 모델·선택 상태를 완료했다고 주장하지 않는다.
+
 ## How to read this
 
 One box is one unit of work. Every box names the evidence that checks it. Check a box only when its evidence exists. 체크되지 않은 항목은 앞으로 수행할 작업이다.
@@ -388,7 +394,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 ## Appendix A. Prototype evidence
 
-이번 작업은 조사와 계획 작성이다. 실행 가능한 prototype, branch, SHA와 DAW screenshot은 아직 없다. P0에서 만든다. 저장소 소스와 로컬 앱 버전 metadata만 확인했다. 참고 프로젝트의 저자 보고와 직접 검증을 구별한 근거는 [RESEARCH.md](RESEARCH.md)에 있다.
+최초 계획 작성 시점에는 조사만 진행했고 prototype, branch, SHA와 DAW screenshot은 없었다. 이후의 실제 구현과 증거는 이 문서 앞의 최신 체크포인트와 VALIDATION.md를 기준으로 읽는다. 당시에는 저장소 소스와 로컬 앱 버전 metadata만 확인했다. 참고 프로젝트의 저자 보고와 직접 검증을 구별한 근거는 [RESEARCH.md](RESEARCH.md)에 있다.
 
 먼저 해결할 실험 질문은 다음과 같다.
 

@@ -2,9 +2,9 @@
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
-Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The bridge, MIDI note creation and editing, 55 representative built-in parameter roundtrips and 3 bypass roundtrips have passed live checks. A separate follow-up verified all 16 fixed controls on an existing top-level Splitter and 15 named Surround Panner controls in a 5.1 fixture. The 60-class matrix now has 57 classes with changed parameter or native graph controls and 3 with bypass-only control; complete control of every built-in plugin remains unfinished. The earlier 55-class parameter coverage was not rerun on the follow-up binary. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for the evidence boundaries.
+Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The final native-extension run covered **60 built-in classes**, enumerated **8,668 indexed parameter records across 59 current providers**, and resolved every reported DSP parameter name. Splitter adds 16 fixed graph controls. Fifty-nine classes passed a parameter or graph change/readback/restore; Phase Meter passed slot bypass. External Effect Mono and Stereo passed gain, mix, manual latency, phase and Unicode-note roundtrips. The same build passed the bridge/EditTask regression. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for scope and evidence. Every GUI action, model and physical hardware path has not been certified.
 
-The 30 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, supported plugin parameters, existing Splitter controls, and finite editing operations. Saved-song inspection and WAV analysis also run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
+The 31 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. Saved-song inspection and WAV analysis also run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
 Build with Rust 1.88 or newer and Cargo. The installed server runs as a native binary. Node.js and Python are development and validation tools. The server does not launch either runtime.
 
@@ -86,11 +86,24 @@ For a scratch channel named `Scratch` with Mixtool in insert slot 0, read the pa
   --expected-document 'DOCUMENT_TOKEN_FROM_CONTEXT'
 ```
 
-Plugin writes require the expected plugin class or instance name. Parameter discovery uses partial metadata candidates. A missing candidate does not prove that the plugin lacks the control. Class matching also cannot distinguish replacement by another instance of the same class in the same slot.
+Plugin writes require the expected plugin class or instance name. With the native extension, carry the returned `instance.object_uid` as `expected_instance` for subsequent reads/writes and the receipt's document token as `expected_document`. Model/pad/focus changes still require fresh discovery. Without the extension, candidate discovery is partial and class-only matching cannot identify a same-class replacement.
+
+For native enumeration and External Effect's controller, quit Studio Pro, stop the owner, then build and install the optional Rust extension.
+
+```sh
+sh native/build.sh
+./target/release/fender-studio-pro-mcp native-install artifacts/native/fender-studio-pro-mcp.native.mac
+```
+
+Start the owner before reopening Studio Pro. The extension accepts only the tested **8.1.1 arm64 / CCL 5.1.2** image identities. It uses the normal user extension loader and makes no changes to the vendor app bundle. Building requires Rust 1.88 and the usual macOS command-line tools; no SDK download or Ghidra installation is needed for an ordinary build. Optional SDK ABI checks and native tests are documented in the [native add-on guide](native/addon/README.md).
+
+Call `plugin_parameters` with `names` omitted and `limit:64`. Follow `next_offset` until null, keeping `expected_document`, `expected_instance` and the returned `source` unchanged. `page_complete` covers a page; `complete` is true only when one page covers the current provider. Counts include read-only meters and UI state, so they are not writable-control counts. Impact exposed 4,262 records; Pro EQ exposed 199. Re-enumerate after changing a model, pad or nested context.
+
+For External Effect, open its expected editor with `plugin_editor_open`, then query `plugin_parameters` with `source:"controller"`. Both modes exposed 24 controller records. `plugin_parameter_choices` reads integer-indexed native list labels without selecting a value. The tested send/receive lists had zero configured hardware ports; positive physical routing, ping/automatic latency and audible loopback remain unverified. Floating-scale DSP list facades do not use this index-list query; their ordinary raw/normalized/display-text parameter path remains available.
 
 Use `track_formats` to read the host's exact audio format names, then `tracks_edit` with `{"ops":[{"op":"addAudioTrack","name":"Scratch 5.1","format":"5.1"}]}` and the current `expected_document`, using a returned format name. Mono and stereo names can be localized. The operation refuses unknown/non-audio formats and duplicate track names. `panner_get` includes the channel's readable `speakerFormat` descriptor.
 
-For an existing Splitter, `splitters_list` returns its native node name, label and active parameter descriptors; pass that identity to `splitter_set`. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed change/readback/restore checks. Graph creation, connection, deletion and nested graph editing remain unfinished. Surround Panner uses `plugin_parameters` and `plugin_parameter_set` with `kind:"panner"`, `slot:0` and `plugin:"Surround Panner"`. Only the 5.1 fixture and 15 known parameter names are verified. Read native descriptors or use normalized writes: some raw scales are 0..10000. External Effect gain, mix and routing, and full native parameter enumeration remain open.
+For an existing Splitter, `splitters_list` returns its native node name, label and active parameter descriptors; pass that identity to `splitter_set`. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed change/readback/restore checks. Graph creation, connection, deletion and nested graph editing remain unfinished. Surround Panner uses `plugin_parameters` and `plugin_parameter_set` with `kind:"panner"`, `slot:0` and `plugin:"Surround Panner"`. Its current 5.1 provider exposed 47 records, with 15 controls verified by changed/readback/restore cases. Read native descriptors or use normalized writes: some raw scales are 0..10000.
 
 Read each outcome receipt. `applied_verified` includes operation-specific readback. `applied_unverified` acknowledges an edit without complete verification. `partially_applied` preserves successful earlier work. `outcome_unknown` can mean the edit happened before a timeout. Inspect the actual state before deciding whether to repeat an operation.
 
@@ -104,7 +117,7 @@ These commands inspect local files without connecting to the DAW or taking its c
 
 `local-catalog` reads candidate parameter names from the installed app's metadata. `song-read` reports the last saved archive, including partial plugin snapshots, rather than unsaved live edits. `audio-analyze` reports WAV loudness, peak, RMS, and stereo measurements with explicit format and measurement limits. Dedicated DAW capture and export workflows remain unfinished.
 
-After a source update, rebuild, stop the active owner, run `install`, and restart Studio Pro. The installer refuses to overwrite modified managed assets without `install --force`. Back up your changes before using that option. To remove unchanged managed assets, stop the owner and run `uninstall`. Locally modified managed files are preserved.
+After a source update, quit Studio Pro, stop the active owner, rebuild and run `install`. Rebuild/reinstall the optional native package separately when its sources change. The installers refuse unknown files and preserve backups when explicitly replacing modified managed files with `--force`. `doctor` reports whether managed assets match their manifests. `uninstall` removes unchanged bridge/EditTask assets; `native-uninstall` separately removes unchanged native files. Modified files are preserved. Restart the DAW with the owner already running after installation changes.
 
 Use these documents for details.
 
