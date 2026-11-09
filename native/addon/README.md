@@ -90,7 +90,10 @@ unavailable reason, with `scope: preset_component_display` and
 `atomic_snapshot: false`. It supplies no URL, dirty-state inference or stronger
 recall result. All temporary owners release before the final fresh attachment
 and context checks; a failed publication check removes this observation.
-This additive path has source/unit coverage; actual-host acceptance is pending.
+Native17 actual-host list checks passed on Pro EQ, Mai Tai, Arpeggiator and
+Console Shaper, covering all four observed slot families. Each catalog
+lifecycle stage preserved the complete typed provider twice. This establishes
+display observation, not recall completion or a restored host preset label.
 
 Recall uses the fixed Presets IDataTarget and returns `accepted` separately
 from `verified:false`: acceptance yields `applied_unverified`, never a sound or

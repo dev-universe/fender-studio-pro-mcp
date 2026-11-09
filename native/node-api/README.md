@@ -39,6 +39,13 @@ observations. Empty native UIDs remain absent. They are not fabricated from
 titles or class names. Canonical IUnknown identities are retained only inside
 one inspection for deduplication and cycle detection.
 
+Each inspected object may also carry `declared_interfaces`: a completed triple
+for fixed `IPresetCollector`, `IPresetMediator` and `IStorable` queries, or null
+when unobserved. Only successful nonnull QI proves presence; only the declared
+NoInterface/null result proves absence. Contradictory or failed outputs stop
+that observation. No methods of these interfaces are invoked. These facts
+confer no later mutation or document-ownership authority.
+
 Exploration includes bounded direct children, bounded parents, and these fixed
 delegate names: NodeController, Slot, Device, Graph, Combinator, Presets,
 RoutingModel, Inserts and plugInUnknown. The last is the declared ComponentAlias

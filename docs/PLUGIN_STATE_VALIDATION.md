@@ -324,6 +324,19 @@ recall and restoration; two further complete projections matched the original
 schema and writable values. This does not establish internal Fender model
 selection or audible/opaque preset behavior.
 
+Native17 list pages then observed the exact current preset display on Pro EQ,
+Mai Tai, Arpeggiator and Console Shaper: all eight pages returned an observed
+display, covering the four slot families. The existing catalog lifecycle checks
+again preserved each full typed provider at all three boundaries. No dirty
+status, issued-index identity, successful recall or host-label restoration is
+inferred from the display.
+A fixed read-only Inserts observation found the actual AudioInsertFolder
+exposed `IPresetCollector` and `IPresetMediator`, with no `IStorable` interface.
+Its object UID was present and class UID absent. The bounded auxiliary report
+was partial; it did not establish whole topology, active-document ownership or
+successful collection save/load. Two fresh Pro EQ native projections matched
+its original full schema and writable values after the metadata observations.
+
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
 read-only and reports traversal limits. Neither API grants topology mutation.

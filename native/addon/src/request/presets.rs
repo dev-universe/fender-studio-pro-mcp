@@ -433,10 +433,7 @@ fn current_name<G: FnMut() -> Result<(), String>>(
         if canonical.as_ref().is_none_or(|owner| owner.0 != identity.0) {
             return Err("preset name controller identity changed".into());
         }
-        parameter = match controller.find("presetName", api) {
-            Ok(parameter) => Some(parameter),
-            Err(_) => None,
-        };
+        parameter = controller.find("presetName", api).ok();
         guard()?;
         let Some(parameter) = parameter.as_ref() else {
             return Ok(unavailable_name("preset_name_unavailable"));
