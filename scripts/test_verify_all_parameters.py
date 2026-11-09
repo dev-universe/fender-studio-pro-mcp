@@ -23,13 +23,19 @@ INSTANCE = {"object_uid": "12345678-1234-1234-1234-123456789ABC",
 
 
 def number(name, value, kind="Float", readonly=False, enabled=True, lower=0.0, upper=1.0):
-    data = {"kind": "integer", "value": value} if type(value) is int else {
-        "kind": "float", "value": value, "bits_hex": struct.pack(">d", value).hex().upper()}
-    return {"name": name, "tag": 10, "native_kind": kind, "value": value, "min": lower, "max": upper,
+    def native(value):
+        data = {"kind": "integer", "value": value} if type(value) is int else {
+            "kind": "float", "value": value, "bits_hex": struct.pack(">d", value).hex().upper()}
+        return {"variant_tag": 1 if type(value) is int else 2, "data": data}
+
+    parameter = {"name": name, "tag": 10, "native_kind": kind, "value": value, "min": lower, "max": upper,
             "normalized": value, "text": str(value), "readOnly": readonly, "enabled": enabled,
             "writable": not readonly and enabled, "support": {"raw": not readonly and enabled},
-            "native_value": {"variant_tag": 1 if type(value) is int else 2, "data": data},
+            "native_value": native(value),
             "display_parser": "PlainNumeric"}
+    if kind in ("Integer", "List"):
+        parameter.update(native_min=native(lower), native_max=native(upper))
+    return parameter
 
 
 def normalized_float(value, normalized, kind="Float"):
@@ -386,7 +392,7 @@ class AcceptanceTests(unittest.TestCase):
 
     def test_raw_float_list_cannot_use_the_float_normalized_settlement_exception(self):
         normalized = 0.37
-        client = DeviceClient([normalized_float(0.75, 0.75, kind="List")])
+        client = DeviceClient([normalized_float(1.0, 1.0, kind="List")])
         client.setter_normalized = normalized
         client.post_change_readings = [normalized_float(math.nextafter(0.37, math.inf), normalized, kind="List")]
         runner = self.runner(client)
@@ -411,6 +417,13 @@ class AcceptanceTests(unittest.TestCase):
     def test_model_selector_requires_enclosing_state_restore_even_when_numeric(self):
         parameter = number("opt.eqmodel", 0, kind="List", lower=0, upper=2)
         self.assertEqual(classification("Fat Channel", parameter), "model_state_restore_required")
+
+    def test_vocal_tune_scale_requires_capsule_restoration_without_classifying_unrelated_scales(self):
+        scale = number("scale", 15.0, kind="List", lower=0.0, upper=15.0)
+        self.assertEqual(classification("Vocal Tune", scale), "model_state_restore_required")
+        self.assertEqual(classification("Fixture Effect", scale), "numeric_scalar")
+        self.assertEqual(classification("Vocal Tune", {**scale, "name": "root"}), "numeric_scalar")
+        self.assertEqual(classification("Vocal Tune", {**scale, "readOnly": True}), "read_only")
 
     def test_source_backed_pulse_actions_are_not_scalar_roundtrips(self):
         actions = {"Expander": ["swapfreqs"], "Gate": ["swapfreqs"],
@@ -488,6 +501,78 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(runner.counts["changed_readback_restored"], 1)
         self.assertEqual([write["value"] for write in client.writes], [1, 0])
         self.assertTrue(all("float_bits" not in write for write in client.writes))
+
+    def test_float_carrier_list_uses_integral_choice_and_exact_original_restore(self):
+        parameter = number("scale", 0.0, kind="List", lower=0.0, upper=24.0)
+        change, restore = candidate(parameter)
+        self.assertEqual(change, {"float_bits": "3FF0000000000000"})
+        self.assertEqual(restore, {"float_bits": "0000000000000000"})
+        client = DeviceClient([parameter])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual([write["float_bits"] for write in client.writes],
+                         ["3FF0000000000000", "0000000000000000"])
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1, 2])
+
+    def test_recorded_vocal_tune_custom_scale_plans_an_adjacent_integer(self):
+        parameter = number("scale", 15.0, kind="List", lower=0.0, upper=15.0)
+        change, restore = candidate(parameter)
+        self.assertEqual(change, {"float_bits": "402C000000000000"})
+        self.assertEqual(restore, {"float_bits": "402E000000000000"})
+
+    def test_integral_kinds_preserve_carriers_endpoints_and_negative_zero(self):
+        for kind in ("Integer", "List"):
+            for current, lower, upper, expected in ((0.0, -2.0, 2.0, 1.0),
+                                                   (2.0, -2.0, 2.0, 1.0),
+                                                   (-2, -2, 2, -1),
+                                                   (-0.0, 0.0, 1.0, 1.0),
+                                                   (float(9_007_199_254_740_991), float(9_007_199_254_740_990),
+                                                    float(9_007_199_254_740_991), float(9_007_199_254_740_990)),
+                                                   (9_007_199_254_740_991, 9_007_199_254_740_990,
+                                                    9_007_199_254_740_991, 9_007_199_254_740_990)):
+                with self.subTest(kind=kind, current=current):
+                    parameter = number("mode", current, kind=kind, lower=lower, upper=upper)
+                    change, restore = candidate(parameter)
+                    if type(current) is int:
+                        self.assertEqual(change, {"value": expected})
+                        self.assertEqual(restore, {"value": current})
+                    else:
+                        self.assertEqual(decode_float_bits(change["float_bits"]), expected)
+                        self.assertEqual(restore["float_bits"], parameter["native_value"]["data"]["bits_hex"])
+
+    def test_integral_candidates_reject_malformed_nonintegral_or_unsafe_metadata(self):
+        invalid = [number("mode", 0.5, kind="List", lower=0.0, upper=2.0),
+                   number("mode", 1.0, kind="Integer", lower=0.5, upper=2.0),
+                   number("mode", 0.0, kind="List", lower=0.0, upper=2.5),
+                   number("mode", 0.0, kind="List", lower=0.0, upper=float(1 << 53)),
+                   number("mode", 1 << 53, kind="Integer", lower=0, upper=1 << 53)]
+        for field in ("native_min", "native_max", "native_value"):
+            for fault in (None, {"variant_tag": True, "data": {"kind": "integer", "value": 0}},
+                          {"variant_tag": 1, "data": {"kind": "float", "value": 0.0, "bits_hex": "0000000000000000"}}):
+                parameter = number("mode", 0.0, kind="List", lower=0.0, upper=2.0)
+                parameter[field] = fault
+                invalid.append(parameter)
+        rounded = number("mode", 0.0, kind="List", lower=0.0, upper=2.0)
+        rounded["native_max"]["data"]["bits_hex"] = struct.pack(">d", math.nextafter(2.0, -math.inf)).hex().upper()
+        invalid.append(rounded)
+        for field in ("value", "min", "max"):
+            for value in (True, float("nan"), float("inf"), 10 ** 400):
+                parameter = number("mode", 0.0, kind="List", lower=0.0, upper=2.0)
+                parameter[field] = value
+                invalid.append(parameter)
+        for parameter in invalid:
+            with self.subTest(parameter=parameter):
+                with self.assertRaises(AcceptanceFailure):
+                    candidate(parameter)
+
+    def test_fractional_list_bounds_stop_the_runner_before_any_setter(self):
+        client = DeviceClient([number("mode", 0.0, kind="List", lower=0.0, upper=2.5)])
+        runner = self.runner(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(client.writes, [])
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
 
     def test_unmuted_fixture_is_refused_before_any_write(self):
         client = DeviceClient()

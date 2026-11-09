@@ -47,6 +47,7 @@ MODEL_SELECTORS = {
     "Fat Channel": {"opt.eqmodel", "opt.compmodel"},
     "Voice FX": {"voicefxopt.fxmodel"},
     "Mai Tai": {"character1.presets"},
+    "Vocal Tune": {"scale"},
 }
 
 
@@ -334,16 +335,44 @@ def classification(plugin, parameter):
     return "numeric_scalar"
 
 
+def integral_parameter_value(parameter, field):
+    native = parameter.get("native_value" if field == "value" else "native_" + field)
+    shadow = parameter.get(field)
+    require(isinstance(native, dict) and set(native) == {"variant_tag", "data"}
+            and isinstance(native.get("data"), dict), "Integral controls require complete exact native " + field)
+    data, tag = native["data"], native["variant_tag"]
+    kind = data.get("kind")
+    require(type(tag) is int and -(1 << 15) <= tag < (1 << 15)
+            and ((kind == "integer" and tag & 15 == 1 and set(data) == {"kind", "value"})
+                 or (kind == "float" and tag & 15 == 2 and set(data) == {"kind", "value", "bits_hex"})),
+            "Integral controls require a matching native numeric carrier for " + field)
+    require(all(type(value) in (int, float) and abs(value) <= MAX_SAFE_INTEGER
+                for value in (data.get("value"), shadow)),
+            "Integral controls require finite safe native and public values for " + field)
+    exact = raw_value({"native_value": native, "value": shadow})
+    require(type(exact) in (int, float) and math.isfinite(exact) and abs(exact) <= MAX_SAFE_INTEGER
+            and exact == int(exact) and type(shadow) in (int, float) and shadow == exact,
+            "Integral controls require a finite exact safe integer " + field)
+    return int(exact)
+
+
 def candidate(parameter):
     if parameter["native_kind"] == "String":
         original = parameter["value"]
         value = original + " MCP 한글"
         require(len(value.encode("utf-16-le")) // 2 <= 4096, "String cannot fit a changed bounded test value")
         return {"text": value}, {"text": original}
-    original, lower, upper = raw_value(parameter), parameter["min"], parameter["max"]
+    if parameter["native_kind"] in ("Integer", "List"):
+        original, lower, upper = (integral_parameter_value(parameter, field) for field in ("value", "min", "max"))
+    else:
+        original, lower, upper = raw_value(parameter), parameter.get("min"), parameter.get("max")
     data_kind = parameter["native_value"]["data"]["kind"]
     if parameter["native_kind"] == "Toggle":
         desired = 0 if original == 1 else 1
+    elif parameter["native_kind"] in ("Integer", "List"):
+        require(lower <= original <= upper and lower < upper,
+                "Integral controls require an in-range value and a different integral choice")
+        desired = original + 1 if original < upper else original - 1
     elif data_kind == "integer":
         desired = original + 1 if original + 1 <= upper else original - 1
     else:
