@@ -35,6 +35,7 @@ MAX_DIRECT_DIGEST_CASES_BETWEEN_FULL_CHECKS = 32
 UNKNOWN_OUTCOMES = frozenset(("outcome_unknown", "unknown"))
 NUMERIC_KINDS = {"Toggle", "Integer", "Float", "List", "Scroll"}
 EXTERNAL_ACTIONS = {"pingAgain", "pingMode", "zoomOut", "latencyTotal", "ms", "samples", "deviceName"}
+EXTERNAL_STATE_ROLES = {"scopeMode", "showImage", "latencyOffset", "mathMode"}
 PARAMETER_ACTIONS = {
     "Expander": {"swapfreqs"},
     "Gate": {"swapfreqs"},
@@ -309,6 +310,8 @@ def classification(plugin, parameter):
         return "dedicated_type_required"
     if name in PARAMETER_ACTIONS.get(plugin, ()) or (plugin.startswith("External Effect ") and name in EXTERNAL_ACTIONS):
         return "dedicated_action_required"
+    if plugin in ("External Effect Mono", "External Effect Stereo") and name in EXTERNAL_STATE_ROLES:
+        return "state_restore_required"
     if name in MODEL_SELECTORS.get(plugin, set()) or (
             plugin in ("Mustang Native", "Rumble Native") and str(name).startswith("global.effectmodel")):
         return "model_state_restore_required"

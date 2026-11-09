@@ -446,6 +446,52 @@ class AcceptanceTests(unittest.TestCase):
                 self.assertEqual(classification(plugin, parameter), "dedicated_action_required")
                 self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
 
+    def test_exact_external_coordinated_roles_require_state_restoration(self):
+        for plugin in ("External Effect Mono", "External Effect Stereo"):
+            for name in ("scopeMode", "showImage", "latencyOffset", "mathMode"):
+                kind = "Integer" if name == "latencyOffset" else "Toggle"
+                parameter = number(name, 0, kind=kind, lower=0, upper=2)
+                self.assertEqual(classification(plugin, parameter), "state_restore_required")
+                self.assertEqual(classification(plugin, {**parameter, "readOnly": True}), "read_only")
+                self.assertEqual(classification(plugin, {**parameter, "enabled": False}), "disabled_dependency")
+                self.assertEqual(classification(plugin, {**parameter, "name": name + "Other"}), "numeric_scalar")
+                self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
+                self.assertEqual(classification("External Effect Custom", parameter), "numeric_scalar")
+
+    def test_external_coordinated_roles_remain_inventoried_without_generic_writes(self):
+        class ExternalInventoryClient(DeviceClient):
+            def call(self, name, args):
+                if name == "plugin_editor_open":
+                    self.calls.append((name, copy.deepcopy(args)))
+                    return self.receipt({"opened": True}, "applied_unverified")
+                return super().call(name, args)
+
+        client = ExternalInventoryClient([number("scopeMode", 0, kind="Toggle", lower=0, upper=1),
+                               number("showImage", 0, kind="Toggle", lower=0, upper=1),
+                               number("latencyOffset", 0, kind="Integer", lower=0, upper=1024),
+                               number("mathMode", 0, kind="Toggle", lower=0, upper=1)])
+        runner = self.runner(client)
+        runner.run_fixture({**TARGET, "plugin": "External Effect Mono"}, write_roundtrips=True)
+        self.assertEqual(runner.counts["records_audited"], 4)
+        self.assertEqual(runner.counts["category_state_restore_required"], 4)
+        self.assertEqual(client.writes, [])
+        self.assertEqual(runner.finish(write_roundtrips=True), 2)
+        self.assertEqual(runner.summary["dedicated_or_unresolved_records"], 4)
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
+    def test_external_existing_dedicated_actions_and_ordinary_numeric_roles_are_unchanged(self):
+        for plugin in ("External Effect Mono", "External Effect Stereo"):
+            for name in ("pingMode", "zoomOut", "pingAgain", "latencyTotal", "ms", "samples", "deviceName"):
+                parameter = number(name, 0, kind="Toggle", lower=0, upper=1)
+                self.assertEqual(classification(plugin, parameter), "dedicated_action_required")
+            for name in ("inputGain", "outputGain", "wetdry", "bypass", "phase", "sensitivity", "colorSelect", "showDeviceNotes"):
+                parameter = number(name, 0, kind="Integer" if name == "colorSelect" else "Float", lower=0, upper=1)
+                self.assertEqual(classification(plugin, parameter), "numeric_scalar")
+            notes = {"name": "deviceNotes", "native_kind": "String", "value": "", "enabled": True,
+                     "readOnly": False, "writable": True, "support": {"text": True}, "display_parser": "LiteralString",
+                     "native_value": {"variant_tag": 19, "data": {"kind": "text", "value": ""}}}
+            self.assertEqual(classification(plugin, notes), "literal_string")
+
     def test_float_exact_metadata_and_negative_zero_do_not_get_silent_tolerance_passes(self):
         parameter = number("gain", -0.0)
         self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
