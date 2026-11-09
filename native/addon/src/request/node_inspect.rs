@@ -177,7 +177,162 @@ pub(super) enum Auxiliary {
     InsertFolderAncestry {
         inspection: Inspection,
         ancestor_matches_active_model: bool,
+        document_environment: DocumentEnvironmentObservation,
     },
+}
+
+pub(super) enum DocumentEnvironmentObservation {
+    Unavailable(String),
+    Observed {
+        route: DocumentEnvironmentRoute,
+        ancestor_matches: bool,
+    },
+}
+
+pub(super) struct DocumentEnvironmentRoute {
+    manager: NodePin,
+    controller: NodePin,
+    environment: NodePin,
+    active_document_name: *const PlainString,
+    environment_name: *const PlainString,
+}
+impl DocumentEnvironmentRoute {
+    fn manager(pointer: *mut c_void) -> Result<NodePin, String> {
+        let manager_node =
+            query(pointer, &NODE).ok_or("document manager node interface unavailable")?;
+        let manager = NodePin::borrowed(manager_node.0)?;
+        let canonical =
+            query(pointer, &UNKNOWN).ok_or("document manager canonical identity unavailable")?;
+        let same = canonical.0 == manager._canonical.0;
+        drop(canonical);
+        drop(manager_node);
+        if !same {
+            return Err("document manager node canonical identity mismatch".into());
+        }
+        Ok(manager)
+    }
+    fn resolve<G: FnMut() -> Result<(), String>>(
+        manager: NodePin,
+        active_document_name: *const PlainString,
+        environment_name: *const PlainString,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        guard()?;
+        let controller = manager.child(active_document_name)?;
+        guard()?;
+        let environment = controller.child(environment_name)?;
+        guard()?;
+        let route = Self {
+            manager,
+            controller,
+            environment,
+            active_document_name,
+            environment_name,
+        };
+        route.check()?;
+        guard()?;
+        Ok(route)
+    }
+    fn capture(ctx: &Context<'_>) -> Result<Self, String> {
+        ctx.check()?;
+        let get_string = constant_string().ok_or("native string constants unavailable")?;
+        let active_document_name = unsafe { get_string(c"ActiveDocument".as_ptr()) };
+        let environment_name = unsafe { get_string(c"Environment".as_ptr()) };
+        if active_document_name.is_null() || environment_name.is_null() {
+            return Err("fixed document environment identifiers unavailable".into());
+        }
+        let manager = Self::manager(ctx.document.manager.0)?;
+        ctx.check()?;
+        let route = Self::resolve(manager, active_document_name, environment_name, &mut || {
+            ctx.check()
+        })?;
+        let id = route.environment.id()?;
+        let family = class_name(route.environment.node.0);
+        route.check()?;
+        ctx.check()?;
+        validate_document_environment_family(&id, &family)?;
+        Ok(route)
+    }
+    fn check(&self) -> Result<(), String> {
+        let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
+            unsafe { method(self.manager.node.0, 10) };
+        let child: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
+            unsafe { method(self.controller.node.0, 10) };
+        if unsafe { find(self.manager.node.0, self.active_document_name) } != self.controller.node.0
+            || unsafe { child(self.controller.node.0, self.environment_name) }
+                != self.environment.node.0
+        {
+            Err("active document Environment attachment changed".into())
+        } else {
+            Ok(())
+        }
+    }
+    fn matches(&self, inspection: &Inspection) -> Result<bool, String> {
+        inspection
+            .ancestor_matches_canonical(
+                NonNull::new(self.environment._canonical.0).expect("retained Environment identity"),
+            )
+            .map_err(|error| error.to_string())
+    }
+}
+
+fn validate_document_environment_family(id: &str, family: &str) -> Result<(), String> {
+    if id == "SongEnvironment" && family == "UltimateStudioEnvironment" {
+        Ok(())
+    } else {
+        Err("fixed document Environment has an unverified node family".into())
+    }
+}
+
+impl DocumentEnvironmentObservation {
+    fn capture(ctx: &Context<'_>, inspection: &Inspection) -> Result<Self, String> {
+        let observed = DocumentEnvironmentRoute::capture(ctx).and_then(|route| {
+            let ancestor_matches = route.matches(inspection)?;
+            Ok(Self::Observed {
+                route,
+                ancestor_matches,
+            })
+        });
+        match observed {
+            Ok(observed) => {
+                if let Err(reason) = observed.check(inspection) {
+                    drop(observed);
+                    ctx.check()?;
+                    return Err(reason);
+                }
+                ctx.check()?;
+                Ok(observed)
+            }
+            Err(reason) => {
+                ctx.check()?;
+                Ok(Self::Unavailable(reason))
+            }
+        }
+    }
+    fn check(&self, inspection: &Inspection) -> Result<(), String> {
+        if let Self::Observed {
+            route,
+            ancestor_matches,
+        } = self
+        {
+            route.check()?;
+            if route.matches(inspection)? != *ancestor_matches {
+                return Err("retained document Environment ancestor observation changed".into());
+            }
+        }
+        Ok(())
+    }
+    fn value(&self) -> Value {
+        match self {
+            Self::Unavailable(reason) => json!({"status":"unavailable","reason":reason,
+                "scope":"fixed_active_document_controller_environment","mutation_capability":false,"atomic_snapshot":false}),
+            Self::Observed {
+                ancestor_matches, ..
+            } => json!({"status":"observed",
+                "scope":"fixed_active_document_controller_environment","ancestor_matches":ancestor_matches,
+                "mutation_capability":false,"atomic_snapshot":false}),
+        }
+    }
 }
 #[derive(Clone, Copy)]
 enum AuxiliaryRole {
@@ -199,11 +354,12 @@ impl Auxiliary {
         let observation = if let Self::InsertFolderAncestry {
             inspection,
             ancestor_matches_active_model,
+            document_environment,
         } = self
         {
             ancestry_matches_model(inspection, ctx).and_then(|current| {
                 if current == *ancestor_matches_active_model {
-                    Ok(())
+                    document_environment.check(inspection)
                 } else {
                     Err("retained Inserts ancestor observation changed".into())
                 }
@@ -211,8 +367,7 @@ impl Auxiliary {
         } else {
             Ok(())
         };
-        // The predicate above performs no foreign calls. Keep this fresh native
-        // Context check last, after inspection validation and temporary cleanup.
+        // Attachment reads create no temporary owners. Keep Context last.
         ctx.check()?;
         observation
     }
@@ -227,6 +382,7 @@ impl Auxiliary {
             }
             Self::InsertFolderAncestry {
                 ancestor_matches_active_model,
+                document_environment,
                 ..
             } => {
                 value["coverage"] = json!("bounded_readonly_insert_folder_ancestor_metadata");
@@ -236,6 +392,7 @@ impl Auxiliary {
                 value["descendants_observed"] = json!(false);
                 value["atomic_snapshot"] = json!(false);
                 value["ancestor_matches_active_model"] = json!(ancestor_matches_active_model);
+                value["document_environment_observation"] = document_environment.value();
                 value["negative_match_scope"] = json!("no_match_in_bounded_parent_chain");
             }
         }
@@ -304,7 +461,16 @@ pub(super) fn capture_insert_folder_ancestry(
             return Err(reason);
         }
     };
+    let document_environment = match DocumentEnvironmentObservation::capture(ctx, &inspection) {
+        Ok(observed) => observed,
+        Err(reason) => {
+            drop(inspection);
+            ctx.check()?;
+            return Err(reason);
+        }
+    };
     let auxiliary = Auxiliary::InsertFolderAncestry {
+        document_environment,
         inspection,
         ancestor_matches_active_model,
     };
@@ -531,6 +697,64 @@ mod tests {
         child: *mut c_void,
         name: *const PlainString,
         bad_names: AtomicU32,
+        parent_reads: AtomicU32,
+        identity: *const PlainString,
+        reject_canonical: bool,
+        replace_on_query: *mut Mock,
+        replacement: *mut c_void,
+        foreign_node_interface: *mut c_void,
+    }
+    #[repr(C)]
+    struct EmptyText {
+        table: *const *const c_void,
+        refs: AtomicU32,
+        replace_on_release: *mut Mock,
+        replacement: *mut c_void,
+    }
+    unsafe extern "C" fn text_retain(pointer: *mut c_void) -> u32 {
+        unsafe { &*pointer.cast::<EmptyText>() }
+            .refs
+            .fetch_add(1, Ordering::Relaxed)
+            + 1
+    }
+    unsafe extern "C" fn text_release(pointer: *mut c_void) -> u32 {
+        let text = unsafe { &mut *pointer.cast::<EmptyText>() };
+        let refs = text.refs.fetch_sub(1, Ordering::Relaxed) - 1;
+        if !text.replace_on_release.is_null() {
+            unsafe {
+                (*text.replace_on_release).child = text.replacement;
+            }
+            text.replace_on_release = ptr::null_mut();
+        }
+        refs
+    }
+    unsafe extern "C" fn text_length(_: *mut c_void) -> i32 {
+        0
+    }
+    unsafe extern "C" fn text_copy(_: *mut c_void, out: *mut u16, count: i32) -> i32 {
+        assert_eq!(count, 1);
+        unsafe {
+            *out = 0;
+        }
+        OK
+    }
+    unsafe extern "C" fn identity(pointer: *mut c_void) -> *const PlainString {
+        unsafe { &*pointer.cast::<Mock>() }.identity
+    }
+    unsafe extern "C" fn missing_uid(_: *mut c_void) -> *const Uid {
+        static EMPTY: Uid = Uid {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: [0; 8],
+        };
+        &EMPTY
+    }
+    unsafe extern "C" fn no_children(_: *mut c_void) -> i32 {
+        0
+    }
+    unsafe extern "C" fn unused_text(_: *const c_char) -> *const c_void {
+        ptr::null()
     }
     unsafe extern "C" fn retain(pointer: *mut c_void) -> u32 {
         unsafe { &*pointer.cast::<Mock>() }
@@ -552,17 +776,36 @@ mod tests {
         unsafe {
             *out = ptr::null_mut();
         }
-        if unsafe { *iid } != UNKNOWN {
+        let mock = unsafe { &*pointer.cast::<Mock>() };
+        if unsafe { *iid } == UNKNOWN && mock.reject_canonical {
+            unsafe {
+                *out = ptr::dangling_mut::<c_void>();
+            }
             return NO_INTERFACE;
+        }
+        if unsafe { *iid } != UNKNOWN && unsafe { *iid } != NODE {
+            return NO_INTERFACE;
+        }
+        if unsafe { *iid } == NODE && !mock.foreign_node_interface.is_null() {
+            unsafe {
+                retain(mock.foreign_node_interface);
+                *out = mock.foreign_node_interface;
+            }
+            return OK;
         }
         unsafe {
             retain(pointer);
             *out = pointer;
+            if !mock.replace_on_query.is_null() {
+                (*mock.replace_on_query).child = mock.replacement;
+            }
         }
         OK
     }
     unsafe extern "C" fn parent(pointer: *mut c_void) -> *mut c_void {
-        unsafe { (*pointer.cast::<Mock>()).parent }
+        let mock = unsafe { &*pointer.cast::<Mock>() };
+        mock.parent_reads.fetch_add(1, Ordering::Relaxed);
+        mock.parent
     }
     unsafe extern "C" fn child(pointer: *mut c_void, name: *const PlainString) -> *mut c_void {
         let mock = unsafe { &*pointer.cast::<Mock>() };
@@ -577,6 +820,9 @@ mod tests {
         _table: Box<[*const c_void; 11]>,
         nodes: Box<[Mock; 5]>,
         names: [Box<PlainString>; 2],
+        _text_table: Box<[*const c_void; 9]>,
+        text: Box<EmptyText>,
+        _identity: Box<PlainString>,
     }
     impl Fixture {
         fn new() -> Self {
@@ -584,8 +830,27 @@ mod tests {
             table[0] = query_mock as *const c_void;
             table[1] = retain as *const c_void;
             table[2] = release as *const c_void;
+            table[3] = identity as *const c_void;
+            table[4] = missing_uid as *const c_void;
+            table[5] = missing_uid as *const c_void;
             table[6] = parent as *const c_void;
+            table[8] = no_children as *const c_void;
             table[10] = child as *const c_void;
+            let mut text_table = Box::new([ptr::null(); 9]);
+            text_table[1] = text_retain as *const c_void;
+            text_table[2] = text_release as *const c_void;
+            text_table[4] = text_length as *const c_void;
+            text_table[8] = text_copy as *const c_void;
+            let mut text = Box::new(EmptyText {
+                table: text_table.as_ptr(),
+                refs: AtomicU32::new(1),
+                replace_on_release: ptr::null_mut(),
+                replacement: ptr::null_mut(),
+            });
+            let identity = Box::new(PlainString {
+                object: ptr::addr_of_mut!(*text).cast(),
+                opaque_debug: ptr::null_mut(),
+            });
             let names = [0, 1].map(|_| {
                 Box::new(PlainString {
                     object: ptr::null_mut(),
@@ -599,11 +864,20 @@ mod tests {
                 child: ptr::null_mut(),
                 name: ptr::null(),
                 bad_names: AtomicU32::new(0),
+                parent_reads: AtomicU32::new(0),
+                identity: ptr::addr_of!(*identity),
+                reject_canonical: false,
+                replace_on_query: ptr::null_mut(),
+                replacement: ptr::null_mut(),
+                foreign_node_interface: ptr::null_mut(),
             }));
             let mut fixture = Self {
                 _table: table,
                 nodes,
                 names,
+                _text_table: text_table,
+                text,
+                _identity: identity,
             };
             fixture.nodes[0].parent = fixture.pointer(1);
             fixture.nodes[1].parent = fixture.pointer(2);
@@ -638,7 +912,311 @@ mod tests {
                     .iter()
                     .all(|node| node.refs.load(Ordering::Acquire) == 1)
             );
+            assert_eq!(self.text.refs.load(Ordering::Acquire), 1);
         }
+        fn environment_route<G: FnMut() -> Result<(), String>>(
+            &mut self,
+            guard: &mut G,
+        ) -> Result<DocumentEnvironmentRoute, String> {
+            let manager = NodePin::borrowed(self.pointer(2))?;
+            DocumentEnvironmentRoute::resolve(
+                manager,
+                ptr::addr_of!(*self.names[0]),
+                ptr::addr_of!(*self.names[1]),
+                guard,
+            )
+        }
+        fn ancestors(&mut self) -> Inspection {
+            let owner = hold(self.pointer(0)).unwrap();
+            let pointer = NonNull::new(owner.0).unwrap();
+            std::mem::forget(owner);
+            let inspector = unsafe {
+                NodeInspector::from_owned(
+                    pointer,
+                    TextApi {
+                        get_constant_string: unused_text,
+                    },
+                )
+            };
+            inspector.inspect_ancestors(&mut || Ok(())).unwrap()
+        }
+    }
+
+    #[test]
+    fn document_environment_uses_only_two_fixed_child_edges_and_retains_their_owners() {
+        let mut fixture = Fixture::new();
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        assert_eq!(route.manager.node.0, fixture.pointer(2));
+        assert_eq!(route.controller.node.0, fixture.pointer(3));
+        assert_eq!(route.environment.node.0, fixture.pointer(4));
+        for (index, node) in fixture.nodes.iter().enumerate() {
+            assert_eq!(
+                node.refs.load(Ordering::Acquire),
+                if index < 2 { 1 } else { 3 }
+            );
+            assert_eq!(node.parent_reads.load(Ordering::Acquire), 0);
+            assert_eq!(node.bad_names.load(Ordering::Acquire), 0);
+        }
+        route.check().unwrap();
+        drop(route);
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_manager_node_must_have_the_original_manager_canonical_identity() {
+        let mut fixture = Fixture::new();
+        let manager = DocumentEnvironmentRoute::manager(fixture.pointer(2)).unwrap();
+        assert_eq!(manager.node.0, fixture.pointer(2));
+        drop(manager);
+        fixture.released();
+        fixture.nodes[2].foreign_node_interface = fixture.pointer(3);
+        assert!(DocumentEnvironmentRoute::manager(fixture.pointer(2)).is_err());
+        fixture.released();
+        fixture.nodes[2].foreign_node_interface = ptr::null_mut();
+        fixture.nodes[2].reject_canonical = true;
+        assert!(DocumentEnvironmentRoute::manager(fixture.pointer(2)).is_err());
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_match_is_only_the_existing_retained_parent_chain() {
+        let mut fixture = Fixture::new();
+        let inspection = fixture.ancestors();
+        let unrelated = fixture.environment_route(&mut || Ok(())).unwrap();
+        assert!(!unrelated.matches(&inspection).unwrap());
+        drop(unrelated);
+        fixture.nodes[3].child = fixture.pointer(1);
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        assert!(route.matches(&inspection).unwrap());
+        let observation = DocumentEnvironmentObservation::Observed {
+            route,
+            ancestor_matches: true,
+        };
+        observation.check(&inspection).unwrap();
+        assert_eq!(observation.value()["ancestor_matches"], true);
+        assert_eq!(
+            observation.value()["scope"],
+            "fixed_active_document_controller_environment"
+        );
+        assert_eq!(observation.value()["mutation_capability"], false);
+        assert_eq!(observation.value()["atomic_snapshot"], false);
+        drop(observation);
+        drop(inspection);
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_missing_fixed_children_never_uses_a_fallback() {
+        for missing in [2, 3] {
+            let mut fixture = Fixture::new();
+            fixture.nodes[missing].child = ptr::null_mut();
+            assert!(fixture.environment_route(&mut || Ok(())).is_err());
+            fixture.released();
+            assert!(
+                fixture
+                    .nodes
+                    .iter()
+                    .all(|node| node.bad_names.load(Ordering::Acquire) == 0)
+            );
+        }
+        let unavailable =
+            DocumentEnvironmentObservation::Unavailable("fixed child unavailable".into()).value();
+        assert_eq!(unavailable["status"], "unavailable");
+        assert!(unavailable.get("ancestor_matches").is_none());
+    }
+
+    #[test]
+    fn document_environment_refuses_both_edge_replacements_and_query_reentry() {
+        let mut fixture = Fixture::new();
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        for index in [2, 3] {
+            let original = fixture.nodes[index].child;
+            fixture.nodes[index].child = fixture.pointer(0);
+            assert!(route.check().is_err());
+            fixture.nodes[index].child = original;
+            route.check().unwrap();
+        }
+        drop(route);
+        fixture.released();
+        fixture.nodes[3].replace_on_query = ptr::addr_of_mut!(fixture.nodes[2]);
+        fixture.nodes[3].replacement = fixture.pointer(4);
+        assert!(fixture.environment_route(&mut || Ok(())).is_err());
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_rejects_failed_nonnull_canonical_qi_without_touching_the_sentinel() {
+        let mut fixture = Fixture::new();
+        fixture.nodes[3].reject_canonical = true;
+        assert!(fixture.environment_route(&mut || Ok(())).is_err());
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_guard_failure_releases_every_new_route_owner() {
+        for fail_at in 1..=4 {
+            let mut fixture = Fixture::new();
+            let mut calls = 0;
+            assert!(
+                fixture
+                    .environment_route(&mut || {
+                        calls += 1;
+                        if calls == fail_at {
+                            Err("context changed".into())
+                        } else {
+                            Ok(())
+                        }
+                    })
+                    .is_err()
+            );
+            fixture.released();
+        }
+    }
+
+    #[test]
+    fn document_environment_requires_the_actual_observed_song_family() {
+        validate_document_environment_family("SongEnvironment", "UltimateStudioEnvironment")
+            .unwrap();
+        for (id, class) in [
+            ("Environment", "UltimateStudioEnvironment"),
+            ("SongEnvironment", "StudioEnvironment"),
+            ("", ""),
+        ] {
+            assert!(validate_document_environment_family(id, class).is_err());
+        }
+    }
+
+    #[test]
+    fn document_environment_refuses_metadata_owner_cleanup_that_replaces_the_fixed_child() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut context_fixture = super::super::guard_tests::Fixture::new();
+        context_fixture.canonical_queries();
+        let context = context_fixture.context();
+        let mut fixture = Fixture::new();
+        let inspection = fixture.ancestors();
+        fixture.nodes[3].child = fixture.pointer(1);
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        let auxiliary = Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+            document_environment: DocumentEnvironmentObservation::Observed {
+                route,
+                ancestor_matches: true,
+            },
+        };
+        fixture.text.replace_on_release = ptr::addr_of_mut!(fixture.nodes[3]);
+        fixture.text.replacement = fixture.pointer(4);
+        assert!(auxiliary.check(&context).is_err());
+        assert!(context.check().is_ok());
+        assert!(fixture.text.replace_on_release.is_null());
+        drop(auxiliary);
+        fixture.released();
+        drop(context);
+    }
+
+    #[test]
+    fn document_environment_owners_survive_publication_and_context_loss_removes_the_proof() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut context_fixture = super::super::guard_tests::Fixture::new();
+        context_fixture.canonical_queries();
+        let context = context_fixture.context();
+        let service = context.service;
+        let mut fixture = Fixture::new();
+        let inspection = fixture.ancestors();
+        fixture.nodes[3].child = fixture.pointer(1);
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        let auxiliary = Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+            document_environment: DocumentEnvironmentObservation::Observed {
+                route,
+                ancestor_matches: true,
+            },
+        };
+        auxiliary.check(&context).unwrap();
+        let report = auxiliary.value();
+        let mut reply = Reply::unbound(
+            json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
+            "ancestor_matches_active_model":false,"document_environment_observation":report["document_environment_observation"],
+            "insert_folder_ancestry_report":report}),
+        );
+        reply.auxiliary = Some(auxiliary);
+        reply.context = Some(context);
+        let mut out = VariantOut {
+            kind: 0,
+            padding: [0; 6],
+            payload: 0,
+        };
+        assert!(publish_reply(&mut out, reply, api().unwrap(), service));
+        let value: Value =
+            serde_json::from_str(&super::super::super::tests::output_text(&out)).unwrap();
+        assert_eq!(value["ok"], true);
+        assert_eq!(value["ancestor_matches_active_model"], false);
+        assert_eq!(
+            value["document_environment_observation"]["ancestor_matches"],
+            true
+        );
+        assert!(fixture.nodes[3].refs.load(Ordering::Acquire) > 1);
+        release_receipt(service);
+        fixture.released();
+        super::super::super::tests::clear_output(&mut out);
+
+        let context = context_fixture.context();
+        let inspection = fixture.ancestors();
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        let auxiliary = Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+            document_environment: DocumentEnvironmentObservation::Observed {
+                route,
+                ancestor_matches: true,
+            },
+        };
+        let report = auxiliary.value();
+        let mut reply = Reply::unbound(
+            json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
+            "ancestor_matches_active_model":false,"document_environment_observation":report["document_environment_observation"],
+            "insert_folder_ancestry_report":report}),
+        );
+        reply.auxiliary = Some(auxiliary);
+        reply.context = Some(context);
+        context_fixture.switch_document();
+        assert!(!reply.final_check(service));
+        assert!(
+            reply
+                .value
+                .get("document_environment_observation")
+                .is_none()
+        );
+        assert!(reply.value.get("insert_folder_ancestry_report").is_none());
+        drop(reply);
+        fixture.released();
+    }
+
+    #[test]
+    fn document_environment_also_rejects_a_model_switch_under_the_same_document() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut context_fixture = super::super::guard_tests::Fixture::new();
+        context_fixture.canonical_queries();
+        let context = context_fixture.context();
+        let mut fixture = Fixture::new();
+        let inspection = fixture.ancestors();
+        fixture.nodes[3].child = fixture.pointer(1);
+        let route = fixture.environment_route(&mut || Ok(())).unwrap();
+        let auxiliary = Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+            document_environment: DocumentEnvironmentObservation::Observed {
+                route,
+                ancestor_matches: true,
+            },
+        };
+        auxiliary.check(&context).unwrap();
+        context_fixture.switch_model();
+        assert!(auxiliary.check(&context).is_err());
+        drop(auxiliary);
+        fixture.released();
+        drop(context);
     }
 
     #[test]

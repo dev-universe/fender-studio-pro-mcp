@@ -55,6 +55,18 @@ function mteNativeReadObserved(value, legacyIdentity) {
 	return true;
 }
 
+function mteDocumentEnvironmentSignature(value) {
+	if (!value || typeof value !== "object" || Array.isArray(value)
+		|| value.scope !== "fixed_active_document_controller_environment"
+		|| value.mutation_capability !== false || value.atomic_snapshot !== false) return null;
+	var keys = Object.keys(value).sort().join(",");
+	if (value.status === "observed" && typeof value.ancestor_matches === "boolean"
+		&& keys === "ancestor_matches,atomic_snapshot,mutation_capability,scope,status") return JSON.stringify([value.status, value.ancestor_matches]);
+	if (value.status === "unavailable" && typeof value.reason === "string" && value.reason.length > 0 && value.reason.length <= 512
+		&& keys === "atomic_snapshot,mutation_capability,reason,scope,status") return JSON.stringify([value.status, value.reason]);
+	return null;
+}
+
 function mteGraphReflection(channel, graphFunctions) {
 	try {
 		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
@@ -102,6 +114,12 @@ function mteInsertFolderAncestry(channel) {
 			|| typeof result.ancestor_matches_active_model !== "boolean" || !result.insert_folder_ancestry_report
 			|| result.insert_folder_ancestry_report.traversal !== "parent_chain_only"
 			|| result.insert_folder_ancestry_report.ancestor_matches_active_model !== result.ancestor_matches_active_model) return { error: "native ancestry identity or scope unavailable" };
+		if (Object.prototype.hasOwnProperty.call(result, "document_environment_observation")
+			|| Object.prototype.hasOwnProperty.call(result.insert_folder_ancestry_report, "document_environment_observation")) {
+			var environment = mteDocumentEnvironmentSignature(result.document_environment_observation);
+			if (environment === null || environment !== mteDocumentEnvironmentSignature(result.insert_folder_ancestry_report.document_environment_observation))
+				return { error: "native document Environment observation unavailable" };
+		}
 		return result;
 	} catch (error) { return { error: String(error).slice(0, 512) }; }
 }

@@ -42,6 +42,50 @@ function nativeReadHelper(helper, stage, patch, omitOutcome = false) {
   return { result, calls, device, auxiliary: helper === 'legacy' ? auxiliary : inserts };
 }
 
+test('document Environment observations preserve separate known match and unavailable states', () => {
+  for (const environment of [
+    { status: 'observed', ancestor_matches: true },
+    { status: 'observed', ancestor_matches: false },
+    { status: 'unavailable', reason: 'fixed child unavailable' },
+  ]) {
+    const value = { ...environment, scope: 'fixed_active_document_controller_environment', mutation_capability: false, atomic_snapshot: false };
+    const { result } = nativeReadHelper('ancestry', 'observation', {
+      document_environment_observation: value,
+      insert_folder_ancestry_report: { traversal: 'parent_chain_only', ancestor_matches_active_model: true, document_environment_observation: value },
+    });
+    assert.equal(result.error, undefined);
+    assert.equal(result.document_environment_observation.status, value.status);
+    assert.equal(result.document_environment_observation.ancestor_matches, value.ancestor_matches);
+    assert.equal(result.ancestor_matches_active_model, true);
+  }
+});
+
+test('document Environment malformed and contradictory evidence never retains a usable predicate', () => {
+  const known = { status: 'observed', ancestor_matches: true, scope: 'fixed_active_document_controller_environment', mutation_capability: false, atomic_snapshot: false };
+  const unavailable = { status: 'unavailable', reason: 'missing', scope: known.scope, mutation_capability: false, atomic_snapshot: false };
+  const invalid = [null, [], {}, { ...known, status: 'unknown' }, { ...known, status: null },
+    { ...known, ancestor_matches: 1 }, { ...known, ancestor_matches: null }, { ...known, mutation_capability: true },
+    { ...known, atomic_snapshot: true }, { ...known, scope: 'active_model' }, { ...known, path: 'untrusted' },
+    { ...unavailable, reason: '' }, { ...unavailable, reason: 'x'.repeat(513) }, { ...unavailable, reason: {} },
+    { ...unavailable, ancestor_matches: false }];
+  for (const value of invalid) {
+    const { result } = nativeReadHelper('ancestry', 'observation', {
+      document_environment_observation: value,
+      insert_folder_ancestry_report: { traversal: 'parent_chain_only', ancestor_matches_active_model: true, document_environment_observation: value },
+    });
+    assert.equal(typeof result.error, 'string');
+    assert.equal(result.document_environment_observation, undefined);
+  }
+  for (const [outer, inner] of [[known, { ...known, ancestor_matches: false }], [known, undefined], [undefined, known], [unavailable, known]]) {
+    const { result } = nativeReadHelper('ancestry', 'observation', {
+      document_environment_observation: outer,
+      insert_folder_ancestry_report: { traversal: 'parent_chain_only', ancestor_matches_active_model: true, document_environment_observation: inner },
+    });
+    assert.equal(typeof result.error, 'string');
+    assert.equal(result.insert_folder_ancestry_report, undefined);
+  }
+});
+
 const nativeReadStatusCases = [
   ['legacy absent statuses', {}, 'identity', true],
   ['both observed', { outcome: 'observed', native_outcome: 'observed' }, true],

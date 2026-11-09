@@ -1226,6 +1226,7 @@ impl Reply {
             let object = self.value.as_object_mut().expect("object response");
             object.remove("insert_folder_ancestry_report");
             object.remove("ancestor_matches_active_model");
+            object.remove("document_environment_observation");
         }
         if self
             .nodes
@@ -1457,6 +1458,7 @@ pub(super) fn dispatch(
                     json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
                         "mutation_capability":false,"atomic_snapshot":false,
                         "ancestor_matches_active_model":report["ancestor_matches_active_model"],
+                        "document_environment_observation":report["document_environment_observation"],
                         "insert_folder_ancestry_report":report}),
                     Some(auxiliary),
                 )
@@ -1945,12 +1947,19 @@ mod tests {
     fn reply_context_invalidation_strips_insert_folder_ancestry_claims() {
         let mut reply = Reply::unbound(json!({"ok":true,"outcome":"observed",
             "scope":"insert_folder_ancestry_observation","ancestor_matches_active_model":true,
+            "document_environment_observation":{"status":"observed","ancestor_matches":true},
             "insert_folder_ancestry_report":{"nodes":[],"ancestor_matches_active_model":true}}));
         reply.invalidate("document or parent chain changed".into());
         assert_eq!(reply.value["ok"], false);
         assert_eq!(reply.value["outcome"], "not_applied");
         assert!(reply.value.get("ancestor_matches_active_model").is_none());
         assert!(reply.value.get("insert_folder_ancestry_report").is_none());
+        assert!(
+            reply
+                .value
+                .get("document_environment_observation")
+                .is_none()
+        );
     }
     fn parse(value: Value) -> Result<Request, String> {
         let r: Request = serde_json::from_value(value).map_err(|e| e.to_string())?;
@@ -2533,6 +2542,9 @@ mod guard_tests {
         pub(super) fn switch_document(&mut self) {
             self.manager.active = ptr::null_mut();
         }
+        pub(super) fn switch_model(&mut self) {
+            self.document.model = ptr::null_mut();
+        }
     }
     impl Drop for Fixture {
         fn drop(&mut self) {
@@ -2775,6 +2787,9 @@ mod guard_tests {
         let auxiliary = node_inspect::Auxiliary::InsertFolderAncestry {
             inspection,
             ancestor_matches_active_model: false,
+            document_environment: node_inspect::DocumentEnvironmentObservation::Unavailable(
+                "synthetic legacy ancestry".into(),
+            ),
         };
         let report = auxiliary.value();
         assert_eq!(report["scope"], "insert_folder_ancestry_observation");
@@ -2829,6 +2844,9 @@ mod guard_tests {
         let auxiliary = node_inspect::Auxiliary::InsertFolderAncestry {
             inspection,
             ancestor_matches_active_model: false,
+            document_environment: node_inspect::DocumentEnvironmentObservation::Unavailable(
+                "synthetic legacy ancestry".into(),
+            ),
         };
         // The node lease still rejects a host-context switch after all retained
         // observations exist, before a predicate can be published.
