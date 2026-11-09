@@ -425,6 +425,17 @@ class AcceptanceTests(unittest.TestCase):
         self.assertEqual(classification("Vocal Tune", {**scale, "name": "root"}), "numeric_scalar")
         self.assertEqual(classification("Vocal Tune", {**scale, "readOnly": True}), "read_only")
 
+    def test_mustang_and_rumble_amp_model_float_facades_are_not_generic_scalars(self):
+        model = number("global.ampmodel", 0.0, kind="Float", lower=0.0, upper=1.0)
+        for plugin in ("Mustang Native", "Rumble Native"):
+            self.assertEqual(classification(plugin, model), "model_state_restore_required")
+            self.assertEqual(classification(plugin, {**model, "name": "global.gain"}), "numeric_scalar")
+            self.assertEqual(classification(plugin, {**model, "name": "global.ampmodelOther"}), "numeric_scalar")
+            self.assertEqual(classification(plugin, {**model, "readOnly": True}), "read_only")
+            self.assertEqual(classification(plugin, {**model, "enabled": False}), "disabled_dependency")
+        self.assertEqual(classification("Fixture Effect", model), "numeric_scalar")
+        self.assertEqual(model["native_kind"], "Float")
+
     def test_source_backed_pulse_actions_are_not_scalar_roundtrips(self):
         actions = {"Expander": ["swapfreqs"], "Gate": ["swapfreqs"],
                    "Compressor": ["studiocomp.swapfreqs", "studiocomp.resetmin"],

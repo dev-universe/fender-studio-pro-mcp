@@ -48,6 +48,8 @@ MODEL_SELECTORS = {
     "Voice FX": {"voicefxopt.fxmodel"},
     "Mai Tai": {"character1.presets"},
     "Vocal Tune": {"scale"},
+    "Mustang Native": {"global.ampmodel"},
+    "Rumble Native": {"global.ampmodel"},
 }
 
 
