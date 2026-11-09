@@ -445,8 +445,12 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                     if (!record || typeof record.name !== "string" || record.name.length > 512) return { error: "invalid native parameter name" };
                     if (native.source === "controller") params.push(record);
                     else if (native.source === "dsp") {
+                        if (record.native_description && typeof record.native_description === "object") {
+                            params.push(Object.assign({}, record.native_description, { name: record.name, native: record, access_metadata_complete: true }));
+                            continue;
+                        }
                         const p = record.name && typeof plug.device.findParameter === "function" ? plug.device.findParameter(record.name) : null;
-                        if (p) params.push(Object.assign(this.paramInfo(p), { name: record.name, native: record }));
+                        if (p) params.push(Object.assign(this.paramInfo(p), { name: record.name, native: record, access_metadata_complete: false }));
                         else {
                             params.push({ name: record.name, value: null, text: null, min: null, max: null, normalized: null, readable: false, native: record });
                             missing.push(record.name || "[native index " + record.index + "]");
@@ -455,7 +459,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 }
                 const pageComplete = native.page_complete === true && (!native.failed_indices || native.failed_indices.length === 0);
                 return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing, page_complete: pageComplete, complete: pageComplete && native.offset === 0 && native.next_offset === null && native.reported_count === params.length,
-                    value_read_complete: missing.length === 0, failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
+                    value_read_complete: missing.length === 0, access_metadata_complete: native.source === "controller" ? pageComplete : native.access_metadata_complete === true,
+                    failed_access_indices: native.failed_access_indices || [], failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
                     parameter_discovery: { source: native.source, completeness: "current_provider", all_indices_read: native.all_indices_read === true, note: "This page covers the current provider and selection, not every nested device, model or editor action." } };
             }
             if (args.offset || args.limit !== undefined || args.source && args.source !== "auto") return { error: "native parameter enumeration requires the matching native extension" };
@@ -465,7 +470,14 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
         if (identityError) return { error: identityError };
         for (const n of names) {
-            const p = args.source === "controller" ? null : args.source === "dsp" ? plug.device.findParameter(String(n)) : this.pluginParameter(plug, String(n));
+            if (args.source === "dsp") {
+                const native = this.nativePluginRequest(plug.device, { operation: "parameter", source: "dsp", param: String(n), expected_instance: args.expected_instance });
+                if (!native) return { error: "native DSP parameter descriptions require the matching native extension" };
+                if (native.ok && native.parameter) params.push(Object.assign({}, native.parameter, { name: String(n) }));
+                else missing.push(String(n));
+                continue;
+            }
+            const p = args.source === "controller" ? null : this.pluginParameter(plug, String(n));
             if (p) params.push(this.paramInfo(p));
             else {
                 const native = args.source === "dsp" ? null : this.nativePluginRequest(plug.device, { operation: "parameter", source: "controller", param: String(n), expected_instance: args.expected_instance });
@@ -476,8 +488,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing };
     }
 
-    nativePluginRequest(device, request) {
-        return typeof NativePluginControls === "function" ? new NativePluginControls(this).request(device, request) : null;
+    nativePluginRequest(device, request, auxiliary) {
+        return typeof NativePluginControls === "function" ? new NativePluginControls(this).request(device, request, auxiliary) : null;
     }
 
     pluginChoices(args) {
@@ -495,6 +507,52 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (expected === undefined) return null;
         const native = this.nativePluginRequest(device, { operation: "inspect", expected_instance: expected });
         return native && native.ok && native.instance && native.instance.object_uid === expected ? null : "the expected native plugin instance is unavailable or changed";
+    }
+
+    pluginParameterDetails(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
+            || (args.source !== "dsp" && args.source !== "controller")
+            || (args.include_owner !== undefined && typeof args.include_owner !== "boolean"))
+            return { error: "an expected plugin, native instance, bounded parameter and explicit source are required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const request = { operation: "parameter_details", source: args.source,
+            param: args.param, expected_instance: args.expected_instance };
+        if (args.include_owner !== undefined) request.include_owner = args.include_owner;
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return { error: "parameter details require the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter details unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginParameterFormat(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
+            || (args.source !== "dsp" && args.source !== "controller") || !Array.isArray(args.values)
+            || args.values.length < 1 || args.values.length > 32
+            || args.values.some(value => typeof value !== "number" || !isFinite(value) || Math.abs(value) > 9007199254740991))
+            return { error: "an expected plugin, native instance, bounded parameter, explicit source and 1..32 finite numeric values are required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "format_values", source: args.source,
+            param: args.param, values: args.values, expected_instance: args.expected_instance });
+        if (!native) return { error: "parameter formatting requires the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter formatting unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginParameterDigest(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || (args.source !== "dsp" && args.source !== "controller"))
+            return { error: "an expected plugin, native instance and explicit source are required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "parameter_digest", source: args.source,
+            expected_instance: args.expected_instance });
+        if (!native) return { error: "parameter digests require the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter digest unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
     }
 
     focusedTrackState() {
@@ -537,7 +595,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         }
         const result = { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
         if (plug.track) result.focusedTrackState = this.focusedTrackState();
-        const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance });
+        const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance, include_nodes: args.include_nodes, node_scope: args.node_scope });
         if (args.expected_instance !== undefined && (!native || !native.ok || !native.instance || native.instance.object_uid !== args.expected_instance)) return { error: "the expected native plugin instance changed" };
         if (native) result.native = native;
         return result;
@@ -554,13 +612,73 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { requested: true, plugin: plug.name, verified: false };
     }
 
+    pluginState(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
+            return { error: "an expected plugin and native instance are required" };
+        const operations = { capture: "state_capture", restore: "state_restore", release: "state_release" };
+        const operation = operations[args.action];
+        if (typeof operation !== "string") return { error: "unsupported plugin state action" };
+        if (args.action === "capture" ? args.token !== undefined : typeof args.token !== "string" || !args.token)
+            return { error: "capture takes no token; restore and release require an issued token" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: operation, token: args.token, expected_instance: args.expected_instance });
+        if (!native) return { error: "plugin state operations require the matching native extension" };
+        if (!native.ok) return { plugin: plug.name, native_outcome: native.outcome, errors: [native.error] };
+        return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name });
+    }
+
+    pluginPresets(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
+            return { error: "an expected plugin and native instance are required" };
+        if (args.catalog_token !== undefined && (typeof args.catalog_token !== "string" || !/^[0-9A-F]{64}$/.test(args.catalog_token)))
+            return { error: "an issued uppercase hexadecimal catalog token is required" };
+        const operations = { list: "presets", apply: "preset_apply", release: "preset_release" };
+        const operation = operations[args.action];
+        if (typeof operation !== "string") return { error: "unsupported plugin preset action" };
+        const pageValid = (args.offset === undefined || (Number.isInteger(args.offset) && args.offset >= 0 && args.offset <= 4096))
+            && (args.limit === undefined || (Number.isInteger(args.limit) && args.limit >= 1 && args.limit <= 64));
+        const valid = args.action === "list" ? args.index === undefined && pageValid
+            : args.catalog_token !== undefined && args.offset === undefined && args.limit === undefined
+                && (args.action === "apply" ? Number.isInteger(args.index) && args.index >= 0 && args.index < 4096 : args.index === undefined);
+        if (!valid) return { error: "list takes a bounded page; apply requires a catalog token and index; release takes only the catalog token" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        let auxiliary;
+        if (args.action === "list" && args.catalog_token === undefined) {
+            if (typeof Host === "undefined" || typeof Host.Url !== "function") return { error: "the native preset catalog requires the host URL factory" };
+            try { auxiliary = Host.Url(""); }
+            catch (_) { return { error: "the empty host URL prototype is unavailable" }; }
+            if (!auxiliary || typeof auxiliary !== "object") return { error: "the empty host URL prototype is unavailable" };
+        }
+        const request = { operation: operation, expected_instance: args.expected_instance, catalog_token: args.catalog_token };
+        if (args.action === "list") {
+            request.offset = args.offset === undefined ? 0 : args.offset;
+            request.limit = args.limit === undefined ? 32 : args.limit;
+        } else if (args.action === "apply") request.index = args.index;
+        const native = this.nativePluginRequest(plug.device, request, auxiliary);
+        if (!native) return { error: "plugin presets require the matching native extension" };
+        if (!native.ok) return { plugin: plug.name, native_outcome: native.outcome, errors: [native.error] };
+        return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name, native_outcome: native.outcome });
+    }
+
     // One of: text (display text, e.g. "4.0:1" or "-12 dB"), normalized (0..1), value (raw).
     setPluginParam(args) {
         if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
-        if (identityError) return { error: identityError };
+        if (identityError) return { plugin: plug.name, native_outcome: "not_applied",
+            guard: "native_instance_preflight", errors: [{ code: "instance_guard", message: identityError }] };
+        if (args.float_bits !== undefined && args.source === undefined) return { error: "float_bits requires an explicit native source" };
+        if (args.source !== undefined) {
+            const mode = args.float_bits !== undefined ? "float_bits" : args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";
+            const value = mode === "float_bits" ? args.float_bits : mode === "text" ? args.text : mode === "normalized" ? args.normalized : args.value;
+            const native = this.nativePluginRequest(plug.device, { operation: "set_parameter", source: args.source, param: String(args.param), mode: mode, value: value, expected_instance: args.expected_instance });
+            if (!native) return { error: "an explicit parameter source requires the matching native extension" };
+            if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), native_outcome: native.outcome, errors: [native.error], before: native.before || null, after: native.after || null };
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), before: native.before, after: native.after, instance: native.instance, source: native.source, native_verified: native.verified === true };
+        }
         const p = this.pluginParameter(plug, String(args.param));
         if (!p) {
             const mode = args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";

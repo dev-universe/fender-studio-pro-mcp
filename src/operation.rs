@@ -63,10 +63,20 @@ pub enum Operation {
     PluginParams(PluginParams),
     #[serde(rename = "pluginChoices", alias = "plugin_parameter_choices")]
     PluginChoices(PluginChoices),
+    #[serde(rename = "pluginParameterDetails", alias = "plugin_parameter_details")]
+    PluginParameterDetails(PluginParameterDetails),
+    #[serde(rename = "pluginParameterFormat", alias = "plugin_parameter_format")]
+    PluginParameterFormat(PluginParameterFormat),
+    #[serde(rename = "pluginParameterDigest", alias = "plugin_parameter_digest")]
+    PluginParameterDigest(PluginParameterDigest),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
     PluginEditorOpen(PluginEditor),
+    #[serde(rename = "pluginState", alias = "plugin_state")]
+    PluginState(PluginState),
+    #[serde(rename = "pluginPresets", alias = "plugin_presets")]
+    PluginPresets(PluginPresets),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -378,6 +388,15 @@ pub struct PluginParams {
     pub source: Option<ParameterSource>,
     /// Bind subsequent pages to the native instance returned by the first page.
     pub expected_instance: Option<String>,
+    pub include_nodes: Option<bool>,
+    pub node_scope: Option<NodeScope>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NodeScope {
+    Target,
+    Graph,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -405,12 +424,104 @@ pub struct PluginChoices {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct PluginParameterDetails {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub param: String,
+    pub source: ParameterSource,
+    pub expected_instance: String,
+    pub include_owner: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginParameterFormat {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub param: String,
+    pub source: ParameterSource,
+    pub expected_instance: String,
+    pub values: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginParameterDigest {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub source: ParameterDigestSource,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ParameterDigestSource {
+    Dsp,
+    Controller,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct PluginEditor {
     pub channel: Option<String>,
     pub slot: Option<u32>,
     pub kind: Option<PluginKind>,
     pub track: Option<String>,
     pub plugin: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginState {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginStateAction,
+    pub token: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginStateAction {
+    Capture,
+    Restore,
+    Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginPresets {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginPresetAction,
+    pub catalog_token: Option<String>,
+    pub index: Option<u32>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginPresetAction {
+    List,
+    Apply,
+    Release,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -425,6 +536,8 @@ pub struct PluginSet {
     pub value: Option<f64>,
     pub normalized: Option<f64>,
     pub text: Option<String>,
+    pub float_bits: Option<String>,
+    pub source: Option<ParameterSource>,
     pub expected_instance: Option<String>,
 }
 
@@ -846,6 +959,9 @@ impl Operation {
             | Self::Sends(_)
             | Self::PluginParams(_)
             | Self::PluginChoices(_)
+            | Self::PluginParameterDetails(_)
+            | Self::PluginParameterFormat(_)
+            | Self::PluginParameterDigest(_)
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
             Self::Command(command) => command.check_only == Some(true),
@@ -943,9 +1059,23 @@ impl Operation {
                 if usize::from(p.value.is_some())
                     + usize::from(p.normalized.is_some())
                     + usize::from(p.text.is_some())
+                    + usize::from(p.float_bits.is_some())
                     != 1
                 {
-                    return Err(invalid("Specify exactly one of value, normalized, or text"));
+                    return Err(invalid(
+                        "Specify exactly one of value, normalized, text, or float_bits",
+                    ));
+                }
+                if let Some(bits) = &p.float_bits {
+                    let valid = bits.len() == 16
+                        && bits.bytes().all(|byte| byte.is_ascii_hexdigit())
+                        && u64::from_str_radix(bits, 16)
+                            .is_ok_and(|raw| f64::from_bits(raw).is_finite());
+                    if !valid || p.source.is_none() {
+                        return Err(invalid(
+                            "float_bits requires 16 finite f64 hexadecimal digits and an explicit native source",
+                        ));
+                    }
                 }
                 if p.normalized
                     .is_some_and(|v| !v.is_finite() || !(0.0..=1.0).contains(&v))
@@ -968,7 +1098,91 @@ impl Operation {
                     p.track.as_deref(),
                 )?;
             }
+            Self::PluginState(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+                let valid_token = p.token.as_ref().is_some_and(|token| {
+                    !token.is_empty()
+                        && token.len() <= 128
+                        && token.bytes().all(|byte| {
+                            byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_'
+                        })
+                });
+                match p.action {
+                    PluginStateAction::Capture if p.token.is_none() => {}
+                    PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
+                    _ => {
+                        return Err(invalid(
+                            "Capture takes no token; restore and release require an issued state token",
+                        ));
+                    }
+                }
+            }
+            Self::PluginPresets(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+                if p.catalog_token.as_ref().is_some_and(|token| {
+                    token.len() != 64
+                        || !token
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+                }) {
+                    return Err(invalid(
+                        "Use the issued uppercase hexadecimal catalog token",
+                    ));
+                }
+                let valid = match p.action {
+                    PluginPresetAction::List => {
+                        p.index.is_none()
+                            && p.offset.is_none_or(|offset| offset <= 4096)
+                            && p.limit.is_none_or(|limit| (1..=64).contains(&limit))
+                    }
+                    PluginPresetAction::Apply => {
+                        p.catalog_token.is_some()
+                            && p.index.is_some_and(|index| index < 4096)
+                            && p.offset.is_none()
+                            && p.limit.is_none()
+                    }
+                    PluginPresetAction::Release => {
+                        p.catalog_token.is_some()
+                            && p.index.is_none()
+                            && p.offset.is_none()
+                            && p.limit.is_none()
+                    }
+                };
+                if !valid {
+                    return Err(invalid(
+                        "List accepts a bounded page; apply requires an issued catalog token and index; release takes only the catalog token",
+                    ));
+                }
+            }
             Self::PluginParams(p) | Self::PluginInspect(p) => {
+                if (p.include_nodes.is_some() || p.node_scope.is_some())
+                    && !matches!(self, Self::PluginInspect(_))
+                {
+                    return Err(invalid(
+                        "Node inventory options apply only to plugin_inspect",
+                    ));
+                }
+                if p.node_scope.is_some() && p.include_nodes != Some(true) {
+                    return Err(invalid("node_scope requires include_nodes=true"));
+                }
                 validate_instance_uid(p.expected_instance.as_deref())?;
                 validate_plugin_target(
                     p.channel.as_deref(),
@@ -992,6 +1206,60 @@ impl Operation {
                     return Err(invalid(
                         "Pagination applies only when parameter names is empty",
                     ));
+                }
+            }
+            Self::PluginParameterDetails(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.param.trim().is_empty()
+                    || p.param.len() > 512
+                    || p.param.contains('\0')
+                    || matches!(p.source, ParameterSource::Auto)
+                {
+                    return Err(invalid(
+                        "Use an expected plugin, bounded parameter name and explicit dsp or controller source",
+                    ));
+                }
+            }
+            Self::PluginParameterFormat(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.param.trim().is_empty()
+                    || p.param.len() > 512
+                    || p.param.contains('\0')
+                    || matches!(p.source, ParameterSource::Auto)
+                    || !(1..=32).contains(&p.values.len())
+                    || p.values
+                        .iter()
+                        .any(|value| !value.is_finite() || value.abs() > 9_007_199_254_740_991.0)
+                {
+                    return Err(invalid(
+                        "Use an expected plugin, bounded parameter, explicit dsp or controller source and 1..32 finite values within the JSON numeric bound",
+                    ));
+                }
+            }
+            Self::PluginParameterDigest(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
                 }
             }
             Self::PluginChoices(p) => {
@@ -1227,6 +1495,185 @@ mod tests {
     use super::*;
 
     #[test]
+    fn native_details_require_a_bound_target_and_explicit_provider() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Expected","param":"model","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let operation = Operation::from_parts("plugin_parameter_details", args.clone()).unwrap();
+        assert!(operation.is_read_only());
+        assert_eq!(operation.wire().0, "pluginParameterDetails");
+        operation.validate().unwrap();
+        for flag in [false, true] {
+            let mut with_owner = args.clone();
+            with_owner["include_owner"] = json!(flag);
+            let operation = Operation::from_parts("plugin_parameter_details", with_owner).unwrap();
+            operation.validate().unwrap();
+            assert_eq!(operation.wire().1["include_owner"], flag);
+        }
+        let mut malformed_owner = args.clone();
+        malformed_owner["include_owner"] = json!("true");
+        assert!(Operation::from_parts("plugin_parameter_details", malformed_owner).is_err());
+        for (key, value) in [
+            ("source", json!("auto")),
+            ("param", json!("")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_details", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut invalid = args;
+        invalid["method"] = json!("invoke");
+        assert!(Operation::from_parts("plugin_parameter_details", invalid).is_err());
+    }
+
+    #[test]
+    fn parameter_formatting_accepts_only_explicit_bounded_numeric_queries() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Expected","param":"model","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","values":[0.0,1.0,0.0]});
+        for source in ["dsp", "controller"] {
+            for values in [
+                vec![0.0],
+                vec![1.0; 32],
+                vec![-9_007_199_254_740_991.0, 9_007_199_254_740_991.0],
+            ] {
+                let mut args = base.clone();
+                args["source"] = json!(source);
+                args["values"] = json!(values);
+                let operation = Operation::from_parts("plugin_parameter_format", args).unwrap();
+                operation.validate().unwrap();
+                assert!(operation.is_read_only());
+                let (name, wire) = operation.wire();
+                assert_eq!(name, "pluginParameterFormat");
+                assert_eq!(wire["values"], json!(values));
+            }
+        }
+        for (field, value) in [
+            ("source", json!("auto")),
+            ("expected_instance", json!("")),
+            ("plugin", json!(" ")),
+            ("param", json!("")),
+            ("param", json!("x".repeat(513))),
+            ("param", json!("x\0y")),
+            ("values", json!([])),
+            ("values", json!(vec![0.0; 33])),
+            ("values", json!([9_007_199_254_740_992.0])),
+            ("values", json!([-9_007_199_254_740_992.0])),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_format", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("source", json!("arbitrary")),
+            ("path", json!("plugin.file")),
+            ("method", json!("setValue")),
+            ("values", json!(["0"])),
+            ("values", json!([null])),
+            ("values", json!(0)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_parameter_format", args).is_err());
+        }
+        for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let mut operation =
+                Operation::from_parts("plugin_parameter_format", base.clone()).unwrap();
+            let Operation::PluginParameterFormat(query) = &mut operation else {
+                unreachable!()
+            };
+            query.values = vec![value];
+            assert!(operation.validate().is_err());
+        }
+    }
+
+    #[test]
+    fn parameter_digests_require_a_bound_target_and_an_explicit_indexed_source() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Expected","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for source in ["dsp", "controller"] {
+            let mut args = base.clone();
+            args["source"] = json!(source);
+            let operation = Operation::from_parts("plugin_parameter_digest", args).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            let (name, wire) = operation.wire();
+            assert_eq!(name, "pluginParameterDigest");
+            assert_eq!(wire["source"], source);
+        }
+        for (field, value) in [
+            ("plugin", json!(" ")),
+            ("expected_instance", json!("")),
+            ("expected_instance", json!("not-an-instance")),
+            ("channel", json!("")),
+            ("slot", json!(16)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_digest", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("source", json!("auto")),
+            ("source", json!("arbitrary")),
+            ("slot", json!(0.5)),
+            ("param", json!("gain")),
+            ("values", json!([0])),
+            ("offset", json!(0)),
+            ("limit", json!(1)),
+            ("options", json!({})),
+            ("hash", json!("client-hash")),
+            ("hash_algorithm", json!("other")),
+            ("path", json!("plugin.file")),
+            ("method", json!("invoke")),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_parameter_digest", args).is_err());
+        }
+        for field in ["plugin", "source", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(field);
+            assert!(Operation::from_parts("plugin_parameter_digest", args).is_err());
+        }
+        for (kind, target, slot, valid) in [
+            ("effect", "channel", Some(15), true),
+            ("effect", "channel", None, false),
+            ("instrument", "track", None, true),
+            ("instrument", "track", Some(1), false),
+            ("note_effect", "track", Some(15), true),
+            ("note_effect", "track", Some(16), false),
+            ("panner", "channel", None, true),
+            ("panner", "channel", Some(1), false),
+            ("mix_fx", "channel", None, true),
+            ("mix_fx", "channel", Some(1), false),
+        ] {
+            let mut args = json!({"plugin":"Expected","source":"dsp","expected_instance":base["expected_instance"],"kind":kind,"slot":slot});
+            args[target] = json!("Scratch");
+            assert_eq!(
+                Operation::from_parts("plugin_parameter_digest", args)
+                    .unwrap()
+                    .validate()
+                    .is_ok(),
+                valid
+            );
+        }
+    }
+
+    #[test]
     fn unknown_operations_and_fields_are_rejected() {
         assert!(Operation::from_parts("eval", json!({"code":"arbitrary"})).is_err());
         assert!(
@@ -1298,6 +1745,187 @@ mod tests {
         )
         .unwrap();
         assert!(op.validate().is_err());
+    }
+
+    #[test]
+    fn plugin_writes_accept_only_finite_native_source_names() {
+        for source in ["auto", "dsp", "controller"] {
+            let operation = Operation::from_parts(
+                "setPluginParam",
+                json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"highcut.hcfreq","value":5000,"source":source}),
+            )
+            .unwrap();
+            assert!(operation.validate().is_ok());
+            assert_eq!(operation.wire().1["source"], source);
+            assert!(!operation.is_read_only());
+        }
+        assert!(Operation::from_parts("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"gain","value":0,"source":"arbitrary"})).is_err());
+    }
+
+    #[test]
+    fn plugin_state_requires_a_bound_instance_and_finite_token_actions() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"capture"});
+        let capture = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(capture.validate().is_ok());
+        assert!(!capture.is_read_only());
+        assert_eq!(capture.wire().0, "pluginState");
+        for action in ["restore", "release"] {
+            let mut args = base.clone();
+            args["action"] = json!(action);
+            assert!(
+                Operation::from_parts("plugin_state", args.clone())
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+            args["token"] = json!("issued-token-123");
+            assert!(
+                Operation::from_parts("plugin_state", args)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+        }
+        for (field, value) in [
+            ("token", json!("imported")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_state", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for field in ["bytes", "path", "source", "method"] {
+            let mut args = base.clone();
+            args[field] = json!("untrusted");
+            assert!(Operation::from_parts("plugin_state", args).is_err());
+        }
+    }
+
+    #[test]
+    fn preset_actions_accept_only_bound_catalog_pages_or_issued_indices() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"});
+        let token = "ABCDEF0123456789".repeat(4);
+        for extra in [
+            json!({}),
+            json!({"offset":4096,"limit":64}),
+            json!({"catalog_token":token,"offset":0,"limit":1}),
+            json!({"action":"apply","catalog_token":token,"index":4095}),
+            json!({"action":"release","catalog_token":token}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let operation = Operation::from_parts("plugin_presets", args).unwrap();
+            assert!(operation.validate().is_ok());
+            assert!(!operation.is_read_only());
+            assert_eq!(operation.wire().0, "pluginPresets");
+        }
+        for extra in [
+            json!({"index":0}),
+            json!({"offset":4097}),
+            json!({"limit":0}),
+            json!({"limit":65}),
+            json!({"catalog_token":"imported"}),
+            json!({"catalog_token":token.to_lowercase()}),
+            json!({"expected_instance":""}),
+            json!({"plugin":" "}),
+            json!({"action":"apply","index":0}),
+            json!({"action":"apply","catalog_token":token}),
+            json!({"action":"apply","catalog_token":token,"index":4096}),
+            json!({"action":"apply","catalog_token":token,"index":0,"offset":0}),
+            json!({"action":"release"}),
+            json!({"action":"release","catalog_token":token,"index":0}),
+            json!({"action":"release","catalog_token":token,"limit":1}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("plugin_presets", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("action", json!("invoke")),
+            ("path", json!("preset.file")),
+            ("url", json!("file:///preset")),
+            ("bytes", json!([0, 1])),
+            ("method", json!("arbitrary")),
+            ("limit", json!(-1)),
+            ("index", json!(0.5)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_presets", args).is_err());
+        }
+    }
+
+    #[test]
+    fn exact_float_writes_reject_nonfinite_bits_and_implicit_sources() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"gain","source":"dsp","float_bits":"8000000000000000"});
+        assert!(
+            Operation::from_parts("setPluginParam", base.clone())
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        for bits in [
+            "",
+            "0000",
+            "7FF0000000000000",
+            "FFF0000000000000",
+            "7FF8000000000000",
+            "XXXXXXXXXXXXXXXX",
+        ] {
+            let mut args = base.clone();
+            args["float_bits"] = json!(bits);
+            assert!(
+                Operation::from_parts("setPluginParam", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut implicit = base.clone();
+        implicit.as_object_mut().unwrap().remove("source");
+        assert!(
+            Operation::from_parts("setPluginParam", implicit)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+        let mut duplicate = base;
+        duplicate["value"] = json!(0);
+        assert!(
+            Operation::from_parts("setPluginParam", duplicate)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn bounded_nodes_option_is_only_an_inspection_request() {
+        let args = json!({"channel":"Scratch","slot":0,"include_nodes":true});
+        let inspect = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        assert!(inspect.is_read_only());
+        assert!(inspect.validate().is_ok());
+        assert_eq!(inspect.wire().1["include_nodes"], true);
+        assert!(
+            Operation::from_parts("plugin_parameters", args)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
     }
 
     #[test]

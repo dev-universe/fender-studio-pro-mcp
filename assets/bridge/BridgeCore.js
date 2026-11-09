@@ -123,7 +123,7 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -232,6 +232,11 @@ class Bridge {
             case "hostProbe": return this.hostProbe(args);
             case "pluginInspect": return this.fromComponent(c => c.pluginInspect(args));
             case "pluginEditorOpen": return this.fromComponent(c => c.pluginEditorOpen(args));
+            case "pluginState": return this.fromComponent(c => c.pluginState(args));
+            case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
+            case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
+            case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
+            case "pluginPresets": return this.fromComponent(c => c.pluginPresets(args));
             default: return fail("unknown op: " + op);
         }
     }

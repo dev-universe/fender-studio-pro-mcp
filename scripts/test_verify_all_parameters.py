@@ -1,0 +1,571 @@
+#!/usr/bin/env python3
+"""Offline transaction and safety checks. No DAW or native module is launched."""
+import copy
+import json
+import math
+from pathlib import Path
+import struct
+import tempfile
+import unittest
+
+from verify_all_parameters import (AcceptanceFailure, ContextChanged, DependencyFailure,
+                                   Journal, PRIVATE_ROOT, RestorationFailure, Runner,
+                                   UnknownMutation, candidate, classification, decode_float_bits,
+                                   value_identity)
+
+
+TARGET = {"plugin": "Fixture Effect", "channel": "FSP Verify FX Fixture", "slot": 0}
+INSTANCE = {"object_uid": "12345678-1234-1234-1234-123456789ABC",
+            "class_uid": "87654321-4321-4321-4321-CBA987654321"}
+
+
+def number(name, value, kind="Float", readonly=False, enabled=True, lower=0.0, upper=1.0):
+    data = {"kind": "integer", "value": value} if type(value) is int else {
+        "kind": "float", "value": value, "bits_hex": struct.pack(">d", value).hex().upper()}
+    return {"name": name, "tag": 10, "native_kind": kind, "value": value, "min": lower, "max": upper,
+            "normalized": value, "text": str(value), "readOnly": readonly, "enabled": enabled,
+            "writable": not readonly and enabled, "support": {"raw": not readonly and enabled},
+            "native_value": {"variant_tag": 1 if type(value) is int else 2, "data": data},
+            "display_parser": "PlainNumeric"}
+
+
+def normalized_float(value, normalized, kind="Float"):
+    parameter = number("gain", value, kind=kind, lower=0.0, upper=1.0)
+    parameter["normalized"] = normalized
+    parameter["support"]["normalized"] = True
+    return parameter
+
+
+class DeviceClient:
+    def __init__(self, parameters=None):
+        self.parameters = copy.deepcopy(parameters or [number("gain", 0.25)])
+        self.document, self.session = "test:1", "test"
+        self.instance = dict(INSTANCE)
+        self.calls, self.writes = [], []
+        self.muted = True
+        self.ignore_change = self.lie_about_change = False
+        self.fail_restore = self.lie_about_restore = False
+        self.unknown_change = self.change_document = False
+        self.side_effect = False
+        self.replace_on_page = None
+        self.pages = 0
+        self.read_only_drift = False
+        self.read_only_access_after = "unchanged"
+        self.post_change_readings = None
+        self.post_change_read_count = 0
+        self.setter_normalized = None
+
+    def receipt(self, result, outcome="observed", error=None):
+        receipt = {"document": self.document, "session": self.session, "result": result, "outcome": outcome}
+        if error:
+            receipt["error"] = error
+        return {"structuredContent": receipt}
+
+    def call(self, name, args):
+        self.calls.append((name, copy.deepcopy(args)))
+        if name == "host_status":
+            return self.receipt({"title": "MCP Validation Scratch", "open": True})
+        if name == "operation_run":
+            operation = args["operation"]
+            if operation == "song":
+                return self.receipt({"title": "MCP Validation Scratch", "transport": {"playing": False, "recording": False}})
+            if operation == "tracks":
+                return self.receipt([{"name": TARGET["channel"], "channel": TARGET["channel"], "mediaType": "Audio",
+                                      "eventCount": 0, "events": []}])
+            if operation == "channels":
+                return self.receipt([{"label": TARGET["channel"], "mute": self.muted, "recordArmed": False, "monitor": False}])
+            raise AssertionError(operation)
+        if name == "plugin_parameters":
+            if args.get("names"):
+                if self.post_change_readings and len(self.writes) == 1:
+                    reading = self.post_change_readings[min(self.post_change_read_count, len(self.post_change_readings) - 1)]
+                    self.parameters[0].update(copy.deepcopy(reading))
+                    self.post_change_read_count += 1
+                params = [copy.deepcopy(p) for p in self.parameters if p["name"] in args["names"]]
+                return self.receipt({"params": params, "missing": [n for n in args["names"] if n not in {p["name"] for p in params}]})
+            self.pages += 1
+            if self.read_only_drift and self.pages > 1:
+                parameter = self.parameters[1]
+                parameter.update(number(parameter["name"], 0.99, parameter["native_kind"],
+                                        readonly=parameter["readOnly"], enabled=parameter["enabled"],
+                                        lower=parameter["min"], upper=parameter["max"]))
+                if self.read_only_access_after is None:
+                    parameter.pop("access_metadata_complete", None)
+                elif self.read_only_access_after != "unchanged":
+                    parameter["access_metadata_complete"] = self.read_only_access_after
+            if self.replace_on_page == self.pages:
+                self.instance["object_uid"] = "ABCDEFAB-1234-1234-1234-123456789ABC"
+            offset = args["offset"]
+            end = min(offset + args["limit"], len(self.parameters))
+            params = [{**copy.deepcopy(p), "native": {"index": i, "tag": p["tag"], "name": p["name"]}}
+                      for i, p in enumerate(self.parameters) if offset <= i < end]
+            return self.receipt({"params": params, "missing": [], "instance": dict(self.instance), "reported_count": len(self.parameters),
+                                 "offset": offset, "next_offset": end if end < len(self.parameters) else None,
+                                 "page_complete": True, "failed_indices": [],
+                                 "parameter_discovery": {"source": "dsp", "completeness": "current_provider"}})
+        if name == "plugin_parameter_set":
+            self.writes.append(copy.deepcopy(args))
+            self.assert_source(args)
+            parameter = next(p for p in self.parameters if p["name"] == args["param"])
+            before = copy.deepcopy(parameter)
+            requested = decode_float_bits(args["float_bits"]) if "float_bits" in args else args["value"]
+            updated = number(parameter["name"], requested, parameter["native_kind"],
+                             lower=parameter["min"], upper=parameter["max"])
+            updated["support"] = copy.deepcopy(parameter["support"])
+            if parameter["max"] > parameter["min"]:
+                updated["normalized"] = (requested - parameter["min"]) / (parameter["max"] - parameter["min"])
+            restore = len(self.writes) % 2 == 0
+            if not restore and self.setter_normalized is not None:
+                updated["normalized"] = self.setter_normalized
+            ignored = self.fail_restore if restore else self.ignore_change
+            if not ignored:
+                parameter.update(updated)
+            if not restore and self.side_effect:
+                self.parameters[1].update(number(self.parameters[1]["name"], 0.99))
+            if not restore and self.change_document:
+                self.document = "test:2"
+            if not restore and self.unknown_change:
+                raise TimeoutError("test transport interruption after dispatch")
+            reported_after = copy.deepcopy(parameter)
+            if (restore and self.lie_about_restore) or (not restore and self.lie_about_change):
+                reported_after.update(updated)
+            return self.receipt({"before": before, "after": reported_after, "source": "dsp", "instance": dict(self.instance)},
+                                "applied_verified")
+        raise AssertionError(name)
+
+    def assert_source(self, args):
+        if args.get("source") != "dsp" or args.get("expected_instance") != INSTANCE["object_uid"]:
+            raise AssertionError("Write did not bind the explicit native source and instance")
+
+
+class AcceptanceTests(unittest.TestCase):
+    def setUp(self):
+        PRIVATE_ROOT.mkdir(exist_ok=True)
+        self.temporary = tempfile.TemporaryDirectory(prefix="runner-unit-", dir=PRIVATE_ROOT)
+        self.directory = Path(self.temporary.name) / "run"
+        self.journal = Journal(self.directory)
+
+    def tearDown(self):
+        if not self.journal.stream.closed:
+            self.journal.close()
+        self.temporary.cleanup()
+
+    def runner(self, client, read_only_observations=False):
+        runner = Runner(client, self.journal, "MCP Validation Scratch", block_size=1,
+                        read_only_observations=read_only_observations)
+        runner.initialize()
+        return runner
+
+    def events(self):
+        return [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
+
+    def changed_attempts(self):
+        return [event["attempt"] for event in self.events() if event["event"] == "changed_readback_attempt"]
+
+    def test_changed_value_and_independent_restore_are_required_for_a_pass(self):
+        client = DeviceClient()
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(client.parameters[0]["value"], 0.25)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(len(client.writes), 2)
+        self.assertEqual(client.writes[1]["float_bits"], "3FD0000000000000")
+        self.assertNotIn("value", client.writes[1])
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+        phases = [event["phase"] for event in self.events() if event["event"] == "transaction_phase"]
+        self.assertIn("ChangedReadbackConfirmed", phases)
+        self.assertIn("RestoreReadbackConfirmed", phases)
+        self.assertEqual(phases[-1], "StateConfirmed")
+
+    def test_ignored_write_with_a_claimed_success_is_not_a_changed_pass(self):
+        client = DeviceClient()
+        client.ignore_change = True
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(client.parameters[0]["value"], 0.25)
+
+    def test_setter_self_report_does_not_replace_independent_changed_readback(self):
+        client = DeviceClient()
+        client.ignore_change = client.lie_about_change = True
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+
+    def test_restore_failure_stops_before_another_parameter_can_be_changed(self):
+        client = DeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        client.fail_restore = True
+        runner = self.runner(client)
+        with self.assertRaises(RestorationFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual([write["param"] for write in client.writes], ["gain", "gain"])
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertIn("RestorationFailed", Journal.pending(self.journal.ledger_path).values())
+
+    def test_restore_self_report_does_not_replace_independent_restore_readback(self):
+        client = DeviceClient()
+        client.fail_restore = client.lie_about_restore = True
+        runner = self.runner(client)
+        with self.assertRaises(RestorationFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertNotEqual(client.parameters[0]["value"], 0.25)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+
+    def test_timeout_after_dispatch_never_triggers_a_blind_restore(self):
+        client = DeviceClient()
+        client.unknown_change = True
+        runner = self.runner(client)
+        with self.assertRaises(UnknownMutation):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.writes), 1)
+        self.assertIn("UnknownAfterDispatch", Journal.pending(self.journal.ledger_path).values())
+
+    def test_document_change_after_dispatch_never_restores_into_new_context(self):
+        client = DeviceClient()
+        client.change_document = True
+        runner = self.runner(client)
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.writes), 1)
+
+    def test_provider_replacement_between_pages_fails_before_any_write(self):
+        client = DeviceClient([number(f"gain{i}", 0.25) for i in range(65)])
+        client.replace_on_page = 2
+        runner = self.runner(client)
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(client.writes, [])
+
+    def test_other_parameter_drift_invalidates_block_before_further_writes(self):
+        client = DeviceClient([number("gain", 0.25), number("mix", 0.5)])
+        client.side_effect = True
+        runner = self.runner(client)
+        with self.assertRaises(DependencyFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual([write["param"] for write in client.writes], ["gain", "gain"])
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+
+    def test_default_comparison_remains_strict_for_proven_read_only_drift(self):
+        meter = {**number("unusual observation name", 0.0, readonly=True), "access_metadata_complete": True}
+        client = DeviceClient([number("gain", 0.25), meter])
+        client.read_only_drift = True
+        runner = self.runner(client)
+        with self.assertRaises(DependencyFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.summary["read_only_values"], "exact_comparison")
+        comparison = next(event for event in self.events() if event["event"] == "block_comparison")
+        self.assertEqual(comparison["changed_parameters"], ["unusual observation name"])
+        self.assertEqual(comparison["read_only_changed"], [])
+
+    def test_opt_in_reports_proven_read_only_drift_without_claiming_its_restoration(self):
+        meter = {**number("unusual observation name", 0.0, readonly=True), "access_metadata_complete": True}
+        client = DeviceClient([number("gain", 0.25), meter])
+        client.read_only_drift = True
+        runner = self.runner(client, read_only_observations=True)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(runner.counts["read_only_value_change_observations"], 1)
+        self.assertEqual(runner.counts["category_numeric_scalar"], 1)
+        self.assertEqual(runner.counts["category_read_only"], 1)
+        self.assertEqual(runner.summary["read_only_values"], "observed_not_restored")
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+        comparison = next(event for event in self.events() if event["event"] == "block_comparison")
+        self.assertEqual(comparison["changed_parameters"], [])
+        self.assertEqual(comparison["read_only_changed"], ["unusual observation name"])
+        self.assertEqual(comparison["read_only_values"], "observed_not_restored")
+        self.assertTrue(all(write["param"] == "gain" for write in client.writes))
+
+    def test_read_only_observations_require_complete_authoritative_access_on_both_reads(self):
+        for before, after in ((False, True), (True, False), (None, True), (True, None)):
+            with self.subTest(before=before, after=after):
+                directory = Path(self.temporary.name) / ("incomplete-" + str(before) + "-" + str(after))
+                journal = Journal(directory)
+                try:
+                    meter = number("observation", 0.0, readonly=True)
+                    if before is not None:
+                        meter["access_metadata_complete"] = before
+                    client = DeviceClient([number("gain", 0.25), meter])
+                    client.read_only_drift = True
+                    client.read_only_access_after = after
+                    runner = Runner(client, journal, "MCP Validation Scratch", block_size=1,
+                                    read_only_observations=True)
+                    runner.initialize()
+                    with self.assertRaises(DependencyFailure):
+                        runner.run_fixture(TARGET, write_roundtrips=True)
+                    self.assertEqual(runner.counts["changed_readback_restored"], 0)
+                    self.assertEqual(runner.counts["read_only_value_change_observations"], 0)
+                finally:
+                    journal.close()
+
+    def test_read_only_observation_option_never_excludes_a_writable_dependency(self):
+        client = DeviceClient([number("gain", 0.25), {**number("meter", 0.5), "access_metadata_complete": True}])
+        client.side_effect = True
+        runner = self.runner(client, read_only_observations=True)
+        with self.assertRaises(DependencyFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual([write["param"] for write in client.writes], ["gain", "gain"])
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["read_only_value_change_observations"], 0)
+
+    def test_two_exact_stable_float_reads_can_confirm_normalized_quantized_settlement(self):
+        normalized = 0.37
+        client = DeviceClient([normalized_float(0.75, 0.75)])
+        client.setter_normalized = normalized
+        settled = normalized_float(math.nextafter(0.37, math.inf), normalized)
+        client.post_change_readings = [settled, settled]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1, 2])
+        self.assertEqual(client.parameters[0]["value"], 0.75)
+        result = next(event for event in self.events() if event["event"] == "parameter_result")
+        self.assertTrue(result["quantized"])
+        self.assertEqual(result["settlement"], {"fresh_reads": 2, "exact_raw_stable": True,
+                                               "quantized_settlement": True, "evidence": "exact_native_normalized",
+                                               "exact_normalized_matches_setter": True})
+
+    def test_normalized_settlement_mismatch_fails_on_the_first_fresh_read(self):
+        client = DeviceClient([normalized_float(0.75, 0.75)])
+        client.setter_normalized = 0.37
+        client.post_change_readings = [normalized_float(math.nextafter(0.37, math.inf), 0.38)]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1])
+        self.assertEqual(client.parameters[0]["value"], 0.75)
+
+    def test_two_unstable_float_raw_reads_are_not_retried_until_they_look_successful(self):
+        normalized = 0.37
+        client = DeviceClient([normalized_float(0.75, 0.75)])
+        client.setter_normalized = normalized
+        client.post_change_readings = [normalized_float(math.nextafter(0.37, math.inf), normalized),
+                                       normalized_float(math.nextafter(math.nextafter(0.37, math.inf), math.inf), normalized)]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1, 2])
+
+    def test_second_normalized_read_must_remain_exact_even_when_raw_is_stable(self):
+        normalized = 0.37
+        client = DeviceClient([normalized_float(0.75, 0.75)])
+        client.setter_normalized = normalized
+        client.post_change_readings = [normalized_float(math.nextafter(0.37, math.inf), normalized),
+                                       normalized_float(math.nextafter(0.37, math.inf), math.nextafter(normalized, math.inf))]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1, 2])
+
+    def test_settlement_never_turns_ignored_semantic_baseline_drift_into_a_changed_control(self):
+        client = DeviceClient([normalized_float(0.75, 0.75)])
+        client.ignore_change = True
+        client.post_change_readings = [normalized_float(math.nextafter(0.75, math.inf), 0.75)]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1])
+        self.assertEqual(client.parameters[0]["value"], 0.75)
+
+    def test_raw_float_list_cannot_use_the_float_normalized_settlement_exception(self):
+        normalized = 0.37
+        client = DeviceClient([normalized_float(0.75, 0.75, kind="List")])
+        client.setter_normalized = normalized
+        client.post_change_readings = [normalized_float(math.nextafter(0.37, math.inf), normalized, kind="List")]
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+        self.assertEqual(runner.counts["change_failed_restored"], 1)
+        self.assertEqual(self.changed_attempts(), [1])
+
+    def test_all_indices_are_audited_and_ineligible_controls_are_not_written(self):
+        client = DeviceClient([number("meter", 0.0, readonly=True),
+                               number("disabled", 0.25, enabled=False),
+                               number("fixed", 1.0, lower=1.0, upper=1.0)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["records_audited"], 3)
+        self.assertEqual(runner.counts["category_read_only"], 1)
+        self.assertEqual(runner.counts["category_disabled_dependency"], 1)
+        self.assertEqual(runner.counts["category_constant_range"], 1)
+        self.assertEqual(client.writes, [])
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
+    def test_model_selector_requires_enclosing_state_restore_even_when_numeric(self):
+        parameter = number("opt.eqmodel", 0, kind="List", lower=0, upper=2)
+        self.assertEqual(classification("Fat Channel", parameter), "model_state_restore_required")
+
+    def test_source_backed_pulse_actions_are_not_scalar_roundtrips(self):
+        actions = {"Expander": ["swapfreqs"], "Gate": ["swapfreqs"],
+                   "Compressor": ["studiocomp.swapfreqs", "studiocomp.resetmin"],
+                   "Limiter": ["resetmin"]}
+        for plugin, names in actions.items():
+            for name in names:
+                parameter = number(name, 0, kind="Toggle", lower=0, upper=1)
+                self.assertEqual(classification(plugin, parameter), "dedicated_action_required")
+                self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
+
+    def test_float_exact_metadata_and_negative_zero_do_not_get_silent_tolerance_passes(self):
+        parameter = number("gain", -0.0)
+        self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
+        del parameter["native_value"]["data"]["bits_hex"]
+        self.assertEqual(classification("Fixture Effect", parameter), "unresolved_exact_value")
+
+    def test_synthetic_one_ulp_json_drift_restores_the_original_native_bits(self):
+        parameter = number("gain", math.nextafter(0.1, math.inf), lower=0.0, upper=1.0)
+        parameter["native_value"]["data"]["bits_hex"] = "3FB999999999999A"
+        self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
+        client = DeviceClient([parameter])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(client.writes[1]["float_bits"], "3FB999999999999A")
+        self.assertEqual(value_identity(client.parameters[0])[2], "3FB999999999999A")
+        self.assertNotEqual(client.parameters[0]["value"], math.nextafter(0.1, math.inf))
+        result = next(event for event in self.events() if event["event"] == "parameter_result")
+        self.assertFalse(result["quantized"])
+
+    def test_negative_zero_is_changed_and_restored_using_bits_without_json_numeric_writes(self):
+        client = DeviceClient([number("gain", -0.0)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(client.writes[1]["float_bits"], "8000000000000000")
+        self.assertEqual(value_identity(client.parameters[0])[2], "8000000000000000")
+        self.assertTrue(all("value" not in write for write in client.writes))
+
+    def test_float_metadata_disagreement_beyond_observed_ulp_is_refused(self):
+        parameter = number("gain", 0.25)
+        for wrong in (0.5, math.nextafter(math.nextafter(0.25, math.inf), math.inf)):
+            with self.subTest(wrong=wrong):
+                parameter["value"] = wrong
+                parameter["native_value"]["data"]["value"] = wrong
+                with self.assertRaises(AcceptanceFailure):
+                    value_identity(parameter)
+                self.assertEqual(classification("Fixture Effect", parameter), "unresolved_exact_value")
+
+    def test_scalar_and_native_json_values_must_still_agree(self):
+        parameter = number("gain", 0.25)
+        parameter["value"] = math.nextafter(0.25, math.inf)
+        with self.assertRaises(AcceptanceFailure):
+            value_identity(parameter)
+
+    def test_float_candidates_are_finite_in_range_and_different_even_for_narrow_or_large_ranges(self):
+        pairs = ((1.0, math.nextafter(1.0, math.inf)), (1e308, 1.5e308), (-1.5e308, 1.5e308))
+        for lower, upper in pairs:
+            for original in (lower, upper):
+                with self.subTest(lower=lower, upper=upper, original=original):
+                    parameter = number("gain", original, lower=lower, upper=upper)
+                    change, restore = candidate(parameter)
+                    desired = decode_float_bits(change["float_bits"])
+                    self.assertTrue(math.isfinite(desired))
+                    self.assertLessEqual(lower, desired)
+                    self.assertLessEqual(desired, upper)
+                    self.assertNotEqual(desired, original)
+                    self.assertEqual(restore["float_bits"], parameter["native_value"]["data"]["bits_hex"])
+
+    def test_integer_values_keep_the_native_integer_write_route(self):
+        client = DeviceClient([number("gain", 0, kind="Integer", lower=0, upper=2)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual([write["value"] for write in client.writes], [1, 0])
+        self.assertTrue(all("float_bits" not in write for write in client.writes))
+
+    def test_unmuted_fixture_is_refused_before_any_write(self):
+        client = DeviceClient()
+        client.muted = False
+        runner = self.runner(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(client.writes, [])
+
+    def test_unresolved_in_flight_journal_cannot_be_replayed_or_overwritten(self):
+        self.journal.append("transaction_phase", transaction="interrupted", phase="ChangeInFlight")
+        self.journal.close()
+        before = self.journal.ledger_path.read_bytes()
+        with self.assertRaises(AcceptanceFailure):
+            Journal(self.directory)
+        self.assertEqual(self.journal.ledger_path.read_bytes(), before)
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {"interrupted": "ChangeInFlight"})
+
+    def test_real_public_unknown_receipt_before_any_transaction_stays_unresolved(self):
+        class UnknownCommandClient(DeviceClient):
+            def call(self, name, args):
+                if name == "operation_run" and args["operation"] == "command":
+                    return self.receipt({}, "outcome_unknown", {"code": "outcome_unknown", "message": "ambiguous mutation"})
+                return super().call(name, args)
+
+        runner = self.runner(UnknownCommandClient())
+        with self.assertRaises(UnknownMutation):
+            runner.operation("command", {"category": "Track", "name": "Mute"}, mutation=True)
+        self.assertFalse(any(event["event"] == "transaction_phase" for event in self.events()))
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {"rpc:2": "UnknownAfterDispatch"})
+        self.journal.close()
+        with self.assertRaises(AcceptanceFailure):
+            Journal(self.directory)
+
+    def test_unmatched_parameter_filter_does_not_verify_a_zero_write_run(self):
+        client = DeviceClient()
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True, parameters={"missing.exact.name"})
+        self.assertEqual(runner.finish(True), 2)
+        self.assertEqual(client.writes, [])
+        self.assertFalse(runner.summary["eligible_roundtrips_verified"])
+        self.assertEqual(runner.summary["status"], "no_eligible_write_cases")
+        self.assertEqual(runner.summary["unmatched_parameters"], ["missing.exact.name"])
+
+    def test_unmatched_filter_beside_a_successful_parameter_remains_incomplete(self):
+        client = DeviceClient()
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True, parameters={"gain", "missing.exact.name"})
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(runner.finish(True), 2)
+        self.assertFalse(runner.summary["eligible_roundtrips_verified"])
+        self.assertEqual(runner.summary["unmatched_parameters"], ["missing.exact.name"])
+
+    def test_read_only_provider_has_no_positive_zero_case_write_verification(self):
+        client = DeviceClient([number("meter", 0.0, readonly=True)])
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.finish(True), 2)
+        self.assertFalse(runner.summary["eligible_roundtrips_verified"])
+        self.assertEqual(runner.summary["status"], "no_eligible_write_cases")
+
+    def test_partial_final_journal_line_is_an_unresolved_run(self):
+        self.journal.close()
+        with self.journal.ledger_path.open("ab") as stream:
+            stream.write(b'{"event":"transaction_phase"')
+        self.assertIn("truncated_ledger", Journal.pending(self.journal.ledger_path))
+
+    def test_in_flight_fixture_mutation_is_preserved_without_parameter_transaction(self):
+        self.journal.append("rpc_in_flight", call=1, tool="operation_run", mutation=True,
+                            arguments={"operation": "command", "args": {"category": "Track", "name": "Mute"}})
+        self.journal.close()
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {"rpc:1": "MutationInFlight"})
+
+    def test_completed_scalar_run_and_incomplete_categories_have_distinct_exit_statuses(self):
+        client = DeviceClient()
+        runner = self.runner(client)
+        runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(runner.finish(True), 0)
+        self.assertTrue(runner.summary["eligible_roundtrips_verified"])
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+        runner.counts["category_model_state_restore_required"] += 1
+        self.assertEqual(runner.finish(True), 2)
+        self.assertEqual(runner.summary["status"], "roundtrips_partial")
+
+    def test_raw_output_outside_local_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(AcceptanceFailure):
+                Journal(Path(directory) / "run")
+
+
+if __name__ == "__main__":
+    unittest.main()

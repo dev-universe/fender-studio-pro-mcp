@@ -37,6 +37,29 @@ function mteWrite(name, value) {
 
 function mteFn(obj, key) { return !!obj && typeof obj[key] === "function"; }
 
+function mteGraphReflection(channel, graphFunctions) {
+	try {
+		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
+		var slot = mteFn(inserts, "find") ? inserts.find("FX01") : null;
+		var device = mteFn(slot, "find") ? slot.find("Device") : null;
+		var objects = Host.Objects;
+		var service = mteFn(objects, "getObjectByName") ? objects.getObjectByName("FenderMcpNative") : null;
+		if (!device || !graphFunctions || !service || !mteFn(service, "capabilities") || !mteFn(service, "request")) return null;
+		var capabilities = JSON.parse(service.capabilities());
+		if (!capabilities.ok || capabilities.api !== "fender-mcp-native-v1") return null;
+		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
+		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
+		var identity = JSON.parse(identityText);
+		if (!identity.ok || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
+		var text = service.request(device, JSON.stringify({ operation: "inspect_aux", expected_instance: identity.instance.object_uid }), graphFunctions);
+		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native reflection response" };
+		var result = JSON.parse(text);
+		if (!result || result.ok !== true || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+			|| result.scope !== "auxiliary_type_observation" || result.mutation_capability !== false) return { error: "native reflection identity or scope unavailable" };
+		return result;
+	} catch (error) { return { error: String(error).slice(0, 512) }; }
+}
+
 // Which of `names` exist on obj, and as what (for the probe).
 function mteShape(obj, names) {
 	var out = {};
@@ -142,6 +165,7 @@ function mteApply(context, ops) {
 				else {
 					var channel = matches[0].channel;
 					r.target = { label: op.channel, children: {} };
+					r.graphReflection = mteGraphReflection(channel, graphFunctions);
 					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
 					r.target.pannerParameters = [];
 					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];

@@ -159,6 +159,36 @@ impl McpServer {
                 "Read a native list parameter's index/label choices without changing its selection. Requires the matching native extension and a controller parameter; open the External Effect editor first. Follow next_offset with expected_document and expected_instance. Empty hardware port lists remain explicit.",
                 false,
             ),
+            named::<PluginParameterDetails>(
+                "plugin_parameter_details",
+                "pluginParameterDetails",
+                "Read native parameter precision, state flags and a bounded original-parameter chain. include_owner=true also observes bounded controller metadata without invoking methods or granting mutation access. Requires an explicit dsp or controller source and expected_instance. List interface presence and precision do not imply a choice count or selection index.",
+                false,
+            ),
+            named::<PluginParameterFormat>(
+                "plugin_parameter_format",
+                "pluginParameterFormat",
+                "Read the native display text for 1..32 explicitly supplied finite raw values without selecting or changing them. Requires an expected plugin, expected_instance and an explicit dsp or controller source. The native parameter range and numeric type further constrain values. Returned labels do not establish a complete model choice list or count.",
+                false,
+            ),
+            named::<PluginParameterDigest>(
+                "plugin_parameter_digest",
+                "pluginParameterDigest",
+                "Read fresh native schema and value digests for the expected plugin's exposed parameter projection. Requires expected_instance and an explicit dsp or controller source. Native scan errors return no digest. Compare only digests with matching version, source, instance and scope. This is a sequential observation, not an atomic snapshot or complete plugin state; opaque contents remain unverified.",
+                false,
+            ),
+            named::<PluginState>(
+                "plugin_state",
+                "pluginState",
+                "Capture, restore or release a bounded in-memory plugin state using the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                true,
+            ),
+            named::<PluginPresets>(
+                "plugin_presets",
+                "pluginPresets",
+                "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
+                true,
+            ),
             named::<PluginEditor>(
                 "plugin_editor_open",
                 "pluginEditorOpen",
@@ -168,7 +198,7 @@ impl McpServer {
             named::<PluginSet>(
                 "plugin_parameter_set",
                 "setPluginParam",
-                "Set exactly one raw, normalized or display-text value on the expected plugin instance. Readback determines verification.",
+                "Set exactly one raw, normalized, display-text or exact finite f64 float_bits value on the expected plugin instance. An explicit source uses native access and type checks; float_bits requires it and preserves the 16 hexadecimal digits from native_value.data.bits_hex. Readback determines verification.",
                 true,
             ),
             named::<InsertBypass>(
@@ -228,7 +258,12 @@ fn named<T: JsonSchema>(
     if mutation
         || matches!(
             operation,
-            "pluginParams" | "pluginInspect" | "pluginChoices"
+            "pluginParams"
+                | "pluginInspect"
+                | "pluginChoices"
+                | "pluginParameterDetails"
+                | "pluginParameterFormat"
+                | "pluginParameterDigest"
         )
     {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
@@ -357,6 +392,7 @@ mod tests {
         for name in [
             "channel_set",
             "plugin_editor_open",
+            "plugin_presets",
             "panner_set",
             "splitter_set",
         ] {
@@ -370,6 +406,88 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
+        assert_eq!(specs.len(), 36);
+    }
+
+    #[test]
+    fn presets_require_document_instance_and_a_finite_action() {
+        let specs = McpServer::specs();
+        let preset = specs
+            .iter()
+            .find(|spec| spec.tool.name == "plugin_presets")
+            .unwrap();
+        assert_eq!(preset.operation, Some("pluginPresets"));
+        let required = preset.tool.input_schema["required"].as_array().unwrap();
+        for field in ["plugin", "expected_instance", "action", "expected_document"] {
+            assert!(required.contains(&json!(field)));
+        }
+        assert_eq!(
+            preset.tool.input_schema["additionalProperties"],
+            json!(false)
+        );
+        for field in ["path", "url", "bytes", "method"] {
+            assert!(preset.tool.input_schema["properties"].get(field).is_none());
+        }
+    }
+
+    #[test]
+    fn formatting_requires_explicit_values_and_has_no_mutation_fields() {
+        let specs = McpServer::specs();
+        let format = specs
+            .iter()
+            .find(|spec| spec.tool.name == "plugin_parameter_format")
+            .unwrap();
+        assert_eq!(format.operation, Some("pluginParameterFormat"));
+        let required = format.tool.input_schema["required"].as_array().unwrap();
+        for field in ["plugin", "param", "source", "expected_instance", "values"] {
+            assert!(required.contains(&json!(field)));
+        }
+        assert!(!required.contains(&json!("expected_document")));
+        assert_eq!(
+            format.tool.input_schema["additionalProperties"],
+            json!(false)
+        );
+        for field in ["path", "method", "index", "normalized", "text"] {
+            assert!(format.tool.input_schema["properties"].get(field).is_none());
+        }
+    }
+
+    #[test]
+    fn digests_accept_only_target_and_provider_fields() {
+        let specs = McpServer::specs();
+        let digest = specs
+            .iter()
+            .find(|spec| spec.tool.name == "plugin_parameter_digest")
+            .unwrap();
+        assert_eq!(digest.operation, Some("pluginParameterDigest"));
+        let required = digest.tool.input_schema["required"].as_array().unwrap();
+        for field in ["plugin", "source", "expected_instance"] {
+            assert!(required.contains(&json!(field)));
+        }
+        assert!(!required.contains(&json!("expected_document")));
+        assert_eq!(
+            digest.tool.input_schema["additionalProperties"],
+            json!(false)
+        );
+        assert_eq!(
+            digest.tool.input_schema["$defs"]["ParameterDigestSource"]["enum"],
+            json!(["dsp", "controller"])
+        );
+        let properties = digest.tool.input_schema["properties"].as_object().unwrap();
+        let fields: std::collections::BTreeSet<_> = properties.keys().map(String::as_str).collect();
+        assert_eq!(
+            fields,
+            std::collections::BTreeSet::from([
+                "channel",
+                "slot",
+                "kind",
+                "track",
+                "plugin",
+                "source",
+                "expected_instance",
+                "expected_document"
+            ])
+        );
     }
 
     #[test]
@@ -415,6 +533,9 @@ mod tests {
             "plugin_parameters",
             "plugin_inspect",
             "plugin_parameter_choices",
+            "plugin_parameter_details",
+            "plugin_parameter_format",
+            "plugin_parameter_digest",
         ] {
             let spec = specs.iter().find(|s| s.tool.name == name).unwrap();
             assert!(

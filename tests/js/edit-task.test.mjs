@@ -2,6 +2,36 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { editTaskHarness, mailbox, musicContext } from './host.mjs';
 
+test('graph probe reflects only its fixed function object using the observed Device identity', () => {
+  const task = editTaskHarness('track');
+  const device = {}, graphFunctions = {}, calls = [];
+  const uid = '12345678-1234-1234-1234-123456789ABC';
+  const channel = { label: 'Fixture', mediaType: 'Audio', find(name) {
+    return name === 'Inserts' ? { find(id) { return id === 'FX01' ? { find(child) { return child === 'Device' ? device : null; } } : null; } } : null;
+  } };
+  task.Host.Objects.getObjectByName = (name) => name === 'FenderMcpNative' ? {
+    capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1' }),
+    request(...args) {
+      calls.push(args);
+      const request = JSON.parse(args[1]);
+      return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
+        ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
+    },
+  } : null;
+  const context = { functions: { root: {
+    environment: { find: () => ({ getChannelList: () => ({ numChannels: 1, getChannel: () => channel }) }) },
+    createFunctions: name => name === 'AudioFXGraphEditFunctions' ? graphFunctions : null,
+  } } };
+  const result = task.run([{ op: 'probe', channel: 'Fixture' }], context);
+  assert.equal(result.results[0].graphReflection.mutation_capability, false);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].length, 2);
+  assert.equal(calls[1].length, 3);
+  assert.equal(calls[1][0], device);
+  assert.equal(calls[1][2], graphFunctions);
+  assert.deepEqual(JSON.parse(calls[1][1]), { operation: 'inspect_aux', expected_instance: uid });
+});
+
 function mutation(kind) {
   if (kind === 'track') {
     const song = musicContext();

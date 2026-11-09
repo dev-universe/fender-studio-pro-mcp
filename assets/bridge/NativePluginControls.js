@@ -20,10 +20,13 @@ class NativePluginControls {
         return !!after && before.open === true && after.open === true && before.document === after.document && before.session === after.session;
     }
 
-    request(device, request) {
+    request(device, request, auxiliary) {
         let dispatched = false;
         let parsed = null;
         try {
+            const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
+            if (needsAuxiliary ? !auxiliary || typeof auxiliary !== "object" : auxiliary !== undefined)
+                throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) return null;
@@ -38,7 +41,7 @@ class NativePluginControls {
             const body = JSON.stringify(request);
             if (body.length > 16384) throw new Error("native request exceeds the supported size");
             dispatched = true;
-            const result = this.parse(service.request(device, body));
+            const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");

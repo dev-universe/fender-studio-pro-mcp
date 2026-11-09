@@ -1,5 +1,9 @@
 # Validation on Studio Pro 8.1.1
 
+This page records the earlier 31-tool baseline. The ongoing
+[plugin-state follow-up](PLUGIN_STATE_VALIDATION.md) records the newer state,
+preset, metadata and exhaustive-parameter work separately.
+
 The final native-provider build ran against **Fender Studio Pro 8.1.1 Build 113103 on macOS 26.7.1 arm64**, using one 65-track synthetic scratch song. The Rust MCP server, installed JavaScript bridge, both EditTasks and optional Rust CCL extension ran in the actual DAW. [Sanitized final evidence](evidence/2026-11-09-native-provider.json) records artifact hashes and scope. The [earlier baseline](evidence/2026-11-09.json) and [spatial follow-up](evidence/2026-11-09-native-controls.json) remain separate historical runs.
 
 The final server exposed 31 MCP tools. The complete matrix was rerun on the final server/native binaries: 60 classes, 59 indexed providers and one Splitter graph. Fifty-nine classes passed changed parameter or graph control; Phase Meter passed slot bypass. This does not certify every GUI action, all model/preset states or physical audio behavior.
