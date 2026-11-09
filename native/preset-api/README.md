@@ -1,9 +1,11 @@
-# Native preset catalog library
+# Native preset API library
 
 This std-only crate owns a bounded preset catalog for one already resolved
 Studio Pro target. It uses exact public CCL 5.1.2 interface declarations. It
 discovers no application, document, slot, service or filesystem on its own.
-It writes no preset file and accepts no preset bytes or location string.
+The catalog accepts no preset bytes or location string and writes no preset
+file. The separate collection primitive below delegates a private-file store
+and restore through an already bound folder handler. No IPC API is included.
 
 ## Inputs and ownership
 
@@ -123,6 +125,56 @@ Failed QueryInterface or factory results never claim or release a nonnull
 output. Only exact success plus a nonnull pointer transfers ownership. The
 shared catalog helpers use the same rule.
 
+## Private folder collection primitive
+
+`folder::collection` is separate from read-only preflight and the catalog. It
+is a source-only primitive until the integrating add-on supplies a dedicated
+folder binding, private destination registry and independent state verifier.
+
+```text
+PrivateDestination::from_owned_empty_url(owned IUrl, trusted private filename, guard)
+CollectionFile::capture(Rc<FolderPresetRoute>, destination, guard) -> CollectionFile
+file.part_count() -> bounded observed count
+file.check(guard)
+file.restore(guard) -> { accepted:true, verified:false, part_count }
+```
+
+The unsafe destination constructor consumes an owned empty IUrl on success and
+failure. It uses a distinct owned public clone and `fromPOSIXPath(kFile)`, then
+requires the exact UTF-8 path roundtrip, file type, absolute/native file URL,
+empty or localhost host and no URL parameters. Its filename is an opaque
+bounded `.multipreset` name. This lexical policy does not establish filesystem
+ownership. The trusted add-on must issue a new exclusive destination inside
+its own private directory, prevent symlink/replacement races, and enforce
+filesystem ownership, cleanup, lifetime, file-size, hash and opaque-token rules.
+MCP callers must never supply this path, native pointers, file contents or XML.
+
+Capture obtains the actual host metadata Attributes, requiring the observed
+name/vendor/category to be present without inventing a folder class UID. It
+calls only the retained exact handler's `createPreset` and requires successful
+IPreset and IPresetCollection QI with the same canonical identity before any
+store. It stores exactly the route's bound folder once. The result must reopen
+through that same handler's `openPreset(url, nullptr)` as an owned collection
+with a count from0 through128. No default/global preset store, custom collection
+implementation, hand-authored FXGraph or user-library notification is used.
+
+Restore opens the same private URL through that exact handler again, requires
+its bounded count to match, and dispatches once to the exact retained folder.
+`accepted:true` is host acceptance; `verified` remains false. Neither part count
+nor reopen proves complete nested graph/model/opaque state. Independent actual
+host verification is still required. A false result or lost guard after store
+or restore has `CollectionCallError.dispatched:true`; store may leave a partial
+private file and restore may partially change the target. There is no automatic
+retry or claim that the operation was not applied. `dispatched:false` only means
+the store/restore call did not begin, not that a handler performed no I/O.
+
+The public delegated store has no cancellation or byte budget parameter. A
+hard pre-write byte cap is not supplied by this API. The owner must constrain
+the fixture before a pilot, enforce post-store limits and private-file rules,
+and keep all handles alive through output publication. It performs a fresh
+binding witness after final owner cleanup. All handles and native calls remain
+on the creator GUI thread; CollectionFile is neither Send nor Sync.
+
 ## Verification and provenance
 
 ```sh
@@ -132,9 +184,9 @@ cargo +1.88.0 clippy --manifest-path native/preset-api/Cargo.toml --all-targets 
 sh native/preset-api/checks/check_sdk.sh /path/to/ccl-framework-5.1.2
 ```
 
-Compiler-only probes verify 38 virtual-call offsets, two service exports,
+Compiler-only probes verify 46 virtual-call offsets, two service exports,
 UID/String/CString/Variant layouts and 53 exact public source hashes. Folder
-preflight also verifies four fixed interface IDs, the import/export flag values
+preflight and collections also verify seven fixed interface IDs, the import/export flag values
 and the exact success/no-interface result constants. They use
 an external official SDK at ccl-5.1.2 commit
 `ad5876b1a7b64aa247f4378c86a7862e7c284ba3` and are never linked into the library.
@@ -144,5 +196,10 @@ header, implementation or proprietary resource is included in this repository.
 Mocks check local filtering, class and instance replacement, selected-entry
 identity, data-target refusal, uncertain accepted loads, context loss,
 destructor reentry, retained list ownership and bounded catalog pagination.
-These checks do not establish actual-host preset recall. The owner must run
+Collection mocks additionally check exact target arguments, strict QI ownership,
+URL/path mutation, missing metadata/handler/capability, bounded part counts,
+false store/restore, reentrant cleanup, guarded foreign boundaries and uncertain
+post-dispatch outcomes. No mock writes a file or invokes a running host.
+These checks do not establish actual-host preset recall or collection graph
+capture/restore. The owner must run
 the resulting add-on in the real supported DAW.

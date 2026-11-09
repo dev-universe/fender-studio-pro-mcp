@@ -10,6 +10,8 @@ expected = {
     "list_add":64,"list_remove":72,"list_clear":80,"iterator_done":24,"iterator_next":32,
     "read_only":24,"name":40,"meta":48,"url":56,"url_clone":24,"url_equal":40,
     "url_empty":48,"url_kind":56,"url_protocol":80,"url_host":96,"url_native":192,"url_absolute":248,
+    "url_to_posix":216,"url_from_posix":224,"url_parameters":328,
+    "handler_open":72,"handler_create":80,"preset_store":72,"preset_restore":80,"collection_count":24,
     "folder_handler":48,"folder_flags":88,"attribute_count":40,
     "exists":32,"attribute":80,"string_length":32,"string_copy":64,"can_insert":24,"insert":32,
 }

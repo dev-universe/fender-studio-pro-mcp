@@ -65,3 +65,13 @@ static_assert(CCL::IPresetFileHandler::kCanImport == 1 && CCL::IPresetFileHandle
 extern "C" CCL::IPresetFileHandler* abi_folder_handler(CCL::IPresetFileRegistry* p, CCL::IUnknown* target){return p->getHandlerForTarget(target);}
 extern "C" int abi_folder_flags(CCL::IPresetFileHandler* p, CCL::IUnknown* target){return p->getTargetFlags(target);}
 extern "C" int abi_attribute_count(CCL::IAttributeList* p){return p->countAttributes();}
+
+static_assert(CCL::IUrl::kFile == 1 && CCL::IUrl::kMaxLength == 2048);
+extern "C" CCL::tbool abi_url_to_posix(CCL::IUrl* p, char* out, int n){return p->toPOSIXPath(out,n);}
+extern "C" CCL::tbool abi_url_from_posix(CCL::IUrl* p, const char* path){return p->fromPOSIXPath(path,CCL::IUrl::kFile);}
+extern "C" CCL::tbool abi_url_parameters(CCL::IUrl* p){return p->hasParameters();}
+extern "C" CCL::IPreset* abi_handler_open(CCL::IPresetFileHandler* p, CCL::IUrl* url){return p->openPreset(*url,nullptr);}
+extern "C" CCL::IPreset* abi_handler_create(CCL::IPresetFileHandler* p, CCL::IUrl* url, CCL::IAttributeList* attributes){return p->createPreset(*url,*attributes);}
+extern "C" CCL::tbool abi_preset_store(CCL::IPreset* p, CCL::IUnknown* folder){return p->store(folder);}
+extern "C" CCL::tbool abi_preset_restore(CCL::IPreset* p, CCL::IUnknown* folder){return p->restore(folder);}
+extern "C" int abi_collection_count(CCL::IPresetCollection* p){return p->countPresets();}

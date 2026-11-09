@@ -1,4 +1,5 @@
 //! Fixed public-interface preflight for an already bound Inserts folder.
+pub mod collection;
 use crate::{Error, ffi, guard};
 use ffi::{CStringRepr, Owned, Uid, Variant};
 use std::{
@@ -219,10 +220,10 @@ impl FolderPresetRoute {
         }
         Ok(flags as u32)
     }
-    fn metadata<G: FnMut() -> Result<(), String>>(
+    fn metadata_attributes<G: FnMut() -> Result<(), String>>(
         &self,
         g: &mut G,
-    ) -> Result<FolderMetadata, Error> {
+    ) -> Result<(Owned, FolderMetadata), Error> {
         let result = (|| {
             guard(g)?;
             let create: unsafe extern "C" fn(
@@ -269,9 +270,24 @@ impl FolderPresetRoute {
             if after != before {
                 return Err(Error::Changed);
             }
+            Ok((attributes, result))
+        })();
+        if let Err(error) = guard(g) {
+            drop(result);
+            guard(g)?;
+            return Err(error);
+        }
+        result
+    }
+    fn metadata<G: FnMut() -> Result<(), String>>(
+        &self,
+        g: &mut G,
+    ) -> Result<FolderMetadata, Error> {
+        let result = (|| {
+            let (attributes, metadata) = self.metadata_attributes(g)?;
             drop(attributes);
             guard(g)?;
-            Ok(result)
+            Ok(metadata)
         })();
         guard(g)?;
         result

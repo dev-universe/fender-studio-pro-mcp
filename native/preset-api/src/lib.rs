@@ -1,4 +1,5 @@
-//! Owned local preset catalogs and fixed folder preflight. No IPC or file writes.
+//! Owned local preset catalogs, folder preflight and private collection primitives.
+//! No IPC, native discovery, arbitrary invoker or caller-supplied preset bytes.
 #![deny(unsafe_op_in_unsafe_fn)]
 mod ffi;
 pub mod folder;
