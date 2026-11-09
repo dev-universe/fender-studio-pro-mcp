@@ -446,6 +446,51 @@ class AcceptanceTests(unittest.TestCase):
                 self.assertEqual(classification(plugin, parameter), "dedicated_action_required")
                 self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
 
+    def test_exact_meter_and_scope_controls_require_dedicated_protocols(self):
+        roles = {"Level Meter": {"resethold": "dedicated_action_required",
+                                 "resetloudness": "dedicated_action_required"},
+                 "Scope": {"trigOneshot": "state_restore_required",
+                           "trigRetrig": "dedicated_action_required"}}
+        for plugin, parameters in roles.items():
+            for name, role in parameters.items():
+                parameter = number(name, 0, kind="Toggle", lower=0, upper=1)
+                with self.subTest(plugin=plugin, name=name):
+                    self.assertEqual(classification(plugin, parameter), role)
+                    self.assertEqual(classification(plugin, {**parameter, "readOnly": True}), "read_only")
+                    self.assertEqual(classification(plugin, {**parameter, "enabled": False}), "disabled_dependency")
+                    self.assertEqual(classification(plugin, {**parameter, "writable": 1}), "unresolved_access")
+                    missing_access = dict(parameter)
+                    del missing_access["enabled"]
+                    self.assertEqual(classification(plugin, missing_access), "unresolved_access")
+                    self.assertEqual(classification(plugin, {**parameter, "name": name + "Other"}), "numeric_scalar")
+                    self.assertEqual(classification("Fixture Effect", parameter), "numeric_scalar")
+                    self.assertEqual(classification(plugin + " Custom", parameter), "numeric_scalar")
+
+    def test_level_meter_commands_are_inventoried_without_generic_writes(self):
+        client = DeviceClient([number("resethold", 0, kind="Toggle", lower=0, upper=1),
+                               number("resetloudness", 0, kind="Toggle", lower=0, upper=1)])
+        runner = self.runner(client)
+        runner.run_fixture({**TARGET, "plugin": "Level Meter"}, write_roundtrips=True)
+        self.assertEqual(runner.counts["records_audited"], 2)
+        self.assertEqual(runner.counts["category_dedicated_action_required"], 2)
+        self.assertEqual(client.writes, [])
+        self.assertEqual(runner.finish(write_roundtrips=True), 2)
+        self.assertEqual(runner.summary["dedicated_or_unresolved_records"], 2)
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
+    def test_scope_capture_controls_are_inventoried_without_generic_writes(self):
+        client = DeviceClient([number("trigOneshot", 0, kind="Toggle", lower=0, upper=1),
+                               number("trigRetrig", 0, kind="Toggle", lower=0, upper=1)])
+        runner = self.runner(client)
+        runner.run_fixture({**TARGET, "plugin": "Scope"}, write_roundtrips=True)
+        self.assertEqual(runner.counts["records_audited"], 2)
+        self.assertEqual(runner.counts["category_state_restore_required"], 1)
+        self.assertEqual(runner.counts["category_dedicated_action_required"], 1)
+        self.assertEqual(client.writes, [])
+        self.assertEqual(runner.finish(write_roundtrips=True), 2)
+        self.assertEqual(runner.summary["dedicated_or_unresolved_records"], 2)
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
     def test_exact_external_coordinated_roles_require_state_restoration(self):
         for plugin in ("External Effect Mono", "External Effect Stereo"):
             for name in ("scopeMode", "showImage", "latencyOffset", "mathMode"):

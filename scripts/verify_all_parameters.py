@@ -41,7 +41,10 @@ PARAMETER_ACTIONS = {
     "Gate": {"swapfreqs"},
     "Compressor": {"studiocomp.swapfreqs", "studiocomp.resetmin"},
     "Limiter": {"resetmin"},
+    "Level Meter": {"resethold", "resetloudness"},
+    "Scope": {"trigRetrig"},
 }
+PARAMETER_STATE_ROLES = {"Scope": {"trigOneshot"}}
 MODEL_SELECTORS = {
     "Ampire": {"opt.ampmodel", "opt.cabmodel", *[f"opt.stompmodel{i}" for i in range(1, 9)]},
     "Pedalboard": {f"opt.stompmodel{i}" for i in range(1, 9)},
@@ -310,7 +313,8 @@ def classification(plugin, parameter):
         return "dedicated_type_required"
     if name in PARAMETER_ACTIONS.get(plugin, ()) or (plugin.startswith("External Effect ") and name in EXTERNAL_ACTIONS):
         return "dedicated_action_required"
-    if plugin in ("External Effect Mono", "External Effect Stereo") and name in EXTERNAL_STATE_ROLES:
+    if name in PARAMETER_STATE_ROLES.get(plugin, ()) or (
+            plugin in ("External Effect Mono", "External Effect Stereo") and name in EXTERNAL_STATE_ROLES):
         return "state_restore_required"
     if name in MODEL_SELECTORS.get(plugin, set()) or (
             plugin in ("Mustang Native", "Rumble Native") and str(name).startswith("global.effectmodel")):
