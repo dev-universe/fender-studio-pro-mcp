@@ -71,6 +71,11 @@ source-backed button is now classified as a dedicated action. No numeric
 restoration tolerance or baseline rebasing was used.
 These are partial results; no all-writable acceptance claim is made here.
 
+The later direct-digest rerun of the original four plugins passed all 100
+candidates again. Unlike the first grouped comparison, every restoration in
+this rerun required two fresh complete native writable-projection matches
+before advancing; independent complete public pages also bracketed each fixture.
+
 A first digest-based Pro EQ sweep stopped on its first candidate, `bypass`.
 Two changed-value reads passed, but an accepted state-stream load left that
 host parameter changed. Full-page diagnosis confirmed that only `bypass`
@@ -158,7 +163,8 @@ next parameter. The final Vocal Tune scale case stopped: restoring the Custom
 selector alone left seven note toggles changed. The unsaved session was
 discarded. A fresh explicit integral scale selection then passed two
 change/capsule-load cycles, comparing the complete 26-record provider and every
-writable value and rejecting the released token. The earlier fractional List candidate was not accepted as an
+writable value and rejecting the released token. The earlier fractional List
+candidate was not accepted as an
 exact requested scale choice.
 
 The disconnected External mode verifier subsequently passed six transitions
@@ -170,6 +176,17 @@ permitted temporary metadata change is that exact button's consistent all-on
 or all-off availability group. Unrelated metadata drift still stops the run.
 These 12 cases establish the tested disconnected transitions, not physical
 routing, ping emission or hardware latency calibration.
+
+The stronger Surround Panner direct check stopped after five confirmed cases:
+restoring `soloLfe` itself left `sendLfe` and two speaker-mute values changed.
+Its unsaved changes were discarded. A fresh capability observation established
+the exact alias's `IStorable` support. Capsule restoration then passed the Solo
+case and a subsequent sweep of all 47 exposed writable panner parameters.
+Each candidate required changed readback, capsule load and two fresh complete
+native digest matches, with independent full public-page checkpoints. This
+covers the current fixture's exposed values, including the advertised speaker
+mute fields; it does not establish every physical output layout or audible
+speaker behavior.
 
 The finite-model verifier passed all current choices for Fat Channel's EQ and
 compressor selectors and Voice FX's selector: three baseline choices were
@@ -196,6 +213,11 @@ choices. Together with Fat Channel/Voice FX, these runs cover 22 current
 exposed selectors and 283 nonbaseline choice roundtrips. Their complete model
 domains, simultaneous selector combinations and audible effects remain separate
 claims; Mustang/Rumble's placeholder selectors are not included.
+Vocal Tune's scale selector subsequently passed all 16 current choices: one
+baseline observation and 15 changed/restored choices, including the final
+released-token checks. This brings finite exposed selector coverage to 23
+selectors and 298 nonbaseline choice roundtrips. The note-enable peers were
+included in every complete typed restoration comparison.
 
 The next build also exposed fresh native parameter digests. Independent Python
 projection from complete public pages matched all three native hashes for
@@ -238,8 +260,13 @@ content and audible behavior are not certified by parameter comparisons.
 on the bound target. The initial call uses a fixed empty URL prototype created
 inside the bridge; callers cannot supply paths, URLs or state blobs. Catalog
 origin is not inferred from read-only storage. Apply acknowledgment alone is not
-an acceptance pass. The initial native recall route covers AudioInsertSlot;
-instrument, Note FX, panner and Mix FX preset routes need separate observations.
+an acceptance pass. The expanded native recall route covers the observed
+AudioInsertSlot, AudioSynthSlot and MusicFXSlot families. In the actual host,
+Pro EQ (74 catalog entries), Mai Tai (241) and Arpeggiator (10) each passed two
+issued recalls with changed writable values, complete-provider restoration,
+token release and released-catalog refusal. The latter two establish instrument
+and Note FX acceptance on these fixtures. Other family members and panner/Mix FX
+preset routes still need their own observations.
 
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
