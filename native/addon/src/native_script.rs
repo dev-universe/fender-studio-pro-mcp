@@ -140,6 +140,8 @@ struct Api {
     empty: Singleton,
     desktop: Singleton,
     scripting: Singleton,
+    plugin_manager: Singleton,
+    file_system: Singleton,
 }
 static API: OnceLock<Option<Api>> = OnceLock::new();
 fn api() -> Option<&'static Api> {
@@ -162,6 +164,8 @@ fn api() -> Option<&'static Api> {
             empty: sym!(c"CCLGetEmptyString", Singleton),
             desktop: sym!(c"CCLGetDesktop", Singleton),
             scripting: sym!(c"CCLGetScriptingManager", Singleton),
+            plugin_manager: sym!(c"CCLGetPlugInManager", Singleton),
+            file_system: sym!(c"CCLGetFileSystem", Singleton),
         })
     })
     .as_ref()
@@ -290,6 +294,8 @@ static BUNDLE_PIN: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
 static MODULE_OWNER: AtomicPtr<Service> = AtomicPtr::new(ptr::null_mut());
 static LIVE_RECEIPTS: AtomicU32 = AtomicU32::new(0);
 pub(super) type ReceiptLease = request::ReceiptLease;
+pub(super) type StateRegistry = request::state::Registry;
+pub(super) type PresetRegistry = request::presets::Registry;
 fn release_receipt(service: *mut Service) {
     let s = unsafe { &*service };
     // GUI-only, and take the Rust slot before any native destructor can reenter.
@@ -424,7 +430,7 @@ static METHODS: [MethodDefinition; 3] = [
     },
     MethodDefinition {
         name: c"request".as_ptr(),
-        args: c"target: Object, request: string".as_ptr(),
+        args: c"target: Object, request: string, auxiliary: Object = null".as_ptr(),
         result: c"string".as_ptr(),
     },
     MethodDefinition {
@@ -746,13 +752,18 @@ unsafe extern "C" fn script_invoke(
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
         request::Reply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64"}),
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true}),
         )
-    } else if name == "request" && count == 2 {
+    } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
             unsafe { method(msg, 5) };
         let target = unsafe { arg(msg, 0) };
         let json = unsafe { arg(msg, 1) };
+        let auxiliary = if count == 3 {
+            unsafe { arg(msg, 2) }
+        } else {
+            ptr::null()
+        };
         if target.is_null()
             || json.is_null()
             || unsafe {
@@ -761,6 +772,9 @@ unsafe extern "C" fn script_invoke(
                     || (*json).kind & 15 != 3
                     || (*json).payload == 0
             }
+            || (count == 3
+                && (auxiliary.is_null()
+                    || unsafe { (*auxiliary).kind & 15 != 4 || (*auxiliary).payload == 0 }))
         {
             request::Reply::error(
                 "invalid_arguments",
@@ -770,12 +784,17 @@ unsafe extern "C" fn script_invoke(
         } else {
             let target =
                 hold(unsafe { (*target).payload as *mut c_void }).expect("nonnull checked");
+            let auxiliary = if count == 3 {
+                hold(unsafe { (*auxiliary).payload as *mut c_void })
+            } else {
+                None
+            };
             match request::copy_string(
                 unsafe { (*json).payload as *mut c_void },
                 request::MAX_REQUEST_BYTES,
             ) {
                 Ok(json) if json.len() <= request::MAX_REQUEST_BYTES => {
-                    request::dispatch(owner, target, &json, a)
+                    request::dispatch(owner, target, &json, auxiliary, a)
                 }
                 _ => request::Reply::error(
                     "invalid_request",
@@ -978,6 +997,8 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
         return WRONG_THREAD;
     }
     release_receipt(service);
+    request::state::drain(service);
+    request::presets::drain(service);
     if s.registered.load(Ordering::Acquire) {
         let table = unsafe { (a.objects)() };
         if table.is_null() {
@@ -1007,18 +1028,22 @@ pub(super) fn module_exit_state() -> bool {
         && FACTORY.refs.load(Ordering::Acquire) == 0
         && TYPE.refs.load(Ordering::Acquire) == 1
         && MODULE_OWNER.load(Ordering::Acquire).is_null()
-        && LIVE_RECEIPTS.load(Ordering::Acquire) == 0;
+        && LIVE_RECEIPTS.load(Ordering::Acquire) == 0
+        && request::state::live_count() == 0
+        && request::presets::live_count() == 0;
     log_detail(
         "module_exit_state",
         &format!(
-            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{}}}",
+            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{},\"state_capsules\":{},\"preset_catalogs\":{}}}",
             LIVE_SERVICES.load(Ordering::Acquire),
             FACTORY.refs.load(Ordering::Acquire),
             TYPE.refs.load(Ordering::Acquire).saturating_sub(1),
             !MODULE_OWNER.load(Ordering::Acquire).is_null(),
             !SELF_PIN.load(Ordering::Acquire).is_null(),
             !BUNDLE_PIN.load(Ordering::Acquire).is_null(),
-            LIVE_RECEIPTS.load(Ordering::Acquire)
+            LIVE_RECEIPTS.load(Ordering::Acquire),
+            request::state::live_count(),
+            request::presets::live_count()
         ),
     );
     clean

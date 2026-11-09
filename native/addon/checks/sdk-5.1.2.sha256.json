@@ -32,6 +32,15 @@
     "ccl/public/systemservices.h": "c1c6e074934fe26afe26a8067973431e68721c9cad499b880937352782cef25d",
     "ccl/public/plugservices.h": "491ad33d6aeef72e486bdc594d02fa643406906072e576c536f5f39a1c2d53cc",
     "ccl/public/base/imessage.h": "568d1de5b9ddca20705345177623a946ca6c9aa5475ae7c249154f19c84fec3d",
-    "ccl/public/plugins/iscriptingmanager.h": "0b89ae25901d4d69d18c21ef8e5406856f472d7aecdf44299e655d79ada0536b"
+    "ccl/public/plugins/iscriptingmanager.h": "0b89ae25901d4d69d18c21ef8e5406856f472d7aecdf44299e655d79ada0536b",
+    "ccl/public/app/ipreset.h": "539592cd23ff776802ad075ae3c8390fa735f393074a7e6cd620e6997521b18a",
+    "ccl/public/gui/idatatarget.h": "9c2bcd1bd36c769c6103261227d3bfd7deef60f2746e38ebc95b4c84e3062096",
+    "ccl/public/storage/istorage.h": "beb6a84f3e1fd1ab164fd4891eb0c906835ae6927757b6c22449856be1f28223",
+    "ccl/public/base/istream.h": "93c2ce3e606cc7efb3ddf634ffcde283037657cc84a92e0148da5483f0429401",
+    "core/public/corestream.h": "6d1728b889ebf8428a510a78e30fd0f0e44bee063cf4cb7b325109f3213b774d",
+    "ccl/public/plugins/ipluginmanager.h": "777ddc141cbc56b303391b6c2155da674602a59c6b6c45e03cac9abf09d8aa29",
+    "ccl/public/system/inativefilesystem.h": "05c514ee75cb1df088ce13d622486de5b26294d37266055a8d6b32f73cf3c1d2",
+    "ccl/public/system/ifilesystem.h": "749ab66773f44d6345a021a7d05b23cf7ecec332df3046fc1096d86243649495",
+    "ccl/public/storage/iurl.h": "2469d9ceaf7312990ee4ebb7a2e7f93aae4e936b74c554682faa56cad9f123c6"
   }
 }

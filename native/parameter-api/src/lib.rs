@@ -18,6 +18,63 @@ pub const MAX_TEXT_UNITS: usize = 4096;
 pub const MAX_NAME_BYTES: usize = 512;
 pub const MAX_CHOICES_PAGE: u32 = 128;
 pub const MAX_LIST_CHOICES: u32 = 1_000_000;
+pub const MAX_ORIGINAL_PARAMETERS: usize = 8;
+pub const MAX_FORMAT_VALUES: usize = 32;
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct FormattedValue {
+    /// The explicit input, before lossless native representation coercion.
+    pub requested: Number,
+    /// The numeric Variant actually supplied to the read-only formatter.
+    pub native_value: NativeValue,
+    pub label: String,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct FormattedValues {
+    pub values: Vec<FormattedValue>,
+    pub before: Description,
+    pub after: Description,
+    pub current_unchanged: bool,
+}
+
+/// Observed metadata, without interpreting precision or bounds as list counts.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ParameterDetails {
+    pub precision: i32,
+    pub storable: bool,
+    pub mutable: bool,
+    pub store_list_value: bool,
+    pub read_only: bool,
+    pub can_undo: bool,
+    pub list_interface: bool,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct OriginalParameter {
+    pub description: Description,
+    pub details: ParameterDetails,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OriginalChainEnd {
+    /// getOriginal returned the current canonical object, possibly another view.
+    SelfReference,
+    MissingOriginal,
+    /// getOriginal returned an earlier entry other than the current entry.
+    Cycle {
+        index: usize,
+    },
+    /// The last entry was not followed because the fixed bound was reached.
+    Limit,
+}
+
+/// Sequential observations. Entry zero describes the receiver.
+#[derive(Clone, Debug, PartialEq)]
+pub struct OriginalChain {
+    pub parameters: Vec<OriginalParameter>,
+    pub end: OriginalChainEnd,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ListChoice {

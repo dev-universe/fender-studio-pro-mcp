@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import subprocess
 import sys
 
@@ -15,3 +16,24 @@ for path,expected in pin['headers'].items():
     if actual!=expected:
         raise SystemExit(f"REFUSED changed public ABI header: {path}")
 print(f"Verified exact {pin['tag']} commit and {len(pin['headers'])} API header hashes")
+
+# Verify newly handed-off interfaces against both the pinned declaration and
+# our Rust constants. No vendor IID implementation is compiled or linked.
+rust=(Path(__file__).parent.parent/'src/request/presets.rs').read_text()
+interfaces={
+    'MEDIATOR':('ccl/public/app/ipreset.h','IPresetMediator'),
+    'DATA_TARGET':('ccl/public/gui/idatatarget.h','IDataTarget'),
+    'MANAGER':('ccl/public/app/ipreset.h','IPresetManager'),
+    'URL':('ccl/public/storage/iurl.h','IUrl'),
+    'FILE_SYSTEM':('ccl/public/system/ifilesystem.h','IFileSystem'),
+}
+for constant,(path,interface) in interfaces.items():
+    declaration=re.search(r'DEFINE_IID\s*\(\s*'+interface+r'\s*,([^)]*)\)',(root/path).read_text())
+    implementation=re.search(r'const '+constant+r': Uid = Uid \{(.*?)\};',rust,re.S)
+    if not declaration or not implementation:
+        raise SystemExit(f'Missing interface declaration: {constant}')
+    sdk_values=[int(v.strip(),0) for v in declaration[1].split(',')]
+    rust_values=[int(v,0) for v in re.findall(r'0x[0-9a-fA-F]+|\b[0-9]+\b',implementation[1])]
+    if sdk_values!=rust_values:
+        raise SystemExit(f'Rust interface IID mismatch: {constant}')
+print(f'Checked {len(interfaces)} preset bridge interface IID constants')

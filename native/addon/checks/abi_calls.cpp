@@ -7,21 +7,28 @@
 #include <dlfcn.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include "ccl/public/app/idocument.h"
+#include "ccl/public/app/ipreset.h"
 #include "ccl/public/base/iobjectnode.h"
 #include "ccl/public/base/iobject.h"
+#include "ccl/public/base/istream.h"
 #include "ccl/public/gui/icontroller.h"
 #include "ccl/public/gui/iparameter.h"
+#include "ccl/public/gui/idatatarget.h"
 #include "ccl/public/gui/framework/iuserinterface.h"
 #include "ccl/public/gui/framework/itimer.h"
 #include "ccl/public/gui/framework/iwindow.h"
 #include "ccl/public/gui/framework/iview.h"
 #include "ccl/public/plugins/iobjecttable.h"
 #include "ccl/public/plugins/icomponent.h"
+#include "ccl/public/storage/istorage.h"
 #include "ccl/public/system/isignalhandler.h"
 #include "ccl/public/system/ithreading.h"
 #include "ccl/public/text/cstring.h"
 #include "ccl/public/base/imessage.h"
 #include "ccl/public/plugins/iscriptingmanager.h"
+#include "ccl/public/plugservices.h"
+#include "ccl/public/systemservices.h"
+#include "ccl/public/system/inativefilesystem.h"
 
 static_assert(sizeof(CCL::Variant) == 16);
 static_assert(alignof(CCL::Variant) == 8);
@@ -35,6 +42,14 @@ static_assert(offsetof(CCL::PlainCString, text) == 0);
 static_assert(offsetof(CCL::PlainCString, theString) == 8);
 static_assert(sizeof(CCL::MutableCString) == 16);
 static_assert(sizeof(Core::Threads::ThreadID) == 8);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IStorable>);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IStream>);
+static_assert(CCL::IStream::kSeekSet==0 && CCL::IStream::kSeekCur==1 && CCL::IStream::kSeekEnd==2);
+static_assert(sizeof(CCL::IStream)==8 && sizeof(CCL::int64)==8);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetMediator>);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetMetaDataProvider>);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IDataTarget>);
+static_assert(std::is_base_of_v<CCL::IUnknown,CCL::IPresetManager>);
 
 extern "C" int abi_controller_count(CCL::IController* p) { return p->countParameters(); }
 extern "C" CCL::IController* abi_controller_provider(CCL::IControllerProvider* p) { return p->getController(); }
@@ -51,6 +66,7 @@ extern "C" const CCL::UIDBytes* abi_node_uid(CCL::IObjectNode* p) { return &p->g
 extern "C" const CCL::UIDBytes* abi_node_class(CCL::IObjectNode* p) { return &p->getClassUID(); }
 extern "C" CCL::IObjectNode* abi_node_find(CCL::IObjectNode* p, CCL::String* id) { return p->findChild(*id); }
 extern "C" CCL::IUnknown* abi_object_named(CCL::IObjectTable* p, const CCL::CString* name) { return p->getObjectByName(*name); }
+extern "C" CCL::IUnknown* abi_object_identified(CCL::IObjectTable* p, const CCL::UIDBytes* id) { return p->getObjectByID(*id); }
 extern "C" CCL::tbool abi_object_property(CCL::IObject* p, CCL::Variant* out, const CCL::CString* name) { return p->getProperty(*out,*name); }
 extern "C" CCL::IDocument* abi_document_active(CCL::IDocumentManager* p) { return p->getActiveIDocument(); }
 extern "C" CCL::IUnknown* abi_document_model(CCL::IDocument* p) { return p->getModel(); }
@@ -69,6 +85,7 @@ extern "C" CCL::tresult abi_post(CCL::ISignalHandler* p, CCL::IObserver* o, CCL:
 extern "C" CCL::tresult abi_cancel_messages(CCL::ISignalHandler* p, CCL::IObserver* o) { return p->cancelMessages(o); }
 extern "C" Core::Threads::ThreadID abi_thread_id(CCL::Threading::IThread* p) { return p->getThreadID(); }
 extern "C" const CCL::String* abi_node_id(CCL::IObjectNode* p) { return &p->getObjectID(); }
+extern "C" CCL::IObjectNode* abi_node_parent(CCL::IObjectNode* p) { return p->getParent(); }
 extern "C" int abi_node_count(CCL::IObjectNode* p) { return p->countChildren(); }
 extern "C" CCL::IObjectNode* abi_node_child(CCL::IObjectNode* p,int i) { return p->getChild(i); }
 extern "C" CCL::IObjectNode* abi_node_lookup(CCL::IObjectNode* p,CCL::String* path) { return p->lookupChild(*path); }
@@ -118,6 +135,11 @@ extern "C" CCL::tresult abi_table_unregister(CCL::IObjectTable* p,CCL::IUnknown*
 extern "C" const CCL::CString* abi_message_id(CCL::IMessage* p) { return &p->getID(); }
 extern "C" int abi_message_count(CCL::IMessage* p) { return p->getArgCount(); }
 extern "C" const CCL::Variant* abi_message_argument(CCL::IMessage* p,int i) { return &p->getArg(i); }
+extern "C" const CCL::Variant* abi_message_auxiliary(CCL::IMessage* p) { return &p->getArg(2); }
+extern "C" CCL::IPlugInManager* abi_plugin_manager_export() { return &CCL::System::GetPlugInManager(); }
+extern "C" CCL::INativeFileSystem* abi_file_system_export() { return &CCL::System::GetFileSystem(); }
+static_assert(std::is_base_of_v<CCL::IClassAllocator,CCL::IPlugInManager>);
+static_assert(std::is_base_of_v<CCL::IFileSystem,CCL::INativeFileSystem>);
 extern "C" CCL::tbool abi_object_invoke(CCL::IObject* p,CCL::Variant* out,CCL::IMessage* msg) { return p->invokeMethod(*out,*msg); }
 extern "C" CCL::IString* abi_string_clone(CCL::IString* p) { return p->cloneString(); }
 extern "C" CCL::tresult abi_string_assign(CCL::IString* p,const CCL::uchar* s,int n) { return p->assignChars(s,n); }
@@ -127,6 +149,13 @@ extern "C" const CCL::ITypeInfo::MethodDefinition* abi_type_methods(CCL::ITypeIn
 extern "C" CCL::ModuleRef abi_type_module(CCL::ITypeInfo* p) { return p->getModuleReference(); }
 extern "C" void abi_scripting_startup(CCL::IScriptingManager* p,const CCL::CString* id,CCL::ModuleRef module) { p->startup(*id,module,nullptr,false); }
 extern "C" void abi_scripting_shutdown(CCL::IScriptingManager* p,CCL::ModuleRef module) { p->shutdown(module,false); }
+extern "C" CCL::tbool abi_storable_save(CCL::IStorable* p,CCL::IStream* stream) { return p->save(*stream); }
+extern "C" CCL::tbool abi_storable_load(CCL::IStorable* p,CCL::IStream* stream) { return p->load(*stream); }
+extern "C" int abi_stream_read(CCL::IStream* p,void* buffer,int size) { return p->read(buffer,size); }
+extern "C" int abi_stream_write(CCL::IStream* p,const void* buffer,int size) { return p->write(buffer,size); }
+extern "C" CCL::int64 abi_stream_tell(CCL::IStream* p) { return p->tell(); }
+extern "C" CCL::tbool abi_stream_seekable(CCL::IStream* p) { return p->isSeekable(); }
+extern "C" CCL::int64 abi_stream_seek(CCL::IStream* p,CCL::int64 offset,int mode) { return p->seek(offset,mode); }
 
 #ifdef LAYOUT_EXECUTABLE
 int main() {

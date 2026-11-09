@@ -10,6 +10,11 @@ use std::{
     thread::{self, ThreadId},
 };
 
+#[path = "details.rs"]
+mod details;
+#[path = "formatting.rs"]
+mod formatting;
+
 /// One caller-resolved IParameter reference, owned and confined to its thread.
 ///
 /// ```compile_fail

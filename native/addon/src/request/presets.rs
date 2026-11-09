@@ -1,0 +1,499 @@
+//! Finite, service-local preset capabilities. Paths and imported bytes never
+//! cross this boundary; only entries observed through the fixed slot are used.
+use super::*;
+use fender_native_preset_api::{Availability, Catalog, Inputs, Page};
+use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
+
+const MAX_CATALOGS: usize = 4;
+pub(super) const MAX_PAGE: u32 = 64;
+static LIVE_CATALOGS: AtomicU32 = AtomicU32::new(0);
+pub(super) fn default_limit() -> u32 {
+    32
+}
+pub(crate) fn live_count() -> u32 {
+    LIVE_CATALOGS.load(Ordering::Acquire)
+}
+pub(crate) fn limits() -> Value {
+    json!({"max_count":MAX_CATALOGS,"max_entries_per_catalog":fender_native_preset_api::MAX_PRESETS,"max_page_size":MAX_PAGE,"default_page_size":default_limit()})
+}
+const MEDIATOR: Uid = Uid {
+    a: 0x25e340af,
+    b: 0xd6e6,
+    c: 0x49cf,
+    d: [0xb2, 0x58, 0x87, 0x47, 0x6e, 0x4a, 0x27, 0x3a],
+};
+const DATA_TARGET: Uid = Uid {
+    a: 0x9967d17c,
+    b: 0xa519,
+    c: 0x4c00,
+    d: [0xa7, 0xcd, 0x92, 0x1e, 0x4d, 0x7c, 0x5e, 0xcb],
+};
+const MANAGER: Uid = Uid {
+    a: 0x861a7175,
+    b: 0xac7b,
+    c: 0x457c,
+    d: [0xac, 0xcd, 0x8b, 0x35, 0xdf, 0xcc, 0xea, 0x9d],
+};
+const URL: Uid = Uid {
+    a: 0xbfca729d,
+    b: 0x5097,
+    c: 0x4b38,
+    d: [0x9f, 0x15, 0x52, 0x13, 0xf9, 0x79, 0, 0xc4],
+};
+const FILE_SYSTEM: Uid = Uid {
+    a: 0x3e510860,
+    b: 0x30ad,
+    c: 0x4f70,
+    d: [0xa9, 0x33, 0x6b, 0x0c, 0x1d, 0xc4, 0x13, 0x28],
+};
+
+#[derive(Clone, PartialEq, Eq)]
+struct Key {
+    document: *mut c_void,
+    model: *mut c_void,
+    target: *mut c_void,
+    object_uid: String,
+    class_uid: String,
+}
+impl Key {
+    fn same_document(&self, ctx: &Context<'_>) -> bool {
+        self.document == ctx.document._identity.0 && self.model == ctx.document._model_identity.0
+    }
+    fn same_target(&self, ctx: &Context<'_>, target: *mut c_void) -> bool {
+        self.same_document(ctx)
+            && self.target == target
+            && self.object_uid == ctx.instance.object_uid
+            && self.class_uid == ctx.instance.class_uid
+    }
+}
+
+struct Route {
+    // Interfaces and children release before their owning document pins.
+    presets: Owned,
+    _presets_identity: Owned,
+    slot: Owned,
+    _slot_identity: Owned,
+    device: Owned,
+    _target: Owned,
+    _model: Owned,
+    _document: Owned,
+    key: Key,
+    name: *const PlainString,
+    slot_identity: (String, String),
+    presets_identity: (String, String),
+}
+fn node_identity(node: *mut c_void) -> (String, String) {
+    let object: unsafe extern "C" fn(*mut c_void) -> *const Uid = unsafe { method(node, 4) };
+    let class: unsafe extern "C" fn(*mut c_void) -> *const Uid = unsafe { method(node, 5) };
+    (uid(unsafe { object(node) }), uid(unsafe { class(node) }))
+}
+impl Route {
+    fn capture(ctx: &Context<'_>) -> Result<Self, String> {
+        ctx.check()?;
+        let get = constant_string().ok_or("native string constants unavailable")?;
+        let name = unsafe { get(c"Presets".as_ptr()) };
+        if name.is_null() {
+            return Err("Presets identifier unavailable".into());
+        }
+        let device = hold(ctx.node.0).ok_or("Device node unavailable")?;
+        let parent: Borrowed = unsafe { method(device.0, 6) };
+        let slot = hold(unsafe { parent(device.0) }).ok_or("Device slot unavailable")?;
+        if class_name(slot.0) != "AudioInsertSlot" {
+            return Err("preset catalog requires the observed AudioInsertSlot family".into());
+        }
+        let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
+            unsafe { method(slot.0, 10) };
+        let presets =
+            hold(unsafe { find(slot.0, name) }).ok_or("slot Presets child unavailable")?;
+        if class_name(presets.0) != "PresetComponent" {
+            return Err("slot Presets child has an unsupported native class".into());
+        }
+        let slot_identity = node_identity(slot.0);
+        let presets_identity = node_identity(presets.0);
+        if !valid_uid(&slot_identity.0)
+            || !valid_uid(&presets_identity.0)
+            || !valid_uid(&presets_identity.1)
+        {
+            return Err("slot or Presets child has no stable native identity".into());
+        }
+        let target =
+            query(ctx.target.0, &UNKNOWN).ok_or("Device canonical identity unavailable")?;
+        let key = Key {
+            document: ctx.document._identity.0,
+            model: ctx.document._model_identity.0,
+            target: target.0,
+            object_uid: ctx.instance.object_uid.clone(),
+            class_uid: ctx.instance.class_uid.clone(),
+        };
+        let route = Self {
+            _presets_identity: query(presets.0, &UNKNOWN).ok_or("Presets identity unavailable")?,
+            _slot_identity: query(slot.0, &UNKNOWN).ok_or("slot identity unavailable")?,
+            _model: hold(ctx.document._model_identity.0).ok_or("model identity unavailable")?,
+            _document: hold(ctx.document._identity.0).ok_or("document identity unavailable")?,
+            presets,
+            slot,
+            device,
+            _target: target,
+            key,
+            name,
+            slot_identity,
+            presets_identity,
+        };
+        route.guard(ctx)?;
+        Ok(route)
+    }
+    fn attachment(&self) -> Result<(), String> {
+        let parent: Borrowed = unsafe { method(self.device.0, 6) };
+        let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
+            unsafe { method(self.slot.0, 10) };
+        if unsafe { parent(self.device.0) } != self.slot.0
+            || unsafe { find(self.slot.0, self.name) } != self.presets.0
+            || node_identity(self.slot.0) != self.slot_identity
+            || node_identity(self.presets.0) != self.presets_identity
+        {
+            Err("Device slot or Presets attachment changed".into())
+        } else {
+            Ok(())
+        }
+    }
+    fn guard(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.attachment()?;
+        ctx.check()
+    }
+    fn matches(&self, ctx: &Context<'_>) -> Result<(), String> {
+        let target = query(ctx.target.0, &UNKNOWN).ok_or("Device identity unavailable")?;
+        let matches = self.key.same_target(ctx, target.0);
+        drop(target);
+        ctx.check()?;
+        if matches {
+            Ok(())
+        } else {
+            Err("catalog belongs to a different service/document/model/Device".into())
+        }
+    }
+}
+
+pub(crate) struct Lease {
+    catalog: Catalog,
+    route: Route,
+    issued: RefCell<Vec<bool>>,
+}
+impl Drop for Lease {
+    fn drop(&mut self) {
+        LIVE_CATALOGS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+impl Lease {
+    fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.route.matches(ctx)?;
+        self.catalog
+            .check(&mut || self.route.guard(ctx))
+            .map_err(|e| e.to_string())?;
+        self.route.guard(ctx)
+    }
+}
+/// Registry ownership and publication ownership are separate. Taking a record
+/// never destroys its host references while the registry is mutably borrowed.
+struct Record<T> {
+    token: String,
+    lease: Rc<T>,
+}
+pub(crate) struct Registry<T = Lease> {
+    entries: Vec<Record<T>>,
+}
+impl<T> Registry<T> {
+    pub(crate) fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+    fn capacity(&self) -> Result<(), String> {
+        if self.entries.len() < MAX_CATALOGS {
+            Ok(())
+        } else {
+            Err("native preset catalog count limit reached".into())
+        }
+    }
+    fn get(&self, token: &str) -> Result<Rc<T>, String> {
+        self.entries
+            .iter()
+            .find(|e| e.token == token)
+            .map(|e| Rc::clone(&e.lease))
+            .ok_or("catalog token is expired, released or belongs to another service".into())
+    }
+    fn take(&mut self, token: &str) -> Result<Record<T>, String> {
+        self.entries
+            .iter()
+            .position(|e| e.token == token)
+            .map(|i| self.entries.swap_remove(i))
+            .ok_or("catalog token is expired, released or belongs to another service".into())
+    }
+}
+fn with_registry<T>(service: *mut Service, f: impl FnOnce(&mut Registry) -> T) -> T {
+    let service = unsafe { &*service };
+    // No foreign calls, native owners dropped, or Rust callbacks in this borrow.
+    let registry = unsafe { &mut *service.presets.get() };
+    let result = f(registry);
+    service
+        .presets_pending
+        .store(!registry.entries.is_empty(), Ordering::Release);
+    result
+}
+pub(super) fn expire(ctx: &Context<'_>) -> Result<(), String> {
+    let old = with_registry(ctx.service, |r| {
+        let mut old = Vec::new();
+        let mut i = 0;
+        while i < r.entries.len() {
+            if r.entries[i].lease.route.key.same_document(ctx) {
+                i += 1;
+            } else {
+                old.push(r.entries.swap_remove(i));
+            }
+        }
+        old
+    });
+    drop(old);
+    ctx.check()
+}
+pub(crate) fn drain(service: *mut Service) {
+    let old = with_registry(service, |r| std::mem::take(&mut r.entries));
+    drop(old);
+}
+#[link(name = "System")]
+unsafe extern "C" {
+    fn arc4random_buf(buffer: *mut c_void, bytes: usize);
+}
+fn token() -> String {
+    let mut bytes = [0u8; 32];
+    unsafe { arc4random_buf(bytes.as_mut_ptr().cast(), bytes.len()) };
+    bytes.iter().map(|b| format!("{b:02X}")).collect()
+}
+fn transfer(owner: Owned) -> NonNull<c_void> {
+    let p = NonNull::new(owner.0).expect("owned interface");
+    std::mem::forget(owner);
+    p
+}
+fn discover(ctx: &Context<'_>, auxiliary: Owned) -> Result<Rc<Lease>, String> {
+    with_registry(ctx.service, |r| r.capacity())?;
+    let route = Route::capture(ctx)?;
+    let mediator = query(route.slot.0, &MEDIATOR).ok_or("slot IPresetMediator unavailable")?;
+    let data_target =
+        query(route.presets.0, &DATA_TARGET).ok_or("Presets IDataTarget unavailable")?;
+    let empty_url = query(auxiliary.0, &URL).ok_or("auxiliary has no IUrl interface")?;
+    drop(auxiliary);
+    let table = unsafe { (ctx.api.objects)() };
+    if table.is_null() {
+        return Err("object table unavailable".into());
+    }
+    let by_id: unsafe extern "C" fn(*mut c_void, *const Uid) -> *mut c_void =
+        unsafe { method(table, 8) };
+    let manager = hold(unsafe { by_id(table, &MANAGER) }).ok_or("preset manager unavailable")?;
+    let exact_manager = query(manager.0, &MANAGER).ok_or("IPresetManager unavailable")?;
+    drop(manager);
+    let plugin_manager =
+        hold(unsafe { (ctx.api.plugin_manager)() }).ok_or("plug-in manager unavailable")?;
+    let allocator =
+        query(plugin_manager.0, &ALLOCATOR).ok_or("plug-in IClassAllocator unavailable")?;
+    drop(plugin_manager);
+    let native_file_system =
+        hold(unsafe { (ctx.api.file_system)() }).ok_or("native file system unavailable")?;
+    let file_system = query(native_file_system.0, &FILE_SYSTEM).ok_or("IFileSystem unavailable")?;
+    drop(native_file_system);
+    route.guard(ctx)?;
+    let inputs = Inputs {
+        manager: transfer(exact_manager),
+        mediator: transfer(mediator),
+        data_target: transfer(data_target),
+        allocator: transfer(allocator),
+        empty_url: transfer(empty_url),
+        file_system: transfer(file_system),
+    };
+    let catalog = unsafe { Catalog::discover_owned(inputs, &mut || route.guard(ctx)) }
+        .map_err(|e| e.to_string())?;
+    route.guard(ctx)?;
+    LIVE_CATALOGS.fetch_add(1, Ordering::Relaxed);
+    Ok(Rc::new(Lease {
+        catalog,
+        route,
+        issued: RefCell::new(vec![false; fender_native_preset_api::MAX_PRESETS]),
+    }))
+}
+
+pub(super) struct Receipt {
+    lease: Rc<Lease>,
+    active: bool,
+}
+impl Receipt {
+    pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        if self.active {
+            self.lease.check(ctx)
+        } else {
+            self.lease.route.matches(ctx)
+        }
+    }
+}
+fn availability(value: &Availability) -> (&'static str, bool) {
+    match value {
+        Availability::LocalReadOnly => ("local_read_only", true),
+        Availability::LocalWritable => ("local_writable", true),
+        Availability::MissingLocalFile => ("missing_local_file", false),
+        Availability::NoLocation => ("no_location", false),
+        Availability::UnsupportedProtocol(_) => ("unsupported_protocol", false),
+        Availability::NonLocalHost => ("non_local_host", false),
+        Availability::InvalidLocalLocation => ("invalid_local_location", false),
+        Availability::ClassMismatch => ("class_mismatch", false),
+    }
+}
+fn page_value(token: &str, page: &Page) -> Value {
+    let mut excluded = BTreeMap::<&str, u32>::new();
+    let entries = page
+        .entries
+        .iter()
+        .map(|entry| {
+            let (availability, recallable) = availability(&entry.availability);
+            if !recallable {
+                *excluded.entry(availability).or_default() += 1;
+            }
+            json!({"index":entry.index,"name":entry.name,"class_key":entry.class_key,
+            "read_only":entry.read_only,"availability":availability,"recallable":recallable})
+        })
+        .collect::<Vec<_>>();
+    json!({"ok":true,"outcome":"observed","catalog_token":token,"entries":entries,"observed_count":page.observed_count,
+        "offset":page.offset,"next":page.next,"catalog_complete":page.catalog_complete,"excluded_on_page":excluded,
+        "factory_origin":"not_inferred","recall_policy":"matching_class_available_local_file"})
+}
+fn page(
+    ctx: &Context<'_>,
+    catalog_token: Option<&str>,
+    offset: u32,
+    limit: u32,
+    auxiliary: Option<Owned>,
+) -> Result<(Value, Receipt), String> {
+    let (token, lease, new) = if let Some(token) = catalog_token {
+        (
+            token.to_owned(),
+            with_registry(ctx.service, |r| r.get(token))?,
+            false,
+        )
+    } else {
+        (
+            token(),
+            discover(
+                ctx,
+                auxiliary.ok_or("initial catalog requires empty IUrl auxiliary")?,
+            )?,
+            true,
+        )
+    };
+    lease.check(ctx)?;
+    let page = lease
+        .catalog
+        .page(offset, limit, &mut || lease.route.guard(ctx))
+        .map_err(|e| e.to_string())?;
+    let value = page_value(&token, &page);
+    for entry in &page.entries {
+        lease.issued.borrow_mut()[entry.index as usize] = true;
+    }
+    if new {
+        with_registry(ctx.service, |r| r.capacity())?;
+        let record = Record {
+            token,
+            lease: Rc::clone(&lease),
+        };
+        with_registry(ctx.service, |r| r.entries.push(record));
+    }
+    lease.check(ctx)?;
+    Ok((
+        value,
+        Receipt {
+            lease,
+            active: true,
+        },
+    ))
+}
+fn apply(ctx: &Context<'_>, token: &str, index: u32) -> (Value, Option<Receipt>) {
+    let lease = match with_registry(ctx.service, |r| r.get(token)) {
+        Ok(lease) => lease,
+        Err(reason) => return (error("invalid_catalog_token", &reason, "not_applied"), None),
+    };
+    let result = (|| {
+        lease.check(ctx).map_err(|e| (e, false))?;
+        if !issued_index(&lease.issued.borrow(), index) {
+            return Err(("preset index was not issued by this catalog".into(), false));
+        }
+        lease
+            .catalog
+            .recall(index, &mut || lease.route.guard(ctx))
+            .map_err(|e| (e.error.to_string(), e.dispatched))
+    })();
+    (
+        apply_value(token, index, result),
+        Some(Receipt {
+            lease,
+            active: true,
+        }),
+    )
+}
+fn issued_index(issued: &[bool], index: u32) -> bool {
+    issued.get(index as usize).copied().unwrap_or(false)
+}
+fn apply_value(
+    token: &str,
+    index: u32,
+    result: Result<fender_native_preset_api::Recall, (String, bool)>,
+) -> Value {
+    match result {
+        Ok(recall) => {
+            json!({"ok":true,"catalog_token":token,"index":index,"accepted":recall.accepted,"verified":false,
+            "outcome":if recall.accepted { "applied_unverified" } else { "not_applied" }})
+        }
+        Err((reason, dispatched)) => error(
+            "preset_apply_failed",
+            &reason,
+            if dispatched { "unknown" } else { "not_applied" },
+        ),
+    }
+}
+fn release(ctx: &Context<'_>, token: &str) -> Result<(Value, Receipt), String> {
+    let lease = with_registry(ctx.service, |r| r.get(token))?;
+    lease.route.matches(ctx)?;
+    let record = with_registry(ctx.service, |r| r.take(token))?;
+    drop(record);
+    ctx.check()?;
+    Ok((
+        json!({"ok":true,"catalog_token":token,"released":true,"verified":true,"outcome":"applied_verified"}),
+        Receipt {
+            lease,
+            active: false,
+        },
+    ))
+}
+pub(super) fn execute(
+    ctx: &Context<'_>,
+    request: &Request,
+    auxiliary: Option<Owned>,
+) -> (Value, Option<Receipt>) {
+    let result = match request {
+        Request::Presets {
+            catalog_token,
+            offset,
+            limit,
+            ..
+        } => page(ctx, catalog_token.as_deref(), *offset, *limit, auxiliary),
+        Request::PresetApply {
+            catalog_token,
+            index,
+            ..
+        } => return apply(ctx, catalog_token, *index),
+        Request::PresetRelease { catalog_token, .. } => release(ctx, catalog_token),
+        _ => unreachable!("finite preset dispatch"),
+    };
+    match result {
+        Ok((value, receipt)) => (value, Some(receipt)),
+        Err(reason) => (error("preset_request_failed", &reason, "not_applied"), None),
+    }
+}
+
+#[cfg(test)]
+#[path = "presets_tests.rs"]
+mod tests;

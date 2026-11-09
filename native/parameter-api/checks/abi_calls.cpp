@@ -24,7 +24,15 @@ static_assert(!std::is_trivially_copyable_v<CCL::Variant>);
 static_assert(!std::is_trivially_destructible_v<CCL::Variant>);
 static_assert(std::is_same_v<CCL::StringID,const CCL::CString&>);
 static_assert(std::is_same_v<CCL::VariantRef,const CCL::Variant&>);
+// The newer-SDK regression compares dispatch separately from changed flags.
+#ifndef FENDER_PARAMETER_CHECK_OFFSETS_ONLY
 static_assert(CCL::IParameter::kReadOnly==0x1000);
+static_assert(CCL::IParameter::kStorable==0x80);
+static_assert(CCL::IParameter::kStoreListValue==0x100);
+static_assert(CCL::IParameter::kMutable==0x800);
+static_assert(CCL::IParameter::kCanUndo==0x10000);
+#endif
+static_assert(CCL::kResultNoInterface==static_cast<CCL::tresult>(0x80004002u));
 static_assert(CCL::IFormatter::kNormalized==1 && CCL::IFormatter::kStateful==2);
 
 extern "C" CCL::tresult abi_query(CCL::IUnknown* p,const CCL::UIDBytes* iid,void** out) {return p->queryInterface(*iid,out);}
@@ -35,6 +43,8 @@ extern "C" const CCL::CString* abi_parameter_name(CCL::IParameter* p) {return &p
 extern "C" CCL::tbool abi_parameter_enabled(CCL::IParameter* p) {return p->isEnabled();}
 extern "C" CCL::tbool abi_parameter_state(CCL::IParameter* p,int mask) {return p->getState(mask);}
 extern "C" int abi_parameter_tag(CCL::IParameter* p) {return p->getTag();}
+extern "C" CCL::IParameter* abi_parameter_original(CCL::IParameter* p) {return p->getOriginal();}
+extern "C" int abi_parameter_precision(CCL::IParameter* p) {return p->getPrecision();}
 extern "C" void abi_parameter_set_raw(CCL::IParameter* p,const CCL::Variant* v,CCL::tbool update) {p->setValue(*v,update);}
 extern "C" float abi_parameter_normalized(CCL::IParameter* p) {return p->getNormalized();}
 extern "C" void abi_parameter_set_normalized(CCL::IParameter* p,float n,CCL::tbool update) {p->setNormalized(n,update);}

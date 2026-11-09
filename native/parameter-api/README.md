@@ -67,6 +67,54 @@ are owned and released on all paths, including a native false result. Objects
 are exposed only as `OpaqueObject { present }`; nonfinite floats are represented
 as bits. Missing properties remain `None`.
 
+`details(guard)` returns separate `ParameterDetails` data with the native
+precision, storable, mutable, store-list-value, read-only, and can-undo flags,
+plus `list_interface`. That last field reports whether querying IListParameter
+succeeded. A missing interface returns false. Other query failures return an
+error. Query references are released before the final context check. Precision
+is the host's increment/decrement setting. It does not establish a choice count.
+
+`original_chain(guard)` returns `OriginalChain { parameters, end }`. Each
+`OriginalParameter` contains the existing `Description` and separate details.
+Entry zero describes the receiver. Later entries describe the original
+parameters returned by `getOriginal`. Each borrowed original is retained before
+the guard can reenter. Retained canonical IUnknown identities deduplicate
+interface views and prevent identity pointer reuse during observation.
+
+The chain contains at most eight distinct parameters. `SelfReference` is the
+normal endpoint when an original refers to the current canonical object.
+`MissingOriginal` records a null original. `Cycle { index }` identifies an
+earlier entry. `Limit` means the eighth entry was not followed. A cycle or limit
+does not establish that the full original chain was inspected.
+
+These observations use getters, fixed property reads, and interface queries.
+They expose no original pointers or mutation capability. Scalar reads and
+interface queries have context checks before and after each call. Each existing
+`describe()` snapshot is enclosed by context checks, including a check after its
+native output owners are released. All retained original and identity owners
+are released with context checks before the chain is returned. Any guard failure
+discards the entire observation. Snapshots are sequential, not atomic, and may
+change after the call. Float bounds, precision, and an IListParameter capability
+do not authorize list-label reads or original-parameter writes.
+
+`format_values(values, guard)` formats 1..32 explicit raw numeric values through
+the same public `IParameter::getString(String OUT, Variant IN)` method. It
+preserves input order and duplicates. Inputs must be finite, inside the observed
+typed numeric bounds, and losslessly convertible to the current Integer or
+Float representation. The entire batch is validated before any format call.
+Numeric kinds can be disabled or read-only. String, Command, opaque, and other
+unsupported kinds remain rejected. No choice count or domain is inferred.
+
+The owned `FormattedValues` result contains `values` with each `requested`
+number, the actual typed `native_value` carrier, and its observed `label`.
+It also contains `before`, `after`, and `current_unchanged:true`. Metadata,
+precision, state flags, current raw bits, and normalized bits are rechecked
+between values and at the end. Any change, copy failure, or context failure
+discards the batch. Native OUT owners are released between context checks.
+`getString` returns void. An empty output cannot distinguish an empty native
+representation from provider refusal, so the result preserves the empty string
+without claiming a choice or selection. No setter, parser, or update is called.
+
 | Method | Accepted data | Readback |
 | --- | --- | --- |
 | `set_raw_number` | Toggle, Integer, Float, List index, Scroll; finite values within the native numeric range, with lossless coercion to the existing representation | Exact raw integer or f64 bits |
@@ -145,7 +193,7 @@ python3 native/parameter-api/checks/regression.py /path/to/ccl-framework-5.2
 
 The first command verifies official `ccl-5.1.2` commit
 `ad5876b1a7b64aa247f4378c86a7862e7c284ba3`, 32 header hashes, C++ scalar/reference
-and layout assertions, and 23 arm64 virtual dispatch offsets. It needs Apple
+and layout assertions, and 25 arm64 virtual dispatch offsets. It needs Apple
 Clang and Python. Temporary compiler output is removed automatically. The
 second command confirms that a separately obtained newer SDK is rejected by
 both the version pin and compiled call map. Neither command links the SDK,

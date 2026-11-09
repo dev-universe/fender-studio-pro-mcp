@@ -355,6 +355,7 @@ struct MockMessage {
     count: i32,
     arg: VariantOut,
     arg2: VariantOut,
+    arg3: VariantOut,
 }
 static MESSAGE_TABLE: MockMessageVtable = MockMessageVtable {
     unused: [0; 3],
@@ -372,6 +373,7 @@ unsafe extern "C" fn message_arg(p: *mut c_void, index: i32) -> *const VariantOu
     match index {
         0 => unsafe { &(*p.cast::<MockMessage>()).arg },
         1 => unsafe { &(*p.cast::<MockMessage>()).arg2 },
+        2 => unsafe { &(*p.cast::<MockMessage>()).arg3 },
         _ => ptr::null(),
     }
 }
@@ -389,6 +391,11 @@ fn message(name: &std::ffi::CStr, count: i32) -> MockMessage {
             payload: 0,
         },
         arg2: VariantOut {
+            kind: 0,
+            padding: [0; 6],
+            payload: 0,
+        },
+        arg3: VariantOut {
             kind: 0,
             padding: [0; 6],
             payload: 0,
@@ -432,6 +439,10 @@ fn metadata_is_borrowed_stable_and_module_associated() {
     );
     assert_eq!(METHODS[0].name, c"capabilities".as_ptr());
     assert!(METHODS[2].name.is_null());
+    assert_eq!(
+        ascii(METHODS[1].args),
+        "target: Object, request: string, auxiliary: Object = null"
+    );
     let module = ptr::without_provenance_mut::<c_void>(0x4000);
     MODULE_REF.store(module, Ordering::Release);
     assert_eq!(unsafe { type_module(ptr::null_mut()) }, module);
@@ -528,6 +539,33 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
         );
         assert!(output_text(&out).contains("invalid_request"));
         assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        msg.count = 3;
+        msg.arg3.kind = 4;
+        msg.arg3.payload = ptr::addr_of_mut!(target) as u64;
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_request"));
+        assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        let units: Vec<_> = "{\"operation\":\"inspect\"}".encode_utf16().collect();
+        assert_eq!(
+            unsafe { string_assign(input, units.as_ptr(), units.len() as i32) },
+            OK
+        );
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_arguments"));
+        assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        msg.arg3.kind = 3;
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_arguments"));
+        msg.count = 2;
         unsafe { string_release(input) };
         msg.arg2.payload = 0;
         assert_eq!(
@@ -601,6 +639,8 @@ pub(super) fn install_mock_api() {
             empty: mock_empty,
             desktop: no_singleton,
             scripting: mock_scripting,
+            plugin_manager: mock_scripting,
+            file_system: mock_scripting,
         })
     });
 }
