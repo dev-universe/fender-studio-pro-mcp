@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify six fixed External Effect mode transitions in disconnected scratch fixtures.
+"""Verify fixed External Effect modes or coupled controls in disconnected fixtures.
 
 This checks exposed state, not physical ping emission or hardware calibration.
 Each case restores the original complete typed projection before the next case.
@@ -50,6 +50,21 @@ class ModeCase:
     desired: int
     expected: Mode
     staging: tuple[str, int, Mode] | None = None
+
+
+@dataclass(frozen=True)
+class ControlSpec:
+    tag: int
+    native_kind: str
+    lower: int
+    upper: int
+
+
+CONTROL_SPECS = {
+    "latencyOffset": ControlSpec(104, "Integer", -32000, 32000),
+    "mathMode": ControlSpec(114, "Toggle", 0, 1),
+    "zoomOut": ControlSpec(115, "Toggle", 0, 1),
+}
 
 
 CASES = (
@@ -241,6 +256,29 @@ class ExternalModeRunner(Runner):
         except ValueError as error:
             raise AcceptanceFailure("External mode triple is not Image, Setup or Scope") from error
 
+    def control_parameter(self, provider, name):
+        require(name in CONTROL_SPECS, "Use only the three fixed coordinated External controls")
+        spec = CONTROL_SPECS[name]
+        matches = [p for p in provider.records if p["name"] == name]
+        if len(matches) != 1:
+            raise ContextChanged("Coordinated External control is unavailable")
+        parameter = matches[0]
+        value = parameter.get("value")
+        if not (parameter.get("native_kind") == spec.native_kind and type(parameter.get("tag")) is int
+                and parameter["tag"] == spec.tag and parameter.get("enabled") is True
+                and parameter.get("writable") is True and parameter.get("readOnly") is False
+                and parameter.get("display_parser") == "PlainNumeric"
+                and type(value) is int and spec.lower <= value <= spec.upper
+                and encoded(parameter.get("native_value")) == encoded({"variant_tag": 1, "data": {"kind": "integer", "value": value}})
+                and encoded(parameter.get("support")) == encoded({key: True for key in ("raw", "normalized", "text")})
+                and encoded(parameter.get("native_support")) == encoded({key: True for key in ("raw_number", "normalized", "display_text")})):
+            raise ContextChanged("Coordinated External control lost its exact integer descriptor or write capability")
+        for key, expected in (("min", spec.lower), ("max", spec.upper), ("default", 0)):
+            if not (type(parameter.get(key)) is int and parameter[key] == expected
+                    and encoded(parameter.get("native_" + key)) == encoded({"variant_tag": 1, "data": {"kind": "integer", "value": expected}})):
+                raise ContextChanged("Coordinated External control bounds or default changed")
+        return parameter
+
     def observe(self, baseline, expected, transaction, stage, attempt):
         self.fixture_check(baseline.target)
         current = self.snapshot(baseline.target, baseline)
@@ -251,14 +289,21 @@ class ExternalModeRunner(Runner):
         return current, projected
 
     def dispatch(self, baseline, expected, transaction, name, desired, phase):
-        current, _ = self.observe(baseline, expected, transaction, "guard-" + phase, 1)
+        current, projected = self.observe(baseline, expected, transaction, "guard-" + phase, 1)
         self.empty_choices(baseline)
         parameter = next(p for p in current.records if p["name"] == name)
-        require(name in (*MODE_PARAMETERS, "latencyOffset") and parameter.get("writable") is True
+        coordinated = name in CONTROL_SPECS and phase in ("ControlChange", "RestoreControl")
+        if coordinated and projected["schema_sha256"] != expected["schema_sha256"]:
+            raise ContextChanged("Coordinated External write requires the captured complete metadata schema")
+        if phase == "ControlChange" and projected["all_values_sha256"] != expected["all_values_sha256"]:
+            raise ContextChanged("Coordinated External change requires the original complete baseline at dispatch")
+        require((name in (*MODE_PARAMETERS, "latencyOffset") or coordinated) and parameter.get("writable") is True
                 and parameter.get("enabled") is True and parameter.get("readOnly") is False
                 and parameter.get("support", {}).get("raw") is True,
                 "Fixed External control lost enabled raw write support")
-        if phase in ("Staging", "Change", "RestoreAvailability"):
+        if coordinated or name == "latencyOffset":
+            self.control_parameter(current, name)
+        if phase in ("Staging", "Change", "RestoreAvailability", "ControlChange", "RestoreControl"):
             require(raw_value(parameter) != desired, "External case must change its own exact original value")
         if phase == "RestoreAvailability":
             require(name == "pingMode" and self.ping_availability(current) is not bool(desired),
@@ -298,6 +343,46 @@ class ExternalModeRunner(Runner):
             require(all(observation(p) == observation(originals[p["name"]]) for p in current.records
                         if p["name"] not in COUPLED_PARAMETERS),
                     "External transition changed an unrelated exposed value")
+
+    def confirm_control(self, baseline, expected, transaction, name, identity):
+        originals = {p["name"]: p for p in baseline.records}
+        first = None
+        allowed = LATENCY_PARAMETERS | {name}
+        for attempt in (1, 2):
+            if attempt == 2 and self.settle_interval:
+                time.sleep(self.settle_interval)
+            current, projected = self.observe(baseline, expected, transaction, "control-changed", attempt)
+            if projected["schema_sha256"] != expected["schema_sha256"]:
+                raise ContextChanged("Coordinated External control changed availability or typed metadata")
+            parameter = self.control_parameter(current, name)
+            parameters = {p["name"]: p for p in current.records}
+            require(self.mode(parameters) is Mode.IMAGE and value_identity(parameter) == identity,
+                    "Coordinated External control did not preserve Image mode and its exact requested own value")
+            own = observation(parameter)
+            require(first is None or own == first, "Coordinated External own raw, normalized or display readback was unstable")
+            first = own
+            require(all(observation(p) == observation(originals[p["name"]]) for p in current.records if p["name"] not in allowed),
+                    "Coordinated External control changed an unrelated exposed value")
+
+    def recover_control(self, baseline, expected, transaction, name):
+        original = self.control_parameter(baseline, name)
+        current, projected = self.observe(baseline, expected, transaction, "before-own-control-restore", 1)
+        if projected["schema_sha256"] != expected["schema_sha256"]:
+            raise ContextChanged("Coordinated External recovery lost the captured complete metadata schema")
+        parameter = self.control_parameter(current, name)
+        if value_identity(parameter) != value_identity(original):
+            before = {p["name"]: p for p in current.records}
+            self.dispatch(baseline, expected, transaction, name, raw_value(original), "RestoreControl")
+            current, projected = self.observe(baseline, expected, transaction, "own-control-restored", 1)
+            if projected["schema_sha256"] != expected["schema_sha256"]:
+                raise ContextChanged("Captured own-control restoration changed complete metadata")
+            require(all(observation(p) == observation(before[p["name"]]) for p in current.records
+                        if p["name"] not in LATENCY_PARAMETERS | {name}),
+                    "Captured own-control restoration changed an unrelated peer")
+            parameter = self.control_parameter(current, name)
+        require(value_identity(parameter) == value_identity(original), "Captured External own control did not restore exactly")
+        self.phase(transaction, "OwnControlRestored", parameter=name)
+        self.recover(baseline, expected, transaction)
 
     def confirm_baseline(self, baseline, expected, transaction, stage):
         consecutive = 0
@@ -343,7 +428,7 @@ class ExternalModeRunner(Runner):
             self.dispatch(baseline, expected, transaction, "latencyOffset", raw_value(originals["latencyOffset"]), "RestoreOffset")
         self.confirm_baseline(baseline, expected, transaction, "restored")
 
-    def run_fixture(self, target):
+    def prepare_fixture(self, target, workflow):
         require(isinstance(target, dict) and set(target) <= {"plugin", "channel", "slot", "track", "kind"}
                 and target.get("plugin") in CLASSES and target.get("kind", "effect") == "effect"
                 and isinstance(target.get("channel"), str) and type(target.get("slot")) is int
@@ -352,6 +437,12 @@ class ExternalModeRunner(Runner):
         require(len(self.summary["fixtures"]) < len(CLASSES)
                 and all(row["plugin"] != target["plugin"] for row in self.summary["fixtures"]),
                 "Each registered External fixture may run only once")
+        require(all(row["status"] in ("six_disconnected_mode_transitions_verified", "three_disconnected_controls_verified")
+                    for row in self.summary["fixtures"]),
+                "An incomplete External fixture stops the run; use a fresh guarded scratch run")
+        require(not self.summary["fixtures"] or self.summary["mode"] == workflow,
+                "Use a fresh run for each fixed External workflow")
+        self.summary["mode"] = workflow
         target = dict(target)
         self.fixture_check(target)
         baseline = self.snapshot(target)
@@ -369,6 +460,9 @@ class ExternalModeRunner(Runner):
             require(name == "latencyOffset" or (parameter.get("min") == 0 and parameter.get("max") == 1),
                     "External mode toggles require the exact binary range")
             numeric_write(parameter, raw_value(parameter))
+        if workflow == "disconnected_external_controls":
+            for name in CONTROL_SPECS:
+                self.control_parameter(baseline, name)
         self.empty_choices(baseline)
         fixture_index = len(self.summary["fixtures"])
         reference = self.journal.baseline("external-" + str(fixture_index), baseline.serialized())
@@ -376,6 +470,10 @@ class ExternalModeRunner(Runner):
                "provider_indices_compared": len(baseline.records), "hardware_calibration_verified": False,
                "all_writable_parameters_verified": False, "opaque_contents_verified": False}
         self.summary["fixtures"].append(row)
+        return baseline, expected, row, fixture_index, reference
+
+    def run_fixture(self, target):
+        baseline, expected, row, fixture_index, reference = self.prepare_fixture(target, "disconnected_external_modes")
         for index, case in enumerate(CASES):
             transaction = f"external-{fixture_index}-{index}"
             result = {"parameter": case.parameter, "requested_mode": case.expected.name.lower(),
@@ -437,10 +535,73 @@ class ExternalModeRunner(Runner):
         self.progress()
         return row
 
+    def run_controls(self, target):
+        baseline, expected, row, fixture_index, reference = self.prepare_fixture(target, "disconnected_external_controls")
+        for index, name in enumerate(CONTROL_SPECS):
+            original = self.control_parameter(baseline, name)
+            value = raw_value(original)
+            desired = value + 1 if value < CONTROL_SPECS[name].upper else value - 1
+            transaction = f"external-control-{fixture_index}-{index}"
+            result = {"parameter": name, "status": "prepared", "complete_provider_projection_restored": False}
+            row["cases"].append(result)
+            self.phase(transaction, "Prepared", baseline=reference, case=index, parameter=name)
+            mutation_count = self.counts["mutation_attempts"]
+            recovering = False
+            try:
+                self.confirm_baseline(baseline, expected, transaction, "before-case")
+                identity = self.dispatch(baseline, expected, transaction, name, desired, "ControlChange")
+                self.confirm_control(baseline, expected, transaction, name, identity)
+                result["control_verified"] = True
+                self.phase(transaction, "ChangedReadbackConfirmed", consecutive_full_reads=2)
+                recovering = True
+                self.recover_control(baseline, expected, transaction, name)
+            except (UnknownMutation, ContextChanged):
+                result["status"] = "unknown_or_context_changed"
+                self.phase(transaction, "UnknownAfterDispatch" if self.counts["mutation_attempts"] > mutation_count else "FailedBeforeDispatch")
+                row["status"] = "failed"
+                self.progress()
+                raise
+            except Exception as error:
+                wrote = self.counts["mutation_attempts"] > mutation_count
+                result["status"] = "restoration_failed" if recovering else "control_unconfirmed"
+                if wrote and not recovering:
+                    try:
+                        recovering = True
+                        self.recover_control(baseline, expected, transaction, name)
+                    except (UnknownMutation, ContextChanged):
+                        self.phase(transaction, "UnknownAfterDispatch")
+                        row["status"] = "failed"
+                        self.progress()
+                        raise
+                    except Exception as recovery_error:
+                        self.phase(transaction, "RestorationFailed", error_type=type(recovery_error).__name__)
+                        row["status"] = "failed"
+                        self.progress()
+                        raise RestorationFailure("Finite captured External own/coordinated recovery failed; no retry is permitted") from recovery_error
+                    result.update(status="control_unconfirmed_restored", complete_provider_projection_restored=True)
+                    self.phase(transaction, "StateConfirmed", control_verified=False, complete_provider_projection_restored=True)
+                else:
+                    self.phase(transaction, "RestorationFailed" if wrote else "FailedBeforeDispatch")
+                row["status"] = "failed"
+                self.progress()
+                raise error
+            result.update(status="control_changed_readback_restored", complete_provider_projection_restored=True,
+                          consecutive_changed_reads=2, consecutive_restored_reads=2)
+            self.phase(transaction, "StateConfirmed", control_verified=True, complete_provider_projection_restored=True)
+            self.counts["control_changed_readback_restored"] += 1
+            self.journal.append("external_control_case_result", **result)
+            self.progress()
+        row["status"] = "three_disconnected_controls_verified"
+        self.progress()
+        return row
+
     def finish(self):
-        verified = bool(self.summary["fixtures"]) and all(row["status"] == "six_disconnected_mode_transitions_verified"
+        controls = self.summary["mode"] == "disconnected_external_controls"
+        status = "three_disconnected_controls_verified" if controls else "six_disconnected_mode_transitions_verified"
+        verified = bool(self.summary["fixtures"]) and all(row["status"] == status
                                                        for row in self.summary["fixtures"])
-        self.summary.update(status="disconnected_external_modes_verified" if verified else "external_modes_not_verified",
+        self.summary.update(status=("disconnected_external_controls_verified" if controls else "disconnected_external_modes_verified")
+                            if verified else ("external_controls_not_verified" if controls else "external_modes_not_verified"),
                             completed_at=utc_now())
         self.progress()
         self.journal.append("run_completed", summary=self.summary)
@@ -453,7 +614,9 @@ def main(argv=None):
     parser.add_argument("--fixtures", required=True)
     parser.add_argument("--scratch-title", required=True)
     parser.add_argument("--plugin", action="append", required=True, choices=tuple(CLASSES))
-    parser.add_argument("--run-modes", action="store_true", required=True)
+    workflow = parser.add_mutually_exclusive_group(required=True)
+    workflow.add_argument("--run-modes", action="store_true")
+    workflow.add_argument("--run-controls", action="store_true")
     parser.add_argument("--output-dir", default=".local/live/external-modes-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--pause", action="store_true")
     args = parser.parse_args(argv)
@@ -469,7 +632,7 @@ def main(argv=None):
     client = runner = None
     try:
         binary = Path(args.binary).resolve()
-        journal.append("run_started", schema=1, mode="disconnected_external_modes",
+        journal.append("run_started", schema=1, mode="disconnected_external_controls" if args.run_controls else "disconnected_external_modes",
                        binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(), plugins=plugins)
         client = McpClient([str(binary), "serve"], timeout=45)
         print("MCP owner ready", flush=True)
@@ -478,7 +641,10 @@ def main(argv=None):
         runner = ExternalModeRunner(client, journal, args.scratch_title)
         runner.initialize()
         for target in targets:
-            runner.run_fixture(target)
+            if args.run_controls:
+                runner.run_controls(target)
+            else:
+                runner.run_fixture(target)
         return runner.finish()
     except Exception as error:
         journal.append("run_failed", error_type=type(error).__name__, message=str(error))
