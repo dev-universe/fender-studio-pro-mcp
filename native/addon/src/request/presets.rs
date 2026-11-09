@@ -79,13 +79,22 @@ struct Route {
     _document: Owned,
     key: Key,
     name: *const PlainString,
-    slot_identity: (String, String),
-    presets_identity: (String, String),
+    slot_identity: (String, String, String),
+    presets_identity: (String, String, String),
 }
-fn node_identity(node: *mut c_void) -> (String, String) {
+fn node_uids(node: *mut c_void) -> (String, String) {
     let object: unsafe extern "C" fn(*mut c_void) -> *const Uid = unsafe { method(node, 4) };
     let class: unsafe extern "C" fn(*mut c_void) -> *const Uid = unsafe { method(node, 5) };
     (uid(unsafe { object(node) }), uid(unsafe { class(node) }))
+}
+fn node_identity(node: *mut c_void) -> (String, String, String) {
+    let (object_uid, class_uid) = node_uids(node);
+    // A slot may have no class UID. Retain its exact observed class name as
+    // part of the binding, rather than letting a stable pointer/UID mask drift.
+    (object_uid, class_uid, class_name(node))
+}
+fn supported_slot_family(name: &str) -> bool {
+    matches!(name, "AudioInsertSlot" | "AudioSynthSlot" | "MusicFXSlot")
 }
 impl Route {
     fn capture(ctx: &Context<'_>) -> Result<Self, String> {
@@ -98,18 +107,18 @@ impl Route {
         let device = hold(ctx.node.0).ok_or("Device node unavailable")?;
         let parent: Borrowed = unsafe { method(device.0, 6) };
         let slot = hold(unsafe { parent(device.0) }).ok_or("Device slot unavailable")?;
-        if class_name(slot.0) != "AudioInsertSlot" {
-            return Err("preset catalog requires the observed AudioInsertSlot family".into());
+        let slot_identity = node_identity(slot.0);
+        if !supported_slot_family(&slot_identity.2) {
+            return Err("preset catalog requires the observed AudioInsertSlot, AudioSynthSlot or MusicFXSlot family".into());
         }
         let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
             unsafe { method(slot.0, 10) };
         let presets =
             hold(unsafe { find(slot.0, name) }).ok_or("slot Presets child unavailable")?;
-        if class_name(presets.0) != "PresetComponent" {
+        let presets_identity = node_identity(presets.0);
+        if presets_identity.2 != "PresetComponent" {
             return Err("slot Presets child has an unsupported native class".into());
         }
-        let slot_identity = node_identity(slot.0);
-        let presets_identity = node_identity(presets.0);
         if !valid_uid(&slot_identity.0)
             || !valid_uid(&presets_identity.0)
             || !valid_uid(&presets_identity.1)
@@ -143,13 +152,31 @@ impl Route {
         Ok(route)
     }
     fn attachment(&self) -> Result<(), String> {
+        // Class reflection queries and releases temporary native IObject
+        // owners. Finish every metadata observation and its cleanup before the
+        // fresh borrowed parent/child reads; release may detach this route.
+        let slot_identity = node_identity(self.slot.0);
+        let presets_identity = node_identity(self.presets.0);
+        if slot_identity != self.slot_identity || presets_identity != self.presets_identity {
+            return Err("Device slot or Presets attachment changed".into());
+        }
+        // Reflection cleanup may also change UIDs in place. Refresh these
+        // borrowed identity values after BOTH reflection owners have released;
+        // no new native owner or reflected metadata follows this phase.
+        let slot_uids = node_uids(self.slot.0);
+        let presets_uids = node_uids(self.presets.0);
+        if slot_uids.0 != self.slot_identity.0
+            || slot_uids.1 != self.slot_identity.1
+            || presets_uids.0 != self.presets_identity.0
+            || presets_uids.1 != self.presets_identity.1
+        {
+            return Err("Device slot or Presets attachment changed".into());
+        }
         let parent: Borrowed = unsafe { method(self.device.0, 6) };
         let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
             unsafe { method(self.slot.0, 10) };
         if unsafe { parent(self.device.0) } != self.slot.0
             || unsafe { find(self.slot.0, self.name) } != self.presets.0
-            || node_identity(self.slot.0) != self.slot_identity
-            || node_identity(self.presets.0) != self.presets_identity
         {
             Err("Device slot or Presets attachment changed".into())
         } else {
@@ -158,6 +185,8 @@ impl Route {
     }
     fn guard(&self, ctx: &Context<'_>) -> Result<(), String> {
         self.attachment()?;
+        // Preserve the existing final current-document/target/service check.
+        // These sequential observations do not establish an atomic graph.
         ctx.check()
     }
     fn matches(&self, ctx: &Context<'_>) -> Result<(), String> {
@@ -497,3 +526,345 @@ pub(super) fn execute(
 #[cfg(test)]
 #[path = "presets_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+mod family_tests {
+    use super::*;
+    use std::{cell::Cell, ffi::CStr};
+
+    #[repr(C)]
+    struct View {
+        table: *const *const c_void,
+        owner: *mut Node,
+    }
+    #[repr(C)]
+    struct Node {
+        table: *const *const c_void,
+        refs: Cell<u32>,
+        parent: Cell<*mut c_void>,
+        child: Cell<*mut c_void>,
+        detach_on_release: Cell<*mut c_void>,
+        uid_on_release: Cell<Option<Uid>>,
+        class_uid_on_release: Cell<Option<Uid>>,
+        object_uid: Cell<Uid>,
+        class_uid: Cell<Uid>,
+        class_uid_available: Cell<bool>,
+        object_available: Cell<bool>,
+        class_name: Cell<&'static CStr>,
+        object: View,
+        info: View,
+    }
+    unsafe fn node<'a>(pointer: *mut c_void) -> &'a Node {
+        unsafe { &*pointer.cast::<Node>() }
+    }
+    unsafe extern "C" fn retain(pointer: *mut c_void) -> u32 {
+        let node = unsafe { node(pointer) };
+        node.refs.set(node.refs.get() + 1);
+        node.refs.get()
+    }
+    unsafe extern "C" fn release(pointer: *mut c_void) -> u32 {
+        let node = unsafe { node(pointer) };
+        node.refs
+            .set(node.refs.get().checked_sub(1).expect("double release"));
+        node.refs.get()
+    }
+    unsafe extern "C" fn query_node(
+        pointer: *mut c_void,
+        iid: *const Uid,
+        out: *mut *mut c_void,
+    ) -> i32 {
+        let node = unsafe { node(pointer) };
+        let iid = unsafe { *iid };
+        let found = if iid == UNKNOWN {
+            pointer
+        } else if iid == OBJECT && node.object_available.get() {
+            ptr::from_ref(&node.object).cast_mut().cast()
+        } else {
+            return NO_INTERFACE;
+        };
+        unsafe {
+            retain(pointer);
+            *out = found;
+        }
+        OK
+    }
+    unsafe extern "C" fn release_object(pointer: *mut c_void) -> u32 {
+        let owner = unsafe { &*(*pointer.cast::<View>()).owner };
+        let replacement = owner.detach_on_release.replace(ptr::null_mut());
+        if !replacement.is_null() {
+            owner.child.set(replacement);
+        }
+        if let Some(uid) = owner.uid_on_release.take() {
+            owner.object_uid.set(uid);
+        }
+        if let Some(uid) = owner.class_uid_on_release.take() {
+            owner.class_uid.set(uid);
+        }
+        unsafe { release((*pointer.cast::<View>()).owner.cast()) }
+    }
+    unsafe extern "C" fn info(pointer: *mut c_void) -> *mut c_void {
+        let owner = unsafe { &*(*pointer.cast::<View>()).owner };
+        ptr::from_ref(&owner.info).cast_mut().cast()
+    }
+    unsafe extern "C" fn name(pointer: *mut c_void) -> *const c_char {
+        unsafe { &*(*pointer.cast::<View>()).owner }
+            .class_name
+            .get()
+            .as_ptr()
+    }
+    unsafe extern "C" fn object_uid(pointer: *mut c_void) -> *const Uid {
+        unsafe { node(pointer) }.object_uid.as_ptr()
+    }
+    unsafe extern "C" fn class_uid(pointer: *mut c_void) -> *const Uid {
+        let node = unsafe { node(pointer) };
+        if node.class_uid_available.get() {
+            node.class_uid.as_ptr()
+        } else {
+            ptr::null()
+        }
+    }
+    unsafe extern "C" fn parent(pointer: *mut c_void) -> *mut c_void {
+        unsafe { node(pointer) }.parent.get()
+    }
+    unsafe extern "C" fn child(pointer: *mut c_void, _: *const PlainString) -> *mut c_void {
+        unsafe { node(pointer) }.child.get()
+    }
+
+    struct Nodes {
+        nodes: Box<[Node; 3]>,
+        _node_table: Box<[*const c_void; 11]>,
+        _object_table: Box<[*const c_void; 4]>,
+        _info_table: Box<[*const c_void; 6]>,
+    }
+    impl Nodes {
+        fn new(family: &'static CStr) -> Self {
+            let mut node_table = Box::new([ptr::null(); 11]);
+            node_table[0] = query_node as *const c_void;
+            node_table[1] = retain as *const c_void;
+            node_table[2] = release as *const c_void;
+            node_table[4] = object_uid as *const c_void;
+            node_table[5] = class_uid as *const c_void;
+            node_table[6] = parent as *const c_void;
+            node_table[10] = child as *const c_void;
+            let mut object_table = Box::new([ptr::null(); 4]);
+            object_table[2] = release_object as *const c_void;
+            object_table[3] = info as *const c_void;
+            let mut info_table = Box::new([ptr::null(); 6]);
+            info_table[5] = name as *const c_void;
+            let mut nodes = Box::new(std::array::from_fn(|index| Node {
+                table: node_table.as_ptr(),
+                refs: Cell::new(1),
+                parent: Cell::new(ptr::null_mut()),
+                child: Cell::new(ptr::null_mut()),
+                detach_on_release: Cell::new(ptr::null_mut()),
+                uid_on_release: Cell::new(None),
+                class_uid_on_release: Cell::new(None),
+                object_uid: Cell::new(SERVICE_CID),
+                class_uid: Cell::new(API_CLASS),
+                class_uid_available: Cell::new(index != 1),
+                object_available: Cell::new(true),
+                class_name: Cell::new(if index == 1 {
+                    family
+                } else if index == 2 {
+                    c"PresetComponent"
+                } else {
+                    c"Device"
+                }),
+                object: View {
+                    table: object_table.as_ptr(),
+                    owner: ptr::null_mut(),
+                },
+                info: View {
+                    table: info_table.as_ptr(),
+                    owner: ptr::null_mut(),
+                },
+            }));
+            for node in &mut *nodes {
+                let pointer = ptr::from_mut(node);
+                node.object.owner = pointer;
+                node.info.owner = pointer;
+            }
+            let result = Self {
+                nodes,
+                _node_table: node_table,
+                _object_table: object_table,
+                _info_table: info_table,
+            };
+            result.nodes[0].parent.set(result.pointer(1));
+            result.nodes[1].child.set(result.pointer(2));
+            result
+        }
+        fn pointer(&self, index: usize) -> *mut c_void {
+            ptr::from_ref(&self.nodes[index]).cast_mut().cast()
+        }
+        fn route(&self, ctx: &Context<'_>) -> Route {
+            let target = query(ctx.target.0, &UNKNOWN).unwrap();
+            Route {
+                presets: hold(self.pointer(2)).unwrap(),
+                _presets_identity: query(self.pointer(2), &UNKNOWN).unwrap(),
+                slot: hold(self.pointer(1)).unwrap(),
+                _slot_identity: query(self.pointer(1), &UNKNOWN).unwrap(),
+                device: hold(self.pointer(0)).unwrap(),
+                key: Key {
+                    document: ctx.document._identity.0,
+                    model: ctx.document._model_identity.0,
+                    target: target.0,
+                    object_uid: ctx.instance.object_uid.clone(),
+                    class_uid: ctx.instance.class_uid.clone(),
+                },
+                _target: target,
+                _model: hold(ctx.document._model_identity.0).unwrap(),
+                _document: hold(ctx.document._identity.0).unwrap(),
+                name: ptr::null(),
+                slot_identity: node_identity(self.pointer(1)),
+                presets_identity: node_identity(self.pointer(2)),
+            }
+        }
+    }
+    impl Drop for Nodes {
+        fn drop(&mut self) {
+            assert!(
+                self.nodes.iter().all(|node| node.refs.get() == 1),
+                "route/reflection reference leak"
+            );
+        }
+    }
+
+    #[test]
+    fn preset_slot_policy_accepts_only_the_three_observed_exact_families() {
+        for family in ["AudioInsertSlot", "AudioSynthSlot", "MusicFXSlot"] {
+            assert!(supported_slot_family(family));
+        }
+        for family in [
+            "",
+            "DeviceSlot",
+            "AudioFXSlot",
+            "AudioSynthFolder",
+            "MusicFXFolder",
+            "MixFXSlot",
+            "PannerSlot",
+            "audiosynthslot",
+            "AudioSynthSlot/Presets",
+            "CustomAudioInsertSlot",
+        ] {
+            assert!(!supported_slot_family(family));
+        }
+    }
+
+    #[test]
+    fn all_observed_families_keep_slot_and_preset_pins_with_null_slot_class_uid() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        for family in [c"AudioInsertSlot", c"AudioSynthSlot", c"MusicFXSlot"] {
+            let mut host = super::super::guard_tests::Fixture::new();
+            host.canonical_queries();
+            let nodes = Nodes::new(family);
+            let mut ctx = host.context();
+            ctx.node = hold(nodes.pointer(0)).unwrap();
+            let route = nodes.route(&ctx);
+            assert_eq!(route.slot_identity.1, "");
+            assert_eq!(route.slot_identity.2, family.to_str().unwrap());
+            assert_eq!(route.presets_identity.2, "PresetComponent");
+            route.guard(&ctx).unwrap();
+            route.matches(&ctx).unwrap();
+            assert!(nodes.nodes.iter().all(|node| node.refs.get() > 1));
+            drop(route);
+            drop(ctx);
+            drop(nodes);
+        }
+    }
+
+    #[test]
+    fn same_identity_class_drift_and_unavailable_class_metadata_are_refused() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioSynthSlot");
+        let mut ctx = host.context();
+        ctx.node = hold(nodes.pointer(0)).unwrap();
+        let route = nodes.route(&ctx);
+        for changed in [c"MusicFXSlot", c"DeviceSlot", c""] {
+            nodes.nodes[1].class_name.set(changed);
+            assert!(
+                route.guard(&ctx).is_err(),
+                "same canonical slot/class UID accepted changed family"
+            );
+        }
+        nodes.nodes[1].class_name.set(c"AudioSynthSlot");
+        route.guard(&ctx).unwrap();
+        nodes.nodes[2].class_name.set(c"OtherPresetComponent");
+        assert!(route.guard(&ctx).is_err());
+        nodes.nodes[2].class_name.set(c"PresetComponent");
+        nodes.nodes[1].object_available.set(false);
+        assert!(route.guard(&ctx).is_err());
+        nodes.nodes[1].object_available.set(true);
+        route.guard(&ctx).unwrap();
+        nodes.nodes[0].parent.set(nodes.pointer(2));
+        assert!(route.guard(&ctx).is_err());
+        nodes.nodes[0].parent.set(nodes.pointer(1));
+        nodes.nodes[1].child.set(nodes.pointer(0));
+        assert!(route.guard(&ctx).is_err());
+        nodes.nodes[1].child.set(nodes.pointer(2));
+        route.guard(&ctx).unwrap();
+        host.switch_document();
+        assert!(route.guard(&ctx).is_err());
+        assert!(route.matches(&ctx).is_err());
+        drop(route);
+        drop(ctx);
+        drop(nodes);
+    }
+
+    #[test]
+    fn reflection_owner_release_cannot_hide_a_detached_presets_child() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioSynthSlot");
+        let mut ctx = host.context();
+        ctx.node = hold(nodes.pointer(0)).unwrap();
+        let route = nodes.route(&ctx);
+        route.guard(&ctx).unwrap();
+        nodes.nodes[1].detach_on_release.set(nodes.pointer(0));
+        let result = route.guard(&ctx);
+        assert_eq!(nodes.nodes[1].child.get(), nodes.pointer(0));
+        assert!(
+            result.is_err(),
+            "reflection owner release detached Presets after the cached child read"
+        );
+        drop(route);
+        drop(ctx);
+        drop(nodes);
+    }
+
+    #[test]
+    fn reflection_owner_release_cannot_hide_same_pointer_uid_drift() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        for changed_node in [1, 2] {
+            for class_uid in [false, true] {
+                let mut host = super::super::guard_tests::Fixture::new();
+                host.canonical_queries();
+                let nodes = Nodes::new(c"AudioSynthSlot");
+                nodes.nodes[changed_node].class_uid_available.set(true);
+                let mut ctx = host.context();
+                ctx.node = hold(nodes.pointer(0)).unwrap();
+                let route = nodes.route(&ctx);
+                route.guard(&ctx).unwrap();
+                if class_uid {
+                    nodes.nodes[changed_node]
+                        .class_uid_on_release
+                        .set(Some(SERVICE_CID));
+                } else {
+                    nodes.nodes[changed_node]
+                        .uid_on_release
+                        .set(Some(API_CLASS));
+                }
+                assert!(
+                    route.guard(&ctx).is_err(),
+                    "reflection release changed slot/preset UID after cached identity read"
+                );
+                drop(route);
+                drop(ctx);
+                drop(nodes);
+            }
+        }
+    }
+}
