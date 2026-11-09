@@ -385,7 +385,13 @@ formatted sentinel row zero. The verifier had incorrectly required automatic
 selection of a non-sentinel row. Neither pilot dispatched a learning-bit setter
 or state load; their scratch changes were discarded. A minimal verifier fix
 accepts the formatter-bound sentinel and retains the explicit key selection,
-model-status and full restoration requirements. Its live acceptance is pending.
+model-status and full restoration requirements. Its fresh actual-host pilot
+applied Mode1, selected the explicit lowest input key, and set its fixed learning
+bit. Two full reads observed the bit change while the independent explicit-chord
+model-status field stayed zero. The model-binding gate failed; no state load or
+follow-on cleanup was dispatched, and scratch changes were discarded. This
+establishes the three value-write routes, not editing or restoring the chord
+model. A processing/lifecycle explanation remains unproved.
 
 A separate Impact focus-alias pilot observed stable, equal Float32 normalized
 values but different exact Float64 raw projections for a generic test value.
@@ -393,7 +399,12 @@ Only the focus cutoff and its selected pad peer changed; both complete original
 projections matched after the one original-alias restore. The original strict
 alias equality gate therefore failed. A scoped verifier correction chooses an
 exactly representable binary fraction for this cutoff profile and preserves
-that equality gate. Fresh live binding acceptance remains pending.
+that equality gate. The fresh actual-host pilot passed: exactly this alias and
+pad0 cutoff changed in two complete 4,262-record observations, their exact raw
+carriers and bits matched, and one original-alias restore was followed by two
+exact original full projections. This covers one current-focus binding and
+current-value roundtrip. The other 32 aliases and other pad selections remain
+separate cases.
 
 `plugin_parameter_details` reports bounded original-chain facts without exporting
 native pointers or invoking methods chosen by a caller. Node inspection is also
