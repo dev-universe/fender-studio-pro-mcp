@@ -11,6 +11,8 @@ import unittest
 from unittest.mock import patch
 
 from test_verify_all_parameters import INSTANCE, TARGET, number
+from test_parameter_digest import floating, normalized
+from test_verify_all_parameter_states import DigestSweepClient
 from test_verify_plugin_states import OTHER, StateClient
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, PRIVATE_ROOT, RestorationFailure,
@@ -160,17 +162,54 @@ class PresetClient(StateClient):
         pass
 
 
+class CatalogClient(PresetClient):
+    description = DigestSweepClient.description
+    indexed = DigestSweepClient.indexed
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.full_snapshots = 0
+        self.page_hook = self.lifecycle_hook = None
+
+    def call(self, name, args):
+        if (name == "plugin_presets" and args["action"] == "list"
+                and args.get("catalog_token") in self.released_catalogs and self.accept_released_catalog):
+            token = args["catalog_token"]
+            self.catalogs[token] = self.released_catalogs[token]
+        result = super().call(name, args)
+        body = result["structuredContent"]["result"]
+        if name == "plugin_parameters" and not args.get("names"):
+            if args["offset"] == 0:
+                self.full_snapshots += 1
+            body["params"] = [self.indexed(parameter, parameter["native"]["index"]) for parameter in body["params"]]
+            if self.page_hook:
+                self.page_hook(self, body)
+        if name == "plugin_presets":
+            if result["structuredContent"]["outcome"] == "not_applied":
+                body.update(source=CATALOG_SOURCE, instance=dict(self.instance), ok=False)
+            if args["action"] == "release" and body.get("released") is True:
+                body["verified"] = True
+            if self.lifecycle_hook:
+                self.lifecycle_hook(self, args, result["structuredContent"])
+        return result
+
+
 class PresetAcceptanceTests(unittest.TestCase):
     def setUp(self):
         PRIVATE_ROOT.mkdir(exist_ok=True)
         self.temporary = tempfile.TemporaryDirectory(prefix="preset-runner-unit-", dir=PRIVATE_ROOT)
         self.journal = Journal(Path(self.temporary.name) / "run")
+        self.runner_count = 0
 
     def tearDown(self):
         self.journal.close()
         self.temporary.cleanup()
 
     def runner(self, client, read_only_observations=False):
+        if self.runner_count:
+            self.journal.close()
+            self.journal = Journal(Path(self.temporary.name) / f"run-{self.runner_count}")
+        self.runner_count += 1
         runner = PresetRunner(client, self.journal, "MCP Validation Scratch", settle_attempts=4,
                               settle_interval=0, read_only_observations=read_only_observations)
         runner.initialize()
@@ -179,6 +218,327 @@ class PresetAcceptanceTests(unittest.TestCase):
     def events(self, event=None):
         events = [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
         return [item for item in events if item["event"] == event] if event else events
+
+    def assert_catalog_only_calls(self, client, actions):
+        self.assertEqual([call["action"] for call in client.preset_calls], actions)
+        self.assertFalse(client.state_calls)
+        self.assertFalse(client.writes)
+        self.assertEqual(client.applies, 0)
+        self.assertFalse(any(name in ("plugin_editor_open", "plugin_parameter_digest") for name, _ in client.calls))
+
+    def test_catalog_only_inventory_never_captures_applies_or_writes(self):
+        client = CatalogClient(count=130)
+        row = self.runner(client).run_catalog_case(TARGET)
+        self.assertEqual(row["status"], "catalog_case_verified")
+        self.assertEqual(row["catalog_count"], 130)
+        self.assertTrue(row["catalog_complete"])
+        self.assert_catalog_only_calls(client, ["list", "list", "list", "release", "list"])
+        pages = [call for call in client.preset_calls if call["action"] == "list"]
+        self.assertEqual([call["offset"] for call in pages], [0, 64, 128, 0])
+        self.assertTrue(all(call["limit"] == 64 and "index" not in call for call in pages))
+        self.assertEqual(len({call["catalog_token"] for call in client.preset_calls[1:]}), 1)
+        self.assertTrue(all(call["expected_instance"] == INSTANCE["object_uid"]
+                            and call["expected_document"] == "test:1" for call in client.preset_calls))
+        self.assertEqual(client.full_snapshots, 7)
+        observations = self.events("catalog_baseline_observation")
+        self.assertEqual([item["boundary"] for item in observations],
+                         ["catalog_discovered"] * 2 + ["catalog_released"] * 2 + ["released_catalog_refused"] * 2)
+        self.assertTrue(all(item["matches"] and item["value_hash_field"] == "all_values_sha256" for item in observations))
+        self.assertFalse(client.catalogs)
+        self.assertFalse(Journal.pending(self.journal.ledger_path))
+        self.assertFalse(row["preset_recalls_verified"])
+        self.assertFalse(row["all_writable_parameters_verified"])
+        self.assertFalse(row["opaque_contents_verified"])
+
+    def test_catalog_only_zero_entries_still_releases_and_refuses_list_without_index(self):
+        client = CatalogClient(count=0)
+        row = self.runner(client).run_catalog_case(TARGET)
+        self.assertEqual(row["catalog_count"], 0)
+        self.assertEqual(row["status"], "catalog_case_verified")
+        self.assert_catalog_only_calls(client, ["list", "release", "list"])
+        self.assertEqual(client.preset_calls[-1]["offset"], 0)
+        self.assertNotIn("index", client.preset_calls[-1])
+        self.assertEqual(client.full_snapshots, 7)
+
+    def test_catalog_only_public_provider_pages_are_complete_for_every_observation(self):
+        client = CatalogClient([writable(f"parameter{i}", 0.25) for i in range(130)])
+        self.runner(client).run_catalog_case(TARGET)
+        pages = [args for name, args in client.calls if name == "plugin_parameters"]
+        self.assertEqual([page["offset"] for page in pages], [0, 64, 128] * 7)
+        self.assertTrue(all("names" not in page and page["limit"] == 64 for page in pages))
+        self.assertTrue(all(page.get("expected_instance") == INSTANCE["object_uid"] for page in pages[3:]))
+
+    def test_catalog_only_rejects_legacy_metadata_before_issuing_catalog(self):
+        client = PresetClient()
+        with self.assertRaisesRegex(AcceptanceFailure, "Complete typed"):
+            self.runner(client).run_catalog_case(TARGET)
+        self.assert_catalog_only_calls(client, [])
+
+    def test_catalog_only_two_fresh_reads_at_each_boundary_catch_typed_and_display_drift(self):
+        for snapshot in range(2, 8):
+            for field, value in (("native_value", floating(0.1)), ("native_default", floating(0.1)),
+                                 ("native_normalized", normalized(0.75)[0]),
+                                 ("text", "unexpected display")):
+                with self.subTest(snapshot=snapshot, field=field):
+                    client = CatalogClient()
+                    def drift(client, page):
+                        if client.full_snapshots != snapshot:
+                            return
+                        parameter = page["params"][0]
+                        parameter[field] = copy.deepcopy(value)
+                        parameter["native"]["native_description"][field] = copy.deepcopy(value)
+                        if field == "native_default":
+                            parameter["default"] = parameter["native"]["native_description"]["default"] = 0.1
+                        if field == "native_value":
+                            parameter["value"] = parameter["native"]["native_description"]["value"] = 0.1
+                        if field == "native_normalized":
+                            parameter["normalized"] = parameter["native"]["native_description"]["normalized"] = normalized(0.75)[1]
+                    client.page_hook = drift
+                    runner = self.runner(client)
+                    with self.assertRaises((AcceptanceFailure, ContextChanged)):
+                        runner.run_catalog_case(TARGET)
+                    expected = ["list"] if snapshot <= 3 else ["list", "release"] if snapshot <= 5 else ["list", "release", "list"]
+                    self.assert_catalog_only_calls(client, expected)
+                    self.assertEqual(client.full_snapshots, snapshot)
+                    self.assertEqual(runner.counts["catalog_case_verified"], 0)
+                    self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_catalog_only_authoritative_readonly_exclusion_is_explicit_and_schema_stays_strict(self):
+        for observe in (False, True):
+            with self.subTest(observe=observe):
+                client = CatalogClient([writable("gain", 0.25), writable("meter", 0.1, readonly=True)])
+                client.read_only_drift = True
+                if observe:
+                    row = self.runner(client, True).run_catalog_case(TARGET)
+                    self.assertEqual(row["status"], "catalog_case_verified")
+                    self.assertTrue(all(item["read_only_values_changed"] for item in self.events("catalog_baseline_observation")[-6:]))
+                else:
+                    with self.assertRaises(AcceptanceFailure):
+                        self.runner(client).run_catalog_case(TARGET)
+                    self.assert_catalog_only_calls(client, ["list"])
+
+    def test_catalog_only_readonly_metadata_cannot_be_excluded_when_missing_or_changed(self):
+        for fault in ("missing_access", "default", "writable"):
+            with self.subTest(fault=fault):
+                client = CatalogClient([writable("gain", 0.25), writable("meter", 0.1, readonly=True)])
+                def corrupt(client, page):
+                    if client.full_snapshots < 2:
+                        return
+                    parameter = page["params"][1]
+                    if fault == "missing_access":
+                        parameter.pop("access_metadata_complete")
+                    elif fault == "default":
+                        parameter["default"] = parameter["native"]["native_description"]["default"] = 0.1
+                        parameter["native_default"] = parameter["native"]["native_description"]["native_default"] = floating(0.1)
+                    else:
+                        parameter["writable"] = parameter["native"]["native_description"]["writable"] = True
+                client.page_hook = corrupt
+                with self.assertRaises((AcceptanceFailure, ContextChanged)):
+                    self.runner(client, True).run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, ["list"])
+
+    def test_catalog_only_readonly_flag_does_not_exclude_a_writable_observation(self):
+        parameter = writable("gain", 0.25)
+        parameter["readOnly"] = True
+        client = CatalogClient([parameter])
+        def drift(client, page):
+            if client.full_snapshots == 2:
+                parameter = page["params"][0]
+                parameter["text"] = parameter["native"]["native_description"]["text"] = "writable observation changed"
+        client.page_hook = drift
+        with self.assertRaises(AcceptanceFailure):
+            self.runner(client, True).run_catalog_case(TARGET)
+        self.assert_catalog_only_calls(client, ["list"])
+
+    def test_catalog_only_exact_negative_zero_normalized_bits_are_retained(self):
+        parameter = writable("gain", 0.25)
+        parameter["normalized"] = -0.0
+        client = CatalogClient([parameter])
+        def drift(client, page):
+            if client.full_snapshots == 3:
+                parameter = page["params"][0]
+                for value in (parameter, parameter["native"]["native_description"]):
+                    value["native_normalized"] = normalized(0.0)[0]
+                    value["normalized"] = 0.0
+        client.page_hook = drift
+        with self.assertRaises(AcceptanceFailure):
+            self.runner(client).run_catalog_case(TARGET)
+        self.assert_catalog_only_calls(client, ["list"])
+        self.assertEqual(client.full_snapshots, 3)
+
+    def test_catalog_only_unknown_malformed_and_contradictory_lifecycle_stops_without_replay(self):
+        faults = [("outer", value) for value in ("unknown", {}, [], None, True)]
+        faults += [(field, value) for field in ("outcome", "native_outcome")
+                   for value in ("unknown", {}, [], None, True, "not_applied")]
+        faults += [("result", value) for value in ({}, [], None)]
+        for phase in (1, 2, 3):
+            for field, value in faults:
+                with self.subTest(phase=phase, field=field, value=value):
+                    client = CatalogClient()
+                    def corrupt(client, args, receipt):
+                        if len(client.preset_calls) != phase:
+                            return
+                        if field in ("outer", "result"):
+                            receipt["outcome" if field == "outer" else "result"] = copy.deepcopy(value)
+                        else:
+                            receipt["result"][field] = copy.deepcopy(value)
+                    client.lifecycle_hook = corrupt
+                    runner = self.runner(client)
+                    # A known refusal is the required final outcome, so retain it.
+                    if phase == 3 and value == "not_applied":
+                        continue
+                    with self.assertRaises((UnknownMutation, AcceptanceFailure, ContextChanged)):
+                        runner.run_catalog_case(TARGET)
+                    self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
+                    self.assertEqual(runner.counts["catalog_case_verified"], 0)
+                    self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_catalog_only_known_outcome_phase_contradictions_never_trigger_cleanup(self):
+        for phase, changes in ((1, {"outcome": "applied_verified"}),
+                               (1, {"released": True}), (1, {"accepted": True}),
+                               (2, {"outcome": "observed"}), (2, {"released": False}),
+                               (2, {"verified": 1}), (2, {"native_outcome": "applied_unverified"}),
+                               (3, {"native_outcome": "applied_verified"}),
+                               (3, {"ok": True}), (3, {"verified": 0}), (3, {"accepted": True})):
+            with self.subTest(phase=phase, changes=changes):
+                client = CatalogClient()
+                def corrupt(client, args, receipt):
+                    if len(client.preset_calls) == phase:
+                        receipt["result"].update(changes)
+                client.lifecycle_hook = corrupt
+                with self.assertRaises(UnknownMutation):
+                    self.runner(client).run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_catalog_only_released_token_refusal_requires_explicit_boolean_false_ok(self):
+        cases = [("missing", None), ("all_flags_missing", None)]
+        cases += [("value", value) for value in (None, True, 0, 1, 0.0, "false", {}, [], [False])]
+        for fault, value in cases:
+            with self.subTest(fault=fault, value=value):
+                client = CatalogClient()
+                def corrupt(client, args, receipt):
+                    if len(client.preset_calls) != 3:
+                        return
+                    native = receipt["result"]
+                    if fault == "value":
+                        native["ok"] = copy.deepcopy(value)
+                    else:
+                        for field in ("ok", "accepted", "released", "verified") if fault == "all_flags_missing" else ("ok",):
+                            native.pop(field, None)
+                client.lifecycle_hook = corrupt
+                runner = self.runner(client)
+                with self.assertRaises(UnknownMutation):
+                    runner.run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, ["list", "release", "list"])
+                self.assertEqual(client.full_snapshots, 5)
+                self.assertEqual(len(self.events("catalog_baseline_observation")), 4)
+                self.assertFalse(any(item["phase"] == "StateConfirmed" for item in self.events("transaction_phase")))
+                self.assertEqual(Journal.pending(self.journal.ledger_path)["catalog-000"], "UnknownAfterDispatch")
+                self.assertFalse(runner.summary["classes"])
+                self.assertEqual(runner.counts["catalog_case_verified"], 0)
+
+    def test_catalog_only_refusal_accepts_explicit_false_optional_flags(self):
+        client = CatalogClient()
+        def explicit_false(client, args, receipt):
+            if len(client.preset_calls) == 3:
+                receipt["result"].update(ok=False, accepted=False, released=False, verified=False)
+        client.lifecycle_hook = explicit_false
+        row = self.runner(client).run_catalog_case(TARGET)
+        self.assertEqual(row["status"], "catalog_case_verified")
+        self.assert_catalog_only_calls(client, ["list", "release", "list"])
+        self.assertEqual(client.full_snapshots, 7)
+        self.assertFalse(Journal.pending(self.journal.ledger_path))
+
+    def test_catalog_only_accepted_released_list_stops_without_second_release(self):
+        client = CatalogClient()
+        client.accept_released_catalog = True
+        with self.assertRaises(UnknownMutation):
+            self.runner(client).run_catalog_case(TARGET)
+        self.assert_catalog_only_calls(client, ["list", "release", "list"])
+        self.assertEqual(client.full_snapshots, 5)
+
+    def test_catalog_only_context_loss_at_each_lifecycle_stops_without_cleanup(self):
+        for phase in (1, 2, 3):
+            with self.subTest(phase=phase):
+                client = CatalogClient()
+                def drift(client, args, receipt):
+                    if len(client.preset_calls) == phase:
+                        receipt["document"] = "different:document"
+                client.lifecycle_hook = drift
+                with self.assertRaises(ContextChanged):
+                    self.runner(client).run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
+
+    def test_catalog_only_discovery_keeps_existing_exact_catalog_validation(self):
+        for fault in ("incomplete", "too_many", "duplicate", "bad_next", "url", "instance", "token", "count", "empty_page"):
+            with self.subTest(fault=fault):
+                client = CatalogClient(count=65)
+                client.catalog_fault = fault
+                with self.assertRaises((AcceptanceFailure, ContextChanged)):
+                    self.runner(client).run_catalog_case(TARGET)
+                self.assertTrue(all(call["action"] == "list" for call in client.preset_calls))
+                self.assertFalse(client.state_calls)
+                self.assertFalse(client.writes)
+
+    def test_catalog_only_preparation_and_nonboolean_readonly_policy_fail_before_catalog(self):
+        for setting in ("prepare_midi", "read_only_observations"):
+            with self.subTest(setting=setting):
+                client = CatalogClient()
+                runner = self.runner(client)
+                setattr(runner, setting, True if setting == "prepare_midi" else 1)
+                with self.assertRaises(AcceptanceFailure):
+                    runner.run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, [])
+
+    def test_catalog_only_cli_reports_finite_inventory_success(self):
+        client = CatalogClient(count=0)
+        fixture = Path(self.temporary.name) / "catalog-fixtures.json"
+        fixture.write_text(json.dumps([TARGET]))
+        output = io.StringIO()
+        with patch("verify_plugin_presets.McpClient", return_value=client), redirect_stdout(output):
+            result = main(["--catalog-only", "--binary", __file__, "--fixtures", str(fixture),
+                           "--scratch-title", "MCP Validation Scratch", "--plugin", TARGET["plugin"],
+                           "--output-dir", str(Path(self.temporary.name) / "catalog-cli"), "--settle-interval", "0"])
+        self.assertEqual(result, 0)
+        self.assertIn('"status": "catalog_cases_verified"', output.getvalue())
+        self.assert_catalog_only_calls(client, ["list", "release", "list"])
+
+    def test_catalog_only_cli_incompatible_mutation_options_fail_before_owner_start(self):
+        for extra in (("--index", "0"), ("--wrong-target-plugin", OTHER["plugin"]), ("--prepare-midi-fixtures",)):
+            with self.subTest(extra=extra), patch("verify_plugin_presets.McpClient") as owner:
+                with self.assertRaisesRegex(AcceptanceFailure, "Catalog-only mode"):
+                    main(["--catalog-only", "--fixtures", "unread-fixtures", "--scratch-title", "scratch",
+                          "--plugin", TARGET["plugin"], *extra])
+                owner.assert_not_called()
+
+    def test_catalog_only_cli_bounds_selected_plugins_before_owner_start(self):
+        fixture = Path(self.temporary.name) / "bounded-fixtures.json"
+        fixture.write_text(json.dumps([TARGET]))
+        plugins = [argument for index in range(129) for argument in ("--plugin", f"plugin{index}")]
+        with patch("verify_plugin_presets.McpClient") as owner:
+            with self.assertRaisesRegex(AcceptanceFailure, "1..128 exact"):
+                main(["--catalog-only", "--fixtures", str(fixture), "--scratch-title", "scratch", *plugins])
+            owner.assert_not_called()
+
+    def test_catalog_only_cli_stops_before_next_plugin_after_typed_corruption(self):
+        client = CatalogClient()
+        def drift(client, page):
+            if client.full_snapshots == 3:
+                parameter = page["params"][0]
+                parameter["text"] = parameter["native"]["native_description"]["text"] = "drift"
+        client.page_hook = drift
+        fixture = Path(self.temporary.name) / "two-fixtures.json"
+        fixture.write_text(json.dumps([TARGET, OTHER]))
+        with patch("verify_plugin_presets.McpClient", return_value=client), redirect_stdout(io.StringIO()):
+            with patch("sys.stderr", new=io.StringIO()):
+                result = main(["--catalog-only", "--binary", __file__, "--fixtures", str(fixture),
+                               "--scratch-title", "MCP Validation Scratch", "--plugin", TARGET["plugin"],
+                               "--plugin", OTHER["plugin"], "--output-dir", str(Path(self.temporary.name) / "stopped-cli"),
+                               "--settle-interval", "0"])
+        self.assertEqual(result, 1)
+        self.assert_catalog_only_calls(client, ["list"])
+        self.assertFalse(any(args.get("channel") == OTHER["channel"] for name, args in client.calls if name.startswith("plugin_")))
 
     def test_recall_proves_two_changed_snapshots_and_exact_whole_restoration(self):
         client = PresetClient()

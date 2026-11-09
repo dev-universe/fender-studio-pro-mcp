@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Verify finite issued preset recalls in named disposable plugin fixtures.
+"""Verify finite issued preset catalogs or recalls in disposable plugin fixtures.
 
 Start the MCP owner before the DAW. Only issued catalog indices are recalled;
 state capsules stay native, and independent full-provider reads prove recovery.
+Catalog-only mode lists and releases catalogs without recalling presets.
 """
 import argparse
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ import sys
 import time
 
 from mcp_client import McpClient
+from parameter_digest import DigestProjectionError, project_snapshot
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, RestorationFailure,
     UnknownMutation, provider_index, require, utc_now, value_identity,
@@ -100,12 +102,41 @@ class PresetRunner(StateRunner):
                     "Preset operation returned a different issued index")
         return result
 
-    def discover_catalog(self, baseline, transaction):
+    def catalog_call(self, provider, action, *, token=None, offset=None):
+        require(action in ("list", "release"), "Catalog-only mode permits only list and release")
+        receipt = self.preset_call(provider, action, token=token, offset=offset, allow_error=True)
+        outer, native = receipt.get("outcome"), receipt.get("result")
+        allowed = ("observed", *APPLIED, "not_applied") if action == "list" else (*APPLIED, "not_applied")
+        if not isinstance(outer, str) or outer not in allowed or not isinstance(native, dict):
+            raise UnknownMutation("Catalog lifecycle outcome is malformed or contradictory")
+        if native.get("instance") != provider.instance:
+            raise ContextChanged("Catalog lifecycle resolved a different native Device")
+        if native.get("source") != CATALOG_SOURCE:
+            raise UnknownMutation("Catalog lifecycle lacks native catalog provenance")
+        metadata_only(native)
+        expected = ("not_applied",) if outer == "not_applied" else ("observed",) if action == "list" else APPLIED
+        outcomes = [native[field] for field in ("outcome", "native_outcome") if field in native]
+        if (not outcomes or any(not isinstance(value, str) or value not in expected for value in outcomes)
+                or len(set(outcomes)) > 1):
+            raise UnknownMutation("Catalog lifecycle native outcome is unknown or contradictory")
+        if outer == "not_applied":
+            if (native.get("ok") is not False
+                    or any(native[field] is not False for field in ("accepted", "released", "verified") if field in native)):
+                raise UnknownMutation("Catalog refusal contains contradictory success evidence")
+        elif (receipt.get("error") or native.get("ok") is not True
+              or any(native[field] is not False for field in ("accepted",) if field in native)
+              or (action == "list" and any(native[field] is not False for field in ("released", "verified") if field in native))
+              or (action == "release" and (native.get("released") is not True or native.get("verified") is not True))):
+            raise UnknownMutation("Catalog success contains malformed or contradictory phase evidence")
+        return receipt
+
+    def discover_catalog(self, baseline, transaction, *, catalog_only=False):
         token, count, offset, entries = None, None, 0, []
         while True:
             self.fixture_check(baseline.target)
             self.phase(transaction, "CatalogPageInFlight", offset=offset)
-            receipt = self.preset_call(baseline, "list", token=token, offset=offset)
+            call = self.catalog_call if catalog_only else self.preset_call
+            receipt = call(baseline, "list", token=token, offset=offset)
             require(receipt.get("outcome") in ("observed", *APPLIED), "Catalog page outcome is not known")
             page = self.preset_result(baseline, receipt, token=token)
             issued = page.get("catalog_token")
@@ -178,14 +209,80 @@ class PresetRunner(StateRunner):
                 "baseline_schema_changed": observations[-1].schema != baseline.schema,
                 "fresh_whole_provider_reads": 2, "opaque_contents_verified": False}
 
-    def release_catalog(self, baseline, catalog, transaction):
+    def release_catalog(self, baseline, catalog, transaction, *, catalog_only=False):
         self.fixture_check(baseline.target)
         self.phase(transaction, "CatalogReleaseInFlight")
-        receipt = self.preset_call(baseline, "release", token=catalog.token)
+        call = self.catalog_call if catalog_only else self.preset_call
+        receipt = call(baseline, "release", token=catalog.token)
         require(receipt.get("outcome") in APPLIED, "Catalog release outcome is not known applied")
         result = self.preset_result(baseline, receipt, token=catalog.token)
         require(result.get("released") is True and result.get("outcome") in APPLIED,
                 "Catalog release was not confirmed")
+
+    def catalog_projection(self, snapshot):
+        try:
+            return project_snapshot(snapshot)
+        except DigestProjectionError as error:
+            raise AcceptanceFailure("Complete typed catalog provider metadata is unavailable: " + str(error)) from error
+
+    def confirm_catalog_baseline(self, baseline, projected, transaction, boundary):
+        field = "non_read_only_values_sha256" if self.read_only_observations else "all_values_sha256"
+        for attempt in range(2):
+            if attempt and self.settle_interval:
+                time.sleep(self.settle_interval)
+            self.fixture_check(baseline.target)
+            current = self.snapshot(baseline.target, baseline)
+            observed = self.catalog_projection(current)
+            matches = (observed["schema_sha256"] == projected["schema_sha256"]
+                       and observed[field] == projected[field])
+            self.journal.append("catalog_baseline_observation", transaction=transaction, boundary=boundary,
+                                attempt=attempt + 1, matches=matches, projection=observed,
+                                value_hash_field=field, expected_value_sha256=projected[field],
+                                read_only_values_changed=observed["all_values_sha256"] != projected["all_values_sha256"])
+            require(matches, "Catalog lifecycle changed the complete typed provider baseline")
+
+    def run_catalog_case(self, target):
+        require(type(self.read_only_observations) is bool,
+                "Read-only observations require an explicit boolean mode")
+        require(not self.prepare_midi, "Catalog-only mode cannot prepare MIDI fixtures")
+        self.summary.update(mode="preset_catalogs", preset_recalls_verified=False,
+                            audible_effects_verified=False, catalog_scope="current_complete_issued_catalog")
+        self.fixture_check(target, setup=True)
+        baseline = self.snapshot(target)
+        projected = self.catalog_projection(baseline)
+        transaction = f"catalog-{len(self.summary['classes']):03d}"
+        reference = self.journal.baseline(transaction, {**baseline.serialized(), "projection": projected})
+        self.phase(transaction, "Prepared", plugin=target["plugin"], baseline=reference,
+                   source=baseline.source, instance=baseline.instance, schema_sha256=projected["schema_sha256"])
+        try:
+            catalog = self.discover_catalog(baseline, transaction, catalog_only=True)
+            self.confirm_catalog_baseline(baseline, projected, transaction, "catalog_discovered")
+            self.release_catalog(baseline, catalog, transaction, catalog_only=True)
+            self.confirm_catalog_baseline(baseline, projected, transaction, "catalog_released")
+            self.fixture_check(target)
+            self.phase(transaction, "ReleasedCatalogCheckInFlight")
+            receipt = self.catalog_call(baseline, "list", token=catalog.token, offset=0)
+            if receipt.get("outcome") != "not_applied":
+                raise UnknownMutation("Released catalog list was not refused before dispatch")
+            self.confirm_catalog_baseline(baseline, projected, transaction, "released_catalog_refused")
+        except Exception:
+            self.phase(transaction, "UnknownAfterDispatch")
+            raise
+        row = {"plugin": target["plugin"], "status": "catalog_case_verified",
+               "catalog_count": len(catalog.entries), "catalog_complete": True,
+               "catalog_scope": "current_complete_issued_catalog", "factory_origin": "not_inferred",
+               "source": baseline.source, "provider_indices_compared": len(baseline.records),
+               "schema_sha256": projected["schema_sha256"], "baseline": reference,
+               "fresh_whole_provider_reads_per_boundary": 2, "independent_baseline_observations": 6,
+               "released_catalog_refused": True, "preset_recalls_verified": False,
+               "read_only_values": self.summary["read_only_values"],
+               "opaque_contents_verified": False, "preset_display_verified": False,
+               "all_writable_parameters_verified": False, "audible_effects_verified": False}
+        self.phase(transaction, "StateConfirmed", status=row["status"], released_catalog_refused=True)
+        self.summary["classes"].append(row)
+        self.counts[row["status"]] += 1
+        self.progress()
+        return row
 
     def confirm_refused_unchanged(self, baseline, receipt, transaction):
         native = receipt.get("result", {})
@@ -309,6 +406,7 @@ def main(argv=None):
     parser.add_argument("--scratch-title", required=True)
     parser.add_argument("--output-dir", default=".local/live/plugin-presets-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--plugin", action="append", required=True, help="Exact fixture plugin; repeat to select more")
+    parser.add_argument("--catalog-only", action="store_true", help="Inventory and release each current issued catalog without recalling presets")
     parser.add_argument("--index", type=int, action="append", help="Issued index0..4095; repeat for finite selections; default only index1")
     parser.add_argument("--wrong-target-plugin", help="Also prove catalog refusal on this different exact fixture")
     parser.add_argument("--pause", action="store_true", help="Start the owner before launching the DAW, then press Enter")
@@ -316,9 +414,12 @@ def main(argv=None):
     parser.add_argument("--settle-attempts", type=int, default=8)
     parser.add_argument("--settle-interval", type=float, default=0.1)
     parser.add_argument("--read-only-observations", action="store_true",
-                        help="Report authoritative read-only drift separately; restore every schema and exact writable value")
+                        help="Compare every typed schema; report only authoritative nonwritable read-only value drift separately")
     args = parser.parse_args(argv)
     validate_settlement(args.settle_attempts, args.settle_interval)
+    require(not args.catalog_only or (args.index is None and args.wrong_target_plugin is None
+                                     and not args.prepare_midi_fixtures),
+            "Catalog-only mode cannot select indices, wrong targets or MIDI fixture preparation")
     if args.index is not None:
         require(0 < len(args.index) <= 64 and all(0 <= index < 4096 for index in args.index),
                 "Select 1..64 issued indices from0..4095")
@@ -327,6 +428,7 @@ def main(argv=None):
             and all(isinstance(item, dict) and isinstance(item.get("plugin"), str) for item in fixtures),
             "Expected 1..128 fixture targets")
     plugins = list(dict.fromkeys(args.plugin))
+    require(0 < len(plugins) <= 128, "Select 1..128 exact plugin fixtures")
     require(all(sum(item["plugin"] == plugin for item in fixtures) == 1 for plugin in plugins),
             "Every selected plugin must match one exact fixture")
     targets = [{key: value for key, value in next(item for item in fixtures if item["plugin"] == plugin).items()
@@ -341,10 +443,11 @@ def main(argv=None):
     client = runner = None
     try:
         binary = Path(args.binary).resolve()
-        journal.append("run_started", schema=1, mode="preset_recalls",
+        journal.append("run_started", schema=1, mode="preset_catalogs" if args.catalog_only else "preset_recalls",
                        binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
                        scope={"plugins": plugins, "indices": args.index},
-                       guarantee="two independent changed provider reads and two complete restored provider reads; opaque state is not decoded")
+                       guarantee=("two fresh complete typed baseline projections after discovery, release and released-token list refusal; no preset recall"
+                                  if args.catalog_only else "two independent changed provider reads and two complete restored provider reads; opaque state is not decoded"))
         client = McpClient([str(binary), "serve"], timeout=45)
         print("MCP owner ready", flush=True)
         if args.pause:
@@ -354,9 +457,15 @@ def main(argv=None):
         runner.initialize()
         for index, target in enumerate(targets, 1):
             print(f"[{index}/{len(targets)}] {target['plugin']}", flush=True)
-            runner.run_preset_case(target, args.index, wrong_target=other)
-        verified = all(row["status"] == "preset_case_verified" for row in runner.summary["classes"])
-        runner.summary.update(status="preset_cases_verified" if verified else "preset_cases_not_verified", completed_at=utc_now())
+            if args.catalog_only:
+                runner.run_catalog_case(target)
+            else:
+                runner.run_preset_case(target, args.index, wrong_target=other)
+        expected = "catalog_case_verified" if args.catalog_only else "preset_case_verified"
+        verified = len(runner.summary["classes"]) == len(targets) and all(row["status"] == expected for row in runner.summary["classes"])
+        status = ("catalog_cases_verified" if verified else "catalog_cases_not_verified") if args.catalog_only else (
+            "preset_cases_verified" if verified else "preset_cases_not_verified")
+        runner.summary.update(status=status, completed_at=utc_now())
         runner.progress()
         journal.append("run_completed", summary=runner.summary)
         print(json.dumps({"status": runner.summary["status"], "counts": dict(runner.counts),
