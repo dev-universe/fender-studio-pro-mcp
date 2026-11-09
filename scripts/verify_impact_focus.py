@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Verify one observed Impact focus-cutoff binding in an empty scratch fixture.
+"""Verify one finite Impact focus alias in an empty scratch fixture.
 
-Only focus.filter.cutoff is written. Its explicit pad peer is discovered from
-two complete changed projections. All exposed values must return exactly to
-the immutable original projection. No other focus aliases are established.
+One selected alias is written; its pad peer is discovered from two complete
+changed projections. All exposed values must return exactly to the immutable
+original projection. Each invocation establishes only its observed binding.
 """
 import argparse
 from copy import deepcopy
@@ -21,12 +21,47 @@ from parameter_digest import DigestProjectionError, project_snapshot
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, RestorationFailure, Runner,
     UnknownMutation, decode_float_bits, encoded, parameter_schema, require, utc_now,
-    value_identity,
+    value_identity, candidate,
 )
 
 
 ALIAS = "focus.filter.cutoff"
 PEERS = tuple(f"pad[{index}].filter.cutoff" for index in range(128))
+FOCUS_ROLES = {
+    'focus.sampleStartOffset': 'Float',
+    'focus.sampleEndOffset': 'Float',
+    'focus.pitchAdsr.attack': 'Float',
+    'focus.pitchAdsr.hold': 'Float',
+    'focus.pitchAdsr.decay': 'Float',
+    'focus.pitchAdsr.sustain': 'Float',
+    'focus.pitchAdsr.release': 'Float',
+    'focus.filterAdsr.attack': 'Float',
+    'focus.filterAdsr.hold': 'Float',
+    'focus.filterAdsr.decay': 'Float',
+    'focus.filterAdsr.sustain': 'Float',
+    'focus.filterAdsr.release': 'Float',
+    'focus.adsrMain.attack': 'Float',
+    'focus.adsrMain.hold': 'Float',
+    'focus.adsrMain.decay': 'Float',
+    'focus.adsrMain.sustain': 'Float',
+    'focus.adsrMain.release': 'Float',
+    'focus.wave.transpose': 'Integer',
+    'focus.wave.tune': 'Integer',
+    'focus.filter.active': 'Toggle',
+    'focus.filter.type': 'List',
+    'focus.filter.clip': 'Toggle',
+    'focus.filter.drive': 'Float',
+    'focus.filter.cutoff': 'Float',
+    'focus.filter.resonance': 'Float',
+    'focus.filter.velo-to-cutoff': 'Float',
+    'focus.filter.compress': 'Float',
+    'focus.wave-amp.pan': 'Float',
+    'focus.wave-amp.dbOffset': 'Float',
+    'focus.voiceAmp.velo-amount': 'Float',
+    'focus.modulation.pitchVeloAmount': 'Float',
+    'focus.modulation.pitchAdsrAmount': 'Float',
+    'focus.modulation.filterAdsrAmount': 'Float',
+}
 IMPACT_CLASS = "3713E26C-2FCA-4024-9F25-17E9D2BE2B9B"
 PROVIDER_COUNT = 4262
 MAIN_LABEL = "메인"
@@ -36,13 +71,14 @@ def observation(parameter):
     return value_identity(parameter), parameter["native_normalized"], parameter["text"]
 
 
-def cutoff_candidate(parameter):
-    require(parameter.get("name") == ALIAS and parameter.get("native_kind") == "Float"
+def binary_fraction_candidate(parameter, expected_name):
+    require(expected_name in FOCUS_ROLES and FOCUS_ROLES[expected_name] == "Float"
+            and parameter.get("name") == expected_name and parameter.get("native_kind") == "Float"
             and parameter.get("support", {}).get("raw") is True
             and parameter.get("support", {}).get("normalized") is True
             and parameter.get("native_support", {}).get("raw_number") is True
             and parameter.get("native_support", {}).get("normalized") is True,
-            "Use the observed raw and normalized Float cutoff profile")
+            "Use the observed raw and normalized finite Float alias profile")
 
     def exact_float(field):
         native = parameter.get("native_value" if field == "value" else "native_" + field)
@@ -80,8 +116,11 @@ def cutoff_candidate(parameter):
         bits = struct.pack(">d", desired).hex().upper()
         if bits != original_bits:
             return {"float_bits": bits}, {"float_bits": original_bits}
-    raise AcceptanceFailure("No different fixed cutoff binary-fraction candidate exists")
+    raise AcceptanceFailure("No different fixed binary-fraction candidate exists")
 
+
+def cutoff_candidate(parameter):
+    return binary_fraction_candidate(parameter, ALIAS)
 
 @dataclass(frozen=True)
 class FocusBinding:
@@ -91,10 +130,13 @@ class FocusBinding:
 
 
 class ImpactFocusRunner(Runner):
-    def __init__(self, client, journal, scratch_title, use_fixture_context=False):
+    def __init__(self, client, journal, scratch_title, use_fixture_context=False, *, alias=ALIAS):
+        require(type(alias) is str and alias in FOCUS_ROLES, "Use one of the 33 fixed Impact focus roles")
+        self.alias = alias
+        self.peers = tuple(f"pad[{index}].{alias.removeprefix('focus.')}" for index in range(128))
         super().__init__(client, journal, scratch_title, use_fixture_context=use_fixture_context)
         self.started = False
-        self.summary.update(mode="one_impact_focus_cutoff_binding", fixtures=[],
+        self.summary.update(mode="one_impact_focus_binding", alias=self.alias, fixtures=[],
                             parameter_verification="two_fresh_complete_typed_public_projections",
                             restoration="one_exact_alias_original_write", atomic_snapshot=False,
                             all_writable_parameters_verified=False, all_focus_aliases_verified=False,
@@ -104,8 +146,8 @@ class ImpactFocusRunner(Runner):
 
     def call(self, name, arguments=None, mutation=False, allow_error=False):
         require(not mutation or (name == "plugin_parameter_set" and isinstance(arguments, dict)
-                                and arguments.get("param") == ALIAS),
-                "The fixed pilot permits only its cutoff-alias parameter setter")
+                                and arguments.get("param") == self.alias),
+                "The fixed pilot permits only its selected finite alias setter")
         try:
             receipt = super().call(name, arguments, mutation, allow_error=True)
         except (UnknownMutation, ContextChanged):
@@ -178,7 +220,7 @@ class ImpactFocusRunner(Runner):
             require(isinstance(result, dict) and set(result) <= {
                 "channel", "slot", "plugin", "params", "missing", "source", "instance",
                 "ok", "outcome", "native_outcome", "error", "native_error", "errors"},
-                "Named cutoff read has an unsupported envelope")
+                "Named alias read has an unsupported envelope")
             require(result.get("plugin") == provider.target["plugin"]
                     and all(result[key] == provider.target.get(key) for key in ("channel", "slot") if key in result)
                     and ("source" not in result or result["source"] == provider.source)
@@ -187,14 +229,14 @@ class ImpactFocusRunner(Runner):
                     and all(result[key] == "observed" for key in ("outcome", "native_outcome") if key in result)
                     and all(result.get(key) is None for key in ("error", "native_error"))
                     and ("errors" not in result or type(result["errors"]) is list and result["errors"] == []),
-                    "Named cutoff read contradicts the bound observed provider")
+                    "Named alias read contradicts the bound observed provider")
             require(result.get("missing") == [] and isinstance(result.get("params"), list)
-                    and len(result["params"]) == 1, "Named cutoff read did not return one complete parameter")
+                    and len(result["params"]) == 1, "Named alias read did not return one complete parameter")
             return self.validated_description(provider, original, result["params"][0])
         except (UnknownMutation, ContextChanged):
             raise
         except Exception as error:
-            raise ContextChanged("Impact cutoff parameter identity and exact typed observation were not established") from error
+            raise ContextChanged("Impact alias parameter identity and exact typed observation were not established") from error
 
     def validated_description(self, provider, original, fresh):
         try:
@@ -202,20 +244,20 @@ class ImpactFocusRunner(Runner):
             fields = set(original["native"]["native_description"])
             require(isinstance(fresh, dict) and fields <= set(fresh)
                     and set(fresh) <= fields | {"native", "access_metadata_complete", "index"},
-                    "Cutoff observation is missing a complete native description")
+                    "Alias observation is missing a complete native description")
             require(type(index) is int and 0 <= index < len(provider.records)
                     and provider.records[index]["name"] == original["name"]
                     and parameter_schema(fresh) == parameter_schema(original),
-                    "Cutoff observation does not match its frozen parameter schema")
+                    "Alias observation does not match its frozen parameter schema")
             require(("native" not in fresh or encoded(fresh["native"]) == encoded(original["native"]))
                     and ("access_metadata_complete" not in fresh or fresh["access_metadata_complete"] is True)
                     and ("index" not in fresh or type(fresh["index"]) is int and fresh["index"] == index),
-                    "Cutoff observation contradicts its frozen indexed metadata")
+                    "Alias observation contradicts its frozen indexed metadata")
             description = {key: deepcopy(fresh[key]) for key in fields}
             require(type(description["native_value"].get("variant_tag")) is int
                     and value_identity(description)[:2] == value_identity(original)[:2]
                     and description["native_normalized"].get("kind") == original["native_normalized"].get("kind"),
-                    "Cutoff observation changed its native value carrier")
+                    "Alias observation changed its native value carrier")
             indexed = deepcopy(original)
             indexed.update(description)
             indexed["native"]["native_description"] = deepcopy(description)
@@ -223,12 +265,12 @@ class ImpactFocusRunner(Runner):
             records[index] = indexed
             projected = project_snapshot({"source": provider.source, "instance": provider.instance, "records": records})
             require(projected["schema_sha256"] == self.projection(provider)["schema_sha256"],
-                    "Cutoff observation changed exact native schema")
+                    "Alias observation changed exact native schema")
             return description
         except (UnknownMutation, ContextChanged):
             raise
         except Exception as error:
-            raise ContextChanged("Cutoff observation has malformed or contradictory exact typed evidence") from error
+            raise ContextChanged("Alias observation has malformed or contradictory exact typed evidence") from error
 
     def full_read(self, baseline, expected, transaction, checkpoint, attempt):
         self.fixture_check(baseline.target)
@@ -247,7 +289,7 @@ class ImpactFocusRunner(Runner):
             require(current == expected, "Complete Impact typed projection differs from its immutable original")
 
     def write(self, provider, parameter, values):
-        require(parameter["name"] == ALIAS, "The fixed focus pilot may write only the cutoff alias")
+        require(parameter["name"] == self.alias, "The fixed focus pilot may write only the selected finite alias")
         self.fixture_check(provider.target)
         channels = self.operation("channels")
         if not isinstance(channels, list):
@@ -284,22 +326,22 @@ class ImpactFocusRunner(Runner):
         before = {parameter["name"]: parameter for parameter in baseline.records}
         after = {parameter["name"]: parameter for parameter in current.records}
         changed = {name for name in before if observation(before[name]) != observation(after[name])}
-        peers = changed.intersection(PEERS)
-        require(len(peers) == 1 and changed == {ALIAS, *peers},
-                "Changed Impact state must contain only the alias and exactly one explicit cutoff peer")
+        peers = changed.intersection(self.peers)
+        require(len(peers) == 1 and changed == {self.alias, *peers},
+                "Changed Impact state must contain only the alias and exactly one same-role explicit pad peer")
         peer = next(iter(peers))
         identity = value_identity(changed_alias)
-        require(value_identity(after[ALIAS]) == identity == value_identity(after[peer]),
+        require(value_identity(after[self.alias]) == identity == value_identity(after[peer]),
                 "Alias and discovered peer do not share the exact changed native carrier and bits")
-        require(identity != value_identity(before[ALIAS]) and identity != value_identity(before[peer]),
+        require(identity != value_identity(before[self.alias]) and identity != value_identity(before[peer]),
                 "Alias and discovered peer must each change from their own original bits")
-        require(value_identity(before[ALIAS]) == value_identity(before[peer]),
+        require(value_identity(before[self.alias]) == value_identity(before[peer]),
                 "Observed alias peer has a different immutable own-original native value")
-        return FocusBinding(ALIAS, peer, PEERS.index(peer))
+        return FocusBinding(self.alias, peer, self.peers.index(peer))
 
     def restore_original(self, baseline, expected, original, arguments, transaction):
         current, _ = self.full_read(baseline, expected, transaction, "before_restore", 1)
-        before = next(parameter for parameter in current.records if parameter["name"] == ALIAS)
+        before = next(parameter for parameter in current.records if parameter["name"] == self.alias)
         self.phase(transaction, "RestoreInFlight")
         restored = self.write(baseline, original, arguments)
         after = self.applied_after(restored, baseline, original, restoring=True, expected_before=before)
@@ -322,16 +364,19 @@ class ImpactFocusRunner(Runner):
         expected = self.projection(baseline)
         self.fixture_context_provider = baseline
         originals = {parameter["name"]: parameter for parameter in baseline.records}
-        require(ALIAS in originals and all(name in originals for name in PEERS),
-                "Impact requires the fixed cutoff alias and all128 explicit cutoff peers")
-        original = originals[ALIAS]
+        require(self.alias in originals and all(name in originals for name in self.peers),
+                "Impact requires the selected fixed alias and all128 same-role explicit pad peers")
+        original = originals[self.alias]
         identity = value_identity(original)
-        require(original["native_kind"] == "Float" and identity[1] == "float" and identity[0] & 15 == 2,
-                "The cutoff alias requires its exact native Float carrier")
-        change_arguments, restore_arguments = cutoff_candidate(original)
+        require(original["native_kind"] == FOCUS_ROLES[self.alias]
+                and identity[1] == "float" and identity[0] & 15 == 2,
+                "The fixed alias requires its observed kind and exact native Float carrier")
+        change_arguments, restore_arguments = (cutoff_candidate(original) if self.alias == ALIAS else
+                                               binary_fraction_candidate(original, self.alias)
+                                               if original["native_kind"] == "Float" else candidate(original))
         reference = self.journal.baseline("impact-focus-original", baseline.serialized())
         transaction = "impact-focus-cutoff"
-        row = {"plugin": "Impact", "parameter": ALIAS, "baseline": reference, "status": "prepared",
+        row = {"plugin": "Impact", "parameter": self.alias, "baseline": reference, "status": "prepared",
                "complete_provider_projection_restored": False, "binding_verified": False}
         self.summary["fixtures"].append(row)
         self.phase(transaction, "Prepared", baseline=reference, requested=change_arguments)
@@ -365,7 +410,7 @@ class ImpactFocusRunner(Runner):
             binding = bindings[0]
             row.update(binding_verified=True, peer=binding.peer, pad_index=binding.pad_index,
                        settlement=settlement, consecutive_complete_changed_reads=2)
-            self.phase(transaction, "ChangedReadbackConfirmed", alias=ALIAS, peer=binding.peer,
+            self.phase(transaction, "ChangedReadbackConfirmed", alias=self.alias, peer=binding.peer,
                        pad_index=binding.pad_index, consecutive_complete_changed_reads=2)
             restoring = True
             self.restore_original(baseline, expected, original, restore_arguments, transaction)
@@ -421,6 +466,7 @@ def main(argv=None):
     parser.add_argument("--scratch-title", required=True)
     parser.add_argument("--run-pilot", action="store_true", required=True)
     parser.add_argument("--use-fixture-context", action="store_true")
+    parser.add_argument("--alias", choices=tuple(FOCUS_ROLES), default=ALIAS)
     parser.add_argument("--output-dir", default=".local/live/impact-focus-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--pause", action="store_true")
     args = parser.parse_args(argv)
@@ -440,7 +486,7 @@ def main(argv=None):
         print("MCP owner ready", flush=True)
         if args.pause:
             input("Open the named empty muted Impact scratch fixture with Main at zero, then press Enter: ")
-        runner = ImpactFocusRunner(client, journal, args.scratch_title, args.use_fixture_context)
+        runner = ImpactFocusRunner(client, journal, args.scratch_title, args.use_fixture_context, alias=args.alias)
         runner.initialize()
         runner.run_fixture(target)
         return runner.finish()

@@ -15,7 +15,7 @@ from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, PRIVATE_ROOT, RestorationFailure,
     UnknownMutation, candidate, decode_float_bits,
 )
-from verify_impact_focus import ALIAS, IMPACT_CLASS, PEERS, ImpactFocusRunner, main
+from verify_impact_focus import ALIAS, IMPACT_CLASS, PEERS, FOCUS_ROLES, ImpactFocusRunner, main
 
 
 TARGET = {"kind": "instrument", "plugin": "Impact", "track": "FSP Verify Inst Impact"}
@@ -31,13 +31,17 @@ def cutoff_number(name, value):
 
 
 class FocusClient(DigestSweepClient):
-    def __init__(self):
-        parameters = [cutoff_number(name, 10000.0) for name in (*PEERS, ALIAS)]
+    def __init__(self, alias=ALIAS):
+        self.alias = alias
+        self.peers = tuple(f"pad[{index}].{alias.removeprefix('focus.')}" for index in range(128))
+        kind = FOCUS_ROLES[alias]
+        initial = 10000.0 if kind == "Float" else {"Integer": 48.0, "Toggle": 0.0, "List": 0.0}[kind]
+        parameters = [self.focus_parameter(name, initial) for name in (*self.peers, self.alias)]
         parameters.append(number("unrelated", 0.25))
         super().__init__(parameters)
         self.live_class = IMPACT_CLASS
         self.instance["class_uid"] = IMPACT_CLASS
-        self.peer = PEERS[37]
+        self.peer = self.peers[37]
         self.fault = None
         self.restoration_fault = None
         self.main_volume = 0
@@ -50,9 +54,20 @@ class FocusClient(DigestSweepClient):
     def find(self, name):
         return next(parameter for parameter in self.parameters if parameter["name"] == name)
 
+    def focus_parameter(self, name, desired):
+        kind = FOCUS_ROLES[self.alias]
+        if kind == "Float":
+            return cutoff_number(name, desired)
+        upper = {"focus.wave.transpose": 96.0, "focus.wave.tune": 200.0,
+                 "focus.filter.active": 1.0, "focus.filter.type": 8.0, "focus.filter.clip": 1.0}[self.alias]
+        result = number(name, float(desired), kind=kind, lower=0.0, upper=upper)
+        result.update(default=0.0, normalized=desired/upper,
+                      support={"raw": True, "normalized": True, "text": True})
+        return result
+
     def update(self, name, desired):
         parameter = self.find(name)
-        parameter.update(cutoff_number(name, desired) if name == ALIAS or name in PEERS else number(name, desired))
+        parameter.update(self.focus_parameter(name, desired) if name == self.alias or name in self.peers else number(name, desired))
 
     def call(self, name, args):
         if name == "operation_run":
@@ -89,22 +104,26 @@ class FocusClient(DigestSweepClient):
         if name == "plugin_parameter_set":
             self.calls.append((name, copy.deepcopy(args)))
             self.writes.append(copy.deepcopy(args))
-            assert args["param"] == ALIAS
+            assert args["param"] == self.alias
             assert args["source"] == "dsp" and args["expected_instance"] == self.instance["object_uid"]
             desired = decode_float_bits(args["float_bits"])
             restoring = len(self.writes) == 2
             fault = self.restoration_fault if restoring else self.fault
             if fault == "before_drift":
-                self.update(ALIAS, 8700.0)
+                self.update(self.alias, 8700.0)
                 self.update(self.peer, 8700.0)
-            before = self.description(self.find(ALIAS))
+            before = self.description(self.find(self.alias))
             if fault not in ("ignore", "refuse"):
-                self.update(ALIAS, desired)
+                self.update(self.alias, desired)
                 if self.fault != "no_peer":
-                    normalized = struct.unpack(">f", struct.pack(">f", desired / 10000.0))[0]
-                    self.update(self.peer, normalized * 10000.0)
+                    if FOCUS_ROLES[self.alias] == "Float":
+                        normalized = struct.unpack(">f", struct.pack(">f", desired / 10000.0))[0]
+                        peer_value = normalized * 10000.0
+                    else:
+                        peer_value = desired
+                    self.update(self.peer, peer_value)
                 if self.fault == "two_peers":
-                    self.update(PEERS[38], desired)
+                    self.update(self.peers[38], desired)
                 if self.fault == "peer_other_bits" and not restoring:
                     self.update(self.peer, desired + 0.01)
                 if self.fault == "unrelated" and not restoring:
@@ -117,7 +136,7 @@ class FocusClient(DigestSweepClient):
                 return self.receipt({}, "outcome_unknown")
             if fault == "refuse":
                 return self.receipt({"native_outcome": "not_applied"}, "not_applied", {"code": "native_rejected"})
-            after = self.description(self.find(ALIAS))
+            after = self.description(self.find(self.alias))
             result = {"before": before, "after": after, "source": "dsp", "instance": dict(self.instance)}
             if fault == "missing_before":
                 result.pop("before")
@@ -128,10 +147,10 @@ class FocusClient(DigestSweepClient):
             if fault == "contradictory":
                 result["native_outcome"] = "not_applied"
             if fault == "schema":
-                self.find(ALIAS)["tag"] += 1
+                self.find(self.alias)["tag"] += 1
                 result["after"]["tag"] += 1
             if fault == "lie" and restoring:
-                self.update(ALIAS, 0.123)
+                self.update(self.alias, 0.123)
                 self.update(self.peer, 0.123)
             if fault == "main_nonzero" and not restoring:
                 self.main_volume = 0.5
@@ -163,6 +182,54 @@ class FocusPilotTests(unittest.TestCase):
 
     def events(self):
         return [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
+
+    def test_each_of_33_finite_roles_uses_only_own_alias_and_proves_own_peer_restoration(self):
+        self.journal.close()
+        self.assertEqual(len(FOCUS_ROLES), 33)
+        for index, alias in enumerate(FOCUS_ROLES):
+            with self.subTest(alias=alias):
+                self.journal = Journal(Path(self.temporary.name) / f"role-{index}")
+                client = FocusClient(alias)
+                original = copy.deepcopy(client.parameters)
+                runner = ImpactFocusRunner(client, self.journal, "MCP Validation Scratch", alias=alias)
+                runner.initialize()
+                result = runner.run_fixture(TARGET)
+                self.assertEqual(result["peer"], client.peers[37])
+                self.assertEqual([write["param"] for write in client.writes], [alias, alias])
+                self.assertEqual(client.parameters, original)
+                self.assertTrue(result["binding_verified"])
+                self.assertEqual(runner.finish(), 0)
+                self.assertFalse(runner.summary["all_focus_aliases_verified"])
+                self.assertFalse(runner.summary["all_focus_selections_verified"])
+                self.journal.close()
+
+    def test_foreign_role_is_rejected_before_any_rpc(self):
+        for alias in (None, False, 1, "pad[0].filter.cutoff", "focus.unknown", "focus.filter.cutoff.extra"):
+            with self.subTest(alias=alias):
+                client = FocusClient()
+                with self.assertRaises(AcceptanceFailure):
+                    ImpactFocusRunner(client, self.journal, "MCP Validation Scratch", alias=alias)
+                self.assertEqual(client.calls, [])
+                self.assertEqual(client.writes, [])
+
+    def test_fixed_role_kind_mismatch_stops_before_setter(self):
+        client = FocusClient("focus.filter.drive")
+        client.find(client.alias)["native_kind"] = "Toggle"
+        runner = ImpactFocusRunner(client, self.journal, "MCP Validation Scratch", alias=client.alias)
+        runner.initialize()
+        with self.assertRaises(AcceptanceFailure):
+            runner.run_fixture(TARGET)
+        self.assertEqual(client.writes, [])
+
+    def test_finite_nondefault_role_unknown_does_not_restore_or_try_another_role(self):
+        client = FocusClient("focus.filter.drive")
+        client.fault = "unknown"
+        runner = ImpactFocusRunner(client, self.journal, "MCP Validation Scratch", alias=client.alias)
+        runner.initialize()
+        with self.assertRaises(UnknownMutation):
+            runner.run_fixture(TARGET)
+        self.assertEqual([write["param"] for write in client.writes], [client.alias])
+        self.assertFalse(runner.summary["fixtures"][0]["binding_verified"])
 
     def test_binding_is_discovered_from_two_full_changed_reads_and_all_values_restore_twice(self):
         client = FocusClient()
