@@ -1653,6 +1653,45 @@ mod tests {
         }
     }
     #[test]
+    fn description_json_transport_preserves_promoted_normalized_and_exact_f64_bits() {
+        let normalized = f32::from_bits(0x307D_AB0C);
+        for bits in [
+            f64::from(normalized).to_bits(), // The Unit13 normalized shadow lost two f64 ULPs.
+            0x3FB9_9999_9999_999A,
+            0x3FB9_9999_9999_999B,
+            0x3FEF_FFFF_FFFF_FFFF,
+            0x3FF0_0000_0000_0001,
+            0x8000_0000_0000_0000,
+            0x0000_0000_0000_0001,
+            0x000F_FFFF_FFFF_FFFF,
+            0x0010_0000_0000_0000,
+            0x7FEF_FFFF_FFFF_FFFF,
+            0xFFEF_FFFF_FFFF_FFFF,
+        ] {
+            let mut d = description_fixture();
+            d.raw = Some(parameters::NativeValue {
+                variant_tag: 2,
+                value: parameters::Value::Float(f64::from_bits(bits)),
+            });
+            d.normalized = parameters::Normalized::Finite(normalized);
+            let mut wire = serde_json::to_string(&description(&d)).unwrap();
+            for _ in 0..2 {
+                let parsed: Value = serde_json::from_str(&wire).unwrap();
+                assert_eq!(parsed["value"].as_f64().unwrap().to_bits(), bits);
+                assert_eq!(
+                    parsed["native_value"]["data"]["bits_hex"],
+                    format!("{bits:016X}")
+                );
+                assert_eq!(
+                    parsed["normalized"].as_f64().unwrap().to_bits(),
+                    f64::from(normalized).to_bits()
+                );
+                assert_eq!(parsed["native_normalized"]["bits_hex"], "307DAB0C");
+                wire = serde_json::to_string(&parsed).unwrap();
+            }
+        }
+    }
+    #[test]
     fn invalid_finite_normalized_values_have_an_explicit_non_numeric_marker() {
         for bits in [0x7FC0_1234, 0x7F80_0000, 0xFF80_0000] {
             let mut d = description_fixture();
