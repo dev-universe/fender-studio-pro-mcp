@@ -11,7 +11,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 2,560 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
+| Impact | 3,072 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
 | Nested graph | 42 Splitter controls and inner/sibling state restoration | Whole-folder capture/load and topology editing |
 
 Each completed live unit is counted only after its final full-provider
@@ -276,7 +276,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 2,560 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 3,072 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
@@ -386,6 +386,34 @@ folder object UID was present and its optional class UID absent. Pro EQ's 199
 records again matched the original schema and all writable values twice.
 This preflight performed no whole-folder file capture or restore; those calls
 and independent graph restoration remain separate acceptance gates.
+
+Native21 subsequently captured and reopened an actual host-authored 1,604-byte
+single-Pro-EQ chain file. Capture preserved the original Device, full 199-record
+schema, all 64 writable values and observed preset display. A same-state load
+replaced the Device and matched the original schema and all writable values
+twice, but its observed display changed from `default*` to `default`. The first
+strict display-preservation gate therefore failed and its scratch was discarded.
+The archive contains the part title `default`; it does not establish preserved
+host dirty/UI state. The actual native reader observes the display string only.
+
+A fresh, separately scoped run preserved that failed observation and permitted
+only this fixture's declared display delta. One highcut value changed in two
+complete 199-record reads; every other writable value remained unchanged.
+Restoring the same original chain token once then matched the original schema
+and all 64 writable values in two reads under a freshly resolved Device. Both
+loads replaced the Device. Folder binding, slot order and exposed bypass
+inventory remained unchanged, and the token was released. Read-only values were
+observed separately. This proves this simple fixture's exposed-state roundtrip;
+nondefault bypass storage, initial display/dirty/UI preservation, opaque
+contents and nested topology remain separate claims.
+A deliberate released-token request then returned native `not_applied` but an
+outer MCP `outcome_unknown`, exposing an error-envelope mapping gap. Two more
+complete reads preserved the original schema and all writable values. No further mutation followed the unknown outer result. A one-line bridge
+normalization then passed 15 focused and 211 full JavaScript tests, independent
+wire/Runtime checks, and a fresh actual-host regression. In that run the
+released-token request returned outer `not_applied` with `native_rejected`; two
+complete reads preserved the 199-record schema and all 64 writable values. No
+load was accepted or repeated by this regression.
 
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
