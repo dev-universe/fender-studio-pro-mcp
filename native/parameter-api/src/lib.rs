@@ -10,7 +10,9 @@ mod parameter;
 mod text;
 mod value;
 
-pub use parameter::RawParameter;
+pub use parameter::{
+    ControllerOwner, PulseError, PulseOutcome, PulseReceipt, PulseState, RawParameter,
+};
 use std::ffi::{c_char, c_void};
 
 pub const CCL_ABI_VERSION: &str = "5.1.2";

@@ -43,6 +43,7 @@ extern "C" const CCL::CString* abi_parameter_name(CCL::IParameter* p) {return &p
 extern "C" CCL::tbool abi_parameter_enabled(CCL::IParameter* p) {return p->isEnabled();}
 extern "C" CCL::tbool abi_parameter_state(CCL::IParameter* p,int mask) {return p->getState(mask);}
 extern "C" int abi_parameter_tag(CCL::IParameter* p) {return p->getTag();}
+extern "C" CCL::IUnknown* abi_parameter_controller(CCL::IParameter* p) {return p->getController();}
 extern "C" CCL::IParameter* abi_parameter_original(CCL::IParameter* p) {return p->getOriginal();}
 extern "C" int abi_parameter_precision(CCL::IParameter* p) {return p->getPrecision();}
 extern "C" void abi_parameter_set_raw(CCL::IParameter* p,const CCL::Variant* v,CCL::tbool update) {p->setValue(*v,update);}

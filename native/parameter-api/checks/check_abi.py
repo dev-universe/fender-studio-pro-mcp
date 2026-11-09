@@ -10,6 +10,7 @@ expected = {
     "query": 0, "retain": 8, "release": 16,
     "parameter_type": 24, "parameter_name": 32,
     "parameter_enabled": 48, "parameter_state": 64, "parameter_tag": 104,
+    "parameter_controller": 112,
     "parameter_original": 144, "parameter_precision": 240,
     "parameter_set_raw": 168, "parameter_normalized": 280,
     "parameter_set_normalized": 288, "parameter_formatter": 328,

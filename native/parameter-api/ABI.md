@@ -12,6 +12,7 @@ The source tree is separate; no SDK implementation/header is distributed here.
 | IParameter | getType / getName | 3 / 4 | i32 / const CString reference |
 | IParameter | isEnabled / getState | 6 / 8 | u8 result; state takes i32 mask |
 | IParameter | getTag | 13 | i32 result |
+| IParameter | getController | 14 | borrowed IUnknown pointer, retained before context reentry |
 | IParameter | getOriginal | 18 | borrowed IParameter pointer, retained before any context callback |
 | IParameter | setValue | 21 | const Variant reference input; u8 update |
 | IParameter | getPrecision | 30 | i32 result, reported without deriving a choice count |
@@ -29,6 +30,7 @@ The source tree is separate; no SDK implementation/header is distributed here.
 Declaration references in this exact commit:
 
 - [IParameter](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/gui/iparameter.h#L130): parameter declarations and `kReadOnly` flag at line102.
+- [Parameter controller](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/gui/iparameter.h#L167): getController returns the controller associated with this parameter. Compiler output checks slot14 at byte offset112. The adjacent performUpdate method is not used by owner observation.
 - [Parameter state flags](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/gui/iparameter.h#L97): `kStorable=0x80`, `kStoreListValue=0x100`, `kMutable=0x800`, `kReadOnly=0x1000`, and `kCanUndo=0x10000`. Compiler assertions check each mask.
 - [IUnknown identity](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/base/iunknown.cpp#L23): canonical query IID `00000000-0000-0000-c000-000000000046`.
 - [IListParameter](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/gui/iparameter.h#L550): query IID `143641b5-92a0-4a2e-b70c-84c57e8fbdb3`. The details helper only queries and releases this interface.
@@ -50,6 +52,15 @@ Fixed property semantics and List raw-index behavior were checked in the same
 official `ccl/app/params.cpp` source as interoperability facts. The adapter does
 not copy those implementations or depend on their classes' object layouts.
 It treats absence/failure/type mismatch as explicit errors or unsupported data.
+
+The finite button pulse follows the parameter-call sequence in official
+[Button::push](https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/gui/controls/button.cpp#L862).
+It supplies max with update=true and then min with update=false through the
+existing compiler-checked `setValue` reference-input slot21. Bounds come from
+guarded IObject OUT properties, so the adapter adds no C++ Variant-by-value
+call. The independent implementation pins and checks the parameter/controller
+association and stops after an unknown upper dispatch. It implements no view
+signal and makes no inference that a Toggle or signal flag is an action.
 
 The public `IParameter::getString` declaration formats a supplied value through
 an OUT String and const Variant reference. The List implementation's

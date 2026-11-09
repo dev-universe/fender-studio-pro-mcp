@@ -14,6 +14,12 @@ use std::{
 mod details;
 #[path = "formatting.rs"]
 mod formatting;
+#[path = "owner.rs"]
+mod owner;
+pub use owner::ControllerOwner;
+#[path = "pulse.rs"]
+mod pulse;
+pub use pulse::{PulseError, PulseOutcome, PulseReceipt, PulseState};
 
 /// One caller-resolved IParameter reference, owned and confined to its thread.
 ///

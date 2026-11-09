@@ -1,5 +1,66 @@
 use super::*;
 
+pub(super) struct OwnerRead {
+    pub(super) value: Value,
+    pub(super) owner: owner_inspect::OwnerInspection,
+}
+
+pub(super) fn inspect_owner(
+    ctx: &Context<'_>,
+    provider: &Provider,
+    param: &str,
+) -> Result<OwnerRead, String> {
+    let controller = provider
+        .scalar()
+        .ok_or("parameter details require a scalar controller")?;
+    let mut guard = || {
+        controller.check()?;
+        ctx.check()
+    };
+    guard()?;
+    let text = owner_inspect::text_api()?;
+    guard()?;
+    let parameter = controller.find(param, ctx.api);
+    let chain = (|| {
+        guard()?;
+        parameter
+            .as_ref()
+            .map_err(Clone::clone)?
+            .original_chain(&mut guard)
+            .map_err(|error| error.to_string())
+    })();
+    match chain {
+        Ok(chain) => {
+            let owner = owner_inspect::OwnerInspection::capture(
+                parameter.expect("chain has a retained parameter"),
+                text,
+                &mut guard,
+            )?;
+            let coverage = match provider {
+                Provider::DspValue(_) => "direct_device_named_parameter",
+                _ => controller.coverage(),
+            };
+            let mut value = report(param, &chain, coverage);
+            value.as_object_mut().expect("object details").extend(
+                owner
+                    .value()
+                    .as_object()
+                    .expect("object owner report")
+                    .clone(),
+            );
+            value["ok"] = json!(true);
+            Ok(OwnerRead { value, owner })
+        }
+        Err(reason) => {
+            let before = guard();
+            drop(parameter);
+            let after = guard();
+            before.and(after)?;
+            Err(reason)
+        }
+    }
+}
+
 pub(super) fn inspect(
     ctx: &Context<'_>,
     provider: &Provider,
@@ -90,6 +151,36 @@ fn report(param: &str, chain: &parameters::OriginalChain, coverage: &str) -> Val
 mod tests {
     use super::*;
     use std::cell::Cell;
+
+    #[test]
+    fn owner_metadata_is_an_optional_boolean_for_parameter_details_only() {
+        let base = json!({"operation":"parameter_details","source":"dsp","param":"model","expected_instance":"61D64D66-2A46-4BEE-A623-EC5CEB898313"});
+        assert!(matches!(
+            serde_json::from_value::<Request>(base.clone()).unwrap(),
+            Request::ParameterDetails {
+                include_owner: false,
+                ..
+            }
+        ));
+        for flag in [false, true] {
+            let mut value = base.clone();
+            value["include_owner"] = json!(flag);
+            let parsed: Request = serde_json::from_value(value).unwrap();
+            assert!(parsed.validate().is_ok());
+            assert!(
+                matches!(parsed,Request::ParameterDetails { include_owner,.. } if include_owner==flag)
+            );
+        }
+        for flag in [Value::Null, json!(1), json!("true"), json!([])] {
+            let mut value = base.clone();
+            value["include_owner"] = flag;
+            assert!(serde_json::from_value::<Request>(value).is_err());
+        }
+        let mut wrong = base;
+        wrong["operation"] = json!("parameter");
+        wrong["include_owner"] = json!(true);
+        assert!(serde_json::from_value::<Request>(wrong).is_err());
+    }
 
     fn original(value: parameters::Value, min: parameters::Value) -> parameters::OriginalParameter {
         parameters::OriginalParameter {

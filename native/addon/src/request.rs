@@ -22,6 +22,8 @@ mod direct_tests;
 mod format;
 #[path = "request/node_inspect.rs"]
 mod node_inspect;
+#[path = "request/owner_inspect.rs"]
+mod owner_inspect;
 #[path = "request/presets.rs"]
 pub(super) mod presets;
 #[path = "request/state.rs"]
@@ -98,6 +100,8 @@ enum Request {
     ParameterDetails {
         param: String,
         source: Source,
+        #[serde(default)]
+        include_owner: bool,
         expected_instance: Option<String>,
     },
     ParameterDigest {
@@ -838,7 +842,7 @@ fn description(d: &parameters::Description) -> Value {
                 | parameters::Value::NonFiniteFloat { .. }
         )
     );
-    json!({"name":d.name,"title":d.name,"tag":d.tag,"value":scalar(d.raw.as_ref()),"text":d.display,"min":scalar(d.min.as_ref()),"max":scalar(d.max.as_ref()),"default":scalar(d.default_value.as_ref()),"normalized":match d.normalized {parameters::Normalized::Finite(v)=>Some(v),_=>None},"enabled":d.enabled,"readOnly":d.read_only,"writable":supported&&!opaque,"native_kind":format!("{:?}",d.kind),"native_value":typed(d.raw.as_ref()),"support":{"raw":safe_integers&&d.support.raw_number,"normalized":safe_integers&&d.support.normalized,"text":safe_integers&&d.support.display_text},"display_parser":format!("{:?}",d.display_parser)})
+    json!({"name":d.name,"title":d.name,"tag":d.tag,"value":scalar(d.raw.as_ref()),"text":d.display,"min":scalar(d.min.as_ref()),"max":scalar(d.max.as_ref()),"default":scalar(d.default_value.as_ref()),"normalized":match d.normalized {parameters::Normalized::Finite(v)=>Some(v),_=>None},"enabled":d.enabled,"readOnly":d.read_only,"writable":supported&&!opaque,"native_kind":format!("{:?}",d.kind),"native_value":typed(d.raw.as_ref()),"native_min":typed(d.min.as_ref()),"native_max":typed(d.max.as_ref()),"native_default":typed(d.default_value.as_ref()),"native_normalized":match d.normalized {parameters::Normalized::NotApplicable=>json!({"kind":"not_applicable"}),parameters::Normalized::Finite(v) if v.is_finite()=>json!({"kind":"float32","bits_hex":format!("{:08X}",v.to_bits())}),parameters::Normalized::Finite(v)=>json!({"kind":"invalid_float32","bits_hex":format!("{:08X}",v.to_bits())}),parameters::Normalized::NonFinite{bits}=>json!({"kind":"non_finite_float32","bits_hex":format!("{bits:08X}")})},"native_support":{"raw_number":d.support.raw_number,"normalized":d.support.normalized,"display_text":d.support.display_text},"support":{"raw":safe_integers&&d.support.raw_number,"normalized":safe_integers&&d.support.normalized,"text":safe_integers&&d.support.display_text},"display_parser":format!("{:?}",d.display_parser)})
 }
 fn dsp_record(
     ctx: &Context<'_>,
@@ -1066,7 +1070,15 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 .map(|d| json!({"parameter":description(&d)})),
             None => Err("parameter provider has no scalar controller".into()),
         },
-        Request::ParameterDetails { param, .. } => details::inspect(ctx, provider, &param),
+        Request::ParameterDetails {
+            param,
+            include_owner: false,
+            ..
+        } => details::inspect(ctx, provider, &param),
+        Request::ParameterDetails {
+            include_owner: true,
+            ..
+        } => Err("owner inspection requires its publication dispatcher".into()),
         Request::ParameterDigest { .. } => digest::inspect(ctx, provider),
         Request::FormatValues { param, values, .. } => {
             format::inspect(ctx, provider, &param, &values)
@@ -1108,6 +1120,7 @@ fn error(code: &str, message: &str, outcome: &str) -> Value {
 }
 pub(crate) struct ReceiptLease {
     _presets: Option<presets::Receipt>,
+    _owner: Option<owner_inspect::OwnerInspection>,
     _auxiliary: Option<node_inspect::Auxiliary>,
     _nodes: Option<node_inspect::Inventory>,
     _provider: Option<Provider>,
@@ -1116,6 +1129,7 @@ pub(crate) struct ReceiptLease {
 pub(super) struct Reply {
     value: Value,
     presets: Option<presets::Receipt>,
+    owner: Option<owner_inspect::OwnerInspection>,
     auxiliary: Option<node_inspect::Auxiliary>,
     nodes: Option<node_inspect::Inventory>,
     provider: Option<Provider>,
@@ -1127,6 +1141,7 @@ impl Reply {
         Self {
             value,
             presets: None,
+            owner: None,
             auxiliary: None,
             nodes: None,
             provider: None,
@@ -1151,6 +1166,7 @@ impl Reply {
             .expect("object response")
             .remove("verified");
         digest::invalidate(&mut self.value);
+        owner_inspect::invalidate(&mut self.value);
     }
     pub(super) fn final_check(&mut self, service: *mut Service) -> bool {
         let result = match self.context.as_ref() {
@@ -1158,6 +1174,14 @@ impl Reply {
                 .presets
                 .as_ref()
                 .map_or(Ok(()), |presets| presets.check(ctx))
+                .and_then(|_| {
+                    self.owner.as_ref().map_or(Ok(()), |owner| {
+                        owner.check(&mut || {
+                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                            ctx.check()
+                        })
+                    })
+                })
                 .and_then(|_| {
                     self.auxiliary
                         .as_ref()
@@ -1196,6 +1220,7 @@ impl Reply {
     pub(super) fn take_receipt(&mut self) -> Option<ReceiptLease> {
         self.context.take().map(|context| ReceiptLease {
             _presets: self.presets.take(),
+            _owner: self.owner.take(),
             _auxiliary: self.auxiliary.take(),
             _nodes: self.nodes.take(),
             _provider: self.provider.take(),
@@ -1204,6 +1229,7 @@ impl Reply {
     }
     pub(super) fn release_context(&mut self) {
         drop(self.presets.take());
+        drop(self.owner.take());
         drop(self.auxiliary.take());
         drop(self.nodes.take());
         drop(self.provider.take());
@@ -1283,6 +1309,7 @@ pub(super) fn dispatch(
             value: error("context_guard_failed", &reason, "not_applied"),
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1307,6 +1334,7 @@ pub(super) fn dispatch(
             value,
             presets: None,
             auxiliary,
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1326,6 +1354,7 @@ pub(super) fn dispatch(
             value,
             presets: catalog,
             auxiliary: None,
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1355,6 +1384,7 @@ pub(super) fn dispatch(
             value,
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: None,
             provider,
             context: Some(ctx),
@@ -1377,11 +1407,24 @@ pub(super) fn dispatch(
         } => Some(*node_scope),
         _ => None,
     };
-    let (mut value, provider) = match provider(&ctx, source, scalar) {
+    let (mut value, provider, owner) = match provider(&ctx, source, scalar) {
         Ok(provider) => {
-            let mut value = execute(&ctx, request, &provider);
+            let (mut value, owner) = match request {
+                Request::ParameterDetails {
+                    param,
+                    include_owner: true,
+                    ..
+                } => match details::inspect_owner(&ctx, &provider, &param) {
+                    Ok(read) => (read.value, Some(read.owner)),
+                    Err(reason) => (
+                        error("parameter_owner_inspection_failed", &reason, "not_applied"),
+                        None,
+                    ),
+                },
+                request => (execute(&ctx, request, &provider), None),
+            };
             value["source"] = json!(provider.source());
-            (value, Some(provider))
+            (value, Some(provider), owner)
         }
         Err(e) => {
             let mut value = error("provider_unavailable", &e, "not_applied");
@@ -1390,7 +1433,7 @@ pub(super) fn dispatch(
                 Source::Controller => json!("controller"),
                 Source::Auto => Value::Null,
             };
-            (value, None)
+            (value, None, None)
         }
     };
     let nodes = if let Some(scope) = node_scope.filter(|_| value["ok"] == true) {
@@ -1415,6 +1458,7 @@ pub(super) fn dispatch(
         value,
         presets: None,
         auxiliary: None,
+        owner,
         nodes,
         provider,
         context: Some(ctx),
@@ -1425,6 +1469,192 @@ pub(super) fn dispatch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn description_fixture() -> parameters::Description {
+        parameters::Description {
+            name: "synthetic".into(),
+            tag: 7,
+            kind: parameters::Kind::Float,
+            enabled: true,
+            read_only: false,
+            raw: Some(parameters::NativeValue {
+                variant_tag: 2,
+                value: parameters::Value::Float(1.0),
+            }),
+            min: None,
+            max: None,
+            default_value: None,
+            normalized: parameters::Normalized::Finite(0.5),
+            display: "synthetic".into(),
+            display_parser: parameters::DisplayParser::PlainNumeric,
+            support: parameters::Support {
+                raw_number: true,
+                normalized: true,
+                display_text: true,
+            },
+        }
+    }
+    #[test]
+    fn native_normalized_preserves_applicability_signed_zero_and_exact_float32_bits() {
+        for (normalized, expected) in [
+            (
+                parameters::Normalized::NotApplicable,
+                json!({"kind":"not_applicable"}),
+            ),
+            (
+                parameters::Normalized::Finite(-0.0),
+                json!({"kind":"float32","bits_hex":"80000000"}),
+            ),
+            (
+                parameters::Normalized::Finite(f32::from_bits(0x3F80_0001)),
+                json!({"kind":"float32","bits_hex":"3F800001"}),
+            ),
+            (
+                parameters::Normalized::NonFinite { bits: 0x7FC0_0042 },
+                json!({"kind":"non_finite_float32","bits_hex":"7FC00042"}),
+            ),
+            (
+                parameters::Normalized::NonFinite { bits: 0xFF80_0000 },
+                json!({"kind":"non_finite_float32","bits_hex":"FF800000"}),
+            ),
+        ] {
+            let mut d = description_fixture();
+            d.normalized = normalized;
+            let value = description(&d);
+            assert_eq!(value["native_normalized"], expected);
+            match normalized {
+                parameters::Normalized::Finite(v) => assert_eq!(
+                    (value["normalized"].as_f64().unwrap() as f32).to_bits(),
+                    v.to_bits()
+                ),
+                _ => assert_eq!(value["normalized"], Value::Null),
+            }
+            let transported: Value = serde_json::from_str(&value.to_string()).unwrap();
+            assert_eq!(transported["native_normalized"], expected);
+        }
+    }
+    #[test]
+    fn invalid_finite_normalized_values_have_an_explicit_non_numeric_marker() {
+        for bits in [0x7FC0_1234, 0x7F80_0000, 0xFF80_0000] {
+            let mut d = description_fixture();
+            d.normalized = parameters::Normalized::Finite(f32::from_bits(bits));
+            let value = description(&d);
+            assert_eq!(
+                value["native_normalized"],
+                json!({"kind":"invalid_float32","bits_hex":format!("{bits:08X}")})
+            );
+            assert_eq!(value["normalized"], Value::Null);
+            assert!(value["native_normalized"].get("value").is_none());
+            assert!(serde_json::from_str::<Value>(&value.to_string()).is_ok());
+        }
+    }
+    #[test]
+    fn descriptions_expose_exact_float_extrema_and_preserve_scalar_fields() {
+        let mut d = description_fixture();
+        d.min = Some(parameters::NativeValue {
+            variant_tag: 2,
+            value: parameters::Value::Float(-0.0),
+        });
+        d.max = Some(parameters::NativeValue {
+            variant_tag: 2,
+            value: parameters::Value::Float(f64::from_bits(0x3FF0_0000_0000_0001)),
+        });
+        d.default_value = Some(parameters::NativeValue {
+            variant_tag: 2,
+            value: parameters::Value::Float(0.0),
+        });
+        let value = description(&d);
+        assert_eq!(
+            value["min"].as_f64().unwrap().to_bits(),
+            (-0.0_f64).to_bits()
+        );
+        assert_eq!(value["max"], scalar(d.max.as_ref()));
+        assert_eq!(value["default"], json!(0.0));
+        assert_eq!(value["native_min"]["data"]["bits_hex"], "8000000000000000");
+        assert_eq!(value["native_max"]["data"]["bits_hex"], "3FF0000000000001");
+        assert_eq!(
+            value["native_default"]["data"]["bits_hex"],
+            "0000000000000000"
+        );
+        for key in ["native_min", "native_max", "native_default"] {
+            assert_eq!(value[key]["variant_tag"], 2);
+            assert_eq!(value[key]["data"]["kind"], "float");
+        }
+        let transported: Value = serde_json::from_str(&value.to_string()).unwrap();
+        assert_eq!(
+            transported["native_max"]["data"]["bits_hex"],
+            "3FF0000000000001"
+        );
+        assert_eq!(
+            value["native_support"],
+            json!({"raw_number":true,"normalized":true,"display_text":true})
+        );
+        assert_eq!(
+            value["support"],
+            json!({"raw":true,"normalized":true,"text":true})
+        );
+        d.min = None;
+        d.max = None;
+        d.default_value = None;
+        let value = description(&d);
+        for key in [
+            "min",
+            "max",
+            "default",
+            "native_min",
+            "native_max",
+            "native_default",
+        ] {
+            assert_eq!(value[key], Value::Null);
+        }
+    }
+    #[test]
+    fn exact_integer_extrema_keep_native_support_when_public_safety_filters_it() {
+        for n in [
+            1,
+            MAX_SAFE_INTEGER,
+            -MAX_SAFE_INTEGER,
+            MAX_SAFE_INTEGER + 2,
+            -MAX_SAFE_INTEGER - 2,
+            i64::MIN,
+            i64::MAX,
+        ] {
+            let native = parameters::NativeValue {
+                variant_tag: 1,
+                value: parameters::Value::Integer(n),
+            };
+            let mut d = description_fixture();
+            d.kind = parameters::Kind::Integer;
+            d.raw = Some(native.clone());
+            d.min = Some(native.clone());
+            d.max = Some(native.clone());
+            d.default_value = Some(native);
+            let value = description(&d);
+            let safe = n.abs_diff(0) <= MAX_SAFE_INTEGER as u64;
+            for key in ["native_min", "native_max", "native_default"] {
+                assert_eq!(value[key]["variant_tag"], 1);
+                assert_eq!(value[key]["data"]["kind"], "integer");
+                if safe {
+                    assert_eq!(value[key]["data"]["value"], json!(n));
+                    assert!(value[key]["data"].get("exact_decimal").is_none());
+                } else {
+                    assert_eq!(value[key]["data"]["exact_decimal"], n.to_string());
+                    assert!(value[key]["data"].get("value").is_none());
+                }
+            }
+            for key in ["value", "min", "max", "default"] {
+                assert_eq!(value[key], if safe { json!(n) } else { Value::Null });
+            }
+            assert_eq!(value["writable"], safe);
+            assert_eq!(
+                value["support"],
+                json!({"raw":safe,"normalized":safe,"text":safe})
+            );
+            assert_eq!(
+                value["native_support"],
+                json!({"raw_number":true,"normalized":true,"display_text":true})
+            );
+        }
+    }
     #[test]
     fn preset_and_auxiliary_requests_require_exact_target_and_finite_fields() {
         let expected = uid(&SERVICE_CID);
@@ -2095,6 +2325,7 @@ mod guard_tests {
             fixture.service,
             ReceiptLease {
                 _presets: None,
+                _owner: None,
                 _auxiliary: None,
                 _nodes: None,
                 _provider: None,
@@ -2125,6 +2356,7 @@ mod guard_tests {
             value: json!({"ok":true,"verified":true,"outcome":"observed","instance":context.instance,"source":"controller"}),
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -2163,6 +2395,7 @@ mod guard_tests {
             value: json!({"ok":true,"node_report":report,"instance":context.instance,"source":"dsp"}),
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: Some(inspection),
             provider: None,
             context: Some(context),
@@ -2199,6 +2432,7 @@ mod guard_tests {
             value: json!({"ok":true,"instance":context.instance,"source":"dsp"}),
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: Some(inspection),
             provider: None,
             context: Some(context),
@@ -2229,6 +2463,7 @@ mod guard_tests {
             value: json!({"ok":true,"outcome":"observed","auxiliary_report":report}),
             presets: None,
             auxiliary: Some(auxiliary),
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -2256,6 +2491,7 @@ mod guard_tests {
             value: json!({"ok":true,"outcome":"observed"}),
             presets: None,
             auxiliary: Some(auxiliary),
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -2276,6 +2512,7 @@ mod guard_tests {
                 "schema_sha256":"a".repeat(64),"all_values_sha256":"b".repeat(64),"non_read_only_values_sha256":"c".repeat(64),"access_complete":true}),
             presets: None,
             auxiliary: None,
+            owner: None,
             nodes: None,
             provider: None,
             context: Some(fixture.context()),
