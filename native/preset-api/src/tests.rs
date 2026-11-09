@@ -776,3 +776,51 @@ fn target_switch_during_final_entry_cleanup_cannot_dispatch() {
     drop(catalog);
     f.balanced();
 }
+
+#[test]
+fn failed_query_never_claims_or_releases_its_output() {
+    #[repr(C)]
+    struct Probe {
+        table: *const *const c_void,
+        releases: Cell<u32>,
+        output: Cell<*mut c_void>,
+        status: Cell<i32>,
+    }
+    unsafe extern "C" fn query(p: *mut c_void, _: *const Uid, out: *mut *mut c_void) -> i32 {
+        let probe = unsafe { &*p.cast::<Probe>() };
+        unsafe { *out = probe.output.get() };
+        probe.status.get()
+    }
+    unsafe extern "C" fn release(p: *mut c_void) -> u32 {
+        let probe = unsafe { &*p.cast::<Probe>() };
+        probe.releases.set(probe.releases.get() + 1);
+        1
+    }
+    let table = [
+        query as *const c_void,
+        ptr::null(),
+        release as *const c_void,
+    ];
+    let sentinel = Probe {
+        table: table.as_ptr(),
+        releases: Cell::new(0),
+        output: Cell::new(ptr::null_mut()),
+        status: Cell::new(-1),
+    };
+    let root = Probe {
+        table: table.as_ptr(),
+        releases: Cell::new(0),
+        output: Cell::new((&sentinel as *const Probe).cast_mut().cast()),
+        status: Cell::new(-1),
+    };
+    let owner =
+        unsafe { Owned::take(NonNull::new((&root as *const Probe).cast_mut().cast()).unwrap()) };
+    assert!(owner.query(&ffi::UNKNOWN).is_err());
+    assert_eq!(
+        sentinel.releases.get(),
+        0,
+        "failed QI output is not an owned reference"
+    );
+    drop(owner);
+    assert_eq!(root.releases.get(), 1);
+}

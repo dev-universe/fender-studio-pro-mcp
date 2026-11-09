@@ -119,12 +119,19 @@ impl Owned {
             unsafe { method(self.raw(), 0) };
         let mut out = std::ptr::null_mut();
         let status = unsafe { query(self.raw(), iid, &mut out) };
-        let owner = NonNull::new(out).map(|p| unsafe { Self::take(p) });
+        unsafe { Self::from_success(status, out, "required interface is unavailable") }
+    }
+    pub unsafe fn from_success(
+        status: i32,
+        out: *mut c_void,
+        error: &'static str,
+    ) -> Result<Self, Error> {
         if status != 0 {
-            drop(owner);
-            return Err(Error::Unavailable("required interface is unavailable"));
+            return Err(Error::Unavailable(error));
         }
-        owner.ok_or(Error::Unavailable("successful query returned null"))
+        NonNull::new(out)
+            .map(|pointer| unsafe { Self::take(pointer) })
+            .ok_or(Error::Unavailable("successful native result returned null"))
     }
 }
 impl Drop for Owned {

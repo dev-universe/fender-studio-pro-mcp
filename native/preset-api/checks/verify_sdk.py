@@ -1,6 +1,7 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import subprocess
 import sys
 
@@ -13,3 +14,17 @@ for path,expected in pin['headers'].items():
     if hashlib.sha256((root/path).read_bytes()).hexdigest()!=expected:
         raise SystemExit(f"REFUSED changed pinned API source: {path}")
 print(f"Verified exact {pin['tag']} and {len(pin['headers'])} public source hashes")
+
+folder_source = Path(__file__).parents[1].joinpath('src/folder.rs').read_text()
+preset_header = root.joinpath('ccl/public/app/ipreset.h').read_text()
+for constant, interface in [('MEDIATOR', 'IPresetMediator'), ('COLLECTOR', 'IPresetCollector'),
+                            ('REGISTRY', 'IPresetFileRegistry'), ('HANDLER', 'IPresetFileHandler')]:
+    public = re.search(r'DEFINE_IID\s*\(\s*' + interface + r'\s*,([^)]*)\)', preset_header)
+    rust = re.search(r'const\s+' + constant + r':\s*Uid\s*=\s*Uid\s*\{(.*?)\};', folder_source, re.S)
+    if not public or not rust:
+        raise SystemExit(f'REFUSED missing fixed folder IID {interface}')
+    expected = [int(value.strip(), 0) for value in public[1].split(',')]
+    actual = [int(value, 0) for value in re.findall(r'0x[0-9a-fA-F]+', rust[1])]
+    if actual != expected:
+        raise SystemExit(f'REFUSED changed fixed folder IID {interface}')
+print('PASS: four fixed folder preset IIDs match pinned declarations')

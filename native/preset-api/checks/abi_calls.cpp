@@ -59,3 +59,9 @@ extern "C" CCL::tbool abi_can_insert(CCL::IDataTarget* p,CCL::IUnknownList* l){r
 extern "C" CCL::tbool abi_insert(CCL::IDataTarget* p,CCL::IUnknownList* l){return p->insertData(*l,nullptr,-1);}
 extern "C" CCL::IPlugInManager* abi_allocator_export(){return &CCL::System::GetPlugInManager();}
 extern "C" CCL::INativeFileSystem* abi_filesystem_export(){return &CCL::System::GetFileSystem();}
+
+static_assert(static_cast<int>(CCL::kResultOk) == 0 && static_cast<int>(CCL::kResultNoInterface) == static_cast<int>(0x80004002));
+static_assert(CCL::IPresetFileHandler::kCanImport == 1 && CCL::IPresetFileHandler::kCanExport == 2);
+extern "C" CCL::IPresetFileHandler* abi_folder_handler(CCL::IPresetFileRegistry* p, CCL::IUnknown* target){return p->getHandlerForTarget(target);}
+extern "C" int abi_folder_flags(CCL::IPresetFileHandler* p, CCL::IUnknown* target){return p->getTargetFlags(target);}
+extern "C" int abi_attribute_count(CCL::IAttributeList* p){return p->countAttributes();}

@@ -82,6 +82,47 @@ The add-on must expire catalog tokens on service/document/target changes and
 drain them at normal shutdown. Keep a catalog owner through native output
 publication. A source/helper test cannot prove any of those owner integrations.
 
+## Inserts folder preflight
+
+`folder::FolderPresetRoute` is a separate read-only precursor. It does not
+relax the catalog's Device/class-key rules. Its three owned inputs are the
+already bound folder `IUnknown`, the host `IPresetFileRegistry`, and an
+`IClassAllocator`. The owner must independently prove the folder's exact
+service, active document and unique channel attachment. This library does not
+discover or certify that relationship.
+
+```text
+FolderPresetRoute::discover_owned(inputs, guard) -> FolderPresetRoute
+route.observe(guard) -> FolderObservation
+route.check(guard)
+```
+
+The route queries only fixed mediator, collector and registry interfaces and
+requires their canonical identities to match their sources. It retains the
+borrowed handler returned by `getHandlerForTarget` before checking context, then
+requires its fixed interface and import/export target flags. It does not use a
+default-handler fallback. A changed current handler invalidates the route.
+
+The host mediator fills a newly allocated attribute list. The observation
+reports a bounded attribute count and only three optional text attributes,
+`Class:Name`, `Class:Vendor` and `Class:Category`. The count is limited to64 and
+each text to256 UTF-16 units. Missing fields remain absent. Nontext, oversized,
+malformed or changing values prevent a successful observation. These fields
+are metadata observations, not a substitute for folder identity or ownership.
+
+Successful String metadata is immediately pinned before any context guard,
+including borrowed Variant text. Temporary native owners are released before
+the final attachment/guard checks.
+The integrating owner keeps the route alive through publication and performs
+its fresh context check after any final route release. All calls and releases
+remain on the creator GUI thread; the route is neither Send nor Sync. It has
+no URL, filename, state token, preset construction, file read/write, store or
+restore method. No collection or graph-restoration acceptance is implied.
+
+Failed QueryInterface or factory results never claim or release a nonnull
+output. Only exact success plus a nonnull pointer transfers ownership. The
+shared catalog helpers use the same rule.
+
 ## Verification and provenance
 
 ```sh
@@ -91,8 +132,10 @@ cargo +1.88.0 clippy --manifest-path native/preset-api/Cargo.toml --all-targets 
 sh native/preset-api/checks/check_sdk.sh /path/to/ccl-framework-5.1.2
 ```
 
-Compiler-only probes verify 35 virtual-call offsets, two service exports,
-UID/String/CString/Variant layouts and 53 exact public source hashes. They use
+Compiler-only probes verify 38 virtual-call offsets, two service exports,
+UID/String/CString/Variant layouts and 53 exact public source hashes. Folder
+preflight also verifies four fixed interface IDs, the import/export flag values
+and the exact success/no-interface result constants. They use
 an external official SDK at ccl-5.1.2 commit
 `ad5876b1a7b64aa247f4378c86a7862e7c284ba3` and are never linked into the library.
 The Rust implementation and probe calls are independently authored. No CCL

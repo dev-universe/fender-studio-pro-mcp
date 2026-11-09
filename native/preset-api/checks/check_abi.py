@@ -10,6 +10,7 @@ expected = {
     "list_add":64,"list_remove":72,"list_clear":80,"iterator_done":24,"iterator_next":32,
     "read_only":24,"name":40,"meta":48,"url":56,"url_clone":24,"url_equal":40,
     "url_empty":48,"url_kind":56,"url_protocol":80,"url_host":96,"url_native":192,"url_absolute":248,
+    "folder_handler":48,"folder_flags":88,"attribute_count":40,
     "exists":32,"attribute":80,"string_length":32,"string_copy":64,"can_insert":24,"insert":32,
 }
 functions = dict(re.findall(r"^_abi_([^:]+):[^\n]*\n(.*?)(?=^\s*; -- End function)",assembly,re.MULTILINE|re.DOTALL))

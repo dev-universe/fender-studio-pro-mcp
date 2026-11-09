@@ -1,6 +1,7 @@
-//! Owned matching-class local preset catalogs. No resolver, IPC or file writes.
+//! Owned local preset catalogs and fixed folder preflight. No IPC or file writes.
 #![deny(unsafe_op_in_unsafe_fn)]
 mod ffi;
+pub mod folder;
 mod list;
 use ffi::{Owned, StringRepr};
 use std::{
@@ -132,12 +133,7 @@ impl Services {
                 &mut out,
             )
         };
-        let result = NonNull::new(out).map(|p| unsafe { Owned::take(p) });
-        if status != 0 {
-            drop(result);
-            return Err(Error::Unavailable("Attributes factory failed"));
-        }
-        result.ok_or(Error::Unavailable("Attributes factory returned null"))
+        unsafe { Owned::from_success(status, out, "Attributes factory failed") }
     }
     fn meta(&self) -> Result<(Owned, String), Error> {
         let attributes = self.attributes()?;
