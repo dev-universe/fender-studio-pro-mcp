@@ -12,7 +12,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
 | Impact | 3,842 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
-| Nested graph | 42 Splitter controls and inner/sibling state restoration | Whole-folder capture/load and topology editing |
+| Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.
@@ -417,6 +417,32 @@ wire/Runtime checks, and a fresh actual-host regression. In that run the
 released-token request returned outer `not_applied` with `native_rejected`; two
 complete reads preserved the 199-record schema and all 64 writable values. No
 load was accepted or repeated by this regression.
+
+A separately declared nested-fixture run then captured and reopened a
+2,859-byte two-part host-authored chain. One same-state load and one later load
+of that same original token each replaced both Devices. Fresh positive
+Graph-node-to-Slot-to-Device paths bound the two logical Mixtools after each
+known accepted load; all six observed Device UIDs were distinct.
+
+The run changed one inner Mixtool gain and then one inner Splitter gain. Two
+complete reads proved only the intended child value changed, with its sibling
+unchanged; a later pair also proved only the intended Splitter value changed.
+The original chain restored both 72-record schemas, all 142 writable values and
+all 14 originally active Splitter fields twice. The token was released and two
+more full reads matched. The separately observed read-only values also showed
+no changes. Initial and final child displays were both `default`, under the
+predeclared exposed-state policy.
+
+The root observed the upper and lower Routing views before capture and after
+each load. Both nested branches, their merge, the outer bypass branch and final
+merge/output remained visible in the same arrangement. Native graph reports
+remain incomplete ownership reports and do not enumerate audio edges. Reads
+and Main-zero checks were sequential; the capture's last Main observation to
+receipt interval was about 31.4 seconds, without an enforced 30-second dispatch
+bound. This does not prove atomic output blocking, physical silence, hidden
+inactive Splitter values, opaque contents or generic node/connection editing.
+Independent offline review rebuilt all 40 full-provider observations across ten
+stages and confirmed the scoped lifecycle and intended deltas.
 
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
