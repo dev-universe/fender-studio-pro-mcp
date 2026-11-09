@@ -595,6 +595,16 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { label: this.readParam(channel, PreSonus.ParamID.kLabel), mute: this.readParam(channel, "mute"), recordArmed: this.readParam(channel, PreSonus.ParamID.kRecord), monitor: this.readParam(channel, "monitor") };
     }
 
+    fixtureTrackState() {
+        try {
+            const state = this.focusedTrackState();
+            if (!state || typeof state.label !== "string" || !state.label
+                || ["mute", "recordArmed", "monitor"].some(name => state[name] !== true && state[name] !== false && state[name] !== 0 && state[name] !== 1))
+                return { error: "complete focused Music fixture switches are unavailable" };
+            return { label: state.label, mute: state.mute, recordArmed: state.recordArmed, monitor: state.monitor };
+        } catch (_) { return { error: "focused Music fixture state is unavailable" }; }
+    }
+
     pluginInspect(args) {
         if (args.node_scope === "plugin_controller" && (args.include_nodes !== true
             || typeof args.plugin !== "string" || !args.plugin.trim()

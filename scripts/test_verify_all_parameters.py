@@ -1194,5 +1194,224 @@ class DirectDigestTests(unittest.TestCase):
         self.assertEqual(client.writes, [])
 
 
+MUSIC_TARGET = {"kind": "instrument", "track": "FSP Verify Instrument Fixture", "plugin": "Fixture Instrument"}
+
+
+class MusicDeviceClient(DigestDeviceClient):
+    def __init__(self):
+        super().__init__()
+        self.focused = {"label": MUSIC_TARGET["track"], "mute": True, "recordArmed": False, "monitor": 0}
+        self.context_hook = None
+        self.main_volume = 0
+        self.named_read_hook = None
+
+    def call(self, name, args):
+        if name == "plugin_inspect":
+            self.calls.append((name, copy.deepcopy(args)))
+            body = {"focusedTrackState": copy.deepcopy(self.focused)}
+            if args.get("include_context"):
+                sample = {
+                    "context": {"document": self.document, "session": self.session, "open": True, "title": "MCP Validation Scratch"},
+                    "song": {"title": "MCP Validation Scratch", "transport": {"playing": False, "recording": False}},
+                    "target_track": {"exact_match_count": 1, "name": MUSIC_TARGET["track"], "mediaType": "Music", "eventCount": 0, "events": [], "events_complete": True},
+                    "selection": {"complete": True, "tracks": [{"name": MUSIC_TARGET["track"], "mediaType": "Music"}]},
+                    "focused_track": copy.deepcopy(self.focused),
+                }
+                body.update(native={"ok": True, "source": "dsp", "instance": dict(self.instance)},
+                            fixture_context={"version": 1, "atomic": False, "scope": "music_fixture_before_after",
+                                             "target": {**MUSIC_TARGET, "slot": None}, "before": sample, "after": copy.deepcopy(sample)})
+                if self.context_hook:
+                    self.context_hook(self, body)
+            return self.receipt(body)
+        if name == "operation_run" and args["operation"] in ("tracks", "channels", "command"):
+            self.calls.append((name, copy.deepcopy(args)))
+            if args["operation"] == "tracks":
+                return self.receipt([{"name": MUSIC_TARGET["track"], "mediaType": "Music", "eventCount": 0, "events": [], "selected": True}])
+            if args["operation"] == "channels":
+                return self.receipt([{"label": "Observed output", "volume": self.main_volume, "output": None}])
+            field = {"Mute": "mute", "Arm": "recordArmed", "Monitor": "monitor"}[args["args"]["name"]]
+            self.focused[field] = not self.focused[field]
+            return self.receipt({}, "applied_unverified")
+        result = super().call(name, args)
+        if name == "plugin_parameters" and args.get("names") and self.named_read_hook:
+            self.named_read_hook(self)
+        return result
+
+
+class FixtureContextTests(unittest.TestCase):
+    def setUp(self):
+        PRIVATE_ROOT.mkdir(exist_ok=True)
+        self.temporary = tempfile.TemporaryDirectory(prefix="fixture-context-unit-", dir=PRIVATE_ROOT)
+        self.journal = Journal(Path(self.temporary.name) / "run")
+        self.no_sleep = patch("verify_all_parameters.time.sleep")
+        self.no_sleep.start()
+
+    def tearDown(self):
+        self.no_sleep.stop()
+        self.journal.close()
+        self.temporary.cleanup()
+
+    def runner(self, client, **options):
+        runner = Runner(client, self.journal, "MCP Validation Scratch", block_size=1, **options)
+        runner.initialize()
+        return runner
+
+    def reset_journal(self, name):
+        self.journal.close()
+        self.journal = Journal(Path(self.temporary.name) / name)
+
+    def test_default_keeps_legacy_music_checks_and_opt_in_replaces_each_later_check_with_one_rpc(self):
+        old = MusicDeviceClient()
+        legacy = self.runner(old)
+        legacy.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+        self.assertFalse(any(args.get("include_context") for _, args in old.calls))
+        self.reset_journal("fast")
+        client = MusicDeviceClient()
+        runner = self.runner(client, use_fixture_context=True)
+        runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertEqual(len(client.writes), 2)
+        first_page = next(i for i, (name, args) in enumerate(client.calls) if name == "plugin_parameters" and not args.get("names"))
+        self.assertTrue(all(name != "operation_run" for name, _ in client.calls[first_page + 1:]))
+        self.assertTrue(any(args.get("include_context") is True for _, args in client.calls[first_page + 1:]))
+        self.assertLess(len(client.calls), len(old.calls))
+        self.assertFalse(runner.summary["fixture_context_atomic"])
+        self.assertFalse(runner.summary["all_writable_parameters_verified"])
+
+    def test_opt_in_also_keeps_full_digest_checkpoints_and_two_fresh_provider_proofs(self):
+        client = MusicDeviceClient()
+        runner = self.runner(client, use_fixture_context=True, use_parameter_digest=True)
+        runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+        self.assertTrue(runner.summary["classes"][0]["digest_fixture_complete"])
+        self.assertGreaterEqual(client.digest_calls, 2)
+        self.assertEqual(runner.finish(True), 0)
+
+    def test_opt_in_is_explicit_and_unsupported_or_unfrozen_targets_fail_without_rpc_or_write(self):
+        for value in (None, 0, 1, "true"):
+            with self.assertRaises(AcceptanceFailure):
+                Runner(None, self.journal, "Scratch", use_fixture_context=value)
+        client = MusicDeviceClient()
+        runner = self.runner(client, use_fixture_context=True)
+        initial = len(client.calls)
+        with self.assertRaises(ContextChanged):
+            runner.fixture_check(MUSIC_TARGET)
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(TARGET, write_roundtrips=True)
+        self.assertEqual(len(client.calls), initial)
+        self.assertEqual(client.writes, [])
+
+    def test_initial_explicit_midi_preparation_stays_in_the_legacy_setup_path(self):
+        client = MusicDeviceClient()
+        client.focused.update(mute=False, recordArmed=True, monitor=1)
+        runner = self.runner(client, use_fixture_context=True, prepare_midi=True)
+        runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+        commands = [(i, args) for i, (name, args) in enumerate(client.calls)
+                    if name == "operation_run" and args["operation"] == "command"]
+        first_fast = next(i for i, (_, args) in enumerate(client.calls) if args.get("include_context"))
+        self.assertEqual([args["args"]["name"] for _, args in commands], ["Mute", "Arm", "Monitor"])
+        self.assertTrue(all(i < first_fast for i, _ in commands))
+        self.assertEqual(runner.counts["changed_readback_restored"], 1)
+
+    def test_every_context_check_is_a_fresh_pinned_inspection_without_preparation(self):
+        client = MusicDeviceClient()
+        runner = self.runner(client, use_fixture_context=True)
+        runner.fixture_context_provider = runner.snapshot(MUSIC_TARGET)
+        before = len(client.calls)
+        runner.fixture_check(MUSIC_TARGET)
+        runner.fixture_check(MUSIC_TARGET)
+        calls = client.calls[before:]
+        self.assertEqual(len(calls), 2)
+        for name, args in calls:
+            self.assertEqual(name, "plugin_inspect")
+            self.assertIs(args["include_context"], True)
+            self.assertEqual(args["source"], "dsp")
+            self.assertEqual(args["expected_instance"], INSTANCE["object_uid"])
+            self.assertEqual(args["expected_document"], "test:1")
+        self.assertEqual(client.writes, [])
+
+    def test_malformed_or_changed_context_never_allows_a_setter_or_fallback(self):
+        changes = [
+            lambda b: b.pop("fixture_context"),
+            lambda b: b.update(error={}),
+            lambda b: b["fixture_context"].update(version=True),
+            lambda b: b["fixture_context"].update(atomic=True),
+            lambda b: b["fixture_context"].update(scope="all_tracks"),
+            lambda b: b["fixture_context"]["target"].update(slot=False),
+            lambda b: b["native"].update(source="controller"),
+            lambda b: b["native"]["instance"].update(class_uid="changed"),
+            lambda b: b["native"].update(outcome="unknown"),
+            lambda b: b["native"].update(outcome="applied_verified"),
+            lambda b: b["native"].update(error={}),
+            lambda b: b["fixture_context"]["before"]["context"].update(document="stale"),
+            lambda b: b["fixture_context"]["after"]["context"].update(session="stale"),
+            lambda b: b["fixture_context"]["after"].pop("song"),
+            lambda b: b["fixture_context"]["after"]["song"]["transport"].update(playing=0),
+            lambda b: b["fixture_context"]["after"]["song"]["transport"].update(recording=True),
+            lambda b: b["fixture_context"]["after"]["target_track"].update(exact_match_count=2),
+            lambda b: b["fixture_context"]["after"]["target_track"].update(eventCount=False),
+            lambda b: b["fixture_context"]["after"]["target_track"].update(events_complete=False),
+            lambda b: b["fixture_context"]["after"]["target_track"].update(events=[{}]),
+            lambda b: b["fixture_context"]["after"]["selection"].update(complete=False),
+            lambda b: b["fixture_context"]["after"]["selection"]["tracks"].append({"name": "Extra", "mediaType": "Audio"}),
+            lambda b: b["fixture_context"]["after"]["focused_track"].update(mute=False),
+            lambda b: b["fixture_context"]["after"]["focused_track"].update(recordArmed=None),
+            lambda b: b["fixture_context"]["after"]["focused_track"].update(monitor="0"),
+            lambda b: b["fixture_context"]["after"]["focused_track"].update(monitor=False),
+        ]
+        for i, change in enumerate(changes):
+            with self.subTest(i=i):
+                self.reset_journal("malformed-" + str(i))
+                client = MusicDeviceClient()
+                client.context_hook = lambda c, b: change(b)
+                runner = self.runner(client, use_fixture_context=True)
+                with self.assertRaises(ContextChanged):
+                    runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+                self.assertEqual(client.writes, [])
+                last = client.calls[-1]
+                self.assertEqual(last[0], "plugin_inspect")
+                self.assertIs(last[1]["include_context"], True)
+
+    def test_guard_failure_after_known_change_stops_without_restore_or_any_later_setter(self):
+        for kind in ("malformed", "native_unknown", "session", "transport"):
+            with self.subTest(kind=kind):
+                self.reset_journal("post-change-" + kind)
+                client = MusicDeviceClient()
+                def change(c, body):
+                    if not c.writes:
+                        return
+                    if kind == "malformed":
+                        body["fixture_context"]["after"].pop("target_track")
+                    elif kind == "native_unknown":
+                        body["native"]["outcome"] = "unknown"
+                    elif kind == "session":
+                        c.session = "other"
+                    else:
+                        body["fixture_context"]["after"]["song"]["transport"]["playing"] = True
+                client.context_hook = change
+                runner = self.runner(client, use_fixture_context=True)
+                with self.assertRaises((ContextChanged, UnknownMutation)):
+                    runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+                self.assertEqual(len(client.writes), 1)
+                self.assertEqual(runner.counts["changed_readback_restored"], 0)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_separate_write_guard_still_reads_main_after_an_intervening_named_read(self):
+        class OutputGuard(Runner):
+            def write(self, provider, parameter, values):
+                output = self.operation("channels")
+                if len(output) != 1 or output[0]["volume"] != 0:
+                    raise ContextChanged("Fresh output observation is not zero")
+                return super().write(provider, parameter, values)
+        client = MusicDeviceClient()
+        client.named_read_hook = lambda c: setattr(c, "main_volume", 0.5)
+        runner = OutputGuard(client, self.journal, "MCP Validation Scratch", block_size=1, use_fixture_context=True)
+        runner.initialize()
+        with self.assertRaises(ContextChanged):
+            runner.run_fixture(MUSIC_TARGET, write_roundtrips=True)
+        self.assertEqual(client.writes, [])
+        self.assertEqual(client.calls[-1][1]["operation"], "channels")
+
+
 if __name__ == "__main__":
     unittest.main()

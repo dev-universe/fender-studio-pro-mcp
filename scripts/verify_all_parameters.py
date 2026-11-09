@@ -397,15 +397,18 @@ def candidate(parameter):
 
 class Runner:
     def __init__(self, client, journal, scratch_title, prepare_midi=False, block_size=16,
-                 read_only_observations=False, use_parameter_digest=False):
+                 read_only_observations=False, use_parameter_digest=False, use_fixture_context=False):
         require(type(use_parameter_digest) is bool, "Parameter digest verification requires an explicit boolean mode")
         require(not use_parameter_digest or (type(block_size) is int and block_size == 1),
                 "Direct parameter digest verification requires block_size=1")
+        require(type(use_fixture_context) is bool, "Fixture context verification requires an explicit boolean mode")
         self.client, self.journal, self.scratch_title = client, journal, scratch_title
         self.prepare_midi, self.block_size = prepare_midi, block_size
         self.read_only_observations = read_only_observations
         self.direct_digest_mode = use_parameter_digest
         self.direct_digest_baseline = None
+        self.use_fixture_context = use_fixture_context
+        self.fixture_context_provider = None
         self.document = self.session = None
         self.call_count = 0
         self.summary = {"schema": 1, "started_at": utc_now(), "status": "running", "classes": [],
@@ -414,6 +417,9 @@ class Runner:
         self.counts = Counter()
         self.requested_parameter_names = set()
         self.matched_parameter_names = set()
+        if use_fixture_context:
+            self.summary.update(fixture_verification="fresh_bracketed_music_context", fixture_context_version=1,
+                                fixture_context_atomic=False, output_guard="separate_fresh_write_guard_required")
         if use_parameter_digest:
             self.summary.update(parameter_verification="direct_restoration_with_native_parameter_digest",
                                 before_next_parameter="two_fresh_complete_native_parameter_digest_matches",
@@ -505,6 +511,17 @@ class Runner:
         self.journal.append("context_bound", document=self.document, session=self.session, title=self.scratch_title)
 
     def fixture_check(self, target, setup=False):
+        if self.use_fixture_context:
+            if target.get("kind") not in ("instrument", "note_effect"):
+                raise ContextChanged("Fixture context mode supports only explicit Music targets")
+            if not setup:
+                try:
+                    self.fixture_context_check(target)
+                except (UnknownMutation, ContextChanged):
+                    raise
+                except (AcceptanceFailure, KeyError, TypeError, ValueError) as error:
+                    raise ContextChanged("Fresh Music fixture context was not established; no follow-on write is permitted") from error
+                return
         song = self.operation("song")
         require(song.get("title") == self.scratch_title and song.get("transport", {}).get("playing") is False
                 and song["transport"].get("recording") is False, "Scratch song or stopped transport changed")
@@ -545,6 +562,60 @@ class Runner:
             if kind != "mix_fx":
                 require(mapped[0].get("recordArmed") in (False, 0) and mapped[0].get("monitor") in (False, 0),
                         "Fixture must not be armed or monitored")
+
+    def fixture_context_check(self, target):
+        provider = self.fixture_context_provider
+        require(provider is not None and provider.target == target, "Fixture context requires the frozen target provider")
+        name = target.get("track")
+        require(isinstance(name, str) and name.startswith("FSP Verify "), "Only named validation fixtures are allowed")
+        result = self.call("plugin_inspect", {**target, "source": provider.source,
+                           "expected_instance": provider.instance["object_uid"], "include_context": True})["result"]
+        require(isinstance(result, dict) and result.get("error") is None and result.get("native_error") is None,
+                "Fixture inspection is malformed")
+        native = result.get("native")
+        require(isinstance(native, dict) and native.get("ok") is True and native.get("error") is None
+                and native.get("source") == provider.source and native.get("instance") == provider.instance,
+                "Fixture native provider identity changed")
+        require(all(native[key] == "observed" for key in ("outcome", "native_outcome") if key in native),
+                "Fixture native inspection did not establish an observed outcome")
+        value = result.get("fixture_context")
+        require(isinstance(value, dict) and set(value) == {"version", "atomic", "scope", "target", "before", "after"}
+                and type(value.get("version")) is int and value["version"] == 1 and value.get("atomic") is False
+                and value.get("scope") == "music_fixture_before_after"
+                and encoded(value.get("target")) == encoded({"kind": target["kind"], "track": name, "plugin": target["plugin"], "slot": target.get("slot")}),
+                "Fixture context contract is unavailable")
+        for sample in (value["before"], value["after"]):
+            require(isinstance(sample, dict) and set(sample) == {"context", "song", "target_track", "selection", "focused_track"},
+                    "Fixture context sample is incomplete")
+            require(sample["context"] == {"session": self.session, "document": self.document,
+                                          "open": True, "title": self.scratch_title}
+                    and sample["context"].get("open") is True, "Fixture context changed")
+            song = sample["song"]
+            require(isinstance(song, dict) and set(song) == {"title", "transport"} and song["title"] == self.scratch_title,
+                    "Fixture song changed")
+            transport = song["transport"]
+            require(isinstance(transport, dict) and set(transport) == {"playing", "recording"}
+                    and transport["playing"] is False and transport["recording"] is False, "Fixture transport is not stopped")
+            track = sample["target_track"]
+            require(isinstance(track, dict) and set(track) == {"exact_match_count", "name", "mediaType", "eventCount", "events", "events_complete"}
+                    and type(track["exact_match_count"]) is int and track["exact_match_count"] == 1
+                    and track["name"] == name and track["mediaType"] == "Music"
+                    and type(track["eventCount"]) is int and track["eventCount"] == 0
+                    and track["events"] == [] and track["events_complete"] is True, "Fixture is not one complete empty Music track")
+            selection = sample["selection"]
+            require(isinstance(selection, dict) and set(selection) == {"complete", "tracks"}
+                    and selection["complete"] is True and selection["tracks"] == [{"name": name, "mediaType": "Music"}],
+                    "Fixture is not exclusively selected")
+            focused = sample["focused_track"]
+            require(isinstance(focused, dict) and set(focused) == {"label", "mute", "recordArmed", "monitor"}
+                    and focused["label"] == name
+                    and all(type(focused[field]) in (bool, int, float) and focused[field] in (0, 1)
+                            for field in ("mute", "recordArmed", "monitor"))
+                    and focused["mute"] in (True, 1) and focused["recordArmed"] in (False, 0)
+                    and focused["monitor"] in (False, 0), "Fixture must remain muted, unarmed and unmonitored")
+        require(encoded(value["before"]) == encoded(value["after"]), "Fixture observations changed during native inspection")
+        self.journal.append("fixture_context_observed", version=1, atomic=False, target=target,
+                            instance=provider.instance, source=provider.source, fresh_rpc=self.call_count)
 
     def snapshot(self, target, previous=None):
         records, seen, offset = [], set(), 0
@@ -841,6 +912,7 @@ class Runner:
                             atomic_snapshot=False, opaque_contents_verified=False)
 
     def run_fixture(self, target, write_roundtrips=False, parameters=None):
+        self.fixture_context_provider = None
         if write_roundtrips:
             self.track_parameter_filter(parameters)
         self.fixture_check(target, setup=True)
@@ -853,6 +925,8 @@ class Runner:
         if target["plugin"].startswith("External Effect "):
             self.call("plugin_editor_open", target, mutation=True)
         baseline = self.snapshot(target)
+        if self.use_fixture_context:
+            self.fixture_context_provider = baseline
         if write_roundtrips:
             self.track_parameter_filter(parameters, baseline.records)
         key = f"provider-{len(self.summary['classes']):03d}"
@@ -927,6 +1001,8 @@ def main(argv=None):
                         help="Observe drifting native read-only values without claiming their restoration; requires complete native access proof before and after")
     parser.add_argument("--use-parameter-digest", action="store_true",
                         help="With --block-size 1, verify each direct restoration by two fresh native digests and periodic complete public pages")
+    parser.add_argument("--use-fixture-context", action="store_true",
+                        help="Use fresh non-atomic before/after Music fixture observations on the existing plugin_inspect read; default off")
     parser.add_argument("--plugin", action="append", help="Limit to an exact plugin name; repeat to select more")
     parser.add_argument("--parameter", action="append", help="Limit writes to an exact parameter name; all records are still audited")
     args = parser.parse_args(argv)
@@ -953,13 +1029,14 @@ def main(argv=None):
                        scope={"plugins": args.plugin, "parameters": args.parameter},
                        guarantee="independent parameter roundtrip plus whole-provider block comparison; no coupled-state workflow",
                        parameter_verification="direct_restoration_with_native_parameter_digest" if args.use_parameter_digest else "full_pages",
+                       fixture_verification="fresh_bracketed_music_context" if args.use_fixture_context else "legacy_separate_reads",
                        read_only_values="observed_not_restored" if args.read_only_observations else "exact_comparison")
         client = McpClient([str(binary), "serve"], timeout=45)
         print("MCP owner ready", flush=True)
         if args.pause:
             input("Open exactly the named scratch song, then press Enter: ")
         runner = Runner(client, journal, args.scratch_title, args.prepare_midi_fixtures, args.block_size,
-                        args.read_only_observations, args.use_parameter_digest)
+                        args.read_only_observations, args.use_parameter_digest, args.use_fixture_context)
         runner.summary["scope"] = {"plugins": args.plugin, "parameters": args.parameter}
         runner.summary["mode"] = "audit" if args.audit_only else "write_roundtrips"
         runner.initialize()

@@ -394,6 +394,20 @@ pub struct PluginParams {
     pub expected_instance: Option<String>,
     pub include_nodes: Option<bool>,
     pub node_scope: Option<NodeScope>,
+    /// Add sequential Music fixture observations around the native inspection.
+    #[serde(
+        default,
+        deserialize_with = "context_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    #[schemars(with = "bool")]
+    pub include_context: Option<bool>,
+}
+
+fn context_option<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<bool>, D::Error> {
+    bool::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1232,6 +1246,36 @@ impl Operation {
                 }
             }
             Self::PluginParams(p) | Self::PluginInspect(p) => {
+                if p.include_context.is_some() && !matches!(self, Self::PluginInspect(_)) {
+                    return Err(invalid("Context observations apply only to plugin_inspect"));
+                }
+                if p.include_context == Some(true)
+                    && (!matches!(
+                        p.kind,
+                        Some(PluginKind::Instrument | PluginKind::NoteEffect)
+                    ) || p.track.as_ref().is_none_or(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 512
+                            || name.chars().any(char::is_control)
+                    }) || p.plugin.as_ref().is_none_or(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 512
+                            || name.chars().any(char::is_control)
+                    }) || p
+                        .expected_instance
+                        .as_deref()
+                        .is_none_or(|uid| uid == "00000000-0000-0000-0000-000000000000")
+                        || !matches!(
+                            p.source,
+                            Some(ParameterSource::Dsp | ParameterSource::Controller)
+                        )
+                        || p.include_nodes == Some(true)
+                        || p.node_scope.is_some())
+                {
+                    return Err(invalid(
+                        "Context observations require a bound Music target, explicit provider and no node inventory",
+                    ));
+                }
                 if (p.include_nodes.is_some() || p.node_scope.is_some())
                     && !matches!(self, Self::PluginInspect(_))
                 {
@@ -1581,6 +1625,104 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn fixture_context_is_an_optional_bound_music_inspection() {
+        for kind in ["instrument", "note_effect"] {
+            let args = json!({"kind":kind,"track":"FSP Verify Keys","slot":0,"plugin":"Expected",
+                "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC","include_context":true});
+            let op = Operation::from_parts("plugin_inspect", args).unwrap();
+            op.validate().unwrap();
+            assert!(op.is_read_only());
+            assert_eq!(op.wire().1["include_context"], true);
+        }
+        for extra in [json!({}), json!({"include_context":false})] {
+            let mut args = json!({"channel":"Scratch","slot":0});
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let op = Operation::from_parts("plugin_inspect", args).unwrap();
+            op.validate().unwrap();
+            assert_eq!(
+                op.wire().1.get("include_context").is_some(),
+                extra.get("include_context").is_some()
+            );
+        }
+    }
+
+    #[test]
+    fn fixture_context_refuses_other_operations_and_malformed_flags() {
+        for value in [
+            json!(true),
+            json!(false),
+            Value::Null,
+            json!("true"),
+            json!(1),
+        ] {
+            let args = json!({"channel":"Scratch","slot":0,"include_context":value});
+            assert!(
+                Operation::from_parts("plugin_parameters", args)
+                    .map_or(true, |op| op.validate().is_err())
+            );
+        }
+        for value in [Value::Null, json!("true"), json!(1), json!({})] {
+            assert!(
+                Operation::from_parts(
+                    "plugin_inspect",
+                    json!({"channel":"Scratch","slot":0,"include_context":value})
+                )
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn fixture_context_requires_exact_target_provider_and_no_node_inventory() {
+        let base = json!({"kind":"instrument","track":"FSP Verify Keys","plugin":"Expected","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","include_context":true});
+        for (key, value) in [
+            ("kind", json!("effect")),
+            ("track", json!(" ")),
+            ("plugin", json!("")),
+            ("track", json!("x".repeat(513))),
+            ("plugin", json!("x\n")),
+            ("source", json!("auto")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("expected_instance", json!("stale")),
+            ("include_nodes", json!(true)),
+            ("node_scope", json!("target")),
+            ("slot", json!(1)),
+        ] {
+            let mut args = base.clone();
+            args[key] = value;
+            assert!(
+                Operation::from_parts("plugin_inspect", args)
+                    .map_or(true, |op| op.validate().is_err()),
+                "{key}"
+            );
+        }
+        for key in ["kind", "track", "plugin", "source", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(key);
+            assert!(
+                Operation::from_parts("plugin_inspect", args)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{key}"
+            );
+        }
+        let mut controller = base;
+        controller["source"] = json!("controller");
+        controller["include_nodes"] = json!(false);
+        Operation::from_parts("plugin_inspect", controller)
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
 
     #[test]
     fn button_actions_accept_only_a_bound_finite_action() {

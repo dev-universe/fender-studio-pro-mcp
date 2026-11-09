@@ -150,7 +150,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and supports only the exact Mustang Native and Rumble Native classes; its bounded read-only observations establish no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and supports only the exact Mustang Native and Rumble Native classes; its bounded read-only observations establish no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -597,6 +597,20 @@ mod tests {
             "plugin_parameter_digest",
         ] {
             let spec = specs.iter().find(|s| s.tool.name == name).unwrap();
+            if name == "plugin_inspect" {
+                assert_eq!(
+                    spec.tool.input_schema["properties"]["include_context"]["type"],
+                    "boolean"
+                );
+                assert!(
+                    !spec
+                        .tool
+                        .input_schema
+                        .get("required")
+                        .and_then(Value::as_array)
+                        .is_some_and(|fields| fields.contains(&json!("include_context")))
+                );
+            }
             assert!(
                 spec.tool.input_schema["properties"]
                     .get("expected_document")
