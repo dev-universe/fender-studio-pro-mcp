@@ -71,6 +71,21 @@ source-backed button is now classified as a dedicated action. No numeric
 restoration tolerance or baseline rebasing was used.
 These are partial results; no all-writable acceptance claim is made here.
 
+A first digest-based Pro EQ sweep stopped on its first candidate, `bypass`.
+Two changed-value reads passed, but an accepted state-stream load left that
+host parameter changed. Full-page diagnosis confirmed that only `bypass`
+differed. No candidate was counted as restored. A subsequent explicit repair
+for the exact Pro EQ class, DSP source and binary `bypass` role passed the
+changed-read/load/direct-correction workflow. Fresh native digests and two
+additional complete pages confirmed the immutable baseline, including exact
+typed latch metadata. The extension does not admit other Toggle controls.
+
+These state-stream omissions motivate a separate direct scalar path. It
+restores each captured raw value and compares the entire exposed provider
+before advancing. Model and preset workflows still require their separately
+proved state restoration. A successful state-stream load is not assumed to
+restore every host-facing parameter.
+
 The next build also exposed fresh native parameter digests. Independent Python
 projection from complete public pages matched all three native hashes for
 Pro EQ's 199 records and Impact's 4,262 records, with three fresh native scans
@@ -125,6 +140,14 @@ models, without using a setter. Five queries returned 36 labels. Independent
 complete-provider reads matched all writable values and schema before and after;
 Ampire's read-only output meters drifted. This establishes those explicit input
 representations, not inferred cardinality for every List facade.
+
+Optional owner observations on Mustang Native, Rumble Native, Ampire and Pro EQ
+returned non-Node `DeviceParamFolder` controllers. Opening the exact Mustang and
+Rumble editors left each complete 39-record typed projection unchanged, with
+the mutable effect-model placeholders still unpopulated. The underlying aliases
+did report the declared `IControllerProvider` interface. Its controller and any
+model catalog remain separate observations to establish; an unpopulated scalar
+facade is not classified as an empty rack.
 
 ## Reproduction and evidence
 

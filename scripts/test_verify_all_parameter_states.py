@@ -18,6 +18,8 @@ from parameter_digest import project_snapshot
 
 
 EXPANDER_TARGET = {**TARGET, "plugin": "Expander"}
+PRO_EQ_TARGET = {**TARGET, "plugin": "Pro EQ"}
+PRO_EQ_CLASS = "D9AE9ACD-69B4-4B43-B8D5-983E39C559A5"
 
 
 class SweepClient(StateClient):
@@ -224,6 +226,12 @@ class ExhaustiveStateTests(unittest.TestCase):
 
     def events(self):
         return [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
+
+    def lossy_bypass(self, original=0.0, changed=1.0):
+        client = DigestSweepClient([number("bypass", original, kind="Toggle")])
+        client.live_class = PRO_EQ_CLASS
+        client.lossy_overrides["bypass"] = number("bypass", changed, kind="Toggle")
+        return client
 
     def test_same_frozen_capsule_restores_coupled_filters_before_every_next_parameter(self):
         client = SweepClient([number("filterlow", 0.25), number("filterhigh", 0.5)])
@@ -595,6 +603,296 @@ class ExhaustiveStateTests(unittest.TestCase):
             runner.run_fixture(EXPANDER_TARGET, parameters={"lookahead"})
         self.assertEqual([write["param"] for write in client.writes], ["lookahead"])
         self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_proeq_latched_bypass_restores_exact_float_bits_and_integer_in_both_modes(self):
+        for mode in (False, True):
+            for index, original in enumerate((0.0, -0.0, 1.0, 0, 1)):
+                with self.subTest(digest=mode, original=original, carrier=type(original).__name__):
+                    self.journal.close()
+                    self.journal = Journal(Path(self.temporary.name) / f"latch-{mode}-{index}")
+                    changed = (1 if original == 0 else 0) if type(original) is int else (1.0 if original == 0 else 0.0)
+                    client = self.lossy_bypass(original, changed)
+                    expected = value_identity(client.parameters[0])
+                    runner = self.runner(client, repair_captured_scalars=True,
+                                         repair_parameters={"Pro EQ": {"bypass"}}, use_parameter_digest=mode)
+                    row = runner.run_fixture(PRO_EQ_TARGET)
+                    self.assertEqual(row["results"], {"changed_readback_restored": 1})
+                    self.assertEqual([write["param"] for write in client.writes], ["bypass", "bypass"])
+                    self.assertEqual(value_identity(client.parameters[0]), expected)
+                    if type(original) is float:
+                        self.assertEqual(client.writes[1]["float_bits"], struct.pack(">d", original).hex().upper())
+                    else:
+                        self.assertEqual(client.writes[1]["value"], original)
+                        self.assertNotIn("float_bits", client.writes[1])
+                    self.assertEqual(client.capture_count, 1)
+                    self.assertEqual(client.restore_count, 1)
+                    self.assertEqual(runner.counts["captured_scalar_corrections"], 1)
+                    self.assertEqual(runner.summary["repair_parameters_used"], {"Pro EQ": ["bypass"]})
+                    self.assertTrue(row["capsule_released"])
+                    self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+                    latch_reads = [event for event in self.events() if event["event"] == "captured_latch_baseline_observation"]
+                    self.assertEqual([event["consecutive_complete_matches"] for event in latch_reads], [1, 2])
+                    self.assertTrue(all(event["exact_typed_metadata"] for event in latch_reads))
+                    if mode:
+                        checkpoints = [event["checkpoint"] for event in self.events()
+                                       if event["event"] == "parameter_digest_full_checkpoint"]
+                        self.assertIn("hybrid_repair_complete", checkpoints)
+                    else:
+                        observations = [event for event in self.events() if event["event"] == "state_baseline_observation"]
+                        self.assertTrue(any(event["consecutive_matches"] == 2 for event in observations))
+
+    def test_latched_bypass_does_not_enable_hybrid_or_an_unlisted_pair(self):
+        for mode in (False, True):
+            for configured in (False, True):
+                with self.subTest(digest=mode, configured=configured):
+                    self.journal.close()
+                    self.journal = Journal(Path(self.temporary.name) / f"no-latch-{mode}-{configured}")
+                    client = self.lossy_bypass()
+                    options = {"repair_captured_scalars": True, "repair_parameters": {"Pro EQ": {"gain"}}} if configured else {}
+                    runner = self.runner(client, use_parameter_digest=mode, **options)
+                    with self.assertRaises(RestorationFailure):
+                        runner.run_fixture(PRO_EQ_TARGET)
+                    self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+                    self.assertEqual(client.restore_count, 1)
+                    self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_latched_bypass_refuses_other_plugin_class_name_and_source(self):
+        for variant in ("plugin", "class", "name", "source"):
+            with self.subTest(variant=variant):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-role-" + variant))
+                client = self.lossy_bypass()
+                target = PRO_EQ_TARGET
+                parameter_name = "bypass"
+                if variant == "plugin":
+                    target = TARGET
+                elif variant == "class":
+                    client.live_class = INSTANCE["class_uid"]
+                elif variant == "name":
+                    parameter_name = "otherToggle"
+                    client.parameters[0]["name"] = parameter_name
+                    client.lossy_overrides = {parameter_name: number(parameter_name, 1.0, kind="Toggle")}
+                runner = self.runner(client, repair_captured_scalars=True,
+                                     repair_parameters={target["plugin"]: {parameter_name}})
+                if variant == "source":
+                    provider = runner.snapshot(target)
+                    provider.source = "controller"
+                    with self.assertRaises(AcceptanceFailure):
+                        runner.repairable_parameter(provider, provider.records[0], provider.records[0])
+                    self.assertEqual(client.writes, [])
+                else:
+                    with self.assertRaises(RestorationFailure):
+                        runner.run_fixture(target)
+                    self.assertEqual(len(client.writes), 1)
+                    self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_latched_bypass_rejects_metadata_or_carrier_drift_before_any_correction(self):
+        mutations = {
+            "kind": lambda p: p.update(native_kind="Float"),
+            "range": lambda p: p.update(max=2.0),
+            "default": lambda p: p.update(default=1.0),
+            "support": lambda p: p["support"].update(normalized=True),
+            "read_only": lambda p: p.update(readOnly=True, writable=False),
+            "disabled": lambda p: p.update(enabled=False, writable=False),
+            "carrier": lambda p: p.update(native_value={"variant_tag": 1, "data": {"kind": "integer", "value": 1}}, value=1),
+            "variant_tag": lambda p: p["native_value"].update(variant_tag=1),
+            "nonbinary_value": lambda p: p.update(number("bypass", 0.75, kind="Toggle")),
+            "typed_min": lambda p: p.update(native_min={"variant_tag": 2, "data": {
+                "kind": "float", "value": 0.0, "bits_hex": "0000000000000001"}}),
+        }
+        for label, mutate in mutations.items():
+            with self.subTest(field=label):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-drift-" + label))
+                client = self.lossy_bypass()
+                mutate(client.lossy_overrides["bypass"])
+                runner = self.runner(client, repair_captured_scalars=True, repair_parameters={"Pro EQ": {"bypass"}})
+                with self.assertRaises(AcceptanceFailure):
+                    runner.run_fixture(PRO_EQ_TARGET)
+                self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+                self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_latched_bypass_requires_complete_indexed_access_and_typed_metadata(self):
+        for missing in ("access_metadata_complete", "native_default", "native_support"):
+            with self.subTest(missing=missing):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-missing-" + missing))
+                client = self.lossy_bypass()
+
+                def omit(owner, page):
+                    for parameter in page["params"]:
+                        parameter.pop(missing, None)
+                        parameter["native"]["native_description"].pop(missing, None)
+
+                client.page_hook = omit
+                runner = self.runner(client, repair_captured_scalars=True, repair_parameters={"Pro EQ": {"bypass"}})
+                with self.assertRaises(RestorationFailure):
+                    runner.run_fixture(PRO_EQ_TARGET)
+                self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+                self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_registered_bypass_with_an_invalid_captured_kind_value_or_carrier_is_not_repaired(self):
+        for invalid in ("kind", "value", "tag"):
+            with self.subTest(invalid=invalid):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-baseline-" + invalid))
+                client = self.lossy_bypass()
+                if invalid == "kind":
+                    client.parameters[0]["native_kind"] = "Float"
+                    client.lossy_overrides["bypass"]["native_kind"] = "Float"
+                elif invalid == "value":
+                    client.parameters[0].update(number("bypass", 0.25, kind="Toggle"))
+                    client.lossy_overrides["bypass"].update(number("bypass", 0.75, kind="Toggle"))
+                else:
+                    client.parameters[0]["native_value"]["variant_tag"] = 1
+                    client.lossy_overrides["bypass"]["native_value"]["variant_tag"] = 1
+                runner = self.runner(client, repair_captured_scalars=True,
+                                     repair_parameters={"Pro EQ": {"bypass"}})
+                with self.assertRaises(RestorationFailure):
+                    runner.run_fixture(PRO_EQ_TARGET)
+                self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+                self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_latched_bypass_fresh_default_drift_stops_before_correction(self):
+        client = self.lossy_bypass()
+        original_call = client.call
+
+        def drift_named(name, args):
+            result = original_call(name, args)
+            if name == "plugin_parameters" and args.get("names") and client.restore_count:
+                parameter = result["structuredContent"]["result"]["params"][0]
+                parameter["default"] = 1.0
+                parameter["native_default"] = {"variant_tag": 2, "data": {
+                    "kind": "float", "value": 1.0, "bits_hex": "3FF0000000000000"}}
+            return result
+
+        client.call = drift_named
+        runner = self.runner(client, repair_captured_scalars=True, repair_parameters={"Pro EQ": {"bypass"}})
+        with self.assertRaises(RestorationFailure):
+            runner.run_fixture(PRO_EQ_TARGET)
+        self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+        self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_latched_bypass_correction_receipt_and_independent_readback_keep_exact_metadata(self):
+        for field in ("receipt", "readback"):
+            with self.subTest(field=field):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-after-" + field))
+                client = self.lossy_bypass()
+                original_call = client.call
+
+                def drift(name, args):
+                    result = original_call(name, args)
+                    parameter = None
+                    if field == "receipt" and name == "plugin_parameter_set" and len(client.writes) == 2:
+                        parameter = result["structuredContent"]["result"]["after"]
+                    if field == "readback" and name == "plugin_parameters" and args.get("names") and len(client.writes) == 2:
+                        parameter = result["structuredContent"]["result"]["params"][0]
+                    if parameter is not None:
+                        parameter["default"] = 1.0
+                        parameter["native_default"] = {"variant_tag": 2, "data": {
+                            "kind": "float", "value": 1.0, "bits_hex": "3FF0000000000000"}}
+                    return result
+
+                client.call = drift
+                runner = self.runner(client, repair_captured_scalars=True, repair_parameters={"Pro EQ": {"bypass"}})
+                with self.assertRaises(RestorationFailure):
+                    runner.run_fixture(PRO_EQ_TARGET)
+                self.assertEqual([write["param"] for write in client.writes], ["bypass", "bypass"])
+                self.assertEqual(client.restore_count, 1)
+                self.assertEqual(runner.counts["captured_scalar_corrections"], 0)
+
+    def test_unregistered_toggle_or_list_prevents_even_an_allowed_bypass_correction(self):
+        for kind in ("Toggle", "List"):
+            with self.subTest(kind=kind):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-other-" + kind))
+                client = self.lossy_bypass()
+                client.parameters.append(number("otherAction", 0.0, kind=kind))
+                client.lossy_overrides["otherAction"] = number("otherAction", 1.0, kind=kind)
+                runner = self.runner(client, repair_captured_scalars=True,
+                                     repair_parameters={"Pro EQ": {"bypass", "otherAction"}})
+                with self.assertRaises(RestorationFailure):
+                    runner.run_fixture(PRO_EQ_TARGET, parameters={"bypass"})
+                self.assertEqual([write["param"] for write in client.writes], ["bypass"])
+                self.assertEqual(runner.counts["captured_scalar_correction_attempts"], 0)
+
+    def test_final_latch_pages_refuse_late_default_support_or_carrier_drift_in_either_read(self):
+        for mode in (False, True):
+            for field in ("default", "support", "carrier"):
+                for attempt in (1, 2):
+                    with self.subTest(digest=mode, field=field, attempt=attempt):
+                        self.journal.close()
+                        self.journal = Journal(Path(self.temporary.name) / f"latch-final-{mode}-{field}-{attempt}")
+                        client = self.lossy_bypass()
+                        final_reads = []
+
+                        def late_drift(owner, page):
+                            events = self.events()
+                            corrections = [event["sequence"] for event in events
+                                           if event["event"] == "captured_scalar_correction_confirmed"]
+                            if not corrections:
+                                return
+                            confirmed = any(event["sequence"] > corrections[-1]
+                                            and ((event["event"] == "state_baseline_observation"
+                                                  and event.get("consecutive_matches") == 2)
+                                                 or (event["event"] == "parameter_digest_baseline_confirmed"
+                                                     and event.get("checkpoint") == "restored_baseline"))
+                                            for event in events)
+                            if not confirmed:
+                                return
+                            final_reads.append(1)
+                            if len(final_reads) != attempt:
+                                return
+                            for parameter in (page["params"][0], page["params"][0]["native"]["native_description"]):
+                                if field == "default":
+                                    parameter["default"] = 1.0
+                                    parameter["native_default"] = {"variant_tag": 2, "data": {
+                                        "kind": "float", "value": 1.0, "bits_hex": "3FF0000000000000"}}
+                                elif field == "support":
+                                    parameter["support"]["normalized"] = True
+                                    parameter["native_support"]["normalized"] = True
+                                else:
+                                    parameter["native_value"] = {"variant_tag": 1, "data": {"kind": "integer", "value": 0}}
+                                    parameter["value"] = 0
+
+                        client.page_hook = late_drift
+                        runner = self.runner(client, repair_captured_scalars=True,
+                                             repair_parameters={"Pro EQ": {"bypass"}}, use_parameter_digest=mode)
+                        with self.assertRaises(AcceptanceFailure):
+                            runner.run_fixture(PRO_EQ_TARGET)
+                        self.assertEqual(len(final_reads), attempt)
+                        self.assertEqual([write["param"] for write in client.writes], ["bypass", "bypass"])
+                        self.assertEqual(client.restore_count, 1)
+                        self.assertEqual(runner.counts["changed_readback_restored"], 0)
+                        self.assertFalse(any(call["action"] == "release" for call in client.state_calls))
+
+    def test_latched_bypass_unknown_load_correction_or_changed_context_never_retries(self):
+        for failure in ("load", "correction", "context"):
+            with self.subTest(failure=failure):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("latch-unknown-" + failure))
+                client = self.lossy_bypass()
+                if failure == "load":
+                    client.unknown_load = True
+                elif failure == "context":
+                    client.document_changed_by_load = True
+                else:
+                    original_call = client.call
+
+                    def unknown_correction(name, args):
+                        if name == "plugin_parameter_set" and client.restore_count:
+                            client.behaviors["bypass"] = "public_unknown"
+                        return original_call(name, args)
+
+                    client.call = unknown_correction
+                runner = self.runner(client, repair_captured_scalars=True,
+                                     repair_parameters={"Pro EQ": {"bypass"}}, use_parameter_digest=True)
+                with self.assertRaises((UnknownMutation, ContextChanged)):
+                    runner.run_fixture(PRO_EQ_TARGET)
+                self.assertEqual(len(client.writes), 2 if failure == "correction" else 1)
+                self.assertEqual(client.restore_count, 1)
+                self.assertFalse(any(call["action"] == "release" for call in client.state_calls))
 
     def test_hybrid_read_only_drift_is_observed_only_with_complete_opt_in_proof(self):
         meter = {**number("meter", 0.0, readonly=True), "access_metadata_complete": True}

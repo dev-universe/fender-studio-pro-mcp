@@ -19,7 +19,7 @@ import sys
 from mcp_client import McpClient
 from parameter_digest import DigestProjectionError, HASH_FIELDS, project_snapshot
 from verify_all_parameters import (
-    AcceptanceFailure, ContextChanged, Journal, RestorationFailure, UnknownMutation, candidate,
+    AcceptanceFailure, ContextChanged, Journal, RestorationFailure, UnknownMutation, candidate, decode_float_bits,
     classification, parameter_schema, provider_index, require, requested_value, raw_value,
     utc_now, value_identity,
 )
@@ -30,6 +30,18 @@ MAX_FIXTURES = 60
 MAX_SCALAR_CORRECTIONS = 32
 MAX_REPAIR_PASSES = 3
 MAX_DIGEST_CASES_BETWEEN_FULL_CHECKS = 32
+# Actual 8.1.1 reads proved this latch persists while IStorable omits its value.
+LATCHED_REPAIR_ROLES = frozenset({("Pro EQ", "D9AE9ACD-69B4-4B43-B8D5-983E39C559A5", "bypass")})
+
+
+def binary_latch_identity(parameter):
+    identity = value_identity(parameter)
+    tag, kind, value = identity
+    require(type(tag) is int and -(1 << 15) <= tag < (1 << 15)
+            and ((kind == "float" and tag & 15 == 2 and decode_float_bits(value) in (0, 1))
+                 or (kind == "integer" and tag & 15 == 1 and value in ("0", "1"))),
+            "Captured latch requires an exact binary Int or Float carrier")
+    return identity
 
 
 def validate_repair_parameters(parameters):
@@ -200,12 +212,45 @@ class ExhaustiveStateRunner(StateRunner):
         plugin = baseline.target["plugin"]
         require(original["name"] in self.repair_parameters.get(plugin, ()),
                 "Captured scalar difference is outside the explicit plugin/parameter repair allowlist")
+        latched = self.is_captured_latch(baseline, original)
         for parameter in (original, current):
             category = classification(plugin, parameter)
             require((category == "numeric_scalar" and parameter.get("native_kind") in ("Float", "Integer"))
+                    or (latched and category == "numeric_scalar" and parameter.get("native_kind") == "Toggle")
                     or (category == "literal_string" and parameter.get("name") == "deviceNotes"),
                     "Captured scalar repair excludes models, actions, read-only, disabled and unsupported fields")
         require(parameter_schema(original) == parameter_schema(current), "Captured scalar repair requires the original schema")
+        if latched:
+            require(original.get("access_metadata_complete") is True, "Captured latch requires complete indexed DSP access metadata")
+            require(self.latch_metadata(original) == self.latch_metadata(current),
+                    "Captured latch requires its exact original typed metadata and numeric carrier")
+
+    def is_captured_latch(self, baseline, parameter):
+        return baseline.source == "dsp" and (baseline.target["plugin"],
+                baseline.instance["class_uid"].upper(), parameter["name"]) in LATCHED_REPAIR_ROLES
+
+    def latch_metadata(self, parameter):
+        require(parameter.get("native_kind") == "Toggle" and parameter.get("enabled") is True
+                and parameter.get("readOnly") is False and parameter.get("writable") is True,
+                "Captured latch must remain an enabled writable Toggle")
+        require("access_metadata_complete" not in parameter or parameter["access_metadata_complete"] is True,
+                "Captured latch access metadata is incomplete")
+        raw = binary_latch_identity(parameter)
+        require(parameter.get("min") == 0 and parameter.get("max") == 1,
+                "Captured latch requires exact binary numeric values and range")
+        extrema = []
+        for field in ("min", "max", "default"):
+            native = parameter.get("native_" + field)
+            require(isinstance(native, dict), "Captured latch lacks exact typed " + field)
+            identity = binary_latch_identity({"native_value": native, "value": parameter.get(field)})
+            extrema.append(identity)
+        native_support = parameter.get("native_support")
+        support_fields = {"raw": "raw_number", "normalized": "normalized", "text": "display_text"}
+        require(isinstance(native_support, dict) and set(native_support) == set(support_fields.values())
+                and all(type(value) is bool for value in native_support.values())
+                and parameter.get("support") == {name: native_support[native] for name, native in support_fields.items()},
+                "Captured latch requires complete matching native write support")
+        return parameter_schema(parameter), tuple(extrema), native_support, raw[:2]
 
     def baseline_correction(self, parameter):
         value_identity(parameter)
@@ -219,6 +264,26 @@ class ExhaustiveStateRunner(StateRunner):
         require(isinstance(text, str) and "\0" not in text and len(text.encode("utf-16-le")) // 2 <= 4096,
                 "Original literal notes exceed the native text bounds")
         return {"text": text}
+
+    def confirm_latch_baseline(self, baseline, transaction):
+        latches = [parameter for parameter in baseline.records
+                   if parameter["name"] in self.repair_parameters.get(baseline.target["plugin"], ())
+                   and self.is_captured_latch(baseline, parameter)]
+        if not latches:
+            return
+        for attempt in (1, 2):
+            self.fixture_check(baseline.target)
+            current = self.snapshot(baseline.target, baseline)
+            difference = snapshot_difference(baseline, current, self.read_only_observations)
+            require(not difference["schema_changed"] and not difference["changed_parameters"],
+                    "Captured latch final full provider read differs from the frozen baseline")
+            present = {parameter["name"]: parameter for parameter in current.records}
+            for original in latches:
+                self.repairable_parameter(baseline, original, present[original["name"]])
+            self.journal.append("captured_latch_baseline_observation", transaction=transaction,
+                                attempt=attempt, consecutive_complete_matches=attempt,
+                                latches=[parameter["name"] for parameter in latches],
+                                exact_typed_metadata=True, **difference)
 
     def restore(self, baseline, capsule, transaction):
         if not self.repair_captured_scalars:
@@ -247,6 +312,7 @@ class ExhaustiveStateRunner(StateRunner):
                                     completed_passes=repair_pass, corrections=corrections, **difference)
                 if not difference["changed_parameters"]:
                     self.wait_for_baseline(baseline, transaction)
+                    self.confirm_latch_baseline(baseline, transaction)
                     if self.use_parameter_digest:
                         self.full_digest_checkpoint(baseline, transaction, "hybrid_repair_complete")
                     self.phase(transaction, "RestoreReadbackConfirmed", restoration="capsule_plus_scalar_correction",
@@ -286,8 +352,12 @@ class ExhaustiveStateRunner(StateRunner):
                     require(isinstance(after, dict) and parameter_schema(after) == parameter_schema(original)
                             and value_identity(after) == value_identity(original),
                             "Captured scalar correction receipt differs from the exact original")
+                    if self.is_captured_latch(baseline, original):
+                        self.repairable_parameter(baseline, original, after)
                     self.fixture_check(baseline.target)
                     readback = self.read_parameter(baseline, original)
+                    if self.is_captured_latch(baseline, original):
+                        self.repairable_parameter(baseline, original, readback)
                     require(value_identity(readback) == value_identity(original),
                             "Captured scalar correction independent readback differs from the exact original")
                     self.counts["captured_scalar_corrections"] += 1
@@ -490,7 +560,7 @@ def main(argv=None):
     parser.add_argument("--settle-interval", type=float, default=0.1)
     parser.add_argument("--verify-released-token", action="store_true", help="Once per fixture prove that the released token is refused without changing its provider")
     parser.add_argument("--repair-captured-scalars", action="store_true",
-                        help="After one accepted capsule load, permit at most 32 exact Float/Integer/literal notes corrections across 3 passes; never rebase the original baseline")
+                        help="After one accepted capsule load, permit at most 32 exact Float/Integer/literal notes or registered binary latch corrections across 3 passes; never rebase the original baseline")
     parser.add_argument("--repair-parameter", action="append", default=[], metavar="PLUGIN:PARAM",
                         help="Explicitly allow this exact plugin/parameter pair for repair; repeat for at most 32 pairs")
     args = parser.parse_args(argv)
