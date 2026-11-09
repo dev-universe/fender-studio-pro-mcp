@@ -186,7 +186,16 @@ class CatalogClient(PresetClient):
                 self.page_hook(self, body)
         if name == "plugin_presets":
             if result["structuredContent"]["outcome"] == "not_applied":
-                body.update(source=CATALOG_SOURCE, instance=dict(self.instance), ok=False)
+                body.clear()
+                body.update(plugin=args["plugin"], native_outcome="not_applied",
+                            errors=[{"code": "preset_request_failed",
+                                     "message": "catalog token is expired, released or belongs to another service"}])
+                result["structuredContent"]["error"] = {
+                    "code": "native_rejected",
+                    "message": "The native request was rejected before applying a change; inspect the result errors"}
+            else:
+                body.update(plugin=args["plugin"], native_outcome=body["outcome"],
+                            channel=args.get("channel"), slot=args.get("slot"))
             if args["action"] == "release" and body.get("released") is True:
                 body["verified"] = True
             if self.lifecycle_hook:
@@ -411,21 +420,41 @@ class PresetAcceptanceTests(unittest.TestCase):
                 self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
                 self.assertTrue(Journal.pending(self.journal.ledger_path))
 
-    def test_catalog_only_released_token_refusal_requires_explicit_boolean_false_ok(self):
-        cases = [("missing", None), ("all_flags_missing", None)]
-        cases += [("value", value) for value in (None, True, 0, 1, 0.0, "false", {}, [], [False])]
-        for fault, value in cases:
-            with self.subTest(fault=fault, value=value):
+    def test_catalog_only_released_token_refusal_requires_the_exact_public_error_envelope(self):
+        native_error = {"code": "preset_request_failed", "message": "catalog token is expired, released or belongs to another service"}
+        cases = [("remove", field) for field in ("errors", "native_outcome", "plugin")]
+        cases += [("native_outcome", value) for value in (None, True, 0, {}, [], "unknown", "observed", "applied_verified")]
+        cases += [("plugin", value) for value in (None, "Other Effect", True, {}, [])]
+        cases += [("errors", value) for value in (None, {}, [], "expired", [None], [native_error, native_error],
+                  [{"code": "preset_request_failed"}], [{"message": native_error["message"]}],
+                  [{**native_error, "code": "native_request_failed"}], [{**native_error, "code": False}],
+                  [{**native_error, "message": "different reason"}], [{**native_error, "message": "x" * 513}],
+                  [{**native_error, "message": None}], [{**native_error, "extra": False}])]
+        cases += [("extra", (field, value)) for field, value in (
+            ("source", CATALOG_SOURCE), ("source", "dsp"), ("instance", INSTANCE), ("class_uid", INSTANCE["class_uid"]),
+            ("outcome", "not_applied"), ("outcome", "applied_verified"),
+            ("ok", False), ("ok", True), ("ok", None), ("ok", 0),
+            ("accepted", False), ("accepted", True), ("released", False), ("released", True),
+            ("verified", False), ("verified", True))]
+        cases += [("outer_error", value) for value in (None, {}, "native_rejected",
+                  {"code": "native_rejected"}, {"code": "host_rejected", "message": "native error"},
+                  {"code": "native_rejected", "message": "different message"})]
+        cases += [("outer_outcome", value) for value in ("observed", "applied_verified", "unknown", None, {})]
+        for field, value in cases:
+            with self.subTest(field=field, value=value):
                 client = CatalogClient()
                 def corrupt(client, args, receipt):
                     if len(client.preset_calls) != 3:
                         return
                     native = receipt["result"]
-                    if fault == "value":
-                        native["ok"] = copy.deepcopy(value)
+                    if field == "remove":
+                        native.pop(value)
+                    elif field == "extra":
+                        native[value[0]] = copy.deepcopy(value[1])
+                    elif field in ("outer_error", "outer_outcome"):
+                        receipt["error" if field == "outer_error" else "outcome"] = copy.deepcopy(value)
                     else:
-                        for field in ("ok", "accepted", "released", "verified") if fault == "all_flags_missing" else ("ok",):
-                            native.pop(field, None)
+                        native[field] = copy.deepcopy(value)
                 client.lifecycle_hook = corrupt
                 runner = self.runner(client)
                 with self.assertRaises(UnknownMutation):
@@ -438,17 +467,72 @@ class PresetAcceptanceTests(unittest.TestCase):
                 self.assertFalse(runner.summary["classes"])
                 self.assertEqual(runner.counts["catalog_case_verified"], 0)
 
-    def test_catalog_only_refusal_accepts_explicit_false_optional_flags(self):
+    def test_catalog_only_refusal_rejects_the_old_raw_native_error_shape(self):
         client = CatalogClient()
-        def explicit_false(client, args, receipt):
+        def raw_native(client, args, receipt):
             if len(client.preset_calls) == 3:
-                receipt["result"].update(ok=False, accepted=False, released=False, verified=False)
-        client.lifecycle_hook = explicit_false
-        row = self.runner(client).run_catalog_case(TARGET)
-        self.assertEqual(row["status"], "catalog_case_verified")
+                receipt["result"] = {"ok": False, "outcome": "not_applied", "native_outcome": "not_applied",
+                                     "instance": dict(INSTANCE), "source": CATALOG_SOURCE,
+                                     "accepted": False, "released": False, "verified": False}
+        client.lifecycle_hook = raw_native
+        with self.assertRaises(UnknownMutation):
+            self.runner(client).run_catalog_case(TARGET)
         self.assert_catalog_only_calls(client, ["list", "release", "list"])
-        self.assertEqual(client.full_snapshots, 7)
-        self.assertFalse(Journal.pending(self.journal.ledger_path))
+        self.assertEqual(client.full_snapshots, 5)
+        self.assertEqual(Journal.pending(self.journal.ledger_path)["catalog-000"], "UnknownAfterDispatch")
+
+    def test_catalog_only_public_refusal_is_not_success_at_discovery_or_release(self):
+        for phase in (1, 2):
+            with self.subTest(phase=phase):
+                client = CatalogClient()
+                def replace(client, args, receipt):
+                    if len(client.preset_calls) == phase:
+                        receipt.update(outcome="not_applied", error={
+                            "code": "native_rejected",
+                            "message": "The native request was rejected before applying a change; inspect the result errors"},
+                            result={"plugin": args["plugin"], "native_outcome": "not_applied", "errors": [
+                                {"code": "preset_request_failed", "message": "catalog token is expired, released or belongs to another service"}]})
+                client.lifecycle_hook = replace
+                with self.assertRaises(UnknownMutation):
+                    self.runner(client).run_catalog_case(TARGET)
+                self.assert_catalog_only_calls(client, ["list", "release"][:phase])
+                self.assertEqual(client.full_snapshots, 1 if phase == 1 else 3)
+                self.assertEqual(Journal.pending(self.journal.ledger_path)["catalog-000"], "UnknownAfterDispatch")
+
+    def test_catalog_only_success_requires_actual_native_ok_source_and_instance(self):
+        for phase in (1, 2):
+            for field in ("ok", "source", "instance"):
+                with self.subTest(phase=phase, field=field):
+                    client = CatalogClient()
+                    def corrupt(client, args, receipt):
+                        if len(client.preset_calls) == phase:
+                            receipt["result"].pop(field)
+                    client.lifecycle_hook = corrupt
+                    with self.assertRaises((UnknownMutation, ContextChanged)):
+                        self.runner(client).run_catalog_case(TARGET)
+                    self.assert_catalog_only_calls(client, ["list", "release"][:phase])
+                    self.assertEqual(client.full_snapshots, 1 if phase == 1 else 3)
+                    self.assertEqual(Journal.pending(self.journal.ledger_path)["catalog-000"], "UnknownAfterDispatch")
+
+    def test_catalog_only_public_refusal_requires_two_fresh_matching_provider_identities(self):
+        for snapshot in (6, 7):
+            for field in ("class_uid", "object_uid", "source"):
+                with self.subTest(snapshot=snapshot, field=field):
+                    client = CatalogClient()
+                    def corrupt(client, page):
+                        if client.full_snapshots == snapshot:
+                            if field == "source":
+                                page["parameter_discovery"]["source"] = "controller"
+                            else:
+                                page["instance"][field] = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"
+                    client.page_hook = corrupt
+                    runner = self.runner(client)
+                    with self.assertRaises(ContextChanged):
+                        runner.run_catalog_case(TARGET)
+                    self.assert_catalog_only_calls(client, ["list", "release", "list"])
+                    self.assertEqual(client.full_snapshots, snapshot)
+                    self.assertFalse(runner.summary["classes"])
+                    self.assertEqual(Journal.pending(self.journal.ledger_path)["catalog-000"], "UnknownAfterDispatch")
 
     def test_catalog_only_accepted_released_list_stops_without_second_release(self):
         client = CatalogClient()
@@ -460,15 +544,16 @@ class PresetAcceptanceTests(unittest.TestCase):
 
     def test_catalog_only_context_loss_at_each_lifecycle_stops_without_cleanup(self):
         for phase in (1, 2, 3):
-            with self.subTest(phase=phase):
-                client = CatalogClient()
-                def drift(client, args, receipt):
-                    if len(client.preset_calls) == phase:
-                        receipt["document"] = "different:document"
-                client.lifecycle_hook = drift
-                with self.assertRaises(ContextChanged):
-                    self.runner(client).run_catalog_case(TARGET)
-                self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
+            for field in ("document", "session"):
+                with self.subTest(phase=phase, field=field):
+                    client = CatalogClient()
+                    def drift(client, args, receipt):
+                        if len(client.preset_calls) == phase:
+                            receipt[field] = "different:context"
+                    client.lifecycle_hook = drift
+                    with self.assertRaises(ContextChanged):
+                        self.runner(client).run_catalog_case(TARGET)
+                    self.assert_catalog_only_calls(client, ["list", "release", "list"][:phase])
 
     def test_catalog_only_discovery_keeps_existing_exact_catalog_validation(self):
         for fault in ("incomplete", "too_many", "duplicate", "bad_next", "url", "instance", "token", "count", "empty_page"):

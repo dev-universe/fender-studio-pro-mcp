@@ -106,7 +106,7 @@ class PresetRunner(StateRunner):
         require(action in ("list", "release"), "Catalog-only mode permits only list and release")
         receipt = self.preset_call(provider, action, token=token, offset=offset, allow_error=True)
         outer, native = receipt.get("outcome"), receipt.get("result")
-        allowed = ("observed", *APPLIED, "not_applied") if action == "list" else (*APPLIED, "not_applied")
+        allowed = ("observed", *APPLIED) if action == "list" else APPLIED
         if not isinstance(outer, str) or outer not in allowed or not isinstance(native, dict):
             raise UnknownMutation("Catalog lifecycle outcome is malformed or contradictory")
         if native.get("instance") != provider.instance:
@@ -114,20 +114,28 @@ class PresetRunner(StateRunner):
         if native.get("source") != CATALOG_SOURCE:
             raise UnknownMutation("Catalog lifecycle lacks native catalog provenance")
         metadata_only(native)
-        expected = ("not_applied",) if outer == "not_applied" else ("observed",) if action == "list" else APPLIED
+        expected = ("observed",) if action == "list" else APPLIED
         outcomes = [native[field] for field in ("outcome", "native_outcome") if field in native]
         if (not outcomes or any(not isinstance(value, str) or value not in expected for value in outcomes)
                 or len(set(outcomes)) > 1):
             raise UnknownMutation("Catalog lifecycle native outcome is unknown or contradictory")
-        if outer == "not_applied":
-            if (native.get("ok") is not False
-                    or any(native[field] is not False for field in ("accepted", "released", "verified") if field in native)):
-                raise UnknownMutation("Catalog refusal contains contradictory success evidence")
-        elif (receipt.get("error") or native.get("ok") is not True
+        if (receipt.get("error") or native.get("ok") is not True
               or any(native[field] is not False for field in ("accepted",) if field in native)
               or (action == "list" and any(native[field] is not False for field in ("released", "verified") if field in native))
               or (action == "release" and (native.get("released") is not True or native.get("verified") is not True))):
             raise UnknownMutation("Catalog success contains malformed or contradictory phase evidence")
+        return receipt
+
+    def released_catalog_list_refusal(self, baseline, catalog):
+        receipt = self.preset_call(baseline, "list", token=catalog.token, offset=0, allow_error=True)
+        expected_error = {"code": "native_rejected",
+                          "message": "The native request was rejected before applying a change; inspect the result errors"}
+        expected_result = {"plugin": baseline.target["plugin"], "native_outcome": "not_applied",
+                           "errors": [{"code": "preset_request_failed",
+                                       "message": "catalog token is expired, released or belongs to another service"}]}
+        if (receipt.get("outcome") != "not_applied" or receipt.get("error") != expected_error
+                or receipt.get("result") != expected_result):
+            raise UnknownMutation("Released catalog list did not return the exact bound public expired-token refusal")
         return receipt
 
     def discover_catalog(self, baseline, transaction, *, catalog_only=False):
@@ -261,9 +269,7 @@ class PresetRunner(StateRunner):
             self.confirm_catalog_baseline(baseline, projected, transaction, "catalog_released")
             self.fixture_check(target)
             self.phase(transaction, "ReleasedCatalogCheckInFlight")
-            receipt = self.catalog_call(baseline, "list", token=catalog.token, offset=0)
-            if receipt.get("outcome") != "not_applied":
-                raise UnknownMutation("Released catalog list was not refused before dispatch")
+            self.released_catalog_list_refusal(baseline, catalog)
             self.confirm_catalog_baseline(baseline, projected, transaction, "released_catalog_refused")
         except Exception:
             self.phase(transaction, "UnknownAfterDispatch")
