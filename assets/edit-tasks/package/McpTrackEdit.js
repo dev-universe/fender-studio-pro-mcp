@@ -166,6 +166,7 @@ function mteApply(context, ops) {
 					var channel = matches[0].channel;
 					r.target = { label: op.channel, children: {} };
 					r.graphReflection = mteGraphReflection(channel, graphFunctions);
+					r.contextEditorReflection = mteGraphReflection(channel, context.editor);
 					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
 					r.target.pannerParameters = [];
 					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];

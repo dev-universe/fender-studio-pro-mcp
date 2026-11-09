@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { editTaskHarness, mailbox, musicContext } from './host.mjs';
 
-test('graph probe reflects only its fixed function object using the observed Device identity', () => {
+test('graph probe reflects the fixed factory object and task editor using the observed Device identity', () => {
   const task = editTaskHarness('track');
-  const device = {}, graphFunctions = {}, calls = [];
+  const device = {}, graphFunctions = {}, contextEditor = {}, calls = [], factoryCalls = [];
   const uid = '12345678-1234-1234-1234-123456789ABC';
   const channel = { label: 'Fixture', mediaType: 'Audio', find(name) {
     return name === 'Inserts' ? { find(id) { return id === 'FX01' ? { find(child) { return child === 'Device' ? device : null; } } : null; } } : null;
@@ -15,22 +15,76 @@ test('graph probe reflects only its fixed function object using the observed Dev
       calls.push(args);
       const request = JSON.parse(args[1]);
       return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
-        ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
+        ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: {
+          nodes: [{ identity: null, reflection: { available: true, types: [{ name: args[2] === contextEditor ? 'FixtureEditView' : 'EditFunctions' }] } }],
+        } } : {}) });
     },
   } : null;
   const context = { functions: { root: {
     environment: { find: () => ({ getChannelList: () => ({ numChannels: 1, getChannel: () => channel }) }) },
-    createFunctions: name => name === 'AudioFXGraphEditFunctions' ? graphFunctions : null,
-  } } };
+    createFunctions(name) {
+      factoryCalls.push({ receiver: this, name, argumentCount: arguments.length });
+      return name === 'AudioFXGraphEditFunctions' ? graphFunctions : null;
+    },
+  } }, editor: contextEditor };
   const result = task.run([{ op: 'probe', channel: 'Fixture' }], context);
   assert.equal(result.results[0].graphReflection.mutation_capability, false);
-  assert.equal(calls.length, 2);
+  assert.equal(result.results[0].contextEditorReflection.mutation_capability, false);
+  assert.equal(result.results[0].contextEditorReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'FixtureEditView');
+  assert.equal(result.results[0].contextEditorReflection.auxiliary_report.nodes[0].identity, null);
+  assert.equal(result.results[0].graphReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'EditFunctions');
+  assert.equal(calls.length, 4);
   assert.equal(calls[0].length, 2);
   assert.equal(calls[1].length, 3);
   assert.equal(calls[1][0], device);
   assert.equal(calls[1][2], graphFunctions);
   assert.deepEqual(JSON.parse(calls[1][1]), { operation: 'inspect_aux', expected_instance: uid });
+  assert.equal(calls[2].length, 2);
+  assert.equal(calls[2][0], device);
+  assert.deepEqual(JSON.parse(calls[2][1]), { operation: 'inspect' });
+  assert.equal(calls[3].length, 3);
+  assert.equal(calls[3][0], device);
+  assert.equal(calls[3][2], contextEditor);
+  assert.deepEqual(JSON.parse(calls[3][1]), { operation: 'inspect_aux', expected_instance: uid });
+  assert.deepEqual(factoryCalls.map(call => call.name), ['DeviceEditFunctions', 'AudioFXGraphEditFunctions']);
+  assert.ok(factoryCalls.every(call => call.receiver === context.functions.root && call.argumentCount === 1));
 });
+
+for (const [label, editorResponse] of [
+  ['malformed native JSON', '{not json'],
+  ['foreign Device identity', JSON.stringify({ ok: true,
+    instance: { object_uid: 'AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA' },
+    scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } })],
+]) {
+  test(`context editor reflection fails closed on ${label}`, () => {
+    const task = editTaskHarness('track');
+    const device = {}, graphFunctions = {}, editor = {}, calls = [];
+    const uid = '12345678-1234-1234-1234-123456789ABC';
+    const channel = { label: 'Fixture', mediaType: 'Audio', find(name) {
+      return name === 'Inserts' ? { find(id) { return id === 'FX01' ? { find(child) { return child === 'Device' ? device : null; } } : null; } } : null;
+    } };
+    task.Host.Objects.getObjectByName = name => name === 'FenderMcpNative' ? {
+      capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1' }),
+      request(...args) {
+        calls.push(args);
+        if (args[2] === editor) return editorResponse;
+        const request = JSON.parse(args[1]);
+        return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
+          ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
+      },
+    } : null;
+    const context = { editor, functions: { root: {
+      environment: { find: () => ({ getChannelList: () => ({ numChannels: 1, getChannel: () => channel }) }) },
+      createFunctions: name => name === 'AudioFXGraphEditFunctions' ? graphFunctions : null,
+    } } };
+    const row = task.run([{ op: 'probe', channel: 'Fixture', auxiliary: { untrusted: true } }], context).results[0];
+    assert.equal(row.graphReflection.mutation_capability, false);
+    assert.equal(typeof row.contextEditorReflection.error, 'string');
+    assert.equal(row.contextEditorReflection.auxiliary_report, undefined);
+    assert.equal(calls.length, 4);
+    assert.equal(calls[3][2], editor);
+  });
+}
 
 function mutation(kind) {
   if (kind === 'track') {
