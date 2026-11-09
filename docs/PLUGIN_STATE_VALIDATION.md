@@ -11,7 +11,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 3,072 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
+| Impact | 3,456 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
 | Nested graph | 42 Splitter controls and inner/sibling state restoration | Whole-folder capture/load and topology editing |
 
 Each completed live unit is counted only after its final full-provider
@@ -276,10 +276,12 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 3,072 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 3,456 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
-cases whose fixture-end checkpoints passed. Every case required two fresh native
+cases whose fixture-end checkpoints passed. The current persistent-field partition
+contains 3,714 names; 258 remain in three bounded units. The separate ordinary,
+Focus and MIDI partitions are outside that queue and remain separately tracked. Every case required two fresh native
 full writable-projection matches before advancing. The remaining Impact fields
 are not included in this count.
 
