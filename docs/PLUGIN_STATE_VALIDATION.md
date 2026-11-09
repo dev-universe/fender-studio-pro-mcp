@@ -132,6 +132,70 @@ Another batch passed all 131 eligible scalar controls across X-Trem,
 Autofilter, Beat Delay and Groove Delay with the same per-candidate digest
 checks. Its complete inventory contained 140 records, including nine read-only
 observations.
+Surround Delay, Analog Delay, Room Reverb, Mixverb, Open AIR and Studio Verb
+then passed all 186 eligible scalar cases using the same two complete native
+digest comparisons after every restoration. The inventory contained 376
+records, including 190 read-only observations. These three batches add 376
+verified scalar cases to the earlier 115 per-candidate Pro EQ/dynamics cases;
+this is still partial coverage of the complete writable inventory.
+
+A later Compressor run confirmed four scalar cases before `studiocomp.autogain`
+left `studiocomp.gain` changed after direct restoration. The schema matched,
+but the complete writable value projection did not. The runner stopped before
+the next parameter and the unsaved scratch session was discarded. A subsequent
+run passed the other 17 scalar controls by direct restoration. The automatic
+gain case then passed capture/change/load and two complete native writable
+projection matches. No captured-scalar correction was dispatched: the saved
+state itself restored the manual gain. All 18 eligible Compressor scalar
+controls are therefore covered through their respective restoration paths;
+the separate minimum-history reset action remains unverified.
+
+The following direct-digest sweep completed 226 further scalar cases:
+Multiband Dynamics (65), De-Esser (7), Rotor (13), Fat Channel (45), Voice FX
+(4), Vocoder (74) and Vocal Tune (18). Each confirmed case restored its exact
+captured value and matched the complete writable projection twice before the
+next parameter. The final Vocal Tune scale case stopped: restoring the Custom
+selector alone left seven note toggles changed. The unsaved session was
+discarded. A fresh explicit integral scale selection then passed two
+change/capsule-load cycles, comparing the complete 26-record provider and every
+writable value and rejecting the released token. The earlier fractional List candidate was not accepted as an
+exact requested scale choice.
+
+The disconnected External mode verifier subsequently passed six transitions
+each on Mono and Stereo. Setup, Scope and image selections required two fresh
+changed observations and two exact complete 24-record baseline matches after
+restoration. The restoration sequence also recovered the captured `pingAgain`
+availability profile before restoring image and offset values. Its only
+permitted temporary metadata change is that exact button's consistent all-on
+or all-off availability group. Unrelated metadata drift still stops the run.
+These 12 cases establish the tested disconnected transitions, not physical
+routing, ping emission or hardware latency calibration.
+
+The finite-model verifier passed all current choices for Fat Channel's EQ and
+compressor selectors and Voice FX's selector: three baseline choices were
+observed, and nine other choices were changed and restored. Every choice reused
+its immutable state capsule, required two exact model reads and two complete
+typed restored projections including normalized values and display strings.
+Released state tokens were independently refused. This does not enumerate
+combinations of several selectors or prove audible/opaque model behavior.
+
+Ampire's five nonbaseline amplifier choices also passed their changed/restored
+projection comparisons. The enclosing case stopped at the final released-token
+check because a read-only peak value's normalized numeric shadow disagreed with
+its exact Float32 metadata. The raw metadata remained authoritative; the batch
+was not labelled complete. A local reproduction traced the two-double-ULP
+difference to JSON number parsing. No comparison tolerance was increased.
+
+Both Rust JSON boundaries now use exact floating-point roundtrip parsing.
+The rebuilt actual-host run completed all 18 Ampire/Pedalboard selector cases:
+18 baseline choices were observed and 262 other choices were changed and
+restored, including all amplifier/cabinet choices and all choices in each of
+the eight pedal slots of both plugins. Final released-token checks also passed.
+Mai Tai's character selector then passed its baseline observation and 12 other
+choices. Together with Fat Channel/Voice FX, these runs cover 22 current
+exposed selectors and 283 nonbaseline choice roundtrips. Their complete model
+domains, simultaneous selector combinations and audible effects remain separate
+claims; Mustang/Rumble's placeholder selectors are not included.
 
 The next build also exposed fresh native parameter digests. Independent Python
 projection from complete public pages matched all three native hashes for
@@ -207,6 +271,13 @@ and `ToneCabinetSelectorComponent` under each real `signalchain`, plus the
 workspace preset component's four children. The full 39-record projections
 remained unchanged twice. These metadata reads establish the fixed selector
 route; model catalog contents and selection effects are separate checks.
+The new read-only `plugin_models` operation then resolved both fixed model
+objects successfully in the actual host. Their current category and effect
+counts were zero, including Mustang after opening its real Add picker, which
+was also visually empty. Both complete 39-record projections remained unchanged
+twice after cold calls and after opening/cancelling that picker. Nonempty title
+enumeration and model selection remain unverified; an empty current model is
+not evidence that all available Fender models have been enumerated.
 An unpopulated scalar facade is not classified as an empty rack.
 
 ## Reproduction and evidence
@@ -215,6 +286,8 @@ The runners include `scripts/verify_all_parameters.py`,
 `scripts/verify_all_parameter_states.py`, `scripts/verify_plugin_states.py`,
 `scripts/verify_plugin_presets.py`, `scripts/verify_plugin_actions.py` and
 `scripts/verify_nested_graph.py`.
+Finite model ranges use `scripts/verify_plugin_models.py`; disconnected External
+mode transitions use `scripts/verify_external_modes.py`.
 Use their `--help` output for finite fixture,
 scope and mode arguments. Start the MCP owner before launching the DAW, open the
 named disposable scratch song, and retain the ignored append-only ledgers and
