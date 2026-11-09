@@ -62,9 +62,11 @@ including slots with no class UID. Other slot families remain unsupported.
 Class/reflection observations and temporary native-owner releases precede
 fresh borrowed UID and parent/Presets-child checks, with the current document/target
 check last. These are sequential observations, not an atomic graph snapshot.
-The `AudioFXSlot` expansion is source/mock verified from the observed Console
-Shaper slot route. That observation does not verify Mix FX or panner preset
-catalog discovery or recall. A stable slot object UID is still mandatory;
+Actual 8.1.1 catalog checks passed for `AudioFXSlot` on Surround Panner (zero
+current entries) and Console Shaper (13), including released-token refusal and
+six independent complete typed provider confirmations per fixture. Two Console
+Shaper recalls also changed writable values and restored the baseline. An empty
+current panner catalog establishes no preset-recall result. A stable slot object UID is still mandatory;
 missing object identity is rejected even when the class name is allowed.
 It lists at most4096 entries per catalog and retains at most four catalogs per
 service. Each random64-uppercase-hex token pins the canonical document, model,

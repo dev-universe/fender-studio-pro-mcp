@@ -272,8 +272,14 @@ AudioInsertSlot, AudioSynthSlot and MusicFXSlot families. In the actual host,
 Pro EQ (74 catalog entries), Mai Tai (241) and Arpeggiator (10) each passed two
 issued recalls with changed writable values, complete-provider restoration,
 token release and released-catalog refusal. The latter two establish instrument
-and Note FX acceptance on these fixtures. Other family members and panner/Mix FX
-preset routes still need their own observations.
+and Note FX acceptance on these fixtures. Other family members remain separate
+acceptance cases.
+The fourth observed slot family, AudioFXSlot, then passed catalog-only checks
+for Surround Panner (zero current entries) and Console Shaper (13). Discovery,
+release and released-token list refusal each required two complete typed
+provider matches, six observations per fixture. Console Shaper also passed two
+issued preset recalls with changed writable values and full restoration. No
+panner preset recall is inferred from an empty current catalog.
 Mustang Native subsequently exposed a 227-entry issued preset catalog. Two
 recalls changed its exposed output-level value and restored its complete
 writable projection. Current category/effect model counts remained zero after
