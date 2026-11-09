@@ -401,6 +401,8 @@ struct Service {
     states_pending: AtomicBool,
     presets: std::cell::UnsafeCell<native_script::PresetRegistry>,
     presets_pending: AtomicBool,
+    insert_chains: std::cell::UnsafeCell<native_script::InsertChainRegistry>,
+    insert_chains_pending: AtomicBool,
 }
 static SERVICE_VTABLE: ServiceVtable = ServiceVtable {
     base: UnknownVtable {
@@ -453,6 +455,8 @@ unsafe extern "C" fn factory_create(
         states_pending: AtomicBool::new(false),
         presets: std::cell::UnsafeCell::new(native_script::PresetRegistry::new()),
         presets_pending: AtomicBool::new(false),
+        insert_chains: std::cell::UnsafeCell::new(native_script::InsertChainRegistry::new()),
+        insert_chains_pending: AtomicBool::new(false),
     });
     let raw = Box::into_raw(service);
     unsafe {
@@ -516,7 +520,8 @@ unsafe extern "C" fn service_release(this: *mut c_void) -> u32 {
                 || service.initializing.load(Ordering::Acquire)
                 || service.receipt_pending.load(Ordering::Acquire)
                 || service.states_pending.load(Ordering::Acquire)
-                || service.presets_pending.load(Ordering::Acquire))
+                || service.presets_pending.load(Ordering::Acquire)
+                || service.insert_chains_pending.load(Ordering::Acquire))
         {
             // Registered objects own a separate reference. Reaching this branch
             // violates that invariant; preserve the allocation, never remove

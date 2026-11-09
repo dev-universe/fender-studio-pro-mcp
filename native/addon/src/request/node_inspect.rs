@@ -234,26 +234,38 @@ impl DocumentEnvironmentRoute {
         Ok(route)
     }
     fn capture(ctx: &Context<'_>) -> Result<Self, String> {
-        ctx.check()?;
+        Self::capture_for_document(&ctx.document.manager, &mut || ctx.check())
+    }
+    pub(super) fn capture_for_document<G: FnMut() -> Result<(), String>>(
+        document_manager: &Owned,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        guard()?;
         let get_string = constant_string().ok_or("native string constants unavailable")?;
+        Self::capture_with_text(document_manager, get_string, guard)
+    }
+    pub(super) fn capture_with_text<G: FnMut() -> Result<(), String>>(
+        document_manager: &Owned,
+        get_string: ConstantString,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        guard()?;
         let active_document_name = unsafe { get_string(c"ActiveDocument".as_ptr()) };
         let environment_name = unsafe { get_string(c"Environment".as_ptr()) };
         if active_document_name.is_null() || environment_name.is_null() {
             return Err("fixed document environment identifiers unavailable".into());
         }
-        let manager = Self::manager(ctx.document.manager.0)?;
-        ctx.check()?;
-        let route = Self::resolve(manager, active_document_name, environment_name, &mut || {
-            ctx.check()
-        })?;
+        let manager = Self::manager(document_manager.0)?;
+        guard()?;
+        let route = Self::resolve(manager, active_document_name, environment_name, guard)?;
         let id = route.environment.id()?;
         let family = class_name(route.environment.node.0);
         route.check()?;
-        ctx.check()?;
+        guard()?;
         validate_document_environment_family(&id, &family)?;
         Ok(route)
     }
-    fn check(&self) -> Result<(), String> {
+    pub(super) fn check(&self) -> Result<(), String> {
         let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
             unsafe { method(self.manager.node.0, 10) };
         let child: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
@@ -267,12 +279,30 @@ impl DocumentEnvironmentRoute {
             Ok(())
         }
     }
-    fn matches(&self, inspection: &Inspection) -> Result<bool, String> {
+    pub(super) fn matches(&self, inspection: &Inspection) -> Result<bool, String> {
         inspection
             .ancestor_matches_canonical(
                 NonNull::new(self.environment._canonical.0).expect("retained Environment identity"),
             )
             .map_err(|error| error.to_string())
+    }
+    pub(super) fn canonical_keys(&self) -> [usize; 3] {
+        [
+            self.manager._canonical.0 as usize,
+            self.controller._canonical.0 as usize,
+            self.environment._canonical.0 as usize,
+        ]
+    }
+    pub(super) fn check_family<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<(), String> {
+        guard()?;
+        let id = self.environment.id()?;
+        guard()?;
+        let family = class_name(self.environment.node.0);
+        guard()?;
+        validate_document_environment_family(&id, &family)
     }
 }
 

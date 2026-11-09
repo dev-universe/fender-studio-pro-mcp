@@ -980,3 +980,170 @@ fn restore_refuses_a_changed_destination_or_handler_before_open() {
         f.balanced();
     }
 }
+
+#[test]
+fn private_validation_runs_after_created_owner_cleanup_before_first_open() {
+    let f = Fixture::new();
+    let mut validations = 0;
+    let file = CollectionFile::capture_with_validation(
+        f.route(),
+        f.destination().unwrap(),
+        &mut f.guard(),
+        &mut || {
+            validations += 1;
+            assert_eq!(f.calls("store"), 1);
+            assert_eq!(f.calls("open"), 0);
+            assert_eq!(unsafe { object(f.created) }.refs.get(), 1);
+            f.events.calls.borrow_mut().push("private_validation");
+            Ok(())
+        },
+    )
+    .unwrap();
+    assert_eq!(validations, 1);
+    let calls = f.events.calls.borrow();
+    assert!(
+        calls.iter().position(|call| *call == "store").unwrap()
+            < calls
+                .iter()
+                .position(|call| *call == "private_validation")
+                .unwrap()
+    );
+    assert!(
+        calls
+            .iter()
+            .position(|call| *call == "private_validation")
+            .unwrap()
+            < calls.iter().position(|call| *call == "open").unwrap()
+    );
+    drop(calls);
+    drop(file);
+    f.balanced();
+}
+#[test]
+fn private_validation_rejection_is_dispatched_without_any_archive_open_or_retry() {
+    let f = Fixture::new();
+    let mut validations = 0;
+    let error = CollectionFile::capture_with_validation(
+        f.route(),
+        f.destination().unwrap(),
+        &mut f.guard(),
+        &mut || {
+            validations += 1;
+            Err("private file failed ownership/size/hash validation".into())
+        },
+    )
+    .err()
+    .unwrap();
+    assert!(error.dispatched);
+    assert_eq!(validations, 1);
+    assert_eq!(f.calls("store"), 1);
+    assert_eq!(f.calls("open"), 0);
+    assert_eq!(f.calls("restore"), 0);
+    f.balanced();
+}
+#[test]
+fn validation_cannot_run_before_an_accepted_store() {
+    for failed in ["create", "store"] {
+        let f = Fixture::new();
+        if failed == "create" {
+            unsafe { object(f.handler) }.created.set(ptr::null_mut());
+        } else {
+            unsafe { object(f.created) }.action.set(0);
+        }
+        let mut validations = 0;
+        let error = CollectionFile::capture_with_validation(
+            f.route(),
+            f.destination().unwrap(),
+            &mut f.guard(),
+            &mut || {
+                validations += 1;
+                Ok(())
+            },
+        )
+        .err()
+        .unwrap();
+        assert_eq!(error.dispatched, failed == "store");
+        assert_eq!(validations, 0);
+        assert_eq!(f.calls("open"), 0);
+        f.balanced();
+    }
+}
+#[test]
+fn validation_reentry_rechecks_context_handler_capability_and_exact_destination() {
+    for changed in ["context", "handler", "flags", "destination"] {
+        let f = Fixture::new();
+        let destination = f.destination().unwrap();
+        let url = destination.url.raw();
+        let mut validations = 0;
+        let error = CollectionFile::capture_with_validation(
+            f.route(),
+            destination,
+            &mut f.guard(),
+            &mut || {
+                validations += 1;
+                match changed {
+                    "context" => f.events.alive.set(false),
+                    "handler" => unsafe { object(f.registry) }.handler.set(f.other),
+                    "flags" => unsafe { object(f.handler) }.flags.set(1),
+                    _ => {
+                        unsafe { object(url) }
+                            .path
+                            .replace(b"/private/foreign.multipreset".to_vec());
+                    }
+                }
+                Ok(())
+            },
+        )
+        .err()
+        .unwrap();
+        assert!(error.dispatched, "{changed}");
+        assert_eq!(validations, 1);
+        assert_eq!(f.calls("store"), 1);
+        assert_eq!(f.calls("open"), 0, "{changed}");
+        f.balanced();
+    }
+}
+#[test]
+fn validation_callback_temporary_release_cannot_escape_the_postcallback_guard() {
+    let f = Fixture::new();
+    let error = CollectionFile::capture_with_validation(
+        f.route(),
+        f.destination().unwrap(),
+        &mut f.guard(),
+        &mut || {
+            let owner = unsafe { Owned::hold(f.other) }.unwrap();
+            unsafe { object(f.other) }.release_invalidate.set(true);
+            drop(owner);
+            Ok(())
+        },
+    )
+    .err()
+    .unwrap();
+    assert!(error.dispatched);
+    assert_eq!(f.calls("open"), 0);
+    assert_eq!(f.events.calls.borrow().last(), Some(&"guard"));
+    f.balanced();
+}
+#[test]
+fn failed_reopen_after_validated_file_never_repeats_validation_or_store() {
+    let f = Fixture::new();
+    f.events.opened.borrow_mut().clear();
+    let mut validations = 0;
+    let error = CollectionFile::capture_with_validation(
+        f.route(),
+        f.destination().unwrap(),
+        &mut f.guard(),
+        &mut || {
+            validations += 1;
+            Ok(())
+        },
+    )
+    .err()
+    .unwrap();
+    assert!(error.dispatched);
+    assert_eq!(validations, 1);
+    assert_eq!(f.calls("store"), 1);
+    assert_eq!(f.calls("open"), 1);
+    assert_eq!(f.calls("restore"), 0);
+    f.balanced();
+}

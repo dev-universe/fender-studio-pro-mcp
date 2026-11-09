@@ -148,6 +148,24 @@ impl CollectionFile {
         destination: PrivateDestination,
         g: &mut G,
     ) -> Result<Self, CollectionCallError> {
+        Self::capture_with_validation(route, destination, g, &mut || Ok(()))
+    }
+    /// Runs an integrating owner's private-file validation after an accepted
+    /// store and before the first archive reopen. The callback must seal and
+    /// verify the server-owned file's ownership, size and hash. It receives no
+    /// native pointer, path or archive bytes from this API.
+    ///
+    /// Validation failure is dispatched and may leave partial private output.
+    /// This post-store gate cannot cancel or impose a hard pre-write byte cap.
+    pub fn capture_with_validation<
+        G: FnMut() -> Result<(), String>,
+        V: FnMut() -> Result<(), String>,
+    >(
+        route: Rc<FolderPresetRoute>,
+        destination: PrivateDestination,
+        g: &mut G,
+        post_store: &mut V,
+    ) -> Result<Self, CollectionCallError> {
         let mut dispatched = false;
         let result = (|| {
             route.check(g)?;
@@ -189,6 +207,12 @@ impl CollectionFile {
             drop(created);
             guard(g)?;
             destination.check(g)?;
+            route.check(g)?;
+            let validation = post_store();
+            guard(g)?;
+            validation.map_err(Error::Guard)?;
+            destination.check(g)?;
+            route.flags(g)?;
             route.check(g)?;
             let fresh = open_preset(&route, &destination, g)?;
             route.check(g)?;

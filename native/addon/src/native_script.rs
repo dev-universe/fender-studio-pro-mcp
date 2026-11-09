@@ -293,9 +293,10 @@ static BUNDLE_PIN: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
 // ownership rejects duplicate startup for the same module, including reentry.
 static MODULE_OWNER: AtomicPtr<Service> = AtomicPtr::new(ptr::null_mut());
 static LIVE_RECEIPTS: AtomicU32 = AtomicU32::new(0);
-pub(super) type ReceiptLease = request::ReceiptLease;
+pub(super) type ReceiptLease = request::NativeReceiptLease;
 pub(super) type StateRegistry = request::state::Registry;
 pub(super) type PresetRegistry = request::presets::Registry;
+pub(super) type InsertChainRegistry = request::insert_chain::Registry;
 fn release_receipt(service: *mut Service) {
     let s = unsafe { &*service };
     // GUI-only, and take the Rust slot before any native destructor can reenter.
@@ -306,7 +307,8 @@ fn release_receipt(service: *mut Service) {
         drop(old);
     }
 }
-fn retain_receipt(service: *mut Service, receipt: ReceiptLease) {
+fn retain_receipt(service: *mut Service, receipt: impl Into<ReceiptLease>) {
+    let receipt = receipt.into();
     let s = unsafe { &*service };
     debug_assert!(!s.receipt_pending.load(Ordering::Acquire));
     unsafe {
@@ -671,10 +673,11 @@ fn return_json(out: *mut VariantOut, text: &str, a: &Api) -> bool {
 }
 fn publish_reply(
     out: *mut VariantOut,
-    mut reply: request::Reply,
+    reply: impl Into<request::NativeReply>,
     a: &Api,
     service: *mut Service,
 ) -> bool {
+    let mut reply = reply.into();
     let Some(string) = prepare_json(&reply.encode(), a) else {
         return false;
     };
@@ -684,27 +687,25 @@ fn publish_reply(
         clear_output(out);
     }
     if reply.final_check(service) {
-        if let Some(receipt) = reply.take_receipt() {
-            retain_receipt(service, receipt);
+        if let Ok(receipt) = reply.take_receipt() {
+            if let Some(receipt) = receipt {
+                retain_receipt(service, receipt);
+            }
+            unsafe {
+                install_string(out, string);
+            }
+            return true;
         }
-        unsafe {
-            install_string(out, string);
-        }
-        true
-    } else {
-        // The reply is already downgraded to a non-success outcome. Release
-        // invalidated pins before preparing that error; no verified claim can
-        // survive either destructor or another output allocation callback.
-        drop(string);
-        reply.release_context();
-        let Some(error) = prepare_json(&reply.encode(), a) else {
-            return false;
-        };
-        unsafe {
-            install_string(out, error);
-        }
-        true
     }
+    drop(string);
+    reply.release_context();
+    let Some(error) = prepare_json(&reply.encode(), a) else {
+        return false;
+    };
+    unsafe {
+        install_string(out, error);
+    }
+    true
 }
 
 unsafe extern "C" fn script_invoke(
@@ -751,8 +752,8 @@ unsafe extern "C" fn script_invoke(
     let count: Count = unsafe { method(msg, 4) };
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
-        request::Reply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true}),
+        request::NativeReply::unbound(
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
         )
     } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
@@ -776,7 +777,7 @@ unsafe extern "C" fn script_invoke(
                 && (auxiliary.is_null()
                     || unsafe { (*auxiliary).kind & 15 != 4 || (*auxiliary).payload == 0 }))
         {
-            request::Reply::error(
+            request::NativeReply::error(
                 "invalid_arguments",
                 "request requires one native object and one JSON string",
                 "not_applied",
@@ -796,7 +797,7 @@ unsafe extern "C" fn script_invoke(
                 Ok(json) if json.len() <= request::MAX_REQUEST_BYTES => {
                     request::dispatch(owner, target, &json, auxiliary, a)
                 }
-                _ => request::Reply::error(
+                _ => request::NativeReply::error(
                     "invalid_request",
                     "request is not valid bounded UTF-16/UTF-8 JSON",
                     "not_applied",
@@ -804,7 +805,7 @@ unsafe extern "C" fn script_invoke(
             }
         }
     } else {
-        request::Reply::error(
+        request::NativeReply::error(
             "invalid_arguments",
             "unsupported method argument count",
             "not_applied",
@@ -999,6 +1000,7 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
     release_receipt(service);
     request::state::drain(service);
     request::presets::drain(service);
+    request::insert_chain::drain(service);
     if s.registered.load(Ordering::Acquire) {
         let table = unsafe { (a.objects)() };
         if table.is_null() {
@@ -1030,11 +1032,12 @@ pub(super) fn module_exit_state() -> bool {
         && MODULE_OWNER.load(Ordering::Acquire).is_null()
         && LIVE_RECEIPTS.load(Ordering::Acquire) == 0
         && request::state::live_count() == 0
-        && request::presets::live_count() == 0;
+        && request::presets::live_count() == 0
+        && request::insert_chain::live_count() == 0;
     log_detail(
         "module_exit_state",
         &format!(
-            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{},\"state_capsules\":{},\"preset_catalogs\":{}}}",
+            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{},\"state_capsules\":{},\"preset_catalogs\":{},\"insert_chain_capsules\":{}}}",
             LIVE_SERVICES.load(Ordering::Acquire),
             FACTORY.refs.load(Ordering::Acquire),
             TYPE.refs.load(Ordering::Acquire).saturating_sub(1),
@@ -1043,7 +1046,8 @@ pub(super) fn module_exit_state() -> bool {
             !BUNDLE_PIN.load(Ordering::Acquire).is_null(),
             LIVE_RECEIPTS.load(Ordering::Acquire),
             request::state::live_count(),
-            request::presets::live_count()
+            request::presets::live_count(),
+            request::insert_chain::live_count()
         ),
     );
     clean

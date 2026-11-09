@@ -136,6 +136,8 @@ fn service() -> Box<Service> {
         states_pending: AtomicBool::new(false),
         presets: std::cell::UnsafeCell::new(super::super::presets::Registry::new()),
         presets_pending: AtomicBool::new(false),
+        insert_chains: std::cell::UnsafeCell::new(super::super::insert_chain::Registry::new()),
+        insert_chains_pending: AtomicBool::new(false),
     })
 }
 impl Fixture {

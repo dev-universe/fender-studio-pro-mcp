@@ -23,8 +23,12 @@ mod digest;
 #[cfg(test)]
 #[path = "request/direct_tests.rs"]
 mod direct_tests;
+#[path = "request/folder_context.rs"]
+mod folder_context;
 #[path = "request/format.rs"]
 mod format;
+#[path = "request/insert_chain.rs"]
+pub(super) mod insert_chain;
 #[path = "request/insert_folder.rs"]
 mod insert_folder;
 #[path = "request/node_inspect.rs"]
@@ -66,6 +70,11 @@ enum Mode {
 }
 fn default_limit() -> u32 {
     64
+}
+fn supplied_folder<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<String>, D::Error> {
+    String::deserialize(deserializer).map(Some)
 }
 #[derive(Debug, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -178,6 +187,26 @@ enum Request {
     InspectInsertFolderPresetPreflight {
         expected_instance: Option<String>,
     },
+    InsertChainCapture {
+        bridge_session: String,
+        document_epoch: String,
+        #[serde(default, deserialize_with = "supplied_folder")]
+        expected_folder: Option<String>,
+    },
+    InsertChainRestore {
+        bridge_session: String,
+        document_epoch: String,
+        #[serde(default, deserialize_with = "supplied_folder")]
+        expected_folder: Option<String>,
+        token: String,
+    },
+    InsertChainRelease {
+        bridge_session: String,
+        document_epoch: String,
+        #[serde(default, deserialize_with = "supplied_folder")]
+        expected_folder: Option<String>,
+        token: String,
+    },
 }
 impl Request {
     fn source(&self) -> Source {
@@ -200,11 +229,17 @@ impl Request {
             | Self::PresetRelease { .. }
             | Self::InspectAux { .. }
             | Self::InspectInsertFolderAncestry { .. }
-            | Self::InspectInsertFolderPresetPreflight { .. } => Source::Auto,
+            | Self::InspectInsertFolderPresetPreflight { .. }
+            | Self::InsertChainCapture { .. }
+            | Self::InsertChainRestore { .. }
+            | Self::InsertChainRelease { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
         match self {
+            Self::InsertChainCapture { .. }
+            | Self::InsertChainRestore { .. }
+            | Self::InsertChainRelease { .. } => None,
             Self::ParameterAction {
                 expected_instance, ..
             }
@@ -265,6 +300,47 @@ impl Request {
             }
         }
         match self {
+            Self::InsertChainCapture {
+                bridge_session,
+                document_epoch,
+                expected_folder,
+            }
+            | Self::InsertChainRestore {
+                bridge_session,
+                document_epoch,
+                expected_folder,
+                ..
+            }
+            | Self::InsertChainRelease {
+                bridge_session,
+                document_epoch,
+                expected_folder,
+                ..
+            } => {
+                for value in [bridge_session, document_epoch] {
+                    if value.is_empty()
+                        || value.encode_utf16().count() > 128
+                        || value.chars().any(char::is_control)
+                    {
+                        return Err(
+                            "insert-chain bridge generation requires bounded nonempty text".into(),
+                        );
+                    }
+                }
+                if expected_folder.as_ref().is_some_and(|uid| !valid_uid(uid)) {
+                    return Err("expected_folder must be a nonzero canonical object UID".into());
+                }
+                if let Self::InsertChainRestore { token, .. }
+                | Self::InsertChainRelease { token, .. } = self
+                {
+                    if !state::valid_token(token) {
+                        return Err(
+                            "insert-chain token requires64 uppercase hexadecimal characters".into(),
+                        );
+                    }
+                }
+                Ok(())
+            }
             Self::ModelCatalog { offset, limit, .. } => catalog::validate_page(*offset, *limit),
             Self::ParameterDigest {
                 expected_instance: None,
@@ -412,6 +488,7 @@ impl Request {
             } | Self::InspectAux { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
+                | Self::InsertChainCapture { .. }
         )
     }
 }
@@ -543,6 +620,44 @@ fn active_document(a: &Api) -> Result<Document, String> {
         _model_identity: model_identity,
     })
 }
+fn check_service_active(pointer: *mut Service) -> Result<(), String> {
+    let service = unsafe { &*pointer };
+    if !READY.load(Ordering::Acquire)
+        || service.terminated.load(Ordering::Acquire)
+        || !service.initialized.load(Ordering::Acquire)
+        || !service.registered.load(Ordering::Acquire)
+    {
+        Err("native service is no longer active".into())
+    } else {
+        Ok(())
+    }
+}
+
+// Shared document-only final witness. No target UID/class getter or temporary
+// native owner follows this witness in the folder publication path.
+fn check_document_only(
+    service: *mut Service,
+    document: &Document,
+    started: Instant,
+    api: &Api,
+) -> Result<(), String> {
+    check_service_active(service)?;
+    if !on_main(api) {
+        return Err("request left the host GUI thread".into());
+    }
+    if started.elapsed() > Duration::from_secs(2) {
+        return Err("native request exceeded its two second budget".into());
+    }
+    let active: Borrowed = unsafe { method(document.manager.0, 9) };
+    let model: Borrowed = unsafe { method(document.document.0, 6) };
+    if unsafe { active(document.manager.0) } != document.document.0
+        || unsafe { model(document.document.0) } != document.model.0
+    {
+        return Err("active document/model changed".into());
+    }
+    check_service_active(service)
+}
+
 pub(super) struct Context<'a> {
     service: *mut Service,
     target: Owned,
@@ -578,33 +693,10 @@ impl<'a> Context<'a> {
         Ok(ctx)
     }
     fn service_active(&self) -> Result<(), String> {
-        let service = unsafe { &*self.service };
-        if !READY.load(Ordering::Acquire)
-            || service.terminated.load(Ordering::Acquire)
-            || !service.initialized.load(Ordering::Acquire)
-            || !service.registered.load(Ordering::Acquire)
-        {
-            Err("native service is no longer active".into())
-        } else {
-            Ok(())
-        }
+        check_service_active(self.service)
     }
     fn check_document(&self) -> Result<(), String> {
-        self.service_active()?;
-        if !on_main(self.api) {
-            return Err("request left the host GUI thread".into());
-        }
-        if self.started.elapsed() > Duration::from_secs(2) {
-            return Err("native request exceeded its two second budget".into());
-        }
-        let active: Borrowed = unsafe { method(self.document.manager.0, 9) };
-        let model: Borrowed = unsafe { method(self.document.document.0, 6) };
-        if unsafe { active(self.document.manager.0) } != self.document.document.0
-            || unsafe { model(self.document.document.0) } != self.document.model.0
-        {
-            return Err("active document/model changed".into());
-        }
-        self.service_active()
+        check_document_only(self.service, &self.document, self.started, self.api)
     }
     fn check(&self) -> Result<(), String> {
         self.service_active()?;
@@ -1175,9 +1267,10 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::PresetRelease { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
-        | Request::InspectInsertFolderPresetPreflight { .. } => {
-            Err("request requires its own dispatcher".into())
-        }
+        | Request::InspectInsertFolderPresetPreflight { .. }
+        | Request::InsertChainCapture { .. }
+        | Request::InsertChainRestore { .. }
+        | Request::InsertChainRelease { .. } => Err("request requires its own dispatcher".into()),
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -1193,6 +1286,62 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
 }
 fn error(code: &str, message: &str, outcome: &str) -> Value {
     json!({"ok":false,"error":{"code":code,"message":message},"outcome":outcome})
+}
+#[allow(
+    clippy::large_enum_variant,
+    reason = "Receipt transfer after the final host guard must not allocate"
+)]
+pub(crate) enum NativeReceiptLease {
+    Device { _lease: ReceiptLease },
+    InsertChain { _lease: insert_chain::ReceiptLease },
+}
+impl From<ReceiptLease> for NativeReceiptLease {
+    fn from(lease: ReceiptLease) -> Self {
+        Self::Device { _lease: lease }
+    }
+}
+pub(super) enum NativeReply {
+    Device(Box<Reply>),
+    InsertChain(insert_chain::Reply),
+}
+impl From<Reply> for NativeReply {
+    fn from(reply: Reply) -> Self {
+        Self::Device(Box::new(reply))
+    }
+}
+impl NativeReply {
+    pub(super) fn unbound(value: Value) -> Self {
+        Reply::unbound(value).into()
+    }
+    pub(super) fn error(code: &str, message: &str, outcome: &str) -> Self {
+        Reply::error(code, message, outcome).into()
+    }
+    pub(super) fn encode(&mut self) -> String {
+        match self {
+            Self::Device(reply) => reply.encode(),
+            Self::InsertChain(reply) => reply.encode(),
+        }
+    }
+    pub(super) fn final_check(&mut self, service: *mut Service) -> bool {
+        match self {
+            Self::Device(reply) => reply.final_check(service),
+            Self::InsertChain(reply) => reply.final_check(service),
+        }
+    }
+    pub(super) fn take_receipt(&mut self) -> Result<Option<NativeReceiptLease>, ()> {
+        match self {
+            Self::Device(reply) => Ok(reply.take_receipt().map(NativeReceiptLease::from)),
+            Self::InsertChain(reply) => reply.take_receipt().map(|receipt| {
+                receipt.map(|lease| NativeReceiptLease::InsertChain { _lease: lease })
+            }),
+        }
+    }
+    pub(super) fn release_context(&mut self) {
+        match self {
+            Self::Device(reply) => reply.release_context(),
+            Self::InsertChain(reply) => reply.release_context(),
+        }
+    }
 }
 pub(crate) struct ReceiptLease {
     _catalog: Option<catalog::Catalog>,
@@ -1408,11 +1557,11 @@ pub(super) fn dispatch(
     text: &str,
     auxiliary: Option<Owned>,
     a: &'static Api,
-) -> Reply {
+) -> NativeReply {
     let request: Request = match serde_json::from_str(text) {
         Ok(r) => r,
         Err(_) => {
-            return Reply::error(
+            return NativeReply::error(
                 "invalid_request",
                 "unsupported operation, field or JSON shape",
                 "not_applied",
@@ -1420,15 +1569,34 @@ pub(super) fn dispatch(
         }
     };
     if let Err(e) = request.validate() {
-        return Reply::error("invalid_request", &e, "not_applied");
+        return NativeReply::error("invalid_request", &e, "not_applied");
     }
     if request.needs_auxiliary() != auxiliary.is_some() {
-        return Reply::error(
+        return NativeReply::error(
             "invalid_arguments",
             "initial presets and fixed auxiliary observations require exactly one auxiliary native object",
             "not_applied",
         );
     }
+    if matches!(
+        request,
+        Request::InsertChainCapture { .. }
+            | Request::InsertChainRestore { .. }
+            | Request::InsertChainRelease { .. }
+    ) {
+        return NativeReply::InsertChain(insert_chain::dispatch(
+            service, target, request, auxiliary, a,
+        ));
+    }
+    dispatch_device(service, target, request, auxiliary, a).into()
+}
+fn dispatch_device(
+    service: *mut Service,
+    target: Owned,
+    request: Request,
+    auxiliary: Option<Owned>,
+    a: &'static Api,
+) -> Reply {
     let ctx = match Context::capture(service, target, request.expected(), a) {
         Ok(ctx) => Box::new(ctx),
         Err(e) => return Reply::error("context_guard_failed", &e, "not_applied"),
@@ -1444,6 +1612,7 @@ pub(super) fn dispatch(
     if let Err(reason) = release_previous(&ctx)
         .and_then(|_| state::expire(&ctx))
         .and_then(|_| presets::expire(&ctx))
+        .and_then(|_| insert_chain::expire(&ctx))
     {
         return Reply {
             value: error("context_guard_failed", &reason, "not_applied"),
@@ -2477,6 +2646,8 @@ mod guard_tests {
             states_pending: AtomicBool::new(false),
             presets: std::cell::UnsafeCell::new(presets::Registry::new()),
             presets_pending: AtomicBool::new(false),
+            insert_chains: std::cell::UnsafeCell::new(insert_chain::Registry::new()),
+            insert_chains_pending: AtomicBool::new(false),
         };
         let a = Api {
             gui: empty,
