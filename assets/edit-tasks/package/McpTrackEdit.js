@@ -37,6 +37,24 @@ function mteWrite(name, value) {
 
 function mteFn(obj, key) { return !!obj && typeof obj[key] === "function"; }
 
+// Only legacy identity reads may omit outcome. Final observations must report
+// observed; every present status/error field must agree with a known read.
+function mteNativeReadObserved(value, legacyIdentity) {
+	if (!value || typeof value !== "object" || Array.isArray(value) || value.ok !== true) return false;
+	if (legacyIdentity !== true && value.outcome !== "observed") return false;
+	var has = Object.prototype.hasOwnProperty;
+	var outcomes = ["outcome", "native_outcome"];
+	for (var i = 0; i < outcomes.length; i++) {
+		if (has.call(value, outcomes[i]) && value[outcomes[i]] !== "observed") return false;
+	}
+	var errors = ["error", "native_error"];
+	for (var j = 0; j < errors.length; j++) {
+		if (has.call(value, errors[j]) && value[errors[j]] !== null) return false;
+	}
+	if (has.call(value, "errors") && (!Array.isArray(value.errors) || value.errors.length !== 0)) return false;
+	return true;
+}
+
 function mteGraphReflection(channel, graphFunctions) {
 	try {
 		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
@@ -50,12 +68,40 @@ function mteGraphReflection(channel, graphFunctions) {
 		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
 		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
 		var identity = JSON.parse(identityText);
-		if (!identity.ok || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
+		if (!mteNativeReadObserved(identity, true) || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
 		var text = service.request(device, JSON.stringify({ operation: "inspect_aux", expected_instance: identity.instance.object_uid }), graphFunctions);
 		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native reflection response" };
 		var result = JSON.parse(text);
-		if (!result || result.ok !== true || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+		if (!mteNativeReadObserved(result) || !result.instance || result.instance.object_uid !== identity.instance.object_uid
 			|| result.scope !== "auxiliary_type_observation" || result.mutation_capability !== false) return { error: "native reflection identity or scope unavailable" };
+		return result;
+	} catch (error) { return { error: String(error).slice(0, 512) }; }
+}
+
+// Fixed parent-chain observation of this channel's actual Inserts folder.
+// The existing auxiliary metadata helper keeps its original one-node profile.
+function mteInsertFolderAncestry(channel) {
+	try {
+		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
+		var slot = mteFn(inserts, "find") ? inserts.find("FX01") : null;
+		var device = mteFn(slot, "find") ? slot.find("Device") : null;
+		var objects = Host.Objects;
+		var service = mteFn(objects, "getObjectByName") ? objects.getObjectByName("FenderMcpNative") : null;
+		if (!device || !inserts || !service || !mteFn(service, "capabilities") || !mteFn(service, "request")) return null;
+		var capabilities = JSON.parse(service.capabilities());
+		if (!capabilities.ok || capabilities.api !== "fender-mcp-native-v1") return null;
+		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
+		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
+		var identity = JSON.parse(identityText);
+		if (!mteNativeReadObserved(identity, true) || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
+		var text = service.request(device, JSON.stringify({ operation: "inspect_insert_folder_ancestry", expected_instance: identity.instance.object_uid }), inserts);
+		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native ancestry response" };
+		var result = JSON.parse(text);
+		if (!mteNativeReadObserved(result) || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+			|| result.scope !== "insert_folder_ancestry_observation" || result.mutation_capability !== false || result.atomic_snapshot !== false
+			|| typeof result.ancestor_matches_active_model !== "boolean" || !result.insert_folder_ancestry_report
+			|| result.insert_folder_ancestry_report.traversal !== "parent_chain_only"
+			|| result.insert_folder_ancestry_report.ancestor_matches_active_model !== result.ancestor_matches_active_model) return { error: "native ancestry identity or scope unavailable" };
 		return result;
 	} catch (error) { return { error: String(error).slice(0, 512) }; }
 }
@@ -169,6 +215,7 @@ function mteApply(context, ops) {
 					r.contextEditorReflection = mteGraphReflection(channel, context.editor);
 					var insertFolder = mteFn(channel, "find") ? channel.find("Inserts") : null;
 					r.insertFolderReflection = mteGraphReflection(channel, insertFolder);
+					r.insertFolderAncestry = mteInsertFolderAncestry(channel);
 					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
 					r.target.pannerParameters = [];
 					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];

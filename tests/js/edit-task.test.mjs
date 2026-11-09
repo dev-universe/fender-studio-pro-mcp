@@ -1,8 +1,98 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { editTaskHarness, mailbox, musicContext } from './host.mjs';
+import vm from 'node:vm';
+import { asset, editTaskHarness, mailbox, memoryHost, musicContext } from './host.mjs';
 
-test('graph probe reflects only the fixed factory, task editor and actual Inserts folder', () => {
+function nativeReadHelper(helper, stage, patch, omitOutcome = false) {
+  const { Host } = memoryHost();
+  const device = {}, auxiliary = {}, calls = [];
+  const uid = '12345678-1234-1234-1234-123456789ABC';
+  const inserts = { find: name => name === 'FX01' ? { find: child => child === 'Device' ? device : null } : null };
+  const channel = { find: name => name === 'Inserts' ? inserts : null };
+  Host.Objects.getObjectByName = name => name === 'FenderMcpNative' ? {
+    // Capabilities has its own contract and intentionally has no read outcome,
+    // node scope, instance or ancestry predicate.
+    capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1' }),
+    request(...args) {
+      calls.push(args);
+      const request = JSON.parse(args[1]);
+      const identity = request.operation === 'inspect';
+      const response = { ok: true, instance: { object_uid: uid }, ...(identity ? {} : helper === 'legacy' ? {
+        outcome: 'observed', scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] },
+      } : {
+        outcome: 'observed', scope: 'insert_folder_ancestry_observation', mutation_capability: false, atomic_snapshot: false,
+        ancestor_matches_active_model: true, insert_folder_ancestry_report: {
+          traversal: 'parent_chain_only', ancestor_matches_active_model: true,
+        },
+      }) };
+      if ((stage === 'identity') === identity) {
+        Object.assign(response, patch);
+        if (omitOutcome) delete response.outcome;
+      }
+      return JSON.stringify(response);
+    },
+  } : null;
+  const context = vm.createContext({ Host, McpEditConfig: { mailbox }, channel, auxiliary });
+  context.include_file = name => {
+    if (name !== 'McpEditConfig.js') vm.runInContext(asset(`edit-tasks/package/${name}`), context, { filename: name });
+  };
+  vm.runInContext(asset('edit-tasks/package/McpTrackEdit.js'), context, { filename: 'McpTrackEdit.js' });
+  const result = vm.runInContext(helper === 'legacy'
+    ? 'mteGraphReflection(channel, auxiliary)' : 'mteInsertFolderAncestry(channel)', context);
+  return { result, calls, device, auxiliary: helper === 'legacy' ? auxiliary : inserts };
+}
+
+const nativeReadStatusCases = [
+  ['legacy absent statuses', {}, 'identity', true],
+  ['both observed', { outcome: 'observed', native_outcome: 'observed' }, true],
+  ['outcome observed', { outcome: 'observed' }, true],
+  ['native_outcome observed without outcome', { native_outcome: 'observed' }, 'identity', true],
+  ['explicit empty errors', { error: null, native_error: null, errors: [] }, true],
+  ...['outcome', 'native_outcome'].flatMap(key =>
+    ['unknown', 'partially_applied', 'applied', 'applied_unverified', 'applied_verified', 'not_applied', null, '', true, 0, {}, []]
+      .map(value => [`${key} ${JSON.stringify(value)}`, { [key]: value }, false])),
+  ...['error', 'native_error'].flatMap(key =>
+    ['', false, 0, {}, [], { message: 'contradictory read' }]
+      .map(value => [`${key} ${JSON.stringify(value)}`, { [key]: value }, false])),
+  ...[null, '', false, 0, {}, ['failed'], [null], ['']]
+    .map(value => [`errors ${JSON.stringify(value)}`, { errors: value }, false]),
+  ['contradictory observed and unknown', { outcome: 'observed', native_outcome: 'unknown' }, false],
+  ...[false, null, 1, 'true'].map(value => [`ok ${JSON.stringify(value)}`, { ok: value }, false]),
+];
+
+for (const helper of ['legacy', 'ancestry']) {
+  for (const stage of ['identity', 'observation']) {
+    test(`native read boundary ${helper} ${stage} status matrix`, () => {
+      const failures = [];
+      for (const [label, patch, acceptance, omitOutcome] of nativeReadStatusCases) {
+        const accepted = acceptance === true || acceptance === stage;
+        const { result, calls, device, auxiliary } = nativeReadHelper(helper, stage, patch, omitOutcome);
+        try {
+          if (accepted) {
+            assert.ok(result.error === undefined || result.error === null);
+            assert.equal(result.ok, true);
+            assert.equal(result.mutation_capability, false);
+            assert.equal(calls.length, 2);
+            assert.equal(calls[1][0], device);
+            assert.equal(calls[1][2], auxiliary);
+            if (helper === 'ancestry') assert.equal(result.ancestor_matches_active_model, true);
+          } else {
+            assert.equal(typeof result.error, 'string');
+            assert.equal(result.ancestor_matches_active_model, undefined);
+            assert.equal(result.insert_folder_ancestry_report, undefined);
+            assert.equal(result.auxiliary_report, undefined);
+            assert.equal(calls.length, stage === 'identity' ? 1 : 2);
+          }
+        } catch (error) {
+          failures.push({ label, native_calls: calls.length, error: error.message });
+        }
+      }
+      assert.deepEqual(failures, []);
+    });
+  }
+}
+
+test('graph probe reflects the fixed factory, task editor, Inserts folder and bounded ancestry', () => {
   const task = editTaskHarness('track');
   const device = {}, graphFunctions = {}, contextEditor = {}, calls = [], factoryCalls = [];
   const uid = '12345678-1234-1234-1234-123456789ABC';
@@ -14,9 +104,14 @@ test('graph probe reflects only the fixed factory, task editor and actual Insert
       calls.push(args);
       const request = JSON.parse(args[1]);
       return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
-        ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: {
+        ? { outcome: 'observed', scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: {
           nodes: [{ identity: null, reflection: { available: true, types: [{ name: args[2] === contextEditor ? 'FixtureEditView' : args[2] === insertFolder ? 'FixtureInsertFolder' : 'EditFunctions' }] } }],
-        } } : {}) });
+        } } : request.operation === 'inspect_insert_folder_ancestry' ? {
+          outcome: 'observed', scope: 'insert_folder_ancestry_observation', mutation_capability: false, atomic_snapshot: false,
+          ancestor_matches_active_model: false, insert_folder_ancestry_report: {
+            traversal: 'parent_chain_only', ancestor_matches_active_model: false, complete: false,
+          },
+        } : {}) });
     },
   } : null;
   const context = { functions: { root: {
@@ -34,7 +129,9 @@ test('graph probe reflects only the fixed factory, task editor and actual Insert
   assert.equal(result.results[0].graphReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'EditFunctions');
   assert.equal(result.results[0].insertFolderReflection.mutation_capability, false);
   assert.equal(result.results[0].insertFolderReflection.auxiliary_report.nodes[0].reflection.types[0].name, 'FixtureInsertFolder');
-  assert.equal(calls.length, 6);
+  assert.equal(result.results[0].insertFolderAncestry.ancestor_matches_active_model, false);
+  assert.equal(result.results[0].insertFolderAncestry.insert_folder_ancestry_report.complete, false);
+  assert.equal(calls.length, 8);
   assert.equal(calls[0].length, 2);
   assert.equal(calls[1].length, 3);
   assert.equal(calls[1][0], device);
@@ -54,6 +151,13 @@ test('graph probe reflects only the fixed factory, task editor and actual Insert
   assert.equal(calls[5][0], device);
   assert.equal(calls[5][2], insertFolder);
   assert.deepEqual(JSON.parse(calls[5][1]), { operation: 'inspect_aux', expected_instance: uid });
+  assert.equal(calls[6].length, 2);
+  assert.equal(calls[6][0], device);
+  assert.deepEqual(JSON.parse(calls[6][1]), { operation: 'inspect' });
+  assert.equal(calls[7].length, 3);
+  assert.equal(calls[7][0], device);
+  assert.equal(calls[7][2], insertFolder);
+  assert.deepEqual(JSON.parse(calls[7][1]), { operation: 'inspect_insert_folder_ancestry', expected_instance: uid });
   assert.deepEqual(factoryCalls.map(call => call.name), ['DeviceEditFunctions', 'AudioFXGraphEditFunctions']);
   assert.ok(factoryCalls.every(call => call.receiver === context.functions.root && call.argumentCount === 1));
 });
@@ -78,7 +182,7 @@ for (const [label, editorResponse] of [
         if (args[2] === editor) return editorResponse;
         const request = JSON.parse(args[1]);
         return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
-          ? { scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
+          ? { outcome: 'observed', scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
       },
     } : null;
     const context = { editor, functions: { root: {
@@ -89,8 +193,51 @@ for (const [label, editorResponse] of [
     assert.equal(row.graphReflection.mutation_capability, false);
     assert.equal(typeof row.contextEditorReflection.error, 'string');
     assert.equal(row.contextEditorReflection.auxiliary_report, undefined);
-    assert.equal(calls.length, 6);
+    assert.equal(calls.length, 8);
     assert.equal(calls[3][2], editor);
+  });
+}
+
+for (const malformed of ['json', 'foreign_identity', 'wrong_scope', 'mutation', 'atomic', 'missing_predicate', 'delegate_traversal', 'predicate_mismatch']) {
+  test(`fixed Inserts ancestry fails closed on ${malformed}`, () => {
+    const task = editTaskHarness('track');
+    const device = {}, editor = {}, calls = [];
+    const uid = '12345678-1234-1234-1234-123456789ABC';
+    const inserts = { find: name => name === 'FX01' ? { find: child => child === 'Device' ? device : null } : null };
+    const channel = { label: 'Fixture', mediaType: 'Audio', find: name => name === 'Inserts' ? inserts : null };
+    const response = { ok: true, outcome: 'observed', instance: { object_uid: uid }, scope: 'insert_folder_ancestry_observation',
+      mutation_capability: false, atomic_snapshot: false, ancestor_matches_active_model: true,
+      insert_folder_ancestry_report: { traversal: 'parent_chain_only', ancestor_matches_active_model: true } };
+    if (malformed === 'foreign_identity') response.instance.object_uid = 'AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA';
+    if (malformed === 'wrong_scope') response.scope = 'auxiliary_type_observation';
+    if (malformed === 'mutation') response.mutation_capability = true;
+    if (malformed === 'atomic') response.atomic_snapshot = true;
+    if (malformed === 'missing_predicate') delete response.ancestor_matches_active_model;
+    if (malformed === 'delegate_traversal') response.insert_folder_ancestry_report.traversal = 'delegate';
+    if (malformed === 'predicate_mismatch') response.insert_folder_ancestry_report.ancestor_matches_active_model = false;
+    task.Host.Objects.getObjectByName = name => name === 'FenderMcpNative' ? {
+      capabilities: () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1' }),
+      request(...args) {
+        calls.push(args);
+        const request = JSON.parse(args[1]);
+        if (request.operation === 'inspect_insert_folder_ancestry') return malformed === 'json' ? '{invalid' : JSON.stringify(response);
+        return JSON.stringify({ ok: true, instance: { object_uid: uid }, ...(request.operation === 'inspect_aux'
+          ? { outcome: 'observed', scope: 'auxiliary_type_observation', mutation_capability: false, auxiliary_report: { nodes: [] } } : {}) });
+      },
+    } : null;
+    const context = { editor, functions: { root: {
+      environment: { find: () => ({ getChannelList: () => ({ numChannels: 1, getChannel: () => channel }) }) },
+      createFunctions: () => ({}),
+    } } };
+    const row = task.run([{ op: 'probe', channel: 'Fixture', auxiliary: { untrusted: true }, ancestors: 128,
+      path: 'foreign/path', operation: 'set_parameter' }], context).results[0];
+    assert.equal(typeof row.insertFolderAncestry.error, 'string');
+    assert.equal(row.insertFolderAncestry.insert_folder_ancestry_report, undefined);
+    const ancestryCalls = calls.filter(args => JSON.parse(args[1]).operation === 'inspect_insert_folder_ancestry');
+    assert.equal(ancestryCalls.length, 1);
+    assert.equal(ancestryCalls[0][0], device);
+    assert.equal(ancestryCalls[0][2], inserts);
+    assert.deepEqual(JSON.parse(ancestryCalls[0][1]), { operation: 'inspect_insert_folder_ancestry', expected_instance: uid });
   });
 }
 

@@ -36,6 +36,7 @@ struct Mock {
     methods: Vec<MethodDefinition>,
     properties: Vec<PropertyDefinition>,
     child_reads: Cell<usize>,
+    delegate_reads: Cell<usize>,
     replacement: Cell<*mut Mock>,
     replace_at: Cell<usize>,
     fail_on_release: Cell<bool>,
@@ -184,6 +185,8 @@ unsafe extern "C" fn node_child(p: *mut c_void, index: i32) -> *mut c_void {
     }
 }
 unsafe extern "C" fn node_find(p: *mut c_void, key: *const c_void) -> *mut c_void {
+    let m = unsafe { mock(p) };
+    m.delegate_reads.set(m.delegate_reads.get() + 1);
     let key = unsafe { CStr::from_ptr(key.cast()) }.to_str().unwrap();
     let child = unsafe { mock(p) }
         .delegates
@@ -328,6 +331,7 @@ impl Tables {
                 },
             ],
             child_reads: Cell::new(0),
+            delegate_reads: Cell::new(0),
             replacement: Cell::new(std::ptr::null_mut()),
             replace_at: Cell::new(0),
             fail_on_release: Cell::new(false),
@@ -720,6 +724,172 @@ fn ancestor_records_keep_parent_edges_and_report_parent_cycles() {
     assert_eq!(result.nodes.len(), 2);
     drop(result);
     assert_eq!(parent.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn fixed_ancestor_profile_retains_only_the_parent_chain_and_skips_descendant_getters() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let mut parent = tables.object("Channel");
+    let mut model = tables.object("Model");
+    let mut child = tables.object("Device");
+    root.parent.set(&mut *parent);
+    parent.parent.set(&mut *model);
+    root.children.borrow_mut().push(&mut *child);
+    root.delegates
+        .borrow_mut()
+        .insert("Device".into(), &mut *child);
+    let canonical = NonNull::from(&mut model.interfaces[0]).cast();
+    let root_canonical = NonNull::from(&mut root.interfaces[0]).cast();
+    let child_canonical = NonNull::from(&mut child.interfaces[0]).cast();
+    let api = inspector(&mut root);
+    let lease = api.inspect_ancestors(&mut || Ok(())).unwrap();
+    assert!(lease.complete);
+    assert_eq!(lease.nodes.len(), 3);
+    assert!(
+        lease
+            .edges
+            .iter()
+            .all(|edge| edge.relation == Relation::Parent)
+    );
+    assert!(lease.ancestor_matches_canonical(canonical).unwrap());
+    assert!(!lease.ancestor_matches_canonical(root_canonical).unwrap());
+    assert!(!lease.ancestor_matches_canonical(child_canonical).unwrap());
+    assert!(
+        !lease
+            .ancestor_matches_canonical(NonNull::dangling())
+            .unwrap()
+    );
+    lease.check(&mut || Ok(())).unwrap();
+    for node in [&root, &parent, &model] {
+        assert_eq!(node.child_reads.get(), 0);
+        assert_eq!(node.delegate_reads.get(), 0);
+        assert!(node.refs.get() > 1);
+    }
+    assert_eq!(child.refs.get(), 1);
+    drop(lease);
+    for node in [&root, &parent, &model] {
+        assert_eq!(node.refs.get(), 1);
+    }
+    drop(api);
+}
+
+#[test]
+fn ancestor_canonical_match_excludes_indexed_and_delegate_records() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let mut child = tables.object("Model");
+    root.children.borrow_mut().push(&mut *child);
+    root.delegates
+        .borrow_mut()
+        .insert("Device".into(), &mut *child);
+    let canonical = NonNull::from(&mut child.interfaces[0]).cast();
+    let api = inspector(&mut root);
+    let lease = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    assert_eq!(lease.nodes.len(), 2);
+    assert!(!lease.ancestor_matches_canonical(canonical).unwrap());
+    drop(lease);
+    drop(api);
+}
+
+#[test]
+fn fixed_ancestor_profile_bounds_the_chain_and_keeps_negative_matches_inconclusive() {
+    let tables = Tables::new();
+    let mut chain: Vec<_> = (0..10)
+        .map(|i| tables.object(&format!("Ancestor{i}")))
+        .collect();
+    for i in 0..9 {
+        let next: *mut Mock = &mut *chain[i + 1];
+        chain[i].parent.set(next);
+    }
+    let ninth = NonNull::from(&mut chain[9].interfaces[0]).cast();
+    let eighth = NonNull::from(&mut chain[8].interfaces[0]).cast();
+    let api = inspector(&mut chain[0]);
+    let lease = api.inspect_ancestors(&mut || Ok(())).unwrap();
+    assert_eq!(lease.nodes.len(), 9);
+    assert!(!lease.complete);
+    assert!(lease.diagnostics.contains(&Diagnostic::AncestorLimit));
+    assert!(lease.ancestor_matches_canonical(eighth).unwrap());
+    assert!(!lease.ancestor_matches_canonical(ninth).unwrap());
+    drop(lease);
+    assert!(chain.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+}
+
+#[test]
+fn retained_ancestor_profile_rejects_parent_replacement_and_predicate_reentry() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let mut parent = tables.object("Channel");
+    let mut replacement = tables.object("Channel");
+    root.parent.set(&mut *parent);
+    let canonical = NonNull::from(&mut parent.interfaces[0]).cast();
+    let api = inspector(&mut root);
+    let lease = api.inspect_ancestors(&mut || Ok(())).unwrap();
+    lease
+        .check(&mut || {
+            assert_eq!(
+                lease.ancestor_matches_canonical(canonical).unwrap_err(),
+                Error::Reentrant
+            );
+            Ok(())
+        })
+        .unwrap();
+    root.parent.set(&mut *replacement);
+    assert_eq!(
+        lease.check(&mut || Ok(())).unwrap_err(),
+        Error::AttachmentChanged
+    );
+    drop(lease);
+    assert_eq!(parent.refs.get(), 1);
+    assert_eq!(replacement.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn fixed_ancestor_profile_reports_cycles_without_matching_the_root_as_its_own_ancestor() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let mut parent = tables.object("Channel");
+    root.parent.set(&mut *parent);
+    parent.parent.set(&mut *root);
+    let root_canonical = NonNull::from(&mut root.interfaces[0]).cast();
+    let api = inspector(&mut root);
+    let lease = api.inspect_ancestors(&mut || Ok(())).unwrap();
+    assert!(!lease.complete);
+    assert!(
+        lease
+            .diagnostics
+            .iter()
+            .any(|issue| matches!(issue, Diagnostic::NodeCycle { .. }))
+    );
+    assert!(!lease.ancestor_matches_canonical(root_canonical).unwrap());
+    drop(lease);
+    assert_eq!(parent.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn fixed_ancestor_profile_rejects_context_loss_during_an_ancestor_interface_release() {
+    let tables = Tables::new();
+    let mut root = tables.object("Inserts");
+    let mut parent = tables.object("Channel");
+    root.parent.set(&mut *parent);
+    parent.declared_supported[0] = true;
+    parent.lose_on_declared_release.set(Some(0));
+    let lost = parent.lost.clone();
+    let api = inspector(&mut root);
+    let result = api.inspect_ancestors(&mut || {
+        if lost.get() {
+            Err("ancestor release changed the context".into())
+        } else {
+            Ok(())
+        }
+    });
+    assert!(matches!(result, Err(Error::Guard(_))));
+    assert_eq!(parent.refs.get(), 1);
+    assert_eq!(root.refs.get(), 1);
     drop(api);
 }
 #[test]

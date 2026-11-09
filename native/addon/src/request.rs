@@ -170,6 +170,9 @@ enum Request {
     InspectAux {
         expected_instance: Option<String>,
     },
+    InspectInsertFolderAncestry {
+        expected_instance: Option<String>,
+    },
 }
 impl Request {
     fn source(&self) -> Source {
@@ -190,7 +193,8 @@ impl Request {
             | Self::Presets { .. }
             | Self::PresetApply { .. }
             | Self::PresetRelease { .. }
-            | Self::InspectAux { .. } => Source::Auto,
+            | Self::InspectAux { .. }
+            | Self::InspectInsertFolderAncestry { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -241,7 +245,10 @@ impl Request {
             | Self::PresetRelease {
                 expected_instance, ..
             }
-            | Self::InspectAux { expected_instance } => expected_instance.as_deref(),
+            | Self::InspectAux { expected_instance }
+            | Self::InspectInsertFolderAncestry { expected_instance } => {
+                expected_instance.as_deref()
+            }
         }
     }
     fn validate(&self) -> Result<(), String> {
@@ -326,6 +333,9 @@ impl Request {
             }
             | Self::InspectAux {
                 expected_instance: None,
+            }
+            | Self::InspectInsertFolderAncestry {
+                expected_instance: None,
             } => Err("state, preset and auxiliary operations require expected_instance".into()),
             Self::Presets { limit, .. } if !(1..=presets::MAX_PAGE).contains(limit) => {
                 Err("preset limit must be between 1 and 64".into())
@@ -390,6 +400,7 @@ impl Request {
                 catalog_token: None,
                 ..
             } | Self::InspectAux { .. }
+                | Self::InspectInsertFolderAncestry { .. }
         )
     }
 }
@@ -1134,7 +1145,10 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::Presets { .. }
         | Request::PresetApply { .. }
         | Request::PresetRelease { .. }
-        | Request::InspectAux { .. } => Err("request requires its own dispatcher".into()),
+        | Request::InspectAux { .. }
+        | Request::InspectInsertFolderAncestry { .. } => {
+            Err("request requires its own dispatcher".into())
+        }
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -1208,6 +1222,11 @@ impl Reply {
         owner_inspect::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
         presets::invalidate(&mut self.value);
+        if self.value["scope"] == "insert_folder_ancestry_observation" {
+            let object = self.value.as_object_mut().expect("object response");
+            object.remove("insert_folder_ancestry_report");
+            object.remove("ancestor_matches_active_model");
+        }
         if self
             .nodes
             .as_ref()
@@ -1365,7 +1384,7 @@ pub(super) fn dispatch(
     if request.needs_auxiliary() != auxiliary.is_some() {
         return Reply::error(
             "invalid_arguments",
-            "only initial presets and inspect_aux require exactly one auxiliary native object",
+            "only initial presets, inspect_aux and inspect_insert_folder_ancestry require exactly one auxiliary native object",
             "not_applied",
         );
     }
@@ -1409,6 +1428,41 @@ pub(super) fn dispatch(
             ),
             Err(reason) => (
                 error("auxiliary_inspection_failed", &reason, "not_applied"),
+                None,
+            ),
+        };
+        let mut reply = Reply {
+            value,
+            catalog: None,
+            action: None,
+            presets: None,
+            auxiliary,
+            owner: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: false,
+        };
+        reply.value["instance"] = json!(reply.context.as_ref().expect("bound context").instance);
+        return reply;
+    }
+    if let Request::InspectInsertFolderAncestry { .. } = request {
+        let (value, auxiliary) = match node_inspect::capture_insert_folder_ancestry(
+            &ctx,
+            auxiliary.expect("validated Inserts auxiliary"),
+        ) {
+            Ok(auxiliary) => {
+                let report = auxiliary.value();
+                (
+                    json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
+                        "mutation_capability":false,"atomic_snapshot":false,
+                        "ancestor_matches_active_model":report["ancestor_matches_active_model"],
+                        "insert_folder_ancestry_report":report}),
+                    Some(auxiliary),
+                )
+            }
+            Err(reason) => (
+                error("insert_folder_ancestry_failed", &reason, "not_applied"),
                 None,
             ),
         };
@@ -1832,6 +1886,7 @@ mod tests {
                 false,
             ),
             ("inspect_aux", json!({}), true),
+            ("inspect_insert_folder_ancestry", json!({}), true),
         ] {
             let mut value = json!({"operation":operation,"expected_instance":expected});
             value
@@ -1843,7 +1898,17 @@ mod tests {
             let mut missing = value.clone();
             missing.as_object_mut().unwrap().remove("expected_instance");
             assert!(parse(missing).is_err());
-            for field in ["source", "url", "path", "bytes", "script", "method"] {
+            for field in [
+                "source",
+                "url",
+                "path",
+                "bytes",
+                "script",
+                "method",
+                "limits",
+                "ancestors",
+                "iid",
+            ] {
                 let mut unchecked = value.clone();
                 unchecked[field] = json!("rejected");
                 assert!(parse(unchecked).is_err());
@@ -1875,6 +1940,17 @@ mod tests {
         assert_eq!(reply.value["ok"], false);
         assert_eq!(reply.value["outcome"], "not_applied");
         assert!(reply.value.get("current_preset_observation").is_none());
+    }
+    #[test]
+    fn reply_context_invalidation_strips_insert_folder_ancestry_claims() {
+        let mut reply = Reply::unbound(json!({"ok":true,"outcome":"observed",
+            "scope":"insert_folder_ancestry_observation","ancestor_matches_active_model":true,
+            "insert_folder_ancestry_report":{"nodes":[],"ancestor_matches_active_model":true}}));
+        reply.invalidate("document or parent chain changed".into());
+        assert_eq!(reply.value["ok"], false);
+        assert_eq!(reply.value["outcome"], "not_applied");
+        assert!(reply.value.get("ancestor_matches_active_model").is_none());
+        assert!(reply.value.get("insert_folder_ancestry_report").is_none());
     }
     fn parse(value: Value) -> Result<Request, String> {
         let r: Request = serde_json::from_value(value).map_err(|e| e.to_string())?;
@@ -2683,6 +2759,83 @@ mod guard_tests {
         assert!(!reply.final_check(fixture.service));
         assert_eq!(reply.value["outcome"], "not_applied");
         drop(reply);
+        assert_eq!(fixture.device.refs.load(Ordering::Acquire), 1);
+    }
+    #[test]
+    fn ancestry_observation_keeps_its_inspection_through_publication_and_rejects_document_switch() {
+        let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut fixture = Fixture::new();
+        fixture.canonical_queries();
+        let context = fixture.context();
+        let node_inspect::Auxiliary::TypeMetadata(inspection) =
+            inspection_for(&context).into_auxiliary()
+        else {
+            unreachable!()
+        };
+        let auxiliary = node_inspect::Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+        };
+        let report = auxiliary.value();
+        assert_eq!(report["scope"], "insert_folder_ancestry_observation");
+        assert_eq!(report["ancestor_matches_active_model"], false);
+        assert_eq!(report["atomic_snapshot"], false);
+        assert_eq!(report["mutation_capability"], false);
+        assert_eq!(report["traversal"], "parent_chain_only");
+        assert_eq!(report["descendants_observed"], false);
+        assert_eq!(
+            report["limits"],
+            json!({"nodes":9,"depth":0,"ancestors":8,"children_per_node":1})
+        );
+        let reply = Reply {
+            value: json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
+                "ancestor_matches_active_model":false,"insert_folder_ancestry_report":report}),
+            catalog: None,
+            action: None,
+            presets: None,
+            auxiliary: Some(auxiliary),
+            owner: None,
+            nodes: None,
+            provider: None,
+            context: Some(context),
+            mutation: false,
+        };
+        let mut out = VariantOut {
+            kind: 0,
+            padding: [0; 6],
+            payload: 0,
+        };
+        assert!(publish_reply(
+            &mut out,
+            reply,
+            api().unwrap(),
+            fixture.service
+        ));
+        let value: Value = serde_json::from_str(&super::super::tests::output_text(&out)).unwrap();
+        assert_eq!(value["ok"], true);
+        assert_eq!(value["ancestor_matches_active_model"], false);
+        assert!(fixture.device.refs.load(Ordering::Acquire) > 3);
+        assert_eq!(LIVE_RECEIPTS.load(Ordering::Acquire), 1);
+        release_receipt(fixture.service);
+        assert_eq!(fixture.device.refs.load(Ordering::Acquire), 1);
+        super::super::tests::clear_output(&mut out);
+
+        let context = fixture.context();
+        let node_inspect::Auxiliary::TypeMetadata(inspection) =
+            inspection_for(&context).into_auxiliary()
+        else {
+            unreachable!()
+        };
+        let auxiliary = node_inspect::Auxiliary::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model: false,
+        };
+        // The node lease still rejects a host-context switch after all retained
+        // observations exist, before a predicate can be published.
+        fixture.switch_document();
+        assert!(auxiliary.check(&context).is_err());
+        drop(auxiliary);
+        drop(context);
         assert_eq!(fixture.device.refs.load(Ordering::Acquire), 1);
     }
     #[test]

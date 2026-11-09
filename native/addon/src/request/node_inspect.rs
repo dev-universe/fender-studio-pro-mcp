@@ -172,26 +172,155 @@ pub(super) enum Inventory {
 
 /// Read-only metadata of a bridge-created object. This never authorizes a
 /// subsequent mutation and makes no claim that the auxiliary owns the Device.
-pub(super) struct Auxiliary {
-    inspection: Inspection,
+pub(super) enum Auxiliary {
+    TypeMetadata(Inspection),
+    InsertFolderAncestry {
+        inspection: Inspection,
+        ancestor_matches_active_model: bool,
+    },
+}
+#[derive(Clone, Copy)]
+enum AuxiliaryRole {
+    TypeMetadata,
+    InsertFolderAncestry,
 }
 impl Auxiliary {
+    fn inspection(&self) -> &Inspection {
+        match self {
+            Self::TypeMetadata(inspection) | Self::InsertFolderAncestry { inspection, .. } => {
+                inspection
+            }
+        }
+    }
     pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
-        self.inspection
+        self.inspection()
             .check(&mut || ctx.check())
             .map_err(|e| e.to_string())?;
-        ctx.check()
+        let observation = if let Self::InsertFolderAncestry {
+            inspection,
+            ancestor_matches_active_model,
+        } = self
+        {
+            ancestry_matches_model(inspection, ctx).and_then(|current| {
+                if current == *ancestor_matches_active_model {
+                    Ok(())
+                } else {
+                    Err("retained Inserts ancestor observation changed".into())
+                }
+            })
+        } else {
+            Ok(())
+        };
+        // The predicate above performs no foreign calls. Keep this fresh native
+        // Context check last, after inspection validation and temporary cleanup.
+        ctx.check()?;
+        observation
     }
     pub(super) fn value(&self) -> Value {
-        let mut value = report(self.inspection.report(), Scope::Target);
-        value["coverage"] = json!("bounded_readonly_auxiliary_type_metadata");
-        value["scope"] = json!("auxiliary_type_observation");
+        let mut value = report(self.inspection().report(), Scope::Target);
         value["mutation_capability"] = json!(false);
-        value["limits"] = json!({"nodes":1,"depth":0,"ancestors":0,"children_per_node":1});
+        match self {
+            Self::TypeMetadata(_) => {
+                value["coverage"] = json!("bounded_readonly_auxiliary_type_metadata");
+                value["scope"] = json!("auxiliary_type_observation");
+                value["limits"] = json!({"nodes":1,"depth":0,"ancestors":0,"children_per_node":1});
+            }
+            Self::InsertFolderAncestry {
+                ancestor_matches_active_model,
+                ..
+            } => {
+                value["coverage"] = json!("bounded_readonly_insert_folder_ancestor_metadata");
+                value["scope"] = json!("insert_folder_ancestry_observation");
+                value["limits"] = json!({"nodes":9,"depth":0,"ancestors":8,"children_per_node":1});
+                value["traversal"] = json!("parent_chain_only");
+                value["descendants_observed"] = json!(false);
+                value["atomic_snapshot"] = json!(false);
+                value["ancestor_matches_active_model"] = json!(ancestor_matches_active_model);
+                value["negative_match_scope"] = json!("no_match_in_bounded_parent_chain");
+            }
+        }
         value
     }
 }
 pub(super) fn capture_auxiliary(ctx: &Context<'_>, auxiliary: Owned) -> Result<Auxiliary, String> {
+    let inspection = capture_auxiliary_inspection(ctx, auxiliary, AuxiliaryRole::TypeMetadata)?;
+    let auxiliary = Auxiliary::TypeMetadata(inspection);
+    auxiliary.check(ctx)?;
+    Ok(auxiliary)
+}
+
+fn ancestry_matches_model(inspection: &Inspection, ctx: &Context<'_>) -> Result<bool, String> {
+    inspection
+        .ancestor_matches_canonical(
+            NonNull::new(ctx.document._model_identity.0).expect("retained model identity"),
+        )
+        .map_err(|e| e.to_string())
+}
+
+fn validate_insert_folder_root(report: &Report) -> Result<(), String> {
+    let root = report
+        .nodes
+        .first()
+        .ok_or("Inserts root was not observed")?;
+    let identity = root
+        .identity
+        .as_ref()
+        .ok_or("Inserts auxiliary has no IObjectNode identity")?;
+    if root.index != 0
+        || identity.id != "Inserts"
+        || !identity.object_uid.as_deref().is_some_and(valid_uid)
+        || identity
+            .class_uid
+            .as_deref()
+            .is_some_and(|uid| !valid_uid(uid))
+        || !root.reflection.available
+        || root
+            .reflection
+            .types
+            .first()
+            .is_none_or(|info| info.name != "AudioInsertFolder")
+    {
+        return Err(
+            "ancestry requires the exact AudioInsertFolder/Inserts family and stable object UID"
+                .into(),
+        );
+    }
+    Ok(())
+}
+
+pub(super) fn capture_insert_folder_ancestry(
+    ctx: &Context<'_>,
+    auxiliary: Owned,
+) -> Result<Auxiliary, String> {
+    let inspection =
+        capture_auxiliary_inspection(ctx, auxiliary, AuxiliaryRole::InsertFolderAncestry)?;
+    let observed = validate_insert_folder_root(inspection.report())
+        .and_then(|_| ancestry_matches_model(&inspection, ctx));
+    let ancestor_matches_active_model = match observed {
+        Ok(observed) => observed,
+        Err(reason) => {
+            drop(inspection);
+            ctx.check()?;
+            return Err(reason);
+        }
+    };
+    let auxiliary = Auxiliary::InsertFolderAncestry {
+        inspection,
+        ancestor_matches_active_model,
+    };
+    if let Err(reason) = auxiliary.check(ctx) {
+        drop(auxiliary);
+        ctx.check()?;
+        return Err(reason);
+    }
+    Ok(auxiliary)
+}
+
+fn capture_auxiliary_inspection(
+    ctx: &Context<'_>,
+    auxiliary: Owned,
+    role: AuxiliaryRole,
+) -> Result<Inspection, String> {
     ctx.check()?;
     let get = constant_string().ok_or("native string constants unavailable")?;
     let text = TextApi {
@@ -205,26 +334,25 @@ pub(super) fn capture_auxiliary(ctx: &Context<'_>, auxiliary: Owned) -> Result<A
     let pointer = NonNull::new(auxiliary.0).expect("held auxiliary");
     std::mem::forget(auxiliary);
     let inspector = unsafe { NodeInspector::from_owned(pointer, text) };
-    let result = inspector.inspect(
-        Limits {
-            nodes: 1,
-            depth: 0,
-            ancestors: 0,
-            children_per_node: 1,
-        },
-        &mut || ctx.check(),
-    );
+    let result = match role {
+        AuxiliaryRole::TypeMetadata => inspector.inspect(
+            Limits {
+                nodes: 1,
+                depth: 0,
+                ancestors: 0,
+                children_per_node: 1,
+            },
+            &mut || ctx.check(),
+        ),
+        AuxiliaryRole::InsertFolderAncestry => inspector.inspect_ancestors(&mut || ctx.check()),
+    };
     drop(inspector);
     if let Err(reason) = ctx.check() {
         drop(result);
         ctx.check()?;
         return Err(reason);
     }
-    let auxiliary = Auxiliary {
-        inspection: result.map_err(|e| e.to_string())?,
-    };
-    auxiliary.check(ctx)?;
-    Ok(auxiliary)
+    result.map_err(|e| e.to_string())
 }
 impl Inventory {
     #[cfg(test)]
@@ -276,7 +404,9 @@ impl Inventory {
     #[cfg(test)]
     pub(super) fn into_auxiliary(self) -> Auxiliary {
         match self {
-            Self::Target(inspection) | Self::Graph { inspection, .. } => Auxiliary { inspection },
+            Self::Target(inspection) | Self::Graph { inspection, .. } => {
+                Auxiliary::TypeMetadata(inspection)
+            }
             Self::PluginController(_) => panic!("synthetic target inventory required"),
         }
     }
@@ -712,5 +842,64 @@ mod tests {
             report(&source, Scope::Target)["nodes"][0]["declared_interfaces"],
             json!({"preset_collector":true,"preset_mediator":false,"storable":true})
         );
+    }
+
+    fn insert_folder_root() -> Report {
+        Report {
+            nodes: vec![NodeRecord {
+                index: 0,
+                identity: Some(NodeIdentity {
+                    id: "Inserts".into(),
+                    object_uid: Some(uid(&SERVICE_CID)),
+                    class_uid: None,
+                }),
+                child_count: Some(2),
+                declared_interfaces: None,
+                reflection: TypeInventory {
+                    available: true,
+                    types: vec![TypeInfo {
+                        name: "AudioInsertFolder".into(),
+                        namespace: None,
+                        class_uid: None,
+                        flags: 0,
+                        methods: vec![],
+                        properties: vec![],
+                    }],
+                    issues: vec![],
+                },
+            }],
+            edges: vec![],
+            diagnostics: vec![],
+            complete: true,
+        }
+    }
+
+    #[test]
+    fn insert_folder_ancestry_requires_exact_node_family_and_object_uid_but_allows_null_class_uid()
+    {
+        let source = insert_folder_root();
+        validate_insert_folder_root(&source).unwrap();
+        for invalid in 0..8 {
+            let mut source = insert_folder_root();
+            let root = &mut source.nodes[0];
+            match invalid {
+                0 => root.identity = None,
+                1 => root.identity.as_mut().unwrap().id = "Other".into(),
+                2 => root.identity.as_mut().unwrap().object_uid = None,
+                3 => root.identity.as_mut().unwrap().object_uid = Some(ZERO_UID.into()),
+                4 => root.identity.as_mut().unwrap().class_uid = Some("malformed".into()),
+                5 => root.reflection.types[0].name = "AudioSynthFolder".into(),
+                6 => root.reflection.available = false,
+                7 => root.reflection.types.clear(),
+                _ => unreachable!(),
+            }
+            assert!(
+                validate_insert_folder_root(&source).is_err(),
+                "case {invalid}"
+            );
+        }
+        let mut missing = source;
+        missing.nodes.clear();
+        assert!(validate_insert_folder_root(&missing).is_err());
     }
 }

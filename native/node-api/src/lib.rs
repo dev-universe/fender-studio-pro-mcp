@@ -272,6 +272,37 @@ impl Inspection {
         &self.report
     }
 
+    /// Compare a caller-retained canonical identity with the observed root's
+    /// parent chain. This only compares addresses; it neither dereferences the
+    /// argument nor performs any foreign call. Root, child and delegate records
+    /// cannot produce a match. False means no match in this bounded observation,
+    /// not proof of ownership absence or authority for a later mutation.
+    pub fn ancestor_matches_canonical(&self, canonical: NonNull<c_void>) -> Result<bool, Error> {
+        if thread::current().id() != self.thread {
+            return Err(Error::WrongThread);
+        }
+        let pins = self.pins.try_borrow().map_err(|_| Error::Reentrant)?;
+        let pins = pins.as_ref().ok_or(Error::Reentrant)?;
+        let mut seen = HashSet::from([0]);
+        let mut from = 0;
+        while let Some(edge) = self
+            .report
+            .edges
+            .iter()
+            .find(|edge| edge.from == from && edge.relation == Relation::Parent)
+        {
+            if !seen.insert(edge.to) {
+                break;
+            }
+            let pin = pins.get(edge.to).ok_or(Error::AttachmentChanged)?;
+            if pin.canonical.raw() == canonical.as_ptr() {
+                return Ok(true);
+            }
+            from = edge.to;
+        }
+        Ok(false)
+    }
+
     /// Revalidate the retained witnesses immediately before publication.
     pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
         if thread::current().id() != self.thread {
@@ -319,6 +350,11 @@ pub struct NodeInspector {
     text: TextApi,
     thread: ThreadId,
 }
+#[derive(Clone, Copy)]
+enum Traversal {
+    Hierarchy,
+    AncestorsOnly,
+}
 impl NodeInspector {
     /// Takes one owned IUnknown-compatible reference.
     ///
@@ -338,6 +374,36 @@ impl NodeInspector {
     pub fn inspect<G: FnMut() -> Result<(), String>>(
         &self,
         limits: Limits,
+        guard: &mut G,
+    ) -> Result<Inspection, Error> {
+        self.inspect_with(limits, Traversal::Hierarchy, guard)
+    }
+
+    /// Observe only the fixed root/parent chain: at most nine retained nodes and
+    /// eight ancestors. No indexed-child or named-delegate getter is called.
+    /// Completeness describes this parent-chain coverage, never descendants.
+    /// These are non-atomic read-only observations, not a continuously current
+    /// graph or authority to mutate any retained ancestor.
+    pub fn inspect_ancestors<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<Inspection, Error> {
+        self.inspect_with(
+            Limits {
+                nodes: 9,
+                depth: 0,
+                ancestors: 8,
+                children_per_node: 1,
+            },
+            Traversal::AncestorsOnly,
+            guard,
+        )
+    }
+
+    fn inspect_with<G: FnMut() -> Result<(), String>>(
+        &self,
+        limits: Limits,
+        traversal: Traversal,
         guard: &mut G,
     ) -> Result<Inspection, Error> {
         if thread::current().id() != self.thread {
@@ -362,12 +428,14 @@ impl NodeInspector {
                 complete: false,
             },
         };
-        let result = session.run(self.root.raw()).map(|report| Inspection {
-            report,
-            pins: RefCell::new(Some(std::mem::take(&mut session.pins))),
-            text: self.text,
-            thread: self.thread,
-        });
+        let result = session
+            .run(self.root.raw(), traversal)
+            .map(|report| Inspection {
+                report,
+                pins: RefCell::new(Some(std::mem::take(&mut session.pins))),
+                text: self.text,
+                thread: self.thread,
+            });
         // Temporary reflection/String releases finish before the final guard.
         // Discovered node owners remain in the returned receipt lease.
         drop(session);
@@ -885,7 +953,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         }
         self.check()
     }
-    fn run(&mut self, root: *mut c_void) -> Result<Report, Error> {
+    fn run(&mut self, root: *mut c_void, traversal: Traversal) -> Result<Report, Error> {
         let owner = self.hold(root)?.ok_or(Error::MissingIdentity)?;
         let root = self.intern(owner)?.ok_or(Error::InvalidLimits)?;
         let mut ancestors = vec![root];
@@ -912,8 +980,10 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
                 self.report.diagnostics.push(Diagnostic::AncestorLimit);
             }
         }
-        for index in ancestors {
-            self.walk(index, self.limits.depth, &mut vec![])?;
+        if matches!(traversal, Traversal::Hierarchy) {
+            for index in ancestors {
+                self.walk(index, self.limits.depth, &mut vec![])?;
+            }
         }
         self.validate()?;
         self.report.complete = self.report.diagnostics.is_empty()
