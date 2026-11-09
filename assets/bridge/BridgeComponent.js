@@ -565,6 +565,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginInspect(args) {
+        if (args.node_scope === "plugin_controller" && (args.include_nodes !== true
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !args.expected_instance))
+            return { error: "plugin controller inspection requires an expected plugin, native instance and include_nodes=true" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const element = {};

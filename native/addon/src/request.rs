@@ -11,6 +11,8 @@ use std::{
 };
 #[path = "request/action.rs"]
 mod action;
+#[path = "request/alias_controller.rs"]
+mod alias_controller;
 #[path = "request/capabilities.rs"]
 mod capabilities;
 #[path = "request/details.rs"]
@@ -277,9 +279,14 @@ impl Request {
             } => Err("parameter_details requires explicit dsp or controller source".into()),
             Self::Inspect {
                 include_nodes: false,
-                node_scope: node_inspect::Scope::Graph,
+                node_scope: node_inspect::Scope::Graph | node_inspect::Scope::PluginController,
                 ..
-            } => Err("graph node_scope requires include_nodes=true".into()),
+            } => Err("this node_scope requires include_nodes=true".into()),
+            Self::Inspect {
+                node_scope: node_inspect::Scope::PluginController,
+                expected_instance: None,
+                ..
+            } => Err("plugin_controller node_scope requires expected_instance".into()),
             Self::StateCapture {
                 expected_instance: None,
             }
@@ -1181,6 +1188,16 @@ impl Reply {
             .remove("verified");
         digest::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
+        if self
+            .nodes
+            .as_ref()
+            .is_some_and(node_inspect::Inventory::is_plugin_controller)
+        {
+            self.value
+                .as_object_mut()
+                .expect("object response")
+                .remove("node_report");
+        }
     }
     pub(super) fn final_check(&mut self, service: *mut Service) -> bool {
         let result = match self.context.as_ref() {
@@ -1201,15 +1218,16 @@ impl Reply {
                         .as_ref()
                         .map_or(Ok(()), |auxiliary| auxiliary.check(ctx))
                 })
-                .and_then(|_| {
-                    self.nodes.as_ref().map_or(Ok(()), |nodes| {
-                        nodes
-                            .check(&mut || ctx.check())
-                            .map_err(|error| error.to_string())
-                    })
-                })
                 .and_then(|_| self.provider.as_ref().map_or(Ok(()), Provider::check))
                 .and_then(|_| ctx.check())
+                .and_then(|_| {
+                    self.nodes.as_ref().map_or(Ok(()), |nodes| {
+                        nodes.check(&mut || {
+                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                            ctx.check()
+                        })
+                    })
+                })
                 .and_then(|_| {
                     self.action.as_ref().map_or(Ok(()), |action| {
                         let provider = self

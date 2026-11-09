@@ -270,6 +270,28 @@ test('node inventory is an explicit read-only inspection option', () => {
   assert.equal(report.diagnostics[0].kind, 'node_limit');
 });
 
+test('declared plugin controller scope remains a bound read-only observation', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device);
+    calls.push(JSON.parse(body));
+    return success({ node_report: { scope: 'alias_declared_controller_observation', mutation_capability: false,
+      complete: false, diagnostics: [{ kind: 'node_limit' }] } });
+  }); } });
+  const base = { plugin: 'Expected', expected_instance: instance.object_uid, include_nodes: true, node_scope: 'plugin_controller' };
+  const result = h.component.pluginInspect(base).native;
+  assert.equal(result.node_report.mutation_capability, false);
+  assert.equal(result.node_report.complete, false);
+  assert.deepEqual(calls, [{ operation: 'inspect', include_nodes: true, node_scope: 'plugin_controller', expected_instance: instance.object_uid }]);
+  for (const missing of [{ plugin: '' }, { expected_instance: '' }, { include_nodes: false }])
+    assert.equal(typeof h.component.pluginInspect({ ...base, ...missing }).error, 'string');
+  assert.equal(calls.length, 1);
+  const host = bridgeHarness();
+  host.bridge.component = { pluginInspect() { return { native: result }; } };
+  assert.equal(host.request({ op: 'pluginInspect', args: base }).ok, true);
+  assert.equal(host.request({ op: 'pluginInspect', args: base, expectedDocument: 'stale' }).code, 'document_changed');
+});
+
 test('fixed object URL is the only fallback lookup and missing extension remains optional', () => {
   const calls = [];
   const h = harness({ getObjectByName() { return null; }, getObjectByUrl(url, optional) { calls.push([url, optional]); return native(() => success()); } });

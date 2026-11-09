@@ -150,7 +150,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and supports only the exact Mustang Native and Rumble Native classes; its bounded read-only observations establish no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(

@@ -28,7 +28,7 @@ nonzero native object UID returned in a prior response.
 
 | Operation | Fields |
 | --- | --- |
-| `inspect` | `source`, `expected_instance` |
+| `inspect` | `source`, `expected_instance`, optional `include_nodes`, finite `node_scope` of `target`, `graph` or `plugin_controller` |
 | `parameters` | `offset` (default0), `limit` (default64,1..128), `source`, `expected_instance` |
 | `parameter` | `param`, `source`, `expected_instance` |
 | `parameter_details` | `param`, required explicit `source` of `dsp` or `controller`, required `expected_instance` |
@@ -83,6 +83,23 @@ The reply labels this `auxiliary_type_observation` and
 `mutation_capability:false`; the metadata does not authorize later invocation.
 Its own retained Inspection and the root Device Context survive publication.
 No auxiliary method, property setter, object factory or arbitrary API is called.
+
+`inspect` with `include_nodes:true` and `node_scope:plugin_controller` observes
+the wrapped plugin's declared `IControllerProvider` controller for the exact
+Mustang Native or Rumble Native Device. This scope requires `expected_instance`.
+It retains the Device parent, alias, plugin, provider and returned controller
+through publication. Node/type inspection is bounded to96 nodes, depth5,
+zero ancestors and32 children per node. A stable null controller returns
+`controller:null`, `complete:false` and a `controller_absent` diagnostic.
+Missing Node or reflection interfaces remain explicit observations.
+
+This report has `scope:alias_declared_controller_observation`,
+`mutation_capability:false` and `atomic_snapshot:false`. Fixed QueryInterface
+views and canonical identities are checked at guarded observations before final
+context guards and borrowed attachment checks. They do not certify a
+continuously current GUI graph, a model catalog or any subsequent mutation.
+Future model selection must acquire and revalidate its own binding. Callers
+cannot choose native paths, methods or model names through this inspection.
 
 `source` is `auto` (default), `dsp` or `controller`. For indexed metadata, `auto`
 selects a positive direct Device DSP provider first, then a controller. For value

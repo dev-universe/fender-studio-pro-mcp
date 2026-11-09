@@ -9,13 +9,19 @@ pub(super) enum Scope {
     #[default]
     Target,
     Graph,
+    PluginController,
 }
 
-fn limits(scope: Scope) -> Limits {
+pub(super) fn limits(scope: Scope) -> Limits {
+    let (nodes, depth) = if scope == Scope::PluginController {
+        (96, 5)
+    } else {
+        (48, 3)
+    };
     Limits {
-        nodes: 48,
-        depth: 3,
-        ancestors: if scope == Scope::Graph { 0 } else { 3 },
+        nodes,
+        depth,
+        ancestors: if scope == Scope::Target { 3 } else { 0 },
         children_per_node: 32,
     }
 }
@@ -54,7 +60,7 @@ impl NodePin {
     }
 }
 
-struct GraphRoute {
+pub(super) struct GraphRoute {
     graph: NodePin,
     combinator: NodePin,
     folder: NodePin,
@@ -155,10 +161,13 @@ fn validate_insert_family(slot: &str, folder: &str, folder_id: &str) -> Result<(
     }
 }
 
-pub(super) struct Inventory {
-    inspection: Inspection,
-    route: Option<GraphRoute>,
-    scope: Scope,
+pub(super) enum Inventory {
+    Target(Inspection),
+    Graph {
+        inspection: Inspection,
+        route: GraphRoute,
+    },
+    PluginController(alias_controller::Inventory),
 }
 
 /// Read-only metadata of a bridge-created object. This never authorizes a
@@ -218,40 +227,57 @@ pub(super) fn capture_auxiliary(ctx: &Context<'_>, auxiliary: Owned) -> Result<A
     Ok(auxiliary)
 }
 impl Inventory {
+    #[cfg(test)]
     pub(super) fn report(&self) -> &Report {
-        self.inspection.report()
+        match self {
+            Self::Target(inspection) | Self::Graph { inspection, .. } => inspection.report(),
+            Self::PluginController(inventory) => {
+                inventory.report().expect("synthetic present controller")
+            }
+        }
     }
     pub(super) fn value(&self) -> Value {
-        report(self.report(), self.scope)
+        match self {
+            Self::Target(inspection) => report(inspection.report(), Scope::Target),
+            Self::Graph { inspection, .. } => report(inspection.report(), Scope::Graph),
+            Self::PluginController(inventory) => inventory.value(),
+        }
+    }
+    pub(super) fn is_plugin_controller(&self) -> bool {
+        matches!(self, Self::PluginController(_))
     }
     pub(super) fn check<G: FnMut() -> Result<(), String>>(
         &self,
         guard: &mut G,
     ) -> Result<(), String> {
-        let mut checked = || {
-            if let Some(route) = &self.route {
-                route.check()?;
+        match self {
+            Self::PluginController(inventory) => inventory.check(guard),
+            Self::Target(inspection) => {
+                inspection.check(guard).map_err(|error| error.to_string())?;
+                guard()
             }
-            guard()
-        };
-        checked()?;
-        self.inspection
-            .check(&mut checked)
-            .map_err(|error| error.to_string())?;
-        checked()
-    }
-    #[cfg(test)]
-    pub(super) fn target(inspection: Inspection) -> Self {
-        Self {
-            inspection,
-            route: None,
-            scope: Scope::Target,
+            Self::Graph { inspection, route } => {
+                let mut checked = || {
+                    route.check()?;
+                    guard()
+                };
+                checked()?;
+                inspection
+                    .check(&mut checked)
+                    .map_err(|error| error.to_string())?;
+                checked()
+            }
         }
     }
     #[cfg(test)]
+    pub(super) fn target(inspection: Inspection) -> Self {
+        Self::Target(inspection)
+    }
+    #[cfg(test)]
     pub(super) fn into_auxiliary(self) -> Auxiliary {
-        Auxiliary {
-            inspection: self.inspection,
+        match self {
+            Self::Target(inspection) | Self::Graph { inspection, .. } => Auxiliary { inspection },
+            Self::PluginController(_) => panic!("synthetic target inventory required"),
         }
     }
 }
@@ -267,6 +293,10 @@ pub(super) fn capture(ctx: &Context<'_>, scope: Scope) -> Result<Inventory, Stri
             >(get_string)
         },
     };
+    if scope == Scope::PluginController {
+        return alias_controller::capture(ctx, text, limits(scope))
+            .map(Inventory::PluginController);
+    }
     let route = if scope == Scope::Graph {
         Some(GraphRoute::capture(ctx)?)
     } else {
@@ -293,10 +323,10 @@ pub(super) fn capture(ctx: &Context<'_>, scope: Scope) -> Result<Inventory, Stri
         ctx.check()?;
         return Err(reason);
     }
-    let inventory = Inventory {
-        inspection: result.map_err(|error| error.to_string())?,
-        route,
-        scope,
+    let inspection = result.map_err(|error| error.to_string())?;
+    let inventory = match route {
+        Some(route) => Inventory::Graph { inspection, route },
+        None => Inventory::Target(inspection),
     };
     inventory.check(&mut || ctx.check())?;
     Ok(inventory)
@@ -317,7 +347,7 @@ pub(super) fn report(report: &Report, scope: Scope) -> Value {
     let limits = limits(scope);
     json!({
         "coverage":"bounded_native_nodes_and_reflection",
-        "scope":if scope == Scope::Graph { "graph" } else { "target" },
+        "scope":match scope { Scope::Target=>"target", Scope::Graph=>"graph", Scope::PluginController=>"alias_declared_controller_observation" },
         "complete":report.complete,
         "limits":{"nodes":limits.nodes,"depth":limits.depth,"ancestors":limits.ancestors,"children_per_node":limits.children_per_node},
         "nodes":report.nodes.iter().map(|node| json!({
@@ -571,6 +601,38 @@ mod tests {
         assert_eq!(value["scope"], "graph");
         assert_eq!(value["limits"]["ancestors"], 0);
         assert!(value.get("instance").is_none());
+    }
+
+    #[test]
+    fn only_plugin_controller_inventory_has_the_deeper_report_bounds() {
+        let empty = Report {
+            nodes: vec![],
+            edges: vec![],
+            diagnostics: vec![],
+            complete: false,
+        };
+        for (scope, nodes, depth, ancestors) in [
+            (Scope::Target, 48, 3, 3),
+            (Scope::Graph, 48, 3, 0),
+            (Scope::PluginController, 96, 5, 0),
+        ] {
+            let bounded = limits(scope);
+            assert_eq!(
+                (
+                    bounded.nodes,
+                    bounded.depth,
+                    bounded.ancestors,
+                    bounded.children_per_node
+                ),
+                (nodes, depth, ancestors, 32)
+            );
+            assert_eq!(
+                report(&empty, scope)["limits"],
+                json!({
+                    "nodes":nodes,"depth":depth,"ancestors":ancestors,"children_per_node":32,
+                })
+            );
+        }
     }
 
     #[test]

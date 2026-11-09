@@ -399,6 +399,7 @@ pub struct PluginParams {
 pub enum NodeScope {
     Target,
     Graph,
+    PluginController,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1215,6 +1216,14 @@ impl Operation {
                 if p.node_scope.is_some() && p.include_nodes != Some(true) {
                     return Err(invalid("node_scope requires include_nodes=true"));
                 }
+                if matches!(p.node_scope, Some(NodeScope::PluginController))
+                    && (p.expected_instance.is_none()
+                        || p.plugin.as_ref().is_none_or(|name| name.trim().is_empty()))
+                {
+                    return Err(invalid(
+                        "Plugin controller inspection requires an expected plugin and native instance",
+                    ));
+                }
                 validate_instance_uid(p.expected_instance.as_deref())?;
                 validate_plugin_target(
                     p.channel.as_deref(),
@@ -1987,6 +1996,30 @@ mod tests {
                 .validate()
                 .is_err()
         );
+    }
+
+    #[test]
+    fn plugin_controller_inventory_requires_a_bound_inspection_target() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Mustang Native",
+            "include_nodes":true,"node_scope":"plugin_controller",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let operation = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        assert!(operation.is_read_only());
+        operation.validate().unwrap();
+        assert_eq!(operation.wire().1["node_scope"], "plugin_controller");
+        for field in ["plugin", "expected_instance", "include_nodes"] {
+            let mut invalid = args.clone();
+            invalid.as_object_mut().unwrap().remove(field);
+            assert!(
+                Operation::from_parts("plugin_inspect", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut invalid = args;
+        invalid["node_scope"] = json!("unchecked/path");
+        assert!(Operation::from_parts("plugin_inspect", invalid).is_err());
     }
 
     #[test]
