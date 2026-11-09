@@ -86,6 +86,53 @@ before advancing. Model and preset workflows still require their separately
 proved state restoration. A successful state-stream load is not assumed to
 restore every host-facing parameter.
 
+The first direct per-candidate run passed all 64 eligible Pro EQ scalar
+parameters. Every candidate required two stable changed-value reads, exact raw
+restoration, independent restored-value readback and a complete 199-record
+provider comparison before the next write. Read-only differences were recorded
+separately. This result covers these current scalar controls, not every model,
+preset, action or opaque state.
+
+The next per-candidate run passed all 51 eligible scalar controls across
+Expander, Gate, Limiter and Tricomp. It compared the complete provider after
+each direct restoration. Three dedicated actions remained separate, so the
+combined run correctly retained a partial overall status.
+
+The registered `swap_filter_frequencies` tool then passed actual Expander,
+Gate and Compressor cases. Each first pulse exchanged the two captured filter
+values in two stable complete-provider observations. Only that proof permitted
+one inverse pulse; two further complete reads confirmed the original exposed
+projection. Native acknowledgments and audible or opaque effects remained
+unverified. The new direct-digest path also passed two Pro EQ scalar probes.
+
+External Effect Mono confirmed 12 candidates, including literal notes, before
+stopping at `scopeMode`. Restoring that control alone left `latencyOffset`,
+`latencyTotal`, `pingMode` and `showImage` changed. Native hashes agreed with the
+diagnostic page, while both value hashes still differed from the immutable
+baseline. No further write or automatic recovery was attempted, and the scratch
+changes were discarded. The diagnostic ledger now distinguishes agreement
+with its current page from agreement with the original baseline. That run did
+not verify coordinated restoration of these controls.
+
+A fresh, disconnected Mono instance isolated this behavior: Scope-on changed
+the Scope and image controls; Scope-off selected Setup and changed the offset
+and derived total latency. Static callback analysis confirmed that these view
+controls update one another. One captured image selection followed by one
+captured offset restoration returned the entire 24-record typed projection to
+its original baseline twice. No write to derived total latency was used. This
+is one bounded observed recovery, not verification of every starting mode,
+physical ping behavior or hardware calibration.
+
+The next direct-digest batch passed 59 scalar cases across RedlightDist,
+Bitcrusher, Phaser, Flanger and Chorus. Each restoration was followed by two
+complete native digest matches; independent complete public-page projection
+checks bracketed each fixture. All 64 records were inventoried, including five
+read-only records whose changing observations were reported separately.
+Another batch passed all 131 eligible scalar controls across X-Trem,
+Autofilter, Beat Delay and Groove Delay with the same per-candidate digest
+checks. Its complete inventory contained 140 records, including nine read-only
+observations.
+
 The next build also exposed fresh native parameter digests. Independent Python
 projection from complete public pages matched all three native hashes for
 Pro EQ's 199 records and Impact's 4,262 records, with three fresh native scans
@@ -145,15 +192,29 @@ Optional owner observations on Mustang Native, Rumble Native, Ampire and Pro EQ
 returned non-Node `DeviceParamFolder` controllers. Opening the exact Mustang and
 Rumble editors left each complete 39-record typed projection unchanged, with
 the mutable effect-model placeholders still unpopulated. The underlying aliases
-did report the declared `IControllerProvider` interface. Its controller and any
-model catalog remain separate observations to establish; an unpopulated scalar
-facade is not classified as an empty rack.
+did report the declared `IControllerProvider` interface. A guarded getter observed
+each alias's `RemoteRootComponent`, including `workspaceroot`, `global`,
+`effect1` through `effect25`, `amp` and `tuner` child identifiers. Two fresh
+complete 39-record projections were unchanged after these read-only calls.
+The bounded type inventory was incomplete and established no model catalog,
+occupied-slot count or selection API.
+The fixed `plugInUnknown` virtual child then exposed each actual workspace,
+including its `signalchain` and `presets` components. Both complete 39-record
+projections again remained unchanged in two fresh observations. Depth limits
+still prevented a complete inner inventory at this checkpoint.
+The subsequent depth-five inventory observed `ToneEffectSelectorComponent`
+and `ToneCabinetSelectorComponent` under each real `signalchain`, plus the
+workspace preset component's four children. The full 39-record projections
+remained unchanged twice. These metadata reads establish the fixed selector
+route; model catalog contents and selection effects are separate checks.
+An unpopulated scalar facade is not classified as an empty rack.
 
 ## Reproduction and evidence
 
 The runners include `scripts/verify_all_parameters.py`,
 `scripts/verify_all_parameter_states.py`, `scripts/verify_plugin_states.py`,
-`scripts/verify_plugin_presets.py` and `scripts/verify_nested_graph.py`.
+`scripts/verify_plugin_presets.py`, `scripts/verify_plugin_actions.py` and
+`scripts/verify_nested_graph.py`.
 Use their `--help` output for finite fixture,
 scope and mode arguments. Start the MCP owner before launching the DAW, open the
 named disposable scratch song, and retain the ignored append-only ledgers and
