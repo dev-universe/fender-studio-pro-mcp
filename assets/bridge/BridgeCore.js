@@ -123,7 +123,7 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
-        const reads = ["ping", "context", "song", "tracks", "channels", "panner", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -187,12 +187,15 @@ class Bridge {
             case "channels": return this.fromComponent(c => c.channels());
             case "panner": return this.fromComponent(c => c.panner(args));
             case "setPanner": return this.fromComponent(c => c.setPanner(args));
+            case "splitters": return this.fromComponent(c => c.splitters(args));
+            case "setSplitter": return this.fromComponent(c => c.setSplitter(args));
             case "setChannel": return this.fromComponent(c => c.setChannel(args));
             case "command": return this.command(args);
             case "editorCommand": return this.editorCommand(args);
             case "listCommands": return this.listCommands(args);
             case "song": return this.song();
             case "tracks": return this.tracks(args);
+            case "trackFormats": return this.trackFormats();
             case "selectTrack": return this.selectTrack(args);
             case "notes": return this.notes(args);
             case "editNotes": return this.editNotes(args);
@@ -909,6 +912,21 @@ class Bridge {
         if (isFail(r)) return r;
         const t = this.trackInfo(args.track);
         return { track: args.track, action: args.action, events: t ? t.events : [] };
+    }
+
+    trackFormats() {
+        const formats = Host.Engine && Host.Engine.TrackFormats;
+        if (!formats || !has(formats, "at", "function") || typeof formats.count !== "number" || !isFinite(formats.count)
+            || formats.count < 0 || Math.floor(formats.count) !== formats.count) return fail("the native track format list is unavailable");
+        const out = [];
+        for (let i = 0; i < Math.min(formats.count, 128); i++) {
+            const format = formats.at(i);
+            if (!format || format.mediaType !== "Audio") continue;
+            const speaker = format.formatData;
+            if (!speaker || typeof speaker.name !== "string" || typeof speaker.type !== "number") return fail("native audio format metadata is incomplete");
+            out.push({ format: speaker.name, speakerType: speaker.type, mediaType: "Audio" });
+        }
+        return { formats: out, truncated: formats.count > 128, scope: "audio_track_formats" };
     }
 
     addTrack(args) {

@@ -172,9 +172,9 @@ for (const kind of ['mix_fx', 'panner']) {
   test(`unmapped ${kind} targets reject reads and writes without changing an insert`, () => {
     const host = pluginHarness();
     const target = { ...host.insert, kind, param: 'gain', value: 60 };
-    assert.match(host.component.pluginParams({ ...target, names: ['gain'] }).error, /no verified live parameter path|no plug-in/);
-    assert.match(host.component.setPluginParam(target).error, /no verified live parameter path|no plug-in/);
-    assert.match(host.component.setInsertBypass({ ...target, bypassed: true }).error, /no verified live parameter path|no plug-in/);
+    assert.match(host.component.pluginParams({ ...target, names: ['gain'] }).error, /no verified live parameter path|no plug-in|native mixer is not available/);
+    assert.match(host.component.setPluginParam(target).error, /no verified live parameter path|no plug-in|native mixer is not available/);
+    assert.match(host.component.setInsertBypass({ ...target, bypassed: true }).error, /no verified live parameter path|no plug-in|native mixer is not available/);
     assert.equal(host.gain.value, 50);
     assert.equal(host.bypass.value, 0);
     assert.deepEqual(host.writes, []);

@@ -21,12 +21,18 @@ pub enum Operation {
     Song(Empty),
     #[serde(rename = "tracks", alias = "tracks_list")]
     Tracks(TrackQuery),
+    #[serde(rename = "trackFormats", alias = "track_formats")]
+    TrackFormats(Empty),
     #[serde(rename = "channels", alias = "channels_list")]
     Channels(Empty),
     #[serde(rename = "panner", alias = "panner_get")]
     Panner(PannerQuery),
     #[serde(rename = "setPanner", alias = "panner_set")]
     SetPanner(PannerSet),
+    #[serde(rename = "splitters", alias = "splitters_list")]
+    Splitters(SplittersQuery),
+    #[serde(rename = "setSplitter", alias = "splitter_set")]
+    SetSplitter(SplitterSet),
     #[serde(rename = "meters")]
     Meters(Empty),
     #[serde(rename = "notes")]
@@ -182,6 +188,58 @@ pub enum PannerField {
     PanX1,
     PanX2,
     PanWidth,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SplittersQuery {
+    pub channel: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SplitterSet {
+    pub channel: String,
+    pub node: String,
+    pub label: String,
+    pub param: SplitterParam,
+    pub value: f64,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+pub enum SplitterParam {
+    #[serde(rename = "numOutputs")]
+    NumOutputs,
+    #[serde(rename = "splitMode")]
+    SplitMode,
+    #[serde(rename = "gain[1]")]
+    Gain1,
+    #[serde(rename = "gain[2]")]
+    Gain2,
+    #[serde(rename = "gain[3]")]
+    Gain3,
+    #[serde(rename = "gain[4]")]
+    Gain4,
+    #[serde(rename = "gain[5]")]
+    Gain5,
+    #[serde(rename = "mute[1]")]
+    Mute1,
+    #[serde(rename = "mute[2]")]
+    Mute2,
+    #[serde(rename = "mute[3]")]
+    Mute3,
+    #[serde(rename = "mute[4]")]
+    Mute4,
+    #[serde(rename = "mute[5]")]
+    Mute5,
+    #[serde(rename = "splitFreq[1]")]
+    SplitFreq1,
+    #[serde(rename = "splitFreq[2]")]
+    SplitFreq2,
+    #[serde(rename = "splitFreq[3]")]
+    SplitFreq3,
+    #[serde(rename = "splitFreq[4]")]
+    SplitFreq4,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -511,6 +569,10 @@ pub enum TrackEdit {
         channel: String,
         plugin: String,
     },
+    AddAudioTrack {
+        name: String,
+        format: String,
+    },
     AddInstrumentTrack {
         instrument: String,
         name: Option<String>,
@@ -738,8 +800,10 @@ impl Operation {
             | Self::HostProbe(_)
             | Self::Song(_)
             | Self::Tracks(_)
+            | Self::TrackFormats(_)
             | Self::Channels(_)
             | Self::Panner(_)
+            | Self::Splitters(_)
             | Self::Meters(_)
             | Self::Notes(_)
             | Self::Plugins(_)
@@ -776,6 +840,39 @@ impl Operation {
                 return Err(invalid(
                     "A channel name and finite raw panner value are required",
                 ));
+            }
+            Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,
+            Self::SetSplitter(change) => {
+                for (name, value) in [
+                    ("channel", &change.channel),
+                    ("node", &change.node),
+                    ("label", &change.label),
+                ] {
+                    validate_splitter_name(value, name)?;
+                }
+                if change.node.contains('/') {
+                    return Err(invalid("Splitter node must be a child name without /"));
+                }
+                if !change.value.is_finite() {
+                    return Err(invalid("Splitter value must be a finite raw number"));
+                }
+                let integer_range = match change.param {
+                    SplitterParam::NumOutputs => Some((2.0, 5.0)),
+                    SplitterParam::SplitMode => Some((0.0, 2.0)),
+                    SplitterParam::Mute1
+                    | SplitterParam::Mute2
+                    | SplitterParam::Mute3
+                    | SplitterParam::Mute4
+                    | SplitterParam::Mute5 => Some((0.0, 1.0)),
+                    _ => None,
+                };
+                if let Some((min, max)) = integer_range
+                    && (change.value.fract() != 0.0 || !(min..=max).contains(&change.value))
+                {
+                    return Err(invalid(format!(
+                        "Splitter count, mode or mute value must be an integer from {min} to {max}"
+                    )));
+                }
             }
             Self::SetInsertBypass(p) => {
                 if let InsertSlot::Index(index) = p.slot
@@ -907,6 +1004,18 @@ impl Operation {
         if let Self::TrackTask(task) = self {
             for op in &task.ops {
                 match op {
+                    TrackEdit::AddAudioTrack { name, format } => {
+                        for (field, value) in [("name", name), ("format", format)] {
+                            if value.trim().is_empty()
+                                || value.len() > 256
+                                || value.chars().any(char::is_control)
+                            {
+                                return Err(invalid(format!(
+                                    "Audio track {field} must contain 1 to 256 UTF-8 bytes without control characters"
+                                )));
+                            }
+                        }
+                    }
                     TrackEdit::CreatePart {
                         start, end, notes, ..
                     } => {
@@ -925,6 +1034,15 @@ impl Operation {
         }
         Ok(())
     }
+}
+
+fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError> {
+    if value.trim().is_empty() || value.len() > 256 || value.chars().any(char::is_control) {
+        return Err(invalid(format!(
+            "Splitter {field} must contain 1 to 256 UTF-8 bytes without control characters"
+        )));
+    }
+    Ok(())
 }
 
 fn validate_plugin_target(
@@ -951,8 +1069,10 @@ fn validate_plugin_target(
                 "Mix FX or panner parameter access requires channel",
             ));
         }
-        if matches!(kind, Some(PluginKind::MixFx)) && slot.is_some_and(|v| v != 0) {
-            return Err(invalid("The native Mix FX rack supports only slot 0"));
+        if slot.is_some_and(|v| v != 0) {
+            return Err(invalid(
+                "The native Mix FX rack or panner supports only slot 0",
+            ));
         }
     } else if channel.is_none_or(str::is_empty) || slot.is_none_or(|v| v >= 16) {
         return Err(invalid(
@@ -1032,6 +1152,45 @@ mod tests {
             )
             .is_err()
         );
+    }
+
+    #[test]
+    fn named_audio_track_creation_uses_the_guarded_track_task_contract() {
+        let operation = Operation::from_parts(
+            "trackTask",
+            json!({"ops":[{"op":"addAudioTrack","name":"Surround scratch","format":"5.1"}]}),
+        )
+        .unwrap();
+        assert!(operation.validate().is_ok());
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().0, "trackTask");
+        assert_eq!(
+            operation.wire().1,
+            json!({"ops":[{"op":"addAudioTrack","name":"Surround scratch","format":"5.1"}]})
+        );
+        for args in [
+            json!({"ops":[{"op":"addAudioTrack","name":"Scratch"}]}),
+            json!({"ops":[{"op":"addAudioTrack","format":"5.1"}]}),
+            json!({"ops":[{"op":"addAudioTrack","name":"Scratch","format":"5.1","script":"unchecked"}]}),
+        ] {
+            assert!(Operation::from_parts("trackTask", args).is_err());
+        }
+    }
+
+    #[test]
+    fn audio_track_name_and_format_are_bounded_before_dispatch() {
+        for field in ["name", "format"] {
+            for invalid_value in ["".into(), " \t ".into(), "x\0y".into(), "x".repeat(257)] {
+                let mut op = json!({"op":"addAudioTrack","name":"Scratch","format":"5.1"});
+                op[field] = json!(invalid_value);
+                let operation = Operation::from_parts("trackTask", json!({"ops":[op]})).unwrap();
+                assert!(operation.validate().is_err(), "field: {field}");
+            }
+            let mut op = json!({"op":"addAudioTrack","name":"Scratch","format":"5.1"});
+            op[field] = json!("x".repeat(256));
+            let operation = Operation::from_parts("trackTask", json!({"ops":[op]})).unwrap();
+            assert!(operation.validate().is_ok());
+        }
     }
 
     #[test]
@@ -1134,6 +1293,120 @@ mod tests {
     }
 
     #[test]
+    fn splitter_operations_have_finite_fields_and_canonical_wire_names() {
+        let query = Operation::from_parts("splitters_list", json!({"channel":"Scratch"})).unwrap();
+        assert!(query.validate().is_ok());
+        assert!(query.is_read_only());
+        assert_eq!(
+            query.wire(),
+            ("splitters".into(), json!({"channel":"Scratch"}))
+        );
+        for param in [
+            "numOutputs",
+            "splitMode",
+            "gain[1]",
+            "gain[2]",
+            "gain[3]",
+            "gain[4]",
+            "gain[5]",
+            "mute[1]",
+            "mute[2]",
+            "mute[3]",
+            "mute[4]",
+            "mute[5]",
+            "splitFreq[1]",
+            "splitFreq[2]",
+            "splitFreq[3]",
+            "splitFreq[4]",
+        ] {
+            let value = if param == "numOutputs" { 2.0 } else { 0.0 };
+            let operation = Operation::from_parts(
+                "splitter_set",
+                json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":param,"value":value}),
+            )
+            .unwrap();
+            assert!(operation.validate().is_ok(), "{param}");
+            assert!(!operation.is_read_only());
+            assert_eq!(operation.wire().0, "setSplitter");
+            assert_eq!(operation.wire().1["param"], param);
+        }
+        for param in [
+            "gain[0]",
+            "gain[6]",
+            "mute[6]",
+            "splitFreq[5]",
+            "color",
+            "bypass",
+        ] {
+            assert!(Operation::from_parts(
+                "splitter_set",
+                json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":param,"value":0}),
+            ).is_err());
+        }
+        for invalid in [
+            json!({"channel":"Scratch","node":"Node01","param":"splitMode","value":0}),
+            json!({"channel":"Scratch","label":"Splitter 1","param":"splitMode","value":0}),
+            json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":"mute[1]","value":true}),
+            json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":"splitMode","value":0,"method":"unchecked"}),
+        ] {
+            assert!(Operation::from_parts("setSplitter", invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn splitter_values_enforce_integer_switches_and_finite_native_numbers() {
+        for (param, valid, invalid) in [
+            ("numOutputs", vec![2.0, 5.0], vec![1.0, 6.0, 2.5]),
+            ("splitMode", vec![0.0, 2.0], vec![-1.0, 3.0, 0.5]),
+            ("mute[1]", vec![0.0, 1.0], vec![-1.0, 2.0, 0.5]),
+            ("mute[5]", vec![0.0, 1.0], vec![-1.0, 2.0, 0.5]),
+        ] {
+            for (values, expected) in [(valid, true), (invalid, false)] {
+                for value in values {
+                    let operation = Operation::from_parts(
+                        "setSplitter",
+                        json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":param,"value":value}),
+                    ).unwrap();
+                    assert_eq!(operation.validate().is_ok(), expected, "{param}: {value}");
+                }
+            }
+        }
+        for param in [SplitterParam::Gain1, SplitterParam::SplitFreq4] {
+            for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+                let operation = Operation::SetSplitter(SplitterSet {
+                    channel: "Scratch".into(),
+                    node: "Node01".into(),
+                    label: "Splitter 1".into(),
+                    param,
+                    value,
+                });
+                assert!(operation.validate().is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn splitter_targets_require_bounded_names_and_a_literal_node_child() {
+        for channel in ["".to_owned(), "  ".into(), "x\0y".into(), "x".repeat(257)] {
+            let query = Operation::from_parts("splitters", json!({"channel":channel})).unwrap();
+            assert!(query.validate().is_err());
+        }
+        for field in ["channel", "node", "label"] {
+            for value in ["".to_owned(), "  ".into(), "x\0y".into(), "x".repeat(257)] {
+                let mut args = json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":"splitMode","value":0});
+                args[field] = json!(value);
+                let operation = Operation::from_parts("setSplitter", args).unwrap();
+                assert!(operation.validate().is_err(), "{field}");
+            }
+        }
+        let path = Operation::from_parts(
+            "setSplitter",
+            json!({"channel":"Scratch","node":"../Node01","label":"Splitter 1","param":"splitMode","value":0}),
+        ).unwrap();
+        assert!(path.validate().is_err());
+    }
+
+    #[test]
     fn plugin_target_slots_match_the_native_bank_boundaries() {
         let cases = [
             (None, None, false),
@@ -1149,11 +1422,19 @@ mod tests {
             (Some("mix_fx"), None, true),
             (Some("mix_fx"), Some(0), true),
             (Some("mix_fx"), Some(1), false),
+            (Some("panner"), None, true),
+            (Some("panner"), Some(0), true),
+            (Some("panner"), Some(1), false),
             (Some("instrument"), None, true),
             (Some("instrument"), Some(0), true),
             (Some("instrument"), Some(1), false),
         ];
-        for name in ["pluginInspect", "pluginEditorOpen", "setPluginParam"] {
+        for name in [
+            "pluginParams",
+            "pluginInspect",
+            "pluginEditorOpen",
+            "setPluginParam",
+        ] {
             for (kind, slot, valid) in cases {
                 let mut args = json!({"channel":"Scratch","track":"Keys","kind":kind,"slot":slot,"plugin":"Expected class"});
                 if name == "setPluginParam" {

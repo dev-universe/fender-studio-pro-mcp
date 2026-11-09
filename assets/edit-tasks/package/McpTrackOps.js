@@ -182,6 +182,42 @@ mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "I
 mtoOps.addMixFx = function (context, op) { return mtoInsertInto(context, op, "AudioBusMixFX", "AudioMixEffect"); };
 mtoOps.addFxSend = function (context, op) { return mtoInsertInto(context, op, "Sends"); };
 
+// { name, format }: format is an exact entry from Host.Engine.TrackFormats.
+mtoOps.addAudioTrack = function (context, op) {
+	if (typeof op.name !== "string" || !op.name.trim() || op.name.length > 256 || /[\u0000-\u001f\u007f]/.test(op.name)) return { error: "audio track name is required and must be at most 256 characters without control characters" };
+	if (typeof op.format !== "string" || !op.format.trim() || op.format.length > 256 || /[\u0000-\u001f\u007f]/.test(op.format)) return { error: "an exact audio track format is required and must be at most 256 characters without control characters" };
+	var f = context.functions;
+	var root = f ? f.root : null;
+	var formats = Host.Engine ? Host.Engine.TrackFormats : null;
+	var tl = context.mainTrackList;
+	if (!mtoFn(f, "addMediaTrack") || !mtoFn(root, "createIterator") || !mtoFn(tl, "getInsertPosition")) return { error: "audio track creation or the track list is not available" };
+	if (!mtoFn(formats, "findEqual")) return { error: "the audio track format list is not available" };
+	var fmt = formats.findEqual(op.format);
+	if (!fmt) return { error: "no track format named " + op.format };
+	if (fmt.mediaType !== "Audio") return { error: "the requested track format is not audio: " + op.format };
+	var it = root.createIterator();
+	if (!mtoFn(it, "done") || !mtoFn(it, "next")) return { error: "the track list is not available to check duplicate names" };
+	while (!it.done()) {
+		var existing = it.next();
+		if (!existing) return { error: "the track list could not be read to check duplicate names" };
+		if (existing.name === op.name) return { error: "a track already has the requested name: " + op.name };
+	}
+	var at = tl.getInsertPosition();
+	if (typeof at !== "number" || !isFinite(at) || at < 0 || at % 1 !== 0) return { error: "the track insertion position is not available" };
+	var previousImmediate = typeof f.executeImmediately === "boolean" ? f.executeImmediately : false;
+	var track = null;
+	try {
+		f.executeImmediately = true;
+		track = f.addMediaTrack(at, op.name, fmt);
+	} catch (_) {
+		return { error: "audio track creation did not return a result; inspect the song before retrying", outcome: "unknown" };
+	} finally {
+		f.executeImmediately = previousImmediate;
+	}
+	if (!track) return { error: "the host did not return a created audio track" };
+	return { created: true, track: typeof track.name === "string" ? track.name : null, format: op.format };
+};
+
 // { name, instrument }: an instrument track playing a new instance of the instrument.
 mtoOps.addInstrumentTrack = function (context, op) {
 	var f = context.functions;

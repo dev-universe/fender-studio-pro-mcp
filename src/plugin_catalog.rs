@@ -92,6 +92,29 @@ impl LocalCatalog {
                 .map(str::to_owned),
             );
         }
+        if normalize(plugin_name) == "surroundpanner" {
+            names.extend(
+                [
+                    "editMode",
+                    "azimuth",
+                    "altitude",
+                    "spread",
+                    "size",
+                    "balanceAzimuth",
+                    "balanceAmount",
+                    "lfeLevel",
+                    "centerLevel",
+                    "disableCenter",
+                    "muteLfe",
+                    "sendLfe",
+                    "snap",
+                    "sizeLock",
+                    "soloLfe",
+                ]
+                .into_iter()
+                .map(str::to_owned),
+            );
+        }
         names.into_iter().collect()
     }
 
