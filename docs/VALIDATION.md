@@ -1,110 +1,87 @@
 # Validation on Studio Pro 8.1.1
 
-Validated on 9 November 2026 against **Fender Studio Pro 8.1.1 Build 113103 on macOS arm64**. The native Rust MCP server, embedded bridge and both EditTasks ran in the actual DAW. The [original public evidence](evidence/2026-11-09.json) records the earlier session and plugin inventory at clean revision `afff1fa`. The [native-controls follow-up](evidence/2026-11-09-native-controls.json) separately records the updated feature binary, Splitter/Surround Panner acceptance and session regression. Source provenance remained unchanged during that regression and installed assets matched their manifest; the feature working tree had uncommitted changes. The earlier 55 representative plugin parameter passes were not all rerun on this binary.
+The final native-provider build ran against **Fender Studio Pro 8.1.1 Build 113103 on macOS 26.7.1 arm64**, using one 65-track synthetic scratch song. The Rust MCP server, installed JavaScript bridge, both EditTasks and optional Rust CCL extension ran in the actual DAW. [Sanitized final evidence](evidence/2026-11-09-native-provider.json) records artifact hashes and scope. The [earlier baseline](evidence/2026-11-09.json) and [spatial follow-up](evidence/2026-11-09-native-controls.json) remain separate historical runs.
 
-The P0 bridge and note-creation paths work. These results do not complete every P0 acceptance or later feature gate in the [implementation plan](IMPLEMENTATION_PLAN.md).
+The final server exposed 31 MCP tools. The complete matrix was rerun on the final server/native binaries: 60 classes, 59 indexed providers and one Splitter graph. Fifty-nine classes passed changed parameter or graph control; Phase Meter passed slot bypass. This does not certify every GUI action, all model/preset states or physical audio behavior.
 
-| Environment | Validated scope |
+## Final observed results
+
+| Check | Actual result |
 | --- | --- |
-| Host | One Apple Silicon Mac running macOS |
-| DAW | Fender Studio Pro 8.1.1 Build 113103 |
-| Session | Named synthetic scratch sessions: 64 tracks in the original run, 65 in the native-controls follow-up |
-| Client path | MCP over stdio, native Rust server, installed bridge and EditTasks |
-| MCP discovery | 30 tools in the updated server; the original evidence recorded 27. Discovery alone does not verify every workflow. |
-| Other platforms | No Windows, Intel Mac or Linux DAW execution evidence |
+| Native enumeration | 8,668 indexed records across 59 current providers; unique complete index coverage, stable document/instance/class/source/count and no unresolved DSP names. Canonical parameter names were unique within each provider. |
+| Representative controls | 56 representative scalar change/readback/restore passes and one Phase Meter slot-bypass pass. |
+| External Effect | Mono and Stereo each exposed all 24 controller records. Each passed input gain, output gain and mix with exact restoration of the finite nonzero raw f64 value; integer manual latency, phase toggle and Unicode notes also changed, independently read back and restored. |
+| Native list choices | Each exposed send/receive hardware list returned zero entries. Empty-list query passed. Floating-scale DSP list facades explicitly reject this integer-index-list query. Positive physical port selection and audible signal flow were not tested. |
+| Splitter | 21 cases passed: counts 2..5, modes 0..2, five gains, five mutes and four crossovers. Sixteen fixed controls were read at five branches; original active values/count/mode were restored. |
+| Surround Panner | 47 indexed records read in a 5.1 fixture; all 15 previously named controls changed/read back/restored. |
+| Spatial acceptance | 36 cases, 908 receipts, restoration confirmed on the same final build. |
+| EditTask regression | Four notes across three parts transposed +1, complete part/note readback matched, then -1 restored exact original note/part data. Generic edit receipts remained applied_unverified; the validator established workflow completion independently. |
+| Process ownership | A second controller was rejected with controller_busy while the sole MCP owner remained active. |
+| Stale document | A stale-token mutation was refused as not_applied/document_changed; channel state stayed unchanged. |
+| Warm request checks | 100 pings and 20 complete track snapshots, all successful, zero timeouts; observed track count 65. |
+| Normal native shutdown | Service instances, factory refs, owned metadata refs and receipt leases reached zero; module registration detached. Own code/bundle pins deliberately last until process exit. |
+| Installation | Bridge/EditTask assets and the four native payload files matched their managed installation manifests. |
 
-## Observed DAW behavior
+The native provider run recorded 1,169 receipts, plus its separate spatial and session regression ledgers. Some read-only preflight probes intentionally checked unsupported sources; the 60-class acceptance and regression summaries passed. A preceding run used normalized 0.37 for four binary switches, which rounded to their unchanged zero state. The validator was corrected to request a different raw switch value; all four passed in the final full rerun. This was a test-target correction, not evidence that an unchanged value counted as a changed control.
 
-| Check | Result and evidence boundary |
-| --- | --- |
-| Bridge and installation | Open-session context, dispatch and state reads succeeded. Timer and MIDI wakeup paths operated with an active session. The original run passed `doctor --live`; the follow-up confirmed installed asset hashes matched the manifest and exercised the updated bridge. |
-| Track EditTask | `createPart` and `addNotes` created an empty instrument part and inserted notes with matching pitch, beat, length and velocity readback. Named-part creation also passed: a part began at 16 seconds, and its synthetic pitch-72 note began at absolute quarter-note beat 32 with a 0.5-second length. |
-| Musical EditTask | The updated feature binary again transposed 4 notes across 3 parts up one semitone, verified complete readback, then transposed down and verified exact original part and note data. |
-| Plugin control | The [60-class matrix](BUILTIN_PLUGINS.md) combines earlier 55 representative parameter and 3 bypass passes with the two native-control results below: 57 classes with parameter/native graph control, 3 bypass-only and none without verified control. This is not all-controls coverage or a fresh full-inventory run. |
-| Splitter | 21 cases passed: counts 2..5, modes 0..2, five gains, five mutes and four crossovers on one existing top-level node. At five branches all 16 fixed controls were readable. Changes and restorations were read back; final original active values, mode and count matched. Hidden branch values before expansion were not observed. |
-| Surround Panner | All 15 known candidates changed, were read back and restored in a 5.1 fixture. Access uses native `Panner/AudioPanFX/FXSlot/Device`, `kind:panner`, slot 0 and expected class identity. Other formats, complete enumeration and audible spatial behavior remain unverified. |
-| Audio track formats | Read-only `track_formats` returned 16 native audio formats. `tracks_edit` / `addAudioTrack` created the named 5.1 fixture using an exact returned format. Localized mono/stereo names must be taken from discovery. `panner_get` reports the readable native `speakerFormat`. |
-| Native channel panner | Five values were readable, including the read-only `pannerType` string `Simple`; four controls were writable. All four (`panX1`, `panX2`, `panWidth`, `stereoMode`) changed with `applied_verified` readback and all original descriptors were restored; width included 1 → 0.75 → 1. |
-| Plugin editor | The Phase Meter editor window opened and was observed in the actual app. This verifies that editor-opening path, not arbitrary editor interaction. |
-| Cross-process ownership | A second controller for the same profile/mailbox exited unsuccessfully with `controller_busy` while the MCP owner remained alive. |
-| Stale document intent | A channel mutation with a stale expected-document token returned `not_applied` / `document_changed`; channel readback remained unchanged. |
-| MIDI wakeup recording probe | Recording was observed on an empty Multi Instrument track with Note FX slot 0 confirmed absent. Sixteen ping operations ran; readback found zero recorded notes. Recording stopped, and the fixture, transport position and Main mute were restored. Input routing was not inspected, so this establishes no global All Inputs or all-routing guarantee. |
+Earlier independent checks also established track/part/note creation, exact named 5.1 audio-track creation, 16 audio format names, four writable Simple-panner controls and plugin-editor opening. An earlier bounded MIDI recording probe found no wakeup notes in one fixture; it is not a guarantee for every input routing configuration. Those creation/routing observations were not repeated as new fixture creation during the final run.
 
-The note-edit receipts remain `applied_unverified` at the generic operation level. The validator independently compared every returned part and note field, including pitch, velocity and timing, to the expected transposed state and original state. This does not promote future edits or command acknowledgments to verified workflow completion.
+## Timing and local checks
 
-The final native-controls run passed **36 cases with 902 receipts**: 21 Splitter and 15 Surround Panner cases, all with restoration confirmed. Each write required a stable named scratch document, unique empty Audio fixtures, muted channels and stopped transport. Some panner raw values use 0..10000 scales; descriptors and normalized writes avoid assuming that raw values are display units or 0..1.
+One warm run, client monotonic wall time excluding report-file writes:
 
-## Session latency
+| Operation | Samples | p50 | p95 | Errors/timeouts |
+| --- | ---: | ---: | ---: | ---: |
+| Ping | 100 | 69.36 ms | 77.76 ms | 0 / 0 |
+| Track snapshot | 20 | 73.40 ms | 86.89 ms | 0 / 0 |
 
-The table below is the **historical baseline from the original evidence**, measured in its 64-track scratch session. Client wall time used a monotonic clock and excluded report-file writes. Snapshots included event data, with at most 50 returned events per track. The private report also retains server `elapsed_ms` values and full receipts.
+These are one-machine observations, not throughput, cold-start or improvement claims. No limiting resource was profiled.
 
-| Operation | Samples | p50 wall time | p95 wall time | Errors | Timeouts |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Ping | 100 | 72.14 ms | 78.31 ms | 0 | 0 |
-| Track snapshot | 20 | 67.79 ms | 75.41 ms | 0 | 0 |
+Final local checks cover 53 root Rust tests, 131 JavaScript tests, 60 native-crate mocks and six native compile-fail documentation checks. Formatting, Clippy with warnings denied, release build, Rust 1.88 checks and optional exact-SDK ABI checks passed. The native mocks are split across parameter access (24), DSP records (11), editor identity (12) and add-on/lifecycle/schema (13). SDK/compiler checks validate 54 add-on calls, 23 parameter calls and 18 editor calls plus layouts and pinned headers. They do not replace actual host evidence.
 
-p50 is the median; p95 uses nearest rank. This is one warm run on one host, with no baseline ratio or throughput claim. The limiting resource was not profiled, and other machines, larger sessions, cold starts and sustained-load behavior remain unmeasured.
+The root release SHA256 is `24353e08beb7223e148a459a41e69d8c7cbdc445a1cc7fd1e731027ef5dc7213`; native add-on SHA256 is `67be3695fb00780b684498e52e920cca8ad924a1ec7de6fe948deb8d881c1bfd`. The working feature sources were uncommitted during the run. Content/installation hashes, rather than an assertion of clean-head execution, bind the evidence.
 
-The updated feature binary separately completed 100 pings and 20 track snapshots in the 65-track session with zero errors or timeouts. Its second-owner rejection, stale-document refusal and complete note restoration also passed; those results do not replace the historical timing values above.
+## Reproduction
 
-## Local checks
-
-The updated feature checks passed **45 Rust tests and 119 JavaScript tests**, formatting, Clippy, the release build and MSRV 1.88.0. The original evidence retains its earlier 38 Rust / 99 JavaScript results and Rust 1.99.0 release compiler; these are separate build records.
-
-Contract tests cover typed input validation, receipt handling, archive bounds, audio fixtures, the actual bridge and both EditTask scripts. Integrated fixtures check one-shot lease consumption, replay rejection, expired and mismatched requests, internal-task command blocking and check-only behavior. Multi-part fixtures cover reversed iteration, repeated names, fresh per-part leases, cleanup and preservation of earlier applied evidence when a later part refuses. These simulated host objects do not prove real host callback scheduling.
-
-The native WAV analyzer has synthetic-file coverage. No EBU conformance suite or end-to-end DAW capture/loudness workflow has been certified.
-
-## Reproducing the script checks
-
-Run local checks from the repository root:
+Run the ordinary checks and the separate native-crate checks described in the [add-on guide](../native/addon/README.md). Native tests/build do not install or launch the DAW.
 
 ```sh
 ./scripts/check.sh
-cargo +1.88.0 check --locked --all-targets
+cargo +1.88.0 test --locked
+sh native/build.sh
 ```
 
-With the bridge installed, open a disposable scratch session and stop playback and recording. Replace the title and fixture names below with exact existing names. The session script requires a unique audio fixture channel; `--note-track` opts into the reversible note edit. Without it, notes are not edited. Reports stay in the ignored private evidence directory.
+Install bridge and native package while the DAW/owner are stopped, then start the acceptance runner first so its MIDI source exists before Studio Pro starts. Its fixture JSON is an array of existing plugin targets, optionally with a previously checked test_parameter or test_bypass flag. For example, a target can contain channel, slot, plugin and test_parameter; instrument/Note FX targets use kind and track. Only named FSP Verify scratch fixtures are accepted. The runner creates no tracks or media and saves no song.
 
 ```sh
-target/release/fender-studio-pro-mcp doctor --live
-python3 scripts/verify_live_session.py \
+python3 scripts/verify_native_parameters.py \
   --binary target/release/fender-studio-pro-mcp \
-  --scratch-title "YOUR SCRATCH SESSION" \
-  --audio-channel "FSP Verify FX Pro EQ" \
-  --note-track "MCP Keys"
-python3 scripts/verify_live_plugins.py \
-  --binary target/release/fender-studio-pro-mcp \
-  --scratch-title "YOUR SCRATCH SESSION" \
-  --kinds effect,instrument,note_effect
-python3 scripts/verify_native_controls.py \
-  --binary target/release/fender-studio-pro-mcp \
-  --scratch-title "YOUR SCRATCH SESSION" \
-  --output .local/live/native-controls.json
+  --fixtures .local/live/native-parameter-fixtures.json \
+  --scratch-title 'MCP Validation Scratch' \
+  --output .local/live/native-parameters.json \
+  --pause --roundtrips --spatial-controls \
+  --prepare-midi-fixtures --external-controls --session-checks
 ```
 
-The [session script](../scripts/verify_live_session.py) records provenance, ownership and stale-token checks, actual track count, timing distributions and optional complete note restoration. It never blindly repeats a transpose after an ambiguous response. The [plugin script](../scripts/verify_live_plugins.py) reproduces the earlier inventory checks, creates or reuses scratch fixtures and restores tested values; fixture tracks and inserts can remain.
+Open exactly the named disposable song, then press Enter in the runner. The supplied test fixture inventory must already exist locally; no raw song or machine-specific fixture inventory is distributed. The spatial option requires the existing named Splitter/5.1 fixtures; session checks require the existing MCP Keys note fixture. Raw output must resolve inside the repository's ignored .local directory.
 
-The [native-controls script](../scripts/verify_native_controls.py) requires existing unique, empty, muted Audio fixtures named `FSP Verify FX Splitter` and `FSP Verify Surround Panner`. The first must contain one top-level Splitter; the second must already use 5.1 with Surround Panner. It creates neither fixture nor graph nodes. It checkpoints each call, checks document and node/class identity, reads state after uncertain writes and restores original raw values only while the document remains stable. Its 16 fixed Splitter controls and 15 panner names do not constitute full native parameter enumeration. The Mix FX, Simple panner, editor-window and MIDI-recording observations were checked separately.
+Selection in the tested DAW auto-armed and enabled monitoring even when reselecting the same Music track. The opt-in MIDI preparation proves unique empty-track identity and exclusive selection, reads finite switch states, sets mute on/arm off/monitor off through fixed observed commands and verifies each update. It avoids reselecting an already exclusive target. These changes affect only the disposable scratch song and were discarded on normal quit.
 
-## Receipt contract and remaining limits
+Every mutation has an in-flight checkpoint, current document and target checks, and a restoration path. A restoration failure aborts further mutation acceptance. The existing [session](../scripts/verify_live_session.py), [candidate-based plugin](../scripts/verify_live_plugins.py) and [spatial](../scripts/verify_native_controls.py) runners remain available for their narrower scopes.
 
-The [receipt model](../src/model.rs) separates observation, verified application, unverified application, refusal, partial application and unknown outcomes. A command acknowledgment establishes dispatch, not completion. A timeout after dispatch can mean an edit occurred without a reply; non-idempotent operations must not be repeated automatically.
+## Receipt and compatibility boundaries
 
-The [runtime](../src/runtime.rs) matches request, bridge session and document context and serializes DAW access through an owner with a process-shared profile lock. The task lease is consumed before mutation and ordinary replay is rejected. This does not provide crash-safe exactly-once execution.
+- **Enumeration scope:** complete current DSP/controller provider indices; read-only meters, headers, UI state and opaque records are included. It is not every possible model, selected pad, unloaded program, modulation route, file action or nested plugin. Opaque image/object contents are not exported or generically writable.
+- **Native ABI:** exact tested app/cclgui arm64 image identities and CCL 5.1.2 declarations. One exploratory prototype used 5.2 method offsets and crashed the disposable scratch process. It was retired, the saved scratch reopened, and note/spatial baselines verified. Corrected and product builds use source/compiler/runtime guards; no final product run crashed. This continuation used Ghidra and authoritative public source.
+- **Lifecycle:** one bounded completed-receipt lease retains native document/model/provider owners through output publication. It drains on the next request or stop. Own code and bundle metadata intentionally remain pinned until process exit; hot unloading is unsupported.
+- **Typed transport:** raw numeric JSON writes are bounded to the JavaScript safe integer magnitude. Larger native integers retain exact decimal metadata and do not advertise generic numeric writes. Unsupported types, disabled/read-only parameters and empty invalid ranges are refused. A successful API call is distinct from a verified requested value.
+- **Hardware:** the exposed send/receive lists contained no entries. Positive routing, ping/automatic latency and audible loopback remain unverified; no hardware test signal was generated. Manual latency means a parameter-state roundtrip, not measured acoustic/electrical latency accuracy.
+- **Graph/spatial:** existing top-level Splitter controls and a 5.1 Surround Panner fixture only. Graph construction/connection/deletion, nested graphs, other speaker formats and audible spatial behavior remain unverified.
+- **Document/task lifetime:** native data requests retain canonical document/model identities. The existing EditTask lease independently compares path/title, so a mocked same-path reopen at that boundary can pass its weaker check; the outer bridge detects the changed object afterward and reports unknown. Prevention at that task boundary remains unresolved.
+- **Instance/focus:** expected_instance binds the resolved native Device within a document, and document tokens must accompany cross-request intent. This does not freeze every selected-pad/model/focus context. Class-only fallback without the add-on cannot distinguish same-class replacement.
+- **No-document/MIDI lifecycle:** an open song is required for the validated path. Home/no-document timeouts and all server/DAW launch orders remain unresolved; source recreation can require reconnecting Receive From. Start the owner before the DAW.
+- **Mapping/platforms:** 256 mixer channels, 16 insert slots and 8 sends per channel; 128 parts per note-edit request. Other mappings, Windows and Intel Mac live behavior are untested.
+- **Other workflows:** saved-song inspection is last-saved and partial; binary notes/automation are not fully decoded. Dedicated capture, managed recording and export-job workflows remain unfinished. WAV tests are synthetic, not EBU conformance certification.
+- **CI:** local checks passed. The current GitHub credential cannot publish Actions workflows; ci/rust.yml remains a template outside .github/workflows. No remote CI pass is asserted.
 
-- **Mapping bounds:** up to 256 mapped mixer channels, 16 insert slots and 8 sends per channel; one note-edit request supports at most 128 parts. Larger mappings and nested rack addressing are not established.
-- **Plugin completeness:** native parameter enumeration is incomplete. Modulation, sampler focus, presets, file loading and all-controls coverage remain open. External Effect gain/mix/routing remain unverified despite successful slot bypass. Splitter support covers the 16 fixed controls of an existing top-level node, not graph construction, connection, deletion, plugin placement or nesting. Surround Panner covers 15 named candidates in 5.1 only.
-- **Document lifetime at the task boundary:** the outer bridge tracks a lifetime token, but the task guard independently compares path and title. A mocked same-path reopen between arming and task execution passed that weaker check. Post-operation context detects the changed lifetime and Rust reports unknown after the possible edit. Real Studio Pro scheduling of that switch during synchronous dispatch has not been demonstrated; prevention at this boundary remains unresolved.
-- **Plugin instance lifetime:** class or instance-label matching cannot distinguish a same-class replacement in the same slot. No stable instance UID/generation contract is implemented.
-- **No-document state:** the original release run observed `bridge_timeout` on the Home/no-document screen. Open a session for the validated path; reliable no-document status remains unresolved.
-- **MIDI lifecycle and routing:** source recreation after server restart can require reconnecting the control-surface input when the DAW was already open. All launch orders and input-routing combinations remain unverified.
-- **Saved songs:** `song_read` reports last-saved state, which can differ from live unsaved state. Plugin snapshots are partial; binary note/automation content is not fully decoded.
-- **Capture and output:** dedicated audio capture, managed recording and export-job workflows are not implemented. The bounded MIDI recording probe does not establish those workflows.
-- **Platforms and CI:** Windows and Intel Mac live behavior remain untested. Publishing the GitHub Actions workflow was blocked by the current credential's workflow authorization. The [Rust workflow template](../ci/rust.yml) is tracked outside the Actions directory; no remote CI pass is asserted.
-
-## Evidence handling
-
-Live runs used scratch data. Raw receipts, session/document identifiers, local paths, user audio and proprietary resource or preset dumps remain local and excluded from Git. The linked public evidence contains sanitized outcomes and reproducibility hashes. Source review, simulated contracts and actual DAW observations retain their separate scopes.
-
-Native path investigation used Ghidra and shipped/public-source evidence. A private Rust CCL service probe loaded through Studio Pro 8.1.1's normal module loader and completed initialization and shutdown without MIDI, document or UI access. Native parameter enumeration remains unfinished research and is not shipped; the loader check adds no plugin control coverage.
+Only synthetic scratch data was edited, and its unsaved edits were discarded at the end. Raw receipts, values, session identifiers, local paths, audio and proprietary resources stay outside Git. The public records contain names, counts, tested fields, outcomes and reproducibility hashes, with source review, mocks and real host observations kept distinct.

@@ -1,0 +1,14 @@
+[package]
+name = "fender-native-parameter-api"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "Owned CCL 5.1.2 parameter access for a validated native host integration"
+repository = "https://github.com/dev-universe/fender-studio-pro-mcp"
+readme = "README.md"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]

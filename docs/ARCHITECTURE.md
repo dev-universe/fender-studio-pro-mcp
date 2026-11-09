@@ -26,17 +26,45 @@ lost. The executor reports an unknown outcome and does not repeat non-idempotent
 edits. Repeated MIDI wakeups for one request ID are deduplicated in the bridge.
 This is not crash-safe exactly-once execution.
 
-The initial implementation has one crate and one owner. A multi-client broker
-can later own that same executor if needed. It is not a prerequisite for real
-DAW verification.
+The optional Rust CCL extension runs inside the DAW on its GUI thread. The
+bridge passes an already resolved native Device object through the scripting
+engine's own marshaller, with a finite JSON request. The native service exposes
+capabilities and a bounded request method; it has no evaluator, arbitrary method
+dispatcher, native-address input, shell or second mailbox executor. The Rust
+server's existing profile lock and serialized operation path remain in charge.
 
-Two independent same-model design candidates converged on this structure.
-Candidate A was selected for its concrete finite operation boundary. Candidate
-B contributed lifecycle-specific outcomes and plugin acceptance covering audio
-effects, instruments, Note FX and non-parameter operations. A separate
-same-model judge scored A 24/25 and B 23/25. These are design judgments, not
-runtime measurements.
+The extension attaches its own module to the public scripting manager and
+registers a fixed IObject service. Exact app/cclgui image identities are checked
+before CCL virtual calls. The private DSP count/info ABI supplies indexed names,
+titles, tags and flags. The bridge resolves those names on the live Device.
+Controller parameter access uses the pinned public CCL 5.1.2 ABI. No nontrivial
+Variant return is called directly from Rust; values use OUT/IN references and
+owned string/object carriers.
 
-All-plugin support requires per-class evidence from the actual DAW. Local
-factory maps provide parameter candidates, not proof of complete enumeration.
-The runtime reports missing parameters and control limitations explicitly.
+Native requests retain the document/model and Device identity, guard immediately
+around dispatch, and retain at most one completed receipt's native owners through
+response publication. Temporary native cleanup precedes the final borrowed
+checks. A subsequent call or stop drains that bounded receipt. Own code and
+bundle metadata are intentionally pinned until process exit; hot unloading is
+not supported. Normal termination must still release service, factory, metadata,
+module registration and receipt ownership.
+
+External Effect needs its editor controller. A bounded resolver matches the
+actual Device UID/class and canonical identity through a unique editor window's
+DeviceSlot/Device, then checks the fixed controller path. It revalidates window
+membership, relationships and identities, including after native temporary
+cleanup. It never chooses an editor from a matching caption alone.
+
+Parameter pages bind count, indices, source and instance. The native API caps a
+request at 16 KiB, a reply at 256 KiB and a page at 128 records. A provider's
+complete list does not establish every nested, selected-pad or model context.
+Carry both the bridge document token and native instance UID between pages.
+Generic writes exclude disabled/read-only fields, opaque objects and unsupported
+types. The JSON/JavaScript boundary limits numeric integer transport to the safe
+range; larger native integers retain exact decimal metadata and are not offered
+as generic writable numbers.
+
+Without the native extension, installed factory metadata remains partial
+candidate discovery. Native failures do not silently become a claim of complete
+metadata discovery. See the [native integration contracts](../native/addon/README.md)
+and [actual per-class evidence](BUILTIN_PLUGINS.md).

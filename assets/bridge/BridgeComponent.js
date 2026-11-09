@@ -5,6 +5,7 @@ include_file("resource://com.presonus.musicdevices/sdk/controlsurfacecomponent.j
 include_file("BridgeConfig.js");
 include_file("BridgeCore.js");
 include_file("NativeControls.js");
+include_file("NativePluginControls.js");
 
 const AUTOMATION_MODES = ["off", "read", "touch", "latch", "write"];
 const PANNER_FIELDS = ["pannerType", "stereoMode", "panX1", "panX2", "panWidth"];
@@ -217,6 +218,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
             const plug = this.pluginOf(args);
             if (plug.error) return plug;
+            const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
+            if (identityError) return { error: identityError };
             const p = plug.component && typeof plug.component.findParameter === "function" ? plug.component.findParameter("bypass") : null;
             if (!p || typeof p.setValue !== "function" || typeof p.value !== "number") return { error: "slot bypass is not available" };
             const before = !!p.value;
@@ -432,14 +435,75 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const names = Array.isArray(args.names) ? args.names : [];
+        if (!names.length) {
+            const native = this.nativePluginRequest(plug.device, { operation: "parameters", source: args.source || "auto", offset: args.offset === undefined ? 0 : args.offset, limit: args.limit === undefined ? 64 : args.limit, expected_instance: args.expected_instance });
+            if (native) {
+                if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, params: [], missing: [], complete: false, native_error: native.error, parameter_discovery: { source: "native", completeness: "unavailable" } };
+                const params = [], missing = [];
+                if (!Array.isArray(native.parameters) || native.parameters.length > 128) return { error: "invalid native parameter page" };
+                for (const record of native.parameters) {
+                    if (!record || typeof record.name !== "string" || record.name.length > 512) return { error: "invalid native parameter name" };
+                    if (native.source === "controller") params.push(record);
+                    else if (native.source === "dsp") {
+                        const p = record.name && typeof plug.device.findParameter === "function" ? plug.device.findParameter(record.name) : null;
+                        if (p) params.push(Object.assign(this.paramInfo(p), { name: record.name, native: record }));
+                        else {
+                            params.push({ name: record.name, value: null, text: null, min: null, max: null, normalized: null, readable: false, native: record });
+                            missing.push(record.name || "[native index " + record.index + "]");
+                        }
+                    } else return { error: "unsupported native parameter source" };
+                }
+                const pageComplete = native.page_complete === true && (!native.failed_indices || native.failed_indices.length === 0);
+                return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing, page_complete: pageComplete, complete: pageComplete && native.offset === 0 && native.next_offset === null && native.reported_count === params.length,
+                    value_read_complete: missing.length === 0, failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
+                    parameter_discovery: { source: native.source, completeness: "current_provider", all_indices_read: native.all_indices_read === true, note: "This page covers the current provider and selection, not every nested device, model or editor action." } };
+            }
+            if (args.offset || args.limit !== undefined || args.source && args.source !== "auto") return { error: "native parameter enumeration requires the matching native extension" };
+        }
         const params = [];
         const missing = [];
+        const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
+        if (identityError) return { error: identityError };
         for (const n of names) {
-            const p = this.pluginParameter(plug, String(n));
+            const p = args.source === "controller" ? null : args.source === "dsp" ? plug.device.findParameter(String(n)) : this.pluginParameter(plug, String(n));
             if (p) params.push(this.paramInfo(p));
-            else missing.push(String(n));
+            else {
+                const native = args.source === "dsp" ? null : this.nativePluginRequest(plug.device, { operation: "parameter", source: "controller", param: String(n), expected_instance: args.expected_instance });
+                if (native && native.ok && native.parameter) params.push(native.parameter);
+                else missing.push(String(n));
+            }
         }
         return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing };
+    }
+
+    nativePluginRequest(device, request) {
+        return typeof NativePluginControls === "function" ? new NativePluginControls(this).request(device, request) : null;
+    }
+
+    pluginChoices(args) {
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "choices", source: args.source || "controller", param: args.param,
+            offset: args.offset === undefined ? 0 : args.offset, limit: args.limit === undefined ? 64 : args.limit, expected_instance: args.expected_instance });
+        if (!native) return { error: "native list choices require the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native list choices unavailable" };
+        if (!Array.isArray(native.choices) || native.choices.length > 128) return { error: "invalid native choices page" };
+        return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name, param: args.param });
+    }
+
+    nativeInstanceError(device, expected) {
+        if (expected === undefined) return null;
+        const native = this.nativePluginRequest(device, { operation: "inspect", expected_instance: expected });
+        return native && native.ok && native.instance && native.instance.object_uid === expected ? null : "the expected native plugin instance is unavailable or changed";
+    }
+
+    focusedTrackState() {
+        const model = this.hostComponent && this.hostComponent.model;
+        const music = model && model.root && typeof model.root.find === "function" ? model.root.find("music") : null;
+        const bank = music && typeof music.find === "function" ? music.find("noteChannel") : null;
+        const channel = bank && typeof bank.getElement === "function" ? bank.getElement(0) : null;
+        if (!channel || typeof channel.isConnected !== "function" || !channel.isConnected()) return null;
+        return { label: this.readParam(channel, PreSonus.ParamID.kLabel), mute: this.readParam(channel, "mute"), recordArmed: this.readParam(channel, PreSonus.ParamID.kRecord), monitor: this.readParam(channel, "monitor") };
     }
 
     pluginInspect(args) {
@@ -471,7 +535,12 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             const p = plug.component && typeof plug.component.findParameter === "function" ? plug.component.findParameter(name) : null;
             element.slotControls[name] = { mapped: this.readParam(plug.element, name), component: p ? this.paramInfo(p) : null };
         }
-        return { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
+        const result = { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
+        if (plug.track) result.focusedTrackState = this.focusedTrackState();
+        const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance });
+        if (args.expected_instance !== undefined && (!native || !native.ok || !native.instance || native.instance.object_uid !== args.expected_instance)) return { error: "the expected native plugin instance changed" };
+        if (native) result.native = native;
+        return result;
     }
 
     pluginEditorOpen(args) {
@@ -490,8 +559,17 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
+        const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
+        if (identityError) return { error: identityError };
         const p = this.pluginParameter(plug, String(args.param));
-        if (!p) return { error: "no parameter " + args.param + " on " + plug.name + " (live_plugin_params lists them)" };
+        if (!p) {
+            const mode = args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";
+            const value = mode === "text" ? args.text : mode === "normalized" ? args.normalized : args.value;
+            const native = this.nativePluginRequest(plug.device, { operation: "set_parameter", source: "controller", param: String(args.param), mode: mode, value: value, expected_instance: args.expected_instance });
+            if (!native) return { error: "no parameter " + args.param + " on " + plug.name };
+            if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), native_outcome: native.outcome, errors: [native.error], before: native.before || null, after: native.after || null };
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), before: native.before, after: native.after, instance: native.instance, source: native.source, native_verified: native.verified === true };
+        }
         const before = this.paramInfo(p);
         if (args.text !== undefined) {
             if (typeof p.fromString !== "function") return { error: "parameter " + args.param + " does not take text" };

@@ -1,0 +1,1184 @@
+{
+  "schema": 1,
+  "generated_at": "2026-11-09T04:35:44.746218+00:00",
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "26.7.1",
+    "architecture": "arm64",
+    "scope": "one installed app; named synthetic scratch song"
+  },
+  "artifacts": {
+    "server_sha256": "24353e08beb7223e148a459a41e69d8c7cbdc445a1cc7fd1e731027ef5dc7213",
+    "server_code_sha256": "48dcf79bf8e396af934b1d9509d3290e5a966a18e2ff59313430fd0346a7ae27",
+    "native_sha256": "67be3695fb00780b684498e52e920cca8ad924a1ec7de6fe948deb8d881c1bfd",
+    "native_uuid": "627EF1D7-94E2-3D32-8228-EED2D2D4ED7E",
+    "native_manifest_sha256": "058d22ee74cb06bfa41d88646ea36b6040ec3aad8a4f7429f1ce8ffc90d02d82",
+    "native_source_file_count": 60,
+    "native_source_hashes": {
+      "README.md": "e748329586c6104b6001b2fd0c18a1cb7019adc0e0ab64bd194a128ea01d8aeb",
+      "addon/.gitignore": "855257ffbad843e6af484fb033142929e1d11ec4a46b2c1c9d487450189cb7fb",
+      "addon/Cargo.lock": "70eab8a61208c35ad25097073d47cda90daa00e4e3284ea517ef7655e5ad11a9",
+      "addon/Cargo.toml": "f8915f2d595dc173d548f1fb72289627b1c0f86e927d961353c13efee66de439",
+      "addon/LICENSE": "e0df271d3c87568b3fb805b058d94dbb787ccb13f2b8ff92594a63a722b065c0",
+      "addon/README.md": "2ce917ab299b8889c2b262e7b581282a54e00b296687ad80215906c8fc222134",
+      "addon/checks/abi_calls.cpp": "5bb43f0d331083edd7e7dcd1ae42bcf2c1cf42f4236e073db61b8819e03c4db6",
+      "addon/checks/check_abi.py": "c78515df973580706e8f8dde7fece01340a4faab57377ea030d879a692819023",
+      "addon/checks/check_sdk.sh": "f039f3a8c1c4b0613b001f177a5feaec3907d1cbdd52afbc88a1c885b1a3c71b",
+      "addon/checks/layout_check.cpp": "7d5fba36e26ebd3d28d01ee43205fd0538888f435a8ab56ea307d3e5d5c26f75",
+      "addon/checks/sdk-5.1.2.sha256.json": "262dafeef7f4fa2c7b1e9db34c8cc2304a6013b7a5ea5b56c9a74cc41932ba85",
+      "addon/checks/verify_sdk.py": "59bbbfd1313ca6124c1fbece6714259f7d0f2c6fe116f48730b3b3329c4db282",
+      "addon/package/installdata.xml": "83ee862f1fb91b32f86deaf873cd41afaf4a1c0be44f497b75b262bbdba40fe0",
+      "addon/package/metainfo.xml": "d7f694029f6b9a4c29ac35fca8a3a6d39210a5777ddf706c13d6d4dae24d908c",
+      "addon/package/plugins/mac/fender_mcp_native.bundle/Contents/Info.plist": "f3cb243fe51863ce1ece21b77d782bcbb94027cf9ad39aa69be2c742fe70eabe",
+      "addon/src/lib.rs": "5d1f615f7c5d8551b0600c2786ccb89ab9518212339862b3fb313e03342dcbd6",
+      "addon/src/native_script.rs": "7500cc35df8cebcb25e96691229ff5a6b35db153346424ef04915ae652298c0a",
+      "addon/src/native_script_tests.rs": "ffb6febf5ca53d22e0e37d47ce8f0791590b564a5a16509d99ce779f9fc42092",
+      "addon/src/request.rs": "1f7c449ce0fc433dc6c14b4283de334ec1469674eb230df2e54c014499e288cc",
+      "build.sh": "e015a1215ea7ac1c6adb7ef4ea7b8bee142dc86e8b3e598323dd3017a192742b",
+      "dsp-api/.gitignore": "07d64eb09a56c853b7853a47276799b38d7d6d25a4314b0c1abc10432c214e17",
+      "dsp-api/Cargo.lock": "7ca3132204dd5873a193e00fb38b2e8c5da8b18833d198ab306e48c5fa71ceda",
+      "dsp-api/Cargo.toml": "689cd342794fea7d98e1065cb5331aeb6b79fabe0915ccd56a273635a5c201c9",
+      "dsp-api/LICENSE": "e0df271d3c87568b3fb805b058d94dbb787ccb13f2b8ff92594a63a722b065c0",
+      "dsp-api/README.md": "90eb53afb536d7ed94410ab0ac2650a61f1e087de9750564af49cf479a8c9204",
+      "dsp-api/src/ffi.rs": "5d7dae80a842ec969f3665019f73ec1b1a7e7093b693495c5aaa14c7846029f8",
+      "dsp-api/src/lib.rs": "6ca818b9cb663678b872127e03f16e52d8708967224afeb3acd0ceca7ae42a1f",
+      "dsp-api/src/record.rs": "ce377845847b2455728debd4f993efc61f9dfe98914069c179cb1f1f27dc5184",
+      "dsp-api/src/tests.rs": "8dda7b5c8ed008801921fc851d0b1224685ff897df30dda68bd6b17da33fa3af",
+      "editor-api/.gitignore": "07d64eb09a56c853b7853a47276799b38d7d6d25a4314b0c1abc10432c214e17",
+      "editor-api/Cargo.lock": "92a2b14cb51ef0a87b7db2c1b938c1f2a1e1c0c850db37c570994638fc8292c6",
+      "editor-api/Cargo.toml": "e8c61c38f7ba981046e19f3607f9e7a7ec1421732251ce0c6c5c919fe7c07922",
+      "editor-api/LICENSE": "e0df271d3c87568b3fb805b058d94dbb787ccb13f2b8ff92594a63a722b065c0",
+      "editor-api/README.md": "5a493a2298339fb19a081ac0ce04ab4c5762a1ee4ac7e7605438db243d55fcd0",
+      "editor-api/checks/abi_calls.cpp": "99fa123dc5f9ba9259f0d181184e4df9615fc6581783b91fc1f68cc855a5d480",
+      "editor-api/checks/check_abi.py": "1ae0c4c3edab47dc84d0130f5c90173db5fac9a89597ed990c294434691400f2",
+      "editor-api/checks/check_sdk.sh": "0b7094fdf0fd427f82a3c7e9d65121a8e21f4d810c0dcd732271c3b3e9d12abf",
+      "editor-api/checks/sdk-5.1.2.sha256.json": "ce6234c51ec30597c5b03f4903b9136b50dbbc8aa6d8cd4db6adf7c8a211ce3f",
+      "editor-api/checks/verify_sdk.py": "b2f27b171ef99d2dcd5abac60255c661b42690fcdae7863873627da8f85f4821",
+      "editor-api/src/ffi.rs": "fc3a1fca844f60928e9061385e5d22ba4046423ff525c719b43b8e14baf73423",
+      "editor-api/src/lib.rs": "2c54ae82884d00115d937a9ba69190cddeecacbaf455f13826d060e4f725a761",
+      "editor-api/src/tests.rs": "d8a5e4fb2a3d36fbfec3968ae8c2f52edf259e9096e06da02e0d3bb67a7edb7c",
+      "parameter-api/.gitignore": "07d64eb09a56c853b7853a47276799b38d7d6d25a4314b0c1abc10432c214e17",
+      "parameter-api/ABI.md": "2e0bae461b90639f6b48f2ba51a186aeb8f6cb207920132544084aa2687c223d",
+      "parameter-api/Cargo.lock": "77d452a60f84662afd725b50d38056cbb650a34f5bfc0e65230545fa87559cfe",
+      "parameter-api/Cargo.toml": "099a65727edcd903cfeb13a535f14aa13493b3e71f56fc904f3235c88a986311",
+      "parameter-api/LICENSE": "e0df271d3c87568b3fb805b058d94dbb787ccb13f2b8ff92594a63a722b065c0",
+      "parameter-api/README.md": "4126bf50c61fd93b81be6d63d5351f0317ebf61b9f5e766ee8537c44147a9557",
+      "parameter-api/checks/abi_calls.cpp": "5fff30041e13a298669a7db72affbe297f54eedf47012c9e47fbebe96a978bce",
+      "parameter-api/checks/check_abi.py": "f82e3c47e1c3ece8c9e0a4602c7f854e99c73cdeea73fbf213676e162e1a4676",
+      "parameter-api/checks/check_sdk.sh": "0b7094fdf0fd427f82a3c7e9d65121a8e21f4d810c0dcd732271c3b3e9d12abf",
+      "parameter-api/checks/regression.py": "2effe694a0413d7da4d3dd6266dd5502df0f2f4f143bd44cd717c306a46c7d25",
+      "parameter-api/checks/sdk-5.1.2.sha256.json": "ce6234c51ec30597c5b03f4903b9136b50dbbc8aa6d8cd4db6adf7c8a211ce3f",
+      "parameter-api/checks/verify_sdk.py": "b2f27b171ef99d2dcd5abac60255c661b42690fcdae7863873627da8f85f4821",
+      "parameter-api/src/ffi.rs": "31c9ba4f2aecb3a4c4fc727f8f63e0d9fd51ac935644d91431a7c082e3bb0c15",
+      "parameter-api/src/lib.rs": "4e8987c157b8dc91836877ff739cf3e8ed9ad0a7ad4a350705bce99ec1b5dfb8",
+      "parameter-api/src/parameter.rs": "7e8e50dc1263c0072e1bc912659432bf10c79a1cd85d3dacf8386e5807aeef2c",
+      "parameter-api/src/tests.rs": "3d3a25465e90698933d038c8ede4faf9eb1beb423a1e26cf16439686762a10ff",
+      "parameter-api/src/text.rs": "64d4ced8e71da3d3a6dcb8c18b1ca97f8a97ed84ddb874f12b74a46715adde59",
+      "parameter-api/src/value.rs": "6b473d95dda3578bd61efe7eddf851da427b840fdbf17e70c9d78bdd2802bfe0"
+    },
+    "sdk_commit": "ad5876b1a7b64aa247f4378c86a7862e7c284ba3",
+    "source_parent_at_run": "843a6edd34cdbd56e8c2c3ec00ba5897a090eaef",
+    "feature_sources_uncommitted_during_run": true,
+    "native_live_manifest_sha256": "8e3345d27633688df8cb7c1fa89289ad4376493c45b9655d6058c85d2274767b",
+    "manifest_note": "Post-validation packaging removed trailing blank lines from four MIT license files; all native executable and dSYM bytes/UUID remained identical to the live-tested artifact."
+  },
+  "checks": {
+    "root_rust_tests": 53,
+    "javascript_tests": 131,
+    "native_mocks": {
+      "parameter_api": 24,
+      "dsp_api": 11,
+      "editor_api": 12,
+      "addon": 13
+    },
+    "native_compile_fail_doc_tests": 6,
+    "msrv": "1.88.0",
+    "server_release_compiler": "1.99.0",
+    "native_release_compiler": "1.88.0",
+    "fmt": "passed",
+    "clippy": "passed",
+    "release_build": "passed",
+    "sdk_compiler_calls": {
+      "addon": 54,
+      "parameter": 23,
+      "editor": 18
+    },
+    "remote_ci": "not_run_workflow_authorization_unavailable"
+  },
+  "acceptance": {
+    "classes": 60,
+    "current_native_providers": 59,
+    "native_records": 8668,
+    "fixed_splitter_controls": 16,
+    "parameter_or_graph_changed_classes": 59,
+    "bypass_only_classes": 1,
+    "representative_scalar_roundtrips": 56,
+    "slot_bypass_roundtrips": 1,
+    "external_gain_mix_roundtrips": 6,
+    "external_additional_roundtrips": 6,
+    "provider_run_receipts": 1169,
+    "spatial_cases": 36,
+    "spatial_receipts": 908,
+    "spatial_restoration_confirmed": true,
+    "all_reported_indices_accounted_for": true,
+    "unresolved_dsp_parameter_names": 0,
+    "scope": "current provider/selection; indexed record counts include read-only meters, headers, UI state and opaque fields, not only writable scalar controls"
+  },
+  "classes": [
+    {
+      "name": "Splitter",
+      "kind": "graph",
+      "enumeration": "fixed_graph_controls",
+      "native_records": 16,
+      "parameter_source": "fixed_top_level_graph",
+      "changed_graph_cases": 21
+    },
+    {
+      "name": "External Effect Mono",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 24,
+      "parameter_source": "controller",
+      "indices_read": 24,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "gain_mix_roundtrips": [
+        {
+          "parameter": "inputGain",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        },
+        {
+          "parameter": "outputGain",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        },
+        {
+          "parameter": "wetdry",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        }
+      ],
+      "additional_controls": {
+        "choices": [
+          {
+            "parameter": "sendPort",
+            "reported_count": 0,
+            "labels_read": 0,
+            "scope": "first_native_list_page"
+          },
+          {
+            "parameter": "receivePort",
+            "reported_count": 0,
+            "labels_read": 0,
+            "scope": "first_native_list_page"
+          }
+        ],
+        "roundtrips": [
+          {
+            "parameter": "latencyOffset",
+            "changed_readback_restored": true
+          },
+          {
+            "parameter": "phase",
+            "changed_readback_restored": true
+          },
+          {
+            "parameter": "deviceNotes",
+            "changed_readback_restored": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "External Effect Stereo",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 24,
+      "parameter_source": "controller",
+      "indices_read": 24,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "gain_mix_roundtrips": [
+        {
+          "parameter": "inputGain",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        },
+        {
+          "parameter": "outputGain",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        },
+        {
+          "parameter": "wetdry",
+          "changed_verified": true,
+          "restored_raw_f64_exact": true
+        }
+      ],
+      "additional_controls": {
+        "choices": [
+          {
+            "parameter": "sendPort",
+            "reported_count": 0,
+            "labels_read": 0,
+            "scope": "first_native_list_page"
+          },
+          {
+            "parameter": "receivePort",
+            "reported_count": 0,
+            "labels_read": 0,
+            "scope": "first_native_list_page"
+          }
+        ],
+        "roundtrips": [
+          {
+            "parameter": "latencyOffset",
+            "changed_readback_restored": true
+          },
+          {
+            "parameter": "phase",
+            "changed_readback_restored": true
+          },
+          {
+            "parameter": "deviceNotes",
+            "changed_readback_restored": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "Channel Strip",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 19,
+      "parameter_source": "dsp",
+      "indices_read": 19,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "autogain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Mixtool",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 72,
+      "parameter_source": "dsp",
+      "indices_read": 72,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "gain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Binaural Pan",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 5,
+      "parameter_source": "dsp",
+      "indices_read": 5,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "stereowidth",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Dual Pan",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 8,
+      "parameter_source": "dsp",
+      "indices_read": 8,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "linkedwidth",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Limiter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 13,
+      "parameter_source": "dsp",
+      "indices_read": 13,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "ingain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Expander",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 14,
+      "parameter_source": "dsp",
+      "indices_read": 14,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Gate",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 19,
+      "parameter_source": "dsp",
+      "indices_read": 19,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Tricomp",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 17,
+      "parameter_source": "dsp",
+      "indices_read": 17,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "ingain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Multiband Dynamics",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 71,
+      "parameter_source": "dsp",
+      "indices_read": 71,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "attackband1",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "RedlightDist",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 10,
+      "parameter_source": "dsp",
+      "indices_read": 10,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "drive",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Bitcrusher",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 12,
+      "parameter_source": "dsp",
+      "indices_read": 12,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "autoGain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Phaser",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 16,
+      "parameter_source": "dsp",
+      "indices_read": 16,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "lfoWidth",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Flanger",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 12,
+      "parameter_source": "dsp",
+      "indices_read": 12,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "lfowidth",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Chorus",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 14,
+      "parameter_source": "dsp",
+      "indices_read": 14,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "hifreq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "X-Trem",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 27,
+      "parameter_source": "dsp",
+      "indices_read": 27,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "depth",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Autofilter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 44,
+      "parameter_source": "dsp",
+      "indices_read": 44,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "cutoff",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Beat Delay",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 14,
+      "parameter_source": "dsp",
+      "indices_read": 14,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "mix",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Groove Delay",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 55,
+      "parameter_source": "dsp",
+      "indices_read": 55,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "cutoff1",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Surround Delay",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 79,
+      "parameter_source": "dsp",
+      "indices_read": 79,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "drive",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Analog Delay",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 24,
+      "parameter_source": "dsp",
+      "indices_read": 24,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "lfotime",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Room Reverb",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 19,
+      "parameter_source": "dsp",
+      "indices_read": 19,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "mix",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Mixverb",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 9,
+      "parameter_source": "dsp",
+      "indices_read": 9,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "mix",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Open AIR",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 94,
+      "parameter_source": "dsp",
+      "indices_read": 94,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "gain",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "IR Maker",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 5,
+      "parameter_source": "dsp",
+      "indices_read": 5,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "irlen",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Spectrum Meter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 9,
+      "parameter_source": "dsp",
+      "indices_read": 9,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "maxfreq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Phase Meter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 2,
+      "parameter_source": "dsp",
+      "indices_read": 2,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "bypass_changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Level Meter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 7,
+      "parameter_source": "dsp",
+      "indices_read": 7,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "togglesize",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Scope",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 31,
+      "parameter_source": "dsp",
+      "indices_read": 31,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "crossLevel",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Tone Generator",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 10,
+      "parameter_source": "dsp",
+      "indices_read": 10,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "freq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Ampire",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 94,
+      "parameter_source": "dsp",
+      "indices_read": 94,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "cab.micmixA",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Pedalboard",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 28,
+      "parameter_source": "dsp",
+      "indices_read": 28,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "input.level",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Mustang Native",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 39,
+      "parameter_source": "dsp",
+      "indices_read": 39,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "input.level",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Rumble Native",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 39,
+      "parameter_source": "dsp",
+      "indices_read": 39,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "input.level",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Studio Verb",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 151,
+      "parameter_source": "dsp",
+      "indices_read": 151,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "algoreverb.centerlevel",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Fat Channel",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 56,
+      "parameter_source": "dsp",
+      "indices_read": 56,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "comp.attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Pro EQ",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 199,
+      "parameter_source": "dsp",
+      "indices_read": 199,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "highcut.hcfreq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Compressor",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 154,
+      "parameter_source": "dsp",
+      "indices_read": 154,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "studiocomp.attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Tuner",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 13,
+      "parameter_source": "dsp",
+      "indices_read": 13,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "calibration",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Voice FX",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 5,
+      "parameter_source": "dsp",
+      "indices_read": 5,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "voicefxopt.fxmodel",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Rotor",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 29,
+      "parameter_source": "dsp",
+      "indices_read": 29,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "drive",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "De-Esser",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 10,
+      "parameter_source": "dsp",
+      "indices_read": 10,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "freq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Vocoder",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 117,
+      "parameter_source": "dsp",
+      "indices_read": 117,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "carrierfreq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "VU Meter",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 11,
+      "parameter_source": "dsp",
+      "indices_read": 11,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "scale",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Vocal Tune",
+      "kind": "effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 26,
+      "parameter_source": "dsp",
+      "indices_read": 26,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "a",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Multi Instrument",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 150,
+      "parameter_source": "dsp",
+      "indices_read": 150,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "bool-1",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Mai Tai",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 283,
+      "parameter_source": "dsp",
+      "indices_read": 283,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "adsr2.attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "SampleOne",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 235,
+      "parameter_source": "dsp",
+      "indices_read": 235,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "adsrMain.attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Impact",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 4262,
+      "parameter_source": "dsp",
+      "indices_read": 4262,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "midi-cc.bendRange",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Presence",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 241,
+      "parameter_source": "dsp",
+      "indices_read": 241,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "adsr2.attack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "CV Instrument",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 110,
+      "parameter_source": "dsp",
+      "indices_read": 110,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "cvGate.time",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Mojito",
+      "kind": "instrument",
+      "enumeration": "current_provider_complete",
+      "native_records": 37,
+      "parameter_source": "dsp",
+      "indices_read": 37,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "ampEnvAttack",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Input Filter",
+      "kind": "note_effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 388,
+      "parameter_source": "dsp",
+      "indices_read": 388,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "hiKey",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Arpeggiator",
+      "kind": "note_effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 108,
+      "parameter_source": "dsp",
+      "indices_read": 108,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "gateTime",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Chorder",
+      "kind": "note_effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 908,
+      "parameter_source": "dsp",
+      "indices_read": 908,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "chorder.autofill",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Repeater",
+      "kind": "note_effect",
+      "enumeration": "current_provider_complete",
+      "native_records": 141,
+      "parameter_source": "dsp",
+      "indices_read": 141,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "timeFreq",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Console Shaper",
+      "kind": "mix_fx",
+      "enumeration": "current_provider_complete",
+      "native_records": 8,
+      "parameter_source": "dsp",
+      "indices_read": 8,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "drive",
+        "changed_readback_restored": true
+      }
+    },
+    {
+      "name": "Surround Panner",
+      "kind": "panner",
+      "enumeration": "current_provider_complete",
+      "native_records": 47,
+      "parameter_source": "dsp",
+      "indices_read": 47,
+      "unique_names": true,
+      "unresolved_value_indices": 0,
+      "representative_control": {
+        "parameter": "azimuth",
+        "changed_readback_restored": true
+      },
+      "changed_spatial_cases": 15
+    }
+  ],
+  "mcp_tools": [
+    "host_status",
+    "session_get",
+    "tracks_list",
+    "channels_list",
+    "panner_get",
+    "panner_set",
+    "splitters_list",
+    "splitter_set",
+    "track_formats",
+    "channel_set",
+    "transport_set",
+    "transport_action",
+    "notes_read",
+    "notes_edit",
+    "tracks_edit",
+    "plugins_list",
+    "plugin_catalog",
+    "plugin_parameters",
+    "plugin_inspect",
+    "plugin_parameter_choices",
+    "plugin_editor_open",
+    "plugin_parameter_set",
+    "plugin_bypass",
+    "send_set",
+    "automation_mode_set",
+    "commands_search",
+    "command_run",
+    "operations_list",
+    "operation_run",
+    "song_read",
+    "audio_analyze"
+  ],
+  "session_regression": {
+    "second_owner": "passed",
+    "stale_document": "passed",
+    "notes": {
+      "requested": true,
+      "performed": true,
+      "status": "passed",
+      "change_readback_verified": true,
+      "restore_readback_verified": true,
+      "parts": 3,
+      "notes": 4,
+      "change_receipt_outcome": "applied_unverified",
+      "original_still_present": false,
+      "restore_dispatched": true,
+      "restore_receipt_outcome": "applied_unverified"
+    },
+    "performance": {
+      "ping": {
+        "requested_samples": 100,
+        "completed_samples": 100,
+        "successful_samples": 100,
+        "failed_samples": 0,
+        "not_run_samples": 0,
+        "timeouts": 0,
+        "wall_all": {
+          "samples": 100,
+          "p50_ms": 69.361021,
+          "p95_ms": 77.759125,
+          "min_ms": 55.415709,
+          "max_ms": 81.487584
+        },
+        "wall_successful": {
+          "samples": 100,
+          "p50_ms": 69.361021,
+          "p95_ms": 77.759125,
+          "min_ms": 55.415709,
+          "max_ms": 81.487584
+        },
+        "receipt_successful": {
+          "samples": 100,
+          "p50_ms": 66.0,
+          "p95_ms": 74,
+          "min_ms": 53,
+          "max_ms": 79
+        }
+      },
+      "tracks": {
+        "requested_samples": 20,
+        "completed_samples": 20,
+        "successful_samples": 20,
+        "failed_samples": 0,
+        "not_run_samples": 0,
+        "timeouts": 0,
+        "wall_all": {
+          "samples": 20,
+          "p50_ms": 73.4006665,
+          "p95_ms": 86.891583,
+          "min_ms": 63.090334,
+          "max_ms": 87.939208
+        },
+        "wall_successful": {
+          "samples": 20,
+          "p50_ms": 73.4006665,
+          "p95_ms": 86.891583,
+          "min_ms": 63.090334,
+          "max_ms": 87.939208
+        },
+        "receipt_successful": {
+          "samples": 20,
+          "p50_ms": 71.0,
+          "p95_ms": 82,
+          "min_ms": 60,
+          "max_ms": 85
+        },
+        "actual_track_counts": [
+          65
+        ]
+      }
+    }
+  },
+  "normal_shutdown": {
+    "clean": true,
+    "services": 0,
+    "factory_refs": 0,
+    "metadata_owned_refs": 0,
+    "module_owned": false,
+    "image_pin_kept_until_process_exit": true,
+    "own_bundle_pin_kept_until_process_exit": true,
+    "receipt_leases": 0
+  },
+  "limits": [
+    "No positive physical routing, ping/automatic latency or audible loopback validation; the exposed send/receive lists each had zero entries. Global I/O configuration was not changed or exhaustively inspected.",
+    "Integer-indexed native list choices only; floating-scale DSP list facades are explicitly rejected by that query.",
+    "Opaque image/object contents, arbitrary GUI actions, preset/file operations, unloaded programs and every model/pad/nested state are not certified.",
+    "Splitter graph construction/connection/deletion/nesting and other Surround speaker formats remain unverified.",
+    "Native ABI is pinned to the tested arm64 app and CCL 5.1.2 images; other host versions/architectures remain unsupported or untested.",
+    "EditTask same-path reopen prevention at its path/title boundary, no-document status and every MIDI launch order remain unresolved.",
+    "Own code/bundle pins intentionally last until process exit; no hot unloading.",
+    "Native raw numeric transport is bounded to JavaScript safe integer magnitude; exact f64 restoration evidence uses finite nonzero originals."
+  ],
+  "privacy": "No raw receipts, parameter values, native instance/session IDs, local paths, audio, vendor resources or presets are published. Scratch edits were discarded on normal quit."
+}

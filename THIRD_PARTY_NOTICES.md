@@ -15,3 +15,14 @@ execution, and extend native plugin access. Fender application binaries, SDK
 source files, factory presets, and proprietary resource maps are not distributed
 by this repository.
 
+## Native interoperability
+
+The optional native crates are independently authored Rust interface bindings and
+interop code. Public API/ABI declarations were checked against official CCL
+5.1.2, commit `ad5876b1a7b64aa247f4378c86a7862e7c284ba3`. No CCL headers,
+implementation, vendor binary, resource, preset or SDK library is vendored.
+The compiled add-on resolves services from the already running host. Optional
+compiler checks consume a separately provided SDK checkout under its own terms.
+Exact-version private DSP interface facts are documented as interoperability
+facts, not public SDK guarantees.
+

@@ -144,13 +144,19 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_parameters",
                 "pluginParams",
-                "Read named parameters of an insert or selected instrument. Candidate-name lookup does not establish exhaustive enumeration.",
+                "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. Native enumeration requires the matching optional extension; metadata fallback is partial.",
                 false,
             ),
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
                 "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution.",
+                false,
+            ),
+            named::<PluginChoices>(
+                "plugin_parameter_choices",
+                "pluginChoices",
+                "Read a native list parameter's index/label choices without changing its selection. Requires the matching native extension and a controller parameter; open the External Effect editor first. Follow next_offset with expected_document and expected_instance. Empty hardware port lists remain explicit.",
                 false,
             ),
             named::<PluginEditor>(
@@ -219,8 +225,15 @@ fn named<T: JsonSchema>(
     mutation: bool,
 ) -> ToolSpec {
     let mut schema = serde_json::to_value(schemars::schema_for!(T)).expect("tool schema");
-    if mutation {
+    if mutation
+        || matches!(
+            operation,
+            "pluginParams" | "pluginInspect" | "pluginChoices"
+        )
+    {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
+    }
+    if mutation {
         let object = schema.as_object_mut().unwrap();
         object
             .entry("required")
@@ -391,6 +404,31 @@ mod tests {
                     .as_array()
                     .unwrap()
                     .contains(&json!(name))
+            );
+        }
+    }
+
+    #[test]
+    fn native_queries_offer_an_optional_document_guard_for_pagination() {
+        let specs = McpServer::specs();
+        for name in [
+            "plugin_parameters",
+            "plugin_inspect",
+            "plugin_parameter_choices",
+        ] {
+            let spec = specs.iter().find(|s| s.tool.name == name).unwrap();
+            assert!(
+                spec.tool.input_schema["properties"]
+                    .get("expected_document")
+                    .is_some()
+            );
+            assert!(
+                !spec
+                    .tool
+                    .input_schema
+                    .get("required")
+                    .and_then(Value::as_array)
+                    .is_some_and(|r| r.contains(&json!("expected_document")))
             );
         }
     }

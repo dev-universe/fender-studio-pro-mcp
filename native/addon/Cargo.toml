@@ -1,0 +1,26 @@
+[package]
+name = "fender-mcp-native-addon"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "Guarded native parameter add-on for Fender Studio Pro 8.1.1 arm64"
+repository = "https://github.com/dev-universe/fender-studio-pro-mcp"
+
+[lib]
+name = "fender_mcp_native"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+fender-native-dsp-api = { path = "../dsp-api" }
+fender-native-parameter-api = { path = "../parameter-api" }
+fender-native-editor-api = { path = "../editor-api" }
+
+[profile.release]
+panic = "abort"
+debug = 2
+split-debuginfo = "packed"
+strip = false
+lto = "thin"
