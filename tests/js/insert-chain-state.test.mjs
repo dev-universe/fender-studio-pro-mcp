@@ -185,6 +185,63 @@ test('native failure receipts preserve known phase outcome without metadata or p
   }
 });
 
+test('insert-chain failures use the Runtime native outcome contract through BridgeCore', () => {
+  for (const action of ['capture', 'restore', 'release']) for (const outcome of ['not_applied', 'unknown']) {
+    const h = harness({ rawResult: JSON.stringify({ ok: false, outcome,
+      error: { code: 'failed', message: '/private/preset' } }) });
+    const host = bridgeHarness();
+    host.bridge.component = h.component;
+    h.component.bridge = Object.assign(host.bridge, { mixerChannel() { return { find() { return h.folder; } }; } });
+    const response = host.writeRequest({ op: 'insertChainState', args: { channel: 'Scratch', action,
+      expected_folder: folderUid, ...(action === 'capture' ? {} : { token }) } });
+    assert.equal(response.ok, true);
+    const result = response.result;
+    assert.deepEqual(Object.keys(result).sort(), ['errors', 'native_outcome']);
+    assert.equal(result.error, undefined);
+    assert.equal(result.native_outcome, outcome);
+    assert.deepEqual(result.errors, [{ code: 'native_insert_chain_failed',
+      message: 'The guarded native insert-chain request did not complete' }]);
+    noClaims(result);
+    assert.equal(JSON.stringify(result).includes('/private/preset'), false);
+    assert.equal(h.calls.length, 1);
+  }
+});
+
+test('failure normalization cannot leak supplied or malformed native capsule claims', () => {
+  for (const extra of [{ token }, { folder: folderIdentity() }, { sha256: 'a'.repeat(64) },
+    { byte_count: 1 }, { part_count: 1 }, { load_accepted: true }, { released: true }]) {
+    const h = harness({ rawResult: JSON.stringify({ ok: false, outcome: 'not_applied',
+      error: { code: 'failed', message: '/private/preset' }, ...extra }) });
+    const result = h.component.insertChainState({ channel: 'Scratch', action: 'restore', token,
+      expected_folder: folderUid });
+    assert.deepEqual(Array.from(Object.keys(result).sort()), ['errors', 'native_outcome']);
+    assert.equal(result.native_outcome, 'unknown');
+    assert.equal(result.errors.length, 1);
+    assert.equal(result.error, undefined);
+    noClaims(result);
+    assert.equal(JSON.stringify(result).includes('/private/preset'), false);
+    assert.equal(h.calls.length, 1);
+  }
+  const h = harness({ dispatch(context) { context.document = 'chain:2'; } });
+  const result = h.component.insertChainState({ channel: 'Scratch', action: 'restore', token,
+    expected_folder: folderUid });
+  assert.deepEqual(Array.from(Object.keys(result).sort()), ['errors', 'native_outcome']);
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.error, undefined); noClaims(result);
+  assert.equal(h.calls.length, 1);
+});
+
+test('missing insert-chain extension returns a known refusal without a top-level soft error', () => {
+  const h = harness();
+  vm.runInContext('NativePluginControls = undefined', h.scope);
+  const result = h.component.insertChainState({ channel: 'Scratch', action: 'restore', token });
+  assert.deepEqual(Array.from(Object.keys(result).sort()), ['errors', 'native_outcome']);
+  assert.equal(result.native_outcome, 'not_applied');
+  assert.equal(result.error, undefined);
+  assert.equal(result.errors[0].code, 'native_required'); noClaims(result);
+  assert.equal(h.calls.length, 0);
+});
+
 test('BridgeCore requires session and document intents for every lifecycle action', () => {
   const host = bridgeHarness(); let calls = 0;
   host.bridge.component = { insertChainState() { calls++; return reply('capture'); } };

@@ -675,6 +675,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     insertChainState(args) {
         const result = typeof NativePluginControls === "function" ? new NativePluginControls(this).insertChainRequest(args)
             : { ok: false, outcome: "not_applied", error: { code: "native_required", message: "The matching native insert-chain extension is required" } };
+        if (!result.ok) return { native_outcome: result.outcome, errors: [result.error] };
         return Object.assign({}, result, { native_outcome: result.outcome });
     }
 
