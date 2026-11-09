@@ -263,7 +263,7 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 1,152 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 1,920 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. Every case required two fresh native
@@ -429,6 +429,12 @@ The runners include `scripts/verify_all_parameters.py`,
 `scripts/verify_nested_graph.py`.
 Finite model ranges use `scripts/verify_plugin_models.py`; disconnected External
 mode transitions use `scripts/verify_external_modes.py`.
+`scripts/verify_impact_focus.py` checks one fixed cutoff-alias binding.
+`scripts/verify_chorder_learning.py` defaults to read-only selector preflight;
+its explicit candidate mode tests one model binding before allowing the original
+capsule load. Both dedicated mutation pilots remain pending actual-host
+acceptance; their offline checks do not establish all-alias or all-learning
+coverage.
 Use their `--help` output for finite fixture,
 scope and mode arguments. Start the MCP owner before launching the DAW, open the
 named disposable scratch song, and retain the ignored append-only ledgers and
