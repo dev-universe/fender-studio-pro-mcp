@@ -424,9 +424,9 @@ class LearningRunner(ModelRunner):
         prepared = self.set_role(baseline, MODE, 1)
         require(changed_names(baseline, prepared) <= {MODE, SELECTOR, *LEARN},
                 "Learning setup changed an unrelated value or model status")
-        require(raw_value(parameters(prepared)[SELECTOR]) in range(1, 129)
+        require(raw_value(parameters(prepared)[SELECTOR]) in range(129)
                 and parameters(prepared)[SELECTOR]["text"] == selector_map.rows[
-                    int(raw_value(parameters(prepared)[SELECTOR]))][1], "Mode auto-selection is not formatter-bound")
+                    int(raw_value(parameters(prepared)[SELECTOR]))][1], "Prepared selector is not formatter-bound")
         if raw_value(parameters(prepared)[SELECTOR]) != intent.value:
             selected = self.set_role(prepared, SELECTOR, intent.value)
             require(changed_names(prepared, selected) <= {SELECTOR, *LEARN},

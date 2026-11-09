@@ -28,7 +28,7 @@ def float_number(name, value=0, kind="Toggle", readonly=False, maximum=1):
 
 
 class ChorderClient(DigestSweepClient):
-    def __init__(self):
+    def __init__(self, mode_autoselect=True):
         records = []
         global_names = ["transpose", "loKey", "hiKey", "autofill", "filterOutsideRange", "learnMode",
                         "learnInputPitch", "playLearnChord", "clear", "clearAll", "copy", "paste"]
@@ -52,6 +52,7 @@ class ChorderClient(DigestSweepClient):
         self.serial_changes = True
         self.main_volume = 0
         self.auto_key = 65
+        self.mode_autoselect = mode_autoselect
         self.omit_assigned_refresh = False
         self.couple_bit = False
         self.format_fault = None
@@ -120,7 +121,7 @@ class ChorderClient(DigestSweepClient):
             value = decode_float_bits(args["float_bits"]) if "float_bits" in args else args["value"]
             before = self.description(self.find(role))
             self.update(role, value)
-            if role == MODE and value:
+            if role == MODE and value and self.mode_autoselect:
                 self.update(SELECTOR, self.auto_key)
             if role == MODE and not value:
                 for learn in LEARN:
@@ -586,6 +587,57 @@ class LearningDescriptionBoundaryTests(unittest.TestCase):
                 self.assertEqual(client.mutation_log, [MODE])
 
 
+class SentinelSelectionTests(unittest.TestCase):
+    setUp = LearningPilotTests.setUp
+    tearDown = LearningPilotTests.tearDown
+    preflight = LearningPilotTests.preflight
+
+    def test_valid_sentinel_requires_explicit_target_before_bit_for_both_pilots(self):
+        for candidate in (False, True):
+            with self.subTest(candidate=candidate):
+                self.journal.close()
+                self.journal = Journal(Path(self.temp.name) / f"sentinel-{candidate}")
+                client, runner, baseline, mapping, binding = self.preflight(ChorderClient(mode_autoselect=False))
+                result = (runner.candidate_pilot(baseline, mapping) if candidate else
+                          runner.pilot(baseline, mapping, binding))
+                self.assertEqual([(write["param"], decode_float_bits(write["float_bits"])) for write in client.writes],
+                                 [(MODE, 1), (SELECTOR, 1), (BIT, 1), (MODE, 0), (SELECTOR, 0)])
+                self.assertEqual(result["status"], "fixed_candidate_binding_and_learning_roundtrip_verified" if candidate
+                                 else "fixed_learning_bit_roundtrip_verified")
+                self.assertEqual(client.restore_count, 1)
+                self.assertFalse(client.model)
+                self.assertEqual(client.post_load_assigned_reads[:2], [(0.0, 3), (0.0, 3)])
+                self.assertEqual(client.tokens, {})
+
+    def test_invalid_prepared_selector_stops_before_any_later_write_or_load(self):
+        for index, fault in enumerate((lambda c: c.find(SELECTOR).update(text="wrong sentinel"),
+                                       lambda c: c.update(SELECTOR, 0.5),
+                                       lambda c: c.update(SELECTOR, -1),
+                                       lambda c: c.update(SELECTOR, 129),
+                                       lambda c: c.find(SELECTOR)["native_value"]["data"].update(bits_hex="malformed"))):
+            with self.subTest(index=index):
+                self.journal.close()
+                self.journal = Journal(Path(self.temp.name) / f"invalid-selector-{index}")
+                client = ChorderClient(mode_autoselect=False)
+                client.fault_after_dispatch = lambda c, role, result: fault(c) if role == MODE else None
+                client, runner, baseline, mapping, _ = self.preflight(client)
+                with self.assertRaises(AcceptanceFailure):
+                    runner.candidate_pilot(baseline, mapping)
+                self.assertEqual([write["param"] for write in client.writes], [MODE])
+                self.assertEqual(client.mutation_log[-1], MODE)
+                self.assertEqual(client.restore_count, 0)
+
+    def test_explicit_selector_requires_verified_readback_before_prepared_capture_or_bit(self):
+        client = ChorderClient(mode_autoselect=False)
+        client.fault_after_dispatch = lambda c, role, result: result["after"].update(text="wrong target") if role == SELECTOR else None
+        client, runner, baseline, mapping, _ = self.preflight(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.candidate_pilot(baseline, mapping)
+        self.assertEqual([write["param"] for write in client.writes], [MODE, SELECTOR])
+        self.assertEqual(client.mutation_log[-1], SELECTOR)
+        self.assertEqual(client.restore_count, 0)
+
+
 class CandidatePilotTests(unittest.TestCase):
     setUp = LearningPilotTests.setUp
     tearDown = LearningPilotTests.tearDown
@@ -615,7 +667,7 @@ class CandidatePilotTests(unittest.TestCase):
             with self.subTest(mode=mode):
                 self.journal.close()
                 self.journal = Journal(Path(self.temp.name) / mode)
-                client = ChorderClient()
+                client = ChorderClient(mode_autoselect=False)
                 if mode == "no_assigned":
                     client.omit_assigned_refresh = True
                 else:
@@ -662,7 +714,7 @@ class CandidatePilotTests(unittest.TestCase):
         self.assertEqual(client.mutation_log[-1], BIT)
 
     def test_candidate_serializer_must_restore_model_before_gui_cleanup(self):
-        client = ChorderClient()
+        client = ChorderClient(mode_autoselect=False)
         client.serialize_model = False
         client.serialize_gui = True
         client, runner, baseline, mapping, _ = self.preflight(client)

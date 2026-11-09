@@ -11,14 +11,16 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 from pathlib import Path
+import struct
 import sys
 
 from mcp_client import McpClient
 from parameter_digest import DigestProjectionError, project_snapshot
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, RestorationFailure, Runner,
-    UnknownMutation, candidate, encoded, parameter_schema, require, utc_now,
+    UnknownMutation, decode_float_bits, encoded, parameter_schema, require, utc_now,
     value_identity,
 )
 
@@ -32,6 +34,53 @@ MAIN_LABEL = "메인"
 
 def observation(parameter):
     return value_identity(parameter), parameter["native_normalized"], parameter["text"]
+
+
+def cutoff_candidate(parameter):
+    require(parameter.get("name") == ALIAS and parameter.get("native_kind") == "Float"
+            and parameter.get("support", {}).get("raw") is True
+            and parameter.get("support", {}).get("normalized") is True
+            and parameter.get("native_support", {}).get("raw_number") is True
+            and parameter.get("native_support", {}).get("normalized") is True,
+            "Use the observed raw and normalized Float cutoff profile")
+
+    def exact_float(field):
+        native = parameter.get("native_value" if field == "value" else "native_" + field)
+        require(isinstance(native, dict) and set(native) == {"variant_tag", "data"}
+                and type(native.get("variant_tag")) is int and native["variant_tag"] == 2
+                and isinstance(native.get("data"), dict)
+                and set(native["data"]) == {"kind", "value", "bits_hex"}
+                and native["data"]["kind"] == "float",
+                "Cutoff requires its exact native Float carrier for " + field)
+        value = decode_float_bits(native["data"]["bits_hex"])
+        require(all(type(shadow) in (int, float) and math.isfinite(shadow) and shadow == value
+                    for shadow in (native["data"]["value"], parameter.get(field))),
+                "Cutoff requires exact finite native and public " + field)
+        return value
+
+    original, lower, upper = (exact_float(field) for field in ("value", "min", "max"))
+    require(struct.pack(">d", lower).hex() == "0000000000000000" and upper == 10000.0
+            and lower <= original <= upper,
+            "Cutoff requires the observed finite native raw bounds 0..10000")
+    normalized = parameter.get("native_normalized")
+    require(isinstance(normalized, dict) and set(normalized) == {"kind", "bits_hex"}
+            and normalized.get("kind") == "float32"
+            and isinstance(normalized.get("bits_hex"), str) and len(normalized["bits_hex"]) == 8
+            and all(character in "0123456789abcdefABCDEF" for character in normalized["bits_hex"]),
+            "Cutoff requires exact native Float32 normalized bits")
+    normalized_value = struct.unpack(">f", bytes.fromhex(normalized["bits_hex"]))[0]
+    require(math.isfinite(normalized_value) and type(parameter.get("normalized")) in (int, float)
+            and parameter["normalized"] == normalized_value
+            and struct.pack(">f", (original - lower) / (upper - lower)).hex().upper()
+            == normalized["bits_hex"].upper(),
+            "Cutoff requires its exact linear Float32 normalized shadow")
+    original_bits = parameter["native_value"]["data"]["bits_hex"].upper()
+    for fraction in (0.5, 0.25, 0.75):
+        desired = lower + (upper - lower) * fraction
+        bits = struct.pack(">d", desired).hex().upper()
+        if bits != original_bits:
+            return {"float_bits": bits}, {"float_bits": original_bits}
+    raise AcceptanceFailure("No different fixed cutoff binary-fraction candidate exists")
 
 
 @dataclass(frozen=True)
@@ -279,7 +328,7 @@ class ImpactFocusRunner(Runner):
         identity = value_identity(original)
         require(original["native_kind"] == "Float" and identity[1] == "float" and identity[0] & 15 == 2,
                 "The cutoff alias requires its exact native Float carrier")
-        change_arguments, restore_arguments = candidate(original)
+        change_arguments, restore_arguments = cutoff_candidate(original)
         reference = self.journal.baseline("impact-focus-original", baseline.serialized())
         transaction = "impact-focus-cutoff"
         row = {"plugin": "Impact", "parameter": ALIAS, "baseline": reference, "status": "prepared",

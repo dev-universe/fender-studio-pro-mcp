@@ -4,6 +4,7 @@ from contextlib import redirect_stderr, redirect_stdout
 import io
 import json
 from pathlib import Path
+import struct
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -12,7 +13,7 @@ from test_verify_all_parameter_states import DigestSweepClient
 from test_verify_all_parameters import number
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, PRIVATE_ROOT, RestorationFailure,
-    UnknownMutation, decode_float_bits,
+    UnknownMutation, candidate, decode_float_bits,
 )
 from verify_impact_focus import ALIAS, IMPACT_CLASS, PEERS, ImpactFocusRunner, main
 
@@ -20,9 +21,18 @@ from verify_impact_focus import ALIAS, IMPACT_CLASS, PEERS, ImpactFocusRunner, m
 TARGET = {"kind": "instrument", "plugin": "Impact", "track": "FSP Verify Inst Impact"}
 
 
+def cutoff_number(name, value):
+    parameter = number(name, float(value), lower=0.0, upper=10000.0)
+    normalized = struct.unpack(">f", struct.pack(">f", value / 10000.0))[0]
+    parameter.update(default=10000.0, normalized=normalized, text=f"cutoff:{normalized:.8g}",
+                     display_parser="NativeFormatter { flags: 1 }",
+                     support={"raw": True, "normalized": True, "text": True})
+    return parameter
+
+
 class FocusClient(DigestSweepClient):
     def __init__(self):
-        parameters = [number(name, 0.75) for name in (*PEERS, ALIAS)]
+        parameters = [cutoff_number(name, 10000.0) for name in (*PEERS, ALIAS)]
         parameters.append(number("unrelated", 0.25))
         super().__init__(parameters)
         self.live_class = IMPACT_CLASS
@@ -42,7 +52,7 @@ class FocusClient(DigestSweepClient):
 
     def update(self, name, desired):
         parameter = self.find(name)
-        parameter.update(number(name, desired))
+        parameter.update(cutoff_number(name, desired) if name == ALIAS or name in PEERS else number(name, desired))
 
     def call(self, name, args):
         if name == "operation_run":
@@ -85,13 +95,14 @@ class FocusClient(DigestSweepClient):
             restoring = len(self.writes) == 2
             fault = self.restoration_fault if restoring else self.fault
             if fault == "before_drift":
-                self.update(ALIAS, 0.87)
-                self.update(self.peer, 0.87)
+                self.update(ALIAS, 8700.0)
+                self.update(self.peer, 8700.0)
             before = self.description(self.find(ALIAS))
             if fault not in ("ignore", "refuse"):
                 self.update(ALIAS, desired)
                 if self.fault != "no_peer":
-                    self.update(self.peer, desired)
+                    normalized = struct.unpack(">f", struct.pack(">f", desired / 10000.0))[0]
+                    self.update(self.peer, normalized * 10000.0)
                 if self.fault == "two_peers":
                     self.update(PEERS[38], desired)
                 if self.fault == "peer_other_bits" and not restoring:
@@ -161,7 +172,8 @@ class FocusPilotTests(unittest.TestCase):
         self.assertEqual(result["peer"], PEERS[37])
         self.assertEqual(result["pad_index"], 37)
         self.assertEqual([item["param"] for item in client.writes], [ALIAS, ALIAS])
-        self.assertEqual(client.writes[1]["float_bits"], "3FE8000000000000")
+        self.assertEqual(client.writes[0]["float_bits"], "40B3880000000000")
+        self.assertEqual(client.writes[1]["float_bits"], "40C3880000000000")
         self.assertEqual(runner.finish(), 0)
         self.assertEqual(Journal.pending(self.journal.ledger_path), {})
         observations = [entry for entry in self.events() if entry["event"] == "focus_complete_projection"]
@@ -170,6 +182,78 @@ class FocusPilotTests(unittest.TestCase):
         self.assertEqual(len([entry for entry in self.events() if entry["event"] == "zero_main_output_observed"]), 2)
         self.assertFalse(runner.summary["all_focus_aliases_verified"])
         self.assertFalse(runner.summary["all_focus_selections_verified"])
+
+    def test_old_decimal_fraction_fails_exact_raw_binding_despite_equal_normalized_and_display(self):
+        client = FocusClient()
+        changed = []
+
+        def observe(instance):
+            changed.append([instance.description(instance.find(name)) for name in (ALIAS, instance.peer)])
+
+        client.changed_page_fault = observe
+        with patch("verify_impact_focus.cutoff_candidate", candidate, create=True):
+            runner = self.runner(client)
+            with self.assertRaisesRegex(AcceptanceFailure, "exact changed native carrier and bits"):
+                runner.run_fixture(TARGET)
+        alias, peer = changed[0]
+        self.assertEqual(alias["value"], 3700.0)
+        self.assertEqual(peer["value"], 3700.000047683716)
+        self.assertNotEqual(alias["native_value"]["data"]["bits_hex"], peer["native_value"]["data"]["bits_hex"])
+        self.assertEqual(alias["native_normalized"], {"kind": "float32", "bits_hex": "3EBD70A4"})
+        self.assertEqual(alias["native_normalized"], peer["native_normalized"])
+        self.assertEqual(alias["text"], peer["text"])
+        self.assertEqual(len(client.writes), 2)
+        self.assertEqual(runner.summary["fixtures"][0]["status"], "binding_unconfirmed_restored")
+        self.assertFalse(runner.summary["fixtures"][0]["binding_verified"])
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_binary_fraction_candidate_uses_half_then_quarter_and_restores_own_original(self):
+        for original, desired in ((10000.0, 5000.0), (5000.0, 2500.0), (2500.0, 5000.0)):
+            with self.subTest(original=original):
+                client = FocusClient()
+                for name in (*PEERS, ALIAS):
+                    client.update(name, original)
+                journal = Journal(Path(self.temporary.name) / f"binary-{original}")
+                runner = ImpactFocusRunner(client, journal, "MCP Validation Scratch")
+                runner.initialize()
+                try:
+                    result = runner.run_fixture(TARGET)
+                    self.assertTrue(result["binding_verified"])
+                    self.assertEqual([decode_float_bits(write["float_bits"]) for write in client.writes],
+                                     [desired, original])
+                    self.assertEqual(Journal.pending(journal.ledger_path), {})
+                finally:
+                    journal.close()
+
+    def test_cutoff_profile_rejects_unobserved_bounds_carrier_and_normalized_support_before_setter(self):
+        faults = {
+            "unit_range": lambda p: p.update(min=0.0, max=1.0),
+            "reversed_range": lambda p: p.update(min=10000.0, max=0.0),
+            "missing_native_min": lambda p: p.update(native_min=None),
+            "nonfinite_native_max": lambda p: p.update(native_max={"variant_tag": 2, "data": {
+                "kind": "float", "value": 10000.0, "bits_hex": "7FF0000000000000"}}),
+            "wrong_native_min_carrier": lambda p: p.update(native_min={"variant_tag": 1, "data": {
+                "kind": "integer", "value": 0}}),
+            "wrong_float_carrier": lambda p: p["native_value"].update(variant_tag=18),
+            "no_normalized_support": lambda p: p["support"].update(normalized=False),
+            "no_native_normalized_support": lambda p: p.update(native_support={
+                "raw_number": True, "normalized": False, "display_text": True}),
+            "not_applicable_normalized": lambda p: p.update(normalized=None, native_normalized={
+                "kind": "not_applicable"}),
+        }
+        for label, corrupt in faults.items():
+            with self.subTest(fault=label):
+                client = FocusClient()
+                corrupt(client.find(ALIAS))
+                journal = Journal(Path(self.temporary.name) / label)
+                runner = ImpactFocusRunner(client, journal, "MCP Validation Scratch")
+                runner.initialize()
+                try:
+                    with self.assertRaises((AcceptanceFailure, ContextChanged)):
+                        runner.run_fixture(TARGET)
+                    self.assertEqual(client.writes, [])
+                finally:
+                    journal.close()
 
     def test_fast_context_mode_is_explicit_and_refreshes_the_frozen_provider(self):
         client = FocusClient()
@@ -262,11 +346,11 @@ class FocusPilotTests(unittest.TestCase):
 
     def test_alias_and_observed_peer_must_share_their_own_original_bits(self):
         client = FocusClient()
-        client.update(client.peer, 0.5)
+        client.update(client.peer, 5000.0)
         with self.assertRaises(RestorationFailure):
             self.runner(client).run_fixture(TARGET)
         self.assertEqual(len(client.writes), 2)
-        self.assertEqual(client.find(client.peer)["value"], 0.75)
+        self.assertEqual(client.find(client.peer)["value"], 10000.0)
         self.assertTrue(Journal.pending(self.journal.ledger_path))
 
     def test_drift_between_full_changed_reads_is_never_a_pass(self):
