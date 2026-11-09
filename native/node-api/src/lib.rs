@@ -82,9 +82,10 @@ pub enum Delegate {
     Presets,
     RoutingModel,
     Inserts,
+    PlugInUnknown,
 }
 impl Delegate {
-    pub const ALL: [Self; 8] = [
+    pub const ALL: [Self; 9] = [
         Self::NodeController,
         Self::Slot,
         Self::Device,
@@ -93,6 +94,7 @@ impl Delegate {
         Self::Presets,
         Self::RoutingModel,
         Self::Inserts,
+        Self::PlugInUnknown,
     ];
     pub fn name(self) -> &'static str {
         match self {
@@ -104,6 +106,7 @@ impl Delegate {
             Self::Presets => "Presets",
             Self::RoutingModel => "RoutingModel",
             Self::Inserts => "Inserts",
+            Self::PlugInUnknown => "plugInUnknown",
         }
     }
     fn c_name(self) -> &'static CStr {
@@ -116,6 +119,7 @@ impl Delegate {
             Self::Presets => c"Presets",
             Self::RoutingModel => c"RoutingModel",
             Self::Inserts => c"Inserts",
+            Self::PlugInUnknown => c"plugInUnknown",
         }
     }
 }

@@ -41,9 +41,11 @@ one inspection for deduplication and cycle detection.
 
 Exploration includes bounded direct children, bounded parents, and these fixed
 delegate names: NodeController, Slot, Device, Graph, Combinator, Presets,
-RoutingModel and Inserts. These names come from the existing exact SDK or
-shipped graph bindings. A fixed lookup's presence does not establish its role
-or mutability. The caller cannot supply an arbitrary delegate or object path.
+RoutingModel, Inserts and plugInUnknown. The last is the declared ComponentAlias
+virtual child and can exist without an indexed child. These names come from the
+existing exact SDK or shipped graph bindings. A fixed lookup's presence does not
+establish its role or mutability. The caller cannot supply an arbitrary delegate
+or object path.
 
 The default limits are 64 nodes, child depth 2, three ancestors and 32 children
 per node. Accepted limits cannot exceed 128 nodes, depth 8, eight ancestors or 128

@@ -356,6 +356,70 @@ fn children_and_fixed_delegates_share_one_canonical_record() {
     assert_eq!(child.refs.get(), 1);
     drop(api);
 }
+
+#[test]
+fn alias_virtual_child_is_inventoried_without_indexed_children() {
+    let tables = Tables::new();
+    let mut alias = tables.object("workspaceroot");
+    let mut plugin = tables.object("Workspace");
+    alias
+        .delegates
+        .borrow_mut()
+        .insert("plugInUnknown".into(), &mut *plugin);
+    let api = inspector(&mut alias);
+    let lease = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    assert_eq!(lease.nodes[0].child_count, Some(0));
+    assert_eq!(alias.child_reads.get(), 0);
+    assert_eq!(lease.nodes.len(), 2);
+    assert_eq!(lease.nodes[1].identity.as_ref().unwrap().id, "Workspace");
+    assert_eq!(
+        lease.edges,
+        vec![Edge {
+            from: 0,
+            to: 1,
+            relation: Relation::Delegate(Delegate::PlugInUnknown),
+        }]
+    );
+    assert!(lease.complete);
+    assert!(plugin.refs.get() > 1);
+    lease.check(&mut || Ok(())).unwrap();
+    drop(lease);
+    assert_eq!(plugin.refs.get(), 1);
+    assert_eq!(alias.refs.get(), 1);
+    drop(api);
+    assert_eq!(alias.refs.get(), 0);
+}
+
+#[test]
+fn replaced_alias_virtual_child_invalidates_the_retained_observation() {
+    let tables = Tables::new();
+    let mut alias = tables.object("workspaceroot");
+    let mut first = tables.object("Workspace");
+    let mut replacement = tables.object("Workspace");
+    alias
+        .delegates
+        .borrow_mut()
+        .insert("plugInUnknown".into(), &mut *first);
+    let api = inspector(&mut alias);
+    let lease = api.inspect(minimal(), &mut || Ok(())).unwrap();
+    lease.check(&mut || Ok(())).unwrap();
+    alias
+        .delegates
+        .borrow_mut()
+        .insert("plugInUnknown".into(), &mut *replacement);
+    assert_eq!(
+        lease.check(&mut || Ok(())).unwrap_err(),
+        Error::AttachmentChanged
+    );
+    assert_eq!(alias.children.borrow().len(), 0);
+    drop(lease);
+    assert_eq!(first.refs.get(), 1);
+    assert_eq!(replacement.refs.get(), 1);
+    assert_eq!(alias.refs.get(), 1);
+    drop(api);
+    assert_eq!(alias.refs.get(), 0);
+}
+
 #[test]
 fn borrowed_child_is_pinned_before_the_next_context_guard() {
     let tables = Tables::new();
