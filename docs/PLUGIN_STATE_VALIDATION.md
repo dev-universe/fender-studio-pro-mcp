@@ -328,6 +328,14 @@ selection or audible/opaque preset behavior.
 native pointers or invoking methods chosen by a caller. Node inspection is also
 read-only and reports traversal limits. Neither API grants topology mutation.
 
+A later exact-anchor EditTask probe added a fixed read-only observation of its
+actual `context.editor`. Before and after opening and visibly focusing the
+normal Routing editor, the bound Device, document and session were unchanged,
+and both editor observations still reported `TrackListView`. The function
+observation remained `EditFunctions`. This establishes the new metadata route,
+but the unchanged task editor makes this focus experiment inconclusive about
+a graph-specific context; it grants no topology mutation authority.
+
 The subsequent `plugin_parameter_format` build successfully formatted explicit
 inputs for Ampire amplifier/cabinet, Fat Channel compressor/EQ and Voice FX
 models, without using a setter. Five queries returned 36 labels. Independent
