@@ -21,7 +21,7 @@ from mcp_client import McpClient
 from parameter_digest import DigestProjectionError, project_snapshot
 from verify_all_parameters import (
     AcceptanceFailure, ContextChanged, Journal, RestorationFailure, Runner,
-    UNKNOWN_OUTCOMES, UnknownMutation, parameter_schema, raw_value, require,
+    UNKNOWN_OUTCOMES, UnknownMutation, ProviderSnapshot, encoded, parameter_schema, raw_value, require,
     utc_now, value_identity,
 )
 
@@ -33,6 +33,8 @@ CLASSES = {
 MODE_PARAMETERS = ("pingMode", "scopeMode", "showImage")
 LATENCY_PARAMETERS = frozenset(("latencyOffset", "latencyTotal"))
 COUPLED_PARAMETERS = frozenset(MODE_PARAMETERS) | LATENCY_PARAMETERS
+VALUE_FIELDS = frozenset(("value", "native_value", "normalized", "native_normalized", "text"))
+AVAILABILITY_FIELDS = frozenset(("enabled", "writable", "support", "native_support"))
 SETTLE_ATTEMPTS = 6
 
 
@@ -84,7 +86,7 @@ class ExternalModeRunner(Runner):
         self.settle_interval = settle_interval
         self.summary.update(mode="disconnected_external_modes", fixtures=[],
                             parameter_verification="two_fresh_complete_typed_public_pages",
-                            restoration="captured_image_then_conditional_captured_offset",
+                            restoration="conditional_captured_availability_then_image_then_conditional_offset",
                             all_writable_parameters_verified=False,
                             hardware_route_verified=False, hardware_calibration_verified=False,
                             audio_emission_verified=False, opaque_contents_verified=False,
@@ -123,15 +125,85 @@ class ExternalModeRunner(Runner):
         except AcceptanceFailure as error:
             raise ContextChanged("External scratch fixture or stopped transport changed") from error
 
+    def ping_availability(self, provider):
+        matches = [p for p in provider.records if p.get("name") == "pingAgain"]
+        if len(matches) != 1:
+            raise ContextChanged("External provider requires one exact pingAgain descriptor")
+        parameter = matches[0]
+        integer = lambda value: {"variant_tag": 1, "data": {"kind": "integer", "value": value}}
+        enabled = parameter.get("enabled")
+        if not (parameter.get("native_kind") == "Toggle" and type(parameter.get("tag")) is int
+                and parameter["tag"] == 112 and parameter.get("readOnly") is False
+                and parameter.get("display_parser") == "PlainNumeric"
+                and all(type(parameter.get(key)) is int and parameter[key] == value
+                        for key, value in (("min", 0), ("max", 1), ("default", 0)))
+                and all(encoded(parameter.get("native_" + key)) == encoded(integer(value))
+                        for key, value in (("min", 0), ("max", 1), ("default", 0)))
+                and type(enabled) is bool and parameter.get("writable") is enabled):
+            raise ContextChanged("External pingAgain authoritative descriptor changed")
+        for key, fields in (("support", ("raw", "normalized", "text")),
+                            ("native_support", ("raw_number", "normalized", "display_text"))):
+            group = parameter.get(key)
+            if not (isinstance(group, dict) and set(group) == set(fields)
+                    and all(group[field] is enabled for field in fields)):
+                raise ContextChanged("External pingAgain availability must be one consistent all-on or all-off profile")
+        if (encoded(parameter.get("native_value")) != encoded(integer(0))
+                or type(parameter.get("value")) is not int or parameter["value"] != 0):
+            raise ContextChanged("External pingAgain must preserve its captured idle typed value")
+        return enabled
+
+    def compatible_schema(self, provider, baseline):
+        if (provider.source != "controller" or provider.source != baseline.source
+                or provider.instance != baseline.instance or len(provider.records) != 24
+                or len(provider.records) != len(baseline.records)):
+            raise ContextChanged("External native provider identity, source or count changed")
+        self.ping_availability(provider)
+        self.ping_availability(baseline)
+        for original, current in zip(baseline.records, provider.records):
+            omitted = VALUE_FIELDS | (AVAILABILITY_FIELDS if original["name"] == "pingAgain" else frozenset())
+            before = {key: value for key, value in original.items() if key not in omitted}
+            after = {key: value for key, value in current.items() if key not in omitted}
+            if encoded(before) != encoded(after):
+                raise ContextChanged("External metadata changed outside the exact pingAgain availability profile")
+
+    def snapshot(self, target, previous=None):
+        args = {**target, "source": "controller", "offset": 0, "limit": 64}
+        if previous is not None:
+            args["expected_instance"] = previous.instance["object_uid"]
+        page = self.call("plugin_parameters", args)["result"]
+        if not (isinstance(page, dict) and not page.get("native_error")
+                and page.get("parameter_discovery", {}).get("completeness") == "current_provider"
+                and page["parameter_discovery"].get("source") == "controller"
+                and type(page.get("reported_count")) is int and page["reported_count"] == 24
+                and type(page.get("offset")) is int and page["offset"] == 0
+                and "next_offset" in page and page["next_offset"] is None
+                and page.get("page_complete") is True and page.get("failed_indices") == []
+                and not page.get("failed_access_indices") and isinstance(page.get("params"), list)
+                and len(page["params"]) == 24):
+            raise ContextChanged("External requires one complete exact 24-record controller page")
+        instance = page.get("instance")
+        if not (isinstance(instance, dict) and all(isinstance(instance.get(key), str) and instance[key]
+                                                 for key in ("class_uid", "object_uid"))):
+            raise ContextChanged("External native provider identity is unavailable")
+        records = page["params"]
+        if not (all(isinstance(p, dict) and type(p.get("index")) is int and isinstance(p.get("name"), str) for p in records)
+                and {p["index"] for p in records} == set(range(24)) and len({p["name"] for p in records}) == 24):
+            raise ContextChanged("External exact controller index coverage changed")
+        result = ProviderSnapshot(dict(target), "controller", dict(instance), sorted(records, key=lambda p: p["index"]))
+        if previous is not None:
+            self.compatible_schema(result, previous)
+        return result
+
     def projection(self, provider, baseline=None, expected=None):
+        self.ping_availability(provider)
         try:
             result = project_snapshot(provider)
         except DigestProjectionError as error:
             raise AcceptanceFailure("Complete exact External projection is unavailable: " + str(error)) from error
-        if baseline is not None and (provider.instance != baseline.instance or provider.source != baseline.source
-                                     or result["count"] != expected["count"]
-                                     or result["schema_sha256"] != expected["schema_sha256"]):
-            raise ContextChanged("External native provider or complete typed schema changed")
+        if baseline is not None:
+            self.compatible_schema(provider, baseline)
+            if result["count"] != expected["count"]:
+                raise ContextChanged("External complete typed provider count changed")
         return result
 
     def disconnected(self, provider):
@@ -186,8 +258,14 @@ class ExternalModeRunner(Runner):
                 and parameter.get("enabled") is True and parameter.get("readOnly") is False
                 and parameter.get("support", {}).get("raw") is True,
                 "Fixed External control lost enabled raw write support")
-        if phase in ("Staging", "Change"):
+        if phase in ("Staging", "Change", "RestoreAvailability"):
             require(raw_value(parameter) != desired, "External case must change its own exact original value")
+        if phase == "RestoreAvailability":
+            require(name == "pingMode" and self.ping_availability(current) is not bool(desired),
+                    "External availability callback must still be necessary before dispatch")
+        if phase in ("RestoreImage", "RestoreOffset"):
+            require(self.ping_availability(current) is self.ping_availability(baseline),
+                    "Captured External availability must remain restored before the next corrective write")
         values, identity = numeric_write(parameter, desired)
         self.phase(transaction, phase + "InFlight", parameter=name)
         self.counts["mutation_attempts"] += 1
@@ -214,6 +292,9 @@ class ExternalModeRunner(Runner):
             require(self.mode(parameters) is case.expected
                     and value_identity(parameters[case.parameter]) == identity,
                     "Independent complete External readback did not establish the requested mode and own value")
+            if case.parameter == "pingMode":
+                require(self.ping_availability(current) is bool(case.desired),
+                        "Setup callback did not establish its exact pingAgain availability profile")
             require(all(observation(p) == observation(originals[p["name"]]) for p in current.records
                         if p["name"] not in COUPLED_PARAMETERS),
                     "External transition changed an unrelated exposed value")
@@ -225,12 +306,15 @@ class ExternalModeRunner(Runner):
             if attempt > 1 and self.settle_interval:
                 time.sleep(self.settle_interval)
             current, projected = self.observe(baseline, expected, transaction, stage, attempt)
-            equal = projected["all_values_sha256"] == expected["all_values_sha256"]
+            equal = (projected["schema_sha256"] == expected["schema_sha256"]
+                     and projected["all_values_sha256"] == expected["all_values_sha256"])
             consecutive = consecutive + 1 if equal else 0
             self.journal.append("external_baseline_comparison", transaction=transaction, stage=stage,
                                 attempt=attempt, full_baseline_equal=equal, consecutive_matches=consecutive)
             if consecutive == 2:
                 return
+            if projected["schema_sha256"] != expected["schema_sha256"]:
+                raise RestorationFailure("External complete baseline availability schema was not restored")
             changed = {p["name"] for p in current.records if observation(p) != observation(originals[p["name"]])}
             if not changed <= LATENCY_PARAMETERS:
                 raise RestorationFailure("External complete baseline has a non-latency mismatch")
@@ -238,8 +322,22 @@ class ExternalModeRunner(Runner):
 
     def recover(self, baseline, expected, transaction):
         originals = {p["name"]: p for p in baseline.records}
+        captured = self.ping_availability(baseline)
+        current, _ = self.observe(baseline, expected, transaction, "before-availability-restore", 1)
+        if self.ping_availability(current) is not captured:
+            desired = int(captured)
+            setup = next(p for p in current.records if p["name"] == "pingMode")
+            if raw_value(setup) == desired:
+                raise RestorationFailure("External availability contradicts Setup; one changed callback cannot restore it")
+            identity = self.dispatch(baseline, expected, transaction, "pingMode", desired, "RestoreAvailability")
+            mode = Mode.SETUP if captured else Mode.SCOPE
+            self.confirm_mode(baseline, expected, transaction, ModeCase("pingMode", desired, mode), identity,
+                              "availability-restored")
+            self.phase(transaction, "AvailabilityRestored", captured_enabled=captured, consecutive_full_reads=2)
         self.dispatch(baseline, expected, transaction, "showImage", raw_value(originals["showImage"]), "RestoreImage")
         current, _ = self.observe(baseline, expected, transaction, "after-image-restore", 1)
+        require(self.ping_availability(current) is captured,
+                "Image callback did not preserve captured External availability")
         offset = next(p for p in current.records if p["name"] == "latencyOffset")
         if value_identity(offset) != value_identity(originals["latencyOffset"]):
             self.dispatch(baseline, expected, transaction, "latencyOffset", raw_value(originals["latencyOffset"]), "RestoreOffset")

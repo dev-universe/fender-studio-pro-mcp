@@ -18,7 +18,7 @@ from verify_external_modes import CLASSES, ExternalModeRunner, main
 
 
 class ExternalClient(DigestSweepClient):
-    def __init__(self, plugin="External Effect Mono"):
+    def __init__(self, plugin="External Effect Mono", availability=True):
         parameters = [number(name, value, "Toggle", lower=0, upper=1)
                       for name, value in (("pingMode", 0), ("scopeMode", 0), ("showImage", 1))]
         parameters += [number("latencyOffset", 0, "Integer", lower=-32000, upper=32000),
@@ -29,7 +29,10 @@ class ExternalClient(DigestSweepClient):
             parameter = number(name, -1, "List", lower=0, upper=-1)
             parameter.update(writable=False, normalized=1, support={"raw": False})
             parameters.append(parameter)
-        parameters += [number("other" + str(index), 0.25) for index in range(17)]
+        ping = number("pingAgain", 0, "Toggle", enabled=availability, lower=0, upper=1)
+        ping.update(tag=112, default=0, support={key: availability for key in ("raw", "normalized", "text")})
+        parameters.append(ping)
+        parameters += [number("other" + str(index), 0.25) for index in range(16)]
         super().__init__(parameters)
         self.target = {**TARGET, "plugin": plugin}
         self.live_class = CLASSES[plugin]
@@ -56,6 +59,11 @@ class ExternalClient(DigestSweepClient):
             updated["normalized"] = (value - parameter["min"]) / (parameter["max"] - parameter["min"])
         parameter.update(updated)
 
+    def availability(self, enabled):
+        self.find("pingAgain").update(enabled=enabled, writable=enabled,
+                                      support={key: enabled for key in ("raw", "normalized", "text")},
+                                      native_support={key: enabled for key in ("raw_number", "normalized", "display_text")})
+
     def call(self, name, args):
         if name == "plugin_parameter_choices":
             self.select_target(args)
@@ -75,9 +83,10 @@ class ExternalClient(DigestSweepClient):
                 value = decode_float_bits(args["float_bits"])
             before = self.description(self.find(name))
             fault = self.faults.get(len(self.writes))
-            if fault != "ignore":
+            if fault not in ("ignore", "refuse"):
                 if name == "pingMode":
                     mode = (value, 1 - value, 0)
+                    self.availability(bool(value))
                 elif name == "scopeMode":
                     mode = (1 - value, value, 0)
                 elif name == "showImage":
@@ -107,6 +116,8 @@ class ExternalClient(DigestSweepClient):
                 self.update("showImage", 1)
             elif fault == "wrong_own":
                 self.update(name, 1 - value)
+            elif fault == "wrong_availability":
+                self.availability(not bool(value))
             elif fault == "schema":
                 self.find("other0")["default"] = 0.75
             elif fault == "document":
@@ -132,8 +143,10 @@ class ExternalClient(DigestSweepClient):
                 outcome = None
             elif fault == "malformed_outcome":
                 outcome = {}
+            elif fault == "refuse":
+                outcome = "not_applied"
             self.active_page_reads = 0
-            return self.receipt(result, outcome)
+            return self.receipt(result, outcome, {"code": "native_rejected"} if fault == "refuse" else None)
         if name == "plugin_parameters":
             self.active_page_reads += 1
             if self.pending_total is not None:
@@ -186,7 +199,7 @@ class ExternalModeTests(unittest.TestCase):
         self.assertTrue(all(r["transition_verified"] and r["complete_provider_projection_restored"] for r in row["cases"]))
         self.assertEqual([(w["param"], w["value"]) for w in client.writes], [
             ("pingMode", 1), ("showImage", 1), ("latencyOffset", 0),
-            ("pingMode", 1), ("pingMode", 0), ("showImage", 1), ("latencyOffset", 0),
+            ("pingMode", 1), ("pingMode", 0), ("pingMode", 1), ("showImage", 1), ("latencyOffset", 0),
             ("scopeMode", 1), ("showImage", 1),
             ("scopeMode", 1), ("scopeMode", 0), ("showImage", 1), ("latencyOffset", 0),
             ("showImage", 0), ("showImage", 1),
@@ -205,6 +218,119 @@ class ExternalModeTests(unittest.TestCase):
         client = ExternalClient("External Effect Stereo")
         row = self.runner(client).run_fixture(client.target)
         self.assertEqual(row["status"], "six_disconnected_mode_transitions_verified")
+
+    def test_both_captured_availability_profiles_restore_for_both_exact_classes(self):
+        for index, (plugin, enabled) in enumerate((name, enabled) for name in CLASSES for enabled in (True, False)):
+            with self.subTest(plugin=plugin, enabled=enabled):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("profile-" + str(index)))
+                client = ExternalClient(plugin, availability=enabled)
+                runner = self.runner(client)
+                row = runner.run_fixture(client.target)
+                self.assertEqual(row["status"], "six_disconnected_mode_transitions_verified")
+                self.assertEqual(len(client.writes), 19)
+                repair = [event for event in self.events("transaction_phase") if event["phase"] == "AvailabilityRestored"]
+                self.assertEqual(len(repair), 1)
+                self.assertIs(repair[0]["captured_enabled"], enabled)
+                self.assertEqual(repair[0]["transaction"], "external-0-1" if enabled else "external-0-0")
+                self.assertIs(client.find("pingAgain")["enabled"], enabled)
+                self.assertTrue(all(w["param"] in ("pingMode", "scopeMode", "showImage", "latencyOffset") for w in client.writes))
+                self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_actual_second_case_all_off_profile_is_observed_then_restored_exactly(self):
+        client = ExternalClient()
+        self.runner(client).run_fixture(client.target)
+        observations = [e for e in self.events("external_mode_observation") if e["transaction"] == "external-0-1"]
+        original_schema = next(e["projection"]["schema_sha256"] for e in observations if e["stage"] == "before-case")
+        changed = [e for e in observations if e["stage"] == "changed"]
+        self.assertEqual(len(changed), 2)
+        self.assertTrue(all(e["projection"]["schema_sha256"] != original_schema for e in changed))
+        restored = [e for e in observations if e["stage"] == "restored"]
+        self.assertEqual(len(restored), 2)
+        self.assertTrue(all(e["projection"]["schema_sha256"] == original_schema for e in restored))
+        self.assertEqual([(w["param"], w["value"]) for w in client.writes[3:8]],
+                         [("pingMode", 1), ("pingMode", 0), ("pingMode", 1), ("showImage", 1), ("latencyOffset", 0)])
+
+    def test_availability_repair_unknown_refusal_or_ignored_callback_stops_without_image_write(self):
+        for index, (enabled, step, fault) in enumerate((enabled, 6 if enabled else 2, fault)
+                                                     for enabled in (True, False)
+                                                     for fault in ("unknown", "timeout", "nested_unknown", "refuse", "ignore", "wrong_availability")):
+            with self.subTest(enabled=enabled, fault=fault):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("repair-" + str(index)))
+                client = ExternalClient(availability=enabled)
+                client.faults[step] = fault
+                with self.assertRaises(AcceptanceFailure):
+                    self.runner(client).run_fixture(client.target)
+                self.assertEqual(len(client.writes), step)
+                self.assertEqual(client.writes[-1]["param"], "pingMode")
+                self.assertEqual(client.writes[-1]["value"], int(enabled))
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_contradictory_profile_cannot_retrigger_an_unchanged_setup_value(self):
+        for enabled, step in ((True, 1), (False, 6)):
+            with self.subTest(enabled=enabled):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("contradiction-" + str(step)))
+                client = ExternalClient(availability=enabled)
+                client.faults[step] = "wrong_availability"
+                with self.assertRaises(RestorationFailure):
+                    self.runner(client).run_fixture(client.target)
+                self.assertEqual(len(client.writes), step)
+                self.assertEqual(client.find("pingMode")["value"], int(enabled))
+                self.assertIs(client.find("pingAgain")["enabled"], not enabled)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_repair_requires_complete_empty_hardware_choices(self):
+        client = ExternalClient()
+        def connected(client, page):
+            if len(client.writes) == 5:
+                page.update(reported_count=1, choices=[{"index": 0, "text": "route"}])
+        client.choice_fault = connected
+        with self.assertRaises(AcceptanceFailure):
+            self.runner(client).run_fixture(client.target)
+        self.assertEqual(len(client.writes), 5)
+        self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_profile_lost_after_image_is_not_repaired_again_or_excluded(self):
+        client = ExternalClient()
+        def lost(client, _):
+            if len(client.writes) == 7:
+                client.availability(False)
+        client.read_fault = lost
+        runner = self.runner(client)
+        with self.assertRaises(AcceptanceFailure):
+            runner.run_fixture(client.target)
+        self.assertEqual(len(client.writes), 7)
+        self.assertEqual(runner.counts["mode_changed_readback_restored"], 1)
+        self.assertEqual(len([e for e in self.events("transaction_phase") if e["phase"] == "AvailabilityRestored"]), 1)
+        self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_only_the_consistent_authoritative_ping_availability_group_can_change(self):
+        faults = (
+            ("pingAgain", {"tag": 113}), ("pingAgain", {"native_kind": "Integer"}),
+            ("pingAgain", {"min": -1}), ("pingAgain", {"max": 2}),
+            ("pingAgain", {"default": 1}), ("pingAgain", {"readOnly": True}),
+            ("pingAgain", {"enabled": True}), ("pingAgain", {"writable": True}),
+            ("pingAgain", {"support": {"raw": False, "normalized": True, "text": False}}),
+            ("pingAgain", {"native_support": {"raw_number": False, "normalized": False, "display_text": True}}),
+            ("pingAgain", {"native_default": {"variant_tag": 2, "data": {"kind": "float", "value": 0, "bits_hex": "0000000000000000"}}}),
+            ("pingAgain", {"title": "different"}),
+            ("other0", {"enabled": False}), ("other0", {"default": 1}),
+        )
+        for index, (name, fields) in enumerate(faults):
+            with self.subTest(name=name, fields=fields):
+                self.journal.close()
+                self.journal = Journal(Path(self.temporary.name) / ("metadata-" + str(index)))
+                client = ExternalClient()
+                def corrupt(client, receipt):
+                    if len(client.writes) == 5:
+                        next(p for p in receipt["result"]["params"] if p["name"] == name).update(copy.deepcopy(fields))
+                client.read_fault = corrupt
+                with self.assertRaises(ContextChanged):
+                    self.runner(client).run_fixture(client.target)
+                self.assertEqual(len(client.writes), 5)
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
 
     def test_wrong_class_or_provider_rejects_without_writes(self):
         client = ExternalClient()
@@ -409,7 +535,7 @@ class ExternalModeTests(unittest.TestCase):
                                    "--binary", str(binary), "--output-dir", str(output),
                                    "--plugin", "External Effect Mono", "--run-modes"]), 0)
         self.assertTrue(client.closed)
-        self.assertEqual(len(client.writes), 18)
+        self.assertEqual(len(client.writes), 19)
         self.assertFalse(json.loads((output / "progress.json").read_text())["all_writable_parameters_verified"])
 
 
