@@ -94,7 +94,10 @@ fn node_identity(node: *mut c_void) -> (String, String, String) {
     (object_uid, class_uid, class_name(node))
 }
 fn supported_slot_family(name: &str) -> bool {
-    matches!(name, "AudioInsertSlot" | "AudioSynthSlot" | "MusicFXSlot")
+    matches!(
+        name,
+        "AudioInsertSlot" | "AudioSynthSlot" | "MusicFXSlot" | "AudioFXSlot"
+    )
 }
 impl Route {
     fn capture(ctx: &Context<'_>) -> Result<Self, String> {
@@ -109,7 +112,7 @@ impl Route {
         let slot = hold(unsafe { parent(device.0) }).ok_or("Device slot unavailable")?;
         let slot_identity = node_identity(slot.0);
         if !supported_slot_family(&slot_identity.2) {
-            return Err("preset catalog requires the observed AudioInsertSlot, AudioSynthSlot or MusicFXSlot family".into());
+            return Err("preset catalog requires the observed AudioInsertSlot, AudioSynthSlot, MusicFXSlot or AudioFXSlot family".into());
         }
         let find: unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void =
             unsafe { method(slot.0, 10) };
@@ -731,14 +734,22 @@ mod family_tests {
     }
 
     #[test]
-    fn preset_slot_policy_accepts_only_the_three_observed_exact_families() {
-        for family in ["AudioInsertSlot", "AudioSynthSlot", "MusicFXSlot"] {
+    fn preset_slot_policy_accepts_only_the_four_observed_exact_families() {
+        for family in [
+            "AudioInsertSlot",
+            "AudioSynthSlot",
+            "MusicFXSlot",
+            "AudioFXSlot",
+        ] {
             assert!(supported_slot_family(family));
         }
         for family in [
             "",
             "DeviceSlot",
-            "AudioFXSlot",
+            "AudioFXSlotExtra",
+            "CustomAudioFXSlot",
+            "AudioFXSlot/Presets",
+            "audiofxslot",
             "AudioSynthFolder",
             "MusicFXFolder",
             "MixFXSlot",
@@ -754,7 +765,12 @@ mod family_tests {
     #[test]
     fn all_observed_families_keep_slot_and_preset_pins_with_null_slot_class_uid() {
         let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
-        for family in [c"AudioInsertSlot", c"AudioSynthSlot", c"MusicFXSlot"] {
+        for family in [
+            c"AudioInsertSlot",
+            c"AudioSynthSlot",
+            c"MusicFXSlot",
+            c"AudioFXSlot",
+        ] {
             let mut host = super::super::guard_tests::Fixture::new();
             host.canonical_queries();
             let nodes = Nodes::new(family);
@@ -808,6 +824,37 @@ mod family_tests {
         host.switch_document();
         assert!(route.guard(&ctx).is_err());
         assert!(route.matches(&ctx).is_err());
+        drop(route);
+        drop(ctx);
+        drop(nodes);
+    }
+
+    #[test]
+    fn audiofx_family_still_requires_the_exact_bound_class_and_object_uid() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioFXSlot");
+        let mut ctx = host.context();
+        ctx.node = hold(nodes.pointer(0)).unwrap();
+        let route = nodes.route(&ctx);
+        assert_eq!(route.slot_identity.1, "");
+        route.guard(&ctx).unwrap();
+        nodes.nodes[1].class_name.set(c"AudioFXSlotExtra");
+        assert!(route.guard(&ctx).is_err());
+        nodes.nodes[1].class_name.set(c"AudioFXSlot");
+        nodes.nodes[1].object_uid.set(Uid {
+            a: 0,
+            b: 0,
+            c: 0,
+            d: [0; 8],
+        });
+        assert!(
+            route.guard(&ctx).is_err(),
+            "AudioFXSlot must not lose its object UID binding"
+        );
+        nodes.nodes[1].object_uid.set(SERVICE_CID);
+        route.guard(&ctx).unwrap();
         drop(route);
         drop(ctx);
         drop(nodes);

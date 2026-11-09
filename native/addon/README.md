@@ -55,13 +55,17 @@ existing two arguments. The optional scripting metadata does not relax these
 operation-specific arity checks.
 
 `presets` is restricted to the observed Device -> owning slot -> Presets route.
-The slot's exact class must be `AudioInsertSlot`, `AudioSynthSlot` or
-`MusicFXSlot`, and its Presets child must be `PresetComponent`. The class names
+The slot's exact class must be `AudioInsertSlot`, `AudioSynthSlot`, `MusicFXSlot`
+or `AudioFXSlot`, and its Presets child must be `PresetComponent`. The class names
 are retained and rechecked alongside canonical pins and node identities,
 including slots with no class UID. Other slot families remain unsupported.
 Class/reflection observations and temporary native-owner releases precede
 fresh borrowed UID and parent/Presets-child checks, with the current document/target
 check last. These are sequential observations, not an atomic graph snapshot.
+The `AudioFXSlot` expansion is source/mock verified from the observed Console
+Shaper slot route. That observation does not verify Mix FX or panner preset
+catalog discovery or recall. A stable slot object UID is still mandatory;
+missing object identity is rejected even when the class name is allowed.
 It lists at most4096 entries per catalog and retains at most four catalogs per
 service. Each random64-uppercase-hex token pins the canonical document, model,
 Device, owning slot and Presets child, including their observed node identities.
