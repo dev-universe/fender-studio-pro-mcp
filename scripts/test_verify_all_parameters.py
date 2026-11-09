@@ -141,6 +141,14 @@ class DeviceClient:
             raise AssertionError("Write did not bind the explicit native source and instance")
 
 
+class ReceiptClient:
+    def __init__(self, receipt):
+        self.receipt = receipt
+
+    def call(self, name, args):
+        return {"structuredContent": copy.deepcopy(self.receipt)}
+
+
 class AcceptanceTests(unittest.TestCase):
     def setUp(self):
         PRIVATE_ROOT.mkdir(exist_ok=True)
@@ -513,6 +521,124 @@ class AcceptanceTests(unittest.TestCase):
         self.journal.close()
         with self.assertRaises(AcceptanceFailure):
             Journal(self.directory)
+
+    def test_pending_mutations_with_malformed_outcomes_remain_unknown(self):
+        receipts = [{"outcome": {}}, {"outcome": []}, {"outcome": None}, {},
+                    {"outcome": True}, {"outcome": 1}, None, [],
+                    {"outcome": "partially_applied"}, {"outcome": "unexpected_status"}]
+        for call, receipt in enumerate(receipts, 100):
+            self.journal.append("rpc_in_flight", call=call, tool="plugin_parameter_set", mutation=True, arguments={})
+            self.journal.append("rpc_returned", call=call, receipt=receipt)
+        self.assertEqual(Journal.pending(self.journal.ledger_path),
+                         {f"rpc:{call}": "UnknownAfterDispatch" for call in range(100, 100 + len(receipts))})
+
+    def test_pending_known_mutation_receipts_clear_and_read_receipts_do_not_create_mutations(self):
+        for call, outcome in enumerate(("applied_verified", "applied_unverified", "not_applied", "observed"), 100):
+            self.journal.append("rpc_in_flight", call=call, tool="operation_run", mutation=True, arguments={})
+            self.journal.append("rpc_returned", call=call, receipt={"outcome": outcome})
+        self.journal.append("rpc_in_flight", call=200, tool="plugin_parameters", mutation=False, arguments={})
+        self.journal.append("rpc_returned", call=200, receipt={"outcome": {}})
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_pending_bare_mutation_or_capture_retains_present_uncertain_native_outcomes(self):
+        faults = ("outcome_unknown", "unknown", "partially_applied", {}, [], None, True, "unexpected_status")
+        call = 100
+        for field in ("outcome", "native_outcome"):
+            for fault in faults:
+                call += 1
+                self.journal.append("rpc_in_flight", call=call, tool="plugin_state", mutation=True,
+                                    arguments={"action": "capture"})
+                self.journal.append("rpc_returned", call=call, receipt={"outcome": "applied_unverified",
+                                    "result": {field: fault}})
+        self.assertEqual(Journal.pending(self.journal.ledger_path),
+                         {f"rpc:{number}": "UnknownAfterDispatch" for number in range(101, call + 1)})
+
+    def test_pending_known_native_capture_and_missing_optional_evidence_remain_compatible(self):
+        for call, body in enumerate(({}, {"outcome": "observed"}, {"native_outcome": "observed"},
+                                     {"outcome": "observed", "native_outcome": "observed"}), 100):
+            self.journal.append("rpc_in_flight", call=call, tool="plugin_state", mutation=True,
+                                arguments={"action": "capture"})
+            self.journal.append("rpc_returned", call=call,
+                                receipt={"outcome": "applied_unverified", "result": body})
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_common_read_boundary_requires_an_observed_outer_receipt(self):
+        faults = (None, {}, [], True, "unknown", "outcome_unknown", "partially_applied",
+                  "unexpected_read_status", "applied_verified", "applied_unverified", "missing")
+        runner = self.runner(DeviceClient())
+        for fault in faults:
+            with self.subTest(fault=fault):
+                receipt = {"document": "test:1", "session": "test", "outcome": fault,
+                           "result": {"open": True, "title": "MCP Validation Scratch"}}
+                if fault == "missing":
+                    receipt.pop("outcome")
+                runner.client = ReceiptClient(receipt)
+                with self.assertRaises(UnknownMutation):
+                    runner.call("host_status", allow_error=True)
+
+    def test_common_read_and_mutation_reject_present_uncertain_native_outcomes(self):
+        runner = self.runner(DeviceClient())
+        for mutation in (False, True):
+            for field in ("outcome", "native_outcome"):
+                for fault in ("unknown", "outcome_unknown", "partially_applied", {}, [], None, True):
+                    with self.subTest(mutation=mutation, field=field, fault=fault):
+                        runner.client = ReceiptClient({"document": "test:1", "session": "test",
+                                                       "outcome": "applied_unverified" if mutation else "observed",
+                                                       "result": {field: fault}})
+                        with self.assertRaises(UnknownMutation):
+                            runner.call("plugin_state" if mutation else "plugin_parameters", mutation=mutation,
+                                        allow_error=True)
+
+    def test_common_observed_reads_reject_present_applied_native_evidence(self):
+        runner = self.runner(DeviceClient())
+        for field in ("outcome", "native_outcome"):
+            for outcome in ("applied_verified", "applied_unverified", "not_applied"):
+                with self.subTest(field=field, outcome=outcome):
+                    runner.client = ReceiptClient({"document": "test:1", "session": "test", "outcome": "observed",
+                                                   "result": {field: outcome}})
+                    with self.assertRaises(UnknownMutation):
+                        runner.call("plugin_parameters", allow_error=True)
+
+    def test_common_mutation_outer_unknown_or_malformed_stops_with_pending_rpc(self):
+        runner = self.runner(DeviceClient())
+        for outcome in (None, {}, [], True, "partially_applied", "unexpected_status", "outcome_unknown"):
+            with self.subTest(outcome=outcome):
+                runner.client = ReceiptClient({"document": "test:1", "session": "test", "outcome": outcome,
+                                               "result": {"after": {"value": 1}}})
+                with self.assertRaises(UnknownMutation):
+                    runner.call("plugin_parameter_set", mutation=True, allow_error=True)
+        pending = Journal.pending(self.journal.ledger_path)
+        self.assertEqual(len(pending), 7)
+        self.assertTrue(all(value == "UnknownAfterDispatch" for value in pending.values()))
+
+    def test_common_known_read_errors_keep_allow_error_without_becoming_observed_data(self):
+        runner = self.runner(DeviceClient())
+        receipt = {"document": "test:1", "session": "test", "outcome": "not_applied",
+                   "error": {"code": "native_rejected"}, "result": {"native_outcome": "not_applied"}}
+        runner.client = ReceiptClient(receipt)
+        with self.assertRaises(AcceptanceFailure):
+            runner.call("plugin_parameters")
+        self.assertEqual(runner.call("plugin_parameters", allow_error=True), receipt)
+        receipt.pop("error")
+        with self.assertRaises(AcceptanceFailure):
+            runner.call("plugin_parameters")
+        self.assertEqual(runner.call("plugin_parameters", allow_error=True)["outcome"], "not_applied")
+        receipt.update(outcome="observed", error={"code": "read_failed"}, result={})
+        with self.assertRaises(AcceptanceFailure) as observed_error:
+            runner.call("plugin_parameters")
+        self.assertNotIsInstance(observed_error.exception, UnknownMutation)
+        self.assertEqual(runner.call("plugin_parameters", allow_error=True), receipt)
+
+    def test_common_observed_reads_and_known_capture_native_evidence_are_compatible(self):
+        runner = self.runner(DeviceClient())
+        for mutation, outer, body in ((False, "observed", {}),
+                                       (False, "observed", {"outcome": "observed"}),
+                                       (True, "applied_unverified", {"native_outcome": "observed"}),
+                                       (True, "not_applied", {})):
+            receipt = {"document": "test:1", "session": "test", "outcome": outer, "result": body}
+            runner.client = ReceiptClient(receipt)
+            self.assertEqual(runner.call("plugin_state" if mutation else "plugin_parameters", mutation=mutation,
+                                         allow_error=True), receipt)
 
     def test_unmatched_parameter_filter_does_not_verify_a_zero_write_run(self):
         client = DeviceClient()

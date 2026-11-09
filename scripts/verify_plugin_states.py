@@ -96,11 +96,45 @@ class StateRunner(Runner):
                             read_only_values="observed_not_restored" if read_only_observations else "exact_comparison")
 
     def state_call(self, provider, action, token=None, allow_error=False):
+        require(action in ("capture", "restore", "release"), "Use a fixed native state lifecycle action")
         args = {**provider.target, "action": action,
                 "expected_instance": provider.instance["object_uid"]}
         if token is not None:
             args["token"] = token
-        return self.call("plugin_state", args, mutation=True, allow_error=allow_error)
+        transaction = f"state-call-{self.call_count + 1:06d}"
+        self.phase(transaction, "StateLifecycleInFlight", action=action, instance=provider.instance)
+        try:
+            # Inspect native evidence before propagating an ordinary receipt error.
+            receipt = self.call("plugin_state", args, mutation=True, allow_error=True)
+            outer = receipt.get("outcome")
+            applied = ("applied_verified", "applied_unverified")
+            allowed_outer = ("observed", *applied, "not_applied") if action == "capture" else (*applied, "not_applied")
+            result = receipt.get("result", {})
+            if not isinstance(outer, str) or outer not in allowed_outer or not isinstance(result, dict):
+                raise UnknownMutation("Native state lifecycle returned a malformed or contradictory outcome")
+            expected = (("not_applied",) if outer == "not_applied" else
+                        ("observed",) if action == "capture" else applied)
+            native = []
+            for field in ("outcome", "native_outcome"):
+                if field not in result:
+                    continue
+                outcome = result[field]
+                if not isinstance(outcome, str) or outcome not in expected:
+                    raise UnknownMutation("Native state " + action + " has unknown or contradictory " + field)
+                native.append(outcome)
+            if len(set(native)) > 1:
+                raise UnknownMutation("Native state lifecycle outcome fields disagree")
+        except (UnknownMutation, ContextChanged):
+            self.phase(transaction, "UnknownAfterDispatch", action=action)
+            raise
+        except Exception as error:
+            self.phase(transaction, "UnknownAfterDispatch", action=action)
+            raise UnknownMutation("Native state lifecycle evidence is malformed; stop further mutations") from error
+        self.phase(transaction, "NoWriteConfirmed" if outer == "not_applied" else "StateConfirmed",
+                   action=action, scope="lifecycle_outcome_only", independently_restored=False)
+        if receipt.get("error") and not allow_error:
+            raise AcceptanceFailure(str(receipt["error"]))
+        return receipt
 
     def capture(self, provider):
         self.fixture_check(provider.target)

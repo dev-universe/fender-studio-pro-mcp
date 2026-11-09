@@ -154,11 +154,18 @@ class Journal:
                 if entry.get("event") == "rpc_in_flight" and entry.get("mutation") is True:
                     mutations[entry["call"]] = "MutationInFlight"
                 elif entry.get("event") == "rpc_returned":
-                    if entry.get("receipt", {}).get("outcome") in UNKNOWN_OUTCOMES:
-                        if entry["call"] in mutations:
+                    if entry["call"] in mutations:
+                        receipt = entry.get("receipt")
+                        outcome = receipt.get("outcome") if isinstance(receipt, dict) else None
+                        result = receipt.get("result") if isinstance(receipt, dict) else None
+                        outcomes = [outcome]
+                        if isinstance(result, dict):
+                            outcomes.extend(result[field] for field in ("outcome", "native_outcome") if field in result)
+                        if any(not isinstance(value, str) or value not in (
+                                "observed", "applied_verified", "applied_unverified", "not_applied") for value in outcomes):
                             mutations[entry["call"]] = "UnknownAfterDispatch"
-                    else:
-                        mutations.pop(entry["call"], None)
+                        else:
+                            mutations.pop(entry["call"], None)
                 elif entry.get("event") == "rpc_context_lost":
                     if entry.get("mutation"):
                         mutations[entry["call"]] = "ContextLostAfterDispatch"
@@ -431,13 +438,24 @@ class Runner:
                 raise UnknownMutation("Mutation transport failed; no automatic retry or restore is permitted") from error
             raise AcceptanceFailure("Read request failed") from error
         self.journal.append("rpc_returned", call=call_id, receipt=receipt)
+        if not isinstance(receipt, dict):
+            raise UnknownMutation("Request returned a malformed receipt; no follow-on mutation is permitted")
         if self.document is not None and (receipt.get("document") != self.document or receipt.get("session") != self.session):
             self.journal.append("rpc_context_lost", call=call_id, mutation=mutation)
             raise ContextChanged("Bridge document or session changed")
-        if mutation and receipt.get("outcome") in UNKNOWN_OUTCOMES:
-            raise UnknownMutation("Mutation outcome is unknown; stop and restore the disposable song through the owning UI")
+        outcome = receipt.get("outcome")
+        result = receipt.get("result")
+        native = [result[field] for field in ("outcome", "native_outcome") if field in result] if isinstance(result, dict) else []
+        if any(not isinstance(value, str) or value not in (
+                "observed", "applied_verified", "applied_unverified", "not_applied") for value in (outcome, *native)):
+            raise UnknownMutation("Request outcome evidence is unknown or malformed; no follow-on mutation is permitted")
+        if not mutation and (outcome not in ("observed", "not_applied")
+                             or (outcome == "observed" and any(value != "observed" for value in native))):
+            raise UnknownMutation("Read request did not establish observed evidence; no follow-on mutation is permitted")
         if receipt.get("error") and not allow_error:
             raise AcceptanceFailure(str(receipt["error"]))
+        if not mutation and outcome == "not_applied" and not allow_error:
+            raise AcceptanceFailure("Read request was refused and has no observed data")
         return receipt
 
     def operation(self, name, args=None, mutation=False):

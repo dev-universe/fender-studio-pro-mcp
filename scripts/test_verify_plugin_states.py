@@ -133,6 +133,38 @@ class StateClient(DeviceClient):
                              "instance": dict(self.instance)}, "applied_unverified")
 
 
+class LifecycleReplyMixin:
+    """Add actual native phase outcomes, with faults after a simulated dispatch."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lifecycle_fault_phase = None
+        self.lifecycle_fault_fields = {"native_outcome": "unknown"}
+        self.lifecycle_fault_outer = {}
+        self.lifecycle_fault_call_count = None
+
+    def call(self, name, args):
+        phase = None
+        if name == "plugin_state":
+            phase = ("released_restore" if args["action"] == "restore" and args["token"] in self.released
+                     else args["action"])
+        response = super().call(name, args)
+        if phase is not None:
+            receipt = response["structuredContent"]
+            native = receipt["result"]
+            native.setdefault("outcome", "not_applied" if receipt["outcome"] == "not_applied" else
+                              "observed" if phase == "capture" else
+                              "applied_verified" if phase == "release" else "applied_unverified")
+            if phase == self.lifecycle_fault_phase:
+                native.update(copy.deepcopy(self.lifecycle_fault_fields))
+                receipt.update(copy.deepcopy(self.lifecycle_fault_outer))
+                self.lifecycle_fault_call_count = len(self.calls)
+        return response
+
+
+class LifecycleStateClient(LifecycleReplyMixin, StateClient):
+    pass
+
+
 class SettlingStateClient(StateClient):
     def __init__(self, mode="stable"):
         parameter = number("cab.micmixA", 0.75, lower=0.0, upper=1.0)
@@ -200,6 +232,106 @@ class StateAcceptanceTests(unittest.TestCase):
 
     def events(self):
         return [json.loads(line) for line in self.journal.ledger_path.read_text().splitlines()]
+
+    def reset_journal(self, name):
+        self.journal.close()
+        self.journal = Journal(Path(self.temporary.name) / name)
+
+    def test_actual_phase_outcomes_keep_capture_observed_and_optional_native_outcome_compatible(self):
+        client = LifecycleStateClient()
+        runner = self.runner(client)
+        runner.run_state_case(TARGET, "gain")
+        self.assertEqual(runner.counts["state_cases_verified"], 1)
+        captures = [event["receipt"] for event in self.events() if event.get("event") == "rpc_returned"
+                    and isinstance(event["receipt"].get("result"), dict) and "serialization" in event["receipt"]["result"]]
+        self.assertTrue(captures)
+        self.assertTrue(all(receipt["outcome"] == "applied_unverified"
+                            and receipt["result"]["outcome"] == "observed"
+                            and "native_outcome" not in receipt["result"] for receipt in captures))
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {})
+
+    def test_nested_unknown_lifecycle_phases_stop_without_follow_on_requests(self):
+        for phase, writes, restores in (("capture", 0, 0), ("restore", 1, 1),
+                                        ("release", 0, 0), ("released_restore", 1, 2)):
+            self.reset_journal("unknown-" + phase)
+            client = LifecycleStateClient()
+            client.lifecycle_fault_phase = phase
+            runner = self.runner(client)
+            with self.assertRaises(UnknownMutation):
+                runner.run_state_case(TARGET, "gain")
+            self.assertEqual(len(client.writes), writes)
+            self.assertEqual(client.restore_count, restores)
+            self.assertEqual(len(client.calls), client.lifecycle_fault_call_count)
+            self.assertEqual(runner.counts["state_cases_verified"], 0)
+            pending = Journal.pending(self.journal.ledger_path)
+            self.assertTrue(any(key.startswith("state-call-") and value == "UnknownAfterDispatch"
+                                for key, value in pending.items()))
+
+    def test_capture_has_a_durable_inflight_marker_even_without_an_enclosing_case(self):
+        client = LifecycleStateClient()
+        client.lifecycle_fault_phase = "capture"
+        runner = self.runner(client)
+        baseline = runner.snapshot(TARGET)
+        with self.assertRaises(UnknownMutation):
+            runner.capture(baseline)
+        events = self.events()
+        inflight = next(event for event in events if event.get("phase") == "StateLifecycleInFlight")
+        dispatch = next(event for event in events if event.get("event") == "rpc_in_flight" and event.get("tool") == "plugin_state")
+        self.assertLess(inflight["sequence"], dispatch["sequence"])
+        self.assertEqual(Journal.pending(self.journal.ledger_path), {
+            inflight["transaction"]: "UnknownAfterDispatch",
+            f"rpc:{dispatch['call']}": "UnknownAfterDispatch",
+        })
+        self.assertEqual(client.writes, [])
+        self.assertEqual(client.restore_count, 0)
+
+    def test_malformed_or_unknown_nested_outcomes_never_certify_a_state_case(self):
+        for field in ("outcome", "native_outcome"):
+            for index, value in enumerate(("unknown", "outcome_unknown", "unexpected", None, True, [], {})):
+                self.reset_journal(f"malformed-{field}-{index}")
+                client = LifecycleStateClient()
+                client.lifecycle_fault_phase = "capture"
+                client.lifecycle_fault_fields = {field: value}
+                runner = self.runner(client)
+                with self.assertRaises(UnknownMutation):
+                    runner.run_state_case(TARGET, "gain")
+                self.assertEqual([call["action"] for call in client.state_calls], ["capture"])
+                self.assertEqual(client.writes, [])
+                self.assertTrue(Journal.pending(self.journal.ledger_path))
+
+    def test_phase_and_outer_native_outcome_contradictions_stop_at_the_boundary(self):
+        cases = (("capture", {"outcome": "not_applied"}, {}),
+                 ("capture", {"outcome": "applied_unverified"}, {}),
+                 ("restore", {"outcome": "not_applied"}, {}),
+                 ("restore", {"outcome": "observed"}, {}),
+                 ("restore", {"native_outcome": "applied_verified"}, {}),
+                 ("release", {"outcome": "not_applied"}, {}),
+                 ("release", {}, {"outcome": "not_applied"}),
+                 ("released_restore", {"native_outcome": "applied_unverified"}, {}),
+                 ("released_restore", {}, {"outcome": "applied_unverified"}))
+        for index, (phase, native, outer) in enumerate(cases):
+            self.reset_journal("contradiction-" + str(index))
+            client = LifecycleStateClient()
+            client.lifecycle_fault_phase, client.lifecycle_fault_fields, client.lifecycle_fault_outer = phase, native, outer
+            runner = self.runner(client)
+            with self.assertRaises(UnknownMutation):
+                runner.run_state_case(TARGET, "gain")
+            self.assertEqual(len(client.calls), client.lifecycle_fault_call_count)
+            self.assertEqual(runner.counts["state_cases_verified"], 0)
+            self.assertIn("UnknownAfterDispatch", Journal.pending(self.journal.ledger_path).values())
+
+    def test_malformed_outer_outcomes_and_native_result_stop_without_incidental_type_errors(self):
+        for index, outer in enumerate(({"outcome": []}, {"outcome": {}}, {"outcome": None}, {"result": []}, {"result": None})):
+            self.reset_journal("outer-malformed-" + str(index))
+            client = LifecycleStateClient()
+            client.lifecycle_fault_phase = "capture"
+            client.lifecycle_fault_fields = {}
+            client.lifecycle_fault_outer = outer
+            runner = self.runner(client)
+            with self.assertRaises(UnknownMutation):
+                runner.run_state_case(TARGET, "gain")
+            self.assertEqual(client.writes, [])
+            self.assertTrue(Journal.pending(self.journal.ledger_path))
 
     def test_frozen_state_restores_changed_scalar_and_coupled_parameter(self):
         client = StateClient([number("gain", 0.25), number("mix", 0.5)])
