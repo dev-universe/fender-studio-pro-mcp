@@ -2,9 +2,9 @@
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
-Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The bridge, MIDI note creation and editing, 55 representative built-in parameter roundtrips and 3 additional bypass roundtrips have passed live checks. Complete control of every built-in plugin remains unfinished. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for the verified scope and open paths.
+Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The bridge, MIDI note creation and editing, 55 representative built-in parameter roundtrips and 3 bypass roundtrips have passed live checks. A separate follow-up verified all 16 fixed controls on an existing top-level Splitter and 15 named Surround Panner controls in a 5.1 fixture. The 60-class matrix now has 57 classes with changed parameter or native graph controls and 3 with bypass-only control; complete control of every built-in plugin remains unfinished. The earlier 55-class parameter coverage was not rerun on the follow-up binary. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for the evidence boundaries.
 
-The tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, supported plugin parameters, and finite editing operations. Saved-song inspection and WAV analysis also run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
+The 30 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, supported plugin parameters, existing Splitter controls, and finite editing operations. Saved-song inspection and WAV analysis also run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
 Build with Rust 1.88 or newer and Cargo. The installed server runs as a native binary. Node.js and Python are development and validation tools. The server does not launch either runtime.
 
@@ -87,6 +87,10 @@ For a scratch channel named `Scratch` with Mixtool in insert slot 0, read the pa
 ```
 
 Plugin writes require the expected plugin class or instance name. Parameter discovery uses partial metadata candidates. A missing candidate does not prove that the plugin lacks the control. Class matching also cannot distinguish replacement by another instance of the same class in the same slot.
+
+Use `track_formats` to read the host's exact audio format names, then `tracks_edit` with `{"ops":[{"op":"addAudioTrack","name":"Scratch 5.1","format":"5.1"}]}` and the current `expected_document`, using a returned format name. Mono and stereo names can be localized. The operation refuses unknown/non-audio formats and duplicate track names. `panner_get` includes the channel's readable `speakerFormat` descriptor.
+
+For an existing Splitter, `splitters_list` returns its native node name, label and active parameter descriptors; pass that identity to `splitter_set`. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed change/readback/restore checks. Graph creation, connection, deletion and nested graph editing remain unfinished. Surround Panner uses `plugin_parameters` and `plugin_parameter_set` with `kind:"panner"`, `slot:0` and `plugin:"Surround Panner"`. Only the 5.1 fixture and 15 known parameter names are verified. Read native descriptors or use normalized writes: some raw scales are 0..10000. External Effect gain, mix and routing, and full native parameter enumeration remain open.
 
 Read each outcome receipt. `applied_verified` includes operation-specific readback. `applied_unverified` acknowledges an edit without complete verification. `partially_applied` preserves successful earlier work. `outcome_unknown` can mean the edit happened before a timeout. Inspect the actual state before deciding whether to repeat an operation.
 

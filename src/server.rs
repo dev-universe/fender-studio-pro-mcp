@@ -75,6 +75,24 @@ impl McpServer {
                 "Set one standard channel panner parameter using its native raw range and read it back. This does not control a Surround Panner plugin.",
                 true,
             ),
+            named::<SplittersQuery>(
+                "splitters_list",
+                "splitters",
+                "Read native Splitter nodes and parameter values from a channel's insert graph. Use the returned node name and label when editing.",
+                false,
+            ),
+            named::<SplitterSet>(
+                "splitter_set",
+                "setSplitter",
+                "Set one native Splitter parameter on the exact node and expected label. Values use native raw ranges; inactive branches and out-of-range values are refused. Matching readback determines verification.",
+                true,
+            ),
+            named::<Empty>(
+                "track_formats",
+                "trackFormats",
+                "Read supported native audio track format names before tracks_edit addAudioTrack. Speaker types are native masks, not channel counts.",
+                false,
+            ),
             named::<ChannelSet>(
                 "channel_set",
                 "setChannel",
@@ -323,7 +341,12 @@ mod tests {
     #[test]
     fn named_mutations_require_the_document_token() {
         let specs = McpServer::specs();
-        for name in ["channel_set", "plugin_editor_open", "panner_set"] {
+        for name in [
+            "channel_set",
+            "plugin_editor_open",
+            "panner_set",
+            "splitter_set",
+        ] {
             let tool = &specs.iter().find(|s| s.tool.name == name).unwrap().tool;
             assert!(
                 tool.input_schema["required"]
@@ -334,5 +357,41 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
+    }
+
+    #[test]
+    fn splitter_named_tools_match_the_finite_operations() {
+        let specs = McpServer::specs();
+        let read = specs
+            .iter()
+            .find(|s| s.tool.name == "splitters_list")
+            .unwrap();
+        let write = specs
+            .iter()
+            .find(|s| s.tool.name == "splitter_set")
+            .unwrap();
+        assert_eq!(read.operation, Some("splitters"));
+        assert_eq!(write.operation, Some("setSplitter"));
+        assert_eq!(read.tool.input_schema["required"], json!(["channel"]));
+        assert!(
+            read.tool.input_schema["properties"]
+                .get("expected_document")
+                .is_none()
+        );
+        for name in [
+            "channel",
+            "node",
+            "label",
+            "param",
+            "value",
+            "expected_document",
+        ] {
+            assert!(
+                write.tool.input_schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!(name))
+            );
+        }
     }
 }

@@ -340,6 +340,9 @@ fn verify(operation: &Operation, result: &Value) -> bool {
     match operation {
         Operation::SetChannel(change) => equivalent(&change.value, &result["after"]),
         Operation::SetPanner(change) => equivalent(&json!(change.value), &result["after"]["value"]),
+        Operation::SetSplitter(change) => {
+            equivalent(&json!(change.value), &result["after"]["value"])
+        }
         Operation::SetInsertBypass(change) => equivalent(&json!(change.bypassed), &result["after"]),
         Operation::SetPluginParam(change) => {
             if let Some(value) = change.value {
@@ -439,6 +442,30 @@ mod tests {
         assert!(verify(&bypass, &json!({"after":true})));
         assert!(!verify(&bypass, &json!({"after":false})));
         assert!(!verify(&bypass, &json!({"after":null})));
+    }
+
+    #[test]
+    fn splitter_verification_requires_matching_native_raw_readback() {
+        let operation = Operation::from_parts(
+            "setSplitter",
+            json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":"gain[1]","value":0.5}),
+        ).unwrap();
+        assert!(verify(&operation, &json!({"after":{"value":0.5}})));
+        for result in [
+            json!({"after":{"value":0.6}}),
+            json!({"requested":0.5}),
+            json!({"after":{"normalized":0.5}}),
+            json!({"after":{"value":"0.5"}}),
+            json!({"after":{"value":null}}),
+        ] {
+            assert!(!verify(&operation, &result));
+        }
+        let mute = Operation::from_parts(
+            "setSplitter",
+            json!({"channel":"Scratch","node":"Node01","label":"Splitter 1","param":"mute[1]","value":1}),
+        ).unwrap();
+        assert!(verify(&mute, &json!({"after":{"value":true}})));
+        assert!(!verify(&mute, &json!({"after":{"value":false}})));
     }
 
     #[test]

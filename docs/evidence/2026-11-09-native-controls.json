@@ -1,0 +1,219 @@
+{
+  "generated_at": "2026-11-09T00:23:04.597528+00:00",
+  "validation_parent_revision": "068c09e9f697beff7097b8f0d5810a43496fb8ba",
+  "source_dirty_during_run": true,
+  "source_sha256": "eaf4ab6c7d71a21b8b3880c532a3abb6ef79b721f6c223679869344100691f19",
+  "source_files": 40,
+  "binary_sha256": "1fbb849e16ab167a22c202dca33e479f5c2101623500e21120136d9f5e6fb3a0",
+  "asset_sha256": {
+    "assets/bridge/BridgeComponent.js": "a3f097caa7cd45111ebf04a8157ba226ef2e9b727e079438c36a76fc6af6369c",
+    "assets/bridge/BridgeCore.js": "96dd1772b3e95c51da729162b983f3934175e0f8a28940424ae597a6f1c31439",
+    "assets/bridge/BridgeDevice.js": "48e2fae1757547f26e12e253c06293fe66ee36faa8730ad7f80f33bda3159f0b",
+    "assets/bridge/NativeControls.js": "612d95b559ae3080b6837d45f1d000af1621ab1def884a33b010268a058ba6d3",
+    "assets/bridge/StudioOneMCP.device": "c4a2dd556f32cae6fdb3e2f27b49204dd2875898d5db72517bddce188d2b4610",
+    "assets/bridge/StudioOneMCP.surface.xml": "f3bc601db79f4e1154cb31feff7c93724b8db2b947d76c60e0d6c0a9309cb79e",
+    "assets/edit-tasks/extension/installdata.xml": "f5f11c0866fc2b6535c4e5d4d5444973d24af202cfbb77ee8a8c529c58d9c28a",
+    "assets/edit-tasks/extension/metainfo.xml": "b46bc7ce855daf6c98f3b7a8d1e59a15395741c71959dca5b44f0504fa9e7ec4",
+    "assets/edit-tasks/package/McpEdit.js": "60722038e3afe40560a18060fb08a21dbbdcc5b471bdb4a14ae6d9865b07416d",
+    "assets/edit-tasks/package/McpTaskGuard.js": "d90ddbe0a5a0a35f4bedb35298a95b5b2723031bd713961850d37f129d0da937",
+    "assets/edit-tasks/package/McpTrackEdit.js": "8a8be25890965f80edbdf69ec320173c8e294df804a1bb61ba3a4a397e9905c1",
+    "assets/edit-tasks/package/McpTrackOps.js": "38943fd84470e2d7033ce67360e7340657cdd1ffb1597c85646c3f39fb6b2ee6",
+    "assets/edit-tasks/package/classfactory.xml": "5d37f661c7aed853b793890672a0968dacc621e8905a16537a84dbdcee9380d7",
+    "assets/edit-tasks/package/metainfo.xml": "2fb74b27515e85e8f2a44b784a8a0a47676db780c53bc3a534edd39149b389c6"
+  },
+  "installed_assets_match_manifest": true,
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS",
+    "architecture": "arm64",
+    "scope": "one installed Apple Silicon host; stopped synthetic scratch session"
+  },
+  "checks": {
+    "rust_tests": 45,
+    "javascript_tests": 119,
+    "fmt": "passed",
+    "clippy": "passed",
+    "release_build": "passed",
+    "msrv": "1.88.0",
+    "msrv_check": "passed",
+    "remote_ci": "not_run_workflow_authorization_unavailable"
+  },
+  "tools": [
+    "host_status",
+    "session_get",
+    "tracks_list",
+    "channels_list",
+    "panner_get",
+    "panner_set",
+    "splitters_list",
+    "splitter_set",
+    "track_formats",
+    "channel_set",
+    "transport_set",
+    "transport_action",
+    "notes_read",
+    "notes_edit",
+    "tracks_edit",
+    "plugins_list",
+    "plugin_catalog",
+    "plugin_parameters",
+    "plugin_inspect",
+    "plugin_editor_open",
+    "plugin_parameter_set",
+    "plugin_bypass",
+    "send_set",
+    "automation_mode_set",
+    "commands_search",
+    "command_run",
+    "operations_list",
+    "operation_run",
+    "song_read",
+    "audio_analyze"
+  ],
+  "track_formats": {
+    "status": "observed",
+    "audio_formats": 16,
+    "speakerType": "native speaker mask, not channel count",
+    "localized_names": true
+  },
+  "native_controls": {
+    "status": "passed",
+    "started_at": "2026-11-09T00:20:11.185859+00:00",
+    "completed_at": "2026-11-09T00:21:50.372598+00:00",
+    "case_count": 36,
+    "receipt_count": 902,
+    "splitter": {
+      "cases": 21,
+      "parameters": [
+        "gain[1]",
+        "gain[2]",
+        "gain[3]",
+        "gain[4]",
+        "gain[5]",
+        "mute[1]",
+        "mute[2]",
+        "mute[3]",
+        "mute[4]",
+        "mute[5]",
+        "numOutputs",
+        "splitFreq[1]",
+        "splitFreq[2]",
+        "splitFreq[3]",
+        "splitFreq[4]",
+        "splitMode"
+      ],
+      "scope": "one existing top-level Splitter; all 16 fixed controls at five branches; counts 2..5 and modes 0..2",
+      "status": "changed_readback_restored",
+      "initial_active_state_restored": true,
+      "hidden_branch_state": "baseline captured only after expansion; no claim about pre-expansion hidden values"
+    },
+    "surround_panner": {
+      "cases": 15,
+      "parameters": [
+        "editMode",
+        "azimuth",
+        "altitude",
+        "spread",
+        "size",
+        "balanceAzimuth",
+        "balanceAmount",
+        "lfeLevel",
+        "centerLevel",
+        "disableCenter",
+        "muteLfe",
+        "sendLfe",
+        "snap",
+        "sizeLock",
+        "soloLfe"
+      ],
+      "speaker_format": "5.1",
+      "scope": "15 named native candidates on a representative 5.1 Surround Panner, not complete parameter enumeration or other speaker formats",
+      "status": "changed_readback_restored",
+      "initial_state_restored": true
+    },
+    "numeric_tolerance": "abs(actual-requested) <= 1e-6 * (1 + abs(requested))"
+  },
+  "session": {
+    "status": "passed",
+    "track_count": 65,
+    "second_owner": "passed",
+    "stale_document": "passed",
+    "note_parts": 3,
+    "notes": 4,
+    "change_readback": true,
+    "restore_readback": true
+  },
+  "performance": {
+    "ping": {
+      "requested_samples": 100,
+      "successful_samples": 100,
+      "failed_samples": 0,
+      "timeouts": 0,
+      "wall_successful": {
+        "samples": 100,
+        "p50_ms": 64.39152100000001,
+        "p95_ms": 68.369541,
+        "min_ms": 55.735458,
+        "max_ms": 70.342875
+      }
+    },
+    "tracks": {
+      "requested_samples": 20,
+      "successful_samples": 20,
+      "failed_samples": 0,
+      "timeouts": 0,
+      "wall_successful": {
+        "samples": 20,
+        "p50_ms": 62.503604499999994,
+        "p95_ms": 67.143417,
+        "min_ms": 55.564875,
+        "max_ms": 67.918334
+      }
+    }
+  },
+  "prior_coverage": {
+    "evidence": "2026-11-09.json",
+    "representative_parameter_classes": 55,
+    "bypass_only_classes": 3,
+    "note": "prior binary, not rerun in the 36-case native-controls acceptance"
+  },
+  "limits": [
+    "Candidate-name discovery is partial, not full native parameter enumeration",
+    "External Effect gain, mix, hardware routing and roundtrip latency remain unverified",
+    "Splitter controls address existing top-level nodes only; no graph creation, connection, deletion or nested rack operations",
+    "Surround Panner verified only on a 5.1 fixture; no acoustic or all-layout claim",
+    "Stable same-class instance replacement and EditTask boundary lifetime gaps remain",
+    "No Windows or Intel Mac live validation"
+  ],
+  "native_loader_research": {
+    "status": "normal_profile_service_activation_and_cleanup_observed",
+    "scope": "private independently authored Rust loader-only probe; no document/UI/audio access and no additional plugin control coverage",
+    "source_sha256": "deac24ce66bf246979c35006f81e7cb35814bc0a9a92d48e9f2d30248ce2b21c",
+    "binary_sha256": "a5d237fd42f1eb766069c9351830456390a219234fad0303cedec28c510dfac6",
+    "abi_source": "https://github.com/cclsoftware/ccl-framework/tree/8a8cab590b1a2e10cdef3df76ea4b2739c92121f",
+    "observed_events": [
+      "module_init",
+      "module_ready",
+      "factory_requested",
+      "factory_version",
+      "factory_count",
+      "factory_description",
+      "factory_released",
+      "module_exit",
+      "module_init",
+      "module_ready",
+      "factory_requested",
+      "service_create",
+      "service_initialize",
+      "service_terminate",
+      "service_destroy",
+      "factory_released",
+      "module_exit"
+    ],
+    "last_factory_refs": 0,
+    "last_services_live": 0,
+    "normal_loader": "own unpacked extension under user profile; no app bundle or security changes",
+    "distribution_limit": "one locally installed host only; no claim of acceptance on other installations"
+  }
+}

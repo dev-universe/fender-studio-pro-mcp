@@ -1,22 +1,23 @@
 # Built-in plugin validation
 
-Validated on 9 November 2026 against Fender Studio Pro 8.1.1 Build 113103 on macOS arm64. The 60-class matrix contains **55 representative parameter roundtrips, 3 bypass roundtrips and 2 classes without verified control**. Full control of every built-in plugin has not been established.
+Validated on 9 November 2026 against Fender Studio Pro 8.1.1 Build 113103 on macOS arm64. Across the separate runs below, the 60-class matrix contains **57 classes with changed parameter or native graph controls, 3 bypass-only classes and 0 classes without verified control**. Full control of every built-in plugin has not been established.
 
-The [public evidence](evidence/2026-11-09.json) records the aggregate, per-class results and source/binary/asset hashes. The final inventory run covered 58 classes: 47 audio effects, 7 instruments and 4 Note FX. Console Shaper and Surround Panner are tracked separately below. These results supersede earlier candidate, identity-mapping and fixture failures. See [session validation](VALIDATION.md) for the test environment and remaining limits.
+The [original public evidence](evidence/2026-11-09.json) records 55 representative parameter passes and 3 bypass passes, including the 58-class inventory and a separate Console Shaper check. The [native-controls follow-up](evidence/2026-11-09-native-controls.json) records 36 successful change/readback/restore cases: 21 for Splitter and 15 for Surround Panner, with 902 receipts. The older inventory was not rerun in full on this follow-up binary. See [session validation](VALIDATION.md) for the test environment and remaining limits.
 
 ## Reading the matrix
 
 - **Parameter pass** means a named parameter changed to a different finite raw value on the live instance, that value was read back, and the original raw value was restored and matched within `1e-6 × (1 + |original|)`. Normalized requests can quantize; the test does not require exact equality with the requested normalized value.
 - **Bypass pass** means the insert-slot bypass changed, was read back, and was restored with readback. It does not establish DSP parameter or signal-path control.
+- **Native graph pass** covers the fixed controls of one existing top-level Splitter. It does not establish graph construction or arbitrary routing edits.
 - **Readable** counts candidate names resolved on that instance. **Missing** counts queried candidate names that did not resolve. Candidate discovery is partial; these are not counts of all plugin controls.
-- **—** means not measured. Zero missing candidates does not prove complete enumeration. Splitter was skipped and Phase Meter had an empty candidate list; their zero counts establish no parameter coverage.
+- **—** means not measured. Zero missing candidates does not prove complete enumeration. Phase Meter had an empty candidate list; its zero counts establish no DSP parameter coverage. Splitter's 16 controls were read with five active branches.
 - Counts depend on the loaded model and selected focus. A representative pass does not certify every control, preset or plugin action.
 
 ## Audio effects
 
 | Plugin | Kind | Readable | Missing | Tested parameter | Status |
 | --- | --- | ---: | ---: | --- | --- |
-| Splitter | Effect | 0 | 0 | — | Unsupported: graph control |
+| Splitter | Graph | 16 | 0 | Count, mode, gains, mutes, crossovers | Native graph pass |
 | External Effect Mono | Effect | 1 | 11 | — | Bypass pass |
 | External Effect Stereo | Effect | 1 | 11 | — | Bypass pass |
 | Channel Strip | Effect | 14 | 0 | `autogain` | Parameter pass |
@@ -68,7 +69,7 @@ External Effect Mono and Stereo each exposed one readable candidate and 11 unres
 
 Phase Meter's slot bypass passed. Its editor window was also observed in the actual app through `plugin_editor_open`; this does not certify meter accuracy or control of every editor element.
 
-Splitter is a graph node. The final run reported graph control as unsupported and inserted no additional Splitter node. Graph construction, branching and nested processing remain unverified.
+Splitter is a graph node. The follow-up verified counts 2..5, modes 0/1/2, `gain[1..5]`, `mute[1..5]` and `splitFreq[1..4]`, including native value changes, readback and restoration. `splitters_list` and `splitter_set` address the exact node name and expected label under the channel's insert graph. The five-branch baseline was captured after expansion; hidden branch values before expansion were not observed. Creating, connecting or deleting graph nodes, placing plugins in branches, and nested graph control remain unverified.
 
 ## Instruments
 
@@ -100,11 +101,13 @@ All four Note FX passed a representative parameter roundtrip on identified live 
 | Plugin | Kind | Readable | Missing | Tested parameter | Status |
 | --- | --- | ---: | ---: | --- | --- |
 | Console Shaper | Mix FX | 6 | 0 | `drive` | Parameter pass |
-| Surround Panner | Panner | — | — | — | Pending: multichannel fixture |
+| Surround Panner | Panner | 15 | 0 | 15 known controls below | Parameter pass: 5.1 fixture |
 
 Console Shaper was inserted through the native AudioBusMixFX path. Six candidates were readable, none of those candidates was missing, and `drive` changed with readback before exact raw restoration. This verifies one Mix FX class and parameter, not every Mix FX rack operation.
 
-Surround Panner still needs a compatible multichannel fixture. The separate native **Simple** channel panner exposed five values, including the read-only string `pannerType`, and four writable controls. `panWidth` changed from 1 to 0.75 and back to 1 with verified readback. That result does not establish Surround Panner class support.
+Surround Panner's verified native device path is `Panner/AudioPanFX/FXSlot/Device`. Access uses `kind:"panner"`, `slot:0` and the expected `plugin:"Surround Panner"` identity. In one 5.1 fixture, all 15 known names changed with native readback and original raw restoration: `editMode`, `azimuth`, `altitude`, `spread`, `size`, `balanceAzimuth`, `balanceAmount`, `lfeLevel`, `centerLevel`, `disableCenter`, `muteLfe`, `sendLfe`, `snap`, `sizeLock` and `soloLfe`. These are named candidates, not complete parameter enumeration. Some native raw ranges use 0..10000; consult descriptors or use normalized writes. Other speaker formats and audible spatial behavior remain unverified.
+
+The separate native **Simple** channel panner exposed five values, including the read-only string `pannerType`, and four writable controls. All four passed change/readback/restore checks. `panner_get` now also reports the readable `speakerFormat` descriptor. `track_formats` discovers supported audio format names, and `tracks_edit` can create an explicitly named audio track using an exact returned format; mono/stereo names can be localized.
 
 ## Target identity and scope
 
@@ -112,4 +115,4 @@ Writes require the expected plugin class or instance name. Current checks cannot
 
 Presets, nested graphs, modulation assignments, sample and file selection, model switching, metering and hardware-dependent behavior need their own verification. The matrix contains no claim of complete native parameter enumeration or all-controls support.
 
-Only plugin names, candidate counts, tested parameter names and outcomes are published here. Raw DAW receipts, proprietary metadata, preset values, user audio and session identifiers remain local and are excluded from Git. The [plugin verification script](../scripts/verify_live_plugins.py) reproduces the 58-class inventory checks in a disposable scratch session; additional native-path and UI observations were checked separately.
+Only plugin names, candidate counts, tested parameter names and outcomes are published here. Raw DAW receipts, proprietary metadata, preset values, user audio and session identifiers remain local and are excluded from Git. The [plugin verification script](../scripts/verify_live_plugins.py) reproduces the earlier 58-class inventory checks. The [native-controls script](../scripts/verify_native_controls.py) reproduces the Splitter and 5.1 Surround Panner checks using existing empty, muted scratch fixtures.

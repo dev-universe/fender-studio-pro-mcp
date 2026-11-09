@@ -4,6 +4,7 @@
 include_file("resource://com.presonus.musicdevices/sdk/controlsurfacecomponent.js");
 include_file("BridgeConfig.js");
 include_file("BridgeCore.js");
+include_file("NativeControls.js");
 
 const AUTOMATION_MODES = ["off", "read", "touch", "latch", "write"];
 const PANNER_FIELDS = ["pannerType", "stereoMode", "panX1", "panX2", "panWidth"];
@@ -70,6 +71,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     readParam(el, id) {
+        if (!el || typeof el.getParamValue !== "function") return null;
         try { const v = el.getParamValue(id); return v === undefined ? null : v; } catch (_) { return null; }
     }
 
@@ -121,7 +123,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (channel && typeof channel.bridgeError === "string") return { error: channel.bridgeError };
         const panner = channel && typeof channel.find === "function" ? channel.find("Panner") : null;
         if (!panner || typeof panner.findParameter !== "function") return { error: "the standard channel panner is not available" };
-        return { panner: panner };
+        return { panner: panner, channel: channel };
     }
 
     panner(args) {
@@ -137,7 +139,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             }
             else missing.push(name);
         }
-        return { channel: args.channel, params: params, missing: missing };
+        const format = typeof target.channel.findParameter === "function" ? target.channel.findParameter("speakerSetup") : null;
+        return { channel: args.channel, params: params, missing: missing, speakerFormat: format ? this.paramInfo(format) : null };
     }
 
     setPanner(args) {
@@ -153,6 +156,9 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         parameter.setValue(args.value, true);
         return { channel: args.channel, param: args.param, before: before, after: this.paramInfo(parameter) };
     }
+
+    splitters(args) { return new NativeControls(this).splitters(args); }
+    setSplitter(args) { return new NativeControls(this).setSplitter(args); }
 
     // ---- inserts and sends ----------------------------------------------------
     //
@@ -316,6 +322,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     pluginOf(args) {
         if (args.kind === "instrument") return this.instrumentOf(args);
         if (args.kind === "note_effect") return this.noteEffectOf(args);
+        if (args.kind === "panner") return this.pannerPluginOf(args);
         if (args.kind && args.kind !== "effect" && args.kind !== "mix_fx") return { error: "this plugin kind has no verified live parameter path yet" };
         const c = this.channelByLabel(args.channel);
         if (c.error) return c;
@@ -337,6 +344,24 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const matches = !expected || String(expected) === String(label) || String(expected) === String(className)
             || (el && typeof el.matchesPlugInClass === "function" && el.matchesPlugInClass(String(expected)));
         return matches ? { name: typeof className === "string" && className ? className : String(label) } : { error: "plugin class or instance identity does not match" };
+    }
+
+    pannerPluginOf(args) {
+        if (args.slot !== undefined && args.slot !== 0) return { error: "the channel panner has only slot 0" };
+        if (!this.bridge || typeof this.bridge.mixerChannel !== "function") return { error: "the native mixer is not available" };
+        const channel = this.bridge.mixerChannel(args.channel);
+        if (channel && channel.bridgeError) return { error: channel.bridgeError };
+        const comp = channel && typeof channel.find === "function" ? channel.find("Panner/AudioPanFX/FXSlot") : null;
+        const dev = comp && typeof comp.find === "function" ? comp.find("Device") : null;
+        if (!dev || typeof dev.findParameter !== "function" || typeof comp.findParameter !== "function") return { error: "the channel has no instantiated panner plugin" };
+        const labelParam = comp.findParameter("deviceName");
+        const label = labelParam && typeof labelParam.value === "string" ? labelParam.value : null;
+        // The native PanFX slot is outside the surface's ordinary insert bank.
+        // Require its reported identity and its actual Device to agree.
+        if (!label || dev.name !== label) return { error: "the panner plugin identity is unavailable or inconsistent" };
+        const identity = this.pluginIdentity(null, label, args.plugin);
+        if (identity.error) return identity;
+        return { name: identity.name, instanceName: label, device: dev, component: comp, element: null };
     }
 
     instrumentOf(args) {
