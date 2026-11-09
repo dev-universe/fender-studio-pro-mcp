@@ -394,6 +394,77 @@ fn page_value(token: &str, page: &Page) -> Value {
         "offset":page.offset,"next":page.next,"catalog_complete":page.catalog_complete,"excluded_on_page":excluded,
         "factory_origin":"not_inferred","recall_policy":"matching_class_available_local_file"})
 }
+/// Only a public QI's documented absence is an optional capability miss.
+/// Failed/malformed outputs are not owned references and are never inspected.
+fn name_interface(object: *mut c_void, iid: &Uid) -> Result<Option<Owned>, String> {
+    let mut out = ptr::null_mut();
+    let result = unsafe { (unknown_vtable(object).query)(object, iid, &mut out) };
+    match (result, out.is_null()) {
+        (OK, false) => Ok(Some(Owned(out))),
+        (NO_INTERFACE, true) => Ok(None),
+        _ => Err("preset name interface query returned invalid evidence".into()),
+    }
+}
+fn unavailable_name(reason: &'static str) -> Value {
+    json!({"status":"unavailable","reason":reason,"scope":"preset_component_display","atomic_snapshot":false})
+}
+fn current_name<G: FnMut() -> Result<(), String>>(
+    presets: &Owned,
+    identity: &Owned,
+    api: &Api,
+    guard: &mut G,
+) -> Result<Value, String> {
+    guard()?;
+    let mut controller = None;
+    let mut canonical = None;
+    let mut parameter = None;
+    let result = (|| {
+        let queried = name_interface(presets.0, &CONTROLLER);
+        controller = queried?.map(|handle| Controller {
+            handle,
+            lease: None,
+        });
+        guard()?;
+        let Some(controller) = controller.as_ref() else {
+            return Ok(unavailable_name("controller_unavailable"));
+        };
+        canonical = name_interface(controller.handle.0, &UNKNOWN)?;
+        guard()?;
+        if canonical.as_ref().is_none_or(|owner| owner.0 != identity.0) {
+            return Err("preset name controller identity changed".into());
+        }
+        parameter = match controller.find("presetName", api) {
+            Ok(parameter) => Some(parameter),
+            Err(_) => None,
+        };
+        guard()?;
+        let Some(parameter) = parameter.as_ref() else {
+            return Ok(unavailable_name("preset_name_unavailable"));
+        };
+        match parameter.string_display("presetName", guard) {
+            Ok(display_text) => Ok(json!({"status":"observed","display_text":display_text,
+                "scope":"preset_component_display","atomic_snapshot":false})),
+            Err(parameters::Error::UnsupportedKind) => {
+                Ok(unavailable_name("preset_name_not_string"))
+            }
+            Err(error) => Err(error.to_string()),
+        }
+    })();
+    // The original Route pins Presets through ALL temporary owner cleanup.
+    // Its fresh attachment/context guard must be the last foreign observation.
+    let before_release = guard();
+    drop(parameter);
+    drop(canonical);
+    drop(controller);
+    let after_release = guard();
+    before_release.and(after_release)?;
+    result
+}
+pub(super) fn invalidate(value: &mut Value) {
+    if let Some(value) = value.as_object_mut() {
+        value.remove("current_preset_observation");
+    }
+}
 fn page(
     ctx: &Context<'_>,
     catalog_token: Option<&str>,
@@ -422,7 +493,13 @@ fn page(
         .catalog
         .page(offset, limit, &mut || lease.route.guard(ctx))
         .map_err(|e| e.to_string())?;
-    let value = page_value(&token, &page);
+    let mut value = page_value(&token, &page);
+    value["current_preset_observation"] = current_name(
+        &lease.route.presets,
+        &lease.route._presets_identity,
+        ctx.api,
+        &mut || lease.route.guard(ctx),
+    )?;
     for entry in &page.entries {
         lease.issued.borrow_mut()[entry.index as usize] = true;
     }
@@ -526,6 +603,9 @@ pub(super) fn execute(
     }
 }
 
+#[cfg(test)]
+#[path = "presets_name_tests.rs"]
+mod name_tests;
 #[cfg(test)]
 #[path = "presets_tests.rs"]
 mod tests;

@@ -83,6 +83,15 @@ this catalog can be recalled. Matching-class presets backed by existing native
 local files are recallable; unavailable, remote, package/resource and mismatched
 entries remain explicitly excluded. `excluded_on_page` reports reason counts
 without paths or URL strings. Read-only does not establish factory origin.
+Successful preset list pages additionally observe the exact PresetComponent
+`presetName` display through its declared controller and parameter interfaces.
+`current_preset_observation` reports an exact display string or an explicit
+unavailable reason, with `scope: preset_component_display` and
+`atomic_snapshot: false`. It supplies no URL, dirty-state inference or stronger
+recall result. All temporary owners release before the final fresh attachment
+and context checks; a failed publication check removes this observation.
+This additive path has source/unit coverage; actual-host acceptance is pending.
+
 Recall uses the fixed Presets IDataTarget and returns `accepted` separately
 from `verified:false`: acceptance yields `applied_unverified`, never a sound or
 state verification claim. Loss after dispatch yields `unknown` with no retry.

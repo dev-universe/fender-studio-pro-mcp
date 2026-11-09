@@ -77,6 +77,60 @@ impl RawParameter {
     pub fn as_borrowed_raw(&self) -> NonNull<c_void> {
         NonNull::new(self.parameter.raw()).expect("owned pointer is nonnull")
     }
+    /// Reads one fixed String parameter's display without property reflection,
+    /// formatting inputs, edits or updates. The caller pins and guards its
+    /// controller/document route through use and eventual parameter release.
+    pub fn string_display<G: FnMut() -> Result<(), String>>(
+        &self,
+        expected_name: &str,
+        guard: &mut G,
+    ) -> Result<String, Error> {
+        self.check_thread()?;
+        guard().map_err(Error::Guard)?;
+        let mut output = None;
+        let mut signature = None;
+        let result = (|| {
+            let before = self.signature();
+            guard().map_err(Error::Guard)?;
+            let before = before?;
+            if before.0 != expected_name {
+                return Err(Error::MetadataChanged);
+            }
+            if before.2 != Kind::String {
+                return Err(Error::UnsupportedKind);
+            }
+            signature = Some(before);
+            output = Some(NativeString::empty(self.text)?);
+            guard().map_err(Error::Guard)?;
+            let get: unsafe extern "C" fn(*mut c_void, *mut StringRepr) =
+                unsafe { ffi::method(self.parameter.raw(), 44) };
+            unsafe {
+                get(
+                    self.parameter.raw(),
+                    output.as_mut().expect("OUT string").as_mut_ptr(),
+                )
+            };
+            guard().map_err(Error::Guard)?;
+            let copied = output.as_ref().expect("OUT string").copy();
+            // copy() releases its temporary IString pin before this guard.
+            guard().map_err(Error::Guard)?;
+            copied
+        })();
+        let before_release = guard().map_err(Error::Guard);
+        drop(output);
+        let after_release = guard().map_err(Error::Guard);
+        before_release.and(after_release)?;
+        if result.is_ok() {
+            // OUT String destruction can reenter without changing the route.
+            // Refresh this fixed parameter's signature after that cleanup too.
+            let after = self.signature();
+            guard().map_err(Error::Guard)?;
+            if Some(after?) != signature {
+                return Err(Error::MetadataChanged);
+            }
+        }
+        result
+    }
     /// Read List labels without selecting an index. Each native label call uses
     /// IParameter.getString(String OUT, Variant const reference IN), not a
     /// nontrivial Variant return or IListParameter's selected values.

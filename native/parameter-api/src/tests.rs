@@ -14,6 +14,8 @@ use std::{
 
 #[path = "details_tests.rs"]
 mod details_tests;
+#[path = "display_tests.rs"]
+mod display_tests;
 #[path = "formatting_tests.rs"]
 mod formatting_tests;
 

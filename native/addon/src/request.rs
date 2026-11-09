@@ -1207,6 +1207,7 @@ impl Reply {
         digest::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
+        presets::invalidate(&mut self.value);
         if self
             .nodes
             .as_ref()
@@ -1864,6 +1865,16 @@ mod tests {
                 .unwrap()
                 .needs_auxiliary()
         );
+    }
+
+    #[test]
+    fn reply_context_invalidation_strips_the_optional_preset_display_observation() {
+        let mut reply = Reply::unbound(json!({"ok":true,"outcome":"observed",
+            "current_preset_observation":{"status":"observed","display_text":"stale"}}));
+        reply.invalidate("preset attachment changed".into());
+        assert_eq!(reply.value["ok"], false);
+        assert_eq!(reply.value["outcome"], "not_applied");
+        assert!(reply.value.get("current_preset_observation").is_none());
     }
     fn parse(value: Value) -> Result<Request, String> {
         let r: Request = serde_json::from_value(value).map_err(|e| e.to_string())?;
