@@ -11,8 +11,9 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 4,227 direct fields plus four current-focus bindings | 29 Focus and two MIDI-controller roles |
+| Impact | 4,227 direct fields plus eight current-focus bindings | 25 Focus and two MIDI-controller roles |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
+| Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -285,10 +286,10 @@ contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass
 including both sample offsets, pan and level. The latest 385-field unit completed
 in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
-The four separate current-focus results cover cutoff, sample start/end offsets
-and pitch-envelope attack, outside this direct-field count. Each observed pad0
+The eight separate current-focus results cover cutoff, sample start/end offsets
+and all five pitch-envelope controls, outside this direct-field count. Each observed pad0
 binding passed two complete changed reads and two complete restored reads.
-Other pad selections, 29 remaining Focus
+Other pad selections, 25 remaining Focus
 roles and two MIDI-controller roles remain unverified.
 
 A separate finite instrument sweep has completed all 32 selected ordinary
@@ -342,9 +343,19 @@ does not identify the old crash cause or prove a crash fix.
 The first four-name Ampire pilot stopped after its first parameter. Its own
 exact value was restored, but the strict full-provider comparison observed
 changes in the two read-only output peak meters. No completed case was counted
-and no next parameter was written. The failed run remains evidence while the
-read-only meter observation policy is reviewed separately from exact writable
-restoration.
+and no next parameter was written. The failure prompted a separate review of
+the read-only meter observation policy and exact writable restoration.
+
+An independently checked diagnostic confirmed that the Ampire failure changed
+only its two read-only peak meters. The full 94-record native schema and all
+69 non-read-only values matched exactly in the diagnostic pages and both native
+restoration digests. A fresh four-field pilot and 35-field remainder then passed
+with the existing explicit read-only observation policy: all writable values
+and all metadata remained strict, while read-only values were recorded without
+requiring them to stop changing. The original failed unit still counts zero.
+Separate final-checkpoint units also passed Mustang (3), Pedalboard (2), Rumble
+(3) and Vocal Tune (4), completing this finite 51-field partition. This does not
+complete their other model, coupled or dedicated roles.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets

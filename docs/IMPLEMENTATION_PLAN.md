@@ -10,9 +10,17 @@ P0부터 실제 호스트 증거를 쌓는다. Rust 서버, 브리지와 EditTas
 [실환경 검증](VALIDATION.md)과 [내장 플러그인 지원표](BUILTIN_PLUGINS.md)를 기준으로 읽는다.
 참고 프로젝트의 버전과 한계는 [조사 문서](RESEARCH.md)에 기록했다.
 
-## Current implementation checkpoint — 2026-11-09
+## Current implementation checkpoint — 2026-11-10
 
-macOS 8.1.1 실제 검증을 계속 진행해 Rust MCP 31개 도구, 브리지, EditTask와 선택 설치형 Rust CCL 확장을 구현했다. 최신 실행에서 내장 60종을 확인했고, 59개 현재 제공자의 8,668개 인덱스와 별도 Splitter 16개 고정 컨트롤을 읽었다. 59종의 파라미터/그래프 변경·읽기·복원과 Phase Meter 바이패스가 통과했다. External Effect 양 모드의 게인·믹스·수동 지연·위상·한글 메모, 공간 제어 36개 사례와 같은 빌드의 P0 회귀도 확인했다.
+macOS 8.1.1에서 Rust MCP, 브리지, EditTask와 선택 설치형 Rust CCL 확장을 실제 검증하고 있다. 내장 60종의 현재 제공값 8,668개를 읽었고, 모델·프리셋·그래프와 전체 파라미터의 변경·복원 검증을 별도 단위로 진행한다. 현재 체크포인트는 다음과 같다. 자세한 판정과 실패 이력은 [플러그인 상태 검증](PLUGIN_STATE_VALIDATION.md)에 보존한다.
+
+- [x] Mojito 32개, Mai Tai 275개, SampleOne 229개, Presence 219개, 선정한 일반 악기 파라미터 총 755개를 변경·읽기·복원했다.
+- [x] Ampire 39개, Mustang 3개, Pedalboard 2개, Rumble 3개, Vocal Tune 4개, 추가 일반 제어 총 51개의 마지막 복원 체크포인트가 통과했다.
+- [x] Impact 직접 제어 4,227개, Surround Panner의 현재 쓰기 가능한 47개, 고정 중첩 Splitter 제어 42개를 검증했다.
+- [x] 선택자 23개의 비기본 선택 298건과 프리셋 카탈로그 59종의 수명 주기를 검증했다. 이는 모든 모델 조합이나 모든 프리셋 호출의 완료를 뜻하지 않는다.
+- [ ] Impact Focus는 33개 중 8개가 완료됐다. 나머지 25개와 MIDI 현재값 역할 2개를 별도로 검증한다.
+- [ ] Chorder의 GUI 수신자는 기존 DSP 수신자와 다름을 확인했다. 실제 GUI 경로 편집과 저장·재시작 후 유지 검증은 진행 중이다.
+- [ ] Mustang/Rumble의 비어 있는 모델 목록, 추가 프리셋 호출, 일반 그래프 생성·연결·삭제와 전용 이벤트·하드웨어 역할은 남아 있다.
 
 아래 P0–P5는 최초 계획과 아직 남은 게이트를 함께 보존한 문서다. 완료 여부는 [최신 검증](VALIDATION.md), [내장 플러그인 표](BUILTIN_PLUGINS.md), [정제한 증거](evidence/2026-11-09-native-provider.json)를 기준으로 읽는다. 하드웨어 포트 목록은 현재 노출된 항목이 0개였으며, 실제 라우팅·핑·오디오 신호, 전체 GUI/파일 동작과 모든 모델·선택 상태를 완료했다고 주장하지 않는다.
 
