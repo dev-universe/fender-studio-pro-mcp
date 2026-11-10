@@ -11,8 +11,8 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 4,227 direct fields plus one current-focus cutoff binding | 32 Focus and two MIDI-controller roles |
-| Other instruments | Mojito 32, Mai Tai 275 and a four-field SampleOne pilot | Remaining SampleOne/Presence fields, MIDI roles and macros |
+| Impact | 4,227 direct fields plus two current-focus bindings | 31 Focus and two MIDI-controller roles |
+| Other instruments | Mojito 32, Mai Tai 275, Presence 219 and a four-field SampleOne pilot | Remaining SampleOne fields, MIDI roles and macros |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -285,14 +285,17 @@ contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass
 including both sample offsets, pan and level. The latest 385-field unit completed
 in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
-The separate current-focus cutoff result is outside this direct-field count;
-32 other Focus roles and two MIDI-controller roles remain unverified.
+The separate current-focus cutoff and sample-start-offset results are outside
+this direct-field count. Both observed pad0 bindings passed two complete changed
+reads and two complete restored reads. Other pad selections, 31 remaining Focus
+roles and two MIDI-controller roles remain unverified.
 
 A separate finite instrument sweep has completed all 32 selected ordinary
-Mojito fields and all 275 selected ordinary Mai Tai fields. Each case changed
+Mojito fields, all 275 selected Mai Tai fields and all 219 selected Presence
+fields. Each case changed
 one field and restored its exact original carrier, with two fresh complete
 native projection matches before advancing and complete public provider
-checkpoints. The full providers contained 37 and 283 records respectively.
+checkpoints. The full providers contained 37, 283 and 241 records respectively.
 Mai Tai's overall runner result remains partial because its separately held
 character-model selector is outside these scalar cases; all selected ordinary
 cases and final restoration checkpoints passed. MIDI inputs, the unresolved
@@ -308,6 +311,11 @@ inspection; the next read lost the session. The crash cause is unproved. No
 automatic restore or setter retry followed. Reopening the saved scratch and two
 complete 235-record observations recovered the exact original values and schema;
 the saved file was unchanged. The failed unit remains separate evidence.
+A later bounded read of the same name at its default value returned normally,
+with two complete original-provider matches afterward and no parameter setter.
+Static binary and exact SDK/compiler evidence identifies a routine in the crash
+stack as global scripting garbage collection. This identifies a stack phase,
+not the corrupting code or a verified crash fix.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
