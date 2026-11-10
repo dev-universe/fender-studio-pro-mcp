@@ -16,6 +16,8 @@ use crate::{
     operation::{Operation, Request},
 };
 
+mod chorder_learning;
+
 #[derive(Clone)]
 pub struct RuntimeHandle {
     sender: SyncSender<Envelope>,
@@ -68,6 +70,7 @@ impl RuntimeHandle {
 
     pub async fn execute(&self, request: Request) -> Result<Receipt, OperationError> {
         request.operation.validate()?;
+        require_learning_document(&request)?;
         let (reply, result) = oneshot::channel();
         self.sender
             .try_send(Envelope { request, reply })
@@ -86,6 +89,21 @@ impl RuntimeHandle {
             )
         })?
     }
+}
+
+fn require_learning_document(request: &Request) -> Result<(), OperationError> {
+    if request.operation.requires_explicit_document()
+        && request
+            .expected_document
+            .as_ref()
+            .is_none_or(String::is_empty)
+    {
+        return Err(OperationError::new(
+            "missing_precondition",
+            "Read host_status and supply expected_document for Chorder learning controls",
+        ));
+    }
+    Ok(())
 }
 
 fn execute(
@@ -237,6 +255,18 @@ fn execute(
     {
         invalidate_gui_edit(&mut response.result, false);
         response.result["error"] = json!({"code":"invalid_gui_edit_receipt", "message":"The GUI edit receipt did not establish the finite receiver contract"});
+    }
+    if let Operation::ChorderLearningGet(query) = &operation
+        && response.ok
+        && !chorder_learning::valid_get(query, &response.result)
+    {
+        chorder_learning::invalidate_get(&mut response.result);
+    }
+    if let Operation::ChorderLearningSet(change) = &operation
+        && response.ok
+        && !chorder_learning::valid_set(change, &response.result)
+    {
+        chorder_learning::invalidate_set(&mut response.result, false);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -707,6 +737,14 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if matches!(operation, Operation::ChorderLearningGet(_)) {
+        chorder_learning::invalidate_get(result);
+        return;
+    }
+    if matches!(operation, Operation::ChorderLearningSet(_)) {
+        chorder_learning::invalidate_set(result, true);
+        return;
+    }
     if matches!(operation, Operation::EditChorderAutofill(_)) {
         invalidate_gui_edit(result, true);
         return;

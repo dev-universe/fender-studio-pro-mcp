@@ -11,8 +11,8 @@ mod text;
 mod value;
 
 pub use parameter::{
-    ControllerOwner, NumericEditAttempt, NumericEditLease, NumericEditPhase, PulseError,
-    PulseOutcome, PulseReceipt, PulseState, RawParameter,
+    ControllerOwner, IntegerEditProfile, NumericEditAttempt, NumericEditLease, NumericEditPhase,
+    PulseError, PulseOutcome, PulseReceipt, PulseState, RawParameter,
 };
 use std::ffi::{c_char, c_void};
 

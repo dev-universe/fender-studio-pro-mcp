@@ -4,7 +4,7 @@ A native Rust MCP server that lets an LLM read and control Fender Studio Pro thr
 
 Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The final native-extension run covered **60 built-in classes**, enumerated **8,668 indexed parameter records across 59 current providers**, and resolved every reported DSP parameter name. Splitter adds 16 fixed graph controls. Fifty-nine classes passed a parameter or graph change/readback/restore; Phase Meter passed slot bypass. External Effect Mono and Stereo passed gain, mix, manual latency, phase and Unicode-note roundtrips. The same build passed the bridge/EditTask regression. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for scope and evidence. Every GUI action, model and physical hardware path has not been certified.
 
-The 40 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
+The 42 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
 The ongoing [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records the newer model, preset, nested-fixture and full-parameter work. It includes successful actual-host cases and stopped restoration tests. Complete current-provider enumeration does not mean every writable parameter or model has passed a roundtrip. A new Chorder check found that live native parameter/model changes can fail to persist through Song Save/reopen; an opt-in edit-lifecycle pilot reproduced that persistence failure, and the receiver/model path remains under investigation.
 
@@ -118,6 +118,18 @@ name or path. One actual 8.1.1 on/off roundtrip passed Save and full app restart
 in both directions, with all 908 exposed values checked twice and the original
 Chorder preset member restored byte for byte. Other chord-model edits remain
 separate work.
+
+The experimental `chorder_learning_get` and `chorder_learning_set` address only
+the already-open Chorder editor's learning mode and selected input pitch. Both
+require `track`, Note FX `slot`, `expected_instance` and `expected_document`.
+The setter's closed `change` is either `{"kind":"learn_mode","enabled":true}`
+or `{"kind":"input_pitch","pitch":0}`. An explicit `pitch:null` clears the
+selection; omitting `pitch` is an error. Pitches are MIDI 0..127. The getter's
+read-only discovery ceiling is 256 views; setter discovery remains limited to
+128 views. Incomplete bindings refuse the request. Successful edits remain
+`applied_unverified` with a separate GUI-current-value fact. These transient
+controls do not establish learned chord contents, persistence or audio results.
+Actual-host learning validation is still pending.
 
 `plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
 

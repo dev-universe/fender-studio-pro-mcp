@@ -693,6 +693,43 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return result;
     }
 
+    chorderLearningGet(args) { return this.chorderLearning(args, false); }
+    chorderLearningSet(args) { return this.chorderLearning(args, true); }
+
+    chorderLearning(args, setter) {
+        const fields = setter ? ["track", "slot", "expected_instance", "change"] : ["track", "slot", "expected_instance"];
+        const failure = message => setter ? {
+            ok: false, native_outcome: "not_applied", gui_value_verified: false, persistence_verified: false,
+            effects_verified: false, dsp_propagation_verified: false, errors: [{ code: "invalid_chorder_learning", message: message }]
+        } : { ok: false, native_outcome: "not_applied", mutation_capability: false,
+            error: { code: "invalid_chorder_learning", message: message } };
+        if (!args || typeof args !== "object" || Array.isArray(args)
+            || Object.keys(args).length !== fields.length || Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.slot !== "number" || Math.floor(args.slot) !== args.slot || args.slot < 0 || args.slot >= 16
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || (setter && !new NativePluginControls(this).guiLearningChange(args.change)))
+            return failure("A bounded track, slot, canonical native instance and fixed learning intent are required");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure("The exact Chorder Note FX target is unavailable");
+        const request = { operation: setter ? "edit_chorder_model" : "chorder_learning_get", expected_instance: args.expected_instance };
+        if (setter) request.change = args.change;
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return failure("The matching native Chorder learning extension is required");
+        const result = Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+        if (setter && native.ok === false) {
+            result.errors = [native.error];
+            delete result.error;
+            result.gui_value_verified = false;
+            result.persistence_verified = false;
+            result.effects_verified = false;
+            result.dsp_propagation_verified = false;
+        }
+        return result;
+    }
+
     pluginAction(args) {
         const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
         if (Object.keys(args).some(key => fields.indexOf(key) < 0)

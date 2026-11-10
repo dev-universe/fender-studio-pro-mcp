@@ -29,6 +29,8 @@ pub(super) mod document_context;
 mod folder_context;
 #[path = "request/format.rs"]
 mod format;
+#[path = "request/gui_model.rs"]
+mod gui_model;
 #[path = "request/gui_parameter.rs"]
 mod gui_parameter;
 #[path = "request/insert_chain.rs"]
@@ -47,6 +49,9 @@ pub(super) mod presets;
 pub(super) mod state;
 
 pub(super) const MAX_REQUEST_BYTES: usize = 16 * 1024;
+pub(super) fn gui_model_api() -> &'static str {
+    gui_model::API
+}
 pub(super) const MAX_RESPONSE_BYTES: usize = 256 * 1024;
 const MAX_COUNT: u32 = 1_000_000;
 const MAX_SAFE_INTEGER: i64 = 9_007_199_254_740_991;
@@ -159,6 +164,13 @@ enum Request {
         enabled: bool,
         expected_instance: String,
     },
+    EditChorderModel {
+        change: gui_model::Change,
+        expected_instance: String,
+    },
+    ChorderLearningGet {
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -230,7 +242,9 @@ impl Request {
         match self {
             Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
-            | Self::EditChorderAutofill { .. } => Source::Dsp,
+            | Self::EditChorderAutofill { .. }
+            | Self::EditChorderModel { .. }
+            | Self::ChorderLearningGet { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -266,6 +280,12 @@ impl Request {
                 expected_instance, ..
             }
             | Self::EditChorderAutofill {
+                expected_instance, ..
+            }
+            | Self::EditChorderModel {
+                expected_instance, ..
+            }
+            | Self::ChorderLearningGet {
                 expected_instance, ..
             }
             | Self::ModelCatalog {
@@ -1296,6 +1316,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
+        | Request::EditChorderModel { .. }
+        | Request::ChorderLearningGet { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
@@ -1392,24 +1414,28 @@ impl NativeReply {
 enum ParameterEditLease {
     Direct(Box<numeric_edit::EditLease>),
     ChorderGui(Box<gui_parameter::AutofillEditLease>),
+    ChorderModel(Box<gui_model::EditLease>),
 }
 impl ParameterEditLease {
     fn phase(&self) -> &'static str {
         match self {
             Self::Direct(lease) => lease.phase(),
             Self::ChorderGui(lease) => lease.phase(),
+            Self::ChorderModel(lease) => lease.phase(),
         }
     }
     fn began(&self) -> bool {
         match self {
             Self::Direct(lease) => lease.began(),
             Self::ChorderGui(lease) => lease.began(),
+            Self::ChorderModel(lease) => lease.began(),
         }
     }
     fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
         match self {
             Self::Direct(lease) => lease.check(ctx),
             Self::ChorderGui(lease) => lease.check(ctx),
+            Self::ChorderModel(lease) => lease.check(ctx),
         }
     }
 }
@@ -1709,6 +1735,7 @@ fn dispatch_device(
         Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
+            | Request::EditChorderModel { .. }
             | Request::ParameterAction { .. }
             | Request::StateRestore { .. }
             | Request::PresetApply { .. }
@@ -1752,6 +1779,55 @@ fn dispatch_device(
             provider: None,
             context: Some(ctx),
             mutation: true,
+        };
+    }
+    if let Request::EditChorderModel { change, .. } = request {
+        let (mut value, edit) = gui_model::edit(&ctx, change);
+        if value["ok"] == true {
+            value["instance"] = json!(ctx.instance);
+        }
+        return Reply {
+            value,
+            catalog: None,
+            edit: edit.map(|lease| ParameterEditLease::ChorderModel(Box::new(lease))),
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
+    if let Request::ChorderLearningGet { .. } = request {
+        let (mut value, gui, provider) = match gui_model::get(&ctx) {
+            Ok((value, gui, direct)) => (value, Some(gui), Some(Provider::DspValue(direct))),
+            Err(reason) => (
+                error("chorder_learning_unavailable", &reason, "not_applied"),
+                None,
+                None,
+            ),
+        };
+        if value["ok"] == true {
+            value["instance"] = json!(ctx.instance);
+        }
+        return Reply {
+            value,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui,
+            nodes: None,
+            provider,
+            context: Some(ctx),
+            mutation: false,
         };
     }
     if let Request::EditChorderAutofill { enabled, .. } = request {

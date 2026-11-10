@@ -22,16 +22,27 @@ const CONTROL: Uid = Uid {
     d: [0x88, 0x9f, 0x9a, 0xd0, 0xef, 0x50, 0x19, 0x81],
 };
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy)]
 struct Coverage {
     complete: bool,
     candidates: usize,
     views: usize,
+    max_views: usize,
+}
+impl Default for Coverage {
+    fn default() -> Self {
+        Self {
+            complete: false,
+            candidates: 0,
+            views: 0,
+            max_views: MAX_VIEWS,
+        }
+    }
 }
 impl Coverage {
     fn value(self) -> Value {
         json!({"complete":self.complete,"candidate_count":self.candidates,
-            "visited_views":self.views,"max_views":MAX_VIEWS,"max_depth":MAX_DEPTH})
+            "visited_views":self.views,"max_views":self.max_views,"max_depth":MAX_DEPTH})
     }
 }
 fn common(coverage: Coverage) -> Value {
@@ -107,6 +118,20 @@ impl WalkFailure {
     }
 }
 pub(super) fn invalidate(value: &mut Value) {
+    if value["operation"] == "edit_chorder_model" || value["operation"] == "chorder_learning_get" {
+        let instance = value.get("instance").cloned();
+        let phase = value.get("edit_phase").cloned();
+        let outcome = value["outcome"].clone();
+        let error = value["error"].clone();
+        *value = json!({"ok":false,"outcome":outcome,"error":error});
+        if let Some(instance) = instance {
+            value["instance"] = instance;
+        }
+        if let Some(phase) = phase {
+            value["edit_phase"] = phase;
+        }
+        return;
+    }
     if value["operation"] == "edit_chorder_autofill" {
         let object = value.as_object_mut().expect("object GUI edit response");
         object.remove("gui_parameter");
@@ -245,6 +270,14 @@ impl ComparisonRead {
         direct: &Controller,
         parameter: RawParameter,
     ) -> Result<Self, String> {
+        Self::capture_bounded(ctx, direct, parameter, MAX_VIEWS)
+    }
+    fn capture_bounded(
+        ctx: &Context<'_>,
+        direct: &Controller,
+        parameter: RawParameter,
+        max_views: usize,
+    ) -> Result<Self, String> {
         if ctx.instance.class_uid != CHORDER {
             return Err("GUI comparison requires exact Chorder class".into());
         }
@@ -283,8 +316,11 @@ impl ComparisonRead {
             }
         };
         let raw = unsafe { root.as_borrowed_root() }.map_err(|e| e.to_string())?;
-        let mut observed_coverage = Coverage::default();
-        let scan = scan(raw.as_ptr(), ctx.api, &mut observed_coverage, &mut guard);
+        let mut observed_coverage = Coverage {
+            max_views,
+            ..Coverage::default()
+        };
+        let scan = scan_bounded(raw.as_ptr(), ctx.api, &mut observed_coverage, &mut guard);
         guard()?;
         let scan = match scan {
             Ok(scan) => scan,
@@ -455,6 +491,142 @@ impl ComparisonRead {
         pins.root.check_pinned().map_err(|e| e.to_string())?;
         pins.check_borrowed(controller)?;
         ctx.check_document()
+    }
+}
+
+pub(super) struct ModelBinding {
+    comparison: ComparisonRead,
+    direct: Controller,
+}
+impl ModelBinding {
+    pub(super) fn capture_set(ctx: &Context<'_>) -> Result<Self, String> {
+        Self::capture(ctx, MAX_VIEWS, true)
+    }
+    pub(super) fn capture_get(ctx: &Context<'_>) -> Result<Self, String> {
+        Self::capture(ctx, 256, false)
+    }
+    fn capture(ctx: &Context<'_>, max_views: usize, project: bool) -> Result<Self, String> {
+        let direct = direct_controller(ctx)?;
+        let parameter = direct.find(PARAMETER, ctx.api)?;
+        ctx.check()?;
+        let mut comparison = ComparisonRead::capture_bounded(ctx, &direct, parameter, max_views)?;
+        comparison.observe_controller(ctx, &direct)?;
+        let mut binding = Self { comparison, direct };
+        let result = (|| {
+            let pins = binding
+                .comparison
+                .pins
+                .as_ref()
+                .ok_or("learning editor discovery is unresolved")?;
+            if pins.root.identity().matched_by != DeviceMatch::CanonicalIUnknown {
+                return Err("learning controls require canonical editor identity".into());
+            }
+            pins.controller_probe
+                .as_ref()
+                .ok_or("learning controller is unresolved")?
+                .require_direct(&pins.gui)?;
+            if project {
+                binding.project(ctx)?;
+            }
+            binding.check(ctx)
+        })();
+        if let Err(reason) = result {
+            release(binding, &mut || ctx.check())?;
+            return Err(reason);
+        }
+        Ok(binding)
+    }
+    fn project(&mut self, ctx: &Context<'_>) -> Result<(), String> {
+        let pins = self
+            .comparison
+            .pins
+            .as_mut()
+            .ok_or("learning binding is unresolved")?;
+        let mut path = vec![pins.node];
+        while let Some(parent) = pins.views[*path.last().expect("nonempty path")].parent {
+            path.push(parent);
+        }
+        path.reverse();
+        let mut old: Vec<_> = std::mem::take(&mut pins.views)
+            .into_iter()
+            .map(Some)
+            .collect();
+        let mut projected = Vec::with_capacity(path.len());
+        for (index, old_index) in path.into_iter().enumerate() {
+            let mut view = old[old_index]
+                .take()
+                .ok_or("learning anchor ancestry repeats")?;
+            view.parent = index.checked_sub(1);
+            projected.push(view);
+        }
+        let leaf_children = projected.last_mut().expect("anchor path").children.take();
+        pins.node = projected.len() - 1;
+        pins.views = projected;
+        let retired: Vec<_> = old.into_iter().flatten().collect();
+        let witnesses = std::mem::take(&mut *pins.witnesses.borrow_mut());
+        let inspection = pins
+            .controller_probe
+            .as_mut()
+            .expect("validated model probe")
+            .take_inspection();
+        release((retired, leaf_children, witnesses, inspection), &mut || {
+            self.direct.check()?;
+            ctx.check()
+        })?;
+        self.check(ctx)
+    }
+    pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.comparison.check(ctx, &self.direct)?;
+        ctx.check_document()
+    }
+    pub(super) fn check_pinned(&self, ctx: &Context<'_>) -> Result<(), String> {
+        let pins = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("learning binding is unresolved")?;
+        pins.check_borrowed(&self.direct)?;
+        pins.root.check_pinned().map_err(|e| e.to_string())?;
+        pins.check_borrowed(&self.direct)?;
+        ctx.check_document()
+    }
+    pub(super) fn parameter(
+        &self,
+        ctx: &Context<'_>,
+        role: gui_model::Role,
+    ) -> Result<RawParameter, String> {
+        self.check(ctx)?;
+        let pin = self
+            .comparison
+            .pins
+            .as_ref()
+            .expect("validated learning binding");
+        let result = pin
+            .controller_probe
+            .as_ref()
+            .expect("validated model probe")
+            .parameter(role, ctx.api);
+        if let Err(reason) = self.check(ctx) {
+            release(result, &mut || ctx.check())?;
+            return Err(reason);
+        }
+        result
+    }
+    pub(super) fn snapshot(&self) -> Result<(Value, Value), String> {
+        let pins = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("learning binding is unresolved")?;
+        let parameters = pins
+            .controller_probe
+            .as_ref()
+            .ok_or("learning controller is unresolved")?
+            .parameters()?;
+        Ok((parameters, self.comparison.value["coverage"].clone()))
+    }
+    pub(super) fn into_read(self) -> (ComparisonRead, Controller) {
+        (self.comparison, self.direct)
     }
 }
 
@@ -754,7 +926,16 @@ fn retained_parameter(pointer: *mut c_void, api: &Api) -> Result<RawParameter, S
     std::mem::forget(owned);
     Ok(unsafe { RawParameter::from_owned(raw, raw_text(api)) })
 }
+#[cfg(test)]
 fn scan<G: FnMut() -> Result<(), String>>(
+    root: *mut c_void,
+    api: &Api,
+    coverage: &mut Coverage,
+    guard: &mut G,
+) -> Result<Scan, WalkFailure> {
+    scan_bounded(root, api, coverage, guard)
+}
+fn scan_bounded<G: FnMut() -> Result<(), String>>(
     root: *mut c_void,
     api: &Api,
     coverage: &mut Coverage,
@@ -855,7 +1036,7 @@ fn scan<G: FnMut() -> Result<(), String>>(
                     unsafe { method(iterator.0, 3) };
                 while unsafe { done(iterator.0) } == 0 {
                     guard().map_err(|_| WalkFailure::context(WalkStage::Iterator, depth))?;
-                    if coverage.views >= MAX_VIEWS {
+                    if coverage.views >= coverage.max_views {
                         return Err(WalkFailure::new(
                             WalkKind::ViewLimit,
                             WalkStage::Children,

@@ -2,7 +2,7 @@ use rmcp::{
     ErrorData, RoleServer, ServerHandler,
     model::{
         CallToolRequestParams, CallToolResponse, CallToolResult, Implementation, ListToolsResult,
-        PaginatedRequestParams, ServerCapabilities, ServerConfig, Tool,
+        PaginatedRequestParams, ServerCapabilities, ServerConfig, Tool, ToolAnnotations,
     },
     service::RequestContext,
 };
@@ -219,6 +219,18 @@ impl McpServer {
                 "Edit only Auto Fill on an already-open exact Chorder editor. The finite GUI receiver is distinct from the DSP facade. Successful receipts remain applied_unverified and report GUI current-value evidence separately; independently verify the full provider and saved-state persistence. Never retry an unknown outcome.",
                 true,
             ),
+            named::<ChorderLearningGet>(
+                "chorder_learning_get",
+                "chorderLearningGet",
+                "Read only Learn Mode and the learning input pitch on an already-open exact Chorder editor. Requires the current document and native instance. The fixed GUI discovery ceiling is 256 views; the report exposes measured coverage and sequential GUI values, with no mutation authority or DSP/persistence/audio verification.",
+                false,
+            ),
+            named::<ChorderLearningSet>(
+                "chorder_learning_set",
+                "chorderLearningSet",
+                "Change one Chorder learning control through a fresh GUI binding. Use change kind learn_mode with a Boolean enabled, or input_pitch with a required pitch that is null or MIDI integer 0..127. Null selects no learning key; zero selects MIDI 0. Selection does not enable Learn Mode. Receipts remain applied_unverified with separate GUI current-value evidence. Never retry an unknown outcome.",
+                true,
+            ),
             named::<PluginSet>(
                 "plugin_parameter_set",
                 "setPluginParam",
@@ -280,6 +292,7 @@ fn named<T: JsonSchema>(
 ) -> ToolSpec {
     let mut schema = serde_json::to_value(schemars::schema_for!(T)).expect("tool schema");
     if mutation
+        || operation == "chorderLearningGet"
         || matches!(
             operation,
             "pluginParams"
@@ -293,7 +306,7 @@ fn named<T: JsonSchema>(
     {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
     }
-    if mutation {
+    if mutation || operation == "chorderLearningGet" {
         let object = schema.as_object_mut().unwrap();
         object
             .entry("required")
@@ -302,9 +315,13 @@ fn named<T: JsonSchema>(
             .unwrap()
             .push(json!("expected_document"));
     }
+    let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
+    if operation == "chorderLearningGet" {
+        tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
+    }
     ToolSpec {
         operation: Some(operation),
-        tool: Tool::new(name, description, schema.as_object().unwrap().clone()),
+        tool,
     }
 }
 
@@ -390,8 +407,13 @@ impl ServerHandler for McpServer {
             serde_json::from_value::<Request>(Value::Object(args))
                 .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?
         };
-        if !operation.operation.is_read_only() && operation.expected_document.is_none() {
-            return Ok(CallToolResult::structured_error(json!({"outcome":"not_applied","error":{"code":"missing_precondition","message":"Read host_status and supply expected_document for mutations"}})).into());
+        if (!operation.operation.is_read_only() || operation.operation.requires_explicit_document())
+            && operation
+                .expected_document
+                .as_ref()
+                .is_none_or(String::is_empty)
+        {
+            return Ok(CallToolResult::structured_error(json!({"outcome":"not_applied","error":{"code":"missing_precondition","message":"Read host_status and supply expected_document"}})).into());
         }
         let result = match self.runtime.execute(operation).await {
             Ok(receipt) => serde_json::to_value(receipt).unwrap(),
@@ -410,6 +432,52 @@ impl ServerHandler for McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chorder_learning_tools_keep_getter_readonly_and_both_document_guards_required() {
+        for (name, operation) in [
+            ("chorder_learning_get", "chorderLearningGet"),
+            ("chorder_learning_set", "chorderLearningSet"),
+        ] {
+            let spec = McpServer::specs()
+                .into_iter()
+                .find(|spec| spec.tool.name == name)
+                .unwrap();
+            assert_eq!(spec.operation, Some(operation));
+            let schema = Value::Object((*spec.tool.input_schema).clone());
+            for field in ["track", "slot", "expected_instance", "expected_document"] {
+                assert!(
+                    schema["required"]
+                        .as_array()
+                        .unwrap()
+                        .contains(&json!(field))
+                );
+            }
+            for forbidden in [
+                "source",
+                "param",
+                "path",
+                "max_views",
+                "budget",
+                "kind",
+                "plugin",
+                "channel",
+            ] {
+                assert!(schema["properties"].get(forbidden).is_none());
+            }
+            if name.ends_with("get") {
+                assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+                assert!(schema["properties"].get("change").is_none());
+            } else {
+                assert!(
+                    schema["required"]
+                        .as_array()
+                        .unwrap()
+                        .contains(&json!("change"))
+                );
+            }
+        }
+    }
 
     #[test]
     fn named_mutations_require_the_document_token() {
@@ -434,7 +502,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 40);
+        assert_eq!(specs.len(), 42);
     }
 
     #[test]

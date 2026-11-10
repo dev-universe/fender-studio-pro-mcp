@@ -33,13 +33,52 @@ struct Link {
 struct NumericAccess {
     object: Owned,
     ids: [*const c_void; 3],
+    default_id: Option<*const c_void>,
+}
+#[derive(Clone, Copy)]
+pub struct IntegerEditProfile {
+    pub name: &'static str,
+    pub tag: i32,
+    pub min: i64,
+    pub max: i64,
+    pub default: i64,
 }
 enum EditProfile {
     General,
     ExactToggle(&'static str),
+    ExactInteger(IntegerEditProfile),
 }
 impl EditProfile {
     fn validate(&self, description: &Description) -> Result<(), Error> {
+        if let Self::ExactInteger(profile) = self {
+            let integer = |v: Option<&NativeValue>| match v {
+                Some(NativeValue {
+                    variant_tag: 1,
+                    value: Value::Integer(n),
+                }) => Some(*n),
+                _ => None,
+            };
+            let valid = description.name == profile.name
+                && description.tag == profile.tag
+                && description.kind == Kind::Integer
+                && description.enabled
+                && !description.read_only
+                && description.support.raw_number
+                && profile.min <= profile.max
+                && (profile.min..=profile.max).contains(&profile.default)
+                && integer(description.raw.as_ref())
+                    .is_some_and(|n| (profile.min..=profile.max).contains(&n))
+                && integer(description.min.as_ref()) == Some(profile.min)
+                && integer(description.max.as_ref()) == Some(profile.max)
+                && integer(description.default_value.as_ref()) == Some(profile.default);
+            return if valid {
+                Ok(())
+            } else {
+                Err(Error::InvalidData(
+                    "numeric edit requires the exact writable Integer profile",
+                ))
+            };
+        }
         let Self::ExactToggle(name) = self else {
             return Ok(());
         };
@@ -91,6 +130,18 @@ pub struct NumericEditAttempt {
 }
 
 impl RawParameter {
+    pub fn edit_raw_integer<G: FnMut() -> Result<(), String>>(
+        self,
+        profile: IntegerEditProfile,
+        value: i64,
+        guard: &mut G,
+    ) -> NumericEditAttempt {
+        self.edit_number(
+            Number::Integer(value),
+            EditProfile::ExactInteger(profile),
+            guard,
+        )
+    }
     /// Performs one synchronous public begin/value/end interaction on this
     /// selected receiver. The integration guards its document and provider and
     /// retains the returned lease until after its final publication check.
@@ -168,6 +219,9 @@ impl RawParameter {
             lease.check(guard)?;
             let current = lease.description(guard)?;
             after = Some(current.clone());
+            if matches!(lease.profile, EditProfile::ExactInteger(_)) {
+                lease.profile.validate(&current)?;
+            }
             same_numeric_shape(&initial, &current)?;
             validate_number(&current, number)?;
             let (value, min, max) = numeric_metadata(&current)?;
@@ -350,11 +404,20 @@ impl NumericEditLease {
         self.numeric = Some(NumericAccess {
             object,
             ids: [std::ptr::null(); 3],
+            default_id: None,
         });
         self.check(guard)?;
         for (index, name) in [c"value", c"min", c"max"].into_iter().enumerate() {
             let id = ffi::property_id(self.parameter.text, name)?;
             self.numeric.as_mut().expect("retained numeric access").ids[index] = id;
+            self.check(guard)?;
+        }
+        if matches!(self.profile, EditProfile::ExactInteger(_)) {
+            let id = ffi::property_id(self.parameter.text, c"default")?;
+            self.numeric
+                .as_mut()
+                .expect("retained numeric access")
+                .default_id = Some(id);
             self.check(guard)?;
         }
         Ok(())
@@ -402,6 +465,9 @@ impl NumericEditLease {
         current.raw = Some(numeric.scalar(0)?);
         current.min = Some(numeric.scalar(1)?);
         current.max = Some(numeric.scalar(2)?);
+        if let Some(id) = numeric.default_id {
+            current.default_value = Some(numeric.property(id)?);
+        }
         let (name, tag, kind) = self.parameter.signature()?;
         current.name = name;
         current.tag = tag;
@@ -446,10 +512,13 @@ impl NumericEditLease {
 
 impl NumericAccess {
     fn scalar(&self, index: usize) -> Result<NativeValue, Error> {
+        self.property(self.ids[index])
+    }
+    fn property(&self, id: *const c_void) -> Result<NativeValue, Error> {
         let mut output = Variant::empty();
         let get: unsafe extern "C" fn(*mut c_void, *mut Variant, *const c_void) -> u8 =
             unsafe { ffi::method(self.object.raw(), 4) };
-        let accepted = unsafe { get(self.object.raw(), &mut output, self.ids[index]) } != 0;
+        let accepted = unsafe { get(self.object.raw(), &mut output, id) } != 0;
         if !accepted {
             return Err(Error::MissingValue("numeric edit scalar property"));
         }

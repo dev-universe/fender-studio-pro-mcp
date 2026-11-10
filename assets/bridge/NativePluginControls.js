@@ -147,7 +147,11 @@ class NativePluginControls {
     }
 
     guiToggleProfile(value) {
-        return this.guiDescription(value) && value.native_kind === "Toggle" && value.enabled === true && value.readOnly === false
+        return this.guiToggleProfileNamed(value, "autofill");
+    }
+
+    guiToggleProfileNamed(value, name) {
+        return this.guiFixedDescription(value, name) && value.native_kind === "Toggle" && value.enabled === true && value.readOnly === false
             && value.writable === true && value.support.raw === true && (value.value === 0 || value.value === 1)
             && value.min === 0 && value.max === 1 && [value.native_value, value.native_min, value.native_max].every(typed => typed
                 && [1, 2].indexOf(typed.variant_tag) >= 0 && typed.variant_tag === value.native_value.variant_tag
@@ -190,6 +194,89 @@ class NativePluginControls {
         const exact = after.value === desired && (after.native_value.data.kind !== "float"
             || after.native_value.data.bits_hex === (request.enabled ? "3FF0000000000000" : "0000000000000000"));
         return result.gui_value_verified === exact;
+    }
+
+    guiLearningChange(change) {
+        if (this.guiExact(change, ["kind", "enabled"]) && change.kind === "learn_mode") return typeof change.enabled === "boolean";
+        return this.guiExact(change, ["kind", "pitch"]) && change.kind === "input_pitch"
+            && (change.pitch === null || this.guiInteger(change.pitch, 0, 127));
+    }
+
+    guiLearningRequest(request) {
+        return this.insertChainUid(request.expected_instance)
+            && (request.operation === "chorder_learning_get" ? this.guiExact(request, ["operation", "expected_instance"])
+                : request.operation === "edit_chorder_model" && this.guiExact(request, ["operation", "expected_instance", "change"])
+                    && this.guiLearningChange(request.change));
+    }
+
+    guiLearningInstance(instance) {
+        return this.guiExact(instance, ["object_uid", "class_uid", "native_class", "object_id"])
+            && this.insertChainUid(instance.object_uid) && instance.class_uid === "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"
+            && ["native_class", "object_id"].every(key => typeof instance[key] === "string" && instance[key].length <= 512);
+    }
+
+    guiLearningPitchProfile(value) {
+        return this.guiFixedDescription(value, "learnInputPitch") && value.native_kind === "Integer" && value.tag === 6
+            && value.enabled === true && value.readOnly === false && value.writable === true && value.support.raw === true
+            && this.guiInteger(value.value, -1, 127) && value.min === -1 && value.max === 127 && value.default === -1
+            && [value.native_value, value.native_min, value.native_max, value.native_default].every(typed => typed
+                && typed.variant_tag === 1 && typed.data.kind === "integer" && this.guiExact(typed.data, ["kind", "value"]));
+    }
+
+    guiLearningResult(result, request) {
+        const setter = request.operation === "edit_chorder_model";
+        if (result.ok === false) {
+            const fields = ["ok", "outcome", "error"];
+            if (result.instance !== undefined) fields.push("instance");
+            if (result.edit_phase !== undefined) fields.push("edit_phase");
+            return this.guiExact(result, fields) && (result.outcome === "not_applied" || setter && result.outcome === "unknown")
+                && (result.instance === undefined || this.guiLearningInstance(result.instance) && result.instance.object_uid === request.expected_instance)
+                && (result.edit_phase === undefined || this.numericEditPhase(result.edit_phase))
+                && (result.outcome !== "not_applied" || result.edit_phase === undefined || result.edit_phase === "prepared")
+                && this.guiExact(result.error, ["code", "message"]) && typeof result.error.code === "string"
+                && /^[a-zA-Z0-9_]{1,64}$/.test(result.error.code) && typeof result.error.message === "string" && result.error.message.length <= 512;
+        }
+        if (!this.guiLearningInstance(result.instance) || result.ok !== true || result.receiver !== "editor_controller"
+            || result.storage_semantics !== "transient_learning_controls") return false;
+        if (!setter) return this.guiExact(result, ["ok", "outcome", "operation", "instance", "receiver", "mutation_capability",
+            "value_semantics", "binding", "coverage", "parameters", "storage_semantics"])
+            && result.outcome === "observed" && result.operation === "chorder_learning_get" && result.mutation_capability === false
+            && result.value_semantics === "sequential_snapshot"
+            && this.guiExact(result.binding, ["editor_match", "autofill_same_gui", "controller_same_observer"])
+            && result.binding.editor_match === "canonical_iunknown" && result.binding.autofill_same_gui === true
+            && result.binding.controller_same_observer === true
+            && this.guiExact(result.coverage, ["complete", "candidate_count", "visited_views", "max_views", "max_depth"])
+            && result.coverage.complete === true && result.coverage.candidate_count === 1 && result.coverage.max_views === 256
+            && result.coverage.max_depth === 32 && this.guiInteger(result.coverage.visited_views, 1, 256)
+            && this.guiExact(result.parameters, ["learnMode", "learnInputPitch"])
+            && this.guiFixedDescription(result.parameters.learnMode, "learnMode")
+            && this.guiFixedDescription(result.parameters.learnInputPitch, "learnInputPitch");
+        const mode = request.change.kind === "learn_mode", name = mode ? "learnMode" : "learnInputPitch";
+        if (!this.guiExact(result, ["ok", "outcome", "operation", "instance", "binding_source", "receiver", "requested_change",
+            "edit_phase", "gui_parameter", "gui_value_verified", "verification_scope", "persistence_verified", "effects_verified",
+            "dsp_propagation_verified", "storage_semantics"]) || result.outcome !== "applied_unverified"
+            || result.operation !== "edit_chorder_model" || result.binding_source !== "dsp" || result.edit_phase !== "closed_checked"
+            || !this.guiLearningChange(result.requested_change)
+            || result.requested_change.kind !== request.change.kind
+            || (mode ? result.requested_change.enabled !== request.change.enabled : result.requested_change.pitch !== request.change.pitch)
+            || !this.guiExact(result.gui_parameter, ["name", "before", "after"]) || result.gui_parameter.name !== name
+            || typeof result.gui_value_verified !== "boolean" || result.verification_scope !== "gui_receiver_current_value"
+            || result.persistence_verified !== false || result.effects_verified !== false || result.dsp_propagation_verified !== false) return false;
+        const before = result.gui_parameter.before, after = result.gui_parameter.after;
+        if (mode ? !this.guiToggleProfileNamed(before, name) || !this.guiToggleProfileNamed(after, name)
+            : !this.guiLearningPitchProfile(before) || !this.guiLearningPitchProfile(after)) return false;
+        const mutable = ["value", "text", "normalized", "native_value", "native_normalized"];
+        if (Object.keys(before).some(key => mutable.indexOf(key) < 0 && JSON.stringify(before[key]) !== JSON.stringify(after[key]))
+            || before.native_value.variant_tag !== after.native_value.variant_tag) return false;
+        const desired = mode ? (request.change.enabled ? 1 : 0) : (request.change.pitch === null ? -1 : request.change.pitch);
+        return result.gui_value_verified === (after.value === desired);
+    }
+
+    guiLearningFailure(error, setter, dispatched, parsed) {
+        const result = { ok: false, outcome: setter && dispatched ? "unknown" : "not_applied",
+            error: { code: "native_chorder_learning_failed", message: String(error).slice(0, 512) } };
+        if (setter && parsed && this.numericEditPhase(parsed.edit_phase)) result.edit_phase = parsed.edit_phase;
+        return result;
     }
 
     guiComparisonRequest(request) {
@@ -507,11 +594,14 @@ class NativePluginControls {
         let parsed = null;
         const guiComparison = request.operation === "parameter_details" && request.compare_gui === true;
         const guiEdit = request.operation === "edit_chorder_autofill";
+        const guiLearning = request.operation === "chorder_learning_get" || request.operation === "edit_chorder_model";
+        const guiLearningSet = request.operation === "edit_chorder_model";
         try {
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
                 throw new Error("invalid finite native GUI comparison request");
             if (guiEdit && !this.guiEditRequest(request)) throw new Error("invalid finite native Chorder GUI edit request");
+            if (guiLearning && !this.guiLearningRequest(request)) throw new Error("invalid fixed Chorder learning request");
             if (request.operation === "model_catalog" && !this.modelRequest(request)) throw new Error("invalid finite native model request");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditRequest(request)) throw new Error("invalid finite native edit request");
             const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
@@ -519,16 +609,22 @@ class NativePluginControls {
                 throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
-            if (typeof Host === "undefined" || !Host.Objects)
+            if (typeof Host === "undefined" || !Host.Objects) {
+                if (guiLearning) throw new Error("native Chorder learning extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
+            }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
-            if (!service) return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
+            if (!service) {
+                if (guiLearning) throw new Error("native Chorder learning extension unavailable");
+                return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
+            }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
+            if (guiLearning && capability.gui_model_edit_api !== "chorder_learning_controls_v1") throw new Error("unsupported native Chorder learning API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
             if (!this.sameContext(before)) throw new Error("native request requires the current open document");
             const body = JSON.stringify(request);
@@ -555,6 +651,7 @@ class NativePluginControls {
             if (guiEdit && (!this.guiEditResult(result, request) || (result.ok === true
                 && (!result.instance || result.instance.class_uid !== "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"))))
                 throw new Error("invalid native Chorder GUI edit result");
+            if (guiLearning && !this.guiLearningResult(result, request)) throw new Error("invalid native Chorder learning result");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditResult(result)) throw new Error("invalid native numeric edit result");
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
@@ -570,6 +667,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (guiLearning) return this.guiLearningFailure(error, guiLearningSet, dispatched, parsed);
             if (guiComparison) return this.guiComparisonFailure(error);
             if (guiEdit) {
                 const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", gui_value_verified: false,

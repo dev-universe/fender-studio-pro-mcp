@@ -85,6 +85,10 @@ pub enum Operation {
     PluginAction(PluginAction),
     #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
     EditChorderAutofill(ChorderAutofillSet),
+    #[serde(rename = "chorderLearningGet", alias = "chorder_learning_get")]
+    ChorderLearningGet(ChorderLearningGet),
+    #[serde(rename = "chorderLearningSet", alias = "chorder_learning_set")]
+    ChorderLearningSet(ChorderLearningSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -468,6 +472,59 @@ pub struct ChorderAutofillSet {
     pub slot: u32,
     pub enabled: bool,
     pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderLearningGet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderLearningSet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+    pub change: ChorderLearningChange,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ChorderLearningChange {
+    LearnMode {
+        enabled: bool,
+    },
+    InputPitch {
+        #[schemars(required)]
+        pitch: ChorderLearningPitch,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(transparent)]
+pub struct ChorderLearningPitch(#[schemars(range(min = 0, max = 127))] pub Option<u8>);
+
+impl<'de> Deserialize<'de> for ChorderLearningPitch {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Value::deserialize(deserializer)? {
+            Value::Null => Ok(Self(None)),
+            Value::Number(number) => number
+                .as_u64()
+                .filter(|value| *value <= 127)
+                .map(|value| Self(Some(value as u8)))
+                .ok_or_else(|| serde::de::Error::custom("pitch must be null or an integer 0..127")),
+            _ => Err(serde::de::Error::custom(
+                "pitch must be null or an integer 0..127",
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1024,6 +1081,10 @@ impl Operation {
         let mut args = value["args"].clone();
         remove_nulls(&mut args);
         match self {
+            Self::ChorderLearningSet(change) => {
+                args["change"] =
+                    serde_json::to_value(&change.change).expect("closed learning change");
+            }
             Self::SetTransport(transport) => {
                 if let Some(position) = &transport.position {
                     args.as_object_mut().unwrap().remove("position");
@@ -1082,6 +1143,7 @@ impl Operation {
             | Self::PluginParams(_)
             | Self::PluginChoices(_)
             | Self::PluginParameterDetails(_)
+            | Self::ChorderLearningGet(_)
             | Self::PluginParameterFormat(_)
             | Self::PluginParameterDigest(_)
             | Self::PluginModels(_)
@@ -1097,6 +1159,13 @@ impl Operation {
             Self::Takes(takes) => matches!(takes.action, TakeAction::List),
             _ => false,
         }
+    }
+
+    pub fn requires_explicit_document(&self) -> bool {
+        matches!(
+            self,
+            Self::ChorderLearningGet(_) | Self::ChorderLearningSet(_)
+        )
     }
 
     pub fn validate(&self) -> Result<(), OperationError> {
@@ -1177,6 +1246,19 @@ impl Operation {
                 {
                     return Err(invalid(
                         "Chorder Auto Fill requires slot 0..15 and a nonzero canonical native instance",
+                    ));
+                }
+            }
+            Self::ChorderLearningGet(p) => {
+                validate_chorder_learning_target(&p.track, p.slot, &p.expected_instance)?;
+            }
+            Self::ChorderLearningSet(p) => {
+                validate_chorder_learning_target(&p.track, p.slot, &p.expected_instance)?;
+                if let ChorderLearningChange::InputPitch { pitch } = &p.change
+                    && pitch.0.is_some_and(|value| value > 127)
+                {
+                    return Err(invalid(
+                        "Chorder learning pitch must be null or MIDI 0..127",
                     ));
                 }
             }
@@ -1665,6 +1747,24 @@ fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError
     Ok(())
 }
 
+fn validate_chorder_learning_target(
+    track: &str,
+    slot: u32,
+    instance: &str,
+) -> Result<(), OperationError> {
+    validate_splitter_name(track, "track")?;
+    validate_instance_uid(Some(instance))?;
+    if slot >= 16
+        || instance == "00000000-0000-0000-0000-000000000000"
+        || instance.bytes().any(|byte| byte.is_ascii_lowercase())
+    {
+        return Err(invalid(
+            "Chorder learning controls require slot 0..15 and a nonzero canonical native instance",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_instance_uid(uid: Option<&str>) -> Result<(), OperationError> {
     if let Some(uid) = uid
         && (uid.len() != 36
@@ -1770,6 +1870,118 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chorder_learning_has_two_closed_typed_roles_and_required_nullable_pitch() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let get = Operation::from_parts("chorder_learning_get", target.clone()).unwrap();
+        get.validate().unwrap();
+        assert!(get.is_read_only());
+        assert!(get.requires_explicit_document());
+        assert_eq!(get.wire(), ("chorderLearningGet".into(), target.clone()));
+        for change in [
+            json!({"kind":"learn_mode","enabled":false}),
+            json!({"kind":"learn_mode","enabled":true}),
+            json!({"kind":"input_pitch","pitch":null}),
+            json!({"kind":"input_pitch","pitch":0}),
+            json!({"kind":"input_pitch","pitch":127}),
+        ] {
+            let mut args = target.clone();
+            args["change"] = change.clone();
+            let set = Operation::from_parts("chorder_learning_set", args.clone()).unwrap();
+            set.validate().unwrap();
+            assert!(!set.is_read_only());
+            assert!(set.requires_explicit_document());
+            assert_eq!(set.wire(), ("chorderLearningSet".into(), args));
+            assert_eq!(set.wire().1["change"], change);
+        }
+        for change in [
+            json!({"kind":"input_pitch"}),
+            json!({"kind":"input_pitch","pitch":-1}),
+            json!({"kind":"input_pitch","pitch":128}),
+            json!({"kind":"input_pitch","pitch":0.0}),
+            json!({"kind":"input_pitch","pitch":true}),
+            json!({"kind":"input_pitch","pitch":"0"}),
+            json!({"kind":"input_pitch","pitch":null,"enabled":false}),
+            json!({"kind":"learn_mode","enabled":0}),
+            json!({"kind":"learn_mode","enabled":true,"pitch":0}),
+            json!({"kind":"other","pitch":0}),
+            json!({}),
+        ] {
+            let mut args = target.clone();
+            args["change"] = change;
+            assert!(Operation::from_parts("chorder_learning_set", args).is_err());
+        }
+    }
+
+    #[test]
+    fn chorder_learning_target_refuses_unbound_or_generic_gui_policies() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for operation in ["chorder_learning_get", "chorder_learning_set"] {
+            let mut base = target.clone();
+            if operation.ends_with("set") {
+                base["change"] = json!({"kind":"input_pitch","pitch":null});
+            }
+            for (key, value) in [
+                ("track", json!(" ")),
+                ("track", json!("x\0y")),
+                ("track", json!("x".repeat(257))),
+                ("slot", json!(16)),
+                (
+                    "expected_instance",
+                    json!("00000000-0000-0000-0000-000000000000"),
+                ),
+                (
+                    "expected_instance",
+                    json!("12345678-1234-1234-1234-123456789abc"),
+                ),
+            ] {
+                let mut args = base.clone();
+                args[key] = value;
+                assert!(
+                    Operation::from_parts(operation, args)
+                        .unwrap()
+                        .validate()
+                        .is_err()
+                );
+            }
+            for key in [
+                "plugin",
+                "source",
+                "param",
+                "path",
+                "max_views",
+                "kind",
+                "channel",
+            ] {
+                let mut args = base.clone();
+                args[key] = json!("unexpected");
+                assert!(Operation::from_parts(operation, args).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn chorder_learning_schema_distinguishes_required_null_from_missing_pitch() {
+        let schema = serde_json::to_value(schemars::schema_for!(ChorderLearningSet)).unwrap();
+        let variants = schema["$defs"]["ChorderLearningChange"]["oneOf"]
+            .as_array()
+            .unwrap();
+        let pitch = variants
+            .iter()
+            .find(|variant| variant["properties"]["kind"]["const"] == "input_pitch")
+            .unwrap();
+        assert!(
+            pitch["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("pitch"))
+        );
+        let definition = &pitch["properties"]["pitch"];
+        assert_eq!(definition["minimum"], 0);
+        assert_eq!(definition["maximum"], 127);
+        assert_eq!(definition["type"], json!(["integer", "null"]));
+    }
 
     #[test]
     fn fixture_context_is_an_optional_bound_music_inspection() {

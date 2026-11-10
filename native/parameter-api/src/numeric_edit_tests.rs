@@ -688,3 +688,135 @@ fn exact_toggle_attachment_loss_after_begin_never_sends_an_end() {
     drop(attempt);
     assert_eq!(trace(&fixture), ["begin"]);
 }
+
+fn integer_fixture(env: &TextEnv) -> (Fixture, RawParameter, IntegerEditProfile) {
+    let (fixture, parameter) = Fixture::new(
+        env,
+        1,
+        FakeValue::Number(Number::Integer(-1)),
+        Number::Integer(-1),
+        Number::Integer(127),
+        None,
+    );
+    unsafe {
+        (*fixture.pointer.cast::<FakeParameter>()).name.text = c"learnInputPitch".as_ptr();
+    }
+    fixture.p().edit.tag_override.set(Some(6));
+    (
+        fixture,
+        parameter,
+        IntegerEditProfile {
+            name: "learnInputPitch",
+            tag: 6,
+            min: -1,
+            max: 127,
+            default: -1,
+        },
+    )
+}
+#[test]
+fn exact_integer_edit_preserves_negative_sentinel_and_midi_endpoints() {
+    let env = TextEnv::new();
+    for value in [-1, 0, 127] {
+        let (f, p, profile) = integer_fixture(&env);
+        let attempt = p.edit_raw_integer(profile, value, &mut f.guard());
+        let result = attempt.result.as_ref().unwrap();
+        assert!(result.verified);
+        assert_eq!(result.after.raw.as_ref().unwrap().variant_tag, 1);
+        assert_eq!(
+            result.after.raw.as_ref().unwrap().value,
+            Value::Integer(value)
+        );
+        assert_eq!(trace(&f), ["begin", "value", "end"]);
+        assert_eq!(*f.p().edit.updates.borrow(), [1]);
+        attempt.lease.check(&mut f.guard()).unwrap();
+        drop(attempt);
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn exact_integer_initial_profile_drift_refuses_before_begin() {
+    let env = TextEnv::new();
+    for scenario in 0..8 {
+        let (f, p, profile) = integer_fixture(&env);
+        let mut calls = 0;
+        let attempt = p.edit_raw_integer(profile, 0, &mut || {
+            calls += 1;
+            if calls == 1 {
+                match scenario {
+                    0 => f.p().edit.name_changed.set(true),
+                    1 => f.p().edit.kind_override.set(Some(2)),
+                    2 => f.p().edit.tag_override.set(Some(7)),
+                    3 => f.p().edit.min_override.set(Some(Number::Integer(0))),
+                    4 => f.p().max_override.set(Some(Number::Integer(128))),
+                    5 => f
+                        .p()
+                        .format
+                        .default_carrier
+                        .set(Some(DefaultCarrier::Unsupported { tag: 1, payload: 0 })),
+                    6 => *f.p().value.borrow_mut() = FakeValue::Number(Number::Float(-1.0)),
+                    7 => f.p().edit.min_override.set(Some(Number::Float(-1.0))),
+                    _ => unreachable!(),
+                }
+            }
+            Ok(())
+        });
+        assert_failure(&attempt, Outcome::NotApplied, NumericEditPhase::Prepared);
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+#[test]
+fn exact_integer_request_outside_literal_range_never_begins() {
+    let env = TextEnv::new();
+    for value in [-2, 128, i64::MIN, i64::MAX] {
+        let (f, p, profile) = integer_fixture(&env);
+        let attempt = p.edit_raw_integer(profile, value, &mut f.guard());
+        assert_failure(&attempt, Outcome::NotApplied, NumericEditPhase::Prepared);
+        assert!(trace(&f).is_empty());
+    }
+}
+#[test]
+fn exact_integer_metadata_only_failure_balances_one_end_without_value() {
+    let env = TextEnv::new();
+    for scenario in 0..4 {
+        let (f, p, profile) = integer_fixture(&env);
+        callback(&f.p().edit.on_begin, move |p| match scenario {
+            0 => p
+                .format
+                .default_carrier
+                .set(Some(DefaultCarrier::Unsupported { tag: 1, payload: 0 })),
+            1 => p.edit.tag_override.set(Some(7)),
+            2 => p.edit.min_override.set(Some(Number::Integer(0))),
+            _ => p.readonly.set(true),
+        });
+        let attempt = p.edit_raw_integer(profile, 0, &mut f.guard());
+        assert_failure(&attempt, Outcome::Unknown, NumericEditPhase::EndDispatched);
+        assert_eq!(trace(&f), ["begin", "end"]);
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+#[test]
+fn exact_integer_final_publication_detects_default_carrier_or_value_drift() {
+    let env = TextEnv::new();
+    for scenario in 0..3 {
+        let (f, p, profile) = integer_fixture(&env);
+        let attempt = p.edit_raw_integer(profile, 0, &mut f.guard());
+        assert!(attempt.result.as_ref().unwrap().verified);
+        match scenario {
+            0 => f
+                .p()
+                .format
+                .default_carrier
+                .set(Some(DefaultCarrier::Unsupported { tag: 1, payload: 0 })),
+            1 => f
+                .p()
+                .format
+                .default_carrier
+                .set(Some(DefaultCarrier::FloatBits((-1.0_f64).to_bits()))),
+            _ => *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(1)),
+        }
+        assert!(attempt.lease.check(&mut f.guard()).is_err());
+        assert_eq!(trace(&f), ["begin", "value", "end"]);
+    }
+}

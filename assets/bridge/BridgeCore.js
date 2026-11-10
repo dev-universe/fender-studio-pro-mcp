@@ -129,7 +129,7 @@ class Bridge {
         let code = null;
         const context = this.context();
         const contextError = this.contextError;
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -145,9 +145,9 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if (!readOnly && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "chorderLearningGet") && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
-                result = fail("writes require expectedSession and expectedDocument from context");
+                result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
                 result = this.handle(req.op, req.args || {});
             }
@@ -159,6 +159,12 @@ class Bridge {
         if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
+        }
+        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet")
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            code = "native_context_lost";
+            result = fail("the Chorder learning document lease changed before publication");
         }
         if (!isFail(result) && req.op === "insertChainState"
             && (context.open !== true || afterContext.open !== true
@@ -264,6 +270,8 @@ class Bridge {
         if (args.include_context !== undefined && op !== "pluginInspect")
             return fail("context observations apply only to pluginInspect");
         switch (op) {
+            case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
+            case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
             case "context": return this.context();
             case "channels": return this.fromComponent(c => c.channels());

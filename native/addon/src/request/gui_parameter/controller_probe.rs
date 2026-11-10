@@ -295,6 +295,44 @@ pub(super) struct ControllerProbe {
     state: State,
 }
 impl ControllerProbe {
+    pub(super) fn require_direct(&self, gui: &ParameterPin) -> Result<(), String> {
+        if !matches!(&self.state, State::Observed(observed) if matches!(observed.selected, Selected::Direct) && observed.observer_same)
+            || self.provider.query != QueryFact::Unsupported
+            || self.direct.anchor(gui) != Anchor::SameParameter
+        {
+            return Err(
+                "learning controls require the exact direct GUI observer controller".into(),
+            );
+        }
+        Ok(())
+    }
+    pub(super) fn parameters(&self) -> Result<Value, String> {
+        match &self.state {
+            State::Observed(observed) => Ok(
+                json!({"learnMode":description(&observed.mode),"learnInputPitch":description(&observed.pitch)}),
+            ),
+            State::Unresolved(_) => Err("learning parameters are unresolved".into()),
+        }
+    }
+    pub(super) fn take_inspection(&mut self) -> Option<Inspection> {
+        self.inspection.take()
+    }
+    pub(super) fn parameter(
+        &self,
+        role: gui_model::Role,
+        api: &Api,
+    ) -> Result<RawParameter, String> {
+        let index = match role {
+            gui_model::Role::LearnMode => 0,
+            gui_model::Role::InputPitch => 1,
+        };
+        let pin = self
+            .models
+            .as_ref()
+            .and_then(|models| models[index].parameter.as_ref())
+            .ok_or("learning parameter is unresolved")?;
+        retained_parameter(pin.parameter.as_borrowed_raw().as_ptr(), api)
+    }
     pub(super) fn capture<G: FnMut() -> Result<(), String>>(
         gui: &ParameterPin,
         direct_canonical: *mut c_void,
