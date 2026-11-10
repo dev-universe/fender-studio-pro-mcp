@@ -65,7 +65,7 @@ class NativePluginControls {
             || report.parameter_name !== "chorder.autofill" || report.semantic_binding !== "named_candidate_only"
             || report.mutation_capability !== false
             || !exact(report.coverage, ["complete", "candidate_count", "visited_views", "max_views", "max_depth"])
-            || typeof report.coverage.complete !== "boolean" || report.coverage.max_views !== 128 || report.coverage.max_depth !== 16
+            || typeof report.coverage.complete !== "boolean" || report.coverage.max_views !== 128 || report.coverage.max_depth !== 32
             || !integer(report.coverage.visited_views, 0, 128) || !integer(report.coverage.candidate_count, 0, report.coverage.visited_views))
             return false;
         if (report.status === "unresolved") {
@@ -77,7 +77,7 @@ class NativePluginControls {
                     "child_query", "view_identity", "edge", "cleanup", "context"];
                 if (report.reason !== "incomplete_walk" || report.coverage.complete !== false
                     || !exact(failure, ["kind", "stage", "depth", "query_status"])
-                    || stages.indexOf(failure.stage) < 0 || !integer(failure.depth, 0, 16)) return false;
+                    || stages.indexOf(failure.stage) < 0 || !integer(failure.depth, 0, 32)) return false;
                 if (failure.stage === "control_query" && report.coverage.visited_views <= failure.depth) return false;
                 const query = ["interface_query_failed", "missing_interface"].indexOf(failure.kind) >= 0;
                 if (query) {
@@ -87,8 +87,8 @@ class NativePluginControls {
                 } else if (failure.query_status !== null) return false;
                 const valid = query || (failure.kind === "context_guard_failed" || failure.kind === "inspection_failed")
                     || (failure.kind === "view_limit" && failure.stage === "children" && report.coverage.visited_views === 128)
-                    || (failure.kind === "depth_limit" && failure.stage === "children" && failure.depth === 16
-                        && report.coverage.visited_views >= 17)
+                    || (failure.kind === "depth_limit" && failure.stage === "children" && failure.depth === 32
+                        && report.coverage.visited_views >= 33)
                     || (failure.kind === "repeated_view" && failure.stage === "view_identity" && report.coverage.visited_views >= 2)
                     || (failure.kind === "detached_view" && failure.stage === "edge" && report.coverage.visited_views >= 2)
                     || (failure.kind === "missing_iterator" && failure.stage === "iterator")
@@ -114,7 +114,7 @@ class NativePluginControls {
         const gui = report && report.status === "unresolved" && this.guiComparisonReport(report) ? report : {
             status: "unresolved", scope: "exact_device_named_control_candidate", parameter_name: "chorder.autofill",
             semantic_binding: "named_candidate_only", mutation_capability: false, reason: "inspection_failed",
-            coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 16 }
+            coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 }
         };
         return { ok: false, outcome: "not_applied", native_outcome: "not_applied", mutation_capability: false,
             error: { code: "native_gui_comparison_failed", message: String(message).slice(0, 512) }, gui_comparison: gui };

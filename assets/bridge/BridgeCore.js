@@ -165,7 +165,7 @@ class Bridge {
                 error: "The GUI comparison document lease changed before publication", gui_comparison: {
                     status: "unresolved", scope: "exact_device_named_control_candidate", parameter_name: "chorder.autofill",
                     semantic_binding: "named_candidate_only", mutation_capability: false, reason: "stale_association",
-                    coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 16 }
+                    coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 }
                 } };
         const reply = isFail(result)
             ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }

@@ -8,12 +8,12 @@ const args = { kind: 'note_effect', track: 'Scratch', slot: 0, plugin: 'Chorder'
   source: 'dsp', param: 'chorder.autofill', expected_instance: instance.object_uid, compare_gui: true };
 const common = () => ({ scope: 'exact_device_named_control_candidate', parameter_name: 'chorder.autofill',
   semantic_binding: 'named_candidate_only', mutation_capability: false,
-  coverage: { complete: true, candidate_count: 1, visited_views: 8, max_views: 128, max_depth: 16 } });
+  coverage: { complete: true, candidate_count: 1, visited_views: 8, max_views: 128, max_depth: 32 } });
 const compared = () => ({ ...common(), status: 'compared', topParameterSame: false, declaredObserverSame: true,
   declaredObserverPresence: 'both_present', originalSame: null, originalBasis: 'not_compared',
   originalUnknownReason: 'not_observed', editorMatch: 'canonical_iunknown' });
 const unresolved = reason => ({ ...common(), status: 'unresolved', reason,
-  coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 16 } });
+  coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 } });
 const success = (gui = compared()) => ({ ok: true, outcome: 'observed', instance, source: 'dsp', gui_comparison: gui });
 
 function harness(reply = () => success()) {
@@ -191,7 +191,7 @@ test('incomplete GUI walks preserve only closed typed failure diagnostics', () =
   const diagnostics = [
     { kind: 'interface_query_failed', stage: 'control_query', depth: 3, query_status: -2147467259 },
     { kind: 'repeated_view', stage: 'view_identity', depth: 1, query_status: null },
-    { kind: 'depth_limit', stage: 'children', depth: 16, query_status: null },
+    { kind: 'depth_limit', stage: 'children', depth: 32, query_status: null },
   ];
   for (const walk_failure of diagnostics) {
     const report = { ...unresolved('incomplete_walk'), walk_failure,
@@ -205,9 +205,10 @@ test('incomplete GUI walks preserve only closed typed failure diagnostics', () =
 
 test('walk failure depth requires enough observed ancestors', () => {
   for (const [kind, stage, depth, count, query_status] of [
-    ['depth_limit', 'children', 16, 0, null],
-    ['depth_limit', 'children', 16, 16, null],
+    ['depth_limit', 'children', 32, 0, null],
+    ['depth_limit', 'children', 32, 32, null],
     ['interface_query_failed', 'control_query', 0, 0, -2147467259],
+    ['interface_query_failed', 'control_query', 32, 32, -2147467259],
   ]) {
     const report = { ...unresolved('incomplete_walk'),
       coverage: { ...common().coverage, complete: false, candidate_count: 0, visited_views: count },
@@ -227,14 +228,16 @@ test('walk failure diagnostics reject unknown, misplaced or contradictory data',
     r => { r.walk_failure = null; }, r => { r.walk_failure = []; },
     r => { r.walk_failure.kind = 'private_error'; }, r => { r.walk_failure.stage = 'path'; },
     r => { r.walk_failure.pointer = 123; }, r => { r.walk_failure.message = 'private native detail'; },
-    r => { delete r.walk_failure.query_status; }, r => { r.walk_failure.depth = 17; },
+    r => { delete r.walk_failure.query_status; }, r => { r.walk_failure.depth = 33; },
     r => { r.walk_failure.depth = -1; }, r => { r.walk_failure.depth = false; },
     r => { r.walk_failure.query_status = null; }, r => { r.walk_failure.query_status = false; },
     r => { r.walk_failure.query_status = -2147483649; }, r => { r.walk_failure.query_status = 2147483648; },
     r => { r.walk_failure.query_status = 0.5; }, r => { r.walk_failure.stage = 'iterator'; },
     r => { r.reason = 'missing_editor'; }, r => { r.coverage.complete = true; },
+    r => { r.coverage.max_depth = 16; },
     r => { r.walk_failure = { kind: 'view_limit', stage: 'children', depth: 0, query_status: null }; },
-    r => { r.walk_failure = { kind: 'depth_limit', stage: 'children', depth: 15, query_status: null }; },
+    r => { r.walk_failure = { kind: 'depth_limit', stage: 'children', depth: 31, query_status: null }; },
+    r => { r.walk_failure = { kind: 'depth_limit', stage: 'children', depth: 16, query_status: null }; },
     r => { r.walk_failure = { kind: 'repeated_view', stage: 'edge', depth: 1, query_status: null }; },
     r => { r.walk_failure = { kind: 'detached_view', stage: 'edge', depth: 1, query_status: 0 }; },
     r => { r.walk_failure.kind = 'missing_interface'; },
@@ -255,6 +258,9 @@ test('walk failure diagnostics reject unknown, misplaced or contradictory data',
     ['missing_iterator', 'iterator', 0, 1, null], ['missing_view', 'root', 0, 0, null],
     ['parameter_metadata', 'parameter_metadata', 2, 3, null], ['context_guard_failed', 'cleanup', 2, 3, null],
     ['inspection_failed', 'parameter_metadata', 1, 2, null],
+    ['depth_limit', 'children', 32, 33, null],
+    ['interface_query_failed', 'control_query', 31, 32, -2147467259],
+    ['interface_query_failed', 'control_query', 32, 33, -2147467259],
   ]) {
     const report = base(); report.coverage.visited_views = count;
     report.walk_failure = { kind, stage, depth, query_status };

@@ -45,7 +45,7 @@ fn comparison_opt_in_is_strict_and_finite() {
 }
 #[test]
 fn final_invalidation_keeps_coverage_and_removes_all_identity_claims() {
-    let mut value = json!({"ok":true,"gui_comparison":{"status":"compared","topParameterSame":true,"declaredObserverSame":true,"originalSame":null,"coverage":{"complete":true,"candidate_count":1,"visited_views":7,"max_views":128,"max_depth":16}}});
+    let mut value = json!({"ok":true,"gui_comparison":{"status":"compared","topParameterSame":true,"declaredObserverSame":true,"originalSame":null,"coverage":{"complete":true,"candidate_count":1,"visited_views":7,"max_views":128,"max_depth":32}}});
     invalidate(&mut value);
     assert_eq!(value["gui_comparison"]["reason"], "stale_association");
     assert_eq!(value["gui_comparison"]["coverage"]["visited_views"], 7);
@@ -402,8 +402,8 @@ fn walk_refuses_cycles_detached_edges_qi_failures_and_bounds() {
         .children
         .replace(children.iter().map(Fixture::raw).collect());
     assert!(run_scan(&root).is_err());
-    let chain: Vec<_> = (0..18).map(|_| Fixture::new("view")).collect();
-    for i in 0..17 {
+    let chain: Vec<_> = (0..34).map(|_| Fixture::new("view")).collect();
+    for i in 0..33 {
         chain[i]
             .value
             .children
@@ -445,8 +445,8 @@ fn incomplete_walk_distinguishes_topology_bounds_and_native_query_status() {
         failure(&root),
         json!({"kind":"view_limit","stage":"children","depth":0,"query_status":null})
     );
-    let chain: Vec<_> = (0..18).map(|_| Fixture::new("view")).collect();
-    for i in 0..17 {
+    let chain: Vec<_> = (0..34).map(|_| Fixture::new("view")).collect();
+    for i in 0..33 {
         chain[i]
             .value
             .children
@@ -455,7 +455,7 @@ fn incomplete_walk_distinguishes_topology_bounds_and_native_query_status() {
     }
     assert_eq!(
         failure(&chain[0]),
-        json!({"kind":"depth_limit","stage":"children","depth":16,"query_status":null})
+        json!({"kind":"depth_limit","stage":"children","depth":32,"query_status":null})
     );
 }
 #[test]
@@ -531,8 +531,8 @@ fn exact_view_and_depth_limits_accept_complete_walks_at_the_boundary() {
     assert_eq!(scan.coverage.views, 128);
     assert!(scan.coverage.complete);
     drop(scan);
-    let chain: Vec<_> = (0..17).map(|_| Fixture::new("view")).collect();
-    for i in 0..16 {
+    let chain: Vec<_> = (0..33).map(|_| Fixture::new("view")).collect();
+    for i in 0..32 {
         chain[i]
             .value
             .children
@@ -541,7 +541,7 @@ fn exact_view_and_depth_limits_accept_complete_walks_at_the_boundary() {
     }
     let scan = run_scan(&chain[0]).unwrap();
     assert!(scan.coverage.complete);
-    assert_eq!(scan.coverage.views, 17);
+    assert_eq!(scan.coverage.views, 33);
     drop(scan);
 }
 #[test]

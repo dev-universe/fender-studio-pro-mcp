@@ -301,7 +301,7 @@ fn invalidate_gui_comparison(operation: &Operation, result: &mut Value) {
                 "status":"unresolved","scope":"exact_device_named_control_candidate",
                 "parameter_name":"chorder.autofill","semantic_binding":"named_candidate_only",
                 "mutation_capability":false,"reason":"stale_association",
-                "coverage":{"complete":false,"candidate_count":0,"visited_views":0,"max_views":128,"max_depth":16}
+                "coverage":{"complete":false,"candidate_count":0,"visited_views":0,"max_views":128,"max_depth":32}
             }
         });
     }
@@ -467,6 +467,8 @@ mod tests {
         invalidate_gui_comparison(&operation, &mut result);
         assert_eq!(result["native_outcome"], "not_applied");
         assert_eq!(result["gui_comparison"]["status"], "unresolved");
+        assert_eq!(result["gui_comparison"]["coverage"]["max_views"], 128);
+        assert_eq!(result["gui_comparison"]["coverage"]["max_depth"], 32);
         assert!(result["gui_comparison"].get("topParameterSame").is_none());
         assert!(
             result["gui_comparison"]
