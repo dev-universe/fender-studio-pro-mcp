@@ -11,8 +11,8 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 4,227 direct fields plus two current-focus bindings | 31 Focus and two MIDI-controller roles |
-| Other instruments | Mojito 32, Mai Tai 275, Presence 219 and a four-field SampleOne pilot | Remaining SampleOne fields, MIDI roles and macros |
+| Impact | 4,227 direct fields plus four current-focus bindings | 29 Focus and two MIDI-controller roles |
+| Other instruments | Mojito 32, Mai Tai 275, Presence 219 and SampleOne 228 | One held SampleOne field, MIDI roles and macros |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -285,9 +285,10 @@ contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass
 including both sample offsets, pan and level. The latest 385-field unit completed
 in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
-The separate current-focus cutoff and sample-start-offset results are outside
-this direct-field count. Both observed pad0 bindings passed two complete changed
-reads and two complete restored reads. Other pad selections, 31 remaining Focus
+The four separate current-focus results cover cutoff, sample start/end offsets
+and pitch-envelope attack, outside this direct-field count. Each observed pad0
+binding passed two complete changed reads and two complete restored reads.
+Other pad selections, 29 remaining Focus
 roles and two MIDI-controller roles remain unverified.
 
 A separate finite instrument sweep has completed all 32 selected ordinary
@@ -316,6 +317,20 @@ with two complete original-provider matches afterward and no parameter setter.
 Static binary and exact SDK/compiler evidence identifies a routine in the crash
 stack as global scripting garbage collection. This identifies a stack phase,
 not the corrupting code or a verified crash fix.
+
+Four subsequent bounded SampleOne units completed 224 further fields, excluding
+the exact gate-step setter involved in the interrupted unit. Together with the
+four-field pilot, 228 of its 229 selected ordinary fields are now verified.
+Each unit required a complete 235-record final checkpoint. The combined finite
+ordinary-instrument partition therefore has 754 of 755 completed fields. The
+held field has not been retried by this sequence, and these successful units do
+not establish a crash fix.
+
+A separate FFI audit corrected the script-return Variant representation to use
+implicit C-layout padding rather than requiring initialized padding bytes from
+foreign C++ constructors. Its 16-byte layout, field offsets and string/object
+ownership contract remain unchanged. Source tests and actual-host reads passed;
+this correction is not evidence that it caused or fixes the recorded crash.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
@@ -525,6 +540,16 @@ The direct Device, parent slot and Presets child expose IController; the alias
 does not expose IController or IControllerProvider. Two complete original
 908-record observations followed each metadata check. These observations do not
 establish that the GUI uses the same parameter or declared observer.
+
+The opt-in read-only GUI comparison first stopped at the explicit depth limit
+after visiting 75 views. A fixed depth-32 build then completed the entire
+125-view walk within the unchanged 128-view bound. No control parameter had the
+full DSP name `chorder.autofill`. Both runs preserved all 908 typed values in
+two complete reads before and after the diagnostic. The shipped exact Chorder
+editor instead defines the local GUI name `autofill` under its `chorder`
+controller. The next comparison uses only that fixed source-defined local name;
+it adds no fallback matching, caller-supplied GUI name or mutation authority.
+GUI/direct receiver equality and persistence remain unverified.
 
 The finite opt-in implementation passed 90 parameter-library unit tests, four
 documentation tests, 203 add-on tests and 76 Rust-server tests. The wire passed

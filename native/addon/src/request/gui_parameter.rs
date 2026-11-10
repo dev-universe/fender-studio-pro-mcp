@@ -3,6 +3,7 @@ use fender_native_editor_api::{DeviceMatch, EditorRootLease, GuiApi};
 use std::cell::RefCell;
 
 pub(super) const PARAMETER: &str = "chorder.autofill";
+const GUI_PARAMETER: &str = "autofill";
 const CHORDER: &str = "D2D9B002-12FC-4F1D-AFDA-70336D1DC108";
 const MAX_VIEWS: usize = 128;
 const MAX_DEPTH: usize = 32;
@@ -565,7 +566,7 @@ fn scan<G: FnMut() -> Result<(), String>>(
                             )
                         })?
                         .name
-                        == PARAMETER;
+                        == GUI_PARAMETER;
                     if matches {
                         coverage.candidates += 1;
                         let canonical = walk_required(

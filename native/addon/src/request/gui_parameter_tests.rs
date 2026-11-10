@@ -266,7 +266,7 @@ impl Fixture {
                 children: RefCell::new(Vec::new()),
                 cursor: Cell::new(0),
                 name: PlainCString {
-                    text: c"chorder.autofill".as_ptr(),
+                    text: c"autofill".as_ptr(),
                     owner: ptr::null_mut(),
                 },
                 qi_failure: Cell::new(false),
@@ -503,7 +503,7 @@ fn walk_checks_release_reentry_and_balances_every_retained_view() {
 }
 
 #[test]
-fn exact_name_matching_has_no_local_name_or_caption_fallback() {
+fn shipped_local_gui_name_is_the_only_exact_candidate() {
     let empty_string = Fixture::new("string");
     EMPTY.with(|x| x.set(empty_string.raw()));
     let root = Fixture::new("view");
@@ -511,13 +511,25 @@ fn exact_name_matching_has_no_local_name_or_caption_fallback() {
     let mut parameter = Fixture::new("parameter");
     let object = Fixture::new("object");
     parameter.value.object.set(object.raw());
-    parameter.value.name.text = c"autofill".as_ptr();
     control.value.parameter.set(parameter.raw());
     root.value.control.set(control.raw());
-    let scan = run_scan(&root).unwrap();
-    assert_eq!(scan.coverage.candidates, 0);
-    assert!(scan.coverage.complete);
-    drop(scan);
+    for (name, expected) in [
+        (c"autofill", 1),
+        (c"chorder.autofill", 0),
+        (c"other.autofill", 0),
+        (c"Autofill", 0),
+        (c"autoFill", 0),
+        (c"Auto Fill", 0),
+        (c"autofill.extra", 0),
+    ] {
+        parameter.value.name.text = name.as_ptr();
+        let scan = run_scan(&root).unwrap();
+        assert_eq!(scan.coverage.candidates, expected, "{name:?}");
+        assert!(scan.coverage.complete);
+        assert_eq!(scan.coverage.views, 1);
+        assert_eq!(scan.candidate.is_some(), expected == 1);
+        drop(scan);
+    }
     EMPTY.with(|x| x.set(ptr::null_mut()));
 }
 #[test]
