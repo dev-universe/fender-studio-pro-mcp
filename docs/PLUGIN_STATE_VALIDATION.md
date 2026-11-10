@@ -468,6 +468,25 @@ are the cause or that a native fix works. The fixed learning diagnostic itself
 has passed 26 focused tests and the 559-test full Python suite; actual execution
 remains pending on a suitable prepared fixture.
 
+A subsequent native user-edit pilot tested that lifecycle hypothesis on the same
+saved GUI Auto Fill-zero fixture. Exactly one Auto Fill-one edit dispatched
+beginEdit/setValue(update=true)/endEdit and returned a checked live match in
+83 ms. Two full 908-record observations matched the expected changed state,
+and two further observations still matched it after Save. However, the saved
+581-byte Chorder member remained exactly the original Auto Fill-zero member.
+A full app restart and fresh instance resolution then matched all original
+908 typed values and schema twice. The second planned setter was skipped.
+The native phase/readback path works on this target, but bracketing this direct
+receiver does not resolve its persistence failure. Its observed declared
+controller is DeviceParamFolder and its original chain is self-referential;
+these facts do not identify the GUI/model receiver or prove audible propagation.
+
+The finite opt-in implementation passed 90 parameter-library unit tests, four
+documentation tests, 203 add-on tests and 76 Rust-server tests. The wire passed
+220 JavaScript tests and an independent 266-case contract check. Six independent
+native failure discriminators passed after callback/ownership corrections.
+These code checks remain separate from the failed live persistence gate.
+
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
 original typed records and schema afterward. This establishes the formatter
