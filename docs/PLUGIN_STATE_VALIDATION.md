@@ -444,6 +444,30 @@ inactive Splitter values, opaque contents or generic node/connection editing.
 Independent offline review rebuilt all 40 full-provider observations across ten
 stages and confirmed the scoped lifecycle and intended deltas.
 
+A new, globally empty one-track Chorder fixture exposed a separate persistence
+failure. Its factory state had one explicit chord and 24 Auto Fill displays.
+A bounded six-setter, three-Play/Stop preparation disabled Auto Fill, cleared the
+model through the Mode-gated Clear All action, reset that command field and
+returned Mode/selector to zero. Two complete 908-record reads proved the final
+difference was exactly Auto Fill plus the original 25 nonzero assigned statuses.
+This was a live model-status result, not a state-capsule restoration claim.
+
+After Save and a full app restart, two reads instead matched the original
+factory state. The saved Chorder preset member was byte-identical to its initial
+member; only transport and Song metadata changed. Its preset dirty field was
+already set in both archives, so a guessed dirty-flag setter is not established
+as the fix. The failed reconstruction remains recorded separately.
+
+A normal GUI Auto Fill edit produced the same 25-field live delta as the native
+Auto Fill edit. Its saved preset member contained Auto Fill zero. A subsequent
+full restart preserved all 908 typed values and schema in two reads. Public CCL
+GUI controls bracket edits with beginEdit/endEdit; the current native numeric
+path uses setValue(update=true) alone. This source difference and GUI contrast
+justify a bounded edit-lifecycle pilot, but do not yet prove the missing calls
+are the cause or that a native fix works. The fixed learning diagnostic itself
+has passed 26 focused tests and the 559-test full Python suite; actual execution
+remains pending on a suitable prepared fixture.
+
 Chorder's learn-input selector also returned all 129 explicit input labels in
 five read-only formatter calls. Two complete native projections matched all 908
 original typed records and schema afterward. This establishes the formatter
