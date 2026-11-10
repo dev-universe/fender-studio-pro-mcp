@@ -105,6 +105,11 @@ impl WalkFailure {
     }
 }
 pub(super) fn invalidate(value: &mut Value) {
+    if value["operation"] == "edit_chorder_autofill" {
+        let object = value.as_object_mut().expect("object GUI edit response");
+        object.remove("gui_parameter");
+        object.insert("gui_value_verified".into(), json!(false));
+    }
     if let Some(previous) = value.get("gui_comparison") {
         let coverage = previous.get("coverage").cloned();
         let mut replacement = unresolved("stale_association", Coverage::default());
@@ -321,7 +326,7 @@ impl ComparisonRead {
             DeviceMatch::CanonicalIUnknown => "canonical_iunknown",
             DeviceMatch::StableNodeUid => "stable_node_uid",
         });
-        let result = Self {
+        let mut result = Self {
             value,
             pins: Some(Compared {
                 witnesses: RefCell::new(Vec::new()),
@@ -336,10 +341,34 @@ impl ComparisonRead {
             }),
         };
         result.check(ctx, direct)?;
+        let descriptor = result.gui_description(ctx, direct)?;
+        result.value["gui_parameter"] = description(&descriptor);
+        result.check(ctx, direct)?;
         Ok(result)
     }
     pub(super) fn value(&self) -> Value {
         self.value.clone()
+    }
+    fn gui_description(
+        &self,
+        ctx: &Context<'_>,
+        controller: &Controller,
+    ) -> Result<parameters::Description, String> {
+        self.check(ctx, controller)?;
+        let observed = self
+            .pins
+            .as_ref()
+            .ok_or("GUI parameter binding is unresolved")?
+            .gui
+            .parameter
+            .describe()
+            .map_err(|error| error.to_string());
+        self.check(ctx, controller)?;
+        let observed = observed?;
+        if observed.name != GUI_PARAMETER {
+            return Err("GUI parameter name changed during observation".into());
+        }
+        Ok(observed)
     }
     pub(super) fn check(&self, ctx: &Context<'_>, controller: &Controller) -> Result<(), String> {
         let mut guard = || {
@@ -397,6 +426,185 @@ impl ComparisonRead {
         pins.check_borrowed(controller)?;
         ctx.check_document()
     }
+}
+
+struct BoundChorderAutofill {
+    comparison: ComparisonRead,
+    direct: Controller,
+}
+impl BoundChorderAutofill {
+    fn capture(ctx: &Context<'_>) -> Result<Self, String> {
+        if ctx.instance.class_uid != CHORDER {
+            return Err("GUI Auto Fill edit requires the exact Chorder class".into());
+        }
+        let direct = direct_controller(ctx)?;
+        let parameter = direct.find(PARAMETER, ctx.api)?;
+        ctx.check()?;
+        let comparison = ComparisonRead::capture(ctx, &direct, parameter)?;
+        let pins = comparison
+            .pins
+            .as_ref()
+            .ok_or("GUI Auto Fill edit requires a complete unique control binding")?;
+        if pins.root.identity().matched_by != DeviceMatch::CanonicalIUnknown {
+            return Err("GUI Auto Fill edit requires canonical editor identity".into());
+        }
+        let binding = Self { comparison, direct };
+        let (gui, direct) = binding.states(ctx)?;
+        if gui != direct {
+            return Err("GUI and direct Auto Fill Boolean values disagree".into());
+        }
+        binding.check(ctx)?;
+        Ok(binding)
+    }
+    fn states(&self, ctx: &Context<'_>) -> Result<(bool, bool), String> {
+        let gui = self.comparison.gui_description(ctx, &self.direct)?;
+        self.comparison.check(ctx, &self.direct)?;
+        let direct = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("GUI Auto Fill binding is unresolved")?
+            .direct
+            .parameter
+            .describe()
+            .map_err(|error| error.to_string());
+        self.comparison.check(ctx, &self.direct)?;
+        Ok((
+            toggle_state(&gui, GUI_PARAMETER)?,
+            toggle_state(&direct?, PARAMETER)?,
+        ))
+    }
+    fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.comparison.check(ctx, &self.direct)?;
+        ctx.check_document()
+    }
+    fn check_pinned(&self, ctx: &Context<'_>) -> Result<(), String> {
+        let pins = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("GUI Auto Fill binding is unresolved")?;
+        pins.check_borrowed(&self.direct)?;
+        pins.root
+            .check_pinned()
+            .map_err(|error| error.to_string())?;
+        pins.check_borrowed(&self.direct)?;
+        ctx.check_document()
+    }
+    fn parameter(&self, ctx: &Context<'_>) -> Result<RawParameter, String> {
+        self.check(ctx)?;
+        let pointer = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("GUI Auto Fill binding is unresolved")?
+            .gui
+            .parameter
+            .as_borrowed_raw()
+            .as_ptr();
+        let duplicate = retained_parameter(pointer, ctx.api);
+        if let Err(reason) = self.check(ctx) {
+            release(duplicate, &mut || self.check(ctx))?;
+            return Err(reason);
+        }
+        duplicate
+    }
+}
+
+fn toggle_state(value: &parameters::Description, name: &str) -> Result<bool, String> {
+    let scalar = |value: Option<&parameters::NativeValue>| match value {
+        Some(parameters::NativeValue {
+            variant_tag,
+            value: parameters::Value::Integer(number),
+        }) if *variant_tag == 1 && (*number == 0 || *number == 1) => Some((*number == 1, 1)),
+        Some(parameters::NativeValue {
+            variant_tag,
+            value: parameters::Value::Float(number),
+        }) if *variant_tag == 2 && matches!(number.to_bits(), 0 | 0x3ff0_0000_0000_0000) => {
+            Some((*number == 1.0, 2))
+        }
+        _ => None,
+    };
+    let raw = scalar(value.raw.as_ref());
+    let min = scalar(value.min.as_ref());
+    let max = scalar(value.max.as_ref());
+    if value.name != name
+        || value.kind != parameters::Kind::Toggle
+        || !value.enabled
+        || value.read_only
+        || !value.support.raw_number
+        || raw.is_none()
+        || min != raw.map(|(_, carrier)| (false, carrier))
+        || max != raw.map(|(_, carrier)| (true, carrier))
+    {
+        return Err("Auto Fill edit requires a complete enabled writable Toggle01 profile".into());
+    }
+    Ok(raw.expect("validated raw Toggle").0)
+}
+
+pub(super) struct AutofillEditLease {
+    numeric: parameters::NumericEditLease,
+    binding: BoundChorderAutofill,
+}
+impl AutofillEditLease {
+    pub(super) fn phase(&self) -> &'static str {
+        self.numeric.phase().as_str()
+    }
+    pub(super) fn began(&self) -> bool {
+        self.numeric.phase().effect_may_have_started()
+    }
+    pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.numeric
+            .check(&mut || self.binding.check(ctx))
+            .map_err(|error| error.to_string())?;
+        self.binding.check_pinned(ctx)
+    }
+}
+
+pub(super) fn edit_autofill(
+    ctx: &Context<'_>,
+    enabled: bool,
+) -> (Value, Option<AutofillEditLease>) {
+    let prepared = (|| {
+        let binding = BoundChorderAutofill::capture(ctx)?;
+        let parameter = binding.parameter(ctx)?;
+        Ok::<_, String>((binding, parameter))
+    })();
+    let (binding, parameter) = match prepared {
+        Ok(prepared) => prepared,
+        Err(reason) => {
+            return (
+                error("gui_autofill_unavailable", &reason, "not_applied"),
+                None,
+            );
+        }
+    };
+    let attempt = parameter.edit_raw_toggle(GUI_PARAMETER, enabled, &mut || binding.check(ctx));
+    let lease = AutofillEditLease {
+        numeric: attempt.lease,
+        binding,
+    };
+    let mut value = match attempt.result {
+        Ok(readback) => json!({
+            "ok":true,"outcome":"applied_unverified","operation":"edit_chorder_autofill",
+            "binding_source":"dsp","logical_parameter":PARAMETER,"receiver":"editor_control",
+            "requested_enabled":enabled,"gui_parameter":{"name":GUI_PARAMETER,
+                "before":description(&readback.before),"after":description(&readback.after)},
+            "gui_value_verified":readback.verified,"verification_scope":"gui_receiver_current_value",
+            "persistence_verified":false,"effects_verified":false,"dsp_propagation_verified":false
+        }),
+        Err(failure) => error(
+            "gui_autofill_edit_failed",
+            &failure.error.to_string(),
+            if lease.began() || failure.outcome == parameters::Outcome::Unknown {
+                "unknown"
+            } else {
+                "not_applied"
+            },
+        ),
+    };
+    value["edit_phase"] = json!(lease.phase());
+    (value, Some(lease))
 }
 
 impl Compared {

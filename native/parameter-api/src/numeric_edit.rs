@@ -34,6 +34,45 @@ struct NumericAccess {
     object: Owned,
     ids: [*const c_void; 3],
 }
+enum EditProfile {
+    General,
+    ExactToggle(&'static str),
+}
+impl EditProfile {
+    fn validate(&self, description: &Description) -> Result<(), Error> {
+        let Self::ExactToggle(name) = self else {
+            return Ok(());
+        };
+        let boolean = |value: Option<&NativeValue>| match value {
+            Some(NativeValue {
+                variant_tag: 1,
+                value: Value::Integer(number),
+            }) if *number == 0 || *number == 1 => Some((*number == 1, 1)),
+            Some(NativeValue {
+                variant_tag: 2,
+                value: Value::Float(number),
+            }) if matches!(number.to_bits(), 0 | 0x3ff0_0000_0000_0000) => {
+                Some((*number == 1.0, 2))
+            }
+            _ => None,
+        };
+        let raw = boolean(description.raw.as_ref());
+        if description.name != *name
+            || description.kind != Kind::Toggle
+            || !description.enabled
+            || description.read_only
+            || !description.support.raw_number
+            || raw.is_none()
+            || boolean(description.min.as_ref()) != raw.map(|(_, carrier)| (false, carrier))
+            || boolean(description.max.as_ref()) != raw.map(|(_, carrier)| (true, carrier))
+        {
+            return Err(Error::InvalidData(
+                "numeric edit requires the exact writable Toggle01 profile",
+            ));
+        }
+        Ok(())
+    }
+}
 
 /// Retains the complete selected parameter binding through reply publication.
 /// Its destructor only releases references, including after an unclosed edit.
@@ -44,6 +83,7 @@ pub struct NumericEditLease {
     phase: NumericEditPhase,
     binding_complete: bool,
     witness: Option<(Description, Number)>,
+    profile: EditProfile,
 }
 pub struct NumericEditAttempt {
     pub result: Result<MutationReadback, MutationError>,
@@ -59,6 +99,28 @@ impl RawParameter {
         number: Number,
         guard: &mut G,
     ) -> NumericEditAttempt {
+        self.edit_number(number, EditProfile::General, guard)
+    }
+    /// Edits one named Toggle with canonical numeric zero/one carriers and
+    /// endpoints. Profile failures use the existing metadata failure path.
+    pub fn edit_raw_toggle<G: FnMut() -> Result<(), String>>(
+        self,
+        expected_name: &'static str,
+        enabled: bool,
+        guard: &mut G,
+    ) -> NumericEditAttempt {
+        self.edit_number(
+            Number::Integer(i64::from(enabled)),
+            EditProfile::ExactToggle(expected_name),
+            guard,
+        )
+    }
+    fn edit_number<G: FnMut() -> Result<(), String>>(
+        self,
+        number: Number,
+        profile: EditProfile,
+        guard: &mut G,
+    ) -> NumericEditAttempt {
         let mut lease = NumericEditLease {
             links: Vec::new(),
             numeric: None,
@@ -66,6 +128,7 @@ impl RawParameter {
             phase: NumericEditPhase::Prepared,
             binding_complete: false,
             witness: None,
+            profile,
         };
         let mut before = None;
         let mut after = None;
@@ -74,6 +137,7 @@ impl RawParameter {
             lease.capture(guard)?;
             lease.capture_numeric(guard)?;
             let initial = lease.description(guard)?;
+            lease.profile.validate(&initial)?;
             let native = validate_number(&initial, number)?;
             before = Some(initial.clone());
             let tag = initial
@@ -153,7 +217,7 @@ impl NumericEditLease {
             check_identity(&link.original, &link.original_identity, guard)?;
             if let Some(owner) = &link.owner {
                 owner.check(guard)?;
-            } else if controller_pointer(link.parameter.parameter.raw()) != std::ptr::null_mut() {
+            } else if !controller_pointer(link.parameter.parameter.raw()).is_null() {
                 guard().map_err(Error::Guard)?;
                 return Err(Error::MetadataChanged);
             }
@@ -307,6 +371,9 @@ impl NumericEditLease {
         self.check(guard).map_err(GateError::Attachment)?;
         let current = observed.map_err(GateError::Metadata)?;
         same_numeric_shape(before, &current).map_err(GateError::Metadata)?;
+        self.profile
+            .validate(&current)
+            .map_err(GateError::Metadata)?;
         validate_number(&current, number).map_err(GateError::Metadata)?;
         self.check(guard).map_err(GateError::Attachment)?;
         self.parameter
@@ -341,6 +408,7 @@ impl NumericEditLease {
         current.kind = kind;
         (current.enabled, current.read_only) = self.parameter.flags();
         same_numeric_shape(before, &current)?;
+        self.profile.validate(&current)?;
         validate_number(&current, number)?;
         current
             .raw

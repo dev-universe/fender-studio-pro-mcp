@@ -213,6 +213,12 @@ impl McpServer {
                 "Request the expected plugin editor to open. The acknowledgment does not verify window visibility.",
                 true,
             ),
+            named::<ChorderAutofillSet>(
+                "chorder_autofill_set",
+                "editChorderAutofill",
+                "Edit only Auto Fill on an already-open exact Chorder editor. The finite GUI receiver is distinct from the DSP facade. Successful receipts remain applied_unverified and report GUI current-value evidence separately; independently verify the full provider and saved-state persistence. Never retry an unknown outcome.",
+                true,
+            ),
             named::<PluginSet>(
                 "plugin_parameter_set",
                 "setPluginParam",
@@ -409,6 +415,7 @@ mod tests {
     fn named_mutations_require_the_document_token() {
         let specs = McpServer::specs();
         for name in [
+            "chorder_autofill_set",
             "channel_set",
             "plugin_editor_open",
             "plugin_presets",
@@ -427,7 +434,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 39);
+        assert_eq!(specs.len(), 40);
     }
 
     #[test]

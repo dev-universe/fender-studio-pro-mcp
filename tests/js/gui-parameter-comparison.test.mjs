@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import { asset, bridgeHarness } from './host.mjs';
+import { guiDescription } from './gui-description.mjs';
 
 const instance = { object_uid: '12345678-1234-1234-1234-123456789ABC', class_uid: 'D2D9B002-12FC-4F1D-AFDA-70336D1DC108' };
 const args = { kind: 'note_effect', track: 'Scratch', slot: 0, plugin: 'Chorder',
@@ -11,7 +12,7 @@ const common = () => ({ scope: 'exact_device_named_control_candidate', parameter
   coverage: { complete: true, candidate_count: 1, visited_views: 8, max_views: 128, max_depth: 32 } });
 const compared = () => ({ ...common(), status: 'compared', topParameterSame: false, declaredObserverSame: true,
   declaredObserverPresence: 'both_present', originalSame: null, originalBasis: 'not_compared',
-  originalUnknownReason: 'not_observed', editorMatch: 'canonical_iunknown' });
+  originalUnknownReason: 'not_observed', editorMatch: 'canonical_iunknown', gui_parameter: guiDescription() });
 const unresolved = reason => ({ ...common(), status: 'unresolved', reason,
   coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 } });
 const success = (gui = compared()) => ({ ok: true, outcome: 'observed', instance, source: 'dsp', gui_comparison: gui });
@@ -273,4 +274,18 @@ test('walk failure diagnostics reject unknown, misplaced or contradictory data',
   assert.equal(failed.native_outcome, 'not_applied');
   assert.equal(failed.gui_comparison.walk_failure.kind, 'interface_query_failed');
   assert.equal('topParameterSame' in failed.gui_comparison, false);
+});
+
+test('GUI descriptor corruption discards both the descriptor and receiver identity claims', () => {
+  for (const mutate of [d => { d.name = 'chorder.autofill'; }, d => { d.native_value.variant_tag = 2; },
+    d => { d.native_value.data.value = 1; }, d => { d.native_normalized.bits_hex = '3F800000'; },
+    d => { d.support.raw = 1; }, d => { d.pointer = 123; }, d => { d.display_parser = {}; }]) {
+    const h = harness(() => { const result = success(); mutate(result.gui_comparison.gui_parameter); return result; });
+    const result = h.component.pluginParameterDetails(args);
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('gui_parameter' in result.gui_comparison, false);
+    assert.equal('topParameterSame' in result.gui_comparison, false);
+    assert.equal(h.calls.length, 1);
+  }
 });

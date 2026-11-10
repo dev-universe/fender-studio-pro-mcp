@@ -47,6 +47,146 @@ class NativePluginControls {
             && result.after && typeof result.after === "object" && !Array.isArray(result.after);
     }
 
+    guiExact(value, fields) {
+        return value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === fields.length
+            && fields.every(key => Object.prototype.hasOwnProperty.call(value, key));
+    }
+
+    guiInteger(value, min, max) {
+        return typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
+    }
+
+    guiBitsNumber(bits, width) {
+        if (typeof bits !== "string" || !(width === 32 ? /^[0-9A-F]{8}$/ : /^[0-9A-F]{16}$/).test(bits)) return NaN;
+        const high = parseInt(bits.slice(0, 8), 16);
+        const exponent = width === 32 ? (high >>> 23) & 255 : (high >>> 20) & 2047;
+        const mantissa = width === 32 ? high & 8388607 : (high & 1048575) * 4294967296 + parseInt(bits.slice(8), 16);
+        const maxExponent = width === 32 ? 255 : 2047;
+        if (exponent === maxExponent) return mantissa ? NaN : (high >>> 31 ? -Infinity : Infinity);
+        const fractionBits = width === 32 ? 23 : 52;
+        const bias = width === 32 ? 127 : 1023;
+        const magnitude = exponent === 0 ? mantissa * Math.pow(2, 1 - bias - fractionBits)
+            : (1 + mantissa / Math.pow(2, fractionBits)) * Math.pow(2, exponent - bias);
+        return high >>> 31 ? -magnitude : magnitude;
+    }
+
+    guiNumberEqual(left, right) {
+        return left === right && (left !== 0 || 1 / left === 1 / right);
+    }
+
+    guiTypedScalar(typed, scalar) {
+        if (typed === null) return scalar === null;
+        if (!this.guiExact(typed, ["variant_tag", "data"]) || !this.guiInteger(typed.variant_tag, -32768, 32767)) return false;
+        const data = typed.data;
+        if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+        const kind = typed.variant_tag & 15;
+        if (data.kind === "integer" && kind === 1) {
+            if (this.guiExact(data, ["kind", "value"]))
+                return this.guiInteger(data.value, -9007199254740991, 9007199254740991) && scalar === data.value;
+            if (!this.guiExact(data, ["kind", "exact_decimal"]) || scalar !== null || typeof data.exact_decimal !== "string"
+                || !/^-?[1-9][0-9]{0,18}$/.test(data.exact_decimal)) return false;
+            const negative = data.exact_decimal.charAt(0) === "-";
+            const digits = negative ? data.exact_decimal.slice(1) : data.exact_decimal;
+            return Math.abs(Number(data.exact_decimal)) > 9007199254740991
+                && (digits.length < 19 || digits <= (negative ? "9223372036854775808" : "9223372036854775807"));
+        }
+        if (data.kind === "float" && kind === 2)
+            return this.guiExact(data, ["kind", "value", "bits_hex"]) && typeof data.value === "number" && isFinite(data.value)
+                && this.guiNumberEqual(data.value, this.guiBitsNumber(data.bits_hex, 64)) && this.guiNumberEqual(scalar, data.value);
+        if (data.kind === "text" && kind === 3)
+            return this.guiExact(data, ["kind", "value"]) && typeof data.value === "string" && data.value.length <= 4096 && scalar === data.value;
+        if (scalar !== null) return false;
+        if (data.kind === "empty" && kind === 0) return this.guiExact(data, ["kind"]);
+        if (data.kind === "opaque_object" && kind === 4)
+            return this.guiExact(data, ["kind", "present"]) && typeof data.present === "boolean";
+        if (data.kind === "non_finite_float" && kind === 2)
+            return this.guiExact(data, ["kind", "bits_hex"]) && typeof data.bits_hex === "string"
+                && /^[0-9A-F]{16}$/.test(data.bits_hex) && !isFinite(this.guiBitsNumber(data.bits_hex, 64));
+        return data.kind === "unsupported" && kind > 4 && this.guiExact(data, ["kind", "tag"]) && data.tag === kind;
+    }
+
+    guiDescription(value) {
+        const fields = ["name", "title", "tag", "value", "text", "min", "max", "default", "normalized", "enabled", "readOnly", "writable",
+            "native_kind", "native_value", "native_min", "native_max", "native_default", "native_normalized", "native_support", "support", "display_parser"];
+        if (!this.guiExact(value, fields) || value.name !== "autofill" || value.title !== "autofill"
+            || !this.guiInteger(value.tag, -2147483648, 2147483647)
+            || (value.text !== null && (typeof value.text !== "string" || value.text.length > 4096))
+            || ["enabled", "readOnly", "writable"].some(key => typeof value[key] !== "boolean")
+            || typeof value.native_kind !== "string"
+            || !/^(Toggle|Integer|Float|String|List|Command|Color|Image|Segments|Scroll|TextModel|Unknown\(-?[0-9]{1,10}\))$/.test(value.native_kind)
+            || typeof value.display_parser !== "string" || value.display_parser.length > 96
+            || !/^(Unsupported|LiteralString|PlainNumeric|NativeFormatter \{ flags: -?[0-9]{1,10} \})$/.test(value.display_parser)
+            || !this.guiExact(value.native_support, ["raw_number", "normalized", "display_text"])
+            || !this.guiExact(value.support, ["raw", "normalized", "text"])
+            || Object.keys(value.native_support).some(key => typeof value.native_support[key] !== "boolean")
+            || Object.keys(value.support).some(key => typeof value.support[key] !== "boolean")) return false;
+        for (const pair of [["native_value", "value"], ["native_min", "min"], ["native_max", "max"], ["native_default", "default"]])
+            if (!this.guiTypedScalar(value[pair[0]], value[pair[1]])) return false;
+        const normalized = value.native_normalized;
+        if (!normalized || typeof normalized !== "object" || Array.isArray(normalized)) return false;
+        if (normalized.kind === "not_applicable") {
+            if (!this.guiExact(normalized, ["kind"]) || value.normalized !== null) return false;
+        } else if (["float32", "invalid_float32", "non_finite_float32"].indexOf(normalized.kind) >= 0) {
+            if (!this.guiExact(normalized, ["kind", "bits_hex"]) || typeof normalized.bits_hex !== "string" || !/^[0-9A-F]{8}$/.test(normalized.bits_hex)) return false;
+            const number = this.guiBitsNumber(normalized.bits_hex, 32);
+            if (normalized.kind === "float32" ? !isFinite(number) || !this.guiNumberEqual(number, value.normalized)
+                : isFinite(number) || value.normalized !== null) return false;
+        } else return false;
+        const safe = [value.native_value, value.native_min, value.native_max, value.native_default]
+            .every(typed => !typed || typed.data.exact_decimal === undefined);
+        if (value.support.raw !== (safe && value.native_support.raw_number)
+            || value.support.normalized !== (safe && value.native_support.normalized)
+            || value.support.text !== (safe && value.native_support.display_text)) return false;
+        const opaque = value.native_value && ["opaque_object", "unsupported", "non_finite_float"].indexOf(value.native_value.data.kind) >= 0;
+        return value.writable === (!!safe && !opaque && (value.native_support.raw_number || value.native_support.normalized || value.native_support.display_text));
+    }
+
+    guiToggleProfile(value) {
+        return this.guiDescription(value) && value.native_kind === "Toggle" && value.enabled === true && value.readOnly === false
+            && value.writable === true && value.support.raw === true && (value.value === 0 || value.value === 1)
+            && value.min === 0 && value.max === 1 && [value.native_value, value.native_min, value.native_max].every(typed => typed
+                && [1, 2].indexOf(typed.variant_tag) >= 0 && typed.variant_tag === value.native_value.variant_tag
+                && (typed.data.kind === "integer" || typed.data.kind === "float"
+                    && typed.data.bits_hex === (typed.data.value === 1 ? "3FF0000000000000" : "0000000000000000")));
+    }
+
+    guiEditRequest(request) {
+        return this.guiExact(request, ["operation", "enabled", "expected_instance"])
+            && typeof request.enabled === "boolean" && this.insertChainUid(request.expected_instance);
+    }
+
+    guiEditResult(result, request) {
+        if (result.ok === false) {
+            const fields = ["ok", "outcome", "error"];
+            if (result.edit_phase !== undefined) fields.push("edit_phase");
+            if (result.instance !== undefined) fields.push("instance");
+            return this.guiExact(result, fields) && ["not_applied", "unknown"].indexOf(result.outcome) >= 0
+                && (result.edit_phase === undefined || this.numericEditPhase(result.edit_phase))
+                && (result.outcome !== "not_applied" || result.edit_phase === undefined || result.edit_phase === "prepared")
+                && this.guiExact(result.error, ["code", "message"]) && typeof result.error.code === "string"
+                && /^[a-zA-Z0-9_]{1,64}$/.test(result.error.code) && typeof result.error.message === "string" && result.error.message.length <= 512;
+        }
+        const fields = ["ok", "outcome", "operation", "instance", "binding_source", "logical_parameter", "receiver", "requested_enabled",
+            "edit_phase", "gui_parameter", "gui_value_verified", "verification_scope", "persistence_verified", "effects_verified", "dsp_propagation_verified"];
+        if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "applied_unverified"
+            || result.operation !== "edit_chorder_autofill" || result.binding_source !== "dsp"
+            || result.logical_parameter !== "chorder.autofill" || result.receiver !== "editor_control"
+            || result.requested_enabled !== request.enabled || result.edit_phase !== "closed_checked"
+            || !this.guiExact(result.gui_parameter, ["name", "before", "after"]) || result.gui_parameter.name !== "autofill"
+            || !this.guiToggleProfile(result.gui_parameter.before) || !this.guiToggleProfile(result.gui_parameter.after)
+            || typeof result.gui_value_verified !== "boolean" || result.verification_scope !== "gui_receiver_current_value"
+            || result.persistence_verified !== false || result.effects_verified !== false || result.dsp_propagation_verified !== false)
+            return false;
+        const before = result.gui_parameter.before, after = result.gui_parameter.after;
+        const mutable = ["value", "text", "normalized", "native_value", "native_normalized"];
+        if (Object.keys(before).some(key => mutable.indexOf(key) < 0 && JSON.stringify(before[key]) !== JSON.stringify(after[key]))) return false;
+        if (before.native_value.variant_tag !== after.native_value.variant_tag) return false;
+        const desired = request.enabled ? 1 : 0;
+        const exact = after.value === desired && (after.native_value.data.kind !== "float"
+            || after.native_value.data.bits_hex === (request.enabled ? "3FF0000000000000" : "0000000000000000"));
+        return result.gui_value_verified === exact;
+    }
+
     guiComparisonRequest(request) {
         return Object.keys(request).every(key => ["operation", "source", "param", "expected_instance", "compare_gui", "include_owner"].indexOf(key) >= 0)
             && request.compare_gui === true && request.source === "dsp" && request.param === "chorder.autofill"
@@ -101,7 +241,8 @@ class NativePluginControls {
                     "ambiguous_named_controls", "stale_association", "deadline", "inspection_failed"].indexOf(report.reason) >= 0;
         }
         return report.status === "compared" && exact(report, common.concat(["topParameterSame", "declaredObserverSame",
-            "declaredObserverPresence", "originalSame", "originalBasis", "originalUnknownReason", "editorMatch"]))
+            "declaredObserverPresence", "originalSame", "originalBasis", "originalUnknownReason", "editorMatch", "gui_parameter"]))
+            && this.guiDescription(report.gui_parameter)
             && report.coverage.complete === true && report.coverage.candidate_count === 1
             && typeof report.topParameterSame === "boolean"
             && ["both_present", "both_absent", "one_absent"].indexOf(report.declaredObserverPresence) >= 0
@@ -259,10 +400,12 @@ class NativePluginControls {
         let dispatched = false;
         let parsed = null;
         const guiComparison = request.operation === "parameter_details" && request.compare_gui === true;
+        const guiEdit = request.operation === "edit_chorder_autofill";
         try {
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
                 throw new Error("invalid finite native GUI comparison request");
+            if (guiEdit && !this.guiEditRequest(request)) throw new Error("invalid finite native Chorder GUI edit request");
             if (request.operation === "model_catalog" && !this.modelRequest(request)) throw new Error("invalid finite native model request");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditRequest(request)) throw new Error("invalid finite native edit request");
             const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
@@ -279,6 +422,7 @@ class NativePluginControls {
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
+            if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
             if (!this.sameContext(before)) throw new Error("native request requires the current open document");
             const body = JSON.stringify(request);
@@ -302,6 +446,9 @@ class NativePluginControls {
                     || !this.guiComparisonReport(result.gui_comparison))
                     throw new Error("invalid native GUI comparison result");
             }
+            if (guiEdit && (!this.guiEditResult(result, request) || (result.ok === true
+                && (!result.instance || result.instance.class_uid !== "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"))))
+                throw new Error("invalid native Chorder GUI edit result");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditResult(result)) throw new Error("invalid native numeric edit result");
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
@@ -318,6 +465,13 @@ class NativePluginControls {
             return result;
         } catch (error) {
             if (guiComparison) return this.guiComparisonFailure(error);
+            if (guiEdit) {
+                const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", gui_value_verified: false,
+                    persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
+                    error: { code: "native_gui_edit_failed", message: String(error).slice(0, 512) } };
+                if (parsed && this.numericEditPhase(parsed.edit_phase)) failure.edit_phase = parsed.edit_phase;
+                return failure;
+            }
             const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: { code: "native_request_failed", message: String(error).slice(0, 512) },
                 before: parsed && parsed.before, after: parsed && parsed.after, instance: parsed && parsed.instance, source: parsed && parsed.source };
             if (request.operation === "edit_numeric_parameter" && parsed && this.numericEditPhase(parsed.edit_phase)) failure.edit_phase = parsed.edit_phase;

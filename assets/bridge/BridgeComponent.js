@@ -666,6 +666,32 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { requested: true, plugin: plug.name, verified: false };
     }
 
+    editChorderAutofill(args) {
+        const fields = ["track", "slot", "enabled", "expected_instance"];
+        const failure = message => ({ ok: false, native_outcome: "not_applied", gui_value_verified: false,
+            persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
+            errors: [{ code: "invalid_chorder_autofill", message: message }] });
+        if (!args || typeof args !== "object" || Array.isArray(args)
+            || Object.keys(args).length !== fields.length || Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.slot !== "number" || Math.floor(args.slot) !== args.slot || args.slot < 0 || args.slot >= 16
+            || typeof args.enabled !== "boolean" || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000")
+            return failure("A bounded track, slot, Boolean state and canonical native instance are required");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure("The exact Chorder Note FX target is unavailable");
+        const native = this.nativePluginRequest(plug.device, { operation: "edit_chorder_autofill",
+            enabled: args.enabled, expected_instance: args.expected_instance });
+        if (!native) return failure("The matching native Chorder GUI edit extension is required");
+        const result = Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+        if (native.ok === false) {
+            result.errors = [native.error];
+            delete result.error;
+        }
+        return result;
+    }
+
     pluginAction(args) {
         const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
         if (Object.keys(args).some(key => fields.indexOf(key) < 0)

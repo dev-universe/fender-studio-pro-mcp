@@ -153,6 +153,10 @@ enum Request {
         value: f64,
         expected_instance: String,
     },
+    EditChorderAutofill {
+        enabled: bool,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -222,7 +226,9 @@ enum Request {
 impl Request {
     fn source(&self) -> Source {
         match self {
-            Self::ParameterAction { .. } | Self::EditNumericParameter { .. } => Source::Dsp,
+            Self::ParameterAction { .. }
+            | Self::EditNumericParameter { .. }
+            | Self::EditChorderAutofill { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -255,6 +261,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::EditNumericParameter {
+                expected_instance, ..
+            }
+            | Self::EditChorderAutofill {
                 expected_instance, ..
             }
             | Self::ModelCatalog {
@@ -1284,6 +1293,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         }
         Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
+        | Request::EditChorderAutofill { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
@@ -1369,9 +1379,33 @@ impl NativeReply {
         }
     }
 }
+enum ParameterEditLease {
+    Direct(Box<numeric_edit::EditLease>),
+    ChorderGui(Box<gui_parameter::AutofillEditLease>),
+}
+impl ParameterEditLease {
+    fn phase(&self) -> &'static str {
+        match self {
+            Self::Direct(lease) => lease.phase(),
+            Self::ChorderGui(lease) => lease.phase(),
+        }
+    }
+    fn began(&self) -> bool {
+        match self {
+            Self::Direct(lease) => lease.began(),
+            Self::ChorderGui(lease) => lease.began(),
+        }
+    }
+    fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        match self {
+            Self::Direct(lease) => lease.check(ctx),
+            Self::ChorderGui(lease) => lease.check(ctx),
+        }
+    }
+}
 pub(crate) struct ReceiptLease {
     _catalog: Option<catalog::Catalog>,
-    _edit: Option<numeric_edit::EditLease>,
+    _edit: Option<ParameterEditLease>,
     _action: Option<action::ActionLease>,
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
@@ -1385,7 +1419,7 @@ pub(crate) struct ReceiptLease {
 pub(super) struct Reply {
     value: Value,
     catalog: Option<catalog::Catalog>,
-    edit: Option<numeric_edit::EditLease>,
+    edit: Option<ParameterEditLease>,
     action: Option<action::ActionLease>,
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
@@ -1419,10 +1453,7 @@ impl Reply {
         Self::unbound(error(code, message, outcome))
     }
     fn invalidate(&mut self, message: String) {
-        let outcome = if self
-            .edit
-            .as_ref()
-            .is_some_and(numeric_edit::EditLease::began)
+        let outcome = if self.edit.as_ref().is_some_and(ParameterEditLease::began)
             || self.mutation && self.value["outcome"] != "not_applied"
         {
             "unknown"
@@ -1585,10 +1616,7 @@ impl Reply {
         let mut value = error(
             "response_too_large",
             "native response exceeded256KiB",
-            if self
-                .edit
-                .as_ref()
-                .is_some_and(numeric_edit::EditLease::began)
+            if self.edit.as_ref().is_some_and(ParameterEditLease::began)
                 || self.mutation && self.value["outcome"] != "not_applied"
             {
                 "unknown"
@@ -1670,6 +1698,7 @@ fn dispatch_device(
         request,
         Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
+            | Request::EditChorderAutofill { .. }
             | Request::ParameterAction { .. }
             | Request::StateRestore { .. }
             | Request::PresetApply { .. }
@@ -1702,7 +1731,26 @@ fn dispatch_device(
         return Reply {
             value,
             catalog: None,
-            edit,
+            edit: edit.map(|lease| ParameterEditLease::Direct(Box::new(lease))),
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
+    if let Request::EditChorderAutofill { enabled, .. } = request {
+        let (mut value, edit) = gui_parameter::edit_autofill(&ctx, enabled);
+        value["instance"] = json!(ctx.instance);
+        return Reply {
+            value,
+            catalog: None,
+            edit: edit.map(|lease| ParameterEditLease::ChorderGui(Box::new(lease))),
             action: None,
             presets: None,
             auxiliary: None,

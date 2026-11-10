@@ -83,6 +83,8 @@ pub enum Operation {
     PluginPresets(PluginPresets),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
     PluginAction(PluginAction),
+    #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
+    EditChorderAutofill(ChorderAutofillSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -457,6 +459,15 @@ pub struct PluginParameterDetails {
     pub include_owner: Option<bool>,
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub compare_gui: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderAutofillSet {
+    pub track: String,
+    pub slot: u32,
+    pub enabled: bool,
+    pub expected_instance: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1152,6 +1163,20 @@ impl Operation {
                 {
                     return Err(invalid(
                         "A slot from 0 to 15 and expected plugin class or instance are required",
+                    ));
+                }
+            }
+            Self::EditChorderAutofill(p) => {
+                validate_splitter_name(&p.track, "track")?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.slot >= 16
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "Chorder Auto Fill requires slot 0..15 and a nonzero canonical native instance",
                     ));
                 }
             }
@@ -2930,5 +2955,50 @@ mod tests {
             loop_set.wire().1,
             json!({"start":0.0,"end":4.0,"enable":false})
         );
+    }
+    #[test]
+    fn chorder_gui_edit_has_one_boolean_role_and_no_caller_matching_policy() {
+        let base = json!({"track":"Scratch","slot":0,"enabled":true,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for enabled in [false, true] {
+            let mut args = base.clone();
+            args["enabled"] = json!(enabled);
+            let op = Operation::from_parts("chorder_autofill_set", args.clone()).unwrap();
+            assert!(op.validate().is_ok());
+            assert!(!op.is_read_only());
+            assert_eq!(op.wire(), ("editChorderAutofill".into(), args));
+        }
+        for extra in [
+            json!({"enabled":null}),
+            json!({"enabled":1}),
+            json!({"enabled":"true"}),
+            json!({"track":""}),
+            json!({"track":"x\0y"}),
+            json!({"slot":16}),
+            json!({"slot":-1}),
+            json!({"expected_instance":"00000000-0000-0000-0000-000000000000"}),
+            json!({"expected_instance":"12345678-1234-1234-1234-123456789abc"}),
+            json!({"source":"dsp"}),
+            json!({"param":"autofill"}),
+            json!({"plugin":"Chorder"}),
+            json!({"kind":"note_effect"}),
+            json!({"path":"autofill"}),
+            json!({"value":1}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("chorder_autofill_set", args)
+                    .and_then(|op| op.validate())
+                    .is_err()
+            );
+        }
+        for missing in ["track", "slot", "enabled", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(missing);
+            assert!(Operation::from_parts("chorder_autofill_set", args).is_err());
+        }
     }
 }

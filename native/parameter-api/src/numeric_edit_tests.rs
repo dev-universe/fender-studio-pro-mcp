@@ -553,3 +553,138 @@ fn numeric_edit_closed_receipt_retains_its_exact_observed_value() {
     );
     assert_eq!(trace(&f), ["begin", "value", "end"]);
 }
+
+fn toggle_fixture(env: &TextEnv, integer: bool) -> (Fixture, RawParameter) {
+    let number = |enabled| {
+        if integer {
+            Number::Integer(i64::from(enabled))
+        } else {
+            Number::Float(f64::from(u8::from(enabled)))
+        }
+    };
+    Fixture::new(
+        env,
+        0,
+        FakeValue::Number(number(false)),
+        number(false),
+        number(true),
+        None,
+    )
+}
+
+#[test]
+fn exact_toggle_edit_preserves_each_native_carrier_and_boolean_intent() {
+    let env = TextEnv::new();
+    for integer in [false, true] {
+        for enabled in [false, true] {
+            let (fixture, parameter) = toggle_fixture(&env, integer);
+            let attempt =
+                parameter.edit_raw_toggle("outerAliasName", enabled, &mut fixture.guard());
+            let readback = attempt.result.as_ref().unwrap();
+            assert!(readback.verified);
+            assert_eq!(
+                readback.after.raw.as_ref().unwrap().variant_tag,
+                if integer { 1 } else { 2 }
+            );
+            assert_eq!(trace(&fixture), ["begin", "value", "end"]);
+            assert_eq!(*fixture.p().edit.updates.borrow(), [1]);
+            drop(attempt);
+        }
+    }
+}
+
+#[test]
+fn exact_toggle_edit_refuses_changed_name_kind_or_range_before_initial_snapshot() {
+    let env = TextEnv::new();
+    for scenario in 0..3 {
+        let (fixture, parameter) = toggle_fixture(&env, false);
+        let mut guards = 0;
+        let attempt = parameter.edit_raw_toggle("outerAliasName", true, &mut || {
+            guards += 1;
+            if guards == 1 {
+                match scenario {
+                    0 => fixture.p().edit.name_changed.set(true),
+                    1 => fixture.p().edit.kind_override.set(Some(2)),
+                    2 => fixture.p().edit.min_override.set(Some(Number::Float(-1.0))),
+                    _ => unreachable!(),
+                }
+            }
+            Ok(())
+        });
+        assert_failure(&attempt, Outcome::NotApplied, NumericEditPhase::Prepared);
+        assert!(trace(&fixture).is_empty());
+        assert_eq!(fixture.p().writes.get(), 0);
+        assert!(guards > 1);
+    }
+}
+
+#[test]
+fn exact_toggle_edit_refuses_noncanonical_values_carriers_and_wrong_name() {
+    let env = TextEnv::new();
+    for scenario in 0..5 {
+        let (fixture, parameter) = toggle_fixture(&env, false);
+        match scenario {
+            0 => *fixture.p().value.borrow_mut() = FakeValue::Number(Number::Float(-0.0)),
+            1 => *fixture.p().value.borrow_mut() = FakeValue::Number(Number::Float(0.5)),
+            2 => fixture.p().edit.min_override.set(Some(Number::Integer(0))),
+            3 => fixture.p().max_override.set(Some(Number::Float(2.0))),
+            4 => (),
+            _ => unreachable!(),
+        }
+        let attempt = parameter.edit_raw_toggle(
+            if scenario == 4 {
+                "autofill"
+            } else {
+                "outerAliasName"
+            },
+            true,
+            &mut fixture.guard(),
+        );
+        assert_failure(&attempt, Outcome::NotApplied, NumericEditPhase::Prepared);
+        assert!(trace(&fixture).is_empty());
+        assert_eq!(fixture.p().writes.get(), 0);
+    }
+}
+
+#[test]
+fn exact_toggle_metadata_changes_after_begin_balance_end_without_a_value_write() {
+    let env = TextEnv::new();
+    for scenario in 0..4 {
+        let (fixture, parameter) = toggle_fixture(&env, false);
+        callback(
+            &fixture.p().edit.on_begin,
+            move |parameter| match scenario {
+                0 => parameter.enabled.set(false),
+                1 => parameter.edit.name_changed.set(true),
+                2 => parameter.edit.kind_override.set(Some(2)),
+                3 => parameter.edit.min_override.set(Some(Number::Float(-1.0))),
+                _ => unreachable!(),
+            },
+        );
+        let attempt = parameter.edit_raw_toggle("outerAliasName", true, &mut fixture.guard());
+        assert_failure(&attempt, Outcome::Unknown, NumericEditPhase::EndDispatched);
+        assert_eq!(trace(&fixture), ["begin", "end"]);
+        assert_eq!(fixture.p().writes.get(), 0);
+        drop(attempt);
+        assert_eq!(trace(&fixture), ["begin", "end"]);
+    }
+}
+
+#[test]
+fn exact_toggle_attachment_loss_after_begin_never_sends_an_end() {
+    let env = TextEnv::new();
+    let (fixture, parameter) = toggle_fixture(&env, true);
+    callback(&fixture.p().edit.on_begin, |parameter| {
+        parameter.context.set(false)
+    });
+    let attempt = parameter.edit_raw_toggle("outerAliasName", true, &mut fixture.guard());
+    assert_failure(
+        &attempt,
+        Outcome::Unknown,
+        NumericEditPhase::BeginDispatched,
+    );
+    assert_eq!(trace(&fixture), ["begin"]);
+    assert_eq!(fixture.p().writes.get(), 0);
+    drop(attempt);
+    assert_eq!(trace(&fixture), ["begin"]);
+}

@@ -11,7 +11,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 4,227 direct fields plus eight current-focus bindings | 25 Focus and two MIDI-controller roles |
+| Impact | 4,227 direct fields, 13 current-focus bindings and two MIDI current-value roles | 20 Focus roles and separate event lifecycles |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
@@ -286,11 +286,20 @@ contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass
 including both sample offsets, pan and level. The latest 385-field unit completed
 in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
-The eight separate current-focus results cover cutoff, sample start/end offsets
-and all five pitch-envelope controls, outside this direct-field count. Each observed pad0
+The 13 separate current-focus results cover cutoff, sample start/end offsets
+and all five pitch- and filter-envelope controls, outside this direct-field count. Each observed pad0
 binding passed two complete changed reads and two complete restored reads.
-Other pad selections, 25 remaining Focus
-roles and two MIDI-controller roles remain unverified.
+Other pad selections and 20 remaining Focus roles remain unverified.
+
+A dedicated two-name protocol then verified the current values of pitch bend
+and sustain. It used exactly one change and one own-original restoration per
+name, with two complete 4,262-record observations at each changed/restored
+boundary and a final independent original pair. Each changed projection differed
+only at its selected controller. Event delivery, autoreset completion, held
+voices, persistence and audible behavior remain outside these two current-value
+results. An earlier read-only preparation expired before any parameter setter
+and contributed no result; the successful attempt used a fresh fixed namespace
+with the unchanged 30-second generation guard.
 
 A separate finite instrument sweep has completed all 32 selected ordinary
 Mojito fields, all 275 selected Mai Tai fields and all 219 selected Presence

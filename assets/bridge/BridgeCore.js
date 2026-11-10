@@ -154,6 +154,14 @@ class Bridge {
             result = { ok: false, outcome: outcome, native_outcome: outcome,
                 error: { code: "insert_chain_context_changed", message: "The insert-chain document lease changed before publication" } };
         }
+        if (!isFail(result) && req.op === "editChorderAutofill"
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const refused = result && result.native_outcome === "not_applied";
+            result = { ok: false, outcome: refused ? "not_applied" : "unknown", native_outcome: refused ? "not_applied" : "unknown",
+                gui_value_verified: false, persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
+                error: { code: "gui_edit_context_changed", message: "The GUI edit document lease changed before publication" } };
+        }
         if (!isFail(result) && req.op === "pluginInspect" && req.args && req.args.include_context === true
             && (!result.fixture_context || !result.fixture_context.after
                 || !sameFixtureContext(result.fixture_context.after.context, afterContext)))
@@ -261,6 +269,7 @@ class Bridge {
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
             case "pluginPresets": return this.fromComponent(c => c.pluginPresets(args));
+            case "editChorderAutofill": return this.fromComponent(c => c.editChorderAutofill(args));
             case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
             default: return fail("unknown op: " + op);
         }

@@ -44,6 +44,120 @@ fn comparison_opt_in_is_strict_and_finite() {
     }
 }
 #[test]
+fn gui_edit_request_accepts_only_the_fixed_boolean_intent() {
+    let base = json!({"operation":"edit_chorder_autofill","enabled":true,
+        "expected_instance":"61D64D66-2A46-4BEE-A623-EC5CEB898313"});
+    for enabled in [false, true] {
+        let mut value = base.clone();
+        value["enabled"] = json!(enabled);
+        let request = serde_json::from_value::<Request>(value).unwrap();
+        assert!(request.validate().is_ok());
+        assert_eq!(request.source(), Source::Dsp);
+    }
+    for enabled in [Value::Null, json!(1), json!("true"), json!([])] {
+        let mut value = base.clone();
+        value["enabled"] = enabled;
+        assert!(serde_json::from_value::<Request>(value).is_err());
+    }
+    for field in ["enabled", "expected_instance"] {
+        let mut value = base.clone();
+        value.as_object_mut().unwrap().remove(field);
+        assert!(serde_json::from_value::<Request>(value).is_err());
+    }
+    for field in ["param", "source", "path", "value", "mode"] {
+        let mut value = base.clone();
+        value[field] = json!("autofill");
+        assert!(serde_json::from_value::<Request>(value).is_err());
+    }
+    let mut value = base;
+    value["expected_instance"] = json!(ZERO_UID);
+    assert!(
+        serde_json::from_value::<Request>(value)
+            .unwrap()
+            .validate()
+            .is_err()
+    );
+}
+
+fn toggle_description(integer: bool) -> parameters::Description {
+    let number = |enabled: bool| parameters::NativeValue {
+        variant_tag: if integer { 1 } else { 2 },
+        value: if integer {
+            parameters::Value::Integer(i64::from(enabled))
+        } else {
+            parameters::Value::Float(f64::from(u8::from(enabled)))
+        },
+    };
+    parameters::Description {
+        name: GUI_PARAMETER.into(),
+        tag: 4,
+        kind: parameters::Kind::Toggle,
+        enabled: true,
+        read_only: false,
+        raw: Some(number(false)),
+        min: Some(number(false)),
+        max: Some(number(true)),
+        default_value: Some(number(false)),
+        normalized: parameters::Normalized::Finite(0.0),
+        display: "0".into(),
+        display_parser: parameters::DisplayParser::PlainNumeric,
+        support: parameters::Support {
+            raw_number: true,
+            normalized: true,
+            display_text: true,
+        },
+    }
+}
+
+#[test]
+fn gui_toggle_profile_preserves_integer_and_float_carriers_and_refuses_other_shapes() {
+    for integer in [false, true] {
+        let value = toggle_description(integer);
+        assert!(!toggle_state(&value, GUI_PARAMETER).unwrap());
+        let mut enabled = value.clone();
+        enabled.raw = enabled.max.clone();
+        assert!(toggle_state(&enabled, GUI_PARAMETER).unwrap());
+        for scenario in 0..15 {
+            let mut changed = value.clone();
+            match scenario {
+                0 => changed.name = PARAMETER.into(),
+                1 => changed.kind = parameters::Kind::Integer,
+                2 => changed.enabled = false,
+                3 => changed.read_only = true,
+                4 => changed.support.raw_number = false,
+                5 => changed.raw = None,
+                6 => changed.min = None,
+                7 => changed.max = changed.min.clone(),
+                8 => changed.raw.as_mut().unwrap().variant_tag = 4,
+                9 => changed.raw.as_mut().unwrap().value = parameters::Value::Float(f64::NAN),
+                10 => changed.raw.as_mut().unwrap().value = parameters::Value::Float(0.5),
+                11 => changed.min.as_mut().unwrap().variant_tag = 4,
+                12 => {
+                    changed.max.as_mut().unwrap().value =
+                        parameters::Value::OpaqueObject { present: true }
+                }
+                13 => changed.raw.as_mut().unwrap().value = parameters::Value::Float(-0.0),
+                14 => changed.raw.as_mut().unwrap().variant_tag |= 0x10,
+                _ => unreachable!(),
+            }
+            assert!(
+                toggle_state(&changed, GUI_PARAMETER).is_err(),
+                "scenario {scenario}"
+            );
+        }
+    }
+}
+
+#[test]
+fn final_gui_edit_invalidation_removes_receiver_readback_and_value_claims() {
+    let mut value = json!({"operation":"edit_chorder_autofill","gui_value_verified":true,
+        "edit_phase":"closed_checked","gui_parameter":{"name":"autofill","before":{},"after":{}}});
+    invalidate(&mut value);
+    assert!(value.get("gui_parameter").is_none());
+    assert_eq!(value["gui_value_verified"], false);
+    assert_eq!(value["edit_phase"], "closed_checked");
+}
+#[test]
 fn final_invalidation_keeps_coverage_and_removes_all_identity_claims() {
     let mut value = json!({"ok":true,"gui_comparison":{"status":"compared","topParameterSame":true,"declaredObserverSame":true,"originalSame":null,"coverage":{"complete":true,"candidate_count":1,"visited_views":7,"max_views":128,"max_depth":32}}});
     invalidate(&mut value);
@@ -55,6 +169,7 @@ fn final_invalidation_keeps_coverage_and_removes_all_identity_claims() {
         "declaredObserverPresence",
         "originalSame",
         "editorMatch",
+        "gui_parameter",
     ] {
         assert!(value["gui_comparison"].get(field).is_none());
     }
