@@ -12,7 +12,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
 | Impact | 4,227 direct fields plus four current-focus bindings | 29 Focus and two MIDI-controller roles |
-| Other instruments | Mojito 32, Mai Tai 275, Presence 219 and SampleOne 228 | One held SampleOne field, MIDI roles and macros |
+| Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -322,15 +322,29 @@ Four subsequent bounded SampleOne units completed 224 further fields, excluding
 the exact gate-step setter involved in the interrupted unit. Together with the
 four-field pilot, 228 of its 229 selected ordinary fields are now verified.
 Each unit required a complete 235-record final checkpoint. The combined finite
-ordinary-instrument partition therefore has 754 of 755 completed fields. The
-held field has not been retried by this sequence, and these successful units do
-not establish a crash fix.
+ordinary-instrument partition reached 754 of 755 completed fields. That
+sequence did not retry the held field or establish a crash fix.
 
 A separate FFI audit corrected the script-return Variant representation to use
 implicit C-layout padding rather than requiring initialized padding bytes from
 foreign C++ constructors. Its 16-byte layout, field offsets and string/object
 ownership contract remain unchanged. Source tests and actual-host reads passed;
 this correction is not evidence that it caused or fixes the recorded crash.
+
+A later independently reviewed one-name experiment used a fresh app session
+and two complete original 235-record preflight reads. Exactly one gate-step
+change and one own-original restoration passed named readback, complete native
+projection checks and the final public checkpoint. SampleOne now has 229 of
+229 selected ordinary fields, and the finite four-instrument partition has all
+755. The earlier crashed unit still contributes zero; the new isolated success
+does not identify the old crash cause or prove a crash fix.
+
+The first four-name Ampire pilot stopped after its first parameter. Its own
+exact value was restored, but the strict full-provider comparison observed
+changes in the two read-only output peak meters. No completed case was counted
+and no next parameter was written. The failed run remains evidence while the
+read-only meter observation policy is reviewed separately from exact writable
+restoration.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
@@ -549,7 +563,13 @@ two complete reads before and after the diagnostic. The shipped exact Chorder
 editor instead defines the local GUI name `autofill` under its `chorder`
 controller. The next comparison uses only that fixed source-defined local name;
 it adds no fallback matching, caller-supplied GUI name or mutation authority.
-GUI/direct receiver equality and persistence remain unverified.
+The actual local-name comparison then found exactly one candidate in the
+complete 125-view walk, with canonical DeviceEditor identity. Its parameter
+and declared observer both differed canonically from the direct DSP receiver.
+Two complete original 908-record observations passed before and after. This
+establishes receiver inequality; it does not identify the persistence cause or
+authorize a generic GUI setter. No parameter write was performed by these
+diagnostics.
 
 The finite opt-in implementation passed 90 parameter-library unit tests, four
 documentation tests, 203 add-on tests and 76 Rust-server tests. The wire passed
