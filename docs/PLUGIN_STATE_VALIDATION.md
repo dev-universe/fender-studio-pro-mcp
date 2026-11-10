@@ -482,6 +482,20 @@ receiver does not resolve its persistence failure. Its observed declared
 controller is DeviceParamFolder and its original chain is self-referential;
 these facts do not identify the GUI/model receiver or prove audible propagation.
 
+A separate one-setter normalized-value contrast also returned a verified live
+Auto Fill-one value in 88 ms. Two full 908-record reads matched before and after
+Save, but the saved 581-byte preset member again remained byte-identical to the
+original GUI-zero member. After a full app restart, two fresh full reads matched
+the original values and schema. The second setter was skipped. Raw, normalized
+and bracketed direct edits therefore share this observed persistence failure;
+the cause remains unknown.
+
+Read-only native metadata now identifies the Auto Fill parameter as DeviceParam.
+The direct Device, parent slot and Presets child expose IController; the alias
+does not expose IController or IControllerProvider. Two complete original
+908-record observations followed each metadata check. These observations do not
+establish that the GUI uses the same parameter or declared observer.
+
 The finite opt-in implementation passed 90 parameter-library unit tests, four
 documentation tests, 203 add-on tests and 76 Rust-server tests. The wire passed
 220 JavaScript tests and an independent 266-case contract check. Six independent
