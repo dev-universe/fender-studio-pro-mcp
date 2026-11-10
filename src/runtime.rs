@@ -213,6 +213,7 @@ fn execute(
         }
     }
     if response.document != context.document {
+        invalidate_gui_comparison(&operation, &mut response.result);
         return Ok(Receipt {
             request_id,
             outcome: if read_only {
@@ -278,6 +279,9 @@ fn execute(
             _ => None,
         };
     }
+    if error.is_some() {
+        invalidate_gui_comparison(&operation, &mut response.result);
+    }
     Ok(Receipt {
         request_id,
         outcome,
@@ -287,6 +291,20 @@ fn execute(
         error,
         elapsed_ms: started.elapsed().as_millis(),
     })
+}
+
+fn invalidate_gui_comparison(operation: &Operation, result: &mut Value) {
+    if matches!(operation, Operation::PluginParameterDetails(details) if details.compare_gui) {
+        *result = json!({
+            "ok":false,"outcome":"not_applied","native_outcome":"not_applied","mutation_capability":false,
+            "gui_comparison":{
+                "status":"unresolved","scope":"exact_device_named_control_candidate",
+                "parameter_name":"chorder.autofill","semantic_binding":"named_candidate_only",
+                "mutation_capability":false,"reason":"stale_association",
+                "coverage":{"complete":false,"candidate_count":0,"visited_views":0,"max_views":128,"max_depth":16}
+            }
+        });
+    }
 }
 
 fn mutation_outcome(value: &Value) -> Outcome {
@@ -433,6 +451,30 @@ fn host_error(response: &WireResponse) -> OperationError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn changed_document_gui_reads_discard_all_identity_claims() {
+        let mut args = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
+            "param":"chorder.autofill","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let mut result = json!({"ok":true,"gui_comparison":{"status":"compared","topParameterSame":true,
+            "declaredObserverSame":true},"controller_report":{"stale":true}});
+        let legacy = Operation::from_parts("plugin_parameter_details", args.clone()).unwrap();
+        let before = result.clone();
+        invalidate_gui_comparison(&legacy, &mut result);
+        assert_eq!(result, before);
+        args["compare_gui"] = json!(true);
+        let operation = Operation::from_parts("plugin_parameter_details", args).unwrap();
+        invalidate_gui_comparison(&operation, &mut result);
+        assert_eq!(result["native_outcome"], "not_applied");
+        assert_eq!(result["gui_comparison"]["status"], "unresolved");
+        assert!(result["gui_comparison"].get("topParameterSame").is_none());
+        assert!(
+            result["gui_comparison"]
+                .get("declaredObserverSame")
+                .is_none()
+        );
+        assert!(result.get("controller_report").is_none());
+    }
 
     #[test]
     fn readback_comparison_handles_host_boolean_numbers() {

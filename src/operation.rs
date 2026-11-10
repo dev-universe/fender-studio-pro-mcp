@@ -455,6 +455,8 @@ pub struct PluginParameterDetails {
     pub source: ParameterSource,
     pub expected_instance: String,
     pub include_owner: Option<bool>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub compare_gui: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1442,6 +1444,19 @@ impl Operation {
                         "Use an expected plugin, bounded parameter name and explicit dsp or controller source",
                     ));
                 }
+                if p.compare_gui
+                    && (p.plugin != "Chorder"
+                        || p.param != "chorder.autofill"
+                        || !matches!(p.source, ParameterSource::Dsp)
+                        || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                        || p.expected_instance
+                            .bytes()
+                            .any(|byte| byte.is_ascii_lowercase()))
+                {
+                    return Err(invalid(
+                        "GUI comparison requires Chorder chorder.autofill with source dsp",
+                    ));
+                }
             }
             Self::PluginParameterFormat(p) => {
                 validate_plugin_target(
@@ -1986,6 +2001,60 @@ mod tests {
         let mut invalid = args;
         invalid["method"] = json!("invoke");
         assert!(Operation::from_parts("plugin_parameter_details", invalid).is_err());
+    }
+
+    #[test]
+    fn gui_parameter_comparison_is_a_strict_finite_read_opt_in() {
+        let base = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
+            "param":"chorder.autofill","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let legacy = Operation::from_parts("plugin_parameter_details", base.clone()).unwrap();
+        let mut disabled = base.clone();
+        disabled["compare_gui"] = json!(false);
+        let disabled = Operation::from_parts("plugin_parameter_details", disabled).unwrap();
+        disabled.validate().unwrap();
+        assert_eq!(legacy.wire().1, disabled.wire().1);
+        assert!(legacy.wire().1.get("compare_gui").is_none());
+        let mut enabled = base.clone();
+        enabled["compare_gui"] = json!(true);
+        for include_owner in [false, true] {
+            let mut input = enabled.clone();
+            input["include_owner"] = json!(include_owner);
+            let operation = Operation::from_parts("plugin_parameter_details", input).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            assert_eq!(operation.wire().1["compare_gui"], true);
+            assert_eq!(operation.wire().1["include_owner"], include_owner);
+        }
+        for selector in [Value::Null, json!("true"), json!(1), json!({}), json!([])] {
+            let mut invalid = base.clone();
+            invalid["compare_gui"] = selector;
+            assert!(Operation::from_parts("plugin_parameter_details", invalid).is_err());
+        }
+        for (field, value) in [
+            ("plugin", json!("Other")),
+            ("param", json!("autofill")),
+            ("source", json!("controller")),
+            ("expected_instance", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+        ] {
+            let mut invalid = enabled.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_details", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let schema = serde_json::to_value(schemars::schema_for!(PluginParameterDetails)).unwrap();
+        assert_eq!(schema["properties"]["compare_gui"]["type"], "boolean");
     }
 
     #[test]

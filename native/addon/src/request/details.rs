@@ -5,6 +5,69 @@ pub(super) struct OwnerRead {
     pub(super) owner: owner_inspect::OwnerInspection,
 }
 
+pub(super) struct GuiRead {
+    pub(super) value: Value,
+    pub(super) owner: Option<owner_inspect::OwnerInspection>,
+    pub(super) gui: gui_parameter::ComparisonRead,
+}
+pub(super) fn inspect_gui(
+    ctx: &Context<'_>,
+    provider: &Provider,
+    include_owner: bool,
+) -> Result<GuiRead, String> {
+    let controller = provider
+        .scalar()
+        .ok_or("GUI comparison requires scalar controller")?;
+    let mut guard = || {
+        controller.check()?;
+        ctx.check()
+    };
+    guard()?;
+    let parameter = controller.find(gui_parameter::PARAMETER, ctx.api)?;
+    guard()?;
+    let chain = parameter
+        .original_chain(&mut guard)
+        .map_err(|e| e.to_string())?;
+    if chain
+        .parameters
+        .first()
+        .is_none_or(|p| p.description.name != gui_parameter::PARAMETER)
+    {
+        return Err("direct comparison parameter name differs".into());
+    }
+    let owner = if include_owner {
+        let held = hold(parameter.as_borrowed_raw().as_ptr()).ok_or("parameter unavailable")?;
+        let raw = NonNull::new(held.0).expect("held parameter");
+        std::mem::forget(held);
+        let duplicate = unsafe { RawParameter::from_owned(raw, raw_text(ctx.api)) };
+        Some(owner_inspect::OwnerInspection::capture(
+            duplicate,
+            owner_inspect::text_api()?,
+            &mut guard,
+        )?)
+    } else {
+        None
+    };
+    let gui = gui_parameter::ComparisonRead::capture(ctx, controller, parameter)?;
+    let mut value = report(
+        gui_parameter::PARAMETER,
+        &chain,
+        "direct_device_named_parameter",
+    );
+    if let Some(owner) = owner.as_ref() {
+        value
+            .as_object_mut()
+            .expect("details object")
+            .extend(owner.value().as_object().expect("owner object").clone());
+    }
+    value["gui_comparison"] = gui.value();
+    value["ok"] = json!(true);
+    value["outcome"] = json!("observed");
+    gui.check(ctx, controller)?;
+    guard()?;
+    Ok(GuiRead { value, owner, gui })
+}
+
 pub(super) fn inspect_owner(
     ctx: &Context<'_>,
     provider: &Provider,

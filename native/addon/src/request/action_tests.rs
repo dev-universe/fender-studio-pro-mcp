@@ -458,6 +458,7 @@ fn reply(
         action: Some(lease),
         presets: None,
         owner: None,
+        gui: None,
         auxiliary: None,
         folder_preflight: None,
         nodes: None,

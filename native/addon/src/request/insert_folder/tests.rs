@@ -440,6 +440,7 @@ fn anchor_uid_callback_refused(publication: bool) {
             auxiliary: None,
             folder_preflight: Some(preflight),
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),

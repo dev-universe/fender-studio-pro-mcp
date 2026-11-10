@@ -47,6 +47,51 @@ class NativePluginControls {
             && result.after && typeof result.after === "object" && !Array.isArray(result.after);
     }
 
+    guiComparisonRequest(request) {
+        return Object.keys(request).every(key => ["operation", "source", "param", "expected_instance", "compare_gui", "include_owner"].indexOf(key) >= 0)
+            && request.compare_gui === true && request.source === "dsp" && request.param === "chorder.autofill"
+            && this.insertChainUid(request.expected_instance)
+            && (request.include_owner === undefined || typeof request.include_owner === "boolean");
+    }
+
+    guiComparisonReport(report) {
+        const object = value => value && typeof value === "object" && !Array.isArray(value);
+        const exact = (value, fields) => object(value) && Object.keys(value).length === fields.length
+            && fields.every(key => Object.prototype.hasOwnProperty.call(value, key));
+        const integer = (value, min, max) => typeof value === "number" && isFinite(value)
+            && Math.floor(value) === value && value >= min && value <= max;
+        const common = ["status", "scope", "parameter_name", "semantic_binding", "mutation_capability", "coverage"];
+        if (!object(report) || report.scope !== "exact_device_named_control_candidate"
+            || report.parameter_name !== "chorder.autofill" || report.semantic_binding !== "named_candidate_only"
+            || report.mutation_capability !== false
+            || !exact(report.coverage, ["complete", "candidate_count", "visited_views", "max_views", "max_depth"])
+            || typeof report.coverage.complete !== "boolean" || report.coverage.max_views !== 128 || report.coverage.max_depth !== 16
+            || !integer(report.coverage.visited_views, 0, 128) || !integer(report.coverage.candidate_count, 0, report.coverage.visited_views))
+            return false;
+        if (report.status === "unresolved")
+            return exact(report, common.concat(["reason"]))
+                && ["missing_editor", "ambiguous_editor", "missing_root_interface", "incomplete_walk", "no_exact_named_control",
+                    "ambiguous_named_controls", "stale_association", "deadline", "inspection_failed"].indexOf(report.reason) >= 0;
+        return report.status === "compared" && exact(report, common.concat(["topParameterSame", "declaredObserverSame",
+            "declaredObserverPresence", "originalSame", "originalBasis", "originalUnknownReason", "editorMatch"]))
+            && report.coverage.complete === true && report.coverage.candidate_count === 1
+            && typeof report.topParameterSame === "boolean"
+            && ["both_present", "both_absent", "one_absent"].indexOf(report.declaredObserverPresence) >= 0
+            && (report.declaredObserverPresence === "both_present" ? typeof report.declaredObserverSame === "boolean" : report.declaredObserverSame === null)
+            && report.originalSame === null && report.originalBasis === "not_compared" && report.originalUnknownReason === "not_observed"
+            && ["canonical_iunknown", "stable_node_uid"].indexOf(report.editorMatch) >= 0;
+    }
+
+    guiComparisonFailure(message, report) {
+        const gui = report && report.status === "unresolved" && this.guiComparisonReport(report) ? report : {
+            status: "unresolved", scope: "exact_device_named_control_candidate", parameter_name: "chorder.autofill",
+            semantic_binding: "named_candidate_only", mutation_capability: false, reason: "inspection_failed",
+            coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 16 }
+        };
+        return { ok: false, outcome: "not_applied", native_outcome: "not_applied", mutation_capability: false,
+            error: { code: "native_gui_comparison_failed", message: String(message).slice(0, 512) }, gui_comparison: gui };
+    }
+
     modelRequest(request) {
         const fields = ["operation", "catalog", "offset", "limit", "expected_instance"];
         const integer = (value, min, max) => typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
@@ -185,7 +230,11 @@ class NativePluginControls {
     request(device, request, auxiliary) {
         let dispatched = false;
         let parsed = null;
+        const guiComparison = request.operation === "parameter_details" && request.compare_gui === true;
         try {
+            if (request.operation === "parameter_details" && request.compare_gui !== undefined
+                && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
+                throw new Error("invalid finite native GUI comparison request");
             if (request.operation === "model_catalog" && !this.modelRequest(request)) throw new Error("invalid finite native model request");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditRequest(request)) throw new Error("invalid finite native edit request");
             const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
@@ -193,11 +242,12 @@ class NativePluginControls {
                 throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
-            if (typeof Host === "undefined" || !Host.Objects) return null;
+            if (typeof Host === "undefined" || !Host.Objects)
+                return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
-            if (!service) return null;
+            if (!service) return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
@@ -209,6 +259,21 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (guiComparison) {
+                if (!result.ok) {
+                    if (result.outcome !== "not_applied") throw new Error("invalid native GUI read failure outcome");
+                    return this.guiComparisonFailure(result.error && result.error.message || "native GUI comparison unavailable", result.gui_comparison);
+                }
+                if (result.ok !== true || result.outcome !== "observed" || result.source !== "dsp"
+                    || (result.error !== undefined && result.error !== null) || (result.native_error !== undefined && result.native_error !== null)
+                    || (result.errors !== undefined && (!Array.isArray(result.errors) || result.errors.length !== 0))
+                    || (result.native_outcome !== undefined && result.native_outcome !== "observed")
+                    || (result.mutation_capability !== undefined && result.mutation_capability !== false)
+                    || result.verified !== undefined || result.effects_verified !== undefined || result.token !== undefined
+                    || !result.instance || result.instance.class_uid !== "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"
+                    || !this.guiComparisonReport(result.gui_comparison))
+                    throw new Error("invalid native GUI comparison result");
+            }
             if (request.operation === "edit_numeric_parameter" && !this.numericEditResult(result)) throw new Error("invalid native numeric edit result");
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
@@ -224,6 +289,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (guiComparison) return this.guiComparisonFailure(error);
             const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: { code: "native_request_failed", message: String(error).slice(0, 512) },
                 before: parsed && parsed.before, after: parsed && parsed.after, instance: parsed && parsed.instance, source: parsed && parsed.source };
             if (request.operation === "edit_numeric_parameter" && parsed && this.numericEditPhase(parsed.edit_phase)) failure.edit_phase = parsed.edit_phase;

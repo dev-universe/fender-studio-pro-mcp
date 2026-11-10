@@ -513,15 +513,24 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
             || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
             || (args.source !== "dsp" && args.source !== "controller")
-            || (args.include_owner !== undefined && typeof args.include_owner !== "boolean"))
+            || (args.include_owner !== undefined && typeof args.include_owner !== "boolean")
+            || (args.compare_gui !== undefined && typeof args.compare_gui !== "boolean"))
             return { error: "an expected plugin, native instance, bounded parameter and explicit source are required" };
+        if (args.compare_gui === true && (args.plugin !== "Chorder" || args.param !== "chorder.autofill" || args.source !== "dsp"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"))
+            return { error: "GUI comparison requires the exact Chorder Auto Fill dsp target and native instance" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
+        if (args.compare_gui === true && plug.name !== "Chorder") return { error: "the resolved GUI comparison target is not Chorder" };
         const request = { operation: "parameter_details", source: args.source,
             param: args.param, expected_instance: args.expected_instance };
         if (args.include_owner !== undefined) request.include_owner = args.include_owner;
+        if (args.compare_gui === true) request.compare_gui = true;
         const native = this.nativePluginRequest(plug.device, request);
         if (!native) return { error: "parameter details require the matching native extension" };
+        if (args.compare_gui === true && !native.ok) return Object.assign({}, native, {
+            error: native.error && native.error.message || "native GUI comparison unavailable", plugin: plug.name });
         if (!native.ok) return { error: native.error && native.error.message || "native parameter details unavailable" };
         return Object.assign({}, native, { plugin: plug.name });
     }

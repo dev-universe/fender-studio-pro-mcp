@@ -158,6 +158,15 @@ class Bridge {
             && (!result.fixture_context || !result.fixture_context.after
                 || !sameFixtureContext(result.fixture_context.after.context, afterContext)))
             result = fail("the fixture document changed before the inspection receipt");
+        if (!isFail(result) && req.op === "pluginParameterDetails" && req.args && req.args.compare_gui === true
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session))
+            result = { ok: false, outcome: "not_applied", native_outcome: "not_applied", mutation_capability: false,
+                error: "The GUI comparison document lease changed before publication", gui_comparison: {
+                    status: "unresolved", scope: "exact_device_named_control_candidate", parameter_name: "chorder.autofill",
+                    semantic_binding: "named_candidate_only", mutation_capability: false, reason: "stale_association",
+                    coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 16 }
+                } };
         const reply = isFail(result)
             ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
             : { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: true, result: result };

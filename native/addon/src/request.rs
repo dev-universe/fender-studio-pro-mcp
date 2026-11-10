@@ -27,6 +27,8 @@ mod direct_tests;
 mod folder_context;
 #[path = "request/format.rs"]
 mod format;
+#[path = "request/gui_parameter.rs"]
+mod gui_parameter;
 #[path = "request/insert_chain.rs"]
 pub(super) mod insert_chain;
 #[path = "request/insert_folder.rs"]
@@ -120,6 +122,8 @@ enum Request {
         source: Source,
         #[serde(default)]
         include_owner: bool,
+        #[serde(default)]
+        compare_gui: bool,
         expected_instance: Option<String>,
     },
     ParameterDigest {
@@ -390,6 +394,14 @@ impl Request {
                 expected_instance: None,
                 ..
             } => Err("parameter_details requires expected_instance".into()),
+            Self::ParameterDetails {
+                compare_gui: true,
+                source,
+                param,
+                ..
+            } if *source != Source::Dsp || param != gui_parameter::PARAMETER => {
+                Err("GUI comparison requires chorder.autofill and explicit dsp source".into())
+            }
             Self::ParameterDetails {
                 source: Source::Auto,
                 ..
@@ -1248,12 +1260,12 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         Request::ParameterDetails {
             param,
             include_owner: false,
+            compare_gui: false,
             ..
         } => details::inspect(ctx, provider, &param),
-        Request::ParameterDetails {
-            include_owner: true,
-            ..
-        } => Err("owner inspection requires its publication dispatcher".into()),
+        Request::ParameterDetails { .. } => {
+            Err("parameter inspection requires its publication dispatcher".into())
+        }
         Request::ParameterDigest { .. } => digest::inspect(ctx, provider),
         Request::FormatValues { param, values, .. } => {
             format::inspect(ctx, provider, &param, &values)
@@ -1363,6 +1375,7 @@ pub(crate) struct ReceiptLease {
     _action: Option<action::ActionLease>,
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
+    _gui: Option<gui_parameter::ComparisonRead>,
     _auxiliary: Option<node_inspect::Auxiliary>,
     _folder_preflight: Option<insert_folder::InsertFolderPreflight>,
     _nodes: Option<node_inspect::Inventory>,
@@ -1376,6 +1389,7 @@ pub(super) struct Reply {
     action: Option<action::ActionLease>,
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
+    gui: Option<gui_parameter::ComparisonRead>,
     auxiliary: Option<node_inspect::Auxiliary>,
     folder_preflight: Option<insert_folder::InsertFolderPreflight>,
     nodes: Option<node_inspect::Inventory>,
@@ -1392,6 +1406,7 @@ impl Reply {
             action: None,
             presets: None,
             owner: None,
+            gui: None,
             auxiliary: None,
             folder_preflight: None,
             nodes: None,
@@ -1426,6 +1441,7 @@ impl Reply {
             .remove("verified");
         digest::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
+        gui_parameter::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
         presets::invalidate(&mut self.value);
         insert_folder::invalidate(&mut self.value);
@@ -1501,7 +1517,17 @@ impl Reply {
                         .as_ref()
                         .map_or(Ok(()), |preflight| preflight.check(ctx))
                 })
-                .and_then(|_| self.edit.as_ref().map_or(Ok(()), |edit| edit.check(ctx))),
+                .and_then(|_| self.edit.as_ref().map_or(Ok(()), |edit| edit.check(ctx)))
+                .and_then(|_| {
+                    self.gui.as_ref().map_or(Ok(()), |gui| {
+                        let controller = self
+                            .provider
+                            .as_ref()
+                            .and_then(Provider::scalar)
+                            .ok_or("GUI comparison scalar provider unavailable")?;
+                        gui.check(ctx, controller)
+                    })
+                }),
             None => {
                 let service = unsafe { &*service };
                 if READY.load(Ordering::Acquire)
@@ -1530,6 +1556,7 @@ impl Reply {
             _action: self.action.take(),
             _presets: self.presets.take(),
             _owner: self.owner.take(),
+            _gui: self.gui.take(),
             _auxiliary: self.auxiliary.take(),
             _folder_preflight: self.folder_preflight.take(),
             _nodes: self.nodes.take(),
@@ -1543,6 +1570,7 @@ impl Reply {
         drop(self.action.take());
         drop(self.presets.take());
         drop(self.owner.take());
+        drop(self.gui.take());
         drop(self.folder_preflight.take());
         drop(self.auxiliary.take());
         drop(self.nodes.take());
@@ -1660,6 +1688,7 @@ fn dispatch_device(
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1679,6 +1708,7 @@ fn dispatch_device(
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1708,6 +1738,7 @@ fn dispatch_device(
             auxiliary,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1736,6 +1767,7 @@ fn dispatch_device(
             auxiliary: None,
             folder_preflight,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1774,6 +1806,7 @@ fn dispatch_device(
             auxiliary,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1798,6 +1831,7 @@ fn dispatch_device(
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(ctx),
@@ -1823,6 +1857,7 @@ fn dispatch_device(
             action: None,
             presets: None,
             owner: None,
+            gui: None,
             auxiliary: None,
             folder_preflight: None,
             nodes: None,
@@ -1859,10 +1894,52 @@ fn dispatch_device(
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider,
             context: Some(ctx),
             mutation,
+        };
+    }
+    if let Request::ParameterDetails {
+        compare_gui: true,
+        include_owner,
+        ..
+    } = &request
+    {
+        let (mut value, provider, owner, gui) = match provider(&ctx, Source::Dsp, true) {
+            Ok(provider) => match details::inspect_gui(&ctx, &provider, *include_owner) {
+                Ok(read) => (read.value, Some(provider), read.owner, Some(read.gui)),
+                Err(reason) => (
+                    error("gui_parameter_inspection_failed", &reason, "not_applied"),
+                    Some(provider),
+                    None,
+                    None,
+                ),
+            },
+            Err(reason) => (
+                error("provider_unavailable", &reason, "not_applied"),
+                None,
+                None,
+                None,
+            ),
+        };
+        value["source"] = json!("dsp");
+        value["instance"] = json!(ctx.instance);
+        return Reply {
+            value,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner,
+            gui,
+            nodes: None,
+            provider,
+            context: Some(ctx),
+            mutation: false,
         };
     }
     let scalar = matches!(
@@ -1943,6 +2020,7 @@ fn dispatch_device(
         auxiliary: None,
         folder_preflight: None,
         owner,
+        gui: None,
         nodes,
         provider,
         context: Some(ctx),
@@ -2905,6 +2983,7 @@ mod guard_tests {
                 _action: None,
                 _presets: None,
                 _owner: None,
+                _gui: None,
                 _auxiliary: None,
                 _folder_preflight: None,
                 _nodes: None,
@@ -2952,6 +3031,7 @@ mod guard_tests {
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -2995,6 +3075,7 @@ mod guard_tests {
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: Some(inspection),
             provider: None,
             context: Some(context),
@@ -3036,6 +3117,7 @@ mod guard_tests {
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: Some(inspection),
             provider: None,
             context: Some(context),
@@ -3071,6 +3153,7 @@ mod guard_tests {
             auxiliary: Some(auxiliary),
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -3103,6 +3186,7 @@ mod guard_tests {
             auxiliary: Some(auxiliary),
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -3153,6 +3237,7 @@ mod guard_tests {
             auxiliary: Some(auxiliary),
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(context),
@@ -3213,6 +3298,7 @@ mod guard_tests {
             auxiliary: None,
             folder_preflight: None,
             owner: None,
+            gui: None,
             nodes: None,
             provider: None,
             context: Some(fixture.context()),

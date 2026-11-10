@@ -155,6 +155,7 @@ fn reply(context: Box<Context<'static>>, owner: OwnerInspection) -> Reply {
         action: None,
         presets: None,
         owner: Some(owner),
+        gui: None,
         auxiliary: None,
         folder_preflight: None,
         nodes: None,

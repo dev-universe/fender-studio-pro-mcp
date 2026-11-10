@@ -162,7 +162,7 @@ impl McpServer {
             named::<PluginParameterDetails>(
                 "plugin_parameter_details",
                 "pluginParameterDetails",
-                "Read native parameter precision, state flags and a bounded original-parameter chain. include_owner=true also observes bounded controller metadata without invoking methods or granting mutation access. Requires an explicit dsp or controller source and expected_instance. List interface presence and precision do not imply a choice count or selection index.",
+                "Read native parameter precision, state flags and a bounded original-parameter chain. include_owner=true also observes bounded controller metadata. compare_gui=true compares the exact already-open Chorder editor's chorder.autofill parameter and declared observer with the direct dsp receiver. It requires source dsp and expected_instance, opens no UI and grants no mutation access. Missing or ambiguous controls remain unresolved. Other details require an explicit dsp or controller source. List precision does not imply a choice count or selection index.",
                 false,
             ),
             named::<PluginParameterFormat>(

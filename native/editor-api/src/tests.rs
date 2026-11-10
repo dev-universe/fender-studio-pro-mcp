@@ -27,6 +27,7 @@ struct Object {
     is_node: bool,
     is_view: bool,
     is_controller: bool,
+    view_override: Cell<*const Object>,
     component: Cell<*const Object>,
     slot: Cell<*const Object>,
     device: Cell<*const Object>,
@@ -46,9 +47,22 @@ unsafe extern "C" fn retain(p: *mut c_void) -> u32 {
 }
 unsafe extern "C" fn release(p: *mut c_void) -> u32 {
     let o = unsafe { obj(p) };
+    REPLACE_OTHER_ROOT_ON_RELEASE.with(|state| {
+        let (trigger, victim, replacement) = state.get();
+        if std::ptr::eq(o, trigger) {
+            state.set((std::ptr::null(), std::ptr::null(), std::ptr::null()));
+            unsafe { &*victim }.view_override.set(replacement);
+        }
+    });
     let n = o.refs.get() - 1;
     o.refs.set(n);
     if o.class.as_bytes() == b"Window" {
+        REPLACE_ROOT_ON_WINDOW_RELEASE.with(|target| {
+            let replacement = target.replace(std::ptr::null());
+            if !replacement.is_null() {
+                o.view_override.set(replacement);
+            }
+        });
         CLOSE_ON_WINDOW_RELEASE.with(|flag| {
             if flag.replace(false) {
                 DESKTOP.with(|d| unsafe { &*d.get() }.windows.borrow_mut().clear());
@@ -67,7 +81,12 @@ unsafe extern "C" fn query(p: *mut c_void, iid: *const Uid, out: *mut *mut c_voi
     } else if *iid == NODE && o.is_node {
         Some(&o.node)
     } else if *iid == VIEW && o.is_view {
-        Some(&o.view)
+        let replacement = o.view_override.get();
+        Some(if replacement.is_null() {
+            &o.view
+        } else {
+            &unsafe { &*replacement }.view
+        })
     } else if *iid == CONTROLLER && o.is_controller {
         Some(&o.controller)
     } else {
@@ -113,12 +132,14 @@ struct ConstName {
     opaque: *const c_void,
 }
 thread_local! {
+    static REPLACE_OTHER_ROOT_ON_RELEASE:Cell<(*const Object,*const Object,*const Object)>=const{Cell::new((std::ptr::null(),std::ptr::null(),std::ptr::null()))};
     static SLOT:ConstName=const{ConstName{ascii:c"DeviceSlot".as_ptr(),opaque:std::ptr::null()}};
     static DEVICE:ConstName=const{ConstName{ascii:c"Device".as_ptr(),opaque:std::ptr::null()}};
     static DESKTOP:Cell<*mut Desktop>=const{Cell::new(std::ptr::null_mut())};
     static ITER_COUNTS:Cell<(u32,u32)>=const{Cell::new((0,0))};
     static CLOSE_ON_ITER_RELEASE:Cell<bool>=const{Cell::new(false)};
     static CLOSE_ON_WINDOW_RELEASE:Cell<bool>=const{Cell::new(false)};
+    static REPLACE_ROOT_ON_WINDOW_RELEASE:Cell<*const Object>=const{Cell::new(std::ptr::null())};
     static REPLACE_ON_COMPONENT_CLASS:Cell<(u32,*const Object)>=const{Cell::new((0,std::ptr::null()))};
 }
 unsafe extern "C" fn constant(s: *const c_char) -> *const c_void {
@@ -308,6 +329,7 @@ impl World {
             is_node: node,
             is_view: view,
             is_controller: ctrl,
+            view_override: Cell::new(std::ptr::null()),
             component: Cell::new(std::ptr::null()),
             slot: Cell::new(std::ptr::null()),
             device: Cell::new(std::ptr::null()),
@@ -385,6 +407,19 @@ impl World {
         ITER_COUNTS.with(|c| c.set((0, 0)));
         w
     }
+    fn resolve_root(&self) -> Result<EditorRootLease, Error> {
+        let raw = raw(&unsafe { &*self.expected }.unknown);
+        unsafe {
+            retain(raw);
+            resolve_read_only_root_owned(
+                NonNull::new(raw).unwrap(),
+                GuiApi {
+                    get_desktop,
+                    get_constant_string: constant,
+                },
+            )
+        }
+    }
     fn resolve(&self) -> Result<ExternalEditorLease, Error> {
         let raw = raw(&unsafe { &*self.expected }.unknown);
         unsafe {
@@ -404,6 +439,10 @@ impl Drop for World {
         DESKTOP.with(|d| d.set(std::ptr::null_mut()));
         CLOSE_ON_ITER_RELEASE.with(|f| f.set(false));
         CLOSE_ON_WINDOW_RELEASE.with(|f| f.set(false));
+        REPLACE_ROOT_ON_WINDOW_RELEASE.with(|f| f.set(std::ptr::null()));
+        REPLACE_OTHER_ROOT_ON_RELEASE.with(|f| {
+            f.set((std::ptr::null(), std::ptr::null(), std::ptr::null()));
+        });
         REPLACE_ON_COMPONENT_CLASS.with(|f| f.set((0, std::ptr::null())));
         for o in &self.objects {
             assert_eq!(
@@ -551,4 +590,121 @@ fn window_and_thread_bounds_precede_unbounded_native_work() {
     drop(lease);
     w.desktop.windows.borrow_mut().resize(65, w.window);
     assert!(matches!(w.resolve(), Err(Error::WindowLimit)));
+}
+
+#[test]
+fn root_only_resolves_nonexternal_device_without_external_widget_path() {
+    let w = World::new();
+    unsafe { &*w.expected }.class_id.set(id(999));
+    unsafe { &*w.window }.views.borrow_mut().clear();
+    let lease = w.resolve_root().unwrap();
+    assert_eq!(lease.identity().device_class, id(999));
+    assert_eq!(lease.identity().matched_by, DeviceMatch::CanonicalIUnknown);
+    assert_eq!(
+        unsafe { lease.as_borrowed_root() }.unwrap().as_ptr(),
+        raw(&unsafe { &*w.window }.view)
+    );
+    assert!(matches!(w.resolve(), Err(Error::UnsupportedDevice)));
+    ITER_COUNTS.with(|c| assert_eq!(c.get(), (0, 0)));
+}
+
+#[test]
+fn root_only_requires_unique_editor_and_public_window_view() {
+    let mut w = World::new();
+    w.desktop.windows.borrow_mut().clear();
+    assert!(matches!(w.resolve_root(), Err(Error::MissingEditor)));
+    w.desktop.windows.borrow_mut().push(w.window);
+    let second = w.add("Window", id(80), id(102), false, true, false);
+    unsafe { &*second }.component.set(w.editor);
+    w.desktop.windows.borrow_mut().push(second);
+    assert!(matches!(w.resolve_root(), Err(Error::AmbiguousEditor)));
+    w.desktop.windows.borrow_mut().pop();
+    let window = w
+        .objects
+        .iter_mut()
+        .find(|o| std::ptr::eq(&***o, w.window))
+        .unwrap();
+    window.is_view = false;
+    assert!(matches!(w.resolve_root(), Err(Error::MissingInterface)));
+}
+
+#[test]
+fn root_only_missing_attachment_and_wrong_device_are_unresolved() {
+    let mut w = World::new();
+    unsafe { &*w.editor }.slot.set(std::ptr::null());
+    assert!(matches!(w.resolve_root(), Err(Error::MissingEditor)));
+    unsafe { &*w.editor }.slot.set(w.slot);
+    unsafe { &*w.slot }.device.set(std::ptr::null());
+    assert!(matches!(w.resolve_root(), Err(Error::MissingEditor)));
+    let other = w.add("AudioEffect", id(999), EXTERNAL_MONO, true, false, false);
+    unsafe { &*w.slot }.device.set(other);
+    assert!(matches!(w.resolve_root(), Err(Error::MissingEditor)));
+}
+
+#[test]
+fn root_only_stable_uid_adapter_and_rebound_device_are_checked() {
+    let mut w = World::new();
+    let alias = w.add("AudioEffect", id(1), EXTERNAL_MONO, true, false, false);
+    unsafe { &*w.slot }.device.set(alias);
+    let lease = w.resolve_root().unwrap();
+    assert_eq!(lease.identity().matched_by, DeviceMatch::StableNodeUid);
+    lease.check().unwrap();
+    lease.check_pinned().unwrap();
+    unsafe { &*w.slot }.device.set(w.expected);
+    assert_eq!(lease.check(), Err(Error::Stale));
+}
+
+#[test]
+fn root_validation_cleanup_reentry_cannot_publish_closed_window() {
+    let w = World::new();
+    let lease = w.resolve_root().unwrap();
+    CLOSE_ON_WINDOW_RELEASE.with(|flag| flag.set(true));
+    assert!(lease.check().is_err());
+    assert!(unsafe { lease.as_borrowed_root() }.is_err());
+}
+
+#[test]
+fn root_validation_cleanup_reentry_cannot_publish_rebound_view() {
+    let mut w = World::new();
+    let lease = w.resolve_root().unwrap();
+    let other = w.add("View", id(700), id(0), false, true, false);
+    REPLACE_ROOT_ON_WINDOW_RELEASE.with(|target| target.set(other));
+    assert_eq!(lease.check(), Err(Error::Stale));
+    assert!(unsafe { lease.as_borrowed_root() }.is_err());
+}
+
+#[test]
+fn root_only_thread_and_window_bounds_remain_finite() {
+    let w = World::new();
+    let mut lease = w.resolve_root().unwrap();
+    lease.thread = std::thread::spawn(|| std::thread::current().id())
+        .join()
+        .unwrap();
+    assert_eq!(lease.check(), Err(Error::WrongThread));
+    assert_eq!(lease.check_pinned(), Err(Error::WrongThread));
+    assert_eq!(unsafe { lease.as_borrowed_root() }, Err(Error::WrongThread));
+    drop(lease);
+    w.desktop.windows.borrow_mut().resize(65, w.window);
+    assert!(matches!(w.resolve_root(), Err(Error::WindowLimit)));
+}
+
+#[test]
+fn root_pinned_check_defers_owner_release_until_next_full_observation() {
+    let w = World::new();
+    let lease = w.resolve_root().unwrap();
+    CLOSE_ON_WINDOW_RELEASE.with(|flag| flag.set(true));
+    lease.check_pinned().unwrap();
+    assert_eq!(w.desktop.windows.borrow().len(), 1);
+    assert!(lease.check().is_err());
+}
+
+#[test]
+fn root_scan_cleanup_reentry_cannot_publish_rebound_view() {
+    let mut w = World::new();
+    let extra = w.add("Window", id(801), id(102), false, true, false);
+    let replacement = w.add("View", id(802), id(0), false, true, false);
+    w.desktop.windows.borrow_mut().push(extra);
+    let lease = w.resolve_root().unwrap();
+    REPLACE_OTHER_ROOT_ON_RELEASE.with(|state| state.set((extra, w.window, replacement)));
+    assert_eq!(lease.check(), Err(Error::Stale));
 }
