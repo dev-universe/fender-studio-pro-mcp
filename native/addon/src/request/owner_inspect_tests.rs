@@ -132,6 +132,7 @@ fn reply(context: Box<Context<'static>>, owner: OwnerInspection) -> Reply {
     Reply {
         value,
         catalog: None,
+        edit: None,
         action: None,
         presets: None,
         owner: Some(owner),

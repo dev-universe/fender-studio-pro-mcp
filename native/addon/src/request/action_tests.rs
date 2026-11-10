@@ -454,6 +454,7 @@ fn reply(
     Reply {
         value,
         catalog: None,
+        edit: None,
         action: Some(lease),
         presets: None,
         owner: None,

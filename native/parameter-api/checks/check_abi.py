@@ -11,6 +11,7 @@ expected = {
     "parameter_type": 24, "parameter_name": 32,
     "parameter_enabled": 48, "parameter_state": 64, "parameter_tag": 104,
     "parameter_controller": 112,
+    "parameter_begin_edit": 128, "parameter_end_edit": 136,
     "parameter_original": 144, "parameter_precision": 240,
     "parameter_set_raw": 168, "parameter_normalized": 280,
     "parameter_set_normalized": 288, "parameter_formatter": 328,

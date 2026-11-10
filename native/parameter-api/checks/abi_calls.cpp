@@ -24,6 +24,8 @@ static_assert(!std::is_trivially_copyable_v<CCL::Variant>);
 static_assert(!std::is_trivially_destructible_v<CCL::Variant>);
 static_assert(std::is_same_v<CCL::StringID,const CCL::CString&>);
 static_assert(std::is_same_v<CCL::VariantRef,const CCL::Variant&>);
+static_assert(std::is_same_v<decltype(std::declval<CCL::IParameter&>().beginEdit()),void>);
+static_assert(std::is_same_v<decltype(std::declval<CCL::IParameter&>().endEdit()),void>);
 // The newer-SDK regression compares dispatch separately from changed flags.
 #ifndef FENDER_PARAMETER_CHECK_OFFSETS_ONLY
 static_assert(CCL::IParameter::kReadOnly==0x1000);
@@ -44,6 +46,8 @@ extern "C" CCL::tbool abi_parameter_enabled(CCL::IParameter* p) {return p->isEna
 extern "C" CCL::tbool abi_parameter_state(CCL::IParameter* p,int mask) {return p->getState(mask);}
 extern "C" int abi_parameter_tag(CCL::IParameter* p) {return p->getTag();}
 extern "C" CCL::IUnknown* abi_parameter_controller(CCL::IParameter* p) {return p->getController();}
+extern "C" void abi_parameter_begin_edit(CCL::IParameter* p) {p->beginEdit();}
+extern "C" void abi_parameter_end_edit(CCL::IParameter* p) {p->endEdit();}
 extern "C" CCL::IParameter* abi_parameter_original(CCL::IParameter* p) {return p->getOriginal();}
 extern "C" int abi_parameter_precision(CCL::IParameter* p) {return p->getPrecision();}
 extern "C" void abi_parameter_set_raw(CCL::IParameter* p,const CCL::Variant* v,CCL::tbool update) {p->setValue(*v,update);}

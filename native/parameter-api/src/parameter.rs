@@ -17,6 +17,9 @@ mod formatting;
 #[path = "owner.rs"]
 mod owner;
 pub use owner::ControllerOwner;
+#[path = "numeric_edit.rs"]
+mod numeric_edit;
+pub use numeric_edit::{NumericEditAttempt, NumericEditLease, NumericEditPhase};
 #[path = "pulse.rs"]
 mod pulse;
 pub use pulse::{PulseError, PulseOutcome, PulseReceipt, PulseState};

@@ -357,6 +357,7 @@ fn reply(context: Box<Context<'static>>, inventory: Inventory) -> Reply {
     Reply {
         value: json!({"ok":true,"node_report":nodes.value()}),
         catalog: None,
+        edit: None,
         action: None,
         presets: None,
         owner: None,

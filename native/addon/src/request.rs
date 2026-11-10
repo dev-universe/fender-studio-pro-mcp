@@ -33,6 +33,8 @@ pub(super) mod insert_chain;
 mod insert_folder;
 #[path = "request/node_inspect.rs"]
 mod node_inspect;
+#[path = "request/numeric_edit.rs"]
+mod numeric_edit;
 #[path = "request/owner_inspect.rs"]
 mod owner_inspect;
 #[path = "request/presets.rs"]
@@ -142,6 +144,11 @@ enum Request {
         limit: u32,
         expected_instance: String,
     },
+    EditNumericParameter {
+        param: String,
+        value: f64,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -211,7 +218,7 @@ enum Request {
 impl Request {
     fn source(&self) -> Source {
         match self {
-            Self::ParameterAction { .. } => Source::Dsp,
+            Self::ParameterAction { .. } | Self::EditNumericParameter { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -241,6 +248,9 @@ impl Request {
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. } => None,
             Self::ParameterAction {
+                expected_instance, ..
+            }
+            | Self::EditNumericParameter {
                 expected_instance, ..
             }
             | Self::ModelCatalog {
@@ -340,6 +350,9 @@ impl Request {
                     }
                 }
                 Ok(())
+            }
+            Self::EditNumericParameter { param, value, .. } => {
+                numeric_edit::validate(param, *value)
             }
             Self::ModelCatalog { offset, limit, .. } => catalog::validate_page(*offset, *limit),
             Self::ParameterDigest {
@@ -1258,6 +1271,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
             };
         }
         Request::ParameterAction { .. }
+        | Request::EditNumericParameter { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
@@ -1345,6 +1359,7 @@ impl NativeReply {
 }
 pub(crate) struct ReceiptLease {
     _catalog: Option<catalog::Catalog>,
+    _edit: Option<numeric_edit::EditLease>,
     _action: Option<action::ActionLease>,
     _presets: Option<presets::Receipt>,
     _owner: Option<owner_inspect::OwnerInspection>,
@@ -1357,6 +1372,7 @@ pub(crate) struct ReceiptLease {
 pub(super) struct Reply {
     value: Value,
     catalog: Option<catalog::Catalog>,
+    edit: Option<numeric_edit::EditLease>,
     action: Option<action::ActionLease>,
     presets: Option<presets::Receipt>,
     owner: Option<owner_inspect::OwnerInspection>,
@@ -1372,6 +1388,7 @@ impl Reply {
         Self {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             owner: None,
@@ -1387,11 +1404,19 @@ impl Reply {
         Self::unbound(error(code, message, outcome))
     }
     fn invalidate(&mut self, message: String) {
-        let outcome = if self.mutation && self.value["outcome"] != "not_applied" {
+        let outcome = if self
+            .edit
+            .as_ref()
+            .is_some_and(numeric_edit::EditLease::began)
+            || self.mutation && self.value["outcome"] != "not_applied"
+        {
             "unknown"
         } else {
             "not_applied"
         };
+        if let Some(edit) = self.edit.as_ref() {
+            self.value["edit_phase"] = json!(edit.phase());
+        }
         self.value["ok"] = json!(false);
         self.value["error"] = json!({"code":"context_changed_before_receipt","message":message});
         self.value["outcome"] = json!(outcome);
@@ -1475,7 +1500,8 @@ impl Reply {
                     self.folder_preflight
                         .as_ref()
                         .map_or(Ok(()), |preflight| preflight.check(ctx))
-                }),
+                })
+                .and_then(|_| self.edit.as_ref().map_or(Ok(()), |edit| edit.check(ctx))),
             None => {
                 let service = unsafe { &*service };
                 if READY.load(Ordering::Acquire)
@@ -1500,6 +1526,7 @@ impl Reply {
     pub(super) fn take_receipt(&mut self) -> Option<ReceiptLease> {
         self.context.take().map(|context| ReceiptLease {
             _catalog: self.catalog.take(),
+            _edit: self.edit.take(),
             _action: self.action.take(),
             _presets: self.presets.take(),
             _owner: self.owner.take(),
@@ -1511,6 +1538,7 @@ impl Reply {
         })
     }
     pub(super) fn release_context(&mut self) {
+        drop(self.edit.take());
         drop(self.catalog.take());
         drop(self.action.take());
         drop(self.presets.take());
@@ -1529,12 +1557,20 @@ impl Reply {
         let mut value = error(
             "response_too_large",
             "native response exceeded256KiB",
-            if self.mutation && self.value["outcome"] != "not_applied" {
+            if self
+                .edit
+                .as_ref()
+                .is_some_and(numeric_edit::EditLease::began)
+                || self.mutation && self.value["outcome"] != "not_applied"
+            {
                 "unknown"
             } else {
                 "not_applied"
             },
         );
+        if let Some(phase) = self.value.get("edit_phase") {
+            value["edit_phase"] = phase.clone();
+        }
         if self.value.get("instance").is_some() {
             value["instance"] = self.value["instance"].clone();
         }
@@ -1605,6 +1641,7 @@ fn dispatch_device(
     let mutation = matches!(
         request,
         Request::SetParameter { .. }
+            | Request::EditNumericParameter { .. }
             | Request::ParameterAction { .. }
             | Request::StateRestore { .. }
             | Request::PresetApply { .. }
@@ -1617,6 +1654,7 @@ fn dispatch_device(
         return Reply {
             value: error("context_guard_failed", &reason, "not_applied"),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -1626,6 +1664,25 @@ fn dispatch_device(
             provider: None,
             context: Some(ctx),
             mutation,
+        };
+    }
+    if let Request::EditNumericParameter { param, value, .. } = request {
+        let (mut value, edit) = numeric_edit::execute(&ctx, &param, value);
+        value["instance"] = json!(ctx.instance);
+        value["source"] = json!("dsp");
+        return Reply {
+            value,
+            catalog: None,
+            edit,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
         };
     }
     if let Request::InspectAux { .. } = request {
@@ -1645,6 +1702,7 @@ fn dispatch_device(
         let mut reply = Reply {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary,
@@ -1672,6 +1730,7 @@ fn dispatch_device(
         let mut reply = Reply {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -1709,6 +1768,7 @@ fn dispatch_device(
         let mut reply = Reply {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary,
@@ -1732,6 +1792,7 @@ fn dispatch_device(
         return Reply {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: catalog,
             auxiliary: None,
@@ -1758,6 +1819,7 @@ fn dispatch_device(
         return Reply {
             value,
             catalog,
+            edit: None,
             action: None,
             presets: None,
             owner: None,
@@ -1791,6 +1853,7 @@ fn dispatch_device(
         return Reply {
             value,
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -1874,6 +1937,7 @@ fn dispatch_device(
     Reply {
         value,
         catalog: None,
+        edit: None,
         action,
         presets: None,
         auxiliary: None,
@@ -2837,6 +2901,7 @@ mod guard_tests {
             fixture.service,
             ReceiptLease {
                 _catalog: None,
+                _edit: None,
                 _action: None,
                 _presets: None,
                 _owner: None,
@@ -2863,6 +2928,17 @@ mod guard_tests {
         drop(current);
     }
     #[test]
+    fn numeric_edit_refuses_an_unregistered_class_before_route_discovery() {
+        let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut fixture = Fixture::new();
+        let context = fixture.context();
+        let (value, lease) = numeric_edit::execute(&context, "chorder.autofill", 0.0);
+        assert_eq!(value["ok"], false);
+        assert_eq!(value["outcome"], "not_applied");
+        assert_eq!(value["error"]["code"], "unregistered_numeric_edit");
+        assert!(lease.is_none());
+    }
+    #[test]
     fn output_assignment_reentry_cannot_publish_a_verified_success() {
         let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
         let mut fixture = Fixture::new();
@@ -2870,6 +2946,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"verified":true,"outcome":"observed","instance":context.instance,"source":"controller"}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2912,6 +2989,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"node_report":report,"instance":context.instance,"source":"dsp"}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2952,6 +3030,7 @@ mod guard_tests {
         let mut reply = Reply {
             value: json!({"ok":true,"instance":context.instance,"source":"dsp"}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2986,6 +3065,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","auxiliary_report":report}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
@@ -3017,6 +3097,7 @@ mod guard_tests {
         let mut reply = Reply {
             value: json!({"ok":true,"outcome":"observed"}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
@@ -3066,6 +3147,7 @@ mod guard_tests {
             value: json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
                 "ancestor_matches_active_model":false,"insert_folder_ancestry_report":report}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: Some(auxiliary),
@@ -3125,6 +3207,7 @@ mod guard_tests {
             value: json!({"ok":true,"outcome":"observed","hash_format_version":"fsp-parameter-digest-v1",
                 "schema_sha256":"a".repeat(64),"all_values_sha256":"b".repeat(64),"non_read_only_values_sha256":"c".repeat(64),"access_complete":true}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,

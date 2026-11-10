@@ -677,6 +677,7 @@ fn reply(context: Box<Context<'static>>, catalog: Catalog) -> Reply {
     Reply {
         value,
         catalog: Some(catalog),
+        edit: None,
         action: None,
         presets: None,
         owner: None,

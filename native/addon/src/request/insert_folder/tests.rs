@@ -434,6 +434,7 @@ fn anchor_uid_callback_refused(publication: bool) {
         let mut reply = Reply {
             value: json!({"ok":true,"outcome":"observed","scope":"insert_folder_preset_preflight_observation","status":"observed","anchor_slot_bound":true,"folder":{},"target_flags":3,"metadata":{}}),
             catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,

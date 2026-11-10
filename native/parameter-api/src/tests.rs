@@ -18,6 +18,8 @@ mod details_tests;
 mod display_tests;
 #[path = "formatting_tests.rs"]
 mod formatting_tests;
+#[path = "numeric_edit_tests.rs"]
+mod numeric_edit_tests;
 
 #[derive(Default)]
 struct Stats {
@@ -138,6 +140,7 @@ thread_local! {
     static MIN_ID:CStringRepr=const{CStringRepr{text:c"min".as_ptr(),owner:std::ptr::null_mut()}};
     static MAX_ID:CStringRepr=const{CStringRepr{text:c"max".as_ptr(),owner:std::ptr::null_mut()}};
     static DEFAULT_ID:CStringRepr=const{CStringRepr{text:c"default".as_ptr(),owner:std::ptr::null_mut()}};
+    static EDIT_NAME:CStringRepr=const{CStringRepr{text:c"reboundName".as_ptr(),owner:std::ptr::null_mut()}};
 }
 unsafe extern "C" fn empty() -> *mut c_void {
     EMPTY.with(Cell::get)
@@ -229,6 +232,21 @@ struct FormatBehavior {
     default_carrier: Cell<Option<DefaultCarrier>>,
     default_after_get: Cell<Option<DefaultCarrier>>,
 }
+type EditCallback = Rc<dyn Fn(&FakeParameter)>;
+#[derive(Default)]
+struct EditBehavior {
+    controller: Cell<*mut c_void>,
+    trace: RefCell<Vec<&'static str>>,
+    updates: RefCell<Vec<u8>>,
+    on_begin: RefCell<Option<EditCallback>>,
+    on_set: RefCell<Option<EditCallback>>,
+    on_end: RefCell<Option<EditCallback>>,
+    ignore_value: Cell<bool>,
+    kind_override: Cell<Option<i32>>,
+    tag_override: Cell<Option<i32>>,
+    name_changed: Cell<bool>,
+    min_override: Cell<Option<Number>>,
+}
 #[derive(Clone, Copy)]
 enum DefaultCarrier {
     Object(*mut c_void),
@@ -272,6 +290,7 @@ struct FakeParameter {
     max_override: Cell<Option<Number>>,
     details: DetailsBehavior,
     format: FormatBehavior,
+    edit: EditBehavior,
 }
 unsafe fn fp<'a>(p: *mut c_void) -> &'a FakeParameter {
     unsafe { &*p.cast() }
@@ -384,7 +403,7 @@ unsafe extern "C" fn property(p: *mut c_void, out: *mut Variant, id: *const c_vo
             }
             FakeValue::Empty => {}
         },
-        b"min" => write_number(out, p.min),
+        b"min" => write_number(out, p.edit.min_override.get().unwrap_or(p.min)),
         b"max" => write_number(out, p.max_override.get().unwrap_or(p.max)),
         b"default" => match p.format.default_carrier.get() {
             None => write_number(out, p.default),
@@ -409,10 +428,16 @@ unsafe extern "C" fn property(p: *mut c_void, out: *mut Variant, id: *const c_vo
     u8::from(!p.false_property.get())
 }
 unsafe extern "C" fn p_kind(p: *mut c_void) -> i32 {
-    unsafe { fp(p) }.kind
+    let p = unsafe { fp(p) };
+    p.edit.kind_override.get().unwrap_or(p.kind)
 }
 unsafe extern "C" fn p_name(p: *mut c_void) -> *const CStringRepr {
-    &unsafe { fp(p) }.name
+    let p = unsafe { fp(p) };
+    if p.edit.name_changed.get() {
+        EDIT_NAME.with(|name| name as *const CStringRepr)
+    } else {
+        &p.name
+    }
 }
 unsafe extern "C" fn p_enabled(p: *mut c_void) -> u8 {
     let p = unsafe { fp(p) };
@@ -444,8 +469,27 @@ unsafe extern "C" fn p_precision(p: *mut c_void) -> i32 {
     }
     p.details.precision.get()
 }
-unsafe extern "C" fn p_tag(_: *mut c_void) -> i32 {
-    106
+unsafe extern "C" fn p_tag(p: *mut c_void) -> i32 {
+    unsafe { fp(p) }.edit.tag_override.get().unwrap_or(106)
+}
+unsafe extern "C" fn p_controller(p: *mut c_void) -> *mut c_void {
+    unsafe { fp(p) }.edit.controller.get()
+}
+unsafe extern "C" fn p_begin_edit(p: *mut c_void) {
+    let p = unsafe { fp(p) };
+    p.edit.trace.borrow_mut().push("begin");
+    let callback = p.edit.on_begin.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
+    }
+}
+unsafe extern "C" fn p_end_edit(p: *mut c_void) {
+    let p = unsafe { fp(p) };
+    p.edit.trace.borrow_mut().push("end");
+    let callback = p.edit.on_end.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
+    }
 }
 fn raw_float(p: &FakeParameter) -> f64 {
     match &*p.value.borrow() {
@@ -470,17 +514,25 @@ unsafe extern "C" fn p_norm(p: *mut c_void) -> f32 {
     }
     ((raw_float(p) - number_float(p.min)) / (number_float(p.max) - number_float(p.min))) as f32
 }
-unsafe extern "C" fn p_set(p: *mut c_void, v: *const Variant, _: u8) {
+unsafe extern "C" fn p_set(p: *mut c_void, v: *const Variant, update: u8) {
     let p = unsafe { fp(p) };
     let v = unsafe { &*v };
     p.writes.set(p.writes.get() + 1);
+    p.edit.trace.borrow_mut().push("value");
+    p.edit.updates.borrow_mut().push(update);
     let n = match v.tag & 15 {
         1 => Number::Integer(v.payload as i64),
         _ => Number::Float(f64::from_bits(v.payload)),
     };
-    *p.value.borrow_mut() = FakeValue::Number(n);
+    if !p.edit.ignore_value.get() {
+        *p.value.borrow_mut() = FakeValue::Number(n);
+    }
     if p.stop_on_set.get() {
         p.context.set(false);
+    }
+    let callback = p.edit.on_set.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
     }
 }
 fn set_norm(p: &FakeParameter, n: f32) {
@@ -753,6 +805,9 @@ impl Fixture {
             t[6] = p_enabled as *const () as usize;
             t[8] = p_state as *const () as usize;
             t[13] = p_tag as *const () as usize;
+            t[14] = p_controller as *const () as usize;
+            t[16] = p_begin_edit as *const () as usize;
+            t[17] = p_end_edit as *const () as usize;
             t[18] = p_original as *const () as usize;
             t[21] = p_set as *const () as usize;
             t[30] = p_precision as *const () as usize;
@@ -809,6 +864,7 @@ impl Fixture {
             max_override: Cell::new(None),
             details: DetailsBehavior::default(),
             format: FormatBehavior::default(),
+            edit: EditBehavior::default(),
         });
         p.object.parent = &mut *p;
         let pointer = Box::into_raw(p).cast();

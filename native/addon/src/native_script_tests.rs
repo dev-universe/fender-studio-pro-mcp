@@ -508,6 +508,8 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
             1
         );
         assert!(output_text(&out).contains("fender-mcp-native-v1"));
+        let capability: serde_json::Value = serde_json::from_str(&output_text(&out)).unwrap();
+        assert_eq!(capability["numeric_edit_api"], "chorder_autofill_v1");
         assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), 1);
         FAIL_ASSIGN.store(true, Ordering::Release);
         let old = out.payload;

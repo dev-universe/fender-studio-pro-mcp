@@ -13,6 +13,7 @@ The source tree is separate; no SDK implementation/header is distributed here.
 | IParameter | isEnabled / getState | 6 / 8 | u8 result; state takes i32 mask |
 | IParameter | getTag | 13 | i32 result |
 | IParameter | getController | 14 | borrowed IUnknown pointer, retained before context reentry |
+| IParameter | beginEdit / endEdit | 16 / 17 | void result, no argument beyond the retained receiver |
 | IParameter | getOriginal | 18 | borrowed IParameter pointer, retained before any context callback |
 | IParameter | setValue | 21 | const Variant reference input; u8 update |
 | IParameter | getPrecision | 30 | i32 result, reported without deriving a choice count |
@@ -61,6 +62,24 @@ guarded IObject OUT properties, so the adapter adds no C++ Variant-by-value
 call. The independent implementation pins and checks the parameter/controller
 association and stops after an unknown upper dispatch. It implements no view
 signal and makes no inference that a Toggle or signal flag is an action.
+
+The separate consuming numeric edit operation brackets one raw numeric update
+with public `beginEdit` and `endEdit`. Compiler probes check byte offsets128
+and136 and both void/no-argument declarations. Calls use the same selected
+receiver and preserve the existing direct setter path. The operation retains
+and rechecks the finite original/controller binding through publication.
+After begin dispatch any failure is Unknown. Attachment loss prevents set/end;
+a metadata-only failure may end once on a freshly proved attachment. Drop
+only releases references. Neither a closed phase nor live readback proves
+serialization, undo behavior or audio processing.
+The final writable witness uses a retained IObject view and pre-resolved numeric
+property IDs after the last callback-bearing route guard. It rechecks the raw
+variant, range, signature and active flags using scalar OUT values. Unexpected
+owned output is released on the refusal path before any safe-close decision;
+successful witness cleanup invokes no native release.
+Once closed, the retained witness also requires the exact observed readback
+value to remain unchanged through publication. A stable readback mismatch may
+still report verified=false; a later value change invalidates the receipt.
 
 The public `IParameter::getString` declaration formats a supplied value through
 an OUT String and const Variant reference. The List implementation's

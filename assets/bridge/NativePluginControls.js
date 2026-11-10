@@ -20,6 +20,33 @@ class NativePluginControls {
         return !!after && before.open === true && after.open === true && before.document === after.document && before.session === after.session;
     }
 
+    numericEditRequest(request) {
+        return Object.keys(request).length === 4
+            && Object.keys(request).every(key => ["operation", "param", "value", "expected_instance"].indexOf(key) >= 0)
+            && typeof request.param === "string" && !!request.param && request.param.length <= 512 && request.param.indexOf("\0") < 0
+            && (request.value === 0 || request.value === 1)
+            && typeof request.expected_instance === "string"
+            && /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
+    }
+
+    numericEditPhase(phase) {
+        return ["prepared", "begin_dispatched", "value_dispatched", "end_dispatched", "closed_checked"].indexOf(phase) >= 0;
+    }
+
+    numericEditResult(result) {
+        if (result.ok === false)
+            return ["not_applied", "unknown"].indexOf(result.outcome) >= 0
+                && (result.edit_phase === undefined || this.numericEditPhase(result.edit_phase))
+                && (result.outcome !== "not_applied" || result.edit_phase === undefined || result.edit_phase === "prepared")
+                && result.error && typeof result.error === "object" && !Array.isArray(result.error)
+                && typeof result.error.code === "string" && typeof result.error.message === "string";
+        return result.ok === true && result.outcome === "observed" && result.source === "dsp" && result.edit_phase === "closed_checked"
+            && typeof result.verified === "boolean"
+            && result.before && typeof result.before === "object" && !Array.isArray(result.before)
+            && result.after && typeof result.after === "object" && !Array.isArray(result.after);
+    }
+
     modelRequest(request) {
         const fields = ["operation", "catalog", "offset", "limit", "expected_instance"];
         const integer = (value, min, max) => typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
@@ -160,6 +187,7 @@ class NativePluginControls {
         let parsed = null;
         try {
             if (request.operation === "model_catalog" && !this.modelRequest(request)) throw new Error("invalid finite native model request");
+            if (request.operation === "edit_numeric_parameter" && !this.numericEditRequest(request)) throw new Error("invalid finite native edit request");
             const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
             if (needsAuxiliary ? !auxiliary || typeof auxiliary !== "object" : auxiliary !== undefined)
                 throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
@@ -173,6 +201,7 @@ class NativePluginControls {
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
+            if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
             if (!this.sameContext(before)) throw new Error("native request requires the current open document");
             const body = JSON.stringify(request);
             if (body.length > 16384) throw new Error("native request exceeds the supported size");
@@ -180,6 +209,7 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (request.operation === "edit_numeric_parameter" && !this.numericEditResult(result)) throw new Error("invalid native numeric edit result");
             if (result.ok && (!result.instance || typeof result.instance.object_uid !== "string" || !result.instance.object_uid || typeof result.instance.class_uid !== "string" || !result.instance.class_uid)) throw new Error("native target identity unavailable");
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
             if (result.ok && request.operation === "model_catalog" && !this.modelResult(result, request)) throw new Error("invalid native current-selector model list contract");
@@ -196,6 +226,7 @@ class NativePluginControls {
         } catch (error) {
             const failure = { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: { code: "native_request_failed", message: String(error).slice(0, 512) },
                 before: parsed && parsed.before, after: parsed && parsed.after, instance: parsed && parsed.instance, source: parsed && parsed.source };
+            if (request.operation === "edit_numeric_parameter" && parsed && this.numericEditPhase(parsed.edit_phase)) failure.edit_phase = parsed.edit_phase;
             if (request.operation === "parameter_action") {
                 failure.action = request.action;
                 failure.effects_verified = false;

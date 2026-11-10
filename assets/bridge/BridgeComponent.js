@@ -731,12 +731,32 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
 
     // One of: text (display text, e.g. "4.0:1" or "-12 dB"), normalized (0..1), value (raw).
     setPluginParam(args) {
+        if (args.edit_lifecycle !== undefined
+            && (args.edit_lifecycle !== "native_user" || args.source !== "dsp"
+                || typeof args.expected_instance !== "string"
+                || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+                || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+                || typeof args.param !== "string" || !args.param || args.param.length > 512 || args.param.indexOf("\0") >= 0
+                || (args.value !== 0 && args.value !== 1)
+                || args.normalized !== undefined || args.text !== undefined || args.float_bits !== undefined))
+            return { native_outcome: "not_applied", errors: [{ code: "invalid_native_edit", message: "Native user edit requires explicit dsp, expected_instance and one raw 0 or 1 value" }] };
         if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
         if (identityError) return { plugin: plug.name, native_outcome: "not_applied",
             guard: "native_instance_preflight", errors: [{ code: "instance_guard", message: identityError }] };
+        if (args.edit_lifecycle === "native_user") {
+            const native = this.nativePluginRequest(plug.device, { operation: "edit_numeric_parameter", param: args.param,
+                value: args.value, expected_instance: args.expected_instance });
+            if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_edit_unavailable", message: "Native user edit requires the matching native extension" }] };
+            if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, param: args.param,
+                native_outcome: native.outcome, edit_phase: native.edit_phase, errors: [native.error],
+                before: native.before || null, after: native.after || null };
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, param: args.param,
+                before: native.before, after: native.after, instance: native.instance, source: native.source,
+                edit_phase: native.edit_phase, native_verified: native.verified === true };
+        }
         if (args.float_bits !== undefined && args.source === undefined) return { error: "float_bits requires an explicit native source" };
         if (args.source !== undefined) {
             const mode = args.float_bits !== undefined ? "float_bits" : args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";

@@ -753,7 +753,7 @@ unsafe extern "C" fn script_invoke(
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
         request::NativeReply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
         )
     } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =

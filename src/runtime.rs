@@ -357,6 +357,9 @@ fn verify(operation: &Operation, result: &Value) -> bool {
         }
         Operation::SetInsertBypass(change) => equivalent(&json!(change.bypassed), &result["after"]),
         Operation::SetPluginParam(change) => {
+            if change.edit_lifecycle.is_some() {
+                return result.get("native_verified").and_then(Value::as_bool) == Some(true);
+            }
             if let Some(verified) = result.get("native_verified").and_then(Value::as_bool) {
                 return verified;
             }
@@ -437,6 +440,38 @@ mod tests {
         assert!(!equivalent(&json!(true), &json!(0)));
         assert!(equivalent(&json!(0.5), &json!(0.50000001)));
         assert!(!equivalent(&json!(0.5), &json!(0.6)));
+    }
+
+    #[test]
+    fn numeric_edit_phase_does_not_promote_native_value_verification() {
+        let operation = Operation::from_parts(
+            "plugin_parameter_set",
+            json!({"kind":"note_effect",
+            "track":"Scratch","slot":0,"plugin":"Chorder","param":"chorder.autofill",
+            "source":"dsp","value":1,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "edit_lifecycle":"native_user"}),
+        )
+        .unwrap();
+        assert!(!verify(
+            &operation,
+            &json!({"edit_phase":"closed_checked","after":{"value":1},"native_verified":false})
+        ));
+        assert!(!verify(
+            &operation,
+            &json!({"edit_phase":"closed_checked","after":{"value":1}})
+        ));
+        assert!(verify(
+            &operation,
+            &json!({"edit_phase":"closed_checked","native_verified":true})
+        ));
+        assert_eq!(
+            mutation_outcome(&json!({"edit_phase":"begin_dispatched","native_outcome":"unknown"})),
+            Outcome::Unknown
+        );
+        assert_eq!(
+            mutation_outcome(&json!({"edit_phase":"prepared","native_outcome":"not_applied"})),
+            Outcome::NotApplied
+        );
     }
 
     #[test]

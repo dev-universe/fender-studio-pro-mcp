@@ -630,6 +630,24 @@ pub struct PluginSet {
     pub float_bits: Option<String>,
     pub source: Option<ParameterSource>,
     pub expected_instance: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "supplied_edit_lifecycle",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub edit_lifecycle: Option<PluginEditLifecycle>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginEditLifecycle {
+    NativeUser,
+}
+
+fn supplied_edit_lifecycle<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<PluginEditLifecycle>, D::Error> {
+    PluginEditLifecycle::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1137,6 +1155,21 @@ impl Operation {
             }
             Self::SetPluginParam(p) => {
                 validate_instance_uid(p.expected_instance.as_deref())?;
+                if p.edit_lifecycle.is_some()
+                    && (!matches!(p.source, Some(ParameterSource::Dsp))
+                        || p.expected_instance.is_none()
+                        || !matches!(p.value, Some(0.0 | 1.0))
+                        || p.normalized.is_some()
+                        || p.text.is_some()
+                        || p.float_bits.is_some()
+                        || p.param.is_empty()
+                        || p.param.encode_utf16().count() > 512
+                        || p.param.contains('\0'))
+                {
+                    return Err(invalid(
+                        "Native user edit requires explicit dsp, expected_instance and one raw 0 or 1 value",
+                    ));
+                }
                 if p.plugin.trim().is_empty() {
                     return Err(invalid(
                         "An expected plugin class or instance name is required",
@@ -2349,6 +2382,53 @@ mod tests {
             let mut args = base.clone();
             args[field] = value;
             assert!(Operation::from_parts("plugin_presets", args).is_err());
+        }
+    }
+
+    #[test]
+    fn numeric_edit_opt_in_requires_raw_dsp_and_instance_without_changing_legacy_wire() {
+        let base = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
+            "param":"chorder.autofill","source":"dsp","value":1.0,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let legacy = Operation::from_parts("plugin_parameter_set", base.clone()).unwrap();
+        assert!(legacy.validate().is_ok());
+        assert_eq!(legacy.wire().1, base);
+        let serialized = serde_json::to_value(&legacy).unwrap();
+        assert!(serialized["args"].get("edit_lifecycle").is_none());
+        let mut edited = base.clone();
+        edited["edit_lifecycle"] = json!("native_user");
+        let operation = Operation::from_parts("plugin_parameter_set", edited.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert_eq!(operation.wire().1, edited);
+        for extra in [
+            json!({"source":"controller"}),
+            json!({"source":"auto"}),
+            json!({"source":null}),
+            json!({"expected_instance":null}),
+            json!({"value":null}),
+            json!({"value":0.5}),
+            json!({"value":2}),
+            json!({"normalized":1}),
+            json!({"text":"On"}),
+            json!({"float_bits":"3FF0000000000000"}),
+            json!({"param":""}),
+        ] {
+            let mut invalid = edited.clone();
+            invalid
+                .as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("plugin_parameter_set", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for selector in [json!(null), json!(false), json!("unknown"), json!({})] {
+            let mut invalid = edited.clone();
+            invalid["edit_lifecycle"] = selector;
+            assert!(Operation::from_parts("plugin_parameter_set", invalid).is_err());
         }
     }
 
