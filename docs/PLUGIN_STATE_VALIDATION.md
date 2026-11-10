@@ -291,6 +291,22 @@ and all five pitch- and filter-envelope controls, outside this direct-field coun
 binding passed two complete changed reads and two complete restored reads.
 Other pad selections and 20 remaining Focus roles remain unverified.
 
+The next Focus role, amplifier-envelope Attack, stopped during its final full
+restoration read when the app exited. Both the change and own-original setter
+had returned verified, but the final provider checkpoint did not complete.
+This unfinished role contributes zero; the accepted Focus count remains 13.
+No setter, automatic restore or retry followed the failure.
+
+Its crash report and the earlier SampleOne report have the same first 24
+frames and captured fault instructions. Exact installed-binary analysis with
+Ghidra identifies the fatal condition as
+`MOZ_RELEASE_ASSERT(!JS::RuntimeHeapIsBusy())`. The stack passes through a
+JavaScript proxy finalizer's native-object release, followed by global scripting
+GC and a forced context GC. This establishes a nested-GC failure path.
+The released host object's identity and a
+verified prevention remain under investigation. The Variant representation
+correction was already installed in this recurrence and is not a crash fix.
+
 A dedicated two-name protocol then verified the current values of pitch bend
 and sustain. It used exactly one change and one own-original restoration per
 name, with two complete 4,262-record observations at each changed/restored
