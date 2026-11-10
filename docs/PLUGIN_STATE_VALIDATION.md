@@ -12,6 +12,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
 | Impact | 4,227 direct fields plus one current-focus cutoff binding | 32 Focus and two MIDI-controller roles |
+| Other instruments | Mojito 32, Mai Tai 275 and a four-field SampleOne pilot | Remaining SampleOne/Presence fields, MIDI roles and macros |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -286,6 +287,27 @@ in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
 The separate current-focus cutoff result is outside this direct-field count;
 32 other Focus roles and two MIDI-controller roles remain unverified.
+
+A separate finite instrument sweep has completed all 32 selected ordinary
+Mojito fields and all 275 selected ordinary Mai Tai fields. Each case changed
+one field and restored its exact original carrier, with two fresh complete
+native projection matches before advancing and complete public provider
+checkpoints. The full providers contained 37 and 283 records respectively.
+Mai Tai's overall runner result remains partial because its separately held
+character-model selector is outside these scalar cases; all selected ordinary
+cases and final restoration checkpoints passed. MIDI inputs, the unresolved
+Mai Tai edit-view toggle, Presence script macros, saved-state persistence and
+audible propagation remain separate claims.
+
+SampleOne's four-field pilot also passed its full 235-record restoration checks.
+A subsequent 124-field unit stopped after 122 individual restorations when the
+app crashed during named readback following a gate-step edit. Its final provider
+checkpoint did not complete, so none of that unfinished unit is counted. The
+last setter had returned verified, followed by a successful fixture-context
+inspection; the next read lost the session. The crash cause is unproved. No
+automatic restore or setter retry followed. Reopening the saved scratch and two
+complete 235-record observations recovered the exact original values and schema;
+the saved file was unchanged. The failed unit remains separate evidence.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
