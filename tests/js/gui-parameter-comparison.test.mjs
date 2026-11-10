@@ -186,3 +186,85 @@ test('legacy details retain their existing native errors payload', () => {
   }
   assert.deepEqual(h.calls[0], h.calls[1]);
 });
+
+test('incomplete GUI walks preserve only closed typed failure diagnostics', () => {
+  const diagnostics = [
+    { kind: 'interface_query_failed', stage: 'control_query', depth: 3, query_status: -2147467259 },
+    { kind: 'repeated_view', stage: 'view_identity', depth: 1, query_status: null },
+    { kind: 'depth_limit', stage: 'children', depth: 16, query_status: null },
+  ];
+  for (const walk_failure of diagnostics) {
+    const report = { ...unresolved('incomplete_walk'), walk_failure,
+      coverage: { ...common().coverage, complete: false, candidate_count: 0, visited_views: 75 } };
+    const result = harness(() => success(report)).component.pluginParameterDetails(args);
+    assert.equal(result.outcome, 'observed');
+    assert.equal(JSON.stringify(result.gui_comparison.walk_failure), JSON.stringify(walk_failure));
+    assert.equal('topParameterSame' in result.gui_comparison, false);
+  }
+});
+
+test('walk failure depth requires enough observed ancestors', () => {
+  for (const [kind, stage, depth, count, query_status] of [
+    ['depth_limit', 'children', 16, 0, null],
+    ['depth_limit', 'children', 16, 16, null],
+    ['interface_query_failed', 'control_query', 0, 0, -2147467259],
+  ]) {
+    const report = { ...unresolved('incomplete_walk'),
+      coverage: { ...common().coverage, complete: false, candidate_count: 0, visited_views: count },
+      walk_failure: { kind, stage, depth, query_status } };
+    const result = harness(() => success(report)).component.pluginParameterDetails(args);
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.gui_comparison.reason, 'inspection_failed');
+    assert.equal('walk_failure' in result.gui_comparison, false);
+  }
+});
+
+test('walk failure diagnostics reject unknown, misplaced or contradictory data', () => {
+  const base = () => ({ ...unresolved('incomplete_walk'),
+    coverage: { ...common().coverage, complete: false, candidate_count: 0, visited_views: 75 },
+    walk_failure: { kind: 'interface_query_failed', stage: 'control_query', depth: 3, query_status: -2147467259 } });
+  const mutations = [
+    r => { r.walk_failure = null; }, r => { r.walk_failure = []; },
+    r => { r.walk_failure.kind = 'private_error'; }, r => { r.walk_failure.stage = 'path'; },
+    r => { r.walk_failure.pointer = 123; }, r => { r.walk_failure.message = 'private native detail'; },
+    r => { delete r.walk_failure.query_status; }, r => { r.walk_failure.depth = 17; },
+    r => { r.walk_failure.depth = -1; }, r => { r.walk_failure.depth = false; },
+    r => { r.walk_failure.query_status = null; }, r => { r.walk_failure.query_status = false; },
+    r => { r.walk_failure.query_status = -2147483649; }, r => { r.walk_failure.query_status = 2147483648; },
+    r => { r.walk_failure.query_status = 0.5; }, r => { r.walk_failure.stage = 'iterator'; },
+    r => { r.reason = 'missing_editor'; }, r => { r.coverage.complete = true; },
+    r => { r.walk_failure = { kind: 'view_limit', stage: 'children', depth: 0, query_status: null }; },
+    r => { r.walk_failure = { kind: 'depth_limit', stage: 'children', depth: 15, query_status: null }; },
+    r => { r.walk_failure = { kind: 'repeated_view', stage: 'edge', depth: 1, query_status: null }; },
+    r => { r.walk_failure = { kind: 'detached_view', stage: 'edge', depth: 1, query_status: 0 }; },
+    r => { r.walk_failure.kind = 'missing_interface'; },
+    r => { Object.assign(r, compared()); },
+  ];
+  for (const mutate of mutations) {
+    const report = base(); mutate(report);
+    const h = harness(() => success(report));
+    const result = h.component.pluginParameterDetails(args);
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.gui_comparison.reason, 'inspection_failed');
+    assert.equal('walk_failure' in result.gui_comparison, false);
+    assert.equal('topParameterSame' in result.gui_comparison, false);
+    assert.equal(h.calls.length, 1);
+  }
+  for (const [kind, stage, depth, count, query_status] of [
+    ['view_limit', 'children', 0, 128, null], ['missing_interface', 'child_query', 1, 2, -2147467262],
+    ['missing_iterator', 'iterator', 0, 1, null], ['missing_view', 'root', 0, 0, null],
+    ['parameter_metadata', 'parameter_metadata', 2, 3, null], ['context_guard_failed', 'cleanup', 2, 3, null],
+    ['inspection_failed', 'parameter_metadata', 1, 2, null],
+  ]) {
+    const report = base(); report.coverage.visited_views = count;
+    report.walk_failure = { kind, stage, depth, query_status };
+    const result = harness(() => success(report)).component.pluginParameterDetails(args);
+    assert.equal(result.outcome, 'observed');
+    assert.equal(result.gui_comparison.walk_failure.kind, kind);
+  }
+  const failed = harness(() => ({ ok: false, outcome: 'not_applied', gui_comparison: base(),
+    error: { code: 'read_failed', message: 'No comparison' } })).component.pluginParameterDetails(args);
+  assert.equal(failed.native_outcome, 'not_applied');
+  assert.equal(failed.gui_comparison.walk_failure.kind, 'interface_query_failed');
+  assert.equal('topParameterSame' in failed.gui_comparison, false);
+});

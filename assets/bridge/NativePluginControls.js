@@ -68,10 +68,38 @@ class NativePluginControls {
             || typeof report.coverage.complete !== "boolean" || report.coverage.max_views !== 128 || report.coverage.max_depth !== 16
             || !integer(report.coverage.visited_views, 0, 128) || !integer(report.coverage.candidate_count, 0, report.coverage.visited_views))
             return false;
-        if (report.status === "unresolved")
-            return exact(report, common.concat(["reason"]))
+        if (report.status === "unresolved") {
+            const fields = common.concat(["reason"]);
+            if (Object.prototype.hasOwnProperty.call(report, "walk_failure")) {
+                fields.push("walk_failure");
+                const failure = report.walk_failure;
+                const stages = ["root", "control_query", "parameter_metadata", "control_identity", "children", "iterator",
+                    "child_query", "view_identity", "edge", "cleanup", "context"];
+                if (report.reason !== "incomplete_walk" || report.coverage.complete !== false
+                    || !exact(failure, ["kind", "stage", "depth", "query_status"])
+                    || stages.indexOf(failure.stage) < 0 || !integer(failure.depth, 0, 16)) return false;
+                if (failure.stage === "control_query" && report.coverage.visited_views <= failure.depth) return false;
+                const query = ["interface_query_failed", "missing_interface"].indexOf(failure.kind) >= 0;
+                if (query) {
+                    if (["root", "control_query", "control_identity", "child_query", "view_identity"].indexOf(failure.stage) < 0
+                        || !integer(failure.query_status, -2147483648, 2147483647)
+                        || (failure.kind === "missing_interface" && failure.query_status !== -2147467262)) return false;
+                } else if (failure.query_status !== null) return false;
+                const valid = query || (failure.kind === "context_guard_failed" || failure.kind === "inspection_failed")
+                    || (failure.kind === "view_limit" && failure.stage === "children" && report.coverage.visited_views === 128)
+                    || (failure.kind === "depth_limit" && failure.stage === "children" && failure.depth === 16
+                        && report.coverage.visited_views >= 17)
+                    || (failure.kind === "repeated_view" && failure.stage === "view_identity" && report.coverage.visited_views >= 2)
+                    || (failure.kind === "detached_view" && failure.stage === "edge" && report.coverage.visited_views >= 2)
+                    || (failure.kind === "missing_iterator" && failure.stage === "iterator")
+                    || (failure.kind === "missing_view" && (failure.stage === "root" || failure.stage === "iterator"))
+                    || (failure.kind === "parameter_metadata" && failure.stage === "parameter_metadata");
+                if (!valid) return false;
+            }
+            return exact(report, fields)
                 && ["missing_editor", "ambiguous_editor", "missing_root_interface", "incomplete_walk", "no_exact_named_control",
                     "ambiguous_named_controls", "stale_association", "deadline", "inspection_failed"].indexOf(report.reason) >= 0;
+        }
         return report.status === "compared" && exact(report, common.concat(["topParameterSame", "declaredObserverSame",
             "declaredObserverPresence", "originalSame", "originalBasis", "originalUnknownReason", "editorMatch"]))
             && report.coverage.complete === true && report.coverage.candidate_count === 1

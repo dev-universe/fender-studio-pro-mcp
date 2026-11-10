@@ -42,6 +42,67 @@ fn unresolved(reason: &str, coverage: Coverage) -> Value {
     value["reason"] = json!(reason);
     value
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum WalkKind {
+    ViewLimit,
+    DepthLimit,
+    RepeatedView,
+    DetachedView,
+    InterfaceQueryFailed,
+    MissingInterface,
+    MissingIterator,
+    MissingView,
+    ParameterMetadata,
+    ContextGuardFailed,
+    InspectionFailed,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+enum WalkStage {
+    Root,
+    ControlQuery,
+    ParameterMetadata,
+    ControlIdentity,
+    Children,
+    Iterator,
+    ChildQuery,
+    ViewIdentity,
+    Edge,
+    Cleanup,
+    Context,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+struct WalkFailure {
+    kind: WalkKind,
+    stage: WalkStage,
+    depth: usize,
+    query_status: Option<i32>,
+}
+impl WalkFailure {
+    fn new(kind: WalkKind, stage: WalkStage, depth: usize) -> Self {
+        Self {
+            kind,
+            stage,
+            depth,
+            query_status: None,
+        }
+    }
+    fn context(stage: WalkStage, depth: usize) -> Self {
+        Self::new(WalkKind::ContextGuardFailed, stage, depth)
+    }
+    fn query(error: QueryFailure, stage: WalkStage, depth: usize) -> Self {
+        match error {
+            QueryFailure::Guard(_) => Self::context(stage, depth),
+            QueryFailure::Native(status) => Self {
+                kind: WalkKind::InterfaceQueryFailed,
+                stage,
+                depth,
+                query_status: Some(status),
+            },
+        }
+    }
+}
 pub(super) fn invalidate(value: &mut Value) {
     if let Some(previous) = value.get("gui_comparison") {
         let coverage = previous.get("coverage").cloned();
@@ -218,12 +279,11 @@ impl ComparisonRead {
         guard()?;
         let scan = match scan {
             Ok(scan) => scan,
-            Err(reason) => {
+            Err(failure) => {
                 release((root, parameter), &mut guard)?;
-                return Ok(Self {
-                    value: unresolved(reason, observed_coverage),
-                    pins: None,
-                });
+                let mut value = unresolved("incomplete_walk", observed_coverage);
+                value["walk_failure"] = json!(failure);
+                return Ok(Self { value, pins: None });
             }
         };
         let coverage = scan.coverage;
@@ -393,22 +453,52 @@ fn optional<G: FnMut() -> Result<(), String>>(
     iid: &Uid,
     guard: &mut G,
 ) -> Result<Option<Owned>, String> {
-    guard()?;
+    query(pointer, iid, guard).map_err(|error| match error {
+        QueryFailure::Guard(reason) => reason,
+        QueryFailure::Native(_) => "GUI interface query failed".into(),
+    })
+}
+enum QueryFailure {
+    Guard(String),
+    Native(i32),
+}
+fn query<G: FnMut() -> Result<(), String>>(
+    pointer: *mut c_void,
+    iid: &Uid,
+    guard: &mut G,
+) -> Result<Option<Owned>, QueryFailure> {
+    guard().map_err(QueryFailure::Guard)?;
     let mut output = ptr::null_mut();
     let status = unsafe { (unknown_vtable(pointer).query)(pointer, iid, &mut output) };
     let owned = (!output.is_null()).then(|| Owned(output));
     if let Err(reason) = guard() {
-        release(owned, guard)?;
-        return Err(reason);
+        release(owned, guard).map_err(QueryFailure::Guard)?;
+        return Err(QueryFailure::Guard(reason));
     }
     match (status, owned) {
         (OK, Some(owned)) => Ok(Some(owned)),
         (NO_INTERFACE, None) => Ok(None),
         (_, owned) => {
-            release(owned, guard)?;
-            Err("GUI interface query failed".into())
+            release(owned, guard).map_err(QueryFailure::Guard)?;
+            Err(QueryFailure::Native(status))
         }
     }
+}
+fn walk_required<G: FnMut() -> Result<(), String>>(
+    pointer: *mut c_void,
+    iid: &Uid,
+    stage: WalkStage,
+    depth: usize,
+    guard: &mut G,
+) -> Result<Owned, WalkFailure> {
+    query(pointer, iid, guard)
+        .map_err(|error| WalkFailure::query(error, stage, depth))?
+        .ok_or(WalkFailure {
+            kind: WalkKind::MissingInterface,
+            stage,
+            depth,
+            query_status: Some(NO_INTERFACE),
+        })
 }
 fn release<T, G: FnMut() -> Result<(), String>>(value: T, guard: &mut G) -> Result<(), String> {
     let before = guard();
@@ -427,13 +517,13 @@ fn scan<G: FnMut() -> Result<(), String>>(
     api: &Api,
     coverage: &mut Coverage,
     guard: &mut G,
-) -> Result<Scan, &'static str> {
+) -> Result<Scan, WalkFailure> {
     let mut views = Vec::<ViewPin>::new();
     let mut candidate = None;
-    let result = (|| -> Result<(), String> {
-        let view = hold(root).ok_or("missing root")?;
-        guard()?;
-        let canonical = required(view.0, &UNKNOWN, guard)?;
+    let result = (|| -> Result<(), WalkFailure> {
+        let view = hold(root).ok_or(WalkFailure::new(WalkKind::MissingView, WalkStage::Root, 0))?;
+        guard().map_err(|_| WalkFailure::context(WalkStage::Root, 0))?;
+        let canonical = walk_required(view.0, &UNKNOWN, WalkStage::Root, 0, guard)?;
         views.push(ViewPin {
             canonical,
             children: None,
@@ -444,22 +534,47 @@ fn scan<G: FnMut() -> Result<(), String>>(
         coverage.views = 1;
         let mut index = 0;
         while index < views.len() {
-            guard()?;
-            if let Some(control) = optional(views[index].view.0, &CONTROL, guard)? {
+            let depth = views[index].depth;
+            guard().map_err(|_| WalkFailure::context(WalkStage::Context, depth))?;
+            if let Some(control) = query(views[index].view.0, &CONTROL, guard)
+                .map_err(|error| WalkFailure::query(error, WalkStage::ControlQuery, depth))?
+            {
                 let raw = control_parameter(control.0);
                 let parameter = if raw.is_null() {
                     None
                 } else {
-                    Some(retained_parameter(raw, api)?)
+                    Some(retained_parameter(raw, api).map_err(|_| {
+                        WalkFailure::new(
+                            WalkKind::InspectionFailed,
+                            WalkStage::ParameterMetadata,
+                            depth,
+                        )
+                    })?)
                 };
-                guard()?;
+                guard().map_err(|_| WalkFailure::context(WalkStage::ParameterMetadata, depth))?;
                 if let Some(parameter) = parameter {
                     let description = parameter.describe();
-                    guard()?;
-                    let matches = description.map_err(|e| e.to_string())?.name == PARAMETER;
+                    guard()
+                        .map_err(|_| WalkFailure::context(WalkStage::ParameterMetadata, depth))?;
+                    let matches = description
+                        .map_err(|_| {
+                            WalkFailure::new(
+                                WalkKind::ParameterMetadata,
+                                WalkStage::ParameterMetadata,
+                                depth,
+                            )
+                        })?
+                        .name
+                        == PARAMETER;
                     if matches {
                         coverage.candidates += 1;
-                        let canonical = required(control.0, &UNKNOWN, guard)?;
+                        let canonical = walk_required(
+                            control.0,
+                            &UNKNOWN,
+                            WalkStage::ControlIdentity,
+                            depth,
+                            guard,
+                        )?;
                         if candidate.is_none() {
                             candidate = Some(Candidate {
                                 control,
@@ -468,62 +583,104 @@ fn scan<G: FnMut() -> Result<(), String>>(
                                 node: index,
                             });
                         } else {
-                            release((control, canonical, parameter), guard)?;
+                            release((control, canonical, parameter), guard)
+                                .map_err(|_| WalkFailure::context(WalkStage::Cleanup, depth))?;
                         }
                     } else {
-                        release((control, parameter), guard)?;
+                        release((control, parameter), guard)
+                            .map_err(|_| WalkFailure::context(WalkStage::Cleanup, depth))?;
                     }
                 } else {
-                    release(control, guard)?;
+                    release(control, guard)
+                        .map_err(|_| WalkFailure::context(WalkStage::Cleanup, depth))?;
                 }
             }
             let children = borrowed(views[index].view.0, 20);
             let children = hold(children);
-            guard()?;
+            guard().map_err(|_| WalkFailure::context(WalkStage::Children, depth))?;
             if let Some(children) = children {
                 let pointer = borrowed(children.0, 11);
-                let iterator = NonNull::new(pointer)
-                    .map(|p| Owned(p.as_ptr()))
-                    .ok_or("missing iterator")?;
-                guard()?;
+                let iterator =
+                    NonNull::new(pointer)
+                        .map(|p| Owned(p.as_ptr()))
+                        .ok_or(WalkFailure::new(
+                            WalkKind::MissingIterator,
+                            WalkStage::Iterator,
+                            depth,
+                        ))?;
+                guard().map_err(|_| WalkFailure::context(WalkStage::Iterator, depth))?;
                 let done: unsafe extern "C" fn(*mut c_void) -> u8 =
                     unsafe { method(iterator.0, 3) };
                 while unsafe { done(iterator.0) } == 0 {
-                    guard()?;
-                    if coverage.views >= MAX_VIEWS || views[index].depth >= MAX_DEPTH {
-                        return Err("walk bound".into());
+                    guard().map_err(|_| WalkFailure::context(WalkStage::Iterator, depth))?;
+                    if coverage.views >= MAX_VIEWS {
+                        return Err(WalkFailure::new(
+                            WalkKind::ViewLimit,
+                            WalkStage::Children,
+                            depth,
+                        ));
+                    }
+                    if depth >= MAX_DEPTH {
+                        return Err(WalkFailure::new(
+                            WalkKind::DepthLimit,
+                            WalkStage::Children,
+                            depth,
+                        ));
                     }
                     let raw = borrowed(iterator.0, 4);
-                    let child = hold(raw).ok_or("null iterator item")?;
+                    let child_depth = depth + 1;
+                    let child = hold(raw).ok_or(WalkFailure::new(
+                        WalkKind::MissingView,
+                        WalkStage::Iterator,
+                        child_depth,
+                    ))?;
                     coverage.views += 1;
-                    guard()?;
-                    let view = required(child.0, &VIEW, guard)?;
-                    let canonical = required(view.0, &UNKNOWN, guard)?;
+                    guard()
+                        .map_err(|_| WalkFailure::context(WalkStage::ChildQuery, child_depth))?;
+                    let view =
+                        walk_required(child.0, &VIEW, WalkStage::ChildQuery, child_depth, guard)?;
+                    let canonical = walk_required(
+                        view.0,
+                        &UNKNOWN,
+                        WalkStage::ViewIdentity,
+                        child_depth,
+                        guard,
+                    )?;
                     if views.iter().any(|p| p.canonical.0 == canonical.0) {
-                        return Err("repeated view".into());
+                        return Err(WalkFailure::new(
+                            WalkKind::RepeatedView,
+                            WalkStage::ViewIdentity,
+                            child_depth,
+                        ));
                     }
                     let edge: unsafe extern "C" fn(*mut c_void, *mut c_void, u8) -> u8 =
                         unsafe { method(children.0, 12) };
                     if unsafe { edge(children.0, view.0, 0) } == 0 {
-                        return Err("detached view".into());
+                        return Err(WalkFailure::new(
+                            WalkKind::DetachedView,
+                            WalkStage::Edge,
+                            child_depth,
+                        ));
                     }
-                    guard()?;
+                    guard().map_err(|_| WalkFailure::context(WalkStage::Edge, child_depth))?;
                     views.push(ViewPin {
                         canonical,
                         children: None,
                         view,
                         parent: Some(index),
-                        depth: views[index].depth + 1,
+                        depth: child_depth,
                     });
-                    release(child, guard)?;
+                    release(child, guard)
+                        .map_err(|_| WalkFailure::context(WalkStage::Cleanup, child_depth))?;
                 }
-                release(iterator, guard)?;
+                release(iterator, guard)
+                    .map_err(|_| WalkFailure::context(WalkStage::Cleanup, depth))?;
                 views[index].children = Some(children);
             }
             index += 1;
         }
         coverage.complete = true;
-        guard()
+        guard().map_err(|_| WalkFailure::context(WalkStage::Context, 0))
     })();
     match result {
         Ok(()) => Ok(Scan {
@@ -531,9 +688,10 @@ fn scan<G: FnMut() -> Result<(), String>>(
             candidate,
             coverage: *coverage,
         }),
-        Err(_) => {
+        Err(failure) => {
+            coverage.complete = false;
             let _ = release((candidate, views), guard);
-            Err("incomplete_walk")
+            Err(failure)
         }
     }
 }

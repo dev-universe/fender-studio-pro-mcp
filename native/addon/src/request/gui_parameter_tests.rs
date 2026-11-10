@@ -74,6 +74,7 @@ struct Fake {
     cursor: Cell<usize>,
     name: PlainCString,
     qi_failure: Cell<bool>,
+    qi_status: Cell<i32>,
     detach: Cell<bool>,
     stop_on_release: Cell<*const Cell<bool>>,
     mutations: Cell<u32>,
@@ -100,7 +101,7 @@ unsafe extern "C" fn query_mock(p: *mut c_void, iid: *const Uid, out: *mut *mut 
     unsafe { *out = ptr::null_mut() };
     let iid = unsafe { *iid };
     if x.qi_failure.get() && iid == CONTROL {
-        return FAILED;
+        return x.qi_status.get();
     }
     let raw = if iid == UNKNOWN {
         if x.canonical.get().is_null() {
@@ -269,6 +270,7 @@ impl Fixture {
                     owner: ptr::null_mut(),
                 },
                 qi_failure: Cell::new(false),
+                qi_status: Cell::new(FAILED),
                 detach: Cell::new(false),
                 stop_on_release: Cell::new(ptr::null()),
                 mutations: Cell::new(0),
@@ -347,7 +349,7 @@ fn canonical_change_and_failed_query_release_are_not_positive_identity_evidence(
     assert!(optional(view.raw(), &CONTROL, &mut || Ok(())).is_err());
 }
 
-fn run_scan(root: &Fixture) -> Result<Scan, &'static str> {
+fn run_scan(root: &Fixture) -> Result<Scan, WalkFailure> {
     let mut coverage = Coverage::default();
     scan(root.raw(), &api(), &mut coverage, &mut || Ok(()))
 }
@@ -409,6 +411,77 @@ fn walk_refuses_cycles_detached_edges_qi_failures_and_bounds() {
             .push(chain[i + 1].raw());
     }
     assert!(run_scan(&chain[0]).is_err());
+}
+#[test]
+fn incomplete_walk_distinguishes_topology_bounds_and_native_query_status() {
+    fn failure(root: &Fixture) -> Value {
+        json!(run_scan(root).err().expect("incomplete walk"))
+    }
+    let root = Fixture::new("view");
+    let child = Fixture::new("view");
+    root.value.children.replace(vec![root.raw()]);
+    assert_eq!(
+        failure(&root),
+        json!({"kind":"repeated_view","stage":"view_identity","depth":1,"query_status":null})
+    );
+    root.value.children.replace(vec![child.raw()]);
+    root.value.detach.set(true);
+    assert_eq!(
+        failure(&root),
+        json!({"kind":"detached_view","stage":"edge","depth":1,"query_status":null})
+    );
+    root.value.detach.set(false);
+    child.value.qi_failure.set(true);
+    assert_eq!(
+        failure(&root),
+        json!({"kind":"interface_query_failed","stage":"control_query","depth":1,"query_status":FAILED})
+    );
+    child.value.qi_failure.set(false);
+    let children: Vec<_> = (0..128).map(|_| Fixture::new("view")).collect();
+    root.value
+        .children
+        .replace(children.iter().map(Fixture::raw).collect());
+    assert_eq!(
+        failure(&root),
+        json!({"kind":"view_limit","stage":"children","depth":0,"query_status":null})
+    );
+    let chain: Vec<_> = (0..18).map(|_| Fixture::new("view")).collect();
+    for i in 0..17 {
+        chain[i]
+            .value
+            .children
+            .borrow_mut()
+            .push(chain[i + 1].raw());
+    }
+    assert_eq!(
+        failure(&chain[0]),
+        json!({"kind":"depth_limit","stage":"children","depth":16,"query_status":null})
+    );
+}
+#[test]
+fn walk_query_status_and_guard_loss_remain_distinct_without_native_messages() {
+    let root = Fixture::new("view");
+    root.value.qi_failure.set(true);
+    root.value.qi_status.set(17);
+    let failure = run_scan(&root).err().expect("query failed");
+    assert_eq!(failure.query_status, Some(17));
+    assert_eq!(failure.kind, WalkKind::InterfaceQueryFailed);
+    root.value.qi_status.set(NO_INTERFACE);
+    let observed = run_scan(&root).expect("exact no-interface is a noncontrol");
+    assert!(observed.coverage.complete);
+    drop(observed);
+    root.value.qi_failure.set(false);
+    let mut coverage = Coverage::default();
+    let failure = scan(root.raw(), &api(), &mut coverage, &mut || {
+        Err("private native/context detail".into())
+    })
+    .err()
+    .expect("guard failed");
+    assert_eq!(
+        json!(failure),
+        json!({"kind":"context_guard_failed","stage":"root","depth":0,"query_status":null})
+    );
+    assert!(!coverage.complete);
 }
 #[test]
 fn walk_checks_release_reentry_and_balances_every_retained_view() {
