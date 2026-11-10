@@ -11,7 +11,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 3,842 direct fields plus one current-focus cutoff binding | Other fields and focus selections |
+| Impact | 4,227 direct fields plus one current-focus cutoff binding | 32 Focus and two MIDI-controller roles |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -276,15 +276,16 @@ per provider. The digests cover exact typed extrema, access metadata, native
 values, normalized representations and display text. They remain sequential
 observations of exposed parameters; opaque plugin contents are not verified.
 
-The ongoing Impact sweep has confirmed 3,842 distinct direct scalar roundtrips
+The ongoing Impact sweep has confirmed 4,227 distinct direct scalar roundtrips
 against its complete 4,262-record provider. This count accepts only the last
 complete public checkpoint from the interrupted initial run and disjoint later
 cases whose fixture-end checkpoints passed. The current persistent-field partition
-contains 3,714 names and is complete. A separate 128-field ordinary unit passed all four roles on pads 0..31,
-including both sample offsets, pan and level. The remaining 385 ordinary fields
-and the Focus/MIDI partitions remain separate. Every case required two fresh native
-full writable-projection matches before advancing. The remaining Impact fields
-are not included in this count.
+contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass field also passed,
+including both sample offsets, pan and level. The latest 385-field unit completed
+in 13 minutes 50 seconds. Every case required two fresh native full
+writable-projection matches before advancing and a final public-page checkpoint.
+The separate current-focus cutoff result is outside this direct-field count;
+32 other Focus roles and two MIDI-controller roles remain unverified.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
