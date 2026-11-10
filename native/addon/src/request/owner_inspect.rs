@@ -14,6 +14,7 @@ enum Observation {
 pub(super) struct OwnerInspection {
     observation: Observation,
     parameter: RawParameter,
+    parameter_native_class: String,
 }
 
 pub(super) fn text_api() -> Result<TextApi, String> {
@@ -30,7 +31,12 @@ pub(super) fn text_api() -> Result<TextApi, String> {
 
 pub(super) fn invalidate(value: &mut Value) {
     if let Some(value) = value.as_object_mut() {
-        for key in ["owner_scope", "controller_report", "controller"] {
+        for key in [
+            "owner_scope",
+            "controller_report",
+            "controller",
+            "parameter_native_class",
+        ] {
             value.remove(key);
         }
     }
@@ -55,11 +61,19 @@ impl OwnerInspection {
         };
         match observation {
             Ok(observation) => {
-                let lease = Self {
+                let mut lease = Self {
                     observation,
                     parameter,
+                    parameter_native_class: String::new(),
                 };
-                if let Err(reason) = lease.check(guard) {
+                let checked = (|| {
+                    guard()?;
+                    lease.parameter_native_class =
+                        class_name(lease.parameter.as_borrowed_raw().as_ptr());
+                    guard()?;
+                    lease.check(guard)
+                })();
+                if let Err(reason) = checked {
                     lease.release(guard)?;
                     return Err(reason);
                 }
@@ -100,6 +114,7 @@ impl OwnerInspection {
         let mut value = json!({
             "owner_scope":"parameter_controller_observation",
             "mutation_capability":false,
+            "parameter_native_class":self.parameter_native_class,
         });
         match &self.observation {
             Observation::Absent => value["controller"] = Value::Null,
@@ -123,6 +138,7 @@ impl OwnerInspection {
         let Self {
             observation,
             parameter,
+            ..
         } = self;
         let observation = match observation {
             Observation::Absent => Ok(()),

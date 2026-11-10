@@ -13,6 +13,9 @@ struct Fake {
     refs: Cell<u32>,
     controller: Cell<*mut c_void>,
     object: Cell<bool>,
+    native_class: Cell<*const c_char>,
+    class_reads: Cell<u32>,
+    stop_after_class: Cell<*mut Service>,
     stop_on_release: Cell<*mut Service>,
     gets: Cell<u32>,
     updates: Cell<u32>,
@@ -61,8 +64,20 @@ unsafe extern "C" fn controller(pointer: *mut c_void) -> *mut c_void {
     value.gets.set(value.gets.get() + 1);
     value.controller.get()
 }
-unsafe extern "C" fn missing_type(_: *mut c_void) -> *mut c_void {
-    ptr::null_mut()
+unsafe extern "C" fn get_type(pointer: *mut c_void) -> *mut c_void {
+    if unsafe { fake(pointer) }.native_class.get().is_null() {
+        ptr::null_mut()
+    } else {
+        pointer
+    }
+}
+unsafe extern "C" fn native_class(pointer: *mut c_void) -> *const c_char {
+    let value = unsafe { fake(pointer) };
+    value.class_reads.set(value.class_reads.get() + 1);
+    value
+        .stop_on_release
+        .set(value.stop_after_class.replace(ptr::null_mut()));
+    value.native_class.get()
 }
 unsafe extern "C" fn update(pointer: *mut c_void) {
     let value = unsafe { fake(pointer) };
@@ -87,7 +102,8 @@ impl Fixture {
         table[0] = query_mock as *const c_void;
         table[1] = retain as *const c_void;
         table[2] = release_mock as *const c_void;
-        table[3] = missing_type as *const c_void;
+        table[3] = get_type as *const c_void;
+        table[5] = native_class as *const c_void;
         table[14] = controller as *const c_void;
         table[15] = update as *const c_void;
         Self {
@@ -96,6 +112,9 @@ impl Fixture {
                 refs: Cell::new(1),
                 controller: Cell::new(ptr::null_mut()),
                 object: Cell::new(false),
+                native_class: Cell::new(ptr::null()),
+                class_reads: Cell::new(0),
+                stop_after_class: Cell::new(ptr::null_mut()),
                 stop_on_release: Cell::new(ptr::null_mut()),
                 gets: Cell::new(0),
                 updates: Cell::new(0),
@@ -146,6 +165,62 @@ fn reply(context: Box<Context<'static>>, owner: OwnerInspection) -> Reply {
 }
 
 #[test]
+fn parameter_native_class_is_copied_from_the_retained_parameter_without_value_ffi() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut host = guard_tests::Fixture::new();
+    let context = host.context();
+    let parameter = Fixture::new();
+    let owner = Fixture::new();
+    parameter.native.controller.set(owner.pointer());
+    parameter.native.object.set(true);
+    parameter
+        .native
+        .native_class
+        .set(c"DeviceParamFolder".as_ptr());
+    let lease = OwnerInspection::capture(parameter.parameter(context.api), text(), &mut || {
+        context.check()
+    })
+    .unwrap();
+    assert_eq!(parameter.native.class_reads.get(), 1);
+    parameter.native.native_class.set(c"ChangedClass".as_ptr());
+    assert_eq!(lease.value()["parameter_native_class"], "DeviceParamFolder");
+    assert_eq!(lease.value()["parameter_native_class"], "DeviceParamFolder");
+    assert_eq!(parameter.native.class_reads.get(), 1);
+    assert_eq!(owner.native.class_reads.get(), 0);
+    lease.release(&mut || context.check()).unwrap();
+    assert_eq!(parameter.native.refs.get(), 1);
+    assert_eq!(owner.native.refs.get(), 1);
+    assert_eq!(parameter.native.updates.get(), 0);
+    assert_eq!(owner.native.updates.get(), 0);
+}
+
+#[test]
+fn parameter_native_class_cleanup_reentry_discards_capture_and_releases_pins() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut host = guard_tests::Fixture::new();
+    let context = host.context();
+    let parameter = Fixture::new();
+    let owner = Fixture::new();
+    parameter.native.controller.set(owner.pointer());
+    parameter.native.object.set(true);
+    parameter
+        .native
+        .native_class
+        .set(c"DeviceParamFolder".as_ptr());
+    parameter.native.stop_after_class.set(context.service);
+    assert!(
+        OwnerInspection::capture(parameter.parameter(context.api), text(), &mut || context
+            .check())
+        .is_err()
+    );
+    assert_eq!(parameter.native.class_reads.get(), 1);
+    assert_eq!(parameter.native.refs.get(), 1);
+    assert_eq!(owner.native.refs.get(), 1);
+    assert_eq!(parameter.native.updates.get(), 0);
+    assert_eq!(owner.native.updates.get(), 0);
+}
+
+#[test]
 fn nonnode_controller_metadata_is_bounded_readonly_and_retained_through_publication() {
     let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
     let mut host = guard_tests::Fixture::new();
@@ -160,6 +235,7 @@ fn nonnode_controller_metadata_is_bounded_readonly_and_retained_through_publicat
     let value = lease.value();
     assert_eq!(value["owner_scope"], "parameter_controller_observation");
     assert_eq!(value["mutation_capability"], false);
+    assert_eq!(value["parameter_native_class"], "");
     assert_eq!(
         value["controller_report"]["limits"],
         json!({"nodes":1,"depth":0,"ancestors":0,"children_per_node":1})
@@ -223,6 +299,7 @@ fn stable_null_owner_is_retained_and_a_new_owner_before_publication_invalidates_
     assert!(reply.value.get("controller").is_none());
     assert!(reply.value.get("controller_report").is_none());
     assert!(reply.value.get("owner_scope").is_none());
+    assert!(reply.value.get("parameter_native_class").is_none());
     drop(reply);
     assert_eq!(parameter.native.refs.get(), 1);
     assert_eq!(owner.native.refs.get(), 1);
@@ -246,6 +323,7 @@ fn changed_owner_before_publication_discards_metadata_and_releases_both_owners()
     parameter.native.controller.set(replacement.pointer());
     assert!(!reply.final_check(service));
     assert!(reply.value.get("controller_report").is_none());
+    assert!(reply.value.get("parameter_native_class").is_none());
     assert_eq!(reply.value["outcome"], "not_applied");
     drop(reply);
     assert_eq!(original.native.refs.get(), 1);
