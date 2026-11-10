@@ -12,6 +12,9 @@ P0부터 실제 호스트 증거를 쌓는다. Rust 서버, 브리지와 EditTas
 
 ## Current implementation checkpoint — 2026-11-10
 
+**사용자 요청으로 중단했다.** 진행 중이던 Native31 설치 후 readonly 단위를 마쳤고 앱과 owner를 종료했다.
+`진행 재개해` 요청은 [재개 안내](RESUME.md)와 [상세 인수인계](LOOP_HANDOFF_2026-11-10.md)를 읽고 이어간다.
+
 macOS 8.1.1에서 Rust MCP, 브리지, EditTask와 선택 설치형 Rust CCL 확장을 실제 검증하고 있다. 내장 60종의 현재 제공값 8,668개를 읽었고, 모델·프리셋·그래프와 전체 파라미터의 변경·복원 검증을 별도 단위로 진행한다. 현재 체크포인트는 다음과 같다. 자세한 판정과 실패 이력은 [플러그인 상태 검증](PLUGIN_STATE_VALIDATION.md)에 보존한다.
 
 - [x] Mojito 32개, Mai Tai 275개, SampleOne 229개, Presence 219개, 선정한 일반 악기 파라미터 총 755개를 변경·읽기·복원했다.
@@ -23,6 +26,8 @@ macOS 8.1.1에서 Rust MCP, 브리지, EditTask와 선택 설치형 Rust CCL 확
 - [x] Impact Focus 33개를 현재 선택된 pad0에서 변경·읽기·복원했다. 직접 제어 4,227개와 MIDI 현재값 2개를 합친 서로 겹치지 않는 이름 집합이 현재 제공값 4,262개와 정확히 일치했다. 다른 패드 선택 상태와 이벤트 수명 주기는 별도다.
 - [x] 두 종료 기록에서 JavaScript proxy 정리 → `SongDocument` 소멸자 → 강제 GC 재진입 경로를 확인했다. 네이티브 문서 참조 경로를 구현하고 실제 문서 전환 두 번, EditTask probe와 남은 Focus 20개를 검증했다. 새 Focus 단위는 11,360회 요청과 파라미터 쓰기 40회를 앱 종료 없이 마쳤다. 모든 종료 원인이 제거됐다는 보장은 아니다.
 - [x] Chorder Auto Fill 전용 GUI 경로의 켜짐·꺼짐 왕복이 두 번의 저장·앱 재시작 후 유지됐다. 최종 908개 값과 Chorder 프리셋 바이트가 원본으로 복원됐다. 다른 코드 모델·학습 제어는 별도 작업이다.
+- [x] Chorder learning get/set 소스를 구현·독립 검토하고 Native31을 설치했다. 실제 Mode-off getter는 125뷰를 완전히 읽었고 전체 908개 원본 비교 두 번이 통과했다. learning setter는 아직 호출하지 않았다.
+- [x] 추가 프리셋 46종 계획 중 Mixtool과 Binaural Pan의 각 두 recall/restore를 마쳤다. 나머지 44종은 fresh catalog와 개별 실행 조건을 확인한 뒤 진행한다.
 - [ ] Mustang/Rumble의 비어 있는 모델 목록, 추가 프리셋 호출, 일반 그래프 생성·연결·삭제와 전용 이벤트·하드웨어 역할은 남아 있다.
 
 아래 P0–P5는 최초 계획과 아직 남은 게이트를 함께 보존한 문서다. 완료 여부는 [최신 검증](VALIDATION.md), [내장 플러그인 표](BUILTIN_PLUGINS.md), [정제한 증거](evidence/2026-11-09-native-provider.json)를 기준으로 읽는다. 하드웨어 포트 목록은 현재 노출된 항목이 0개였으며, 실제 라우팅·핑·오디오 신호, 전체 GUI/파일 동작과 모든 모델·선택 상태를 완료했다고 주장하지 않는다.

@@ -1,5 +1,9 @@
 # Fender Studio Pro MCP
 
+The current autonomous run is paused at the user's request. See the
+[resume guide](docs/RESUME.md) and [detailed handoff](docs/LOOP_HANDOFF_2026-11-10.md)
+for completed work, remaining tasks and the exact restart sequence.
+
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
 Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The final native-extension run covered **60 built-in classes**, enumerated **8,668 indexed parameter records across 59 current providers**, and resolved every reported DSP parameter name. Splitter adds 16 fixed graph controls. Fifty-nine classes passed a parameter or graph change/readback/restore; Phase Meter passed slot bypass. External Effect Mono and Stereo passed gain, mix, manual latency, phase and Unicode-note roundtrips. The same build passed the bridge/EditTask regression. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for scope and evidence. Every GUI action, model and physical hardware path has not been certified.
@@ -129,7 +133,8 @@ read-only discovery ceiling is 256 views; setter discovery remains limited to
 128 views. Incomplete bindings refuse the request. Successful edits remain
 `applied_unverified` with a separate GUI-current-value fact. These transient
 controls do not establish learned chord contents, persistence or audio results.
-Actual-host learning validation is still pending.
+The Mode-off getter completed a 125-view actual-host walk and two complete
+908-record original comparisons. Learning setter roundtrips remain pending.
 
 `plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
 

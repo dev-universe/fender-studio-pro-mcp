@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "date": "2026-11-10",
+  "status": "paused_by_user_after_completed_readonly_unit",
+  "product_source_commit": "486d6115dcecbcbb96cbbbfd083e014af8eddbb0",
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "native_unit": 31,
+  "native_uuid": "411316DF-1CAE-3CE2-86CA-72C39C7E1B0A",
+  "raw_runtime_data_included": false,
+  "references_are_private_file_hashes_only": true,
+  "all_builtin_plugins_verified": false,
+  "global_crash_fix_verified": false,
+  "references_sha256": {
+    ".local/next-state/unit47-artifact-binding.json": "ff6071896a13747e95f7424dd3888b3efb3db920f27bd839703ffc371a7d0178",
+    ".local/next-state/unit47a-readonly-stop-result.json": "00a07b2275cc4ec0b1b7d957c1d87b6e08585967c86c77ae7860e0d1b5735a37",
+    ".local/next-state/unit47-final-pause-state.json": "40ae5867a0df5d9109f88be799f1c99502c9ca7cd5729631ce13c8e02aa1ab44",
+    ".local/next-state/unit46-focus-complete33-result.json": "129666c7b06a26bd282635a9856b80903a1ac1e81e60e6c79b8294d215001071",
+    ".local/next-state/unit46-impact-current-provider-complete4262.json": "8608afe5f23eebfda19c3815fc4033585fa24ac7476ee764d60cd17c5c2bbec6",
+    ".local/next-state/unit21-impact-accepted4227.json": "dac6e8167d840e691335b8090cf0b68f6cdbbf9b00bdcf51d1dac15aedfa6d5d",
+    ".local/next-state/unit36-focus-accepted33.json": "ea7a01f9a3b2d4722c11433c0b8dafef26303675583dc8f7f3862095281ce030",
+    ".local/next-state/unit40m-actual-result.json": "637b5a80d01aa910776ab8e12acafab8393c89ffb101067a557d842c2e1ffd48",
+    ".local/next-state/unit32-instruments-accepted755.json": "cdb2a5c922230c2d0352aa8ef6534d6abfc8e100c5c95f4d2d31e535fa903f44",
+    ".local/next-state/unit38-extra-accepted51.json": "286dd7e5272cb1c92d510c453906dcf79800956bb2cdeaf6f21abc09ae2dc7b2",
+    ".local/next-state/unit46v-all13-result.json": "76e61885499554f3a4e6fcfed6234f018cbaad700068e320e5b0b08d6a744806",
+    ".local/next-state/unit46p-mixtool-result.json": "9d4149e011d1500b491291067ecb5dbc64cdc9898329135a476e985329124234",
+    ".local/next-state/unit46p-binaural-result.json": "0700bd7744deb47cc5e1956573723fe55c7b2f7ac72ba66fa25f7913d5e3a221",
+    ".local/next-state/unit44a-gui-persistent-roundtrip-result.json": "20abc42f9e3c0fc8f7cb49cba3b31ccda3435e25500d8a3fe400c4fdf3072e92",
+    ".local/next-state/unit46a-controller-probe-result.json": "bd91ca08e9b2e6c8d2ec4caa96fc2443dc6dccbdcf7a1aa90ccdfc4efa364db4",
+    ".local/next-state/unit46-native-context-first-proof.json": "21e4729470b5f7e1bdd9055689aa620f9b684bd5483dd4e4a420521f92ebcb7d",
+    ".local/next-state/unit46-edittask-native-context-proof.json": "bbcbed18905040917a79f2c0807a28b5ace40b5db4908267afcf07eea5890e1b",
+    ".local/next-state/chorder-learning-independent-review/evidence.json": "fe887a2bb6b78fcb680465c26acc5b6336d9d9a07a9ab665444590c2f8365f8e"
+  }
+}

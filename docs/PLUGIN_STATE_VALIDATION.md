@@ -4,11 +4,16 @@ This follow-up extends the [previous 60-class validation](VALIDATION.md). It is
 still in progress. Current-provider enumeration and representative controls do
 not establish complete model, preset, nested-graph or writable-parameter coverage.
 
+The run is paused at the user's request after the Native31 read-only unit.
+The app and owner are stopped. Use the [resume guide](RESUME.md) and
+[detailed handoff](LOOP_HANDOFF_2026-11-10.md) before further live work.
+
 | Area | Actual host evidence | Remaining scope |
 |---|---|---|
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
+| Additional preset recalls | Two Mixtool and two Binaural Pan changed/restored cases | 44 other classes from the finite remaining plan |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
 | Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
@@ -664,9 +669,25 @@ It observed local `learnMode` as an Integer Toggle with range 0..1 and
 `learnInputPitch` as an Integer with range -1..127 and default/current value -1.
 The latter uses -1 for no selected input and 0..127 for MIDI pitches. Two
 independent probes agreed, and two complete 908-record original reads before
-and after the probes were unchanged. The editor's observed root child count
-was 128. This establishes descriptors and binding only; no learning setter or
+and after the probes were unchanged. The GUI observer's reported child count
+was 128, distinct from the view-walk count. This establishes descriptors and binding only; no learning setter or
 persistence claim is included.
+
+The next build added closed learning get/set operations and an ExactInteger
+profile to the existing edit lease. Source verification passed 241 add-on tests,
+100 parameter tests plus four documentation tests, 91 server tests, nine
+captured targeted JS tests and 14 native-function fake-host integration cases.
+The builder also observed 273 full JS tests passing without retaining that
+complete output. Independent review passed 35 further boundary cases and
+matched the final source and captured log hashes. These are source results.
+
+Native31 was then installed and matched to the tested source. The actual
+Mode-off getter observed a complete 125-view walk under its 256-view ceiling,
+Mode zero and input-pitch minus one. Two complete 908-record observations
+matched the prior saved original projection exactly. No learning setter or
+transport action was sent. The user requested a pause; the owned diagnostic
+was closed without saving, its saved file was unchanged, and the app and owner
+were stopped. Mode-on discovery and both setter roundtrips remain unverified.
 
 Source verification passed 224 add-on tests, 95 parameter-library tests and four
 documentation tests, 81 server tests and 244 JavaScript tests. Independent
