@@ -591,6 +591,34 @@ establishes receiver inequality; it does not identify the persistence cause or
 authorize a generic GUI setter. No parameter write was performed by these
 diagnostics.
 
+The dedicated Boolean `chorder_autofill_set` subsequently passed its bounded
+actual-host persistence experiment. Read-only preflight identified the GUI
+receiver as an Integer Toggle with range 0..1, whereas the direct DSP facade
+used a Float carrier. Exactly one GUI enable request closed its native edit
+and verified the GUI current value. Two complete 908-record observations then
+matched the expected enabled model. Saving changed the owned Song's 581-byte
+Chorder preset member, and a full app exit/restart preserved all 908 values and
+schema twice. One guarded own-original disable request restored all 908 original
+values twice. After another Save and complete app restart, all 908 values and
+schema again matched the original twice, and the preset member was byte-identical
+to its original disabled version. No transport or learning command was used.
+
+This establishes one Auto Fill persistent roundtrip through the finite GUI
+receiver. The operation still returns `applied_unverified` with a separately
+checked GUI-current-value fact; a single call does not verify saving, DSP
+propagation or audible behavior. The legacy direct raw, normalized and
+`native_user` persistence failures remain unchanged evidence. Other Chorder
+model and learning roles are not covered by the Auto Fill result.
+
+Source verification passed 224 add-on tests, 95 parameter-library tests and four
+documentation tests, 81 server tests and 244 JavaScript tests. Independent
+native review found and reproduced a late value-witness ordering error before
+release. The corrected implementation passed 25 real-function integration
+cases and a counterfactual that failed after removing only the final borrowed
+association check. Independent wire review exercised 51 malformed packets and
+the real Rust execution path. These source checks preceded the actual-host
+experiment above.
+
 The finite opt-in implementation passed 90 parameter-library unit tests, four
 documentation tests, 203 add-on tests and 76 Rust-server tests. The wire passed
 220 JavaScript tests and an independent 266-case contract check. Six independent

@@ -114,7 +114,10 @@ editor already open. Read its `gui_parameter` descriptor through the comparison
 first. A successful call remains `applied_unverified`; `gui_value_verified`
 covers only the typed GUI current value. DSP propagation, persistence and effects
 need independent observations. This finite operation accepts no arbitrary GUI
-name or path. Its actual-host Save/restart validation is still pending.
+name or path. One actual 8.1.1 on/off roundtrip passed Save and full app restart
+in both directions, with all 908 exposed values checked twice and the original
+Chorder preset member restored byte for byte. Other chord-model edits remain
+separate work.
 
 `plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
 
