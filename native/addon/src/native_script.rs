@@ -297,6 +297,8 @@ pub(super) type ReceiptLease = request::NativeReceiptLease;
 pub(super) type StateRegistry = request::state::Registry;
 pub(super) type PresetRegistry = request::presets::Registry;
 pub(super) type InsertChainRegistry = request::insert_chain::Registry;
+pub(super) type DocumentContextRegistry = request::document_context::Registry;
+pub(super) use request::document_context::next_service_serial as next_document_context_serial;
 fn release_receipt(service: *mut Service) {
     let s = unsafe { &*service };
     // GUI-only, and take the Rust slot before any native destructor can reenter.
@@ -423,7 +425,7 @@ struct MethodDefinition {
 }
 // Immutable pointers into static strings; no cross-thread native calls.
 unsafe impl Sync for MethodDefinition {}
-static METHODS: [MethodDefinition; 3] = [
+static METHODS: [MethodDefinition; 4] = [
     MethodDefinition {
         name: c"capabilities".as_ptr(),
         args: c"".as_ptr(),
@@ -432,6 +434,11 @@ static METHODS: [MethodDefinition; 3] = [
     MethodDefinition {
         name: c"request".as_ptr(),
         args: c"target: Object, request: string, auxiliary: Object = null".as_ptr(),
+        result: c"string".as_ptr(),
+    },
+    MethodDefinition {
+        name: c"documentContext".as_ptr(),
+        args: c"".as_ptr(),
         result: c"string".as_ptr(),
     },
     MethodDefinition {
@@ -738,7 +745,7 @@ unsafe extern "C" fn script_invoke(
         return 0;
     }
     let name = ascii(unsafe { (*id).text });
-    if name != "capabilities" && name != "request" {
+    if name != "capabilities" && name != "request" && name != "documentContext" {
         return 0;
     }
     if service.busy.swap(true, Ordering::AcqRel) {
@@ -750,8 +757,10 @@ unsafe extern "C" fn script_invoke(
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
         request::NativeReply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","gui_edit_api":"chorder_autofill_v1","state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","document_context_api":"native_document_context_v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","gui_edit_api":"chorder_autofill_v1","state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
         )
+    } else if name == "documentContext" && count == 0 {
+        request::document_context::dispatch(owner, a)
     } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
             unsafe { method(msg, 5) };
@@ -984,7 +993,11 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
         marker("service_stop_deferred_initialization");
         return OK;
     }
-    if !s.registered.load(Ordering::Acquire) && !s.module_attached.load(Ordering::Acquire) {
+    if !s.registered.load(Ordering::Acquire)
+        && !s.module_attached.load(Ordering::Acquire)
+        && !s.receipt_pending.load(Ordering::Acquire)
+        && !s.document_context_pending.load(Ordering::Acquire)
+    {
         marker("service_terminate");
         return OK;
     }
@@ -995,6 +1008,7 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
         return WRONG_THREAD;
     }
     release_receipt(service);
+    request::document_context::drain(service);
     request::state::drain(service);
     request::presets::drain(service);
     request::insert_chain::drain(service);

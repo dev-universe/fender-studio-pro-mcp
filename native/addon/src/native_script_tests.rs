@@ -489,7 +489,9 @@ fn metadata_is_borrowed_stable_and_module_associated() {
         "FenderMcpNative"
     );
     assert_eq!(METHODS[0].name, c"capabilities".as_ptr());
-    assert!(METHODS[2].name.is_null());
+    assert_eq!(METHODS[2].name, c"documentContext".as_ptr());
+    assert_eq!(ascii(METHODS[2].args), "");
+    assert!(METHODS[3].name.is_null());
     assert_eq!(
         ascii(METHODS[1].args),
         "target: Object, request: string, auxiliary: Object = null"

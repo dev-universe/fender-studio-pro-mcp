@@ -132,6 +132,10 @@ fn service() -> Box<Service> {
         busy: AtomicBool::new(true),
         receipt: std::cell::UnsafeCell::new(None),
         receipt_pending: AtomicBool::new(false),
+        document_context: std::cell::UnsafeCell::new(
+            super::super::document_context::Registry::new(1),
+        ),
+        document_context_pending: AtomicBool::new(false),
         states: std::cell::UnsafeCell::new(Registry::new()),
         states_pending: AtomicBool::new(false),
         presets: std::cell::UnsafeCell::new(super::super::presets::Registry::new()),

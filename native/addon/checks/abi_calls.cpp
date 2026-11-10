@@ -22,6 +22,7 @@
 #include "ccl/public/plugins/iobjecttable.h"
 #include "ccl/public/plugins/icomponent.h"
 #include "ccl/public/storage/istorage.h"
+#include "ccl/public/storage/iurl.h"
 #include "ccl/public/system/isignalhandler.h"
 #include "ccl/public/system/ithreading.h"
 #include "ccl/public/text/cstring.h"
@@ -91,6 +92,9 @@ extern "C" CCL::IUnknown* abi_object_named(CCL::IObjectTable* p, const CCL::CStr
 extern "C" CCL::IUnknown* abi_object_identified(CCL::IObjectTable* p, const CCL::UIDBytes* id) { return p->getObjectByID(*id); }
 extern "C" CCL::tbool abi_object_property(CCL::IObject* p, CCL::Variant* out, const CCL::CString* name) { return p->getProperty(*out,*name); }
 extern "C" CCL::IDocument* abi_document_active(CCL::IDocumentManager* p) { return p->getActiveIDocument(); }
+extern "C" const CCL::String* abi_document_title(CCL::IDocument* p) { return &p->getTitle(); }
+extern "C" const CCL::IUrl* abi_document_path(CCL::IDocument* p) { return &p->getPath(); }
+extern "C" void abi_document_url(const CCL::IUrl* p, CCL::String* out) { p->getUrl(*out, false); }
 extern "C" CCL::IUnknown* abi_document_model(CCL::IDocument* p) { return p->getModel(); }
 extern "C" int abi_desktop_count(CCL::IDesktop* p) { return p->countWindows(); }
 extern "C" CCL::IWindow* abi_desktop_window(CCL::IDesktop* p,int i) { return p->getWindow(i); }

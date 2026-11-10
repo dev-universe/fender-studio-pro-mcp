@@ -302,9 +302,12 @@ frames and captured fault instructions. Exact installed-binary analysis with
 Ghidra identifies the fatal condition as
 `MOZ_RELEASE_ASSERT(!JS::RuntimeHeapIsBusy())`. The stack passes through a
 JavaScript proxy finalizer's native-object release, followed by global scripting
-GC and a forced context GC. This establishes a nested-GC failure path.
-The released host object's identity and a
-verified prevention remain under investigation. The Variant representation
+GC and a forced context GC. The main executable's destructor, primary vtable,
+type-info getter and class registration identify the `SongDocument` destructor
+on this path. Its explicit forced GC reenters the collector while its JavaScript
+proxy is being finalized. This establishes the observed failure path; the exact
+prior proxy reference and all possible triggers have not been recovered.
+Verified prevention remains under investigation. The Variant representation
 correction was already installed in this recurrence and is not a crash fix.
 
 A dedicated two-name protocol then verified the current values of pitch bend

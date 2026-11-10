@@ -3,6 +3,7 @@
 
 include_file("resource://com.presonus.musicdevices/sdk/controlsurfacecomponent.js");
 include_file("BridgeConfig.js");
+include_file("McpDocumentContext.js");
 include_file("BridgeCore.js");
 include_file("NativeControls.js");
 include_file("NativePluginControls.js");

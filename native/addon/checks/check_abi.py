@@ -12,6 +12,7 @@ expected = {
     "parameter_controller": 112, "parameter_normalized": 280,
     "node_uid": 32, "node_class": 40, "node_find": 80,
     "object_named": 72, "object_identified":64, "document_active": 72, "document_model": 48,
+    "document_title":24,"document_path":32,"document_url":64,
     "desktop_count": 48, "desktop_window": 56, "window_controller": 240,
     "view_controller": 256, "view_children": 160, "children_iterator": 88,
     "iterator_done": 24, "iterator_next": 32, "control_parameter": 24,
@@ -54,6 +55,8 @@ for name,registers in {"scripting_startup":["x3","w4"],"scripting_shutdown":["w2
             raise SystemExit(f"Scripting load/unload=false or null args changed: {name} {register}")
 if not re.search(r"mov\s+w1, #2\b", functions["message_auxiliary"]):
     raise SystemExit("Third Message argument must be fetched by reference at fixed index2")
+if not re.search(r"mov\s+w2, #0\b", functions["document_url"]):
+    raise SystemExit("Document URL output must omit query parameters")
 for name,symbol in [("plugin_manager_export","CCLGetPlugInManager"),("file_system_export","CCLGetFileSystem")]:
     if symbol not in functions[name]:
         raise SystemExit(f"Export ABI mismatch: {name}")

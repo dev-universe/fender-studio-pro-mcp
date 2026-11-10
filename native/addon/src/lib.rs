@@ -397,6 +397,8 @@ struct Service {
     busy: AtomicBool,
     receipt: std::cell::UnsafeCell<Option<native_script::ReceiptLease>>,
     receipt_pending: AtomicBool,
+    document_context: std::cell::UnsafeCell<native_script::DocumentContextRegistry>,
+    document_context_pending: AtomicBool,
     states: std::cell::UnsafeCell<native_script::StateRegistry>,
     states_pending: AtomicBool,
     presets: std::cell::UnsafeCell<native_script::PresetRegistry>,
@@ -437,6 +439,9 @@ unsafe extern "C" fn factory_create(
     if !READY.load(Ordering::Acquire) {
         return FAILED;
     }
+    let Some(document_context_serial) = native_script::next_document_context_serial() else {
+        return FAILED;
+    };
     let service = Box::new(Service {
         vtable: &SERVICE_VTABLE,
         refs: AtomicU32::new(1),
@@ -451,6 +456,10 @@ unsafe extern "C" fn factory_create(
         busy: AtomicBool::new(false),
         receipt: std::cell::UnsafeCell::new(None),
         receipt_pending: AtomicBool::new(false),
+        document_context: std::cell::UnsafeCell::new(native_script::DocumentContextRegistry::new(
+            document_context_serial,
+        )),
+        document_context_pending: AtomicBool::new(false),
         states: std::cell::UnsafeCell::new(native_script::StateRegistry::new()),
         states_pending: AtomicBool::new(false),
         presets: std::cell::UnsafeCell::new(native_script::PresetRegistry::new()),
@@ -519,6 +528,7 @@ unsafe extern "C" fn service_release(this: *mut c_void) -> u32 {
                 || service.module_attached.load(Ordering::Acquire)
                 || service.initializing.load(Ordering::Acquire)
                 || service.receipt_pending.load(Ordering::Acquire)
+                || service.document_context_pending.load(Ordering::Acquire)
                 || service.states_pending.load(Ordering::Acquire)
                 || service.presets_pending.load(Ordering::Acquire)
                 || service.insert_chains_pending.load(Ordering::Acquire))

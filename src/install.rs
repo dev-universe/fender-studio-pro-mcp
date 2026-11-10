@@ -198,6 +198,15 @@ fn planned_files(config: &Config) -> Result<BTreeMap<PathBuf, Vec<u8>>, Operatio
             file.contents().to_vec(),
         );
     }
+    let document_context = ASSETS
+        .get_file("edit-tasks/package/McpDocumentContext.js")
+        .ok_or_else(|| {
+            OperationError::new("missing_asset", "Embedded document context is missing")
+        })?;
+    files.insert(
+        device.join("McpDocumentContext.js"),
+        document_context.contents().to_vec(),
+    );
     let host_config = json!({"mailbox": file_url(&config.mailbox()), "allowEval": false});
     files.insert(
         device.join("BridgeConfig.js"),
@@ -263,6 +272,34 @@ pub(crate) fn write_complete_file(path: &Path, bytes: &[u8]) -> Result<(), Opera
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn document_context_helper_is_identical_in_device_and_edit_task_package() {
+        use std::io::Read;
+
+        let temp = tempfile::tempdir().unwrap();
+        let profile = temp.path().join("profile");
+        let config = Config {
+            data_dir: Some(temp.path().join("data")),
+            profile: Some(profile.clone()),
+            timeout_ms: 100,
+        };
+        let files = planned_files(&config).unwrap();
+        let helper =
+            &files[&profile.join("User Devices/fender-studio-pro-mcp/McpDocumentContext.js")];
+        let package = &files[&profile.join(
+            "Extensions/fender-studio-pro-mcp.edittasks/scripts/fender-studio-pro-mcp.package",
+        )];
+        let mut archive = zip::ZipArchive::new(Cursor::new(package)).unwrap();
+        let mut packaged_helper = Vec::new();
+        archive
+            .by_name("McpDocumentContext.js")
+            .unwrap()
+            .read_to_end(&mut packaged_helper)
+            .unwrap();
+        assert!(!helper.is_empty());
+        assert_eq!(*helper, packaged_helper);
+    }
 
     #[test]
     fn installer_preserves_unknown_and_modified_files() {

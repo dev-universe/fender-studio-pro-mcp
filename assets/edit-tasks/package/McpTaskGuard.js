@@ -1,3 +1,5 @@
+include_file("McpDocumentContext.js");
+
 function mcpClaimTask(readFn, writeFn, requestFilename, kind) {
 	var request = readFn(requestFilename);
 	var lease = readFn("task-lease.json");
@@ -23,6 +25,16 @@ function mcpClaimTask(readFn, writeFn, requestFilename, kind) {
 		error = "EditTask lease has no document identity";
 	} else if (typeof Host === "undefined" || !Host.Objects || typeof Host.Objects.getObjectByUrl !== "function") {
 		error = "active document is not available";
+	} else if (lease.nativeDocument !== undefined) {
+		try {
+			var identity = lease.nativeDocument;
+			if (!identity || typeof identity !== "object" || Array.isArray(identity)
+				|| Object.keys(identity).sort().join(",") !== "context_api,token"
+				|| identity.context_api !== "native_document_context_v1" || !mcpDocumentToken(identity.token)) throw new Error("invalid native task identity");
+			var context = mcpReadNativeDocument(mcpNativeDocumentService());
+			if (!context.open || context.token !== identity.token || context.title !== lease.title || context.fileUrl !== lease.fileUrl)
+				throw new Error("native task document changed");
+		} catch (_) { error = "native document does not match EditTask lease"; }
 	} else {
 		var manager = Host.Objects.getObjectByUrl("://studioapp/DocumentManager");
 		var document = manager && typeof manager.activeDocument === "object" ? manager.activeDocument : null;

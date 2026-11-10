@@ -84,6 +84,11 @@ class Bridge {
         this.replies = [];
         this.documentObject = undefined;
         this.documentEpoch = 0;
+        this.documentMode = null;
+        this.documentService = null;
+        this.nativeDocument = null;
+        this.contextError = null;
+        this.contextBusy = false;
         this.internalTaskDispatch = false;
         this.requestContext = null;
         this.lastBeat = 0;
@@ -107,7 +112,7 @@ class Bridge {
     }
 
     tick(source) {
-        if (this.requestContext) return;
+        if (this.requestContext || this.contextBusy) return;
         if (source) this.clocks[source] = (this.clocks[source] || 0) + 1;
         const now = Date.now();
         this.beat(false);
@@ -123,11 +128,15 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
+        const contextError = this.contextError;
         const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "inserts", "sends", "meters", "listCommands"];
         const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
-            if (req.protocol !== kProtocol) {
+            if (contextError) {
+                code = "missing_precondition";
+                result = fail("native document context is unavailable");
+            } else if (req.protocol !== kProtocol) {
                 code = "protocol_mismatch";
                 result = fail("bridge protocol 2 is required");
             } else if (req.expectedSession && req.expectedSession !== this.session) {
@@ -147,6 +156,10 @@ class Bridge {
         }
         this.requestContext = null;
         const afterContext = this.context();
+        if (!isFail(result) && this.contextError) {
+            code = "native_context_lost";
+            result = fail("native document context was lost before publication");
+        }
         if (!isFail(result) && req.op === "insertChainState"
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
@@ -185,19 +198,58 @@ class Bridge {
     }
 
     context() {
-        const dm = appObject("DocumentManager");
-        const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
-        if (doc !== this.documentObject) {
-            this.documentObject = doc;
-            this.documentEpoch++;
+        if (this.contextBusy) {
+            this.contextError = "native document context reentered";
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: false, title: null, fileUrl: null };
         }
-        return {
-            protocol: kProtocol, session: this.session,
-            document: this.session + ":" + this.documentEpoch,
-            open: !!doc,
-            title: doc && has(doc, "title", "string") ? String(doc.title) : null,
-            fileUrl: doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null,
-        };
+        this.contextBusy = true;
+        try {
+            if (this.documentMode === null) {
+                this.documentMode = "native";
+                this.documentService = mcpNativeDocumentService();
+                if (!this.documentService) this.documentMode = "legacy";
+            }
+            let identity, open, title, fileUrl;
+            if (this.documentMode === "native") {
+                const value = mcpReadNativeDocument(this.documentService);
+                const token = mcpDocumentToken(value.token);
+                if (this.nativeDocument) {
+                    const prior = mcpDocumentToken(this.nativeDocument.token);
+                    if (token.source !== prior.source
+                        || token.generation.length < prior.generation.length
+                        || (token.generation.length === prior.generation.length && token.generation < prior.generation)
+                        || (value.token === this.nativeDocument.token && value.open !== this.nativeDocument.open))
+                        throw new Error("native document identity regressed");
+                }
+                identity = value.token;
+                this.nativeDocument = value;
+                open = value.open;
+                title = value.title;
+                fileUrl = value.fileUrl;
+            } else {
+                const dm = appObject("DocumentManager");
+                const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
+                identity = doc;
+                open = !!doc;
+                title = doc && has(doc, "title", "string") ? String(doc.title) : null;
+                fileUrl = doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null;
+            }
+            if (identity !== this.documentObject || this.contextError) {
+                this.documentObject = identity;
+                this.documentEpoch++;
+            }
+            this.contextError = null;
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: open, title: title, fileUrl: fileUrl };
+        } catch (_) {
+            if (!this.contextError) this.documentEpoch++;
+            this.contextError = "native document context is unavailable";
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: false, title: null, fileUrl: null };
+        } finally {
+            this.contextBusy = false;
+        }
     }
 
     // ---- operations -------------------------------------------------------------
@@ -470,6 +522,10 @@ class Bridge {
         const context = this.context();
         if (!this.requestContext || context.document !== this.requestContext.document || !context.open) return fail("the task document changed before dispatch");
         const lease = { id: id, kind: kind, session: this.session, document: context.document, fileUrl: context.fileUrl, title: context.title, expiresAt: Date.now() + 10000 };
+        if (this.documentMode === "native") {
+            if (this.contextError || !this.nativeDocument || !this.nativeDocument.open) return fail("native task document is unavailable");
+            lease.nativeDocument = { context_api: "native_document_context_v1", token: this.nativeDocument.token };
+        }
         if (!this.mailbox.write(filename, { id: id, ops: ops, expectedSession: lease.session, expectedDocument: lease.document })) return fail("cannot write the task request");
         if (!this.mailbox.write("task-lease.json", lease)) {
             this.mailbox.write(filename, { id: null, ops: [] });
@@ -491,13 +547,12 @@ class Bridge {
     song() {
         const transport = this.transportState();
         if (isFail(transport)) return transport;
-        const dm = appObject("DocumentManager");
-        const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
+        const context = this.context();
+        if (this.contextError) return fail("native song document is unavailable");
         const list = trackList();
-        const path = doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null;
         return {
-            title: doc ? String(doc.title) : null,
-            fileUrl: path,
+            title: context.title,
+            fileUrl: context.fileUrl,
             transport: transport,
             trackCount: list ? uniqueTracks(list).length : null,
             selectedTracks: list ? selectedTracks(list).map(t => String(t.name)) : [],

@@ -23,6 +23,8 @@ mod digest;
 #[cfg(test)]
 #[path = "request/direct_tests.rs"]
 mod direct_tests;
+#[path = "request/document_context.rs"]
+pub(super) mod document_context;
 #[path = "request/folder_context.rs"]
 mod folder_context;
 #[path = "request/format.rs"]
@@ -1330,6 +1332,7 @@ fn error(code: &str, message: &str, outcome: &str) -> Value {
 pub(crate) enum NativeReceiptLease {
     Device { _lease: ReceiptLease },
     InsertChain { _lease: insert_chain::ReceiptLease },
+    DocumentContext { _lease: document_context::Receipt },
 }
 impl From<ReceiptLease> for NativeReceiptLease {
     fn from(lease: ReceiptLease) -> Self {
@@ -1339,6 +1342,7 @@ impl From<ReceiptLease> for NativeReceiptLease {
 pub(super) enum NativeReply {
     Device(Box<Reply>),
     InsertChain(insert_chain::Reply),
+    DocumentContext(document_context::Reply),
 }
 impl From<Reply> for NativeReply {
     fn from(reply: Reply) -> Self {
@@ -1356,12 +1360,14 @@ impl NativeReply {
         match self {
             Self::Device(reply) => reply.encode(),
             Self::InsertChain(reply) => reply.encode(),
+            Self::DocumentContext(reply) => reply.encode(),
         }
     }
     pub(super) fn final_check(&mut self, service: *mut Service) -> bool {
         match self {
             Self::Device(reply) => reply.final_check(service),
             Self::InsertChain(reply) => reply.final_check(service),
+            Self::DocumentContext(reply) => reply.final_check(service),
         }
     }
     pub(super) fn take_receipt(&mut self) -> Result<Option<NativeReceiptLease>, ()> {
@@ -1370,12 +1376,16 @@ impl NativeReply {
             Self::InsertChain(reply) => reply.take_receipt().map(|receipt| {
                 receipt.map(|lease| NativeReceiptLease::InsertChain { _lease: lease })
             }),
+            Self::DocumentContext(reply) => Ok(reply
+                .take_receipt()
+                .map(|lease| NativeReceiptLease::DocumentContext { _lease: lease })),
         }
     }
     pub(super) fn release_context(&mut self) {
         match self {
             Self::Device(reply) => reply.release_context(),
             Self::InsertChain(reply) => reply.release_context(),
+            Self::DocumentContext(reply) => reply.release_context(),
         }
     }
 }
@@ -2832,6 +2842,8 @@ mod guard_tests {
             busy: AtomicBool::new(true),
             receipt: std::cell::UnsafeCell::new(None),
             receipt_pending: AtomicBool::new(false),
+            document_context: std::cell::UnsafeCell::new(document_context::Registry::new(1)),
+            document_context_pending: AtomicBool::new(false),
             states: std::cell::UnsafeCell::new(state::Registry::new()),
             states_pending: AtomicBool::new(false),
             presets: std::cell::UnsafeCell::new(presets::Registry::new()),

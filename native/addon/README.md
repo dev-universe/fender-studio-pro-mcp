@@ -6,10 +6,11 @@ provides a finite, synchronous native API to the existing DAW JavaScript bridge.
 It includes no vendor implementation, SDK headers, app resources or songs.
 
 The service exposes `Host.Objects.getObjectByName("FenderMcpNative")` after normal
-CCL scripting-module attachment. Its two methods return JSON strings:
+CCL scripting-module attachment. Its three methods return JSON strings:
 
 ```js
 native.capabilities();
+native.documentContext();
 native.request(resolvedDevice, JSON.stringify({
   operation: "parameters", source: "auto", offset: 0, limit: 64
 }));
@@ -19,6 +20,22 @@ The target is the bridge's exact resolved native `Device` object. It is passed
 as an object inside the existing serialized GUI/document transaction, never as
 a caller-supplied object path. The add-on has no independent IPC, eval, shell,
 generic native-method dispatch or arbitrary interface selector.
+
+`documentContext()` takes no arguments. It returns a bounded active-document
+snapshot with an opaque service/document generation token, title and file URL.
+The native registry retains at most one last-observed canonical document identity;
+retired owners are released synchronously in the guarded native call. Reply
+owners survive JSON conversion through the existing receipt lease. No native
+document object is returned to JavaScript. A document closed through the UI can
+remain pinned until the next context observation or service stop.
+
+The bridge chooses native document identity on its first context read when
+this method is available, and keeps that service until restart. A failed native
+read revokes the public document epoch and prevents dispatch; it cannot switch
+to the legacy document-proxy route. Native EditTask leases bind the same token.
+Without this method, the bridge keeps its legacy source until restart. These
+source and ownership rules target the observed SongDocument finalizer/forced-GC
+path; actual stability verification is recorded separately.
 
 ## Requests
 
