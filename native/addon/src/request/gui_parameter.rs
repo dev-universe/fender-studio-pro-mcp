@@ -1,6 +1,8 @@
 use super::*;
 use fender_native_editor_api::{DeviceMatch, EditorRootLease, GuiApi};
 use std::cell::RefCell;
+#[path = "gui_parameter/controller_probe.rs"]
+mod controller_probe;
 
 pub(super) const PARAMETER: &str = "chorder.autofill";
 const GUI_PARAMETER: &str = "autofill";
@@ -222,6 +224,7 @@ struct Scan {
     coverage: Coverage,
 }
 struct Compared {
+    controller_probe: Option<controller_probe::ControllerProbe>,
     witnesses: RefCell<Vec<Owned>>,
     direct_controller_canonical: Owned,
     direct: ParameterPin,
@@ -329,6 +332,7 @@ impl ComparisonRead {
         let mut result = Self {
             value,
             pins: Some(Compared {
+                controller_probe: None,
                 witnesses: RefCell::new(Vec::new()),
                 direct_controller_canonical,
                 direct: direct_pin,
@@ -348,6 +352,29 @@ impl ComparisonRead {
     }
     pub(super) fn value(&self) -> Value {
         self.value.clone()
+    }
+    pub(super) fn observe_controller(
+        &mut self,
+        ctx: &Context<'_>,
+        controller: &Controller,
+    ) -> Result<(), String> {
+        self.check(ctx, controller)?;
+        let Some(pins) = self.pins.as_mut() else {
+            return Ok(());
+        };
+        let mut guard = || {
+            controller.check()?;
+            ctx.check()
+        };
+        let probe = controller_probe::ControllerProbe::capture(
+            &pins.gui,
+            pins.direct_controller_canonical.0,
+            ctx.api,
+            &mut guard,
+        )?;
+        self.value["controller_probe"] = probe.value();
+        pins.controller_probe = Some(probe);
+        self.check(ctx, controller)
     }
     fn gui_description(
         &self,
@@ -418,6 +445,9 @@ impl ComparisonRead {
         witnesses.push(attached_control);
         if !same {
             return Err("view control attachment changed".into());
+        }
+        if let Some(probe) = pins.controller_probe.as_ref() {
+            probe.check(&pins.gui, ctx.api, &mut guard, &mut witnesses)?;
         }
         let previous = pins.witnesses.replace(witnesses);
         release(previous, &mut guard)?;
@@ -625,6 +655,9 @@ impl Compared {
         }
         self.direct.check_borrowed()?;
         self.gui.check_borrowed()?;
+        if let Some(probe) = self.controller_probe.as_ref() {
+            probe.check_borrowed(&self.gui)?;
+        }
         for node in &self.views {
             if let Some(parent) = node.parent {
                 let parent = &self.views[parent];
@@ -679,14 +712,14 @@ fn query<G: FnMut() -> Result<(), String>>(
     guard().map_err(QueryFailure::Guard)?;
     let mut output = ptr::null_mut();
     let status = unsafe { (unknown_vtable(pointer).query)(pointer, iid, &mut output) };
-    let owned = (!output.is_null()).then(|| Owned(output));
+    let owned = (status == OK && !output.is_null()).then(|| Owned(output));
     if let Err(reason) = guard() {
         release(owned, guard).map_err(QueryFailure::Guard)?;
         return Err(QueryFailure::Guard(reason));
     }
     match (status, owned) {
         (OK, Some(owned)) => Ok(Some(owned)),
-        (NO_INTERFACE, None) => Ok(None),
+        (NO_INTERFACE, None) if output.is_null() => Ok(None),
         (_, owned) => {
             release(owned, guard).map_err(QueryFailure::Guard)?;
             Err(QueryFailure::Native(status))

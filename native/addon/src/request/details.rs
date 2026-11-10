@@ -48,7 +48,10 @@ pub(super) fn inspect_gui(
     } else {
         None
     };
-    let gui = gui_parameter::ComparisonRead::capture(ctx, controller, parameter)?;
+    let mut gui = gui_parameter::ComparisonRead::capture(ctx, controller, parameter)?;
+    if include_owner {
+        gui.observe_controller(ctx, controller)?;
+    }
     let mut value = report(
         gui_parameter::PARAMETER,
         &chain,

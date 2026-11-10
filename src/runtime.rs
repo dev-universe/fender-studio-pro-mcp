@@ -874,12 +874,18 @@ mod tests {
         let mut args = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
             "param":"chorder.autofill","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
         let mut result = json!({"ok":true,"gui_comparison":{"status":"compared","topParameterSame":true,
-            "declaredObserverSame":true},"controller_report":{"stale":true}});
+            "declaredObserverSame":true,"controller_probe":{"status":"observed",
+                "interfaces":{"controller":{"status":"present"}},
+                "binding":{"autofill_same_gui":true},
+                "parameters":{"learnInputPitch":{"value":-1}},
+                "observer_metadata":{"status":"observed","report":{"nodes":[{"reflection":{"types":[{"name":"stale"}]}}]}}}},
+            "controller_report":{"stale":true}});
         let legacy = Operation::from_parts("plugin_parameter_details", args.clone()).unwrap();
         let before = result.clone();
         invalidate_gui_evidence(&legacy, &mut result);
         assert_eq!(result, before);
         args["compare_gui"] = json!(true);
+        args["include_owner"] = json!(true);
         let operation = Operation::from_parts("plugin_parameter_details", args).unwrap();
         invalidate_gui_evidence(&operation, &mut result);
         assert_eq!(result["native_outcome"], "not_applied");
@@ -892,6 +898,7 @@ mod tests {
                 .get("declaredObserverSame")
                 .is_none()
         );
+        assert!(result["gui_comparison"].get("controller_probe").is_none());
         assert!(result.get("controller_report").is_none());
     }
 

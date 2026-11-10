@@ -153,7 +153,7 @@ impl OwnerInspection {
     }
 }
 
-fn reflect<G: FnMut() -> Result<(), String>>(
+pub(super) fn reflect<G: FnMut() -> Result<(), String>>(
     owner: &parameters::ControllerOwner,
     text: TextApi,
     guard: &mut G,

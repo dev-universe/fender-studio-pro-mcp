@@ -17,7 +17,43 @@ const unresolved = reason => ({ ...common(), status: 'unresolved', reason,
   coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 } });
 const success = (gui = compared()) => ({ ok: true, outcome: 'observed', instance, source: 'dsp', gui_comparison: gui });
 
-function harness(reply = () => success()) {
+function modelDescription(name, value = 0) {
+  const descriptor = guiDescription();
+  const pitch = name === 'learnInputPitch';
+  const typed = value => ({ variant_tag: 1, data: { kind: 'integer', value } });
+  const normalized = pitch ? (value + 1) / 128 : value;
+  const bits = new DataView(new ArrayBuffer(4));
+  bits.setFloat32(0, normalized);
+  return { ...descriptor, name, title: name, tag: pitch ? 12 : 11, value, text: String(value),
+    min: pitch ? -1 : 0, max: pitch ? 127 : 1, default: pitch ? -1 : 0, normalized,
+    native_kind: pitch ? 'Integer' : 'Toggle', native_value: typed(value), native_min: typed(pitch ? -1 : 0),
+    native_max: typed(pitch ? 127 : 1), native_default: typed(pitch ? -1 : 0),
+    native_normalized: { kind: 'float32', bits_hex: bits.getUint32(0).toString(16).padStart(8, '0').toUpperCase() } };
+}
+
+function observerMetadata() {
+  return { status: 'observed', report: { coverage: 'bounded_parameter_controller_metadata',
+    scope: 'parameter_controller_observation', mutation_capability: false, complete: true,
+    limits: { nodes: 1, depth: 0, ancestors: 0, children_per_node: 1 },
+    nodes: [{ index: 0, identity: null, child_count: null,
+      declared_interfaces: { preset_collector: false, preset_mediator: false, storable: false },
+      reflection: { available: true, types: [{ name: 'FakeModelController', namespace: null, class_uid: null, flags: 0,
+        methods: [{ name: 'findParameter', arguments: 'name: string', return_type: 'Object' }],
+        properties: [{ name: 'paramCount', data_type: 1, type_name: null, has_type_info: false }] }], issues: [] } }],
+    edges: [], diagnostics: [] } };
+}
+
+function controllerProbe() {
+  return { status: 'observed', scope: 'fixed_gui_declared_observer_controller', mutation_capability: false,
+    value_semantics: 'sequential_snapshot', interfaces: { controller: { status: 'present' }, provider: { status: 'unsupported' } },
+    anchors: { controller: 'same_parameter', provider: 'controller_absent' }, observer_metadata: observerMetadata(),
+    binding: { route: 'direct', autofill_same_gui: true, controller_same_observer: true, controller_same_direct_dsp: false },
+    parameters: { learnMode: modelDescription('learnMode'), learnInputPitch: modelDescription('learnInputPitch', -1) } };
+}
+
+function withProbe(probe = controllerProbe()) { return { ...compared(), controller_probe: probe }; }
+
+function harness(reply = request => success(request.include_owner === true ? withProbe() : compared())) {
   const calls = [];
   const context = { open: true, document: 'gui:1', session: 'gui' };
   const service = {
@@ -288,4 +324,176 @@ test('GUI descriptor corruption discards both the descriptor and receiver identi
     assert.equal('topParameterSame' in result.gui_comparison, false);
     assert.equal(h.calls.length, 1);
   }
+});
+
+test('fixed GUI controller metadata requires both existing opt-ins and a compared base', () => {
+  for (const include_owner of [undefined, false]) {
+    const result = harness(() => success(withProbe())).component.pluginParameterDetails({ ...args, include_owner });
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+  const missing = harness(() => success()).component.pluginParameterDetails({ ...args, include_owner: true });
+  assert.equal(missing.gui_comparison.status, 'unresolved');
+  for (const report of [unresolved('missing_editor'), { ...unresolved('missing_editor'), controller_probe: controllerProbe() }]) {
+    const result = harness(() => success(report)).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+});
+
+test('fixed GUI controller routes and signed selector observations preserve exact native values', () => {
+  const routes = [
+    probe => probe,
+    probe => { probe.binding.route = 'provider'; probe.interfaces.controller.status = 'unsupported';
+      probe.interfaces.provider.status = 'present'; probe.anchors = { controller: 'controller_absent', provider: 'same_parameter' }; return probe; },
+    probe => { probe.binding.route = 'both'; probe.interfaces.provider.status = 'present';
+      probe.anchors.provider = 'same_parameter'; return probe; },
+    probe => { probe.interfaces.provider.status = 'present'; probe.anchors.provider = 'controller_absent'; return probe; },
+    probe => { probe.interfaces.provider.status = 'present'; probe.anchors.provider = 'identity_mismatch'; return probe; },
+  ];
+  for (const route of routes) {
+    for (const value of [-1, 0, 127]) {
+      const probe = route(controllerProbe());
+      probe.parameters.learnInputPitch = modelDescription('learnInputPitch', value);
+      const h = harness(() => success(withProbe(probe)));
+      const result = h.component.pluginParameterDetails({ ...args, include_owner: true });
+      assert.equal(result.gui_comparison.status, 'compared');
+      assert.deepEqual(JSON.parse(JSON.stringify(result.gui_comparison.controller_probe)), probe);
+      assert.equal(result.gui_comparison.controller_probe.parameters.learnInputPitch.value, value);
+      assert.equal(result.gui_comparison.controller_probe.parameters.learnInputPitch.min, -1);
+      assert.equal(result.gui_comparison.controller_probe.parameters.learnInputPitch.max, 127);
+      assert.equal(result.gui_comparison.controller_probe.mutation_capability, false);
+      assert.equal(h.calls.length, 1);
+      assert.equal(h.calls[0].operation, 'parameter_details');
+    }
+  }
+});
+
+test('fixed GUI controller unresolved facts keep assessed routes but expose no model pair', () => {
+  const variants = [
+    probe => { probe.reason = 'observer_absent'; probe.interfaces = { controller: { status: 'not_attempted' }, provider: { status: 'not_attempted' } };
+      probe.anchors = { controller: 'not_attempted', provider: 'not_attempted' }; probe.observer_metadata = { status: 'absent' }; },
+    probe => { probe.reason = 'interface_query_failed'; probe.interfaces.controller = { status: 'failed', query_status: 0 };
+      probe.anchors.controller = 'not_attempted'; },
+    probe => { probe.reason = 'interface_query_failed'; probe.interfaces.provider = { status: 'failed', query_status: -2147467262 };
+      probe.anchors.provider = 'not_attempted'; },
+    probe => { probe.reason = 'no_anchored_controller'; probe.anchors.controller = 'identity_mismatch'; },
+    probe => { probe.reason = 'ambiguous_controller_routes'; probe.interfaces.provider.status = 'present'; probe.anchors.provider = 'same_parameter'; },
+    probe => { probe.reason = 'parameter_missing'; },
+  ];
+  for (const variant of variants) {
+    const probe = controllerProbe();
+    probe.status = 'unresolved';
+    delete probe.binding;
+    delete probe.parameters;
+    variant(probe);
+    const result = harness(() => success(withProbe(probe))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'compared');
+    assert.deepEqual(JSON.parse(JSON.stringify(result.gui_comparison.controller_probe)), probe);
+    assert.equal('parameters' in result.gui_comparison.controller_probe, false);
+    assert.equal('binding' in result.gui_comparison.controller_probe, false);
+  }
+});
+
+test('unresolved fixed GUI reasons must agree with the completed interface and anchor facts', () => {
+  const mutations = [
+    p => { p.reason = 'observer_absent'; },
+    p => { p.reason = 'interface_query_failed'; },
+    p => { p.reason = 'no_anchored_controller'; },
+    p => { p.reason = 'ambiguous_controller_routes'; },
+    p => { p.reason = 'parameter_missing'; p.anchors.controller = 'parameter_absent'; },
+    p => { p.reason = 'stale_association'; },
+    p => { p.reason = 'interface_query_failed'; p.interfaces.controller = { status: 'failed', query_status: 0 };
+      p.anchors.controller = 'not_attempted'; p.interfaces.provider = { status: 'not_attempted' }; p.anchors.provider = 'not_attempted'; },
+    p => { p.reason = 'no_anchored_controller'; p.interfaces.controller = { status: 'failed', query_status: 0 }; p.anchors.controller = 'not_attempted'; },
+  ];
+  for (const mutate of mutations) {
+    const probe = controllerProbe();
+    probe.status = 'unresolved';
+    delete probe.binding;
+    delete probe.parameters;
+    mutate(probe);
+    const result = harness(() => success(withProbe(probe))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+});
+
+test('fixed GUI observer reflection retains honest bounded partial and unavailable facts', () => {
+  for (const change of [
+    report => { report.nodes[0].reflection = { available: false, types: [], issues: ['no_object_interface'] }; report.complete = false; },
+    report => { report.nodes[0].identity = { id: 'root', object_uid: null, class_uid: instance.class_uid }; report.nodes[0].child_count = 2;
+      report.diagnostics = [{ kind: 'child_limit', node: 0 }, { kind: 'depth_limit', node: 0 }, { kind: 'ancestor_limit' }]; report.complete = false; },
+    report => { report.nodes[0].reflection.issues = ['method_limit']; report.complete = false; },
+  ]) {
+    const probe = controllerProbe();
+    change(probe.observer_metadata.report);
+    const result = harness(() => success(withProbe(probe))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'compared');
+    assert.deepEqual(JSON.parse(JSON.stringify(result.gui_comparison.controller_probe.observer_metadata)), probe.observer_metadata);
+  }
+});
+
+test('malformed fixed GUI metadata and contradictory route claims erase the entire comparison', () => {
+  const mutations = [
+    p => { p.scope = 'arbitrary_controller'; }, p => { p.mutation_capability = true; }, p => { p.value_semantics = 'verified'; },
+    p => { p.pointer = 1; }, p => { p.token = 'authority'; }, p => { p.binding.pointer = 1; }, p => { p.binding.autofill_same_gui = false; },
+    p => { p.binding.route = 'first'; }, p => { p.binding.route = 'both'; }, p => { p.binding.controller_same_observer = null; },
+    p => { p.interfaces.controller = { status: 'failed', query_status: 1.5 }; },
+    p => { p.interfaces.controller = { status: 'present', query_status: 0 }; },
+    p => { p.interfaces.controller = { status: 'failed', query_status: 0, output: 1 }; },
+    p => { p.interfaces.provider.status = 'not_attempted'; p.anchors.provider = 'not_attempted'; },
+    p => { p.interfaces.provider.status = 'failed'; p.interfaces.provider.query_status = -1; p.anchors.provider = 'not_attempted'; },
+    p => { p.anchors.controller = 'identity_mismatch'; }, p => { p.anchors.provider = 'same_parameter'; },
+    p => { p.parameters.learnInputPitch.name = 'chorder.corePitch'; }, p => { p.parameters.learnInputPitch.title = 'Pitch'; },
+    p => { p.parameters.learnInputPitch.value = 0; }, p => { p.parameters.learnInputPitch.min = 0; },
+    p => { p.parameters.learnInputPitch.native_value.variant_tag = 2; }, p => { p.parameters.learnMode.native_normalized.bits_hex = '3F800000'; },
+    p => { delete p.parameters.learnMode; }, p => { p.parameters.learnChord = guiDescription(); },
+    p => { p.observer_metadata.status = 'absent'; delete p.observer_metadata.report; },
+    p => { p.observer_metadata.report.limits.nodes = 2; }, p => { p.observer_metadata.report.mutation_capability = true; },
+    p => { p.observer_metadata.report.pointer = 1; }, p => { p.observer_metadata.report.nodes[0].identity = { id: 'a', object_uid: null, class_uid: null }; },
+    p => { p.observer_metadata.report.nodes[0].reflection.types[0].methods[0].address = 1; },
+    p => { p.observer_metadata.report.nodes[0].reflection.types[0].properties[0].data_type = '1'; },
+    p => { p.observer_metadata.report.nodes[0].reflection.types[0].name = 'x'.repeat(513); },
+    p => { p.observer_metadata.report.nodes[0].reflection.available = false; },
+    p => { p.observer_metadata.report.nodes[0].reflection.issues = ['not_supported']; },
+    p => { p.observer_metadata.report.nodes[0].reflection.types[0].methods = Array(257).fill({ name: 'a', arguments: null, return_type: null }); },
+    p => { p.observer_metadata.report.diagnostics = [{ kind: 'depth_limit', node: 1 }]; p.observer_metadata.report.complete = false; },
+    p => { p.observer_metadata.report.complete = false; },
+    p => { p.status = 'unresolved'; p.reason = 'parameter_missing'; },
+  ];
+  for (const mutate of mutations) {
+    const probe = controllerProbe();
+    mutate(probe);
+    const result = harness(() => success(withProbe(probe))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+    assert.equal('gui_parameter' in result.gui_comparison, false);
+    assert.equal('topParameterSame' in result.gui_comparison, false);
+  }
+});
+
+test('fixed GUI controller observations disappear on soft native errors or either publication boundary', () => {
+  for (const change of [
+    result => { result.error = 'native comparison failed'; }, result => { result.errors = ['late read failure']; },
+    result => { result.native_error = { code: 'stale' }; }, result => { result.ok = false; result.outcome = 'not_applied'; },
+    result => { result.instance.object_uid = '87654321-4321-4321-4321-CBA987654321'; },
+  ]) {
+    const result = harness(() => { const value = { ...success(withProbe()), instance: { ...instance } }; change(value); return value; })
+      .component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+  const changed = harness((request, context) => { context.document = 'gui:2'; return success(withProbe()); })
+    .component.pluginParameterDetails({ ...args, include_owner: true });
+  assert.equal('controller_probe' in changed.gui_comparison, false);
+  const host = bridgeHarness();
+  host.bridge.component = { pluginParameterDetails() {
+    host.manager.activeDocument = { title: 'Different' };
+    return success(withProbe());
+  } };
+  const response = host.request({ op: 'pluginParameterDetails', args: { ...args, include_owner: true } });
+  assert.equal(response.result.gui_comparison.status, 'unresolved');
+  assert.equal('controller_probe' in response.result.gui_comparison, false);
 });
