@@ -36,11 +36,12 @@ const CONTROLLER_PROVIDER: Uid = Uid {
     c: 0x42e1,
     d: [0x9d, 0xa5, 0x72, 0xde, 0x99, 0x2b, 0xf5, 0x16],
 };
-const INTERFACES: [(&str, &Uid); 5] = [
+const INTERFACES: [(&str, &Uid); 6] = [
     ("storable", &STORABLE),
     ("preset_mediator", &PRESET_MEDIATOR),
     ("preset_metadata", &PRESET_METADATA),
     ("data_target", &DATA_TARGET),
+    ("controller", &CONTROLLER),
     ("controller_provider", &CONTROLLER_PROVIDER),
 ];
 
@@ -120,6 +121,7 @@ mod tests {
         table: *const *const c_void,
         refs: AtomicU32,
         queries: std::cell::RefCell<Vec<Uid>>,
+        controller: bool,
     }
     unsafe extern "C" fn retain(p: *mut c_void) -> u32 {
         unsafe { &*p.cast::<Mock>() }
@@ -137,7 +139,10 @@ mod tests {
         let mock = unsafe { &*p.cast::<Mock>() };
         mock.queries.borrow_mut().push(unsafe { *iid });
         unsafe { *out = ptr::null_mut() };
-        if unsafe { *iid } != STORABLE && unsafe { *iid } != PRESET_METADATA {
+        if unsafe { *iid } != STORABLE
+            && unsafe { *iid } != PRESET_METADATA
+            && !(unsafe { *iid } == CONTROLLER && mock.controller)
+        {
             return NO_INTERFACE;
         }
         unsafe {
@@ -153,23 +158,37 @@ mod tests {
             retain as *const c_void,
             release as *const c_void,
         ];
-        let mut mock = Mock {
-            table: table.as_ptr(),
-            refs: AtomicU32::new(1),
-            queries: std::cell::RefCell::new(Vec::new()),
-        };
-        let value = object(ptr::addr_of_mut!(mock).cast());
-        assert_eq!(value["storable"], true);
-        assert_eq!(value["preset_metadata"], true);
-        assert_eq!(value["preset_mediator"], false);
-        assert_eq!(value["data_target"], false);
-        assert_eq!(value["controller_provider"], false);
-        assert!(value["identity"].is_null());
-        assert!(value["identity_error"].is_string());
-        assert_eq!(mock.refs.load(Ordering::Relaxed), 1);
-        assert!(mock.queries.borrow().iter().all(|iid| {
-            *iid == OBJECT || *iid == NODE || INTERFACES.iter().any(|(_, known)| **known == *iid)
-        }));
-        assert_eq!(mock.queries.borrow().len(), 7);
+        for controller in [false, true] {
+            let mut mock = Mock {
+                table: table.as_ptr(),
+                refs: AtomicU32::new(1),
+                queries: std::cell::RefCell::new(Vec::new()),
+                controller,
+            };
+            let value = object(ptr::addr_of_mut!(mock).cast());
+            assert_eq!(value["storable"], true);
+            assert_eq!(value["preset_metadata"], true);
+            assert_eq!(value["preset_mediator"], false);
+            assert_eq!(value["data_target"], false);
+            assert_eq!(value["controller"], controller);
+            assert_eq!(value["controller_provider"], false);
+            assert!(value["identity"].is_null());
+            assert!(value["identity_error"].is_string());
+            assert_eq!(mock.refs.load(Ordering::Relaxed), 1);
+            assert!(mock.queries.borrow().iter().all(|iid| {
+                *iid == OBJECT
+                    || *iid == NODE
+                    || INTERFACES.iter().any(|(_, known)| **known == *iid)
+            }));
+            assert_eq!(mock.queries.borrow().len(), 8);
+            assert_eq!(
+                mock.queries
+                    .borrow()
+                    .iter()
+                    .filter(|iid| **iid == CONTROLLER)
+                    .count(),
+                1
+            );
+        }
     }
 }
