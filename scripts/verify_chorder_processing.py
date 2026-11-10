@@ -103,8 +103,11 @@ class ProcessingRunner(LearningRunner):
                 and tracks[0].get("events") == [], "The complete track inventory must be one empty Music track")
         metronome = self.operation("metronome")
         require(isinstance(metronome, dict)
-                and all(metronome.get(name) is False for name in ("click", "precount", "preroll")),
-                "Metronome click, precount and preroll must already be off")
+                and all(metronome.get(name) is False for name in ("click", "precount"))
+                and "preroll" in metronome and (metronome["preroll"] is None or metronome["preroll"] is False)
+                and all(metronome.get(name) is None for name in ("error", "native_error"))
+                and ("errors" not in metronome or metronome["errors"] == []),
+                "Metronome click and precount must be off; its preroll must be explicitly unsupported or off")
         if self.provider is None:
             return song
         result = self.call("plugin_inspect", {**target, "source": "dsp", "include_context": True,

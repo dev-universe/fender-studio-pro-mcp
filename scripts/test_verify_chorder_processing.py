@@ -185,6 +185,42 @@ class ProcessingTests(unittest.TestCase):
         entries = [json.loads(line) for line in runner.journal.ledger_path.read_text().splitlines()]
         self.assertEqual(sum(row["event"] == "run_completed" for row in entries), 1)
 
+    def test_explicit_unsupported_metronome_preroll_uses_stopped_transport_guard(self):
+        client = ProcessingClient()
+        client.metronome_fault = lambda m: m.update(preroll=None)
+        client, runner, result = self.run_case(client)
+        self.assertTrue(result["model_status_witness"])
+        self.assertEqual(client.mutation_log, [MODE, "play", "stop", SELECTOR, "play", "stop", BIT, "play", "stop"])
+        self.assertEqual(result["state_lifecycle_calls"], 0)
+        self.assertFalse(result["model_roundtrip_verified"])
+
+    def test_metronome_and_transport_preroll_evidence_must_be_explicit(self):
+        faults = (("missing_metronome", lambda m: m.pop("preroll"), None),
+                  ("enabled_metronome", lambda m: m.update(preroll=True), None),
+                  ("integer_metronome", lambda m: m.update(preroll=0), None),
+                  ("float_metronome", lambda m: m.update(preroll=0.0), None),
+                  ("string_metronome", lambda m: m.update(preroll="false"), None),
+                  ("error_metronome", lambda m: m.update(error={"code": "failed"}), None),
+                  ("native_error_metronome", lambda m: m.update(native_error={"code": "failed"}), None),
+                  ("errors_metronome", lambda m: m.update(errors=[{"code": "failed"}]), None),
+                  ("missing_transport", None, lambda s: s["transport"].pop("preroll")),
+                  ("enabled_transport", None, lambda s: s["transport"].update(preroll=True)),
+                  ("null_transport", None, lambda s: s["transport"].update(preroll=None)))
+        for name, metronome_fault, song_fault in faults:
+            with self.subTest(name=name):
+                client = ProcessingClient()
+                def alter_metronome(m, fault=metronome_fault):
+                    m["preroll"] = None
+                    if fault:
+                        fault(m)
+                client.metronome_fault = alter_metronome
+                client.song_fault = song_fault
+                with self.assertRaises(AcceptanceFailure):
+                    self.run_case(client)
+                self.assertEqual(client.mutation_log, [])
+                self.assertEqual(client.writes, [])
+                self.assertEqual(client.transport_log, [])
+
     def test_observed_auto_selection_skips_selector_setter_and_its_window(self):
         client = ProcessingClient()
         client.mode_autoselect_on_stop = True
