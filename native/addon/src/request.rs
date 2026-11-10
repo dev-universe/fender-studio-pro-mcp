@@ -3040,7 +3040,6 @@ mod guard_tests {
         super::super::tests::ASSIGN_REENTER_STOP.store(fixture.service, Ordering::Release);
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -3083,7 +3082,6 @@ mod guard_tests {
         };
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -3161,7 +3159,6 @@ mod guard_tests {
         };
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -3245,7 +3242,6 @@ mod guard_tests {
         };
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -3307,7 +3303,6 @@ mod guard_tests {
         super::super::tests::ASSIGN_REENTER_STOP.store(fixture.service, Ordering::Release);
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(

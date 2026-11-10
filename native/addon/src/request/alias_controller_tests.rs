@@ -382,7 +382,6 @@ fn inventory_and_declared_controller_survive_output_until_receipt_release() {
     let reply = reply(context, inventory);
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(&mut out, reply, api().unwrap(), service));

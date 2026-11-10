@@ -262,7 +262,6 @@ fn nonnode_controller_metadata_is_bounded_readonly_and_retained_through_publicat
     let reply = reply(context, lease);
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(&mut out, reply, api().unwrap(), service));
@@ -347,7 +346,6 @@ fn parameter_release_reentry_after_receipt_is_checked_by_the_next_context() {
     let service = context.service;
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(
@@ -391,7 +389,6 @@ fn output_reentry_and_unavailable_type_info_never_publish_controller_success() {
     super::super::super::tests::ASSIGN_REENTER_STOP.store(service, Ordering::Release);
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(

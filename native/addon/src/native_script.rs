@@ -413,7 +413,6 @@ pub(super) fn pin_own_image(module: *mut c_void) -> bool {
 #[repr(C)]
 struct VariantOut {
     kind: i16,
-    padding: [u8; 6],
     payload: u64,
 }
 #[repr(C)]
@@ -613,7 +612,6 @@ unsafe fn clear_output(out: *mut VariantOut) {
             out,
             VariantOut {
                 kind: 0,
-                padding: [0; 6],
                 payload: 0,
             },
         )
@@ -629,7 +627,6 @@ unsafe fn install_string(out: *mut VariantOut, string: Owned) {
     unsafe {
         *out = VariantOut {
             kind: 3 | 16,
-            padding: [0; 6],
             payload: string.0 as u64,
         };
     }
@@ -1056,6 +1053,7 @@ const _: () = {
     assert!(
         size_of::<VariantOut>() == 16
             && align_of::<VariantOut>() == 8
+            && offset_of!(VariantOut, kind) == 0
             && offset_of!(VariantOut, payload) == 8
     );
     assert!(

@@ -482,7 +482,6 @@ fn action_parameter_and_owner_survive_output_until_receipt_release() {
     let reply = reply(context, provider, value, lease.unwrap());
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(&mut out, reply, api().unwrap(), service));
@@ -527,7 +526,6 @@ fn output_reentry_turns_an_action_into_unknown_without_another_pulse() {
     super::super::super::tests::ASSIGN_REENTER_STOP.store(service, Ordering::Release);
     let mut out = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(&mut out, reply, api().unwrap(), service));

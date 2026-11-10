@@ -701,7 +701,6 @@ fn retained_catalog_survives_publication_and_receipt_release() {
     let catalog = f.catalog(Kind::Effects, 0, 2, &mut || Ok(())).unwrap();
     let mut output = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(
@@ -750,7 +749,6 @@ fn output_allocation_reentry_cannot_publish_a_catalog_after_context_loss() {
     super::super::super::super::tests::ASSIGN_REENTER_STOP.store(service, Ordering::Release);
     let mut output = VariantOut {
         kind: 0,
-        padding: [0; 6],
         payload: 0,
     };
     assert!(publish_reply(

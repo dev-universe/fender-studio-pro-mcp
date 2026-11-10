@@ -164,7 +164,6 @@ fn stop_during_register(object: *mut c_void) {
     let calls = unsafe { (*owner).calls.load(Ordering::Acquire) };
     let mut out = VariantOut {
         kind: 1,
-        padding: [0; 6],
         payload: 777,
     };
     let mut msg = message(c"capabilities", 0);
@@ -341,6 +340,61 @@ pub(super) fn clear_output(out: &mut VariantOut) {
     out.payload = 0;
 }
 
+#[test]
+fn foreign_empty_output_initializes_only_the_cpp_fields() {
+    let mut storage = std::mem::MaybeUninit::<VariantOut>::uninit();
+    let output = storage.as_mut_ptr();
+    unsafe {
+        ptr::addr_of_mut!((*output).kind).write(0);
+        ptr::addr_of_mut!((*output).payload).write(0);
+        super::clear_output(output);
+    }
+    let output = unsafe { storage.assume_init() };
+    assert_eq!((output.kind, output.payload), (0, 0));
+}
+
+#[test]
+fn foreign_shared_output_preserves_string_transfer_and_releases_once() {
+    let _serial = TEST_LOCK.lock().unwrap();
+    install_mock_api();
+    assert!(!FAIL_ASSIGN.load(Ordering::Acquire));
+    assert!(ASSIGN_REENTER_STOP.load(Ordering::Acquire).is_null());
+    let strings = LIVE_STRINGS.load(Ordering::Acquire);
+    let old = prepare_json(r#"{"old":true}"#, api().unwrap()).unwrap();
+    let external = hold(old.0).unwrap();
+    let pointer = old.0;
+    assert_eq!(
+        unsafe { &*pointer.cast::<MockString>() }
+            .refs
+            .load(Ordering::Acquire),
+        2
+    );
+    std::mem::forget(old);
+    let mut storage = std::mem::MaybeUninit::<VariantOut>::uninit();
+    let output = storage.as_mut_ptr();
+    unsafe {
+        ptr::addr_of_mut!((*output).kind).write(3 | 16);
+        ptr::addr_of_mut!((*output).payload).write(pointer as u64);
+    }
+    assert!(return_json(output, "한글 🎵", api().unwrap()));
+    let mut output = unsafe { storage.assume_init() };
+    assert_eq!(output_text(&output), "한글 🎵");
+    assert_eq!(
+        unsafe { &*external.0.cast::<MockString>() }
+            .refs
+            .load(Ordering::Acquire),
+        1
+    );
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings + 2);
+    drop(external);
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings + 1);
+    unsafe { super::clear_output(&mut output) };
+    assert_eq!((output.kind, output.payload), (0, 0));
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings);
+    unsafe { super::clear_output(&mut output) };
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings);
+}
+
 #[repr(C)]
 struct MockMessageVtable {
     unused: [usize; 3],
@@ -387,17 +441,14 @@ fn message(name: &std::ffi::CStr, count: i32) -> MockMessage {
         count,
         arg: VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         },
         arg2: VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         },
         arg3: VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         },
     }
@@ -499,7 +550,6 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
         assert_eq!(unsafe { (*service).refs.load(Ordering::Acquire) }, expected);
         let mut out = VariantOut {
             kind: 1,
-            padding: [0; 6],
             payload: 7,
         };
         let mut msg = message(c"capabilities", 0);
@@ -769,7 +819,6 @@ fn stop_during_registration_cleans_late_entry_without_reactivation() {
                 assert_eq!(REGISTER_CALLS.load(Ordering::Acquire), registrations);
                 let mut out = VariantOut {
                     kind: 1,
-                    padding: [0; 6],
                     payload: 777,
                 };
                 let mut msg = message(c"capabilities", 0);

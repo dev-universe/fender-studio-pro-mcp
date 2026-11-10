@@ -1380,7 +1380,6 @@ mod tests {
         let service = fixture.service();
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -1430,7 +1429,6 @@ mod tests {
         reply.pending = Some(token);
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(!publish_reply(
@@ -1455,7 +1453,6 @@ mod tests {
         super::super::super::tests::ASSIGN_REENTER_STOP.store(service, Ordering::Release);
         let mut out = VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         };
         assert!(publish_reply(
@@ -1495,7 +1492,6 @@ mod tests {
         OUTPUT_FIXTURE.store(ptr::from_ref(&fixture).cast_mut(), Ordering::Release);
         let mut out = VariantOut {
             kind: 4 | 16,
-            padding: [0; 6],
             payload: ptr::addr_of_mut!(object) as u64,
         };
         assert!(publish_reply(
