@@ -11,9 +11,10 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Impact | 4,227 direct fields, 13 current-focus bindings and two MIDI current-value roles | 20 Focus roles and separate event lifecycles |
+| Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
+| Vocal Tune scale state | Root and all 12 note masks changed, read back and capsule-restored | Host bypass callback, persistence and audio |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
 
 Each completed live unit is counted only after its final full-provider
@@ -286,15 +287,17 @@ contains 3,714 names and is complete. All 512 ordinary pad fields and the bypass
 including both sample offsets, pan and level. The latest 385-field unit completed
 in 13 minutes 50 seconds. Every case required two fresh native full
 writable-projection matches before advancing and a final public-page checkpoint.
-The 13 separate current-focus results cover cutoff, sample start/end offsets
-and all five pitch- and filter-envelope controls, outside this direct-field count. Each observed pad0
-binding passed two complete changed reads and two complete restored reads.
-Other pad selections and 20 remaining Focus roles remain unverified.
+All 33 separate current-focus results are now complete, outside this direct-field
+count. Each observed pad0 binding passed two complete changed reads and two
+complete restored reads. The accepted names across 4,227 direct fields, 33 Focus
+aliases and two MIDI current-value roles are disjoint and exactly match the
+current 4,262-name provider. Other pad selections, event lifecycles, persistence
+and audible behavior remain unverified.
 
-The next Focus role, amplifier-envelope Attack, stopped during its final full
+An earlier attempt at amplifier-envelope Attack stopped during its final full
 restoration read when the app exited. Both the change and own-original setter
 had returned verified, but the final provider checkpoint did not complete.
-This unfinished role contributes zero; the accepted Focus count remains 13.
+This failed attempt contributes zero; the accepted count at that point was 13.
 No setter, automatic restore or retry followed the failure.
 
 Its crash report and the earlier SampleOne report have the same first 24
@@ -307,8 +310,23 @@ type-info getter and class registration identify the `SongDocument` destructor
 on this path. Its explicit forced GC reenters the collector while its JavaScript
 proxy is being finalized. This establishes the observed failure path; the exact
 prior proxy reference and all possible triggers have not been recovered.
-Verified prevention remains under investigation. The Variant representation
-correction was already installed in this recurrence and is not a crash fix.
+The Variant representation correction was already installed in this recurrence
+and is not a crash fix.
+
+The bridge now obtains document context through a native service when that
+service exposes the versioned API. This avoids creating JavaScript document
+proxies for context, song metadata and the EditTask lease. Context tokens bind
+one service generation to a retained native document identity; a failed native
+context query revokes dispatch instead of falling back to a JavaScript proxy.
+The legacy route remains for hosts without the native method.
+
+With the new native build installed, two owned-document switches, a read-only
+EditTask probe and all 20 remaining Focus cases passed. The Focus cases made
+11,360 requests and 40 parameter setter calls without a recurrence. Every case
+completed its full-provider restoration checkpoint, including a new experiment
+for amplifier-envelope Attack. The failed earlier attempt remains excluded.
+These finite results support the new context route; they do not guarantee that
+every host crash trigger has been removed.
 
 A dedicated two-name protocol then verified the current values of pitch bend
 and sustain. It used exactly one change and one own-original restoration per
@@ -384,6 +402,17 @@ requiring them to stop changing. The original failed unit still counts zero.
 Separate final-checkpoint units also passed Mustang (3), Pedalboard (2), Rumble
 (3) and Vocal Tune (4), completing this finite 51-field partition. This does not
 complete their other model, coupled or dedicated roles.
+
+A subsequent dedicated Vocal Tune protocol completed the root and all twelve
+note-mask roles. Each case verified two complete changed 26-record projections
+before one planned capsule load, then required two complete exact original
+projections at every restoration gate. All seven read-only values remained in
+the strict comparison. Root choice one was separately formatted as C# without
+selecting it before the root case. Across the 13 cases, 1,484 requests included
+117 mutation-labelled calls, each preceded by a fresh numeric-zero Main and
+explicit null-output observation. Released-token refusal and a final independent
+full original pair passed. This does not verify the separate host bypass
+callback, saved-state persistence or audible correction.
 
 The opt-in Music fixture context route also passed actual read-only preflight,
 four mutation pilots and a subsequent 124-case Impact batch. Each check brackets
@@ -628,6 +657,16 @@ checked GUI-current-value fact; a single call does not verify saving, DSP
 propagation or audible behavior. The legacy direct raw, normalized and
 `native_user` persistence failures remain unchanged evidence. Other Chorder
 model and learning roles are not covered by the Auto Fill result.
+
+A later read-only controller probe resolved the GUI declared observer as a
+direct `IController`, anchored by the same canonical GUI Auto Fill parameter.
+It observed local `learnMode` as an Integer Toggle with range 0..1 and
+`learnInputPitch` as an Integer with range -1..127 and default/current value -1.
+The latter uses -1 for no selected input and 0..127 for MIDI pitches. Two
+independent probes agreed, and two complete 908-record original reads before
+and after the probes were unchanged. The editor's observed root child count
+was 128. This establishes descriptors and binding only; no learning setter or
+persistence claim is included.
 
 Source verification passed 224 add-on tests, 95 parameter-library tests and four
 documentation tests, 81 server tests and 244 JavaScript tests. Independent
