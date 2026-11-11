@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+  "native_unit": 31,
+  "status": "continued_after_user_resume",
+  "pitch_roundtrip": {
+    "gui_values": [
+      -1,
+      0,
+      -1
+    ],
+    "plugin_setters": 2,
+    "full_provider_records": 908,
+    "full_before_reads": 2,
+    "full_changed_reads": 2,
+    "full_restored_reads": 2,
+    "only_changed_dsp_name": "chorder.learnInputPitch",
+    "all_other_records_exactly_unchanged": true,
+    "save_or_audio_verified": false
+  },
+  "mode_measurement": {
+    "mode_off_views": 125,
+    "mode_on_views": 131,
+    "previous_setter_limit": 128,
+    "mcp_mode_setters": 0,
+    "accepted_mode_roundtrips": 0,
+    "unplanned_learning_peers": 5,
+    "follow_on_parameter_writes": 0,
+    "owned_saved_file_unchanged": true
+  },
+  "raw_runtime_data_included": false,
+  "references_sha256": {
+    ".local/next-state/unit48-resume-preflight.json": "d94f9009fb5bc63a38933aff0c7251ca18b1be1ae7206ef20ccce0191d708efb",
+    ".local/next-state/unit48a-pitch-roundtrip-result.json": "97d30dba070d1bdd4d2d37aab2315437c4b64c2d1ecb5b74b510631cb4c139d2",
+    ".local/next-state/unit48b-mode-measurement-stop-result.json": "5bd389694fe67c39b3a1a7c2dda3740e51ec8fec9004c28c2ce5da8ef64f28e6",
+    ".local/next-state/unit48b-discard-recovery-proof.json": "cb92c913883f13b2531184047c18366255561e19b6a2c5873198bc15d85b9769",
+    ".local/next-state/unit49-learning-bound-fix/readiness.json": "c0184823c18341ea25e2bcdd8a01ff13e16c41c4c4f10fc44970292d2b9b4833",
+    ".local/next-state/unit49-learning-bound-review/evidence.json": "b2dab51523c99532b6559dc2a1d766074a86454360d51522ea9d1eb9b5ef0a84"
+  },
+  "source_learning_setter_view_limit": 144,
+  "installed_native31_learning_setter_view_limit": 128
+}

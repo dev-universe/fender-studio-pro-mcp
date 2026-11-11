@@ -689,6 +689,28 @@ transport action was sent. The user requested a pause; the owned diagnostic
 was closed without saving, its saved file was unchanged, and the app and owner
 were stopped. Mode-on discovery and both setter roundtrips remain unverified.
 
+The user resumed work on 2026-11-12. One Mode-off GUI input-pitch roundtrip
+from null to MIDI zero and back to null passed with exactly two setters.
+Two complete 908-record reads at each original/changed/restored boundary
+showed that only the DSP input selector changed, observed as selector one for
+GUI MIDI zero. Final GUI descriptors and the entire provider matched the
+original. This is one current-value case, not every pitch, persistence or audio.
+
+A separate normal-UI Mode-on measurement completed a 131-view walk twice,
+compared with 125 views when off. The existing 128-view learning setter was
+not called. Besides Mode and the input selector, five learning-buffer flags
+changed, exceeding that experiment's two-name plan. No follow-on setter or
+state load was sent; the owned unsaved diagnostic was discarded and its saved
+file remained unchanged. This unit contributes no Mode roundtrip.
+
+The stored synthetic chord's input MIDI60 and output pitches60/63/67/70/74
+match the observed selector61 and learning flags61/64/68/71/75. A new protocol
+binds its coupled changes to that stored content. The source now gives only
+learning edits a fixed 144-view bound. Legacy Auto Fill remains128, getter256
+and depth32 remain unchanged. Add-on241 tests and a captured19-case native
+integration run passed, including131/144 success and145 refusal before begin.
+Actual Mode editing on the corrected build remains pending.
+
 Source verification passed 224 add-on tests, 95 parameter-library tests and four
 documentation tests, 81 server tests and 244 JavaScript tests. Independent
 native review found and reproduced a late value-witness ordering error before

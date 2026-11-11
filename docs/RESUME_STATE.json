@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "updated_date": "2026-11-10",
-  "status": "paused_by_user",
+  "updated_date": "2026-11-12",
+  "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
   "product_source_commit": "486d6115dcecbcbb96cbbbfd083e014af8eddbb0",
@@ -17,8 +17,8 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native31 Chorder Mode-off learning getter plus two exact original 908-record reads",
-  "last_completed_unit_learning_setters": 0,
+  "last_completed_unit": "Native31 Mode-off Chorder GUI input pitch null->MIDI0->null with full908 changed/restored pairs",
+  "last_completed_unit_learning_setters": 2,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -29,16 +29,18 @@
     "additional_ordinary_selected_fields": 51,
     "vocal_tune_additional_root_note_mask_roles": 13,
     "preset_catalog_classes": 59,
-    "new_preset_classes_completed": ["Mixtool", "Binaural Pan"],
+    "new_preset_classes_completed": [
+      "Mixtool",
+      "Binaural Pan"
+    ],
     "new_preset_recall_restore_cases": 4,
-    "remaining_preset_classes": 44
+    "remaining_preset_classes": 44,
+    "chorder_gui_input_pitch_current_value_cases": 1
   },
   "next_units_in_order": [
-    "Revalidate source/install hashes; start exactly one owner before opening the owned Chorder diagnostic",
-    "Refresh context, instance, stopped/empty fixture, Main zero/null output and full original 908 proof",
-    "Chorder Mode-off input pitch null-to-MIDI0-to-null pilot with full changed/restored projections",
-    "Measure Mode-on full GUI discovery and fresh reverse binding before Mode MCP pilot",
-    "Chorder transient reset/chord-state preservation and remaining model roles",
+    "Validate and install fixed learning-only144-view bound from actual131-view Mode-on measurement",
+    "Execute fresh stored-chord-bound Mode protocol with complete changed/restored908 checks",
+    "Characterize transient reset and retained chord state separately from persistence",
     "Resume 44 finite preset class controls using fresh issued catalogs",
     "Vocal Tune direct bypass role plan and separate current-value pilot",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles",
@@ -48,5 +50,7 @@
   ],
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
-  "global_crash_fix_verified": false
+  "global_crash_fix_verified": false,
+  "current_progress_document": "docs/PROGRESS_2026-11-12.md",
+  "last_measurement": "Mode-on131views; five unplanned learning peers; zero Mode roundtrips accepted; owned unsaved diagnostic discarded"
 }

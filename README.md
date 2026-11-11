@@ -1,8 +1,8 @@
 # Fender Studio Pro MCP
 
-The current autonomous run is paused at the user's request. See the
-[resume guide](docs/RESUME.md) and [detailed handoff](docs/LOOP_HANDOFF_2026-11-10.md)
-for completed work, remaining tasks and the exact restart sequence.
+The run resumed at the user's request on 2026-11-12. See the
+[current progress](docs/PROGRESS_2026-11-12.md), [resume guide](docs/RESUME.md)
+and [detailed handoff](docs/LOOP_HANDOFF_2026-11-10.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
@@ -129,12 +129,14 @@ require `track`, Note FX `slot`, `expected_instance` and `expected_document`.
 The setter's closed `change` is either `{"kind":"learn_mode","enabled":true}`
 or `{"kind":"input_pitch","pitch":0}`. An explicit `pitch:null` clears the
 selection; omitting `pitch` is an error. Pitches are MIDI 0..127. The getter's
-read-only discovery ceiling is 256 views; setter discovery remains limited to
-128 views. Incomplete bindings refuse the request. Successful edits remain
+read-only discovery ceiling is 256 views; learning setter discovery is limited to
+144 views after an actual 131-view Mode-on measurement. The separate Auto Fill
+setter remains limited to 128 views. Incomplete bindings refuse the request. Successful edits remain
 `applied_unverified` with a separate GUI-current-value fact. These transient
 controls do not establish learned chord contents, persistence or audio results.
-The Mode-off getter completed a 125-view actual-host walk and two complete
-908-record original comparisons. Learning setter roundtrips remain pending.
+The Mode-off getter completed a 125-view actual-host walk. One input-pitch
+null-to-MIDI0-to-null setter roundtrip passed complete 908-record changed and
+original comparisons. Mode setter roundtrips remain pending.
 
 `plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
 
