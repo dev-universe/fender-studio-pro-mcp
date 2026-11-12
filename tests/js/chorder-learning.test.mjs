@@ -7,6 +7,7 @@ const instance = { object_uid: '12345678-1234-1234-1234-123456789ABC', class_uid
 const target = { track: 'Scratch', slot: 0, expected_instance: instance.object_uid };
 const mode = enabled => ({ kind: 'learn_mode', enabled });
 const input = pitch => ({ kind: 'input_pitch', pitch });
+const note = (enabled = true, expected_input_pitch = 60, output_pitch = 0) => ({ kind: 'chord_note', expected_input_pitch, output_pitch, enabled });
 function bits(number, width) {
   const view = new DataView(new ArrayBuffer(width / 8));
   if (width === 64) { view.setFloat64(0, number); return view.getBigUint64(0).toString(16).padStart(16, '0').toUpperCase(); }
@@ -17,7 +18,7 @@ function description(name, value, float = false) {
   const typed = number => float ? { variant_tag: 2, data: { kind: 'float', value: number, bits_hex: bits(number, 64) } }
     : { variant_tag: 1, data: { kind: 'integer', value: number } };
   const normalized = Math.fround(pitch ? (value + 1) / 128 : value);
-  return { name, title: name, tag: pitch ? 6 : 5, value, text: String(value), min: pitch ? -1 : 0, max: pitch ? 127 : 1,
+  return { name, title: name, tag: pitch ? 6 : name === 'learnChord' ? 1 : 5, value, text: String(value), min: pitch ? -1 : 0, max: pitch ? 127 : 1,
     default: pitch ? -1 : 0, normalized, enabled: true, readOnly: false, writable: true, native_kind: pitch ? 'Integer' : 'Toggle',
     native_value: typed(value), native_min: typed(pitch ? -1 : 0), native_max: typed(pitch ? 127 : 1), native_default: typed(pitch ? -1 : 0),
     native_normalized: { kind: 'float32', bits_hex: bits(normalized, 32) }, native_support: { raw_number: true, normalized: true, display_text: true },
@@ -30,14 +31,17 @@ function observed(views = 125) {
     parameters: { learnMode: description('learnMode', 0), learnInputPitch: description('learnInputPitch', -1) }, storage_semantics: 'transient_learning_controls' };
 }
 function edited(change = input(0), float = false) {
-  const name = change.kind === 'learn_mode' ? 'learnMode' : 'learnInputPitch';
-  const value = change.kind === 'learn_mode' ? Number(change.enabled) : change.pitch === null ? -1 : change.pitch;
-  const before = change.kind === 'learn_mode' ? 1 - value : value === -1 ? 0 : -1;
+  const member = change.kind === 'chord_note';
+  const name = member ? 'learnChord' : change.kind === 'learn_mode' ? 'learnMode' : 'learnInputPitch';
+  const value = member || change.kind === 'learn_mode' ? Number(change.enabled) : change.pitch === null ? -1 : change.pitch;
+  const before = member || change.kind === 'learn_mode' ? 1 - value : value === -1 ? 0 : -1;
   return { ok: true, outcome: 'applied_unverified', operation: 'edit_chorder_model', instance: { ...instance }, binding_source: 'dsp',
     receiver: 'editor_controller', requested_change: { ...change }, edit_phase: 'closed_checked', gui_parameter: { name,
       before: description(name, before, float), after: description(name, value, float) }, gui_value_verified: true,
     verification_scope: 'gui_receiver_current_value', persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
-    storage_semantics: 'transient_learning_controls' };
+    storage_semantics: member ? 'selected_chord_membership_gui_current_value' : 'transient_learning_controls',
+    ...(member ? { stored_model_verified: false, output_pitch_mapping: 'source_declared_unverified',
+      selection_semantics: 'synchronous_guarded_comparison_not_atomic_snapshot' } : {}) };
 }
 function harness(reply = request => request.operation === 'chorder_learning_get' ? observed() : edited(request.change), capability = 'chorder_learning_controls_v1') {
   const calls = [], targets = [];
@@ -53,7 +57,7 @@ function harness(reply = request => request.operation === 'chorder_learning_get'
   return { component, context, calls, targets, service };
 }
 function noPositive(result) {
-  for (const key of ['parameters', 'binding', 'coverage', 'gui_parameter', 'requested_change', 'storage_semantics']) assert.equal(key in result, false, key);
+  for (const key of ['parameters', 'binding', 'coverage', 'gui_parameter', 'requested_change', 'storage_semantics', 'stored_model_verified', 'output_pitch_mapping', 'selection_semantics']) assert.equal(key in result, false, key);
   assert.notEqual(result.gui_value_verified, true);
 }
 
@@ -186,4 +190,86 @@ test('outer bridge requires explicit context for learning reads and strips all l
     const result = host.writeRequest({ op, args }); assert.equal(calls, 1); assert.equal(result.ok, false); assert.equal(result.code, 'native_context_lost');
     assert.equal(result.result, undefined);
   }
+});
+
+test('chord note delegates one exact closed native request without selecting mode or input', () => {
+  for (const expected of [0, 60, 127]) for (const output of [0, 60, 127]) for (const enabled of [false, true]) {
+    const change = note(enabled, expected, output), h = harness();
+    const result = h.component.chorderLearningSet({ ...target, change });
+    assert.deepEqual(h.calls, [{ operation: 'edit_chorder_model', expected_instance: instance.object_uid, change }]);
+    assert.equal(JSON.stringify(h.targets), JSON.stringify([{ kind: 'note_effect', track: 'Scratch', slot: 0, plugin: 'Chorder' }]));
+    assert.equal(result.native_outcome, 'applied_unverified'); assert.equal(result.edit_phase, 'closed_checked');
+    assert.equal(result.gui_parameter.name, 'learnChord'); assert.equal(result.gui_parameter.after.value, Number(enabled));
+    assert.equal(result.gui_value_verified, true); assert.equal(result.stored_model_verified, false);
+    assert.equal(result.output_pitch_mapping, 'source_declared_unverified');
+    assert.equal(result.selection_semantics, 'synchronous_guarded_comparison_not_atomic_snapshot');
+    for (const flag of ['verified', 'token', 'model', 'mapping_verified']) assert.equal(flag in result, false);
+    for (const flag of ['persistence_verified', 'effects_verified', 'dsp_propagation_verified']) assert.equal(result[flag], false);
+  }
+});
+
+test('chord note rejects missing, nullable, bool pitches, nonbool state and cross-variant keys before resolution', () => {
+  const h = harness(); h.component.pluginOf = () => { throw Error('invalid request resolved a target'); };
+  const bad = [];
+  for (const key of ['expected_input_pitch', 'output_pitch']) for (const value of [null, true, false, '0', -1, 128, 0.5, NaN, Infinity, {}, []]) bad.push({ ...note(), [key]: value });
+  for (const key of ['kind', 'expected_input_pitch', 'output_pitch', 'enabled']) { const change = note(); delete change[key]; bad.push(change); }
+  for (const enabled of [undefined, null, 0, 1, 'true', {}, []]) bad.push({ ...note(), enabled });
+  for (const key of ['pitch', 'param', 'path', 'native_json', 'eval', 'budget', 'source']) bad.push({ ...note(), [key]: 0 });
+  for (const kind of ['learn_mode', 'input_pitch', 'other']) bad.push({ ...note(), kind });
+  for (const change of bad) assert.equal(h.component.chorderLearningSet({ ...target, change }).native_outcome, 'not_applied');
+  assert.equal(h.calls.length, 0);
+});
+
+test('chord note refuses forged model, mapping, snapshot and cross-variant result authority', () => {
+  const mutations = [
+    result => { result.stored_model_verified = true; }, result => { result.output_pitch_mapping = 'verified'; },
+    result => { result.selection_semantics = 'atomic'; }, result => { result.persistence_verified = true; },
+    result => { result.storage_semantics = 'transient_learning_controls'; }, result => { result.edit_phase = 'value_dispatched'; },
+    result => { result.requested_change.expected_input_pitch++; }, result => { result.requested_change.output_pitch++; },
+    result => { result.requested_change.enabled = false; }, result => { result.requested_change.pitch = 60; },
+    result => { result.gui_parameter.after.tag = 5; }, result => { result.gui_parameter.after.default = 1; },
+    result => { result.gui_parameter.after.readOnly = true; }, result => { result.verified = true; },
+    result => { result.instance.class_uid = instance.object_uid; }, result => { result.instance.extra = true; },
+  ];
+  for (const key of ['stored_model_verified', 'output_pitch_mapping', 'selection_semantics']) mutations.push(result => { delete result[key]; });
+  for (const mutate of mutations) {
+    const result = edited(note()); mutate(result); const h = harness(() => result);
+    const refused = h.component.chorderLearningSet({ ...target, change: note() });
+    assert.equal(refused.native_outcome, 'unknown'); noPositive(refused); assert.equal(h.calls.length, 1);
+  }
+  for (const change of [mode(true), input(60)]) {
+    const h = harness(() => edited(note())); const refused = h.component.chorderLearningSet({ ...target, change });
+    assert.equal(refused.native_outcome, 'unknown'); noPositive(refused);
+  }
+  const h = harness(() => edited(mode(true))); noPositive(h.component.chorderLearningSet({ ...target, change: note() }));
+  const float = harness(() => edited(note(), true)); noPositive(float.component.chorderLearningSet({ ...target, change: note() }));
+});
+
+test('chord note preserves no-op and unsuccessful GUI readback without promoting model proof', () => {
+  for (const enabled of [false, true]) {
+    const same = edited(note(enabled)); same.gui_parameter.before = structuredClone(same.gui_parameter.after);
+    const h = harness(() => same); assert.equal(h.component.chorderLearningSet({ ...target, change: note(enabled) }).gui_value_verified, true);
+  }
+  const mismatch = edited(note()); mismatch.gui_parameter.after = description('learnChord', 0); mismatch.gui_value_verified = false;
+  const h = harness(() => mismatch), result = h.component.chorderLearningSet({ ...target, change: note() });
+  assert.equal(result.native_outcome, 'applied_unverified'); assert.equal(result.gui_value_verified, false); assert.equal(result.stored_model_verified, false);
+});
+
+test('old native closed-variant refusal stays not_applied under the existing capability version', () => {
+  const h = harness(() => ({ ok: false, outcome: 'not_applied', error: { code: 'invalid_request', message: 'unknown change variant chord_note' } }));
+  const result = h.component.chorderLearningSet({ ...target, change: note() });
+  assert.equal(result.native_outcome, 'not_applied'); noPositive(result); assert.equal(h.calls.length, 1);
+});
+
+test('chord note requires fresh inner session/document and outer bridge context after dispatch', () => {
+  for (const key of ['document', 'session', 'open']) {
+    const h = harness((request, context) => { context[key] = key === 'open' ? false : 'changed'; return edited(request.change); });
+    const result = h.component.chorderLearningSet({ ...target, change: note() });
+    assert.equal(result.native_outcome, 'unknown'); noPositive(result); assert.equal(h.calls.length, 1);
+  }
+  const host = bridgeHarness(); let calls = 0;
+  host.bridge.component = { chorderLearningSet() { calls++; host.manager.activeDocument = { title: 'Different' }; return edited(note()); } };
+  assert.equal(host.request({ op: 'chorderLearningSet', args: { ...target, change: note() } }).ok, false); assert.equal(calls, 0);
+  const result = host.writeRequest({ op: 'chorderLearningSet', args: { ...target, change: note() } });
+  assert.equal(calls, 1); assert.equal(result.ok, false); assert.equal(result.code, 'native_context_lost'); assert.equal(result.result, undefined);
 });

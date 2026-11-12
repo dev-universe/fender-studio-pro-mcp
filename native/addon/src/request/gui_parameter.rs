@@ -1,8 +1,11 @@
 use super::*;
 use fender_native_editor_api::{DeviceMatch, EditorRootLease, GuiApi};
 use std::cell::RefCell;
+#[path = "gui_parameter/chord_note.rs"]
+mod chord_note;
 #[path = "gui_parameter/controller_probe.rs"]
 mod controller_probe;
+pub(super) use chord_note::NoteBinding;
 
 pub(super) const PARAMETER: &str = "chorder.autofill";
 const GUI_PARAMETER: &str = "autofill";
@@ -636,6 +639,22 @@ impl ModelBinding {
             return Err(reason);
         }
         result
+    }
+    fn capture_note_child<G: FnMut() -> Result<(), String>>(
+        &self,
+        ctx: &Context<'_>,
+        output_pitch: u8,
+        guard: &mut G,
+    ) -> Result<controller_probe::LearningNoteChild, String> {
+        let pins = self
+            .comparison
+            .pins
+            .as_ref()
+            .ok_or("learning editor is unresolved")?;
+        pins.controller_probe
+            .as_ref()
+            .ok_or("learning controller is unresolved")?
+            .capture_note_child(&pins.gui, output_pitch, ctx.api, guard)
     }
     pub(super) fn snapshot(&self) -> Result<(Value, Value), String> {
         let pins = self

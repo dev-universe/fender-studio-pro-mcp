@@ -521,6 +521,30 @@ pub enum ChorderLearningChange {
         #[schemars(required)]
         pitch: ChorderLearningPitch,
     },
+    ChordNote {
+        expected_input_pitch: ChorderMidiPitch,
+        output_pitch: ChorderMidiPitch,
+        enabled: bool,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(transparent)]
+pub struct ChorderMidiPitch(#[schemars(range(min = 0, max = 127))] pub u8);
+
+impl<'de> Deserialize<'de> for ChorderMidiPitch {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Value::deserialize(deserializer)? {
+            Value::Number(number) => number
+                .as_u64()
+                .filter(|value| *value <= 127)
+                .map(|value| Self(value as u8))
+                .ok_or_else(|| serde::de::Error::custom("MIDI pitch must be an integer 0..127")),
+            _ => Err(serde::de::Error::custom(
+                "MIDI pitch must be an integer 0..127",
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, JsonSchema)]
@@ -1279,11 +1303,20 @@ impl Operation {
             }
             Self::ChorderLearningSet(p) => {
                 validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
-                if let ChorderLearningChange::InputPitch { pitch } = &p.change
-                    && pitch.0.is_some_and(|value| value > 127)
-                {
+                let valid_pitch = match &p.change {
+                    ChorderLearningChange::LearnMode { .. } => true,
+                    ChorderLearningChange::InputPitch { pitch } => {
+                        pitch.0.is_none_or(|value| value <= 127)
+                    }
+                    ChorderLearningChange::ChordNote {
+                        expected_input_pitch,
+                        output_pitch,
+                        ..
+                    } => expected_input_pitch.0 <= 127 && output_pitch.0 <= 127,
+                };
+                if !valid_pitch {
                     return Err(invalid(
-                        "Chorder learning pitch must be null or MIDI 0..127",
+                        "Chorder learning pitches must be MIDI 0..127, or null only for input_pitch",
                     ));
                 }
             }
@@ -3286,5 +3319,111 @@ mod tests {
             args.as_object_mut().unwrap().remove(missing);
             assert!(Operation::from_parts("chorder_autofill_set", args).is_err());
         }
+    }
+
+    #[test]
+    fn chord_note_is_closed_bounded_and_serializes_without_selection_or_names() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for expected in [0, 60, 127] {
+            for output in [0, 60, 127] {
+                for enabled in [false, true] {
+                    let mut args = target.clone();
+                    args["change"] = json!({"kind":"chord_note","expected_input_pitch":expected,"output_pitch":output,"enabled":enabled});
+                    let operation =
+                        Operation::from_parts("chorder_learning_set", args.clone()).unwrap();
+                    operation.validate().unwrap();
+                    assert!(!operation.is_read_only());
+                    assert!(operation.requires_explicit_document());
+                    assert_eq!(operation.wire(), ("chorderLearningSet".into(), args));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn chord_note_rejects_unbounded_missing_boolean_and_cross_variant_arguments() {
+        let valid = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "change":{"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true}});
+        for key in ["expected_input_pitch", "output_pitch"] {
+            for value in [
+                Value::Null,
+                json!(false),
+                json!("0"),
+                json!(0.0),
+                json!(-1),
+                json!(128),
+                json!({}),
+                json!([]),
+            ] {
+                let mut bad = valid.clone();
+                bad["change"][key] = value;
+                assert!(
+                    Operation::from_parts("chorder_learning_set", bad).is_err(),
+                    "{key}"
+                );
+            }
+        }
+        for key in ["expected_input_pitch", "output_pitch", "enabled"] {
+            let mut bad = valid.clone();
+            bad["change"].as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for key in [
+            "pitch",
+            "param",
+            "path",
+            "source",
+            "native_json",
+            "eval",
+            "max_views",
+            "kind2",
+        ] {
+            let mut bad = valid.clone();
+            bad["change"][key] = json!(0);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for value in [Value::Null, json!(0), json!(1), json!("true")] {
+            let mut bad = valid.clone();
+            bad["change"]["enabled"] = value;
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for kind in ["learn_mode", "input_pitch", "chord_note2"] {
+            let mut bad = valid.clone();
+            bad["change"]["kind"] = json!(kind);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        let invalid = Operation::ChorderLearningSet(ChorderLearningSet {
+            track: "Scratch".into(),
+            slot: 0,
+            expected_instance: "12345678-1234-1234-1234-123456789ABC".into(),
+            change: ChorderLearningChange::ChordNote {
+                expected_input_pitch: ChorderMidiPitch(128),
+                output_pitch: ChorderMidiPitch(0),
+                enabled: true,
+            },
+        });
+        assert!(invalid.validate().is_err());
+    }
+
+    #[test]
+    fn chord_note_schema_has_only_required_finite_fields_and_boolean_state() {
+        let schema = serde_json::to_value(schemars::schema_for!(ChorderLearningSet)).unwrap();
+        let variants = schema["$defs"]["ChorderLearningChange"]["oneOf"]
+            .as_array()
+            .unwrap();
+        assert_eq!(variants.len(), 3);
+        let note = variants
+            .iter()
+            .find(|v| v["properties"]["kind"]["const"] == "chord_note")
+            .unwrap();
+        assert_eq!(note["additionalProperties"], false);
+        assert_eq!(note["properties"].as_object().unwrap().len(), 4);
+        for key in ["kind", "expected_input_pitch", "output_pitch", "enabled"] {
+            assert!(note["required"].as_array().unwrap().contains(&json!(key)));
+        }
+        assert_eq!(note["properties"]["enabled"]["type"], "boolean");
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["type"], "integer");
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["minimum"], 0);
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["maximum"], 127);
     }
 }

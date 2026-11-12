@@ -129,7 +129,178 @@ pub struct NumericEditAttempt {
     pub lease: NumericEditLease,
 }
 
+pub struct ScalarBindingLease {
+    binding: NumericEditLease,
+    before: Description,
+}
+impl ScalarBindingLease {
+    pub fn description(&self) -> &Description {
+        &self.before
+    }
+    pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
+        self.binding.check(guard)?;
+        self.check_borrowed()
+    }
+    pub fn check_borrowed(&self) -> Result<(), Error> {
+        self.observed_borrowed().map(|_| ())
+    }
+    /// Checks captured original/controller edges without reading scalar values.
+    pub fn check_binding_borrowed(&self) -> Result<(), Error> {
+        self.binding.parameter.check_thread()?;
+        self.binding.pinned_views()
+    }
+    fn observed_borrowed(&self) -> Result<NativeValue, Error> {
+        self.binding.parameter.check_thread()?;
+        self.binding.pinned_views()?;
+        let numeric = self
+            .binding
+            .numeric
+            .as_ref()
+            .ok_or(Error::MissingInterface("scalar read IObject"))?;
+        let default = numeric.property(
+            numeric
+                .default_id
+                .ok_or(Error::MissingValue("scalar read default"))?,
+        )?;
+        let expected_default = self
+            .before
+            .default_value
+            .as_ref()
+            .ok_or(Error::MissingValue("scalar read default"))?;
+        if default.variant_tag != expected_default.variant_tag
+            || !value::exact(
+                value::number(Some(expected_default)).ok_or(Error::TypeMismatch)?,
+                Some(&default),
+            )
+        {
+            return Err(Error::MetadataChanged);
+        }
+        let within_profile = value::number(self.before.raw.as_ref()).ok_or(Error::TypeMismatch)?;
+        let (observed, final_default) = self
+            .binding
+            .scalar_witness_with_default(&self.before, within_profile)?;
+        let final_default = final_default
+            .as_ref()
+            .ok_or(Error::MissingValue("scalar read final default"))?;
+        if final_default.variant_tag != expected_default.variant_tag
+            || !value::exact(
+                value::number(Some(expected_default)).ok_or(Error::TypeMismatch)?,
+                Some(final_default),
+            )
+        {
+            return Err(Error::MetadataChanged);
+        }
+        self.binding.pinned_views()?;
+        Ok(observed)
+    }
+}
+pub struct ScalarReadLease {
+    binding: ScalarBindingLease,
+    expected: Number,
+}
+impl ScalarReadLease {
+    pub fn description(&self) -> &Description {
+        self.binding.description()
+    }
+    pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
+        self.binding.check(guard)?;
+        self.check_borrowed()
+    }
+    pub fn check_borrowed(&self) -> Result<(), Error> {
+        let observed = self.binding.observed_borrowed()?;
+        if !value::exact(self.expected, Some(&observed)) {
+            return Err(Error::MetadataChanged);
+        }
+        Ok(())
+    }
+    /// Checks captured original/controller edges without reading scalar values.
+    pub fn check_binding_borrowed(&self) -> Result<(), Error> {
+        self.binding.check_binding_borrowed()
+    }
+}
+
 impl RawParameter {
+    pub fn pin_raw_toggle_binding<G: FnMut() -> Result<(), String>>(
+        self,
+        expected_name: &'static str,
+        guard: &mut G,
+    ) -> Result<ScalarBindingLease, Error> {
+        self.pin_scalar_binding(EditProfile::ExactToggle(expected_name), guard)
+    }
+    pub fn pin_raw_toggle_state<G: FnMut() -> Result<(), String>>(
+        self,
+        expected_name: &'static str,
+        enabled: bool,
+        guard: &mut G,
+    ) -> Result<ScalarReadLease, Error> {
+        self.pin_scalar_state(
+            EditProfile::ExactToggle(expected_name),
+            Number::Integer(i64::from(enabled)),
+            guard,
+        )
+    }
+    pub fn pin_raw_integer_state<G: FnMut() -> Result<(), String>>(
+        self,
+        profile: IntegerEditProfile,
+        expected: i64,
+        guard: &mut G,
+    ) -> Result<ScalarReadLease, Error> {
+        self.pin_scalar_state(
+            EditProfile::ExactInteger(profile),
+            Number::Integer(expected),
+            guard,
+        )
+    }
+    fn pin_scalar_state<G: FnMut() -> Result<(), String>>(
+        self,
+        profile: EditProfile,
+        expected: Number,
+        guard: &mut G,
+    ) -> Result<ScalarReadLease, Error> {
+        let binding = self.pin_scalar_binding(profile, guard)?;
+        let expected = validate_number(binding.description(), expected)?;
+        let lease = ScalarReadLease { binding, expected };
+        lease.check(guard)?;
+        Ok(lease)
+    }
+    fn pin_scalar_binding<G: FnMut() -> Result<(), String>>(
+        self,
+        profile: EditProfile,
+        guard: &mut G,
+    ) -> Result<ScalarBindingLease, Error> {
+        let mut binding = NumericEditLease {
+            links: Vec::new(),
+            numeric: None,
+            parameter: self,
+            phase: NumericEditPhase::Prepared,
+            binding_complete: false,
+            witness: None,
+            profile,
+        };
+        binding.parameter.check_thread()?;
+        binding.capture(guard)?;
+        binding.capture_numeric(guard)?;
+        if binding
+            .numeric
+            .as_ref()
+            .expect("captured scalar IObject")
+            .default_id
+            .is_none()
+        {
+            let id = ffi::property_id(binding.parameter.text, c"default")?;
+            binding
+                .numeric
+                .as_mut()
+                .expect("captured scalar IObject")
+                .default_id = Some(id);
+            binding.check(guard)?;
+        }
+        let before = binding.description(guard)?;
+        binding.profile.validate(&before)?;
+        let lease = ScalarBindingLease { binding, before };
+        lease.check(guard)?;
+        Ok(lease)
+    }
     pub fn edit_raw_integer<G: FnMut() -> Result<(), String>>(
         self,
         profile: IntegerEditProfile,
@@ -166,11 +337,40 @@ impl RawParameter {
             guard,
         )
     }
+    /// Successful borrowed numeric checks require no QI, retain or release.
+    /// A malformed owned OUT is released on refusal, which blocks the next
+    /// dispatch. Getter observations remain sequential, not atomic.
+    pub fn edit_raw_toggle_with_terminal_guard<
+        G: FnMut() -> Result<(), String>,
+        T: FnMut() -> Result<(), String>,
+    >(
+        self,
+        expected_name: &'static str,
+        enabled: bool,
+        guard: &mut G,
+        terminal_guard: &mut T,
+    ) -> NumericEditAttempt {
+        self.edit_number_guarded(
+            Number::Integer(i64::from(enabled)),
+            EditProfile::ExactToggle(expected_name),
+            guard,
+            terminal_guard,
+        )
+    }
     fn edit_number<G: FnMut() -> Result<(), String>>(
         self,
         number: Number,
         profile: EditProfile,
         guard: &mut G,
+    ) -> NumericEditAttempt {
+        self.edit_number_guarded(number, profile, guard, &mut || Ok(()))
+    }
+    fn edit_number_guarded<G: FnMut() -> Result<(), String>, T: FnMut() -> Result<(), String>>(
+        self,
+        number: Number,
+        profile: EditProfile,
+        guard: &mut G,
+        terminal_guard: &mut T,
     ) -> NumericEditAttempt {
         let mut lease = NumericEditLease {
             links: Vec::new(),
@@ -200,12 +400,14 @@ impl RawParameter {
             lease
                 .writable(&initial, number, guard)
                 .map_err(GateError::error)?;
+            terminal_guard().map_err(Error::Guard)?;
             lease.phase = NumericEditPhase::BeginDispatched;
             lease.dispatch_lifecycle(16);
             lease.check(guard)?;
             if let Err(error) = lease.writable(&initial, number, guard) {
                 return Err(lease.close_after_gate_error(error, guard));
             }
+            terminal_guard().map_err(Error::Guard)?;
             lease.phase = NumericEditPhase::ValueDispatched;
             let set: unsafe extern "C" fn(*mut c_void, *const Variant, u8) =
                 unsafe { ffi::method(lease.parameter.parameter.raw(), 21) };
@@ -214,6 +416,7 @@ impl RawParameter {
             if let Err(error) = lease.writable(&initial, number, guard) {
                 return Err(lease.close_after_gate_error(error, guard));
             }
+            terminal_guard().map_err(Error::Guard)?;
             lease.phase = NumericEditPhase::EndDispatched;
             lease.dispatch_lifecycle(17);
             lease.check(guard)?;
@@ -239,7 +442,10 @@ impl RawParameter {
         // All closure-local native owners have been released before this final
         // check. Persistent association pins remain in the returned lease.
         let result = match result {
-            Ok(value) => match lease.check(guard) {
+            Ok(value) => match lease
+                .check(guard)
+                .and_then(|()| terminal_guard().map_err(Error::Guard))
+            {
                 Ok(()) => Ok(value),
                 Err(error) => Err(error),
             },
@@ -457,6 +663,14 @@ impl NumericEditLease {
     }
 
     fn scalar_witness(&self, before: &Description, number: Number) -> Result<NativeValue, Error> {
+        self.scalar_witness_with_default(before, number)
+            .map(|(value, _)| value)
+    }
+    fn scalar_witness_with_default(
+        &self,
+        before: &Description,
+        number: Number,
+    ) -> Result<(NativeValue, Option<NativeValue>), Error> {
         let numeric = self
             .numeric
             .as_ref()
@@ -476,9 +690,10 @@ impl NumericEditLease {
         same_numeric_shape(before, &current)?;
         self.profile.validate(&current)?;
         validate_number(&current, number)?;
-        current
+        let raw = current
             .raw
-            .ok_or(Error::MissingValue("numeric edit scalar value"))
+            .ok_or(Error::MissingValue("numeric edit scalar value"))?;
+        Ok((raw, current.default_value))
     }
 
     fn close_after_gate_error<G: FnMut() -> Result<(), String>>(

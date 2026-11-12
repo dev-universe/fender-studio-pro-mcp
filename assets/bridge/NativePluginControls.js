@@ -237,8 +237,11 @@ class NativePluginControls {
 
     guiLearningChange(change) {
         if (this.guiExact(change, ["kind", "enabled"]) && change.kind === "learn_mode") return typeof change.enabled === "boolean";
-        return this.guiExact(change, ["kind", "pitch"]) && change.kind === "input_pitch"
-            && (change.pitch === null || this.guiInteger(change.pitch, 0, 127));
+        if (this.guiExact(change, ["kind", "pitch"]) && change.kind === "input_pitch")
+            return change.pitch === null || this.guiInteger(change.pitch, 0, 127);
+        return this.guiExact(change, ["kind", "expected_input_pitch", "output_pitch", "enabled"]) && change.kind === "chord_note"
+            && this.guiInteger(change.expected_input_pitch, 0, 127) && this.guiInteger(change.output_pitch, 0, 127)
+            && typeof change.enabled === "boolean";
     }
 
     guiLearningRequest(request) {
@@ -262,8 +265,15 @@ class NativePluginControls {
                 && typed.variant_tag === 1 && typed.data.kind === "integer" && this.guiExact(typed.data, ["kind", "value"]));
     }
 
+    guiLearningMemberProfile(value) {
+        return this.guiToggleProfileNamed(value, "learnChord") && value.tag === 1 && value.default === 0
+            && [value.native_value, value.native_min, value.native_max, value.native_default].every(typed => typed
+                && typed.variant_tag === 1 && typed.data.kind === "integer" && this.guiExact(typed.data, ["kind", "value"]));
+    }
+
     guiLearningResult(result, request) {
         const setter = request.operation === "edit_chorder_model";
+        const note = setter && request.change.kind === "chord_note";
         if (result.ok === false) {
             const fields = ["ok", "outcome", "error"];
             if (result.instance !== undefined) fields.push("instance");
@@ -276,7 +286,7 @@ class NativePluginControls {
                 && /^[a-zA-Z0-9_]{1,64}$/.test(result.error.code) && typeof result.error.message === "string" && result.error.message.length <= 512;
         }
         if (!this.guiLearningInstance(result.instance) || result.ok !== true || result.receiver !== "editor_controller"
-            || result.storage_semantics !== "transient_learning_controls") return false;
+            || result.storage_semantics !== (note ? "selected_chord_membership_gui_current_value" : "transient_learning_controls")) return false;
         if (!setter) return this.guiExact(result, ["ok", "outcome", "operation", "instance", "receiver", "mutation_capability",
             "value_semantics", "binding", "coverage", "parameters", "storage_semantics"])
             && result.outcome === "observed" && result.operation === "chorder_learning_get" && result.mutation_capability === false
@@ -290,24 +300,32 @@ class NativePluginControls {
             && this.guiExact(result.parameters, ["learnMode", "learnInputPitch"])
             && this.guiFixedDescription(result.parameters.learnMode, "learnMode")
             && this.guiFixedDescription(result.parameters.learnInputPitch, "learnInputPitch");
-        const mode = request.change.kind === "learn_mode", name = mode ? "learnMode" : "learnInputPitch";
-        if (!this.guiExact(result, ["ok", "outcome", "operation", "instance", "binding_source", "receiver", "requested_change",
+        const mode = request.change.kind === "learn_mode", name = note ? "learnChord" : mode ? "learnMode" : "learnInputPitch";
+        const fields = ["ok", "outcome", "operation", "instance", "binding_source", "receiver", "requested_change",
             "edit_phase", "gui_parameter", "gui_value_verified", "verification_scope", "persistence_verified", "effects_verified",
-            "dsp_propagation_verified", "storage_semantics"]) || result.outcome !== "applied_unverified"
+            "dsp_propagation_verified", "storage_semantics"];
+        if (note) fields.push("stored_model_verified", "output_pitch_mapping", "selection_semantics");
+        if (!this.guiExact(result, fields) || result.outcome !== "applied_unverified"
             || result.operation !== "edit_chorder_model" || result.binding_source !== "dsp" || result.edit_phase !== "closed_checked"
             || !this.guiLearningChange(result.requested_change)
             || result.requested_change.kind !== request.change.kind
-            || (mode ? result.requested_change.enabled !== request.change.enabled : result.requested_change.pitch !== request.change.pitch)
+            || (note ? result.requested_change.enabled !== request.change.enabled
+                || result.requested_change.expected_input_pitch !== request.change.expected_input_pitch
+                || result.requested_change.output_pitch !== request.change.output_pitch
+                : mode ? result.requested_change.enabled !== request.change.enabled : result.requested_change.pitch !== request.change.pitch)
+            || note && (result.stored_model_verified !== false || result.output_pitch_mapping !== "source_declared_unverified"
+                || result.selection_semantics !== "synchronous_guarded_comparison_not_atomic_snapshot")
             || !this.guiExact(result.gui_parameter, ["name", "before", "after"]) || result.gui_parameter.name !== name
             || typeof result.gui_value_verified !== "boolean" || result.verification_scope !== "gui_receiver_current_value"
             || result.persistence_verified !== false || result.effects_verified !== false || result.dsp_propagation_verified !== false) return false;
         const before = result.gui_parameter.before, after = result.gui_parameter.after;
-        if (mode ? !this.guiToggleProfileNamed(before, name) || !this.guiToggleProfileNamed(after, name)
-            : !this.guiLearningPitchProfile(before) || !this.guiLearningPitchProfile(after)) return false;
+        if (note ? !this.guiLearningMemberProfile(before) || !this.guiLearningMemberProfile(after)
+            : mode ? !this.guiToggleProfileNamed(before, name) || !this.guiToggleProfileNamed(after, name)
+                : !this.guiLearningPitchProfile(before) || !this.guiLearningPitchProfile(after)) return false;
         const mutable = ["value", "text", "normalized", "native_value", "native_normalized"];
         if (Object.keys(before).some(key => mutable.indexOf(key) < 0 && JSON.stringify(before[key]) !== JSON.stringify(after[key]))
             || before.native_value.variant_tag !== after.native_value.variant_tag) return false;
-        const desired = mode ? (request.change.enabled ? 1 : 0) : (request.change.pitch === null ? -1 : request.change.pitch);
+        const desired = note || mode ? (request.change.enabled ? 1 : 0) : (request.change.pitch === null ? -1 : request.change.pitch);
         return result.gui_value_verified === (after.value === desired);
     }
 

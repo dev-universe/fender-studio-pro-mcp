@@ -179,8 +179,8 @@ fn descriptor(value: &Value, name: &str) -> bool {
     value["writable"].as_bool() == Some(writable) && normalized(value)
 }
 
-fn toggle(value: &Value) -> bool {
-    descriptor(value, "learnMode")
+fn toggle_named(value: &Value, name: &str) -> bool {
+    descriptor(value, name)
         && value["native_kind"] == "Toggle"
         && value["enabled"] == true
         && value["readOnly"] == false
@@ -202,6 +202,23 @@ fn toggle(value: &Value) -> bool {
                         } else {
                             "0000000000000000"
                         }
+            })
+}
+
+fn toggle(value: &Value) -> bool {
+    toggle_named(value, "learnMode")
+}
+
+fn member(value: &Value) -> bool {
+    toggle_named(value, "learnChord")
+        && value["tag"] == 1
+        && value["default"] == 0
+        && ["native_value", "native_min", "native_max", "native_default"]
+            .iter()
+            .all(|key| {
+                value[*key]["variant_tag"] == 1
+                    && exact_gui_object(&value[*key]["data"], &["kind", "value"])
+                    && value[*key]["data"]["kind"] == "integer"
             })
 }
 
@@ -355,28 +372,35 @@ pub(super) fn valid_set(change: &ChorderLearningSet, value: &Value) -> bool {
                 .get("instance")
                 .is_none_or(|instance| instance["object_uid"] == change.expected_instance);
     }
-    if !exact_gui_object(
-        value,
-        &[
-            "ok",
-            "outcome",
-            "native_outcome",
-            "operation",
-            "instance",
-            "binding_source",
-            "receiver",
-            "requested_change",
-            "edit_phase",
-            "gui_parameter",
-            "gui_value_verified",
-            "verification_scope",
-            "persistence_verified",
-            "effects_verified",
-            "dsp_propagation_verified",
-            "storage_semantics",
-            "plugin",
-        ],
-    ) || value["ok"] != true
+    let note = matches!(change.change, ChorderLearningChange::ChordNote { .. });
+    let mut fields = vec![
+        "ok",
+        "outcome",
+        "native_outcome",
+        "operation",
+        "instance",
+        "binding_source",
+        "receiver",
+        "requested_change",
+        "edit_phase",
+        "gui_parameter",
+        "gui_value_verified",
+        "verification_scope",
+        "persistence_verified",
+        "effects_verified",
+        "dsp_propagation_verified",
+        "storage_semantics",
+        "plugin",
+    ];
+    if note {
+        fields.extend([
+            "stored_model_verified",
+            "output_pitch_mapping",
+            "selection_semantics",
+        ]);
+    }
+    if !exact_gui_object(value, &fields)
+        || value["ok"] != true
         || value["outcome"] != "applied_unverified"
         || value["native_outcome"] != "applied_unverified"
         || value["operation"] != "edit_chorder_model"
@@ -388,7 +412,17 @@ pub(super) fn valid_set(change: &ChorderLearningSet, value: &Value) -> bool {
             != serde_json::to_value(&change.change).expect("typed learning change")
         || !instance(&value["instance"], &change.expected_instance)
         || value["verification_scope"] != "gui_receiver_current_value"
-        || value["storage_semantics"] != "transient_learning_controls"
+        || value["storage_semantics"]
+            != if note {
+                "selected_chord_membership_gui_current_value"
+            } else {
+                "transient_learning_controls"
+            }
+        || note
+            && (value["stored_model_verified"] != false
+                || value["output_pitch_mapping"] != "source_declared_unverified"
+                || value["selection_semantics"]
+                    != "synchronous_guarded_comparison_not_atomic_snapshot")
         || [
             "persistence_verified",
             "effects_verified",
@@ -405,13 +439,18 @@ pub(super) fn valid_set(change: &ChorderLearningSet, value: &Value) -> bool {
         ChorderLearningChange::InputPitch { pitch } => {
             ("learnInputPitch", pitch.0.map_or(-1, i64::from))
         }
+        ChorderLearningChange::ChordNote { enabled, .. } => ("learnChord", i64::from(*enabled)),
     };
     if value["gui_parameter"]["name"] != name {
         return false;
     }
     let before = &value["gui_parameter"]["before"];
     let after = &value["gui_parameter"]["after"];
-    let profile = if name == "learnMode" { toggle } else { pitch };
+    let profile = match &change.change {
+        ChorderLearningChange::LearnMode { .. } => toggle,
+        ChorderLearningChange::InputPitch { .. } => pitch,
+        ChorderLearningChange::ChordNote { .. } => member,
+    };
     if !profile(before)
         || !profile(after)
         || before["native_value"]["variant_tag"] != after["native_value"]["variant_tag"]
@@ -506,7 +545,7 @@ mod tests {
         } else {
             value as f32
         };
-        json!({"name":name,"title":name,"tag":if pitch{6}else{5},"value":value,"text":value.to_string(),"min":if pitch{-1}else{0},
+        json!({"name":name,"title":name,"tag":if pitch{6}else if name=="learnChord"{1}else{5},"value":value,"text":value.to_string(),"min":if pitch{-1}else{0},
             "max":if pitch{127}else{1},"default":if pitch{-1}else{0},"normalized":f64::from(normalized),"enabled":true,"readOnly":false,"writable":true,
             "native_kind":if pitch{"Integer"}else{"Toggle"},"native_value":typed(value),"native_min":typed(if pitch{-1}else{0}),"native_max":typed(if pitch{127}else{1}),
             "native_default":typed(if pitch{-1}else{0}),"native_normalized":{"kind":"float32","bits_hex":format!("{:08X}",normalized.to_bits())},
@@ -525,18 +564,27 @@ mod tests {
             ChorderLearningChange::InputPitch { pitch } => {
                 ("learnInputPitch", pitch.0.map_or(-1, i64::from))
             }
+            ChorderLearningChange::ChordNote { enabled, .. } => ("learnChord", i64::from(*enabled)),
         };
-        let before = if name == "learnMode" {
+        let before = if name == "learnMode" || name == "learnChord" {
             1 - value
         } else if value == -1 {
             0
         } else {
             -1
         };
-        json!({"ok":true,"outcome":"applied_unverified","native_outcome":"applied_unverified","operation":"edit_chorder_model","instance":id(),
+        let mut result = json!({"ok":true,"outcome":"applied_unverified","native_outcome":"applied_unverified","operation":"edit_chorder_model","instance":id(),
             "binding_source":"dsp","receiver":"editor_controller","requested_change":change.change,"edit_phase":"closed_checked","gui_parameter":{"name":name,
                 "before":description(name,before,float),"after":description(name,value,float)},"gui_value_verified":true,"verification_scope":"gui_receiver_current_value",
-            "persistence_verified":false,"effects_verified":false,"dsp_propagation_verified":false,"storage_semantics":"transient_learning_controls","plugin":"Chorder"})
+            "persistence_verified":false,"effects_verified":false,"dsp_propagation_verified":false,"storage_semantics":"transient_learning_controls","plugin":"Chorder"});
+        if matches!(change.change, ChorderLearningChange::ChordNote { .. }) {
+            result["storage_semantics"] = json!("selected_chord_membership_gui_current_value");
+            result["stored_model_verified"] = json!(false);
+            result["output_pitch_mapping"] = json!("source_declared_unverified");
+            result["selection_semantics"] =
+                json!("synchronous_guarded_comparison_not_atomic_snapshot");
+        }
+        result
     }
     fn no_positive(value: &Value) {
         for key in [
@@ -546,6 +594,9 @@ mod tests {
             "gui_parameter",
             "requested_change",
             "storage_semantics",
+            "stored_model_verified",
+            "output_pitch_mapping",
+            "selection_semantics",
         ] {
             assert!(value.get(key).is_none(), "{key}");
         }
@@ -726,5 +777,105 @@ mod tests {
                 .is_ok()
             );
         }
+    }
+
+    fn note(enabled: bool) -> ChorderLearningSet {
+        change(ChorderLearningChange::ChordNote {
+            expected_input_pitch: crate::operation::ChorderMidiPitch(60),
+            output_pitch: crate::operation::ChorderMidiPitch(0),
+            enabled,
+        })
+    }
+    #[test]
+    fn chord_note_receipt_is_current_member_only_and_cross_variant_claims_are_refused() {
+        for enabled in [false, true] {
+            let intent = note(enabled);
+            let good = set(&intent, false);
+            assert!(valid_set(&intent, &good));
+            assert!(!valid_set(&intent, &set(&intent, true)));
+            let mut unchanged = good.clone();
+            unchanged["gui_parameter"]["before"] = unchanged["gui_parameter"]["after"].clone();
+            assert!(valid_set(&intent, &unchanged));
+            let other = change(ChorderLearningChange::LearnMode { enabled });
+            assert!(!valid_set(&other, &good));
+            assert!(!valid_set(&intent, &set(&other, false)));
+        }
+        let intent = note(true);
+        let good = set(&intent, false);
+        for (key, value) in [
+            ("stored_model_verified", json!(true)),
+            ("output_pitch_mapping", json!("verified")),
+            ("selection_semantics", json!("atomic")),
+            ("persistence_verified", json!(true)),
+            ("effects_verified", json!(true)),
+            ("storage_semantics", json!("transient_learning_controls")),
+            ("edit_phase", json!("value_dispatched")),
+            ("verified", json!(true)),
+            ("token", json!("unchecked")),
+        ] {
+            let mut bad = good.clone();
+            bad[key] = value;
+            assert!(!valid_set(&intent, &bad), "{key}");
+        }
+        for key in [
+            "stored_model_verified",
+            "output_pitch_mapping",
+            "selection_semantics",
+        ] {
+            let mut bad = good.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(!valid_set(&intent, &bad));
+        }
+        for (key, value) in [
+            ("expected_input_pitch", json!(61)),
+            ("output_pitch", json!(1)),
+            ("enabled", json!(false)),
+            ("pitch", json!(60)),
+        ] {
+            let mut bad = good.clone();
+            bad["requested_change"][key] = value;
+            assert!(!valid_set(&intent, &bad), "{key}");
+        }
+        for (key, value) in [
+            ("tag", json!(5)),
+            ("default", json!(1)),
+            ("readOnly", json!(true)),
+            ("max", json!(2)),
+        ] {
+            let mut bad = good.clone();
+            bad["gui_parameter"]["after"][key] = value;
+            assert!(!valid_set(&intent, &bad), "{key}");
+        }
+    }
+    #[test]
+    fn chord_note_late_invalidation_strips_every_new_positive_field_without_retry() {
+        let intent = note(true);
+        let mut good = set(&intent, false);
+        super::super::invalidate_gui_evidence(&Operation::ChorderLearningSet(intent), &mut good);
+        no_positive(&good);
+        assert_eq!(good["native_outcome"], "unknown");
+        assert_eq!(good["edit_phase"], "closed_checked");
+    }
+    #[test]
+    fn chord_note_requires_explicit_document_before_queue_and_old_native_refusal_is_compatible() {
+        let intent = note(true);
+        assert!(
+            super::super::require_learning_document(&Request {
+                operation: Operation::ChorderLearningSet(intent.clone()),
+                expected_document: None
+            })
+            .is_err()
+        );
+        assert!(
+            super::super::require_learning_document(&Request {
+                operation: Operation::ChorderLearningSet(intent.clone()),
+                expected_document: Some("session:1".into())
+            })
+            .is_ok()
+        );
+        let old = json!({"ok":false,"native_outcome":"not_applied","plugin":"Chorder","gui_value_verified":false,
+            "persistence_verified":false,"effects_verified":false,"dsp_propagation_verified":false,
+            "errors":[{"code":"invalid_request","message":"unknown change variant chord_note"}]});
+        assert!(valid_set(&intent, &old));
     }
 }

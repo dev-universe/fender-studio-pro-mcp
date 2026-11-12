@@ -820,3 +820,290 @@ fn exact_integer_final_publication_detects_default_carrier_or_value_drift() {
         assert_eq!(trace(&f), ["begin", "value", "end"]);
     }
 }
+
+#[test]
+fn scalar_read_toggle_pins_both_carriers_without_lifecycle_or_value_dispatch() {
+    let env = TextEnv::new();
+    for integer in [false, true] {
+        let (f, p) = toggle_fixture(&env, integer);
+        let lease = p
+            .pin_raw_toggle_state("outerAliasName", false, &mut f.guard())
+            .unwrap();
+        lease.check(&mut f.guard()).unwrap();
+        lease.check_borrowed().unwrap();
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+        assert!(f.p().refs.get() > 1);
+        drop(lease);
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+
+#[test]
+fn scalar_read_integer_requires_exact_selected_state_and_complete_profile() {
+    let env = TextEnv::new();
+    for expected in [0, 60, 127] {
+        let (f, p, profile) = integer_fixture(&env);
+        *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(expected));
+        let lease = p
+            .pin_raw_integer_state(profile, expected, &mut f.guard())
+            .unwrap();
+        lease.check_borrowed().unwrap();
+        *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(-1));
+        assert_eq!(lease.check_borrowed(), Err(Error::MetadataChanged));
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+    }
+    for scenario in 0..6 {
+        let (f, p, profile) = integer_fixture(&env);
+        *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(60));
+        match scenario {
+            0 => *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(61)),
+            1 => f.p().readonly.set(true),
+            2 => f.p().enabled.set(false),
+            3 => f.p().edit.tag_override.set(Some(7)),
+            4 => f
+                .p()
+                .format
+                .default_carrier
+                .set(Some(DefaultCarrier::Unsupported { tag: 1, payload: 0 })),
+            5 => f.p().max_override.set(Some(Number::Integer(128))),
+            _ => unreachable!(),
+        }
+        assert!(
+            p.pin_raw_integer_state(profile, 60, &mut f.guard())
+                .is_err()
+        );
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+
+#[test]
+fn scalar_read_terminal_checks_refuse_rebinding_and_typed_value_drift() {
+    let env = TextEnv::new();
+    for scenario in 0..5 {
+        let (f, p) = toggle_fixture(&env, true);
+        let (replacement, _replacement) = toggle_fixture(&env, true);
+        let lease = p
+            .pin_raw_toggle_state("outerAliasName", false, &mut f.guard())
+            .unwrap();
+        match scenario {
+            0 => f.p().details.original.set(Some(replacement.pointer)),
+            1 => f.p().edit.controller.set(replacement.pointer),
+            2 => *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(1)),
+            3 => f.p().edit.kind_override.set(Some(1)),
+            4 => f.p().edit.name_changed.set(true),
+            _ => unreachable!(),
+        }
+        assert!(lease.check_borrowed().is_err());
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+
+#[test]
+fn scalar_read_guard_value_switch_during_capture_is_refused_without_writes() {
+    let env = TextEnv::new();
+    let (f, p) = toggle_fixture(&env, true);
+    let mut calls = 0;
+    let result = p.pin_raw_toggle_state("outerAliasName", false, &mut || {
+        calls += 1;
+        if calls == 4 {
+            *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(1));
+        }
+        Ok(())
+    });
+    assert!(result.is_err());
+    assert!(trace(&f).is_empty());
+    assert_eq!(f.p().writes.get(), 0);
+}
+
+#[test]
+fn terminal_guard_refusal_stops_each_next_toggle_dispatch_with_phase_specific_outcomes() {
+    let env = TextEnv::new();
+    for refusal in 1..=4 {
+        let (f, p) = toggle_fixture(&env, true);
+        let mut terminal_calls = 0;
+        let attempt = p.edit_raw_toggle_with_terminal_guard(
+            "outerAliasName",
+            true,
+            &mut f.guard(),
+            &mut || {
+                terminal_calls += 1;
+                if terminal_calls == refusal {
+                    Err("selected chord changed".into())
+                } else {
+                    Ok(())
+                }
+            },
+        );
+        let expected = [
+            (Outcome::NotApplied, NumericEditPhase::Prepared, &[][..]),
+            (
+                Outcome::Unknown,
+                NumericEditPhase::BeginDispatched,
+                &["begin"][..],
+            ),
+            (
+                Outcome::Unknown,
+                NumericEditPhase::ValueDispatched,
+                &["begin", "value"][..],
+            ),
+            (
+                Outcome::Unknown,
+                NumericEditPhase::ClosedChecked,
+                &["begin", "value", "end"][..],
+            ),
+        ][refusal - 1];
+        assert_failure(&attempt, expected.0, expected.1);
+        assert_eq!(trace(&f), expected.2);
+        assert_eq!(terminal_calls, refusal);
+    }
+}
+
+#[test]
+fn successful_terminal_guarded_toggle_performs_only_one_existing_edit_lifecycle() {
+    let env = TextEnv::new();
+    let (f, p) = toggle_fixture(&env, true);
+    let mut terminal_calls = 0;
+    let attempt =
+        p.edit_raw_toggle_with_terminal_guard("outerAliasName", true, &mut f.guard(), &mut || {
+            terminal_calls += 1;
+            Ok(())
+        });
+    assert!(attempt.result.as_ref().unwrap().verified);
+    assert_eq!(trace(&f), ["begin", "value", "end"]);
+    assert_eq!(f.p().writes.get(), 1);
+    assert_eq!(terminal_calls, 4);
+    attempt.lease.check(&mut f.guard()).unwrap();
+}
+
+#[test]
+fn scalar_binding_pins_original_chain_and_metadata_while_allowing_declared_toggle_values() {
+    let env = TextEnv::new();
+    let (f, p) = toggle_fixture(&env, true);
+    let binding = p
+        .pin_raw_toggle_binding("outerAliasName", &mut f.guard())
+        .unwrap();
+    *f.p().value.borrow_mut() = FakeValue::Number(Number::Integer(1));
+    binding.check(&mut f.guard()).unwrap();
+    binding.check_borrowed().unwrap();
+    assert!(trace(&f).is_empty());
+    assert_eq!(f.p().writes.get(), 0);
+    let (replacement, _) = toggle_fixture(&env, true);
+    f.p().details.original.set(Some(replacement.pointer));
+    assert_eq!(binding.check_borrowed(), Err(Error::MetadataChanged));
+    assert!(trace(&f).is_empty());
+}
+
+#[test]
+fn pinned_scalar_default_change_is_rejected_by_borrowed_checks() {
+    let env = TextEnv::new();
+    let (f, p) = toggle_fixture(&env, true);
+    let binding = p
+        .pin_raw_toggle_binding("outerAliasName", &mut f.guard())
+        .unwrap();
+    f.p()
+        .format
+        .default_carrier
+        .set(Some(DefaultCarrier::Unsupported { tag: 1, payload: 1 }));
+    assert_eq!(binding.check_borrowed(), Err(Error::MetadataChanged));
+    assert!(trace(&f).is_empty());
+    assert_eq!(f.p().writes.get(), 0);
+}
+
+thread_local! {
+    static DEFAULT_DRIFT_READS: Cell<usize> = const { Cell::new(0) };
+    static DEFAULT_DRIFT_TARGET: Cell<DefaultCarrier> = const {
+        Cell::new(DefaultCarrier::Unsupported { tag: 1, payload: 1 })
+    };
+}
+unsafe extern "C" fn default_drift_property(
+    object: *mut c_void,
+    out: *mut Variant,
+    id: *const c_void,
+) -> u8 {
+    let accepted = unsafe { property(object, out, id) };
+    let name = unsafe { std::ffi::CStr::from_ptr((*id.cast::<CStringRepr>()).text) }.to_bytes();
+    if name == b"default" {
+        DEFAULT_DRIFT_READS.with(|reads| {
+            reads.set(reads.get() + 1);
+            if reads.get() == 1 {
+                unsafe { &*(*object.cast::<ObjectView>()).parent }
+                    .format
+                    .default_carrier
+                    .set(Some(DEFAULT_DRIFT_TARGET.with(Cell::get)));
+            }
+        });
+    }
+    accepted
+}
+struct DefaultDriftHook {
+    parameter: *mut FakeParameter,
+    original: *const usize,
+    _table: Box<[usize; 5]>,
+}
+impl DefaultDriftHook {
+    fn new(f: &Fixture, target: DefaultCarrier) -> Self {
+        DEFAULT_DRIFT_TARGET.with(|value| value.set(target));
+        let original = f.p().object.table;
+        let mut table = Box::new(unsafe { *original.cast::<[usize; 5]>() });
+        table[4] = default_drift_property as *const () as usize;
+        let parameter = f.pointer.cast::<FakeParameter>();
+        unsafe { (*parameter).object.table = table.as_ptr() };
+        DEFAULT_DRIFT_READS.with(|reads| reads.set(0));
+        Self {
+            parameter,
+            original,
+            _table: table,
+        }
+    }
+}
+impl Drop for DefaultDriftHook {
+    fn drop(&mut self) {
+        unsafe { (*self.parameter).object.table = self.original };
+    }
+}
+
+#[test]
+fn read_binding_refuses_captured_default_drift_observed_by_second_getter() {
+    let env = TextEnv::new();
+    for target in [
+        DefaultCarrier::Unsupported { tag: 1, payload: 1 },
+        DefaultCarrier::FloatBits(0.0_f64.to_bits()),
+    ] {
+        let (f, p) = toggle_fixture(&env, true);
+        let lease = p
+            .pin_raw_toggle_binding("outerAliasName", &mut f.guard())
+            .unwrap();
+        let _hook = DefaultDriftHook::new(&f, target);
+        assert_eq!(lease.check_borrowed(), Err(Error::MetadataChanged));
+        DEFAULT_DRIFT_READS.with(|reads| assert_eq!(reads.get(), 2));
+        assert!(trace(&f).is_empty());
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+
+#[test]
+fn scalar_binding_edge_check_does_not_repeat_numeric_callbacks_and_refuses_reassociation() {
+    let env = TextEnv::new();
+    let (f, p) = toggle_fixture(&env, true);
+    let binding = p
+        .pin_raw_toggle_binding("outerAliasName", &mut f.guard())
+        .unwrap();
+    let refs = f.p().refs.get();
+    let _hook = DefaultDriftHook::new(&f, DefaultCarrier::Unsupported { tag: 1, payload: 1 });
+    binding.check_binding_borrowed().unwrap();
+    DEFAULT_DRIFT_READS.with(|reads| assert_eq!(reads.get(), 0));
+    assert_eq!(f.p().refs.get(), refs);
+    let (replacement, _) = toggle_fixture(&env, true);
+    f.p().details.original.set(Some(replacement.pointer));
+    assert_eq!(
+        binding.check_binding_borrowed(),
+        Err(Error::MetadataChanged)
+    );
+    assert_eq!(f.p().writes.get(), 0);
+    assert!(trace(&f).is_empty());
+}

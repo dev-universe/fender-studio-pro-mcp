@@ -244,7 +244,7 @@ impl McpServer {
             named::<ChorderLearningSet>(
                 "chorder_learning_set",
                 "chorderLearningSet",
-                "Change one Chorder learning control through a fresh GUI binding. Use change kind learn_mode with a Boolean enabled, or input_pitch with a required pitch that is null or MIDI integer 0..127. Null selects no learning key; zero selects MIDI 0. Selection does not enable Learn Mode. Receipts remain applied_unverified with separate GUI current-value evidence. Never retry an unknown outcome.",
+                "Change one Chorder learning control through a fresh GUI binding. Use change kind learn_mode with a Boolean enabled, or input_pitch with a required pitch that is null or MIDI integer 0..127. Null selects no learning key; zero selects MIDI 0. chord_note compares required expected_input_pitch and changes output_pitch membership with Boolean enabled; both pitches are MIDI integers 0..127. It requires Mode1 and the exact selected input, and never selects one implicitly. Receipts remain applied_unverified with GUI current-value evidence; output mapping, stored model, persistence and audio require independent checks. Never retry an unknown outcome.",
                 true,
             ),
             named::<PluginSet>(
@@ -889,5 +889,28 @@ mod tests {
                     .is_some_and(|r| r.contains(&json!("expected_document")))
             );
         }
+    }
+
+    #[test]
+    fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
+        let specs = McpServer::specs();
+        assert_eq!(specs.len(), 45);
+        let spec = specs
+            .iter()
+            .find(|s| s.tool.name == "chorder_learning_set")
+            .unwrap();
+        assert_eq!(spec.operation, Some("chorderLearningSet"));
+        assert!(spec.tool.annotations.is_none());
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(schema["additionalProperties"], false);
+        let variants = schema["$defs"]["ChorderLearningChange"]["oneOf"]
+            .as_array()
+            .unwrap();
+        assert!(
+            variants
+                .iter()
+                .any(|v| v["properties"]["kind"]["const"] == "chord_note")
+        );
+        assert_eq!(env!("CARGO_PKG_VERSION"), "0.1.0");
     }
 }

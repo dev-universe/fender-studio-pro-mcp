@@ -43,36 +43,87 @@ impl Serialize for InputPitch {
         }
     }
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(transparent)]
+pub(super) struct MidiPitch(u8);
+impl MidiPitch {
+    fn value(self) -> u8 {
+        self.0
+    }
+}
+impl<'de> Deserialize<'de> for MidiPitch {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Value::deserialize(deserializer)? {
+            Value::Number(number) => number
+                .as_u64()
+                .filter(|value| *value <= 127)
+                .map(|value| Self(value as u8))
+                .ok_or_else(|| serde::de::Error::custom("MIDI pitch must be an integer0..127")),
+            _ => Err(serde::de::Error::custom(
+                "MIDI pitch must be an integer0..127",
+            )),
+        }
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub(super) enum Change {
-    LearnMode { enabled: bool },
-    InputPitch { pitch: InputPitch },
+    LearnMode {
+        enabled: bool,
+    },
+    InputPitch {
+        pitch: InputPitch,
+    },
+    ChordNote {
+        expected_input_pitch: MidiPitch,
+        output_pitch: MidiPitch,
+        enabled: bool,
+    },
 }
 impl Change {
-    fn role(self) -> Role {
+    fn role(self) -> Option<Role> {
         match self {
-            Self::LearnMode { .. } => Role::LearnMode,
-            Self::InputPitch { .. } => Role::InputPitch,
+            Self::LearnMode { .. } => Some(Role::LearnMode),
+            Self::InputPitch { .. } => Some(Role::InputPitch),
+            Self::ChordNote { .. } => None,
         }
     }
     fn name(self) -> &'static str {
         match self {
             Self::LearnMode { .. } => "learnMode",
             Self::InputPitch { .. } => "learnInputPitch",
+            Self::ChordNote { .. } => "learnChord",
         }
     }
 }
-const PITCH_PROFILE: parameters::IntegerEditProfile = parameters::IntegerEditProfile {
+pub(super) const PITCH_PROFILE: parameters::IntegerEditProfile = parameters::IntegerEditProfile {
     name: "learnInputPitch",
     tag: 6,
     min: -1,
     max: 127,
     default: -1,
 };
+enum Binding {
+    Controls(Box<gui_parameter::ModelBinding>),
+    Note(Box<gui_parameter::NoteBinding>),
+}
+impl Binding {
+    fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        match self {
+            Self::Controls(binding) => binding.check(ctx),
+            Self::Note(binding) => binding.check(ctx),
+        }
+    }
+    fn check_pinned(&self, ctx: &Context<'_>) -> Result<(), String> {
+        match self {
+            Self::Controls(binding) => binding.check_pinned(ctx),
+            Self::Note(binding) => binding.check_pinned(ctx),
+        }
+    }
+}
 pub(super) struct EditLease {
     numeric: parameters::NumericEditLease,
-    binding: gui_parameter::ModelBinding,
+    binding: Binding,
 }
 impl EditLease {
     pub(super) fn phase(&self) -> &'static str {
@@ -90,8 +141,25 @@ impl EditLease {
 }
 pub(super) fn edit(ctx: &Context<'_>, change: Change) -> (Value, Option<EditLease>) {
     let prepared = (|| {
-        let binding = gui_parameter::ModelBinding::capture_set(ctx)?;
-        let parameter = binding.parameter(ctx, change.role())?;
+        let binding = match change {
+            Change::ChordNote {
+                expected_input_pitch,
+                output_pitch,
+                ..
+            } => Binding::Note(Box::new(gui_parameter::NoteBinding::capture(
+                ctx,
+                expected_input_pitch.value(),
+                output_pitch.value(),
+            )?)),
+            _ => Binding::Controls(Box::new(gui_parameter::ModelBinding::capture_set(ctx)?)),
+        };
+        let parameter = match &binding {
+            Binding::Controls(controls) => controls.parameter(
+                ctx,
+                change.role().ok_or("learning control role is missing")?,
+            )?,
+            Binding::Note(note) => note.parameter(ctx)?,
+        };
         Ok::<_, String>((binding, parameter))
     })();
     let (binding, parameter) = match prepared {
@@ -111,6 +179,12 @@ pub(super) fn edit(ctx: &Context<'_>, change: Change) -> (Value, Option<EditLeas
         Change::InputPitch { pitch } => {
             parameter.edit_raw_integer(PITCH_PROFILE, pitch.raw(), &mut guard)
         }
+        Change::ChordNote { enabled, .. } => match &binding {
+            Binding::Note(note) => note.edit(parameter, enabled, ctx),
+            Binding::Controls(_) => {
+                unreachable!("closed membership intent requires a note binding")
+            }
+        },
     };
     let lease = EditLease {
         numeric: attempt.lease,
@@ -135,6 +209,12 @@ pub(super) fn edit(ctx: &Context<'_>, change: Change) -> (Value, Option<EditLeas
             },
         ),
     };
+    if value["ok"] == true && matches!(change, Change::ChordNote { .. }) {
+        value["storage_semantics"] = json!("selected_chord_membership_gui_current_value");
+        value["stored_model_verified"] = json!(false);
+        value["output_pitch_mapping"] = json!("source_declared_unverified");
+        value["selection_semantics"] = json!("synchronous_guarded_comparison_not_atomic_snapshot");
+    }
     value["edit_phase"] = json!(lease.phase());
     (value, Some(lease))
 }
@@ -155,6 +235,102 @@ pub(super) fn get(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn chord_note_intent_is_closed_bounded_and_never_implicitly_selects_an_input() {
+        let base =
+            json!({"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true});
+        for input in [0, 60, 127] {
+            for output in [0, 60, 127] {
+                for enabled in [false, true] {
+                    let mut value = base.clone();
+                    value["expected_input_pitch"] = json!(input);
+                    value["output_pitch"] = json!(output);
+                    value["enabled"] = json!(enabled);
+                    let change: Change = serde_json::from_value(value.clone()).unwrap();
+                    assert_eq!(serde_json::to_value(change).unwrap(), value);
+                    assert_eq!(change.role(), None);
+                    assert_eq!(change.name(), "learnChord");
+                }
+            }
+        }
+        for field in ["expected_input_pitch", "output_pitch"] {
+            for bad in [
+                Value::Null,
+                json!(-1),
+                json!(128),
+                json!(60.0),
+                json!(true),
+                json!("60"),
+                json!([]),
+            ] {
+                let mut value = base.clone();
+                value[field] = bad;
+                assert!(serde_json::from_value::<Change>(value).is_err());
+            }
+        }
+        for field in ["expected_input_pitch", "output_pitch", "enabled"] {
+            let mut value = base.clone();
+            value.as_object_mut().unwrap().remove(field);
+            assert!(serde_json::from_value::<Change>(value).is_err());
+        }
+        for field in [
+            "pitch",
+            "child",
+            "path",
+            "param",
+            "source",
+            "select_input",
+            "value",
+            "mode",
+            "max_views",
+        ] {
+            let mut value = base.clone();
+            value[field] = json!("forbidden");
+            assert!(serde_json::from_value::<Change>(value).is_err());
+        }
+        for bad in [Value::Null, json!(1), json!("true")] {
+            let mut value = base.clone();
+            value["enabled"] = bad;
+            assert!(serde_json::from_value::<Change>(value).is_err());
+        }
+        let request:Request=serde_json::from_value(json!({"operation":"edit_chorder_model","expected_instance":"61D64D66-2A46-4BEE-A623-EC5CEB898313","change":base})).unwrap();
+        assert!(request.validate().is_ok());
+        assert_eq!(request.source(), Source::Dsp);
+    }
+    #[test]
+    fn late_chord_note_receipt_failure_removes_all_gui_selection_model_and_mapping_claims() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = guard_tests::Fixture::new();
+        let ctx = host.context();
+        let service = ctx.service;
+        let mut reply = Reply::unbound(
+            json!({"ok":true,"outcome":"applied_unverified","operation":"edit_chorder_model",
+            "requested_change":{"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true},
+            "gui_value_verified":true,"gui_parameter":{"name":"learnChord","after":{"value":1}},
+            "edit_phase":"closed_checked","stored_model_verified":false,"output_pitch_mapping":"source_declared_unverified",
+            "selection_semantics":"synchronous_guarded_comparison_not_atomic_snapshot","persistence_verified":false,"effects_verified":false}),
+        );
+        reply.context = Some(ctx);
+        reply.mutation = true;
+        host.switch_document();
+        assert!(!reply.final_check(service));
+        assert_eq!(reply.value["outcome"], "unknown");
+        assert_eq!(reply.value["ok"], false);
+        for field in [
+            "requested_change",
+            "gui_value_verified",
+            "gui_parameter",
+            "stored_model_verified",
+            "output_pitch_mapping",
+            "selection_semantics",
+            "persistence_verified",
+            "effects_verified",
+        ] {
+            assert!(reply.value.get(field).is_none(), "{field}");
+        }
+        assert_eq!(reply.value["edit_phase"], "closed_checked");
+        reply.release_context();
+    }
     #[test]
     fn native_learning_operations_are_finite_and_require_instance() {
         let uid = "61D64D66-2A46-4BEE-A623-EC5CEB898313";

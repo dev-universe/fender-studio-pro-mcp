@@ -20,6 +20,7 @@ enum State {
     Observed(Box<[parameters::Description; 2]>),
 }
 pub(super) struct FixedLearningChild {
+    name: &'static CStr,
     publication_witnesses: RefCell<Vec<Owned>>,
     parameters: Option<[NamedPin; 2]>,
     controller: Option<InterfacePin>,
@@ -38,6 +39,7 @@ pub(super) struct FixedLearningChild {
 impl FixedLearningChild {
     pub(super) fn not_direct() -> Self {
         Self {
+            name: c"pitch61",
             parameters: None,
             publication_witnesses: RefCell::new(Vec::new()),
             controller: None,
@@ -60,7 +62,17 @@ impl FixedLearningChild {
         api: &Api,
         guard: &mut G,
     ) -> Result<Self, String> {
+        Self::capture_named(controller, c"pitch61", text, api, guard)
+    }
+    fn capture_named<G: FnMut() -> Result<(), String>>(
+        controller: &InterfacePin,
+        name: &'static CStr,
+        text: TextApi,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<Self, String> {
         let mut probe = Self::not_direct();
+        probe.name = name;
         probe.text = Some(text);
         let result = probe.capture_inner(controller, api, guard);
         let after = guard();
@@ -105,7 +117,12 @@ impl FixedLearningChild {
             self.state = State::Unresolved(Reason::RootShapeChanged);
             return Ok(());
         }
-        let child = find_child(root.handle.0, self.text.expect("fixed text API"), guard)?;
+        let child = find_child(
+            root.handle.0,
+            self.name,
+            self.text.expect("fixed text API"),
+            guard,
+        )?;
         let Some(child) = child else {
             self.state = State::Unresolved(Reason::ChildAbsent);
             return Ok(());
@@ -113,7 +130,7 @@ impl FixedLearningChild {
         self.child = Some(InterfacePin::capture(child, guard)?);
         let child = self.child.as_ref().expect("retained child");
         self.child_id = Some(node_id(child.handle.0, guard)?);
-        if self.child_id.as_deref() != Some("pitch61") {
+        if self.child_id.as_deref() != Some(self.name.to_str().expect("static child name")) {
             self.state = State::Unresolved(Reason::ChildIdMismatch);
             return Ok(());
         }
@@ -158,6 +175,79 @@ impl FixedLearningChild {
             _ => State::Unresolved(Reason::ParameterMissing),
         };
         Ok(())
+    }
+    pub(super) fn capture_note<G: FnMut() -> Result<(), String>>(
+        controller: &InterfacePin,
+        output_pitch: u8,
+        text: TextApi,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        let name = *CHILD_NAMES
+            .get(usize::from(output_pitch))
+            .ok_or("MIDI output pitch is outside0..127")?;
+        let child = Self::capture_named(controller, name, text, api, guard)?;
+        child.member_profile(guard)?;
+        Ok(child)
+    }
+    pub(super) fn member_profile<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<(), String> {
+        if !matches!(self.state, State::Observed(_)) {
+            return Err("learning child is unresolved".into());
+        }
+        let parameters = self
+            .parameters
+            .as_ref()
+            .ok_or("learning child parameters are absent")?;
+        let member = parameters[0]
+            .describe(guard)?
+            .ok_or("learning membership parameter is absent")?;
+        let assigned = parameters[1]
+            .describe(guard)?
+            .ok_or("learning assignment indicator is absent")?;
+        let integer = |value: Option<&parameters::NativeValue>| match value {
+            Some(parameters::NativeValue {
+                variant_tag: 1,
+                value: parameters::Value::Integer(value),
+            }) => Some(*value),
+            _ => None,
+        };
+        if member.name != "learnChord"
+            || member.tag != 1
+            || member.kind != parameters::Kind::Toggle
+            || !member.enabled
+            || member.read_only
+            || !member.support.raw_number
+            || !matches!(integer(member.raw.as_ref()), Some(0 | 1))
+            || integer(member.min.as_ref()) != Some(0)
+            || integer(member.max.as_ref()) != Some(1)
+            || integer(member.default_value.as_ref()) != Some(0)
+            || assigned.name != "chordAssigned"
+            || assigned.tag != 6
+            || assigned.kind != parameters::Kind::Integer
+            || !assigned.enabled
+            || !assigned.read_only
+            || assigned.support.raw_number
+            || !matches!(integer(assigned.raw.as_ref()), Some(0..=2))
+            || integer(assigned.min.as_ref()) != Some(0)
+            || integer(assigned.max.as_ref()) != Some(2)
+            || integer(assigned.default_value.as_ref()) != Some(0)
+        {
+            return Err(
+                "learning child requires the exact membership and indicator profiles".into(),
+            );
+        }
+        guard()
+    }
+    pub(super) fn member_parameter(&self, api: &Api) -> Result<RawParameter, String> {
+        let parameter = self
+            .parameters
+            .as_ref()
+            .and_then(|parameters| parameters[0].parameter.as_ref())
+            .ok_or("learning membership parameter is absent")?;
+        retained_parameter(parameter.parameter.as_borrowed_raw().as_ptr(), api)
     }
     pub(super) fn value(&self) -> Value {
         let mut value = json!({"scope":"fixed_chorder_pitch61_learning_parameters","child_id":"pitch61",
@@ -204,7 +294,12 @@ impl FixedLearningChild {
         if self.root_count != Some(128) {
             return guard();
         }
-        let fresh = find_child(root.handle.0, self.text.expect("fixed text API"), guard)?;
+        let fresh = find_child(
+            root.handle.0,
+            self.name,
+            self.text.expect("fixed text API"),
+            guard,
+        )?;
         let same = fresh.as_ref().map(|p| p.0) == self.child.as_ref().map(|p| p.handle.0);
         witnesses.extend(fresh);
         if !same {
@@ -258,7 +353,7 @@ impl FixedLearningChild {
         if self.root_count != Some(128) {
             return Ok(());
         }
-        if find_child_raw(root.handle.0, self.text.expect("fixed text API"))?
+        if find_child_raw(root.handle.0, self.name, self.text.expect("fixed text API"))?
             != self.child.as_ref().map_or(ptr::null_mut(), |p| p.handle.0)
         {
             return Err("GUI fixed learning child changed after cleanup".into());
@@ -394,8 +489,12 @@ fn node_id<G: FnMut() -> Result<(), String>>(
     guard()?;
     value
 }
-fn find_child_raw(node: *mut c_void, text: TextApi) -> Result<*mut c_void, String> {
-    let name = unsafe { (text.get_constant_string)(c"pitch61".as_ptr()) };
+fn find_child_raw(
+    node: *mut c_void,
+    name: &'static CStr,
+    text: TextApi,
+) -> Result<*mut c_void, String> {
+    let name = unsafe { (text.get_constant_string)(name.as_ptr()) };
     if name.is_null() {
         return Err("fixed learning child string is unavailable".into());
     }
@@ -405,11 +504,12 @@ fn find_child_raw(node: *mut c_void, text: TextApi) -> Result<*mut c_void, Strin
 }
 fn find_child<G: FnMut() -> Result<(), String>>(
     node: *mut c_void,
+    name: &'static CStr,
     text: TextApi,
     guard: &mut G,
 ) -> Result<Option<Owned>, String> {
     guard()?;
-    let name = unsafe { (text.get_constant_string)(c"pitch61".as_ptr()) };
+    let name = unsafe { (text.get_constant_string)(name.as_ptr()) };
     guard()?;
     if name.is_null() {
         return Err("fixed learning child string is unavailable".into());
@@ -439,3 +539,134 @@ fn node_parent<G: FnMut() -> Result<(), String>>(
 #[cfg(test)]
 #[path = "learning_child_tests.rs"]
 mod tests;
+
+const CHILD_NAMES: [&CStr; 128] = [
+    c"pitch1",
+    c"pitch2",
+    c"pitch3",
+    c"pitch4",
+    c"pitch5",
+    c"pitch6",
+    c"pitch7",
+    c"pitch8",
+    c"pitch9",
+    c"pitch10",
+    c"pitch11",
+    c"pitch12",
+    c"pitch13",
+    c"pitch14",
+    c"pitch15",
+    c"pitch16",
+    c"pitch17",
+    c"pitch18",
+    c"pitch19",
+    c"pitch20",
+    c"pitch21",
+    c"pitch22",
+    c"pitch23",
+    c"pitch24",
+    c"pitch25",
+    c"pitch26",
+    c"pitch27",
+    c"pitch28",
+    c"pitch29",
+    c"pitch30",
+    c"pitch31",
+    c"pitch32",
+    c"pitch33",
+    c"pitch34",
+    c"pitch35",
+    c"pitch36",
+    c"pitch37",
+    c"pitch38",
+    c"pitch39",
+    c"pitch40",
+    c"pitch41",
+    c"pitch42",
+    c"pitch43",
+    c"pitch44",
+    c"pitch45",
+    c"pitch46",
+    c"pitch47",
+    c"pitch48",
+    c"pitch49",
+    c"pitch50",
+    c"pitch51",
+    c"pitch52",
+    c"pitch53",
+    c"pitch54",
+    c"pitch55",
+    c"pitch56",
+    c"pitch57",
+    c"pitch58",
+    c"pitch59",
+    c"pitch60",
+    c"pitch61",
+    c"pitch62",
+    c"pitch63",
+    c"pitch64",
+    c"pitch65",
+    c"pitch66",
+    c"pitch67",
+    c"pitch68",
+    c"pitch69",
+    c"pitch70",
+    c"pitch71",
+    c"pitch72",
+    c"pitch73",
+    c"pitch74",
+    c"pitch75",
+    c"pitch76",
+    c"pitch77",
+    c"pitch78",
+    c"pitch79",
+    c"pitch80",
+    c"pitch81",
+    c"pitch82",
+    c"pitch83",
+    c"pitch84",
+    c"pitch85",
+    c"pitch86",
+    c"pitch87",
+    c"pitch88",
+    c"pitch89",
+    c"pitch90",
+    c"pitch91",
+    c"pitch92",
+    c"pitch93",
+    c"pitch94",
+    c"pitch95",
+    c"pitch96",
+    c"pitch97",
+    c"pitch98",
+    c"pitch99",
+    c"pitch100",
+    c"pitch101",
+    c"pitch102",
+    c"pitch103",
+    c"pitch104",
+    c"pitch105",
+    c"pitch106",
+    c"pitch107",
+    c"pitch108",
+    c"pitch109",
+    c"pitch110",
+    c"pitch111",
+    c"pitch112",
+    c"pitch113",
+    c"pitch114",
+    c"pitch115",
+    c"pitch116",
+    c"pitch117",
+    c"pitch118",
+    c"pitch119",
+    c"pitch120",
+    c"pitch121",
+    c"pitch122",
+    c"pitch123",
+    c"pitch124",
+    c"pitch125",
+    c"pitch126",
+    c"pitch127",
+    c"pitch128",
+];

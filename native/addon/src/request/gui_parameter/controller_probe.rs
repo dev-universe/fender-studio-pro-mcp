@@ -286,6 +286,38 @@ struct Observed {
     mode: parameters::Description,
     pitch: parameters::Description,
 }
+pub(super) struct LearningNoteChild {
+    child: learning_child::FixedLearningChild,
+    witnesses: RefCell<Vec<Owned>>,
+}
+impl LearningNoteChild {
+    pub(super) fn check<G: FnMut() -> Result<(), String>>(
+        &self,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<(), String> {
+        let previous = std::mem::take(&mut *self.witnesses.borrow_mut());
+        release(previous, guard)?;
+        self.child.retire_publication_witnesses(guard)?;
+        let mut witnesses = Vec::new();
+        let result = self.child.check(api, guard, &mut witnesses);
+        let previous = self.witnesses.replace(witnesses);
+        release(previous, guard)?;
+        result?;
+        self.child.member_profile(guard)?;
+        guard()?;
+        self.child.check_borrowed()
+    }
+    pub(super) fn check_borrowed(&self) -> Result<(), String> {
+        self.child.check_borrowed()
+    }
+    pub(super) fn retain_publication(&self) -> Result<(), String> {
+        self.child.retain_publication_interfaces()
+    }
+    pub(super) fn parameter(&self, api: &Api) -> Result<RawParameter, String> {
+        self.child.member_parameter(api)
+    }
+}
 pub(super) struct ControllerProbe {
     inspection: Option<Inspection>,
     models: Option<[NamedPin; 2]>,
@@ -488,6 +520,29 @@ impl ControllerProbe {
             Selected::Direct | Selected::Both => self.direct.controller.as_ref(),
             Selected::Provider => self.provider.controller.as_ref(),
         }
+    }
+    pub(super) fn capture_note_child<G: FnMut() -> Result<(), String>>(
+        &self,
+        gui: &ParameterPin,
+        output_pitch: u8,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<LearningNoteChild, String> {
+        self.require_direct(gui)?;
+        let child = learning_child::FixedLearningChild::capture_note(
+            self.direct
+                .controller
+                .as_ref()
+                .ok_or("direct GUI controller is absent")?,
+            output_pitch,
+            owner_inspect::text_api()?,
+            api,
+            guard,
+        )?;
+        Ok(LearningNoteChild {
+            child,
+            witnesses: RefCell::new(Vec::new()),
+        })
     }
     pub(super) fn observe_learning_child<G: FnMut() -> Result<(), String>>(
         &mut self,

@@ -496,3 +496,6 @@ fn retired_publication_witnesses_reenter_before_fresh_normal_checks() {
         assert!(probe.check(api, &mut || Ok(()), &mut witnesses).is_err());
     });
 }
+
+#[path = "chord_note_tests.rs"]
+mod note_tests;
