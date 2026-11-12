@@ -12,8 +12,8 @@
   "mcp_tools": 45,
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
-  "app_closed_observed": false,
-  "mcp_owner_stopped": false,
+  "app_closed_observed": true,
+  "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -272,7 +272,8 @@
       118,
       119,
       120
-    ]
+    ],
+    "room_writable_serialized_restore_pilots": 1
   },
   "next_units_in_order": [
     "Keep Native36/main45/bridges frozen while its dependent units remain. Hardware is detached; fresh OS inventory twice and actual MacBook48k/512 DAW preferences are verified. Do not repeat hardware observer or completed model/preset sweeps.",
@@ -294,11 +295,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": {
-    "unit": "Room Reverb fresh serialized identity r1",
-    "state": "live",
-    "global_preset_count_unchanged": true
-  },
+  "current_execution": null,
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -1011,7 +1008,7 @@
     "all_six_saved_songs_unchanged": true,
     "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
     "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
-    "first_failure_details": "pending_readonly_raw_audit"
+    "first_failure_details": "All16writable and outwidth restored; outdepth/outheight stayed exact known postload. Planned250ms gate failed at approximately1086ms; no500ms observation. Old capsule-load hash echoes original bytes and did not prove fresh capture identity."
   },
   "surround_second_independent_review": {
     "status": "PASS_WITH_LIMITS",
@@ -1076,5 +1073,41 @@
     "all_six_saved_songs_unchanged": true,
     "result_sha256": "8013452269d0dd4884efa987a4e9b1787b4dd1fa25ee75df4ded8843f01058c9",
     "raw_audit_sha256": "fbee4bd521b00d4f52f8f27b4c9bd2fc66106d994aa78d4f578cab68f1fcb8ec"
+  },
+  "room_serialized_identity_actual": {
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+    "plugin": "Room Reverb",
+    "preset_index": 0,
+    "accepted_writable_serialized_restore_pilots": 1,
+    "accepted_global_preset_cases": 0,
+    "full19_current_restored": false,
+    "derived_readonly_restored": false,
+    "writable_parameters_restored": 16,
+    "provider_records_observed": 19,
+    "full_provider_reads": 18,
+    "fresh_capture_count": 2,
+    "capture_byte_count": 725,
+    "fresh_serialization_signatures_equal": true,
+    "capture_tokens_distinct": true,
+    "state_releases": 2,
+    "original_state_loads": 1,
+    "plugin_parameter_writes": 1,
+    "main_preparation_writes": 1,
+    "rpc_calls": 156,
+    "elapsed_seconds_with_UI_cleanup": 99.811,
+    "all_six_saved_songs_unchanged": true,
+    "app_and_owner_closed": true,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "persistence_verified": false,
+    "audio_verified": false,
+    "hidden_memory_equality_proved": false,
+    "readonly_serialization_participation_proved": false,
+    "result_sha256": "5835ce2fc643e55aeed36cfc749501f68269b3c8d86de22ead0a3e0de7b10afd",
+    "raw_audit_sha256": "958ea1b88902a352c89a912fba2c3c6e06ef6bfc0f1d5546b5ce006598c41a19",
+    "root_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
+    "bound_freeze_sha256": "0e6f36b54c21643cfd1f275fdbe1dbfcccec1c7b5c013cf50c98f960748a7752",
+    "independent_review_report_sha256": "c7c235157b2a450c1e09cc37b6465755fb369f73df3c70f737f4a91c0502003b"
   }
 }

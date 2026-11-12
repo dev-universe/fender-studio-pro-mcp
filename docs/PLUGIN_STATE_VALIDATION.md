@@ -904,3 +904,6 @@ outside Git. Source review, mocks and actual-host observations remain separate.
 The new Native35 input60/output0 member edit passed actual179RPC with independent stored-model witnesses. See [model edit evidence](evidence/2026-11-13-chorder-note-model.json). This one mapping does not establish all pitches or persistence.
 
 Latest November13 checkpoint: the new Mixverb index1 hybrid passed121 actual requests and exact whole-nine-record restoration before and after token closure. Its prior independently audited index0 is reused. The additional preset plan now has26/46 completed classes,52 cases and20 remaining classes. Original capsule-only failures remain preserved. Chorder input60 has60/128 output roles accepted; the old chunk queue halted at the original-enabled60 serialized-order difference. A replacement queue remains under review.
+
+
+Room Reverb has one separately accepted writable/serialized restore pilot from actual8.1.1:156RPC/99.811s, all16 writable rows restored, two fresh725-byte capture signatures equal, distinct tokens released, NoSave closure and6 saved archives unchanged. Two derived read-only current rows remain the known postload values, so global preset counts stay28/46classes/56cases; all19 restoration/persistence/audio/hidden memory remain unproved. Public evidence: `evidence/2026-11-13-room-serialized-identity.json`.
