@@ -208,17 +208,18 @@
     ]
   },
   "next_units_in_order": [
-    "Hardwaremetadata/originalAudioSetuprestorecomplete. External36exactStereoGUIreadPASS37RPC; Autoaftereditor24identicalexactGUI24. Noneinteger-1/choices0 despiteactualSendMainmenu; portwriterNOTverified. Source-onlypublicSDKdynamicmenuinvestigation thenconcreteRootREA/Ghidraquestion. MonoexactGUIpilotstillseparate; nooldfailedreplays.",
-    "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
-    "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "25/46presetclasses51positivecases21remaining. OpenAIRsentinelnow61RPCstoppedbecauseissueddefaultdidnotresetobservedmix.5;0accepted/nofollowonload, NoSaveclosedhashesunchanged. Investigatecatalogentryapplicationsemantics separately, noalternatesameunitretry. Ordinarytailcomplete; VoiceFXR2alreadyaccepted2cases.",
-    "Continue21remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
-    "First Chorder input60/output0 model edit+restore passed179RPC withsixwhole908/sixwhole128 passes. Execute reviewed finite chunks for remainingoutput1..127 (output0notreplayed), then separateinputboundaries/save+restartpersistence. Native35GUIreceipt itselfremainscurrentvalueonly.",
-    "Vocal Tune direct bypass role plan and separate current-value pilot.",
-    "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
-    "Generic nested graph create/connect/reorder/delete with complete topology restoration.",
-    "External/CV hardware-dependent validation where a real verified route permits. USB-only availability does not satisfy physical-loopback requirements.",
-    "Recompute exact distinct-name union, update support documentation and release readiness."
+    "Keep Native36/main45/bridges frozen while its dependent units remain. Hardware is detached; fresh OS inventory twice and actual MacBook48k/512 DAW preferences are verified. Do not repeat hardware observer or completed model/preset sweeps.",
+    "Independently review and bind the replacement63 originally-disabled Chorder roles in8 finite chunks. Independently review the5 original-enabled serialized-order units, with10/8/6/4/2 fixed writers. Accept only exact whole908/128 and original capture restoration plus actual app/owner closure and six saved hashes. Reuse outputs0..59; never replay or resume failed original chunk08 or auto-start09.",
+    "Review a new Surround R2 independent scheduling admission: it may run on the owned Scratch while Chorder replacement reviews continue because it has no Chorder model dependency. Preserve six original archives, exact normal35/36/source/context/full-provider/terminal/closure guards. Historical Mixverb provenance must resolve immutable pre-binding snapshots; old R1 and oldall16 flags remain unchanged. Run141RPC index0 only after review/freshbinding; a distinct second successful case is still required for class completion.",
+    "Prepare separate finite Multiband Dynamics five-scalar and Room Reverb one-scalar/derived-readonly plans from immutable measurements. Exact raw/normalized/full profiles required; no tolerance widening or generic repair. Need two distinct selected cases per class to complete its preset plan.",
+    "Investigate Open AIR singleton application semantics. Both unchanged original entry and independently seeded mix no-reset attempts remain failed; do not rerun the same transaction or try another arbitrary seed. Current total26/46 completed preset classes,52cases,20remaining.",
+    "After all units that pin six original archives finish, review Chorder input boundaries and the339RPC/three-owner persistence candidate. Its literal all16 prerequisite needs a separately reviewed replacement completion admission. Exactly two Saves on the sixth dedicated copy; preserve five original songs, exact original581 model member after restoration, and cross-restart identity rebinding of only the two declared paths.",
+    "Compose approved Native37 nativeR2 and wireR2, run appropriate composed checks, build/install a normal artifact, then bind the independently reviewed35RPC Stereo menu pilot. Never use private isolated UUID. Mono exactGUI/menu remains separate. Dynamic menu selection/External port writes need their own fixed authority contract and real verification; reader observations alone do not prove routing.",
+    "Continue remaining preset/model classes and instrument/meter actions, using complete provider and schema-aware evidence. Remaining classes are explicitly listed in remaining_preset_class_names. Treat empty model catalogs as current observations, not enumeration of all available models.",
+    "Complete Vocal Tune direct bypass and remaining dedicated writable parameter, macro, model catalog, MIDI/event and input-boundary roles with fresh bounded plans and actual app proof.",
+    "Complete generic nested graph create/connect/reorder/delete and exact topology restoration. Keep existing fixed topology evidence and unresolved limits distinct.",
+    "Physical External audio, loopback latency, CV isolation and actual hardware keys remain unverified and require hardware/route conditions. USB-only historical connection did not satisfy physical loopback; do not claim those results while devices are detached.",
+    "Recompute the exact distinct-name union from immutable accepted evidence, then update support documentation and release readiness. Historical name denominators are not current coverage. Keep PR4 Draft and do not claim all built-ins fully verified while required work remains."
   ],
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
@@ -709,7 +710,18 @@
       180
     ],
     "hardware_boundary_policy": "No live unit during21:30UTC USBdetach boundary. AudioSetup already restored; freshcontext after boundary.",
-    "replacement_disabled_queue": "private implementation in progress;63 never-tested originally-disabled outputs, fresh review/binding required",
+    "replacement_disabled_queue": {
+      "candidate": "chorder-disabled-remainder-r1",
+      "freeze_sha256": "5ecb884bae3cb87693ef1b0e87b3e4da62e6fdc730eae56fc4e8dfe53413af4e",
+      "offline_groups": 34,
+      "role_count": 63,
+      "chunks": 8,
+      "rpc_calls": 11057,
+      "setters": 126,
+      "independent_review": "in_progress",
+      "runtime_binding": "UNBOUND",
+      "actual_calls": 0
+    },
     "replacement_enabled_roles": [
       60,
       63,
@@ -745,5 +757,13 @@
     "all_six_saved_songs_unchanged": true,
     "result_sha256": "6602702b746b47eb544a2deae4cab214a4461e74ec365cc41c75c0a3b8eb6f53",
     "raw_audit_sha256": "6599db36e8304dab2adb7309e5b123c5dae3fae66fc51fbe93cf09306dc960bd"
+  },
+  "external37_menu_pilot_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "offline_groups": 28,
+    "report_sha256": "d39876faeb087ef27b890a9372135d211a03c2509f2c7989203eed0c23b44fdb",
+    "evidence_sha256": "aa5af3b2c872d2ec61b51df41919a48868ca01ca257af1b733fe0e5fd6c12861",
+    "actual_calls": 0,
+    "normal37_installed": false
   }
 }
