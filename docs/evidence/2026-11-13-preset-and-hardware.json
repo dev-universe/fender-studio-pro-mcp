@@ -223,5 +223,39 @@
     "normal_saves": 0,
     "saved_source_unchanged": true,
     "app_and_owner_closed": true
+  },
+  "External_provider_choices_only": {
+    "status": "passed_cleaned_up",
+    "elapsed_seconds_including_UI_cleanup": 417.436,
+    "rpc_calls": 51,
+    "instances": 2,
+    "complete24record_provider_reads": 8,
+    "record_observations": 192,
+    "complete_choice_pages": 8,
+    "each_send_and_receive_count": 0,
+    "complete_insert_list_reads": 4,
+    "Main_API1to0_preparations": 1,
+    "plugin_parameter_writes": 0,
+    "state_writes": 0,
+    "port_writes": 0,
+    "transport_actions": 0,
+    "normal_saves": 0,
+    "complete_graph_verified": false,
+    "topology_not_assessed": true,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true,
+    "physical_ping_verified": false,
+    "audio_verified": false
+  },
+  "External_IO_copy_preparation": {
+    "normal_save_as_observed": true,
+    "elapsed_seconds_including_UI_cleanup": 324.610276,
+    "new_title_and_file_url_observed": true,
+    "new_named_scratch": "MCP External IO Diagnostic",
+    "three_existing_saved_sources_unchanged": true,
+    "io_changes": 0,
+    "mcp_calls": 0,
+    "app_closed": true,
+    "original_AudioSetup_restoration_required": true
   }
 }

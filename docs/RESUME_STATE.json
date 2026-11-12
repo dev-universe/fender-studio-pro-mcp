@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Unit68 adds Rotor,De-Esser,Vocoder,VocalTune4classes8cases; stops at OpenAIR singleton no-value/no-schema-change; app/owner closed and saved source unchanged.",
+  "last_completed_unit": "External provider/choices-only:51RPC,2instances,8full24-record providers,8complete zero-count port pages; no graph claim. Normal SaveAs created separate External IO diagnostic copy with source originals unchanged.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -120,7 +120,7 @@
     "chorder_complete_stored_model_readonly_units": 1
   },
   "next_units_in_order": [
-    "Before06:30KST: prepare/review new External provider/choices-only unit with one Main1→0 API preparation, exact24record providers/complete portchoices/insert lists/fixture preservation. Do not require or claim full native diagnostic graph; generic topology remains separate. Restore original Audio Setup through UI after hardware work.",
+    "Before06:30KST: External provider-only51RPC complete. In separate normal-SaveAs External IO diagnostic copy, prepare/review staged logical/physical bus catalog observation with exact Main1→0 API prep. No port writes until native unset-1 restoration path exists. Restore original Audio Setup through actual UI after hardware work.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
     "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
@@ -138,7 +138,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "24/46classes,48positivecases,22remain. Ordinary unrun tail0; OpenAIR singleton unobserved recall effect, VoiceFX schema-aware case pending. Previous4strict drift failures remain unaccepted.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed after68. External provider/choices-only reduced scope independent review ongoing; unit67 raw journal gate fix ongoing; Native35 candidate isolated native/supporting tests in progress. Restore original Audio Setup after hardware unit.",
+  "current_execution": "App/owner closed. External IO staged helper preparation for new owned copy; unit67 registry outcome contract fixed, independent rerun ongoing; Native35 R2 supporting API review ongoing. Restore original Audio Setup through actual UI before06:30KST.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -221,7 +221,7 @@
     },
     "67": {
       "path": ".local/next-state/unit67-mixverb-exact-restore",
-      "status": "independent_review_FIX_REQUIRED_raw_journal_gate_fix_in_progress",
+      "status": "registry_outcome_contract_fixed_independent_rerun_pending",
       "execution_ready": false
     },
     "68": {
@@ -301,14 +301,22 @@
     "daw_io_buses_verified": true,
     "input_bus_table_empty": true,
     "first_external_readonly_status": "failed_at_Main_exact0_precondition_before_full_provider_or_choices",
-    "external_full_provider_readonly_verified": false,
+    "external_full_provider_readonly_verified": true,
     "UI_Main_minimum_is_exact_numeric0": false,
     "exact_Main1_to0_API_preparation_verified": true,
     "external_native_graph_complete": false,
     "external_graph_diagnostics": [
       "ancestor_limit",
       "depth_limit"
-    ]
+    ],
+    "external_provider_instances": 2,
+    "external_full_provider_reads": 8,
+    "external_choice_pages": 8,
+    "external_current_send_choice_count": 0,
+    "external_current_return_choice_count": 0,
+    "external_port_writes": 0,
+    "external_unset_minus1_generic_write_supported": false,
+    "external_io_diagnostic_copy_created": true
   },
   "tooling_update_checkpoint": {
     "scope": "Official acquisition, isolated CLI execution, Codex registration update and same-byte static analysis verified; existing connected MCP still6.5.0",
@@ -340,5 +348,12 @@
   },
   "unit65_current_status": "failed_cleaned_up_no_cases_accepted",
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
-  "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted"
+  "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
+  "native35_candidate": {
+    "status": "R2_private_supporting_API_independent_rerun_pending",
+    "installed": false,
+    "wire_implemented": false,
+    "addon_independent_review_complete": false,
+    "freeze_sha256": "1573964b044aaaef775240a8a0e8f5eec91791975e6996dff4bb6bcc4f2a9998"
+  }
 }

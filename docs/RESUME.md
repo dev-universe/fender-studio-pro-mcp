@@ -26,7 +26,7 @@
 - 추가 프리셋46종 계획에서24종·48사례가 완료됐고22종이 남았다. unit64 때문에 이 수를 늘리지 않는다.
 - unit65는 Mixverb의 strict typed 복원 실패로 종료·정리됐다. 추가 성공0종, 저장본 불변. unit66은 Studio Verb·Compressor2종·4사례를 추가하고 Voice FX의 provider 구성 전환에서 fixed-provider gate가 멈췄다. unit68은 Rotor·De-Esser·Vocoder·Vocal Tune4종·8사례를 더 수락하고 Open AIR 단일 preset 무변화에서 끝났다. 일반 미실행 tail은 없으며65·66·68을 재실행하지 않는다.
 - 사용자는 Volt 276과 Keystation 88 MK3를 한국 시간11월13일 오전6시30분까지 USB로만 연결한다. 물리 loopback 배선은 없다.
-- 실제 Audio Setup에서 재생·녹음 Volt276·48kHz·512샘플을 확인했다. 원래 MacBook 스피커·마이크 설정의 UI 복원이 하드웨어 단위 종료 또는 마감 전에 반드시 필요하다. DAW I/O는 INPUT1·2/MONITOR L·R을 관찰했고 입력 bus는 비어 있다. External 전체 provider·선택지 확인은 남아 있다. 첫 UI Main 최솟값은 exact0이 아니어서 중단했으며 새 단위는 API Main1→0 준비1회를 선언한다.
+- 실제 Audio Setup에서 재생·녹음 Volt276·48kHz·512샘플을 확인했다. 원래 MacBook 스피커·마이크 설정의 UI 복원이 하드웨어 단위 종료 또는 마감 전에 반드시 필요하다. DAW I/O는 INPUT1·2/MONITOR L·R을 관찰했고 입력 bus는 비어 있다. External provider-only51RPC에서 두 인스턴스의 전체24record8회와 complete port page8회를 확인했다. 송·리턴 선택지는 각각0개다. 별도 정상 SaveAs 사본 MCP External IO Diagnostic을 생성했으며 그 사본에서 I/O bus 노출을 다음 단계로 확인한다. 현재 generic setter는 원래 port값-1 쓰기를 허용하지 않아 포트 선택 왕복은 아직 실행하지 않는다. 첫 UI Main 최솟값은 exact0이 아니어서 중단했으며 새 단위는 API Main1→0 준비1회를 선언한다.
 - Rust inventory·bounded observer의 소스·독립 검토·실제 CLI/MCP 검증이 완료됐고 main은45개 도구다. 세 수신 창은 event0과 정리status0이며 실제 건반 연주 증거는 아니다. 소스7dedec2와 [하드웨어 안내](HARDWARE.md)를 참고한다.
 - REA6.9.0·portableNode26.12.1·Craft0.6.1 설치·실행과 Codex 등록 갱신, 새CLI+Ghidra12.1.4 분석을 확인했다. 기존 연결REA MCP는6.5.0이며 새CLI를 사용한다. Hopper는 사용하지 않았다.
 
