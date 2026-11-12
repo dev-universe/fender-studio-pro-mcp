@@ -7,11 +7,11 @@
   "native_unit": 34,
   "new_preset_plan": {
     "classes_total": 46,
-    "classes_complete": 20,
-    "accepted_cases": 40,
-    "classes_remaining": 26,
-    "capsule_only_classes": 18,
-    "capsule_only_cases": 36,
+    "classes_complete": 24,
+    "accepted_cases": 48,
+    "classes_remaining": 22,
+    "capsule_only_classes": 22,
+    "capsule_only_cases": 44,
     "hybrid_classes": 2,
     "hybrid_cases": 4
   },
@@ -149,5 +149,79 @@
     "complete_provider_reads": 0,
     "choice_pages": 0,
     "saved_source_unchanged": true
+  },
+  "unit68": {
+    "elapsed_seconds_including_UI_cleanup": 184.288,
+    "overall_status": "failed_cleaned_up",
+    "previous_full_class_gates_retained": true,
+    "accepted_classes": [
+      {
+        "name": "Rotor",
+        "provider_records": 29,
+        "catalog_count": 18,
+        "issued_indices": [
+          1,
+          2
+        ],
+        "changed_writable_counts": [
+          9,
+          10
+        ]
+      },
+      {
+        "name": "De-Esser",
+        "provider_records": 10,
+        "catalog_count": 14,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "Vocoder",
+        "provider_records": 117,
+        "catalog_count": 27,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          42,
+          61
+        ]
+      },
+      {
+        "name": "Vocal Tune",
+        "provider_records": 26,
+        "catalog_count": 13,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          3,
+          4
+        ]
+      }
+    ],
+    "not_accepted": {
+      "name": "Open AIR",
+      "provider_records": 94,
+      "catalog_count": 1,
+      "indices": [
+        0
+      ],
+      "reason": "no_observable_value_or_schema_change",
+      "baseline_schema_changed": false,
+      "restoration_and_release_verified": true
+    },
+    "unrun_classes": [],
+    "normal_saves": 0,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true
   }
 }

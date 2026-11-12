@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Unit66 accepts Studio Verb and Compressor2classes4cases, stops at VoiceFX no-value-change and cleans up; first External read fails Main UI floor!=exact0 before provider/choices; all saved originals preserved.",
+  "last_completed_unit": "Unit68 adds Rotor,De-Esser,Vocoder,VocalTune4classes8cases; stops at OpenAIR singleton no-value/no-schema-change; app/owner closed and saved source unchanged.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -49,18 +49,22 @@
       "Gate",
       "Analog Delay",
       "Studio Verb",
-      "Compressor"
+      "Compressor",
+      "Rotor",
+      "De-Esser",
+      "Vocoder",
+      "Vocal Tune"
     ],
-    "new_preset_recall_restore_cases": 40,
-    "remaining_preset_classes": 26,
+    "new_preset_recall_restore_cases": 48,
+    "remaining_preset_classes": 22,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
     "new_hybrid_preset_recall_restore_cases": 4,
     "partial_preset_classes": {},
-    "new_preset_cases_in_completed_classes": 40,
-    "new_capsule_only_preset_classes_completed": 18,
-    "new_capsule_only_preset_recall_restore_cases": 36,
+    "new_preset_cases_in_completed_classes": 48,
+    "new_capsule_only_preset_classes_completed": 22,
+    "new_capsule_only_preset_recall_restore_cases": 44,
     "new_hybrid_preset_classes_completed": 2,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -99,6 +103,17 @@
         "observed_model_after": "Transformer",
         "actual_value_changes_observed": true,
         "legacy_no_state_change_status_is_misleading": true
+      },
+      "Open AIR": {
+        "accepted_cases": 0,
+        "reason": "singleton_default_no_observable_value_or_schema_change",
+        "indices": [
+          0
+        ],
+        "full_provider_records": 94,
+        "catalog_count": 1,
+        "baseline_schema_changed": false,
+        "restoration_and_release_verified": true
       }
     },
     "chorder_fixed_child_readonly_observations": 1,
@@ -108,8 +123,8 @@
     "Before06:30KST: prepare/review new External provider/choices-only unit with one Main1→0 API preparation, exact24record providers/complete portchoices/insert lists/fixture preservation. Do not require or claim full native diagnostic graph; generic topology remains separate. Restore original Audio Setup through UI after hardware work.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "After hardware priority, prepare/review/bind unit68 for only unit66 unrun5ordinaryFXclasses9cases: Rotor,De-Esser,Vocoder,VocalTune,OpenAIR0last. VoiceFX0/1 actually change5→6provider and De-Tuner→Transformer; fixed-schema verifier status is misleading and needs separate schema-aware plan, not replay.",
-    "Continue exact26remainingpresetclasses. Unit67 first prepares Mixverb predeclared one-preset/one-predelay-normalized-setter exact restoration pilot; separately Surround2,Multiband5,Room1 scalar plans. Previous4failedclasses remain0accepted; no generic tolerance or samefailedunit repair.",
+    "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
+    "Continue exact22remainingpresetclasses: unit67 first Mixverb predeclared one-preset/one-scalar exact restore, fix raw Journal proof gate before binding; later Surround2/Multiband5/Room1 plans. Preserve previous failures and no generic tolerance widening.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
@@ -121,9 +136,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "20/46presetclasses,40positivecases,26remain. VoiceFX2no-changecasesnotaccepted; unrun5classes9cases. UI Main minimum6.309418287428427e-08 is not numeric0.",
+  "last_measurement": "24/46classes,48positivecases,22remain. Ordinary unrun tail0; OpenAIR singleton unobserved recall effect, VoiceFX schema-aware case pending. Previous4strict drift failures remain unaccepted.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed. Mainzero API preparation verified, then graph completeness refused; new External provider/choices-only scope prepares with topology_not_assessed. Unit68 reviewed/mechanical delta pending Root; unit67 independent review ongoing; isolated Native35 candidate in progress.",
+  "current_execution": "App/owner closed after68. External provider/choices-only reduced scope independent review ongoing; unit67 raw journal gate fix ongoing; Native35 candidate isolated native/supporting tests in progress. Restore original Audio Setup after hardware unit.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -132,11 +147,11 @@
       "reason for changes in estimate"
     ],
     "estimated_overall_remaining_hours": [
-      6,
-      18
+      5,
+      17
     ],
     "estimate_confidence": "low",
-    "estimate_basis": "Unit66 adds2classes4cases. VoiceFX has no observed writable value changes and needs a separate witness; Main UI floor setup requires cause-specific fixed API preparation. Keep6–18h low confidence while Native35/model persistence and graphs remain uncertain.",
+    "estimate_basis": "Unit68 completes4more ordinary classes8cases and exhausts unrun ordinary tail; reduce both bounds1hour. Dedicated model/persistence/graph roles remain uncertain; hardware physical cable checks separate.",
     "hardware_dependent_verification": "separate condition",
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
@@ -151,8 +166,8 @@
   "last_runtime_verified_native_unit": 34,
   "last_runtime_verified_source_commit": "3815714",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": 66,
-  "last_completed_live_elapsed_seconds": 209.528,
+  "last_completed_live_unit": 68,
+  "last_completed_live_elapsed_seconds": 184.288,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -206,15 +221,24 @@
     },
     "67": {
       "path": ".local/next-state/unit67-mixverb-exact-restore",
-      "status": "preparing_predeclared_single_scalar_single_preset",
+      "status": "independent_review_FIX_REQUIRED_raw_journal_gate_fix_in_progress",
       "execution_ready": false
     },
     "68": {
       "path": ".local/next-state/unit68-preset-remainder",
-      "status": "planned_unrun_tail_only",
+      "status": "completed_stopped_OpenAIR",
       "classes": 5,
       "selected_cases": 9,
-      "execution_ready": false
+      "execution_ready": false,
+      "started": true,
+      "completed": true,
+      "validation_passed": false,
+      "accepted_classes": 4,
+      "accepted_cases": 8,
+      "unrun_classes": 0,
+      "unrun_cases": 0,
+      "runner_sha256": "aaa02ec3a98e6f12e4bb6187d55163088563b7cde05c168121ea51dc731911ec",
+      "replay_policy": "completed_evidence_only_do_not_replay"
     }
   },
   "remaining_preset_class_names": [
@@ -232,11 +256,7 @@
     "Rumble Native",
     "Tuner",
     "Voice FX",
-    "Rotor",
-    "De-Esser",
-    "Vocoder",
     "VU Meter",
-    "Vocal Tune",
     "Multi Instrument",
     "SampleOne",
     "Impact",
