@@ -146,10 +146,11 @@
         "change_and_restore": true,
         "persistence_verified": false
       }
-    ]
+    ],
+    "external_stereo_exact_GUI_metadata_units": 1
   },
   "next_units_in_order": [
-    "USBonlyhardware metadata complete andoriginalAudioSetuprestored. Historical24record provider iscontroller(notDSP); UIpopup choices differ. Native36source/normalinstalldone; R1preeditorAutoDSP0stoppedclean; freshR2acceptsexactpreeditorprofilethenRooteditorcheckpointbeforeGUIreads. Nophysicalping/audio/portwrites.",
+    "Hardwaremetadata/originalAudioSetuprestorecomplete. External36exactStereoGUIreadPASS37RPC; Autoaftereditor24identicalexactGUI24. Noneinteger-1/choices0 despiteactualSendMainmenu; portwriterNOTverified. Source-onlypublicSDKdynamicmenuinvestigation thenconcreteRootREA/Ghidraquestion. MonoexactGUIpilotstillseparate; nooldfailedreplays.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
     "Ordinary tail exhausted; VoiceFXR2 new schema-aware indices0/1complete. Retain25/46classes51positivecases(50completed+1partialMixverb),21remaining. OpenAIR singleton sentinel/default recall witness stilldesignonly; no completedreplays.",
@@ -167,7 +168,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46classes,51positivecases (50incompletedclasses+1partialMixverb),21remain; VoiceFXR2 indices0/1 newaccepted, old66failureimmutable.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "No currentowner/appclosed. Native36normalinstalled sourcebaa9076. ChorderR3storedmodelpilotPASS; all128memberroleschunkpreparing. External36R1failedat12thactualreceipt(preeditorAutoDSPcount0;11priorverified),0GUIreads/0portwrites; separateR2preparing. Keep README temporary accepted-wire bytes until pendingstrict59-source pilotcomplete; publicREADME newintent retained and privateRootcopyawaitrestore. OpenAIRsentinelprivatepreparation.",
+  "current_execution": "No currentowner/appclosed. External36editor-readyR2PASS37RPC/8fullprovider/8choicepages. ExactGUIcontroller24==Autoaftereditor24; Noneinteger-1, choices0stillactualSendMenuMainrow. Noportwrites. READMEtemporaryfreezeversionrestoredtonewactualdocumentationafterclosedunit; futurebindingsexcludeonlydocsREADMEfrom58runtimewirechecks. AwaitreviewOpenAIRsentinel andfirstChorder8rolechunk; source-onlySDKmenuinvestigationongoing.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -192,11 +193,11 @@
     "BridgeCore.js": "9165a23872a0af32866e9f400f874d74e8011b06ee5b951d1fee5b066fdfdd3c",
     "NativePluginControls.js": "d9a4968e87288ed102c7f3abeebaca0ee3a0956230c0272950bdcd16efcf75f3"
   },
-  "last_runtime_verified_native_unit": 35,
-  "last_runtime_verified_source_commit": "eb29bc4",
+  "last_runtime_verified_native_unit": 36,
+  "last_runtime_verified_source_commit": "baa9076",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "External36 pre-editor Auto inspect stopped; knownterminal NoSavecleanup",
-  "last_completed_live_elapsed_seconds": 148.841,
+  "last_completed_live_unit": "External36 exact GUI Stereo read-only metadata PASS",
+  "last_completed_live_elapsed_seconds": 103.882,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -317,6 +318,23 @@
       "GUI_provider_reads": 0,
       "port_writes": 0,
       "all_five_saved_songs_unchanged": true
+    },
+    "External36_R2_actual": {
+      "status": "complete",
+      "elapsed_seconds": 103.882,
+      "actual_rpc": 37,
+      "Auto24_full_reads": 4,
+      "GUI24_full_reads": 4,
+      "complete_choice_streams": 8,
+      "port_writes": 0,
+      "native_None_integer": -1,
+      "native_None_normalized_bits": "3F800000",
+      "all_parameter_choice_counts": 0,
+      "actual_Send_menu_Main_row": true,
+      "actual_Return_menu_None_only": true,
+      "source_auto_equals_exact_GUI_after_editor": true,
+      "all_five_saved_songs_unchanged": true,
+      "app_and_owner_closed": true
     }
   },
   "remaining_preset_class_names": [

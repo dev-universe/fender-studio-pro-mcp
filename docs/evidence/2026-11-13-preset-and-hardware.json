@@ -430,5 +430,31 @@
     "all_five_saved_songs_unchanged": true,
     "app_closed": true,
     "owner_stopped": true
+  },
+  "external36_editor_ready_R2": {
+    "status": "complete",
+    "elapsed_seconds_with_UI_cleanup": 103.882,
+    "rpc_calls": 37,
+    "native_unit": 36,
+    "native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
+    "Auto_complete24record_reads": 4,
+    "exact_GUI_complete24record_reads": 4,
+    "complete_choice_streams": 8,
+    "Auto_provider_equals_exact_GUI_after_editor": true,
+    "None_native_integer": -1,
+    "None_normalized_bits": "3F800000",
+    "send_and_return_choice_count": 0,
+    "actual_Send_menu_has_Main": true,
+    "actual_Return_menu_None_only": true,
+    "parameter_list_does_not_enumerate_popup_menu": true,
+    "plugin_parameter_writes": 0,
+    "port_writes": 0,
+    "Main_preparation_sets": 1,
+    "all_five_saved_songs_unchanged": true,
+    "app_and_owner_closed": true,
+    "physical_loopback_verified": false,
+    "ping_verified": false,
+    "audio_verified": false,
+    "result_sha256": "58ff7836cc06026d6d0832d0f5888c3b3a138e2c0be4e31815fbbfb5cd7dacd6"
   }
 }

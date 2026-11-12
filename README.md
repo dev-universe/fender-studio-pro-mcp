@@ -133,7 +133,9 @@ The setter's closed `change` accepts `{"kind":"learn_mode","enabled":true}`,
 The last intent requires Learn Mode1 and an already selected matching input.
 It changes no selector or mode implicitly and reports only GUI current-value
 verification. Stored-model mapping, restoration, persistence and audio need
-separate evidence; the first actual model pilot has not passed yet.
+separate evidence. One actual input60/output0 add/remove pilot passed all908
+provider values and all128stored-input model comparisons in179requests.
+Other pitches and persistence remain separate checks.
 An explicit `pitch:null` clears the
 selection; omitting `pitch` is an error. Pitches are MIDI 0..127. The getter's
 read-only discovery ceiling is 256 views; learning setter discovery is limited to
@@ -167,7 +169,8 @@ passed actual 8.1.1 unit64 with two complete 128-input passes, 16 serializer
 reads and four unchanged complete 908-record reads. The run made zero parameter
 writes, capsule actions, loads, transport actions or Song Saves. See the
 [read-only model evidence](docs/evidence/2026-11-13-chorder-chords-readonly.json).
-Model editing, restoration and persistence remain pending.
+One input60/output0 membership edit and exact restoration passed independently
+through this getter. Other pitches, Save/restart and audio remain pending.
 
 Native33's fixed Chorder child probe also passed in the actual 8.1.1 host.
 It observed `pitch61` and its local `learnChord` and `chordAssigned` metadata.
@@ -219,3 +222,12 @@ Use these documents for details.
 
 This independent project is not affiliated with Fender or PreSonus. Fender Studio Pro and Studio One are trademarks of their respective owners. The project uses the [MIT license](LICENSE). Copied upstream assets retain their notices in [third-party notices](THIRD_PARTY_NOTICES.md).
 
+
+For the exact External Effect Mono/Stereo classes, explicit `source:"controller"`
+reads require a matching retained open editor. The new actual Stereo check read
+its complete24-parameter provider before and after without changes. Its current
+None value is integer-1, but parameter choice lists are empty even when the
+visible menu has a Main bus row. These lists do not enumerate the popup menu.
+Explicit controller sendPort/receivePort writes are refused until a separate
+GUI port writer is verified. No physical loopback, ping or audio claim follows
+from these metadata reads.

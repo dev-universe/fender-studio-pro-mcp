@@ -64,4 +64,4 @@ The explicit controller send/return lists remained empty even after mapping. Act
 No plugin port was selected, and no ping, transport or audio action ran.
 The temporary logical buses were removed, the original native fixture returned, and all five saved diagnostic songs stayed unchanged.
 Root restored MacBook Pro speakers and microphone through the actual Preferences UI, then reopened it to verify both devices,48kHz and512frames.
-A separate read-only GUI receiver is installed. Its first pilot stopped before editor opening because Auto returned an empty DSP provider; GUI choices and None encoding remain unverified.
+The separate exact GUI receiver passed a new Stereo read-only pilot in37requests. Auto after editor opening and the exact GUI provider return the same24parameters. The current None is integer-1; both native choice lists are empty despite a visible Main send-menu row. Port selection, dynamic-menu enumeration and physical capability remain unverified.
