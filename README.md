@@ -136,7 +136,11 @@ setter remains limited to 128 views. Incomplete bindings refuse the request. Suc
 controls do not establish learned chord contents, persistence or audio results.
 The Mode-off getter completed a 125-view actual-host walk. One input-pitch
 null-to-MIDI0-to-null setter roundtrip passed complete 908-record changed and
-original comparisons. Mode setter roundtrips remain pending.
+original comparisons. Native32 also passed one Mode-on, Mode-off and explicit
+input-null roundtrip. Eighteen complete provider reads covered its phases;
+the final 908 records and GUI descriptors matched the original. Five state
+captures retained identical stored chord bytes. Song Save/restart and learned
+chord editing remain separate checks.
 
 `plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
 

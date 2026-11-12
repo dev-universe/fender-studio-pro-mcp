@@ -4,9 +4,10 @@ This follow-up extends the [previous 60-class validation](VALIDATION.md). It is
 still in progress. Current-provider enumeration and representative controls do
 not establish complete model, preset, nested-graph or writable-parameter coverage.
 
-The run is paused at the user's request after the Native31 read-only unit.
-The app and owner are stopped. Use the [resume guide](RESUME.md) and
-[detailed handoff](LOOP_HANDOFF_2026-11-10.md) before further live work.
+The user resumed the run on 2026-11-12. Native32 passed a Chorder Mode roundtrip
+after the Native31 input-pitch case. The [current progress](PROGRESS_2026-11-12.md),
+[resume guide](RESUME.md) and [detailed handoff](LOOP_HANDOFF_2026-11-10.md)
+separate completed evidence from the remaining queue.
 
 | Area | Actual host evidence | Remaining scope |
 |---|---|---|
@@ -16,6 +17,7 @@ The app and owner are stopped. Use the [resume guide](RESUME.md) and
 | Additional preset recalls | Two Mixtool and two Binaural Pan changed/restored cases | 44 other classes from the finite remaining plan |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
+| Chorder GUI learning controls | One Mode-off input-pitch case and one Mode-on/off/explicit-null case, with full 908-record restoration | Transient reset, learned chord editing and other pitches |
 | Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
@@ -709,7 +711,27 @@ binds its coupled changes to that stored content. The source now gives only
 learning edits a fixed 144-view bound. Legacy Auto Fill remains128, getter256
 and depth32 remain unchanged. Add-on241 tests and a captured19-case native
 integration run passed, including131/144 success and145 refusal before begin.
-Actual Mode editing on the corrected build remains pending.
+Native32 was installed with this bound. Its first interactive Mode experiment
+confirmed Mode-on and Mode-off-retained but was discarded before the final null
+checkpoint when the execution transport changed. It contributes no completed
+Mode case.
+
+A fresh finite batch then completed the entire stored-chord-bound protocol.
+Three setters enabled Mode, disabled Mode and explicitly cleared the retained
+input selection. Mode-on observed GUI input60, DSP selector61 and exactly the
+five planned learnChord flags. Mode-off cleared those flags while retaining the
+selector. The explicit null restored every original record and GUI descriptor.
+Nine phase checkpoints each used two complete 908-record reads and two GUI reads.
+All five component-alias IStorable captures had the same 581-byte content hash,
+including the Mode-on capture; all five tokens were released. No state load,
+transport action or Song Save was sent. The 440 RPC receipts completed without
+an error. The owned diagnostic was closed without saving, its saved original
+was unchanged, and the app and owner exited in that order.
+
+This is one current-value Mode case with unchanged serialized chord contents.
+It does not establish learned chord editing, Save/restart behavior or audio.
+The [sanitized evidence](evidence/2026-11-12-chorder-learning.json) retains counts
+and private evidence hashes without raw runtime capabilities.
 
 Source verification passed 224 add-on tests, 95 parameter-library tests and four
 documentation tests, 81 server tests and 244 JavaScript tests. Independent
