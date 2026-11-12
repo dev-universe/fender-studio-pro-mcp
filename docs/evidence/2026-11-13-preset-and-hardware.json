@@ -8,14 +8,14 @@
   "new_preset_plan": {
     "classes_total": 46,
     "classes_complete": 26,
-    "accepted_cases": 53,
+    "accepted_cases": 54,
     "classes_remaining": 20,
     "capsule_only_classes": 23,
     "capsule_only_cases": 46,
     "hybrid_classes": 3,
-    "hybrid_cases": 7,
+    "hybrid_cases": 8,
     "cases_in_completed_classes": 52,
-    "partial_hybrid_cases": 1
+    "partial_hybrid_cases": 2
   },
   "unit66": {
     "elapsed_seconds_including_UI_cleanup": 209.528,
@@ -524,5 +524,39 @@
     "all_six_saved_songs_unchanged": true,
     "result_sha256": "ccd3d82d9954a9623ecabeb72409430e40df69eb9cb4d9d9ffa0fc322dd06a7f",
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
+  },
+  "Multiband_Dynamics_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 83.145,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "2bfed60855989f13dd1c36212cfede891c61a494de4fd8b715e439bdc2e467ce",
+    "raw_audit_sha256": "b449083a1c019a5f339051b62cff3434bd185ff5addf305f15c120e57084df13"
+  },
+  "Room_Reverb_index0_hybrid": {
+    "status": "failed_cleaned_up",
+    "accepted_new_cases": 0,
+    "elapsed_seconds_with_UI_cleanup": 113.363,
+    "actual_rpc_calls": 106,
+    "last_terminal_observed": true,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
+    "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
+    "first_failure_details": "pending_readonly_raw_audit"
   }
 }

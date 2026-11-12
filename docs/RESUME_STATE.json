@@ -57,12 +57,12 @@
       "Voice FX",
       "Mixverb"
     ],
-    "new_preset_recall_restore_cases": 53,
+    "new_preset_recall_restore_cases": 54,
     "remaining_preset_classes": 20,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 7,
+    "new_hybrid_preset_recall_restore_cases": 8,
     "partial_preset_classes": {
       "Surround Delay": {
         "accepted_cases": 1,
@@ -74,6 +74,17 @@
         ],
         "ordinary_class_complete": false,
         "acceptance_basis": "new_independently_reviewed_exact_two_scalar_hybrid_actual_unit"
+      },
+      "Multiband Dynamics": {
+        "accepted_cases": 1,
+        "issued_indices": [
+          1
+        ],
+        "remaining_planned_indices": [
+          2
+        ],
+        "ordinary_class_complete": false,
+        "acceptance_basis": "new_independently_reviewed_exact_five_scalar_hybrid_actual_unit"
       }
     },
     "new_preset_cases_in_completed_classes": 52,
@@ -83,7 +94,9 @@
     "stopped_preset_classes": {
       "Multiband Dynamics": {
         "accepted_cases": 0,
-        "reason": "strict_typed_original_restoration_not_confirmed"
+        "reason": "strict_typed_original_restoration_not_confirmed",
+        "historical_failure_retained": true,
+        "current_new_hybrid_cases": 1
       },
       "Surround Delay": {
         "accepted_cases": 0,
@@ -93,7 +106,10 @@
       },
       "Room Reverb": {
         "accepted_cases": 0,
-        "reason": "strict_typed_original_restoration_not_confirmed"
+        "reason": "strict_typed_original_restoration_not_confirmed",
+        "historical_failure_retained": true,
+        "new_hybrid_attempt_accepted_cases": 0,
+        "new_hybrid_reason": "raw_failure_audit_pending"
       },
       "Mixverb": {
         "accepted_cases": 0,
@@ -146,7 +162,7 @@
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1,
     "new_hybrid_cases_in_completed_classes": 6,
-    "partial_hybrid_cases": 1,
+    "partial_hybrid_cases": 2,
     "chorder_stored_model_edit_restore_pilot_cases": 1,
     "chorder_verified_model_mappings": [
       {
@@ -273,7 +289,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "NoactiveDAWownerafterChorderdisabled04PASS1404RPC247.794s/appfalseownerstop/all6originalarchives. Total92/128roles36remaining. PreparingreviewedMultiband169/max179RPC normal36 firsthybrid; followprogressbeforeDAWactions. NextChorder05 MUSTbindimmediatelylatestactualcontext after anyinterleavedunit. Allruntimeproduct/assetsfrozen;noSave.",
+  "current_execution": "LIVE Native36 Chorderreplacementdisabled05 outputs97..104. Read chorder-disabled-remainder-r1/chunks/05/run/progress.json beforeDAWactions. BindingpinslatestRoomknownobservedterminalafterfailed_cleaned_up/appfalseownerstop/all6saved. Accepted92/12836remaining. RoomrawauditingRO250msfailure; no500readwasissued. Presets26/46classes54cases20remain. Assets/runtimefrozen,noSave.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -800,7 +816,7 @@
       "runtime_binding": "UNBOUND",
       "actual_calls": 0,
       "review_report_sha256": "9e58c7fdde470a4512a14b4c6404ccd5513d9d5835a99fd1c08bf5131ebc7322",
-      "current_chunk": null,
+      "current_chunk": 5,
       "completed_chunks": [
         1,
         2,
@@ -808,7 +824,7 @@
         4
       ],
       "evidence_document": "docs/evidence/2026-11-13-chorder-replacement.json",
-      "next_chunk": 5
+      "next_chunk": null
     },
     "replacement_enabled_roles": [
       60,
@@ -899,5 +915,45 @@
     "groups": 39,
     "report_sha256": "3ff7f5c4af716731172a6667ddbd158eb7d6e4fc48f0112f0c24ab41a9ecbd43",
     "actual_calls": 0
+  },
+  "room_first_hybrid_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "groups": 41,
+    "report_sha256": "ac6cef9fd064fd06f55a1380a9fb7526c26853a704ffdb21df00f7156887368a",
+    "actual_calls": 0
+  },
+  "multiband_index1_actual": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 83.145,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "2bfed60855989f13dd1c36212cfede891c61a494de4fd8b715e439bdc2e467ce",
+    "raw_audit_sha256": "b449083a1c019a5f339051b62cff3434bd185ff5addf305f15c120e57084df13"
+  },
+  "room_index0_hybrid_actual": {
+    "status": "failed_cleaned_up",
+    "accepted_new_cases": 0,
+    "elapsed_seconds_with_UI_cleanup": 113.363,
+    "actual_rpc_calls": 106,
+    "last_terminal_observed": true,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
+    "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
+    "first_failure_details": "pending_readonly_raw_audit"
   }
 }
