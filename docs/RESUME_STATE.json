@@ -1,7 +1,7 @@
 {
   "schema": 1,
-  "updated_date": "2026-11-12",
-  "status": "paused_by_user",
+  "updated_date": "2026-11-13",
+  "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
   "product_source_commit": "3815714",
@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native34 R2 source tests, independent native/wire review, normal package and managed installation observation completed. Actual host unit64 has not started.",
+  "last_completed_unit": "Native34 unit64 actual-host stored Chorder model read verified: two complete128-key passes,16 serializer reads,four908-record original reads,zero writes/loads/transport/Save; app and owner closed.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -74,26 +74,29 @@
         "reason": "strict_typed_original_restoration_not_confirmed"
       }
     },
-    "chorder_fixed_child_readonly_observations": 1
+    "chorder_fixed_child_readonly_observations": 1,
+    "chorder_complete_stored_model_readonly_units": 1
   },
   "next_units_in_order": [
-    "Only after explicit resume: read latest Nov12 handoff, compare current Git/installed artifacts/songs/processes, create fresh bindings; finalize reviewed unit64 binding and run its fixed94 read-only RPCs",
-    "After unit64: finalize reviewed unit65 fresh binding and verify nine ordinary FX classes/17 selected cases; stop first nonpositive class",
-    "Continue the exact remaining28-class preset list without completed replays; separately preplan strict scalar restoration for failed Multiband Dynamics, Surround Delay and Room Reverb; retain Music/CV and signal-routing guards",
-    "Chorder stored-model read, fixed GUI child authority and learned-chord change/restore/persistence",
-    "Vocal Tune direct bypass role plan and separate current-value pilot",
-    "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles",
-    "Generic nested graph create/connect/delete with complete topology restoration",
-    "External/CV hardware-dependent validation where the real environment permits",
-    "Recompute exact distinct-name union, update support documentation and release readiness"
+    "Before2026-11-13T06:30+09:00: verify the actual DAW Audio Setup and Volt I/O labels, then bounded read-only External send/receive choice pages and passive Keystation input where the verified setup permits. USB only; no physical loopback/ping or CV isolation claim.",
+    "Review and verify the native Rust hardware_devices and bounded midi_input_observe additions before installation or live use; preserve signed CoreMIDI UIDs and distinguish zero events from physical key proof.",
+    "Complete the authorized pinned REA and Craft Anything update/runtime checks; reuse existing Ghidra evidence and apply a bounded new probe only for a concrete unresolved receiver question.",
+    "When hardware priority permits, finalize the reviewed unit65 fresh binding and verify nine ordinary FX classes/17 selected cases; stop at the first nonpositive class.",
+    "Continue the exact remaining28-class preset list without completed replays; separately preplan strict scalar restoration for failed Multiband Dynamics, Surround Delay and Room Reverb; retain Music/CV and signal-routing guards.",
+    "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
+    "Vocal Tune direct bypass role plan and separate current-value pilot.",
+    "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
+    "Generic nested graph create/connect/reorder/delete with complete topology restoration.",
+    "External/CV hardware-dependent validation where a real verified route permits. USB-only availability does not satisfy physical-loopback requirements.",
+    "Recompute exact distinct-name union, update support documentation and release readiness."
   ],
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
-  "current_progress_document": "docs/PROGRESS_2026-11-12.md",
-  "last_measurement": "Native33 runtime complete through63;18of46presetclasses36positivecases28remaining. Native34 source/install verified but actual stored-model getter remains untested until64.",
+  "current_progress_document": "docs/PROGRESS_2026-11-13.md",
+  "last_measurement": "Unit64 verifies the complete current stored Chorder model read only. Additional preset plan stays18of46classes complete,36positivecases,28remaining.",
   "binary_source_commit": "3815714",
-  "current_execution": "Paused by explicit user request after completing Native34 installation verification. Studio Pro and MCP owners closed. Units64 and65 unstarted and deliberately unbound.",
+  "current_execution": "After unit64 checkpoint: program resumed; hardware-first work before06:30KST is in progress. Unit65 remains reviewed but unbound and unstarted.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -106,7 +109,7 @@
       17
     ],
     "estimate_confidence": "low",
-    "estimate_basis": "Actual Native33 fixed child read resolved the receiver lookup uncertainty. Stored-chord getter/edit/restoration/persistence and model/graph/special roles remain uncertain; hardware validation separate.",
+    "estimate_basis": "Unit64 removed the stored-model read uncertainty. New hardware inventory/MIDI work and remaining chord edits, model/graph/special roles keep the6-17hour range unchanged; physical cabling checks remain separate.",
     "hardware_dependent_verification": "separate condition",
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
@@ -118,26 +121,27 @@
     "BridgeCore.js": "9165a23872a0af32866e9f400f874d74e8011b06ee5b951d1fee5b066fdfdd3c",
     "NativePluginControls.js": "626e9cb4fa365d08ecdcdae40e9693ae5dd44f8f47f60c539d8a0c4faa8bb230"
   },
-  "last_runtime_verified_native_unit": 33,
-  "last_runtime_verified_source_commit": "045c458",
-  "native34_runtime_verified": false,
-  "last_completed_live_unit": 63,
-  "last_completed_live_elapsed_seconds": 126.843,
-  "paused_observed_at": "2026-11-12T09:50:26.559375+00:00",
-  "pause_reason": "User requested finishing only the current unit and ending the loop, with a detailed versioned handoff",
+  "last_runtime_verified_native_unit": 34,
+  "last_runtime_verified_source_commit": "3815714",
+  "native34_runtime_verified": true,
+  "last_completed_live_unit": 64,
+  "last_completed_live_elapsed_seconds": 117.091,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
       "independent_review": "passed",
       "execution_ready": false,
-      "started": false,
+      "started": true,
       "runner": "run_getter64.py",
       "runner_sha256": "c2b184e569072665448711762c65d22c4138f2b2f685ea60683ec5d931c0ff97",
       "owner_sha256": "952a62ad02dcba2324299fbe6f5345e9ced9b3b686fd63abdcaf3c2caf4601f5",
       "raw_calls": 94,
       "serializer_reads": 16,
       "full908_reads": 4,
-      "normal_saves": 0
+      "normal_saves": 0,
+      "completed": true,
+      "validation_passed": true,
+      "replay_policy": "completed_evidence_only_do_not_replay"
     },
     "65": {
       "path": ".local/next-state/unit65-preset-remainder",
@@ -180,5 +184,48 @@
     "Mojito",
     "Chorder",
     "Repeater"
-  ]
+  ],
+  "previous_pause": {
+    "observed_at": "2026-11-12T09:50:26.559375+00:00",
+    "reason": "User requested finishing only the current unit and ending the loop, with a detailed versioned handoff",
+    "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md"
+  },
+  "resumed_date": "2026-11-13",
+  "resume_preflight_verified": true,
+  "native34_runtime_verification_scope": "Read-only stored-model getter on the exact diagnostic fixture; not model editing, persistence, audio or output-pitch mapping",
+  "hardware_window": {
+    "deadline_kst": "2026-11-13T06:30:00+09:00",
+    "deadline_utc": "2026-11-12T21:30:00Z",
+    "devices_declared": [
+      "Universal Audio Volt 276",
+      "M-Audio Keystation 88 MK3"
+    ],
+    "connection_confirmed_by_user": "usb_only",
+    "physical_loopback_cabling": false,
+    "os_audio_inventory_verified": true,
+    "midi_endpoint_presence_verified": true,
+    "daw_audio_device_verified": false,
+    "physical_key_events_verified": false,
+    "physical_loopback_verified": false,
+    "external_ping_verified": false,
+    "cv_routing_verified": false,
+    "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately."
+  },
+  "tooling_update_checkpoint": {
+    "scope": "Official acquisition verified; new runtime/configuration execution not yet verified at this checkpoint",
+    "rea_requested_version": "6.9.0",
+    "craft_requested_version": "0.6.1",
+    "portable_node_version": "26.12.1",
+    "acquired_artifact_hashes_verified": true,
+    "rea_update_execution_verified": false,
+    "craft_execution_verified": false,
+    "ghidra_existing_version": "12.1.4 PUBLIC",
+    "hopper_use_allowed": false
+  },
+  "planned_hardware_tools": {
+    "hardware_devices": "source_in_progress_not_installed",
+    "midi_input_observe": "source_in_progress_not_installed",
+    "planned_total_mcp_tools": 45,
+    "currently_installed_total_mcp_tools": 43
+  }
 }

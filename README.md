@@ -1,7 +1,7 @@
 # Fender Studio Pro MCP
 
-The run is paused at the user's request after the 2026-11-12 Native34 installation checkpoint. See the
-[current progress](docs/PROGRESS_2026-11-12.md), [resume guide](docs/RESUME.md)
+The user resumed the run on 2026-11-13. See the
+[current progress](docs/PROGRESS_2026-11-13.md), [resume guide](docs/RESUME.md)
 and [latest detailed handoff](docs/LOOP_HANDOFF_2026-11-12.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
@@ -155,9 +155,12 @@ native extension. Supply `track`, Note FX `slot`, `expected_instance`,
 keys and sorted output MIDI pitches. Each page captures fresh state; compare
 the capture and model digests across pages. The bounded decoder accepts only
 the known Chorder serializer schema and exposes no XML, file path or state
-token. It grants no mutation authority or persistence/audio claim. Native34's
-source checks and independent reviews passed; actual-host verification is
-pending at this checkpoint.
+token. It grants no mutation authority or persistence/audio claim. Native34
+passed actual 8.1.1 unit64 with two complete 128-input passes, 16 serializer
+reads and four unchanged complete 908-record reads. The run made zero parameter
+writes, capsule actions, loads, transport actions or Song Saves. See the
+[read-only model evidence](docs/evidence/2026-11-13-chorder-chords-readonly.json).
+Model editing, restoration and persistence remain pending.
 
 Native33's fixed Chorder child probe also passed in the actual 8.1.1 host.
 It observed `pitch61` and its local `learnChord` and `chordAssigned` metadata.
