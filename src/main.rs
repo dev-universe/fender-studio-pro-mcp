@@ -1,6 +1,7 @@
 mod audio;
 mod bridge;
 mod config;
+mod hardware;
 mod install;
 mod midi;
 mod model;
@@ -75,6 +76,17 @@ enum Command {
     SongRead { path: std::path::PathBuf },
     /// Analyze a WAV file's loudness, peaks and stereo measurements in Rust.
     AudioAnalyze { path: std::path::PathBuf },
+    /// Read operating-system audio and MIDI metadata without opening a stream.
+    HardwareDevices,
+    /// Observe one exact MIDI source briefly without forwarding messages.
+    MidiInputObserve {
+        #[arg(long, allow_negative_numbers = true)]
+        source_uid: i32,
+        #[arg(long)]
+        duration_ms: u32,
+        #[arg(long)]
+        max_events: u32,
+    },
     /// Discover partial parameter candidates from installed plugin metadata.
     LocalCatalog {
         #[arg(long, default_value = "/Applications/Studio Pro 8.app/Contents")]
@@ -121,6 +133,22 @@ async fn main() -> Result<()> {
         Command::AudioAnalyze { path } => {
             let analysis = audio::analyze_file(&path).map_err(anyhow::Error::msg)?;
             print_json(&serde_json::to_value(analysis)?)?;
+        }
+        Command::HardwareDevices => {
+            print_json(&hardware::inspect().map_err(anyhow::Error::msg)?)?;
+        }
+        Command::MidiInputObserve {
+            source_uid,
+            duration_ms,
+            max_events,
+        } => {
+            let query = hardware::midi_input::ObserveMidiInput {
+                source_uid,
+                duration_ms,
+                max_events,
+            };
+            hardware::midi_input::validate(&query)?;
+            print_json(&hardware::midi_input::observe(&query)?)?;
         }
         Command::LocalCatalog {
             app,
@@ -224,4 +252,42 @@ async fn main() -> Result<()> {
 fn print_json(value: &Value) -> Result<()> {
     println!("{}", serde_json::to_string_pretty(value)?);
     Ok(())
+}
+
+#[cfg(test)]
+mod cli_tests {
+    use super::*;
+
+    #[test]
+    fn hardware_cli_parses_without_a_daw_operation() {
+        let cli = Cli::try_parse_from(["fsp", "hardware-devices"]).unwrap();
+        assert!(matches!(cli.command, Command::HardwareDevices));
+        assert!(Cli::try_parse_from(["fsp", "hardware-devices", "--path", "/unchecked"]).is_err());
+    }
+
+    #[test]
+    fn passive_midi_cli_preserves_signed_source_uid() {
+        let cli = Cli::try_parse_from([
+            "fsp",
+            "midi-input-observe",
+            "--source-uid",
+            "-123456789",
+            "--duration-ms",
+            "100",
+            "--max-events",
+            "16",
+        ])
+        .unwrap();
+        match cli.command {
+            Command::MidiInputObserve {
+                source_uid,
+                duration_ms,
+                max_events,
+            } => {
+                assert_eq!((source_uid, duration_ms, max_events), (-123456789, 100, 16));
+            }
+            _ => panic!("Expected the finite observer command"),
+        }
+        assert!(Cli::try_parse_from(["fsp", "midi-input-observe", "--source-uid", "1"]).is_err());
+    }
 }

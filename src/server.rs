@@ -31,6 +31,16 @@ struct FileQuery {
     path: std::path::PathBuf,
 }
 
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct HardwareQuery {}
+
+fn hardware_query(args: serde_json::Map<String, Value>) -> Result<(), ErrorData> {
+    serde_json::from_value::<HardwareQuery>(Value::Object(args))
+        .map(|_| ())
+        .map_err(|error| ErrorData::invalid_params(error.to_string(), None))
+}
+
 impl McpServer {
     pub fn new(runtime: RuntimeHandle) -> Self {
         Self { runtime }
@@ -275,6 +285,18 @@ impl McpServer {
             ),
         ];
         let empty = json!({"type":"object","properties":{},"additionalProperties":false});
+        specs.push(ToolSpec { operation: None,
+            tool: Tool::new("hardware_devices", "Read bounded operating-system CoreAudio devices/defaults and CoreMIDI endpoints. This does not identify the DAW-selected device, open streams, change settings, send MIDI, or verify physical key events or routing. MIDI unique IDs are signed integers; re-resolve them before use.", empty.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
+        let midi_input_schema = serde_json::to_value(schemars::schema_for!(
+            crate::hardware::midi_input::ObserveMidiInput
+        ))
+        .unwrap();
+        specs.push(ToolSpec { operation: None,
+            tool: Tool::new("midi_input_observe", "Observe one exact currently-online MIDI source for a bounded duration and event cap without selecting a destination or forwarding/sending messages. Requires signed nonzero source_uid, duration_ms 100..5000 and max_events 1..256. Empty observations do not verify physical key performance. Inspect cleanup and source stability before accepting events.", midi_input_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         specs.push(ToolSpec { operation: None, tool: Tool::new("operations_list", "Get the finite operation schema, including less common operations. No arbitrary eval or raw bridge escape hatch is available.", empty.as_object().unwrap().clone()) });
         specs.push(ToolSpec { operation: None, tool: Tool::new("operation_run", "Run a typed operation from operations_list. Supply expected_document for mutations. Receipts distinguish observed, verified, unverified, partial and unknown outcomes.", schema().as_object().unwrap().clone()) });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
@@ -369,6 +391,34 @@ impl ServerHandler for McpServer {
         if request.name == "operations_list" {
             return Ok(CallToolResult::structured(json!({"schema":schema(),"provenance":"server implementation; live support is version dependent","arbitrary_eval":false})).into());
         }
+        if request.name == "hardware_devices" {
+            hardware_query(args)?;
+            let result = tokio::task::spawn_blocking(crate::hardware::inspect)
+                .await
+                .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(value) => CallToolResult::structured(value),
+                Err(message) => CallToolResult::structured_error(json!({"scope":"operating_system","error":{"code":"hardware_inventory_unavailable","message":message}})),
+            }.into());
+        }
+        if request.name == "midi_input_observe" {
+            let query: crate::hardware::midi_input::ObserveMidiInput =
+                serde_json::from_value(Value::Object(args))
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            crate::hardware::midi_input::validate(&query)
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result =
+                tokio::task::spawn_blocking(move || crate::hardware::midi_input::observe(&query))
+                    .await
+                    .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(value) => CallToolResult::structured(value),
+                Err(error) => CallToolResult::structured_error(
+                    json!({"scope":"passive_midi_source","error":error}),
+                ),
+            }
+            .into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -438,6 +488,58 @@ impl ServerHandler for McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hardware_inventory_is_a_closed_local_read() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "hardware_devices")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(schema["properties"], json!({}));
+        assert!(hardware_query(serde_json::Map::new()).is_ok());
+        for (key, value) in [
+            ("path", json!("/unchecked")),
+            ("command", json!("anything")),
+            ("source_uid", json!(1)),
+            ("expected_document", json!("stale")),
+            ("include_audio", json!(true)),
+        ] {
+            assert!(hardware_query(serde_json::Map::from_iter([(key.into(), value)])).is_err());
+        }
+    }
+
+    #[test]
+    fn passive_midi_tool_keeps_the_finite_source_only_contract() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "midi_input_observe")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(schema["additionalProperties"], false);
+        for field in ["source_uid", "duration_ms", "max_events"] {
+            assert!(
+                schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!(field))
+            );
+        }
+        for field in [
+            "destination",
+            "path",
+            "message",
+            "forward",
+            "expected_document",
+        ] {
+            assert!(schema["properties"].get(field).is_none());
+        }
+    }
 
     #[test]
     fn chorder_learning_tools_keep_getter_readonly_and_both_document_guards_required() {
@@ -545,7 +647,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 43);
+        assert_eq!(specs.len(), 45);
     }
 
     #[test]
