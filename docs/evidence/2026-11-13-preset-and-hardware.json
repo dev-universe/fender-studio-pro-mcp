@@ -321,5 +321,26 @@
     "app_and_owner_closed": true,
     "four_saved_sources_unchanged": true,
     "global_AudioSetup_restoration_required": true
+  },
+  "External_mapped_unit_partial_A": {
+    "overall_status": "failed_cleaned_up",
+    "elapsed_seconds": 730.966,
+    "completed_io_stages": [
+      "A"
+    ],
+    "original_wrapper_accepted_metadata_stages": 0,
+    "full24record_provider_reads": 8,
+    "complete_choice_pages": 8,
+    "all_send_return_counts_in_A": 0,
+    "rpc_calls": 55,
+    "Main_API_preparation_writes": 1,
+    "BMONO_actual_UI_mapping_observed": true,
+    "BMONO_API_queries": 0,
+    "BMONO_not_flagged_after_UI_deadline": true,
+    "original_IO_UI_restored": true,
+    "port_parameter_state_transport_Save_writes": 0,
+    "source_unchanged": true,
+    "app_and_owner_closed": true,
+    "global_AudioSetup_restoration_required": true
   }
 }

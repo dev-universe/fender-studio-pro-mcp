@@ -137,7 +137,7 @@
     "partial_hybrid_cases": 1
   },
   "next_units_in_order": [
-    "Before06:30KST: newmapped4stage External unit A→BMONO→BSTEREO→RESTORE, exactactual69layoutoldprefix66/new66,67/Main68, canonicalUI Main/new2/CV6. OldStageA15RPCfailedandUIrestoredimmutable. Noportwritesuntilunset-1clearpath. Lastnewhardwarestart20:15UTC,globalAudioSetupUIrestorestartno-later21:05UTC; restoreearlierimmediatelywhenhardwareworkends.",
+    "Before06:30KST: executeNEWphysical-only BMONO→BSTEREO→RESTORE600sUIwait fromknown69native/actualcanonicalmatrix. Ametadataalreadyread55RPC8provider/8choiceall0, noA replay; mappedoverallwrapperfailureimmutable. ExactMain1→0prepbeforeUI. Noportwritesuntilunset-1path. Lastnewhardwarestart20:15UTC,globalAudioSetupUIrestorestartno-later21:05UTC; restoreearlierafterphysicalstages.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
     "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
@@ -155,7 +155,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "24/46classes,49positivecases (48incompletedclasses +1partialMixverb),22remain. Actualunit67 wrapperfailureimmutable, separateindependentactualtraceaudit accepts1hybridpilot. SecondMixverbcasepending.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed. NewmappedExternal4stagehelper independentreviewongoing; oldStageAfailed15RPC/0provider sourcepreserved. Native35R3andwireindependentPASS, integrationdeferreduntilhardwareunitscomplete. NewnormalSaveAsChorderNoteDiagnostic copycreated, first179RPCmodelpilotpreparing; VoiceFXnewpredeclaredschema-aware2caseunitpreparing. OriginalglobalAudioSetup stillVoltandmustUIrestorebefore06:30KST.",
+  "current_execution": "App/owner closed after mappedExternal unit730.966s: completed_io_stages[A],8provider/8choicepagesall0, overallwrapperfailedUI_BMONO_timeout/acceptedmetadata0. BMono physicalmatrixactualobservedbutnoAPIflagaccepted;4rowsremoved/MainLRrestoredNoSave/sourceunchanged. Newphysical-only BMONO→BSTEREO→RESTORE with600sUIwaitpreparing; doNOTrepeatA. Pilot179R2quiescencefixinprogress; VoiceFXreviewfoundEOF/boolID/latefailuregateblocks; native35R3+wireacceptedbutnotlandedinstalled.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -372,6 +372,24 @@
       "full_providers": 0,
       "choice_pages": 0,
       "port_writes": 0
+    },
+    "mapped_unit_observation": {
+      "overall_status": "failed_cleaned_up",
+      "elapsed_seconds": 730.966,
+      "completed_io_stages": [
+        "A"
+      ],
+      "wrapper_accepted_metadata_stages": 0,
+      "full_provider_reads": 8,
+      "choice_pages": 8,
+      "all_port_counts_in_A": 0,
+      "rpc_calls": 55,
+      "BMONO_actual_UI_applied": true,
+      "BMONO_API_stage_accepted": false,
+      "BMONO_flag_not_written_after_deadline": true,
+      "original_IO_UI_restored": true,
+      "source_song_unchanged": true,
+      "global_AudioSetup_restore_required": true
     }
   },
   "tooling_update_checkpoint": {
