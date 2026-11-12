@@ -1,6 +1,6 @@
 # Chorder membership validation, November13
 
-Current accepted program union: **116/128 roles**, **12 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
+Current accepted program union: **125/128 roles**, **3 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
 
 The scope is every current output membership role at input60. The completed output0 pilot is reused. Each new role has fresh complete908-record and whole128-input model pairs before treatment, after treatment and after inverse restoration. Save/restart, input boundaries and audio remain separate.
 
@@ -40,3 +40,9 @@ Disabled replacement chunk5 covered97–104 in262.838seconds,1404RPC/16setters. 
 Disabled replacement chunk6 covered105–112 in286.272seconds,1404RPC/16setters. Exact whole908/128/original581 restoration, app/owner closure and six saved archives passed. Two disabled chunks (15roles) and five enabled-order units remain.
 
 Disabled replacement chunk7 covered113–120 in252.587seconds,1404RPC/16setters. Exact whole908/128/original581 restoration, app/owner closure and six saved archives passed. The final disabled chunk (7roles) and five enabled-order units remain.
+
+Disabled replacement chunk8 completed outputs121–127:1229RPC,14writes,234.22seconds, exact whole908/128/original581 restoration, actual NoSave app and owner closure, all6 saved archives unchanged. This completes all63 originally-disabled replacement roles.
+
+Enabled-order unit1 target60 completed667RPC/10writes in169.391seconds, including the predeclared suffix rotations and exact original node order restoration. Only target60 adds coverage. Unit2 target63 expired at the Root editor_context checkpoint after57reads and zero writes; its failed evidence and zero acceptance are retained. NoSave cleanup took420.92seconds and preserved all6 archives. A new independently reviewed target63 namespace is required. Remaining roles:63,67,70,74.
+
+Enabled-order unit3 target67 completed423RPC/6writes in143.275seconds. Full908/128 and exact original581 restoration, NoSave/app/owner closure and6 saved archive hashes passed. Remaining63,70,74.

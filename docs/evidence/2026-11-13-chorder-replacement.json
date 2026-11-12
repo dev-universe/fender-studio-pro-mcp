@@ -66,11 +66,13 @@
     57,
     58,
     59,
+    60,
     61,
     62,
     64,
     65,
     66,
+    67,
     68,
     69,
     71,
@@ -121,13 +123,20 @@
     117,
     118,
     119,
-    120
+    120,
+    121,
+    122,
+    123,
+    124,
+    125,
+    126,
+    127
   ],
-  "verified_roles": 116,
-  "remaining_roles": 12,
-  "disabled_replacement_chunks_complete": 7,
+  "verified_roles": 125,
+  "remaining_roles": 3,
+  "disabled_replacement_chunks_complete": 8,
   "disabled_replacement_chunks_total": 8,
-  "enabled_order_units_complete": 0,
+  "enabled_order_units_complete": 2,
   "enabled_order_units_total": 5,
   "disabled_completed": [
     {
@@ -269,10 +278,72 @@
       "all_six_saved_songs_unchanged": true,
       "result_sha256": "6f8d5b654267f95ac8949d5cd0af94c3b12247bf51aa3a40275aa6d9735f0a2f",
       "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    },
+    {
+      "chunk": 8,
+      "output_pitches": [
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127
+      ],
+      "rpc_calls": 1229,
+      "model_setters": 14,
+      "elapsed_seconds_with_UI_cleanup": 234.22,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "5179c6cc56f31402e4d4d833c2e131bd31477113e120fd8bc5dae0b5ae0ad9b4",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
     }
   ],
-  "enabled_completed": [],
+  "enabled_completed": [
+    {
+      "chunk": 1,
+      "output_pitches": [
+        60
+      ],
+      "rpc_calls": 667,
+      "model_setters": 10,
+      "elapsed_seconds_with_UI_cleanup": 169.391,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "2d6dc71dd128a9786596881b251cceef91cf7a17cf952b306580c0e6b3666bf8",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    },
+    {
+      "chunk": 3,
+      "output_pitches": [
+        67
+      ],
+      "rpc_calls": 423,
+      "model_setters": 6,
+      "elapsed_seconds_with_UI_cleanup": 143.275,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "7d02b9bb5addfb82968a6b0d810a68fbb292838c624cfda1d56b52f2b88c9420",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    }
+  ],
   "persistence_verified": false,
   "audio_verified": false,
-  "all_original16_chunks_complete": false
+  "all_original16_chunks_complete": false,
+  "enabled_failed": [
+    {
+      "unit": 2,
+      "target_output_pitch": 63,
+      "status": "failed_cleaned_up",
+      "rpc_calls": 57,
+      "model_setters": 0,
+      "accepted_membership_cases": 0,
+      "elapsed_seconds_with_UI_cleanup": 420.92,
+      "cause": "Root editor_context UI checkpoint timed out before first model write",
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "e7d3fdf9e75d530f9ab9e154aa55460d4d06c3c95f0f28ccf569fbdb38cd176e",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    }
+  ]
 }

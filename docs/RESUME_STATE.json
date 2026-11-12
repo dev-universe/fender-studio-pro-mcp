@@ -2,7 +2,7 @@
   "schema": 1,
   "updated_date": "2026-11-13",
   "status": "in_progress",
-  "resume_phrase": "진행 재개해",
+  "resume_phrase": "\uc9c4\ud589 \uc7ac\uac1c\ud574",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
   "product_source_commit": "baa9076",
   "branch": "feature/plugin-state-and-exhaustive-validation",
@@ -154,7 +154,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 116,
+    "chorder_model_membership_roles_verified": 125,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -294,7 +294,11 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "LIVE Native36 Chorderreplacementdisabled08 outputs121..1271229RPC. Read chorder-disabled-remainder-r1/chunks/08/run/progress.json beforeDAWactions. Disabled07PASS1404RPC252.587s/all6savedappfalseownerstop. Accepted116/12812remain; enabled5unitsindependentPASSUNBOUND. Presets28/46classes56cases18remain. Nameunion6423/7112onlyhistorical92cutoff. Roomserialized146pilot/persistence339R2pendingreview; VocalTunereadonlyreceiverpreparing. Assets/runtimefrozen/noSave.",
+  "current_execution": {
+    "unit": "chorder-enabled-order-r1 unit4 target70",
+    "state": "live",
+    "accepted_roles_before_unit": 125
+  },
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -761,11 +765,13 @@
       57,
       58,
       59,
+      60,
       61,
       62,
       64,
       65,
       66,
+      67,
       68,
       69,
       71,
@@ -816,9 +822,16 @@
       117,
       118,
       119,
-      120
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127
     ],
-    "remaining_roles": 12,
+    "remaining_roles": 3,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -843,7 +856,7 @@
       "runtime_binding": "UNBOUND",
       "actual_calls": 0,
       "review_report_sha256": "9e58c7fdde470a4512a14b4c6404ccd5513d9d5835a99fd1c08bf5131ebc7322",
-      "current_chunk": 8,
+      "current_chunk": null,
       "completed_chunks": [
         1,
         2,
@@ -851,7 +864,8 @@
         4,
         5,
         6,
-        7
+        7,
+        8
       ],
       "evidence_document": "docs/evidence/2026-11-13-chorder-replacement.json",
       "next_chunk": null
@@ -872,8 +886,17 @@
       "independent_groups": 27,
       "rpc_calls": 2115,
       "setters": 30,
-      "actual_calls": 0,
-      "runtime_binding": "UNBOUND"
+      "actual_calls": 1147,
+      "runtime_binding": "MIXED_BOUND_PER_UNIT",
+      "current_unit": 4,
+      "fixed_output": 70,
+      "completed_units": [
+        1,
+        3
+      ],
+      "failed_units": [
+        2
+      ]
     }
   },
   "rough_overall_remaining_hours": [
@@ -937,8 +960,8 @@
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   },
   "rough_chorder_remaining_minutes": [
-    20,
-    50
+    10,
+    25
   ],
   "multiband_first_hybrid_independent_review": {
     "status": "PASS_WITH_LIMITS",
