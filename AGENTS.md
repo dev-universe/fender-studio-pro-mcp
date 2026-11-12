@@ -14,8 +14,8 @@
 
 ## Resuming paused work
 
-- For continuation of the built-in plugin program, including the user's phrase `진행 재개해`, read `docs/RESUME.md`, `docs/LOOP_HANDOFF_2026-11-10.md`, and `docs/RESUME_STATE.json` before starting work.
+- For continuation of the built-in plugin program, including the user's phrase `진행 재개해`, read `docs/RESUME.md`, the latest `resume_document` named in `docs/RESUME_STATE.json` (currently `docs/LOOP_HANDOFF_2026-11-12.md`), and `docs/RESUME_STATE.json` before starting work. Keep the November 10 handoff as historical context; do not replay its completed starting units.
 - The program is paused by explicit user request. Do not resume automatically. A resume instruction authorizes continuing the documented queue within the existing scope.
 - Revalidate changeable state and create fresh runtime bindings. Reuse immutable completed evidence instead of restarting completed sweeps.
-- Report a checklist after each completed live unit, including completed scope and remaining work.
+- Report a checklist after each completed live unit, including actual elapsed time, completed scope, remaining counts, a rough overall remaining time range and why the estimate changed. Distinguish hardware-dependent checks.
 

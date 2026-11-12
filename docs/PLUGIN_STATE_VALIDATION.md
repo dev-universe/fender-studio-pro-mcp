@@ -4,7 +4,10 @@ This follow-up extends the [previous 60-class validation](VALIDATION.md). It is
 still in progress. Current-provider enumeration and representative controls do
 not establish complete model, preset, nested-graph or writable-parameter coverage.
 
-The user resumed the run on 2026-11-12. Native32 passed a Chorder Mode roundtrip
+The user paused the run again after the Native34 installation checkpoint on
+2026-11-12. Units64 and65 remain unstarted with pending bindings. Read the
+[latest handoff](LOOP_HANDOFF_2026-11-12.md) before an explicit resume.
+During this run Native32 passed a Chorder Mode roundtrip
 after the Native31 input-pitch case. The [current progress](PROGRESS_2026-11-12.md),
 [resume guide](RESUME.md) and [detailed handoff](LOOP_HANDOFF_2026-11-10.md)
 separate completed evidence from the remaining queue.

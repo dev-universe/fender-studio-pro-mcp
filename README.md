@@ -1,8 +1,8 @@
 # Fender Studio Pro MCP
 
-The run resumed at the user's request on 2026-11-12. See the
+The run is paused at the user's request after the 2026-11-12 Native34 installation checkpoint. See the
 [current progress](docs/PROGRESS_2026-11-12.md), [resume guide](docs/RESUME.md)
-and [detailed handoff](docs/LOOP_HANDOFF_2026-11-10.md) for completed work and remaining tasks.
+and [latest detailed handoff](docs/LOOP_HANDOFF_2026-11-12.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
@@ -10,7 +10,7 @@ Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Sili
 
 The 43 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
-The ongoing [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records the newer model, preset, nested-fixture and full-parameter work. It includes successful actual-host cases and stopped restoration tests. Complete current-provider enumeration does not mean every writable parameter or model has passed a roundtrip. A new Chorder check found that live native parameter/model changes can fail to persist through Song Save/reopen; an opt-in edit-lifecycle pilot reproduced that persistence failure, and the receiver/model path remains under investigation.
+The [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records the newer model, preset, nested-fixture and full-parameter work. It includes successful actual-host cases and stopped restoration tests. Complete current-provider enumeration does not mean every writable parameter or model has passed a roundtrip. A new Chorder check found that live native parameter/model changes can fail to persist through Song Save/reopen; an opt-in edit-lifecycle pilot reproduced that persistence failure, and the receiver/model path remains under investigation.
 
 Build with Rust 1.88 or newer and Cargo. The installed server runs as a native binary. Node.js and Python are development and validation tools. The server does not launch either runtime.
 
