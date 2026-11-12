@@ -52,3 +52,8 @@ Voice FX의 기존 no_state_change 상태는 구성 변경 시 빈 diff를 반�
 Voice FX의 새 schema-aware R2는 두 고정 index의5→6구성과 원래5개 전체 복원을154RPC로 확인했다.116.953초·NoSave종료·5저장곡불변이다. 이전66실패를 수정하지 않고 새2사례·1종을 더했다. Native35는 정상설치됐지만 첫 모델 실기는 준비Mode0/input-1에서40읽기 뒤 중단해 모델쓰기0이며 새 UI준비checkpoint를 검토 중이다. External physical3단계는143RPC로 통과했고 원래 MacBook 스피커·마이크48k/512도 실제UI로 복원 완료했다. 최신 RESUME_STATE와 진행기록을 우선한다.
 
 최신 Chorder R3는 input60/output0 add/remove를179RPC·119.06초로 통과했다. 전체908pair/128modelpair가 원본 복원됐고5저장곡 불변이다. Native36 exactGUI read 경로를 설치했으며 첫 External 실기는 preeditor AutoDSP0에서 멈춰GUI조회0이었다. 과거24record는controller이고 DSP라는 예전 설명은 정정했다. 새editor-ready R2와 남은127Chorder member chunks를 준비한다.
+
+최신후속상태는Mixverb index1 실제121RPC 통과로26/46종·52사례·20종잔여다.
+Chorder는출력0~59의60/128역할완료이며청크8의원래on출력60직렬화순서차이로옛16청크큐가중단됐다.
+청크8을재실행하거나9로자동진행하지않는다. 별도63off역할과5on역할후보를검토한다.
+사용자는두USB장치를분리했고OS조회2회및실제DAW환경설정으로내장48k/512를새로확인했다.

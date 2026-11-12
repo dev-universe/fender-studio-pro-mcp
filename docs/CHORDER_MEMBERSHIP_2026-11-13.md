@@ -13,8 +13,8 @@ Verified60/128roles; remaining68. Completed7/16new chunks. Final acceptance requ
 |5|33–40|1404|16|366.699|complete|
 |6|41–48|1404|16|414.841|complete|
 |7|49–56|1404|16|246.746|complete|
-|8|57–59|695|8|170.877|failed_cleaned_up|
+|8|57–59 accepted;60 failed|696|8|170.877|failed_cleaned_up|
 
 The original16-chunk queue is halted after chunk8. Only outputs57–59 are accepted from that partial unit. Output60 returned the original semantic model but a different581-byte capture hash after remove/readd. Moving only its original XML output node to the end reproduces the observed hash exactly in an offline check. The raw failed result is preserved; no capture tolerance is widened. Outputs61–64 were not attempted.
 
-The partial row's695 is the runner's successfully validated input counter, not a final count of every issued raw request. Audit the raw journal before reporting a total dispatch count for that unit. A separately reviewed replacement queue is required for the63 remaining originally-disabled roles and5 originally-enabled roles. Do not replay the failed chunk or automatically start chunk9.
+The partial row has696 exact matching raw tool/terminal pairs. The runner's695 counter excludes the final observed response whose model proof failed. Initialization is separate and excluded. The immutable result counter is preserved. A separately reviewed replacement queue is required for the63 remaining originally-disabled roles and5 originally-enabled roles. Do not replay the failed chunk or automatically start chunk9.

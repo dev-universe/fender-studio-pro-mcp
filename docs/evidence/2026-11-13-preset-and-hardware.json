@@ -7,15 +7,15 @@
   "native_unit": 35,
   "new_preset_plan": {
     "classes_total": 46,
-    "classes_complete": 25,
-    "accepted_cases": 51,
-    "classes_remaining": 21,
+    "classes_complete": 26,
+    "accepted_cases": 52,
+    "classes_remaining": 20,
     "capsule_only_classes": 23,
     "capsule_only_cases": 46,
-    "hybrid_classes": 2,
-    "hybrid_cases": 5,
-    "cases_in_completed_classes": 50,
-    "partial_hybrid_cases": 1
+    "hybrid_classes": 3,
+    "hybrid_cases": 6,
+    "cases_in_completed_classes": 52,
+    "partial_hybrid_cases": 0
   },
   "unit66": {
     "elapsed_seconds_including_UI_cleanup": 209.528,
@@ -121,7 +121,8 @@
     "physical_loopback": false,
     "native_client_lifetime": "one_per_process",
     "actual_DAW_device_and_IO_UI_observed": true,
-    "original_AudioSetup_restoration_required": true
+    "original_AudioSetup_restoration_required": false,
+    "original_AudioSetup_restoration_confirmed": true
   },
   "first_External_readonly_unit": {
     "status": "failed_cleaned_up_before_full_provider_or_choice_reads",
@@ -478,5 +479,32 @@
     "app_closed": true,
     "owner_stopped": true,
     "result_sha256": "d99702f54cba2c071853a476a8a02a9a857770e55af84d57dfcf8d22a9a22bf3"
+  },
+  "Mixverb_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_audit": true,
+    "elapsed_seconds_with_UI_cleanup": 99.66,
+    "actual_rpc_calls": 121,
+    "suite_rpc_calls": 111,
+    "original_result_counter_preserved": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "6602702b746b47eb544a2deae4cab214a4461e74ec365cc41c75c0a3b8eb6f53",
+    "raw_audit_sha256": "6599db36e8304dab2adb7309e5b123c5dae3fae66fc51fbe93cf09306dc960bd"
+  },
+  "post_hardware_detach": {
+    "user_confirmed": true,
+    "inventory_passes": 2,
+    "audio_device_count": 4,
+    "midi_source_count": 0,
+    "midi_destination_count": 0,
+    "volt_absent": true,
+    "os_defaults_builtin_microphone_and_speakers": true,
+    "actual_DAW_UI_builtin_microphone_and_speakers": true,
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "settings_changed": false,
+    "actual_audio_or_physical_keys_verified": false
   }
 }

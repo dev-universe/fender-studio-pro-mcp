@@ -247,5 +247,14 @@
   ],
   "persistence_verified": false,
   "audio_verified": false,
-  "all_input_output_combinations_verified": false
+  "all_input_output_combinations_verified": false,
+  "partial_chunk08_raw_audit": {
+    "matching_tool_terminal_pairs": 696,
+    "original_successful_validator_counter": 695,
+    "initialize_excluded": true,
+    "final_terminal_outcome": "observed",
+    "final_model_proof_failed": true,
+    "journal_sha256": "b26db76ab3ede3cd85e52f0d320e0c8371e41255e7c3635724e4536c56b64c1f",
+    "original_result_unchanged": true
+  }
 }

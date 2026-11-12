@@ -54,32 +54,20 @@
       "De-Esser",
       "Vocoder",
       "Vocal Tune",
-      "Voice FX"
+      "Voice FX",
+      "Mixverb"
     ],
-    "new_preset_recall_restore_cases": 51,
-    "remaining_preset_classes": 21,
+    "new_preset_recall_restore_cases": 52,
+    "remaining_preset_classes": 20,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 5,
-    "partial_preset_classes": {
-      "Mixverb": {
-        "accepted_cases": 1,
-        "issued_indices": [
-          0
-        ],
-        "remaining_planned_indices": [
-          1
-        ],
-        "ordinary_class_complete": false,
-        "acceptance_basis": "independent_retrospective_actual_primary_trace_audit",
-        "original_wrapper_passed": false
-      }
-    },
-    "new_preset_cases_in_completed_classes": 50,
+    "new_hybrid_preset_recall_restore_cases": 6,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 52,
     "new_capsule_only_preset_classes_completed": 23,
     "new_capsule_only_preset_recall_restore_cases": 46,
-    "new_hybrid_preset_classes_completed": 2,
+    "new_hybrid_preset_classes_completed": 3,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
         "accepted_cases": 0,
@@ -102,7 +90,10 @@
           "predelay"
         ],
         "historical_failure_unit": 65,
-        "current_independently_audited_hybrid_cases": 1
+        "current_independently_audited_hybrid_cases": 1,
+        "historical_failure_retained": true,
+        "current_new_index1_hybrid_cases": 1,
+        "current_hybrid_class_complete": true
       },
       "Voice FX": {
         "accepted_cases": 0,
@@ -140,8 +131,8 @@
     },
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1,
-    "new_hybrid_cases_in_completed_classes": 4,
-    "partial_hybrid_cases": 1,
+    "new_hybrid_cases_in_completed_classes": 6,
+    "partial_hybrid_cases": 0,
     "chorder_stored_model_edit_restore_pilot_cases": 1,
     "chorder_verified_model_mappings": [
       {
@@ -235,7 +226,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "Native36 chunk08 STOPPED failed_cleaned_up after partial verified outputs57..59; output60 remove/readd semantic model equal but exact581 capture differs. Root offline XML-node permutation moving60 toend exactly reproduces observedad171d hash; no tolerance widened. Total60/128 accepted,68remaining. Old16chunk queue HALTED; do not run/bind chunk09 or replay08. All6saved songs unchanged/appfalse/ownerstopped. Need separately reviewed replacement queue for63 remaining originally-disabled roles and strict serialized-order restoration plan for5 originally-enabled roles. Native37 native/wire independentPASS private only; no install while36-dependent remaining units.",
+  "current_execution": "No active DAW owner after Mixverb index1 actualPASS121RPC99.66s/all6savedhashsame. Presets26/46classes52cases20remain. Chorder old16queueHALTED after08partial;60/128roles68remain; private63disabled and5enabledorder candidates pendingfreeze/review. Native37readerpilot private19offlinegroupspendingreview, no37install. PostdetachOS/UI freshMacBook48k512 observed.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -430,7 +421,6 @@
     "Multiband Dynamics",
     "Surround Delay",
     "Room Reverb",
-    "Mixverb",
     "Open AIR",
     "Spectrum Meter",
     "Level Meter",
@@ -718,10 +708,42 @@
       60,
       180
     ],
-    "hardware_boundary_policy": "No live unit during21:30UTC USBdetach boundary. AudioSetup already restored; freshcontext after boundary."
+    "hardware_boundary_policy": "No live unit during21:30UTC USBdetach boundary. AudioSetup already restored; freshcontext after boundary.",
+    "replacement_disabled_queue": "private implementation in progress;63 never-tested originally-disabled outputs, fresh review/binding required",
+    "replacement_enabled_roles": [
+      60,
+      63,
+      67,
+      70,
+      74
+    ]
   },
   "rough_overall_remaining_hours": [
     6,
     20
-  ]
+  ],
+  "hardware_latest_user_instruction": "User will detach Volt276 and Keystation88MK3 five minutes after latest notice; keep app/owner closed across detachment, no live hardware work. MacBook AudioSetup restored. Refresh inventory/context before next live unit.",
+  "hardware_detach_not_before_utc": "2026-11-12T21:25:54Z",
+  "live_units_held_until_fresh_detach_observation": false,
+  "hardware_detach_observed": {
+    "user_confirmed": true,
+    "os_inventory_passes": 2,
+    "volt_absent": true,
+    "midi_sources": 0,
+    "midi_destinations": 0,
+    "daw_audio_setup_actual_ui": "MacBook Pro speakers and microphone;48kHz;512frames;unchanged"
+  },
+  "mixverb_index1_actual": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_audit": true,
+    "elapsed_seconds_with_UI_cleanup": 99.66,
+    "actual_rpc_calls": 121,
+    "suite_rpc_calls": 111,
+    "original_result_counter_preserved": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "6602702b746b47eb544a2deae4cab214a4461e74ec365cc41c75c0a3b8eb6f53",
+    "raw_audit_sha256": "6599db36e8304dab2adb7309e5b123c5dae3fae66fc51fbe93cf09306dc960bd"
+  }
 }
