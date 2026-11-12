@@ -290,5 +290,36 @@
     "app_and_owner_closed": true,
     "capsule_only_restoration_verified": false,
     "audio_or_persistence_verified": false
+  },
+  "External_IO_stageA_first_observation": {
+    "status": "failed_cleaned_up_before_providers",
+    "elapsed_seconds": 357.629,
+    "rpc_calls": 15,
+    "Main_API1to0_preparations": 1,
+    "logical_rows_added_and_removed_UI": 4,
+    "channel_counts": [
+      67,
+      69
+    ],
+    "new_output_indices": [
+      66,
+      67
+    ],
+    "Main_index_before_after": [
+      66,
+      68
+    ],
+    "other_old_channel_fields_changed": 0,
+    "actual_native_layout": "oldprefix66,newMono66,newStereo67,Main68",
+    "actual_IO_UI_reopen_order": "Main,newMono,newStereo,sixCVrows",
+    "original_IO_UI_restored": true,
+    "full_provider_reads": 0,
+    "choice_pages": 0,
+    "plugin_parameter_writes": 0,
+    "port_writes": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "four_saved_sources_unchanged": true,
+    "global_AudioSetup_restoration_required": true
   }
 }

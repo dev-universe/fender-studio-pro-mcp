@@ -137,7 +137,7 @@
     "partial_hybrid_cases": 1
   },
   "next_units_in_order": [
-    "Before06:30KST: External provider-only51RPC complete. In separate normal-SaveAs External IO diagnostic copy, prepare/review staged logical/physical bus catalog observation with exact Main1→0 API prep. No port writes until native unset-1 restoration path exists. Restore original Audio Setup through actual UI after hardware work.",
+    "Before06:30KST: newmapped4stage External unit A→BMONO→BSTEREO→RESTORE, exactactual69layoutoldprefix66/new66,67/Main68, canonicalUI Main/new2/CV6. OldStageA15RPCfailedandUIrestoredimmutable. Noportwritesuntilunset-1clearpath. Lastnewhardwarestart20:15UTC,globalAudioSetupUIrestorestartno-later21:05UTC; restoreearlierimmediatelywhenhardwareworkends.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
     "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
@@ -155,7 +155,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "24/46classes,49positivecases (48incompletedclasses +1partialMixverb),22remain. Actualunit67 wrapperfailureimmutable, separateindependentactualtraceaudit accepts1hybridpilot. SecondMixverbcasepending.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed after readonly ExternalIO baseline preflight; all4savedowned sources unchanged. IOhelperreview found complete67channelcoverage/appendedroworder gaps; fixpending. Native35R3targetedreview andclosedwireindependentreviewongoing. RestoreglobalAudioSetupbefore06:30KST.",
+  "current_execution": "App/owner closed. NewmappedExternal4stagehelper independentreviewongoing; oldStageAfailed15RPC/0provider sourcepreserved. Native35R3andwireindependentPASS, integrationdeferreduntilhardwareunitscomplete. NewnormalSaveAsChorderNoteDiagnostic copycreated, first179RPCmodelpilotpreparing; VoiceFXnewpredeclaredschema-aware2caseunitpreparing. OriginalglobalAudioSetup stillVoltandmustUIrestorebefore06:30KST.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -349,7 +349,30 @@
     "external_current_return_choice_count": 0,
     "external_port_writes": 0,
     "external_unset_minus1_generic_write_supported": false,
-    "external_io_diagnostic_copy_created": true
+    "external_io_diagnostic_copy_created": true,
+    "latest_new_hardware_stage_start_utc": "2026-11-12T20:15:00Z",
+    "original_AudioSetup_restore_start_no_later_utc": "2026-11-12T21:05:00Z",
+    "last_external_io_unit": {
+      "status": "failed_cleaned_up_before_providers",
+      "elapsed_seconds": 357.629,
+      "rpc_calls": 15,
+      "logical_rows_added_and_removed_UI": 4,
+      "native_channel_count_before": 67,
+      "native_channel_count_after_UI_add": 69,
+      "new_output_indices": [
+        66,
+        67
+      ],
+      "Main_index_change": [
+        66,
+        68
+      ],
+      "other_old_native_fields_unchanged": true,
+      "original_IO_UI_restored": true,
+      "full_providers": 0,
+      "choice_pages": 0,
+      "port_writes": 0
+    }
   },
   "tooling_update_checkpoint": {
     "scope": "Official acquisition, isolated CLI execution, Codex registration update and same-byte static analysis verified; existing connected MCP still6.5.0",
@@ -383,11 +406,28 @@
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
   "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
   "native35_candidate": {
-    "status": "R3_private_fix_frozen_targeted_review_pending_wire_independent_review_pending",
+    "status": "R3_and_wire_independent_PASS_integration_deferred_until_hardware_units_complete_firstmodelpilot_preparation",
     "installed": false,
     "wire_implemented": true,
-    "addon_independent_review_complete": false,
+    "addon_independent_review_complete": true,
     "freeze_sha256": "7306764b9e00dba3dc4fc04d8fb3b9cd113b218184553d87ef2b6ef249627471",
-    "wire_patch_sha256": "3d2014e97d12f64ec8e18330a99e5f4d73b9a3e86e29040e2a0262ddf19c74a6"
+    "wire_patch_sha256": "3d2014e97d12f64ec8e18330a99e5f4d73b9a3e86e29040e2a0262ddf19c74a6",
+    "wire_independent_review_complete": true
+  },
+  "owned_diagnostic_copy_preparations": {
+    "External_IO": {
+      "normal_save_as_observed": true,
+      "io_changes_now_restored": true,
+      "saved_source_unchanged_after_failed_unit": true
+    },
+    "Chorder_Note": {
+      "normal_save_as_observed": true,
+      "new_title": "MCP Chorder Note Diagnostic",
+      "new_saved_sha256": "e5e18f425fc871df4df73925f4323680bd448c8b7d885573a417e9d7136c41e7",
+      "elapsed_seconds": 130.582493,
+      "prior_four_saved_sources_unchanged": true,
+      "mcp_calls": 0,
+      "app_closed": true
+    }
   }
 }
