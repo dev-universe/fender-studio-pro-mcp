@@ -1,6 +1,8 @@
 use super::*;
 use fender_native_node_api::Inspection;
 use std::ffi::CStr;
+#[path = "learning_child.rs"]
+mod learning_child;
 
 const CONTROLLER_PROVIDER: Uid = Uid {
     a: 0x16ad4d2a,
@@ -293,6 +295,7 @@ pub(super) struct ControllerProbe {
     anchors: [Anchor; 2],
     selected: Option<Selected>,
     state: State,
+    learning_child: Option<learning_child::FixedLearningChild>,
 }
 impl ControllerProbe {
     pub(super) fn require_direct(&self, gui: &ParameterPin) -> Result<(), String> {
@@ -348,6 +351,7 @@ impl ControllerProbe {
             anchors: [Anchor::NotAttempted; 2],
             selected: None,
             state: State::Unresolved(Reason::ObserverAbsent),
+            learning_child: None,
         };
         let result = probe.capture_inner(gui, direct_canonical, api, guard);
         let after = guard();
@@ -485,6 +489,28 @@ impl ControllerProbe {
             Selected::Provider => self.provider.controller.as_ref(),
         }
     }
+    pub(super) fn observe_learning_child<G: FnMut() -> Result<(), String>>(
+        &mut self,
+        gui: &ParameterPin,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<(), String> {
+        guard()?;
+        if self.learning_child.is_some() {
+            return Err("fixed learning child observation was already attempted".into());
+        }
+        self.learning_child = Some(if self.require_direct(gui).is_ok() {
+            learning_child::FixedLearningChild::capture(
+                self.direct.controller.as_ref().expect("direct anchor"),
+                owner_inspect::text_api()?,
+                api,
+                guard,
+            )?
+        } else {
+            learning_child::FixedLearningChild::not_direct()
+        });
+        guard()
+    }
     pub(super) fn value(&self) -> Value {
         let metadata = match self.inspection.as_ref() {
             Some(inspection) => {
@@ -512,6 +538,9 @@ impl ControllerProbe {
                     "controller_same_observer":observed.observer_same,"controller_same_direct_dsp":observed.direct_same});
                 value["parameters"] = json!({"learnMode":description(&observed.mode),"learnInputPitch":description(&observed.pitch)});
             }
+        }
+        if let Some(child) = &self.learning_child {
+            value["learning_child"] = child.value();
         }
         value
     }
@@ -578,7 +607,23 @@ impl ControllerProbe {
         if let Some(inspection) = self.inspection.as_ref() {
             inspection.check(guard).map_err(|e| e.to_string())?;
         }
+        if let Some(child) = &self.learning_child {
+            child.check(api, guard, witnesses)?;
+        }
         guard()
+    }
+    pub(super) fn retire_learning_child_publication<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<(), String> {
+        self.learning_child
+            .as_ref()
+            .map_or(Ok(()), |child| child.retire_publication_witnesses(guard))
+    }
+    pub(super) fn retain_learning_child_publication(&self) -> Result<(), String> {
+        self.learning_child
+            .as_ref()
+            .map_or(Ok(()), |child| child.retain_publication_interfaces())
     }
     pub(super) fn check_borrowed(&self, gui: &ParameterPin) -> Result<(), String> {
         gui.check_borrowed()?;
@@ -601,6 +646,9 @@ impl ControllerProbe {
             for parameter in models {
                 parameter.check_borrowed(selected.handle.0)?;
             }
+        }
+        if let Some(child) = &self.learning_child {
+            child.check_borrowed()?;
         }
         Ok(())
     }

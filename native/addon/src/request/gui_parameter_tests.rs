@@ -740,3 +740,22 @@ fn different_native_class_is_refused_before_editor_discovery() {
     drop(direct);
     drop(ctx);
 }
+
+pub(super) fn with_learning_child_parameters<F: FnOnce(&Api, *mut c_void, *mut c_void)>(run: F) {
+    let previous = EMPTY.with(Cell::get);
+    let empty_string = Fixture::new("string");
+    EMPTY.with(|x| x.set(empty_string.raw()));
+    let object = Fixture::new("object");
+    let mut learn = Fixture::new("parameter");
+    learn.value.name.text = c"learnChord".as_ptr();
+    learn.value.object.set(object.raw());
+    let mut assigned = Fixture::new("parameter");
+    assigned.value.name.text = c"chordAssigned".as_ptr();
+    assigned.value.object.set(object.raw());
+    run(&api(), learn.raw(), assigned.raw());
+    EMPTY.with(|x| x.set(previous));
+}
+
+pub(super) fn learning_child_parameter_refs(parameter: *mut c_void) -> u32 {
+    unsafe { f(parameter) }.refs.get()
+}

@@ -164,6 +164,9 @@ test('GUI metadata preserves descriptive unsupported profiles without granting e
     const descriptor = guiDescription(0, kind);
     assert.equal(h.native.guiDescription(descriptor), true);
     descriptor.native_kind = 'Float'; descriptor.readOnly = true;
+    descriptor.writable = false;
+    descriptor.native_support = { raw_number: false, normalized: false, display_text: false };
+    descriptor.support = { raw: false, normalized: false, text: false };
     assert.equal(h.native.guiDescription(descriptor), true);
     assert.equal(h.native.guiToggleProfile(descriptor), false);
   }

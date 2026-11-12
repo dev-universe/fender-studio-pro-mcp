@@ -53,6 +53,28 @@ function controllerProbe() {
 
 function withProbe(probe = controllerProbe()) { return { ...compared(), controller_probe: probe }; }
 
+function learningChild() {
+  const member = modelDescription('learnMode');
+  member.name = member.title = 'learnChord';
+  member.tag = -7;
+  const assigned = modelDescription('learnMode', 1);
+  Object.assign(assigned, { name: 'chordAssigned', title: 'chordAssigned', tag: 93, native_kind: 'Integer',
+    max: 2, normalized: 0.5, readOnly: true, writable: false,
+    native_max: { variant_tag: 1, data: { kind: 'integer', value: 2 } },
+    native_normalized: { kind: 'float32', bits_hex: '3F000000' },
+    native_support: { raw_number: false, normalized: false, display_text: false },
+    support: { raw: false, normalized: false, text: false } });
+  return { status: 'observed', scope: 'fixed_chorder_pitch61_learning_parameters', child_id: 'pitch61',
+    mutation_capability: false, value_semantics: 'sequential_snapshot', output_pitch_mapping: 'not_established',
+    interfaces: { root_node: { status: 'present' }, controller: { status: 'present' } }, root_child_count: 128,
+    binding: { root_same_observer: true, parent_same_root: true, controller_same_child: true },
+    parameters: { learnChord: member, chordAssigned: assigned } };
+}
+
+function withChild(child = learningChild(), owner = controllerProbe()) {
+  return withProbe({ ...owner, learning_child: child });
+}
+
 function harness(reply = request => success(request.include_owner === true ? withProbe() : compared())) {
   const calls = [];
   const context = { open: true, document: 'gui:1', session: 'gui' };
@@ -495,5 +517,185 @@ test('fixed GUI controller observations disappear on soft native errors or eithe
   } };
   const response = host.request({ op: 'pluginParameterDetails', args: { ...args, include_owner: true } });
   assert.equal(response.result.gui_comparison.status, 'unresolved');
+  assert.equal('controller_probe' in response.result.gui_comparison, false);
+});
+
+test('fixed learning child descriptors remain read-only metadata with no established pitch mapping', () => {
+  const report = withChild();
+  const h = harness(() => success(report));
+  const result = h.component.pluginParameterDetails({ ...args, include_owner: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.gui_comparison)), report);
+  const child = result.gui_comparison.controller_probe.learning_child;
+  assert.equal(child.mutation_capability, false);
+  assert.equal(child.output_pitch_mapping, 'not_established');
+  assert.equal(child.parameters.learnChord.tag, -7);
+  assert.equal(child.parameters.chordAssigned.tag, 93);
+  assert.equal(child.parameters.chordAssigned.writable, false);
+  assert.equal('value_verified' in child, false);
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].operation, 'parameter_details');
+  assert.equal('learning_child' in h.calls[0], false);
+});
+
+test('fixed learning child unresolved reasons match interface ordering without positive bindings', () => {
+  const variants = [
+    ['root_not_direct', 'not_attempted', 'not_attempted', null],
+    ['root_node_unsupported', 'unsupported', 'not_attempted', null],
+    ['interface_query_failed', 'failed', 'not_attempted', null],
+    ['interface_query_failed', 'present', 'failed', 128],
+    ['root_shape_changed', 'present', 'not_attempted', 0],
+    ['root_shape_changed', 'present', 'not_attempted', 1000000],
+    ['child_absent', 'present', 'not_attempted', 128],
+    ['child_id_mismatch', 'present', 'not_attempted', 128],
+    ['child_detached', 'present', 'not_attempted', 128],
+    ['controller_unsupported', 'present', 'unsupported', 128],
+    ['controller_identity_mismatch', 'present', 'present', 128],
+    ['parameter_missing', 'present', 'present', 128],
+  ];
+  const query = status => status === 'failed' ? { status, query_status: 0 } : { status };
+  for (const [reason, root, controller, count] of variants) {
+    const child = learningChild();
+    child.status = 'unresolved';
+    child.reason = reason;
+    child.interfaces = { root_node: query(root), controller: query(controller) };
+    child.root_child_count = count;
+    delete child.binding;
+    delete child.parameters;
+    const owner = controllerProbe();
+    if (reason === 'root_not_direct') {
+      owner.binding.route = 'provider';
+      owner.binding.controller_same_observer = false;
+      owner.interfaces = { controller: { status: 'unsupported' }, provider: { status: 'present' } };
+      owner.anchors = { controller: 'controller_absent', provider: 'same_parameter' };
+    }
+    const result = harness(() => success(withChild(child, owner))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'compared', reason);
+    assert.deepEqual(JSON.parse(JSON.stringify(result.gui_comparison.controller_probe.learning_child)), child);
+    assert.equal('parameters' in result.gui_comparison.controller_probe.learning_child, false);
+    assert.equal('binding' in result.gui_comparison.controller_probe.learning_child, false);
+  }
+  for (const absent of [false, true]) {
+    const owner = controllerProbe();
+    owner.status = 'unresolved';
+    owner.reason = absent ? 'observer_absent' : 'parameter_missing';
+    delete owner.binding;
+    delete owner.parameters;
+    if (absent) {
+      owner.interfaces = { controller: { status: 'not_attempted' }, provider: { status: 'not_attempted' } };
+      owner.anchors = { controller: 'not_attempted', provider: 'not_attempted' };
+      owner.observer_metadata = { status: 'absent' };
+    }
+    const child = learningChild();
+    Object.assign(child, { status: 'unresolved', reason: 'root_not_direct', root_child_count: null,
+      interfaces: { root_node: { status: 'not_attempted' }, controller: { status: 'not_attempted' } } });
+    delete child.binding;
+    delete child.parameters;
+    const result = harness(() => success(withChild(child, owner))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'compared');
+    assert.equal(result.gui_comparison.controller_probe.learning_child.reason, 'root_not_direct');
+  }
+});
+
+test('honest unavailable child values stay explicit and never become writable or verified', () => {
+  for (const [variant_tag, data] of [[4, { kind: 'opaque_object', present: true }],
+    [5, { kind: 'unsupported', tag: 5 }], [2, { kind: 'non_finite_float', bits_hex: '7FF8000000000000' }]]) {
+    const child = learningChild();
+    Object.assign(child.parameters.learnChord, { value: null, text: null, normalized: null, writable: false,
+      native_value: { variant_tag, data }, native_normalized: { kind: 'not_applicable' },
+      native_support: { raw_number: false, normalized: false, display_text: false },
+      support: { raw: false, normalized: false, text: false } });
+    const result = harness(() => success(withChild(child))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.gui_comparison.status, 'compared');
+    assert.equal(result.gui_comparison.controller_probe.learning_child.parameters.learnChord.writable, false);
+    assert.equal(result.gui_comparison.controller_probe.learning_child.mutation_capability, false);
+  }
+});
+
+test('malformed child authority, schema, carriers and root relationships erase the whole comparison', () => {
+  const mutations = [
+    c => { c.scope = 'arbitrary_child'; }, c => { c.child_id = 'pitch62'; }, c => { c.mutation_capability = true; },
+    c => { c.value_semantics = 'atomic'; }, c => { c.output_pitch_mapping = 60; }, c => { c.pointer = 1; },
+    c => { c.value_verified = true; }, c => { c.root_child_count = true; }, c => { c.root_child_count = 127; },
+    c => { c.root_child_count = 1000001; }, c => { c.interfaces.root_node.status = 'unsupported'; },
+    c => { c.interfaces.controller.status = 'unsupported'; }, c => { c.interfaces.controller.query_status = 0; },
+    c => { c.interfaces.root_node = { status: 'failed', query_status: 1.5 }; },
+    c => { c.interfaces.root_node = { status: 'failed', query_status: 2147483648 }; },
+    c => { c.binding.root_same_observer = 1; }, c => { c.binding.parent_same_root = false; },
+    c => { c.binding.controller_same_child = false; }, c => { c.binding.token = 'authority'; },
+    c => { c.parameters.learnChord.name = 'other'; }, c => { c.parameters.chordAssigned.title = 'Other'; },
+    c => { c.parameters.extra = c.parameters.learnChord; }, c => { delete c.parameters.chordAssigned; },
+    c => { c.parameters.learnChord.native_value.data.value = 1; },
+    c => { c.parameters.learnChord.native_normalized.bits_hex = '3F800000'; },
+    c => { c.parameters.learnChord.readOnly = true; }, c => { c.parameters.learnChord.enabled = false; },
+    c => { c.parameters.chordAssigned.native_support.raw_number = true; },
+  ];
+  for (const mutate of mutations) {
+    const child = learningChild();
+    mutate(child);
+    const result = harness(() => success(withChild(child))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.gui_comparison.status, 'unresolved');
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+  for (const mutate of [p => { p.binding.controller_same_observer = false; },
+    p => { p.interfaces.provider.status = 'present'; p.anchors.provider = 'same_parameter'; p.binding.route = 'both'; }]) {
+    const owner = controllerProbe();
+    mutate(owner);
+    const result = harness(() => success(withChild(learningChild(), owner))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+});
+
+test('unresolved child reports cannot hide positive data or contradict their assessed phase', () => {
+  const cases = [
+    ['root_not_direct', 'present', 'present', 128], ['root_node_unsupported', 'present', 'not_attempted', null],
+    ['interface_query_failed', 'present', 'not_attempted', 128], ['root_shape_changed', 'present', 'not_attempted', 128],
+    ['root_shape_changed', 'present', 'not_attempted', null], ['child_absent', 'present', 'present', 128],
+    ['child_detached', 'present', 'not_attempted', 0], ['controller_unsupported', 'present', 'present', 128],
+    ['controller_identity_mismatch', 'present', 'unsupported', 128], ['parameter_missing', 'unsupported', 'present', 128],
+    ['arbitrary', 'present', 'present', 128],
+  ];
+  for (const [reason, root, controller, count] of cases) {
+    const child = learningChild();
+    Object.assign(child, { status: 'unresolved', reason, root_child_count: count,
+      interfaces: { root_node: { status: root }, controller: { status: controller } } });
+    delete child.binding;
+    delete child.parameters;
+    const result = harness(() => success(withChild(child))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal('controller_probe' in result.gui_comparison, false, reason);
+  }
+  for (const field of ['binding', 'parameters']) {
+    const child = learningChild();
+    child.status = 'unresolved'; child.reason = 'parameter_missing';
+    delete child[field === 'binding' ? 'parameters' : 'binding'];
+    const result = harness(() => success(withChild(child))).component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+});
+
+test('child reads add no caller inputs and disappear at soft-error and document publication boundaries', () => {
+  for (const extra of [{ learning_child: true }, { child_id: 'pitch61' }, { output_pitch: 60 }]) {
+    const h = harness(() => success(withChild()));
+    const request = { operation: 'parameter_details', source: 'dsp', param: args.param,
+      expected_instance: instance.object_uid, compare_gui: true, include_owner: true, ...extra };
+    const result = h.component.nativePluginRequest({}, request);
+    assert.equal(result.outcome, 'not_applied');
+    assert.equal(h.calls.length, 0);
+  }
+  for (const change of [v => { v.error = 'late read failure'; }, v => { v.errors = ['late read failure']; },
+    v => { v.native_error = { code: 'late' }; }, v => { v.ok = false; v.outcome = 'not_applied'; }]) {
+    const result = harness(() => { const value = success(withChild()); change(value); return value; })
+      .component.pluginParameterDetails({ ...args, include_owner: true });
+    assert.equal('controller_probe' in result.gui_comparison, false);
+  }
+  const changed = harness((request, context) => { context.document = 'gui:2'; return success(withChild()); })
+    .component.pluginParameterDetails({ ...args, include_owner: true });
+  assert.equal('controller_probe' in changed.gui_comparison, false);
+  const host = bridgeHarness();
+  host.bridge.component = { pluginParameterDetails() {
+    host.manager.activeDocument = { title: 'Different' };
+    return success(withChild());
+  } };
+  const response = host.request({ op: 'pluginParameterDetails', args: { ...args, include_owner: true } });
   assert.equal('controller_probe' in response.result.gui_comparison, false);
 });

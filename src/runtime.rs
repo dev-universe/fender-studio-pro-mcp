@@ -918,6 +918,8 @@ mod tests {
                 "parameters":{"learnInputPitch":{"value":-1}},
                 "observer_metadata":{"status":"observed","report":{"nodes":[{"reflection":{"types":[{"name":"stale"}]}}]}}}},
             "controller_report":{"stale":true}});
+        result["gui_comparison"]["controller_probe"]["learning_child"] =
+            fixed_learning_child_observation();
         let legacy = Operation::from_parts("plugin_parameter_details", args.clone()).unwrap();
         let before = result.clone();
         invalidate_gui_evidence(&legacy, &mut result);
@@ -938,6 +940,7 @@ mod tests {
         );
         assert!(result["gui_comparison"].get("controller_probe").is_none());
         assert!(result.get("controller_report").is_none());
+        assert!(!result.to_string().contains("learning_child"));
     }
 
     fn gui_description(value: i64, float: bool) -> Value {
@@ -954,6 +957,30 @@ mod tests {
             "native_normalized":{"kind":"float32","bits_hex":if value==0{"00000000"}else{"3F800000"}},
             "native_support":{"raw_number":true,"normalized":true,"display_text":true},
             "support":{"raw":true,"normalized":true,"text":true},"display_parser":"PlainNumeric"})
+    }
+
+    fn fixed_learning_child_observation() -> Value {
+        let mut member = gui_description(0, false);
+        member["name"] = json!("learnChord");
+        member["title"] = json!("learnChord");
+        let mut assigned = gui_description(1, false);
+        assigned["name"] = json!("chordAssigned");
+        assigned["title"] = json!("chordAssigned");
+        assigned["native_kind"] = json!("Integer");
+        assigned["readOnly"] = json!(true);
+        assigned["writable"] = json!(false);
+        assigned["max"] = json!(2);
+        assigned["native_max"]["data"]["value"] = json!(2);
+        assigned["normalized"] = json!(0.5);
+        assigned["native_normalized"]["bits_hex"] = json!("3F000000");
+        assigned["native_support"] =
+            json!({"raw_number":false,"normalized":false,"display_text":false});
+        assigned["support"] = json!({"raw":false,"normalized":false,"text":false});
+        json!({"status":"observed","scope":"fixed_chorder_pitch61_learning_parameters","child_id":"pitch61",
+            "mutation_capability":false,"value_semantics":"sequential_snapshot","output_pitch_mapping":"not_established",
+            "interfaces":{"root_node":{"status":"present"},"controller":{"status":"present"}},"root_child_count":128,
+            "binding":{"root_same_observer":true,"parent_same_root":true,"controller_same_child":true},
+            "parameters":{"learnChord":member,"chordAssigned":assigned}})
     }
 
     fn gui_edit_success(float: bool) -> (crate::operation::ChorderAutofillSet, Value) {

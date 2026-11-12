@@ -112,7 +112,7 @@ class NativePluginControls {
     guiFixedDescription(value, name) {
         const fields = ["name", "title", "tag", "value", "text", "min", "max", "default", "normalized", "enabled", "readOnly", "writable",
             "native_kind", "native_value", "native_min", "native_max", "native_default", "native_normalized", "native_support", "support", "display_parser"];
-        if (["autofill", "learnMode", "learnInputPitch"].indexOf(name) < 0
+        if (["autofill", "learnMode", "learnInputPitch", "learnChord", "chordAssigned"].indexOf(name) < 0
             || !this.guiExact(value, fields) || value.name !== name || value.title !== name
             || !this.guiInteger(value.tag, -2147483648, 2147483647)
             || (value.text !== null && (typeof value.text !== "string" || value.text.length > 4096))
@@ -125,6 +125,7 @@ class NativePluginControls {
             || !this.guiExact(value.support, ["raw", "normalized", "text"])
             || Object.keys(value.native_support).some(key => typeof value.native_support[key] !== "boolean")
             || Object.keys(value.support).some(key => typeof value.support[key] !== "boolean")) return false;
+        if ((!value.enabled || value.readOnly) && Object.keys(value.native_support).some(key => value.native_support[key])) return false;
         for (const pair of [["native_value", "value"], ["native_min", "min"], ["native_max", "max"], ["native_default", "default"]])
             if (!this.guiTypedScalar(value[pair[0]], value[pair[1]])) return false;
         const normalized = value.native_normalized;
@@ -340,21 +341,70 @@ class NativePluginControls {
         return report.complete === (report.diagnostics.length === 0 && reflection.issues.length === 0);
     }
 
+    guiInterfaceQuery(query) {
+        return query && query.status === "failed"
+            ? this.guiExact(query, ["status", "query_status"]) && this.guiInteger(query.query_status, -2147483648, 2147483647)
+            : this.guiExact(query, ["status"]) && ["not_attempted", "unsupported", "present"].indexOf(query.status) >= 0;
+    }
+
+    guiLearningChild(probe, owner) {
+        const common = ["status", "scope", "child_id", "mutation_capability", "value_semantics", "output_pitch_mapping",
+            "interfaces", "root_child_count"];
+        const observed = probe && probe.status === "observed";
+        if (!this.guiExact(probe, common.concat(observed ? ["binding", "parameters"] : ["reason"]))
+            || probe.scope !== "fixed_chorder_pitch61_learning_parameters" || probe.child_id !== "pitch61"
+            || probe.mutation_capability !== false || probe.value_semantics !== "sequential_snapshot"
+            || probe.output_pitch_mapping !== "not_established"
+            || !this.guiExact(probe.interfaces, ["root_node", "controller"])
+            || !this.guiInterfaceQuery(probe.interfaces.root_node) || !this.guiInterfaceQuery(probe.interfaces.controller)
+            || probe.root_child_count !== null && !this.guiInteger(probe.root_child_count, 0, 1000000)) return false;
+        const direct = owner.status === "observed" && owner.binding && owner.binding.route === "direct"
+            && owner.binding.autofill_same_gui === true && owner.binding.controller_same_observer === true
+            && owner.interfaces.controller.status === "present" && owner.interfaces.provider.status === "unsupported"
+            && owner.anchors.controller === "same_parameter" && owner.anchors.provider === "controller_absent";
+        const root = probe.interfaces.root_node.status, controller = probe.interfaces.controller.status;
+        if (!observed && probe.status === "unresolved" && probe.reason === "root_not_direct")
+            return !direct && root === "not_attempted" && controller === "not_attempted" && probe.root_child_count === null;
+        if (!direct) return false;
+        if (!observed) {
+            if (probe.status !== "unresolved") return false;
+            if (probe.reason === "root_node_unsupported")
+                return root === "unsupported" && controller === "not_attempted" && probe.root_child_count === null;
+            if (probe.reason === "interface_query_failed")
+                return root === "failed" && controller === "not_attempted" && probe.root_child_count === null
+                    || root === "present" && controller === "failed" && probe.root_child_count === 128;
+            if (root !== "present") return false;
+            if (probe.reason === "root_shape_changed")
+                return controller === "not_attempted" && probe.root_child_count !== null && probe.root_child_count !== 128;
+            if (probe.root_child_count !== 128) return false;
+            if (["child_absent", "child_id_mismatch", "child_detached"].indexOf(probe.reason) >= 0)
+                return controller === "not_attempted";
+            if (probe.reason === "controller_unsupported") return controller === "unsupported";
+            return ["controller_identity_mismatch", "parameter_missing"].indexOf(probe.reason) >= 0 && controller === "present";
+        }
+        return root === "present" && controller === "present" && probe.root_child_count === 128
+            && this.guiExact(probe.binding, ["root_same_observer", "parent_same_root", "controller_same_child"])
+            && Object.keys(probe.binding).every(key => probe.binding[key] === true)
+            && this.guiExact(probe.parameters, ["learnChord", "chordAssigned"])
+            && this.guiFixedDescription(probe.parameters.learnChord, "learnChord")
+            && this.guiFixedDescription(probe.parameters.chordAssigned, "chordAssigned");
+    }
+
     guiControllerProbe(probe) {
         const common = ["status", "scope", "mutation_capability", "value_semantics", "interfaces", "anchors", "observer_metadata"];
+        const hasChild = probe && Object.prototype.hasOwnProperty.call(probe, "learning_child");
+        if (hasChild) common.push("learning_child");
         const observed = probe && probe.status === "observed";
         if (!this.guiExact(probe, common.concat(observed ? ["binding", "parameters"] : ["reason"]))
             || probe.scope !== "fixed_gui_declared_observer_controller" || probe.mutation_capability !== false
             || probe.value_semantics !== "sequential_snapshot" || !this.guiExact(probe.interfaces, ["controller", "provider"])
-            || !this.guiExact(probe.anchors, ["controller", "provider"]) || !this.guiObserverMetadata(probe.observer_metadata)) return false;
+            || !this.guiExact(probe.anchors, ["controller", "provider"]) || !this.guiObserverMetadata(probe.observer_metadata)
+            || hasChild && !this.guiLearningChild(probe.learning_child, probe)) return false;
         const anchors = ["not_attempted", "controller_absent", "parameter_absent", "identity_mismatch", "same_parameter"];
         const stable = ["controller_absent", "parameter_absent", "identity_mismatch"];
         for (const route of ["controller", "provider"]) {
             const query = probe.interfaces[route], anchor = probe.anchors[route];
-            if (!query || anchors.indexOf(anchor) < 0) return false;
-            if (query.status === "failed") {
-                if (!this.guiExact(query, ["status", "query_status"]) || !this.guiInteger(query.query_status, -2147483648, 2147483647)) return false;
-            } else if (!this.guiExact(query, ["status"]) || ["not_attempted", "unsupported", "present"].indexOf(query.status) < 0) return false;
+            if (!this.guiInterfaceQuery(query) || anchors.indexOf(anchor) < 0) return false;
             if ((["not_attempted", "failed"].indexOf(query.status) >= 0 && anchor !== "not_attempted")
                 || (query.status === "unsupported" && anchor !== "controller_absent")
                 || (query.status === "present" && (anchor === "not_attempted" || route === "controller" && anchor === "controller_absent"))) return false;

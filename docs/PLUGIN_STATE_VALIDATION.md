@@ -14,8 +14,8 @@ separate completed evidence from the remaining queue.
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two cases each for Mixtool, Binaural Pan, Channel Strip, Dual Pan and Limiter | 41 classes, including an Expander restoration failure |
-| Expander hybrid preset pilot | One recalled preset restored by one original capsule load plus one preplanned original attack setter, with all 14 records exact | Second planned preset, capsule-only restoration, persistence and audio |
+| Additional preset recalls | Two capsule-only cases each for 15 classes, plus two hybrid Expander cases. The finite 46-class plan has 16 complete classes | 30 classes, including partial Gate and stopped Multiband Dynamics and Surround Delay |
+| Expander and Gate hybrid cases | Expander issued indices 1 and 2 and Gate index 1 each restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Gate index 2, capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
 | Chorder GUI learning controls | One input-pitch case, one Mode case and reset after a full restart without Save, with exact 908-record checks | Learned chord editing, other pitches and stored-model persistence |
@@ -27,6 +27,32 @@ separate completed evidence from the remaining queue.
 
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.
+
+The 15 capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
+Limiter, Tricomp, RedlightDist, Bitcrusher, Phaser, Flanger, Chorus, X-Trem,
+Autofilter, Beat Delay and Groove Delay. Their 30 cases plus Expander's two
+hybrid cases and Gate's one partial hybrid case give 33 positive cases.
+Catalog enumeration is separate from applying selected issued indices.
+
+Starting with unit57, every original-restoration observation checks complete
+typed schema and nonvalue metadata, including unknown fields. The final two
+full-provider observations must match all non-read-only values exactly before
+token release or the next preset. Read-only current values are observed rather
+than restored. An offline audit applied the same projection to 30 existing
+original observations from Channel Strip, Dual Pan and Limiter; all passed.
+It performed no new DAW actions. Multiband Dynamics and Surround Delay each
+stopped at this strict restoration gate and count as zero accepted cases.
+
+The new Expander and Gate experiments used a separately planned intermediate
+profile before the single attack setter. Gate also allowed one finite read-only
+reduction observation before four strict intermediate full-provider reads.
+That observation is not a restoration claim. Final original comparisons,
+token release and expired-catalog refusal passed. The runs made no Song Save
+or audio-verification claim. See the [preset evidence](evidence/2026-11-12-preset-recalls.json).
+
+Native33's fixed Chorder child read is implemented and source-tested but remains
+uninstalled and unverified in the actual host at this checkpoint. It establishes
+no learned-chord edit capability or additional accepted runtime coverage.
 
 ## Actual 8.1.1 observations
 

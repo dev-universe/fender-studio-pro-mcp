@@ -51,6 +51,7 @@ pub(super) fn inspect_gui(
     let mut gui = gui_parameter::ComparisonRead::capture(ctx, controller, parameter)?;
     if include_owner {
         gui.observe_controller(ctx, controller)?;
+        gui.observe_learning_child(ctx, controller)?;
     }
     let mut value = report(
         gui_parameter::PARAMETER,

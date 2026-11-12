@@ -413,6 +413,27 @@ impl ComparisonRead {
         pins.controller_probe = Some(probe);
         self.check(ctx, controller)
     }
+    pub(super) fn observe_learning_child(
+        &mut self,
+        ctx: &Context<'_>,
+        controller: &Controller,
+    ) -> Result<(), String> {
+        self.check(ctx, controller)?;
+        let Some(pins) = self.pins.as_mut() else {
+            return Ok(());
+        };
+        let mut guard = || {
+            controller.check()?;
+            ctx.check()
+        };
+        let probe = pins
+            .controller_probe
+            .as_mut()
+            .ok_or("GUI controller observation is missing")?;
+        probe.observe_learning_child(&pins.gui, ctx.api, &mut guard)?;
+        self.value["controller_probe"] = probe.value();
+        self.check(ctx, controller)
+    }
     fn gui_description(
         &self,
         ctx: &Context<'_>,
@@ -444,6 +465,9 @@ impl ComparisonRead {
         };
         let previous = std::mem::take(&mut *pins.witnesses.borrow_mut());
         release(previous, &mut guard)?;
+        if let Some(probe) = pins.controller_probe.as_ref() {
+            probe.retire_learning_child_publication(&mut guard)?;
+        }
         pins.root.check().map_err(|e| e.to_string())?;
         guard()?;
         let mut witnesses = Vec::new();
@@ -812,6 +836,9 @@ pub(super) fn edit_autofill(
 
 impl Compared {
     fn check_borrowed(&self, controller: &Controller) -> Result<(), String> {
+        if let Some(probe) = self.controller_probe.as_ref() {
+            probe.retain_learning_child_publication()?;
+        }
         if control_parameter(self.control.0) != self.gui.parameter.as_borrowed_raw().as_ptr() {
             return Err("GUI parameter association changed".into());
         }
