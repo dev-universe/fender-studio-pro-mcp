@@ -54,8 +54,14 @@
         0,
         1
       ],
-      "reason": "no_observable_writable_value_change",
-      "restoration_and_release_verified": true
+      "reason": "provider_schema_changed_not_accepted_by_fixed_provider_runner",
+      "restoration_and_release_verified": true,
+      "baseline_provider_records": 5,
+      "changed_provider_records": 6,
+      "model_before": "De-Tuner",
+      "model_after": "Transformer",
+      "actual_value_changes_observed": true,
+      "legacy_no_state_change_status_misleading": true
     },
     "unrun_classes": [
       "Rotor",
@@ -128,5 +134,20 @@
     "normal_saves": 0,
     "saved_source_unchanged": true
   },
-  "all_builtins_fully_verified": false
+  "all_builtins_fully_verified": false,
+  "External_mainzero_unit": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds_including_UI_cleanup": 199.771,
+    "rpc_calls": 18,
+    "Main_API1to0_verified": true,
+    "mixer_write_attempts": 1,
+    "graph_complete": false,
+    "graph_diagnostics": [
+      "ancestor_limit",
+      "depth_limit"
+    ],
+    "complete_provider_reads": 0,
+    "choice_pages": 0,
+    "saved_source_unchanged": true
+  }
 }

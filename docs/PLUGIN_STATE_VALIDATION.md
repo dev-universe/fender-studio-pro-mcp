@@ -6,7 +6,7 @@ not establish complete model, preset, nested-graph or writable-parameter coverag
 
 The user resumed on2026-11-13. Native34's stored Chorder model getter passed
 unit64. Units65 and66 ran with fresh bindings; unit66 added Studio Verb and
-Compressor before stopping at Voice FX's unobserved writable-value changes.
+Compressor before stopping at Voice FX's provider-schema transition.
 Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
 and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
@@ -16,7 +16,7 @@ state and the complete remaining queue. Completed units are not replayed.
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two capsule-only cases each for18classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has20completeclasses/40positivecases |26classes, including4strict-restoration stops and VoiceFX no-value-change observations |
+| Additional preset recalls | Two capsule-only cases each for18classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has20completeclasses/40positivecases |26classes, including4strict-restoration stops and VoiceFX provider-schema transitions |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -46,8 +46,10 @@ than restored. An offline audit applied the same projection to 30 existing
 original observations from Channel Strip, Dual Pan and Limiter; all passed.
 It performed no new DAW actions. Multiband Dynamics, Surround Delay, Room Reverb
 and Mixverb each stopped at this strict restoration gate and count as zero accepted cases.
-Voice FX indices0and1 restored but showed no writable value change, so they also
-count as zero accepted cases. The remaining ordinary tail is5classes/9cases.
+Voice FX indices0and1 switched De-Tuner to Transformer and changed5records to6.
+The old verifier emits an empty changed-value list on schema mismatch; its
+no_state_change status is misleading. The fixed-provider gate does not accept
+this transition, so zero cases are counted pending a schema-aware unit. The remaining ordinary tail is5classes/9cases.
 See the [November13 checkpoint evidence](evidence/2026-11-13-preset-and-hardware.json)
 and [hardware guide](HARDWARE.md) for the distinct accepted scopes.
 

@@ -86,23 +86,29 @@
       },
       "Voice FX": {
         "accepted_cases": 0,
-        "reason": "two_selected_presets_no_observable_writable_value_change_not_verified",
+        "reason": "provider_schema_changed_not_accepted_by_fixed_provider_runner",
         "indices": [
           0,
           1
         ],
         "full_provider_records": 5,
-        "restoration_and_release_verified": true
+        "restoration_and_release_verified": true,
+        "baseline_records": 5,
+        "changed_records": 6,
+        "observed_model_before": "De-Tuner",
+        "observed_model_after": "Transformer",
+        "actual_value_changes_observed": true,
+        "legacy_no_state_change_status_is_misleading": true
       }
     },
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1
   },
   "next_units_in_order": [
-    "Before06:30KST: new External mainzero unit must predeclare exactlyone Main1→0 API preparation and independently verify it; first UI-minimum attempt stopped before provider/choice reads. Finish two24recordproviders/portchoices, then restore original MacBook speakers/microphone48k512 through actualUI. USB only, no physical ping/CV claim.",
+    "Before06:30KST: prepare/review new External provider/choices-only unit with one Main1→0 API preparation, exact24record providers/complete portchoices/insert lists/fixture preservation. Do not require or claim full native diagnostic graph; generic topology remains separate. Restore original Audio Setup through UI after hardware work.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "After hardware priority, prepare/review/bind unit68 for only unit66 unrun5ordinaryFXclasses9cases: Rotor,De-Esser,Vocoder,VocalTune,OpenAIR0last. VoiceFX0/1 no-value-change cases require separate semantic/model plan, not replay.",
+    "After hardware priority, prepare/review/bind unit68 for only unit66 unrun5ordinaryFXclasses9cases: Rotor,De-Esser,Vocoder,VocalTune,OpenAIR0last. VoiceFX0/1 actually change5→6provider and De-Tuner→Transformer; fixed-schema verifier status is misleading and needs separate schema-aware plan, not replay.",
     "Continue exact26remainingpresetclasses. Unit67 first prepares Mixverb predeclared one-preset/one-predelay-normalized-setter exact restoration pilot; separately Surround2,Multiband5,Room1 scalar plans. Previous4failedclasses remain0accepted; no generic tolerance or samefailedunit repair.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
@@ -117,7 +123,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "20/46presetclasses,40positivecases,26remain. VoiceFX2no-changecasesnotaccepted; unrun5classes9cases. UI Main minimum6.309418287428427e-08 is not numeric0.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed after unit66. New External mainzero preparation, Mixverb unit67 exact scalar pilot and isolated Native35 Chorder candidate are being prepared; unit68 planned for only remaining5ordinaryFXclasses9cases.",
+  "current_execution": "App/owner closed. Mainzero API preparation verified, then graph completeness refused; new External provider/choices-only scope prepares with topology_not_assessed. Unit68 reviewed/mechanical delta pending Root; unit67 independent review ongoing; isolated Native35 candidate in progress.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -276,7 +282,13 @@
     "input_bus_table_empty": true,
     "first_external_readonly_status": "failed_at_Main_exact0_precondition_before_full_provider_or_choices",
     "external_full_provider_readonly_verified": false,
-    "UI_Main_minimum_is_exact_numeric0": false
+    "UI_Main_minimum_is_exact_numeric0": false,
+    "exact_Main1_to0_API_preparation_verified": true,
+    "external_native_graph_complete": false,
+    "external_graph_diagnostics": [
+      "ancestor_limit",
+      "depth_limit"
+    ]
   },
   "tooling_update_checkpoint": {
     "scope": "Official acquisition, isolated CLI execution, Codex registration update and same-byte static analysis verified; existing connected MCP still6.5.0",
