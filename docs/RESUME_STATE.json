@@ -157,7 +157,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 76,
+    "chorder_model_membership_roles_verified": 92,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -234,7 +234,23 @@
       77,
       78,
       79,
-      80
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96
     ]
   },
   "next_units_in_order": [
@@ -257,7 +273,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "No activeDAWowner afterSurroundindex0PASS151RPC84.958s/whole79restore/all6saved. Presets26/46classes53cases20remain,Surroundpartial1. Chorder76/128roles52remain; nextdisabled03 bindfromlatestSurroundactualcontext. Enabled5units independentPASSnotbound. Surroundindex1/Multiband/Roomprivatecandidatesunderwork; noSave.",
+  "current_execution": "NoactiveDAWownerafterChorderdisabled04PASS1404RPC247.794s/appfalseownerstop/all6originalarchives. Total92/128roles36remaining. PreparingreviewedMultiband169/max179RPC normal36 firsthybrid; followprogressbeforeDAWactions. NextChorder05 MUSTbindimmediatelylatestactualcontext after anyinterleavedunit. Allruntimeproduct/assetsfrozen;noSave.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -741,9 +757,25 @@
       77,
       78,
       79,
-      80
+      80,
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92,
+      93,
+      94,
+      95,
+      96
     ],
-    "remaining_roles": 52,
+    "remaining_roles": 36,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -771,10 +803,12 @@
       "current_chunk": null,
       "completed_chunks": [
         1,
-        2
+        2,
+        3,
+        4
       ],
       "evidence_document": "docs/evidence/2026-11-13-chorder-replacement.json",
-      "next_chunk": 3
+      "next_chunk": 5
     },
     "replacement_enabled_roles": [
       60,
@@ -855,5 +889,15 @@
     "all_six_saved_songs_unchanged": true,
     "result_sha256": "ccd3d82d9954a9623ecabeb72409430e40df69eb9cb4d9d9ffa0fc322dd06a7f",
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
+  },
+  "rough_chorder_remaining_minutes": [
+    35,
+    80
+  ],
+  "multiband_first_hybrid_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "groups": 39,
+    "report_sha256": "3ff7f5c4af716731172a6667ddbd158eb7d6e4fc48f0112f0c24ab41a9ecbd43",
+    "actual_calls": 0
   }
 }

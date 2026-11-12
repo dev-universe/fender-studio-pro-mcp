@@ -1,8 +1,10 @@
 # Chorder membership validation, November13
 
+Current accepted program union: **92/128 roles**, **36 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
+
 The scope is every current output membership role at input60. The completed output0 pilot is reused. Each new role has fresh complete908-record and whole128-input model pairs before treatment, after treatment and after inverse restoration. Save/restart, input boundaries and audio remain separate.
 
-Verified60/128roles; remaining68. Completed7/16new chunks. Final acceptance requires actual app/owner closure and preservation of all six saved diagnostic songs.
+The original halted queue verified60/128roles, with68 then remaining and7/16 original chunks complete. Final acceptance requires actual app/owner closure and preservation of all six saved diagnostic songs.
 
 | Chunk | Outputs | RPC | Setters | Seconds with UI/cleanup | Result |
 |---|---|---:|---:|---:|---|
@@ -28,3 +30,7 @@ The five enabled-order units also passed independent review2af176fe37c350d201725
 See evidence/2026-11-13-chorder-replacement.json for the current disjoint union. Original chunk8 remains failed and all_original16_chunks_complete remains false.
 
 Disabled replacement chunk2 covered72,73,75–80 in296.182seconds including UI/cleanup, with1404requests/16setters and the same exact whole908/128/581 restoration. App/owner closed and six archives unchanged. Current union is76/128 roles,52remaining. The original16 queue remains halted.
+
+Disabled replacement chunk3 covered81–88 in246.749seconds,1404RPC/16setters. Exact whole908/128/original581 restoration, app/owner closure and six archives passed. Current program union is84/128 roles with44remaining.
+
+Disabled replacement chunk4 covered89–96 in247.794seconds,1404RPC/16setters. Exact whole908/128/original581 restoration, app/owner closure and six saved archives passed. Four of eight replacement chunks are complete;31 disabled roles and5 enabled-order roles remain.
