@@ -57,13 +57,25 @@
       "Voice FX",
       "Mixverb"
     ],
-    "new_preset_recall_restore_cases": 52,
+    "new_preset_recall_restore_cases": 53,
     "remaining_preset_classes": 20,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 6,
-    "partial_preset_classes": {},
+    "new_hybrid_preset_recall_restore_cases": 7,
+    "partial_preset_classes": {
+      "Surround Delay": {
+        "accepted_cases": 1,
+        "issued_indices": [
+          0
+        ],
+        "remaining_planned_indices": [
+          1
+        ],
+        "ordinary_class_complete": false,
+        "acceptance_basis": "new_independently_reviewed_exact_two_scalar_hybrid_actual_unit"
+      }
+    },
     "new_preset_cases_in_completed_classes": 52,
     "new_capsule_only_preset_classes_completed": 23,
     "new_capsule_only_preset_recall_restore_cases": 46,
@@ -75,7 +87,9 @@
       },
       "Surround Delay": {
         "accepted_cases": 0,
-        "reason": "strict_typed_original_restoration_not_confirmed"
+        "reason": "strict_typed_original_restoration_not_confirmed",
+        "historical_failure_retained": true,
+        "current_new_hybrid_cases": 1
       },
       "Room Reverb": {
         "accepted_cases": 0,
@@ -132,7 +146,7 @@
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1,
     "new_hybrid_cases_in_completed_classes": 6,
-    "partial_hybrid_cases": 0,
+    "partial_hybrid_cases": 1,
     "chorder_stored_model_edit_restore_pilot_cases": 1,
     "chorder_verified_model_mappings": [
       {
@@ -143,7 +157,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 60,
+    "chorder_model_membership_roles_verified": 76,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -204,7 +218,23 @@
       56,
       57,
       58,
-      59
+      59,
+      61,
+      62,
+      64,
+      65,
+      66,
+      68,
+      69,
+      71,
+      72,
+      73,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80
     ]
   },
   "next_units_in_order": [
@@ -227,7 +257,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "No active DAW owner after Mixverb index1 actualPASS121RPC99.66s/all6savedhashsame. Presets26/46classes52cases20remain. Chorder old16queueHALTED after08partial;60/128roles68remain; private63disabled and5enabledorder candidates pendingfreeze/review. Native37readerpilot private19offlinegroupspendingreview, no37install. PostdetachOS/UI freshMacBook48k512 observed.",
+  "current_execution": "No activeDAWowner afterSurroundindex0PASS151RPC84.958s/whole79restore/all6saved. Presets26/46classes53cases20remain,Surroundpartial1. Chorder76/128roles52remain; nextdisabled03 bindfromlatestSurroundactualcontext. Enabled5units independentPASSnotbound. Surroundindex1/Multiband/Roomprivatecandidatesunderwork; noSave.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -695,9 +725,25 @@
       56,
       57,
       58,
-      59
+      59,
+      61,
+      62,
+      64,
+      65,
+      66,
+      68,
+      69,
+      71,
+      72,
+      73,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80
     ],
-    "remaining_roles": 68,
+    "remaining_roles": 52,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -718,9 +764,17 @@
       "chunks": 8,
       "rpc_calls": 11057,
       "setters": 126,
-      "independent_review": "in_progress",
+      "independent_review": "PASS_WITH_LIMITS",
       "runtime_binding": "UNBOUND",
-      "actual_calls": 0
+      "actual_calls": 0,
+      "review_report_sha256": "9e58c7fdde470a4512a14b4c6404ccd5513d9d5835a99fd1c08bf5131ebc7322",
+      "current_chunk": null,
+      "completed_chunks": [
+        1,
+        2
+      ],
+      "evidence_document": "docs/evidence/2026-11-13-chorder-replacement.json",
+      "next_chunk": 3
     },
     "replacement_enabled_roles": [
       60,
@@ -728,7 +782,19 @@
       67,
       70,
       74
-    ]
+    ],
+    "replacement_enabled_order": {
+      "candidate": "chorder-enabled-order-r1",
+      "freeze_sha256": "07e40954bd0f7c73126ff8f295d68d4eeb1da0d1b0e1d5622c421616e84dd027",
+      "independent_review": "PASS_WITH_LIMITS",
+      "review_report_sha256": "2af176fe37c350d20172571b18b38df1d143ce469d8b1d37f36246f13bf1a7c1",
+      "offline_groups": 30,
+      "independent_groups": 27,
+      "rpc_calls": 2115,
+      "setters": 30,
+      "actual_calls": 0,
+      "runtime_binding": "UNBOUND"
+    }
   },
   "rough_overall_remaining_hours": [
     6,
@@ -765,5 +831,29 @@
     "evidence_sha256": "aa5af3b2c872d2ec61b51df41919a48868ca01ca257af1b733fe0e5fd6c12861",
     "actual_calls": 0,
     "normal37_installed": false
+  },
+  "surround_r2_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "groups": 37,
+    "report_sha256": "b6c5d7fcf1d4a83b99e1df6d0fbb08e87d2fac218cc94311ee23fe3e96ac5e0f",
+    "actual_calls_before_this_job": 0
+  },
+  "surround_index0_actual": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 84.958,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "ccd3d82d9954a9623ecabeb72409430e40df69eb9cb4d9d9ffa0fc322dd06a7f",
+    "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   }
 }

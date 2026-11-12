@@ -8,14 +8,14 @@
   "new_preset_plan": {
     "classes_total": 46,
     "classes_complete": 26,
-    "accepted_cases": 52,
+    "accepted_cases": 53,
     "classes_remaining": 20,
     "capsule_only_classes": 23,
     "capsule_only_cases": 46,
     "hybrid_classes": 3,
-    "hybrid_cases": 6,
+    "hybrid_cases": 7,
     "cases_in_completed_classes": 52,
-    "partial_hybrid_cases": 0
+    "partial_hybrid_cases": 1
   },
   "unit66": {
     "elapsed_seconds_including_UI_cleanup": 209.528,
@@ -506,5 +506,23 @@
     "buffer_frames": 512,
     "settings_changed": false,
     "actual_audio_or_physical_keys_verified": false
+  },
+  "Surround_Delay_index0_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 84.958,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "ccd3d82d9954a9623ecabeb72409430e40df69eb9cb4d9d9ffa0fc322dd06a7f",
+    "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   }
 }
