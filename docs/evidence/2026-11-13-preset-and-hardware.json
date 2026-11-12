@@ -2,19 +2,19 @@
   "schema": 1,
   "date_kst": "2026-11-13",
   "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
-  "main_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "main_sha256": "c303b0e1cd91414b07cd9d189bf29748f7e50fd40f680bd52c9d94d94be084f8",
-  "native_unit": 34,
+  "main_source_commit": "eb29bc4",
+  "main_sha256": "bb78844f0bf14d4a3351d3c34b073847a6ec800942b6e4413e3ce668ce617fe6",
+  "native_unit": 35,
   "new_preset_plan": {
     "classes_total": 46,
-    "classes_complete": 24,
-    "accepted_cases": 49,
-    "classes_remaining": 22,
-    "capsule_only_classes": 22,
-    "capsule_only_cases": 44,
+    "classes_complete": 25,
+    "accepted_cases": 51,
+    "classes_remaining": 21,
+    "capsule_only_classes": 23,
+    "capsule_only_cases": 46,
     "hybrid_classes": 2,
     "hybrid_cases": 5,
-    "cases_in_completed_classes": 48,
+    "cases_in_completed_classes": 50,
     "partial_hybrid_cases": 1
   },
   "unit66": {
@@ -342,5 +342,38 @@
     "source_unchanged": true,
     "app_and_owner_closed": true,
     "global_AudioSetup_restoration_required": true
+  },
+  "voicefx_schema_aware_R2": {
+    "status": "complete",
+    "accepted_new_classes": 1,
+    "accepted_new_cases": 2,
+    "issued_indices": [
+      0,
+      1
+    ],
+    "actual_rpc_pairs": 154,
+    "suite_rpc_pairs_each": 72,
+    "catalog_count_each": 12,
+    "original_provider_records": 5,
+    "changed_provider_records": 6,
+    "original_model": "De-Tuner",
+    "changed_model": "Transformer",
+    "complete_changed_pair_each": true,
+    "complete_original_pair_before_release_each": true,
+    "complete_original_pair_after_refusal_each": true,
+    "whole_saved_source_unchanged": true,
+    "all_five_saved_songs_unchanged": true,
+    "main_preparation_sets": 1,
+    "scalar_or_model_repair_setters": 0,
+    "Song_Save": 0,
+    "elapsed_seconds_with_UI_cleanup": 116.953,
+    "app_closed_observed": true,
+    "owner_stopped": true,
+    "historical_unit66_failure_unchanged": true,
+    "original_ledger_sha256": [
+      "d51bb198dedb61f1aba77becf0d578795f61b3ba171332dba2231a8e137bf85f",
+      "155cfa7c12d2eb5d5ca42ace029f72c111991016cb4040cf453501df65714574"
+    ],
+    "result_sha256": "e0634ab0e5735dd31ba8c4953392973ca82ca9595b6da631efef751d401636c3"
   }
 }

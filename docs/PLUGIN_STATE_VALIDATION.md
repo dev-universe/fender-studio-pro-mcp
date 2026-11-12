@@ -16,7 +16,7 @@ state and the complete remaining queue. Completed units are not replayed.
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two capsule-only cases each for22classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has24completeclasses/49positivecases, including one partial Mixverb hybrid pilot |22classes, including4strict-restoration stops and VoiceFX provider-schema transitions |
+| Additional preset recalls | Two capsule-only cases each for23classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has25completeclasses/51positivecases, including one partial Mixverb hybrid pilot |21classes, including4strict-restoration stops |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -32,11 +32,11 @@ state and the complete remaining queue. Completed units are not replayed.
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.
 
-The22capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
+The23capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
 Limiter, Tricomp, RedlightDist, Bitcrusher, Phaser, Flanger, Chorus, X-Trem,
-Autofilter, Beat Delay, Groove Delay, Analog Delay, Studio Verb, Compressor, Rotor, De-Esser, Vocoder and Vocal Tune.
-Their44cases plus Expander's two hybrid cases and Gate's two hybrid cases give48positivecases in completed classes.
-One additional Mixverb hybrid pilot is accepted through a separately versioned independent audit of the immutable actual101RPC/227event trace. The original wrapper failure and zero acceptance remain unchanged; its fake-only two-field instance contract was wrong. Exact four-field identity, raw and normalized restoration, final full-provider pair and releases pass the audit. Mixverb still needs its separately planned second case. Total49 includes this one partial case.
+Autofilter, Beat Delay, Groove Delay, Analog Delay, Studio Verb, Compressor, Rotor, De-Esser, Vocoder, Vocal Tune and Voice FX.
+Their46cases plus Expander's two hybrid cases and Gate's two hybrid cases give50positivecases in completed classes.
+One additional Mixverb hybrid pilot is accepted through a separately versioned independent audit of the immutable actual101RPC/227event trace. The original wrapper failure and zero acceptance remain unchanged; its fake-only two-field instance contract was wrong. Exact four-field identity, raw and normalized restoration, final full-provider pair and releases pass the audit. Mixverb still needs its separately planned second case. Total51 includes this one partial case.
 Catalog enumeration is separate from applying selected issued indices.
 
 Starting with unit57, every original-restoration observation checks complete
@@ -50,7 +50,7 @@ and Mixverb each stopped at this strict restoration gate and count as zero accep
 Voice FX indices0and1 switched De-Tuner to Transformer and changed5records to6.
 The old verifier emits an empty changed-value list on schema mismatch; its
 no_state_change status is misleading. The fixed-provider gate does not accept
-this transition, so zero cases are counted pending a schema-aware unit. Unit68 added four ordinary classes; its Open AIR singleton showed no observable
+this transition. A new schema-aware R2 unit now accepts both fixed indices with complete changed6-record pairs and restored original5-record pairs; the old unit66 zero acceptance remains unchanged. Unit68 added four ordinary classes; its Open AIR singleton showed no observable
 value or schema change. It restored and released but counts as zero accepted
 cases. The unrun ordinary tail is exhausted.
 See the [November13 checkpoint evidence](evidence/2026-11-13-preset-and-hardware.json)

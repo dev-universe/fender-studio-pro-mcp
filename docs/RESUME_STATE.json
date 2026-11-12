@@ -12,8 +12,8 @@
   "mcp_tools": 45,
   "installed_native_unit": 35,
   "installed_native_uuid": "5F7778ED-A4AD-3021-B6F9-1358F2C53FE4",
-  "app_closed_observed": false,
-  "mcp_owner_stopped": false,
+  "app_closed_observed": true,
+  "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -53,10 +53,11 @@
       "Rotor",
       "De-Esser",
       "Vocoder",
-      "Vocal Tune"
+      "Vocal Tune",
+      "Voice FX"
     ],
-    "new_preset_recall_restore_cases": 49,
-    "remaining_preset_classes": 22,
+    "new_preset_recall_restore_cases": 51,
+    "remaining_preset_classes": 21,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
@@ -75,9 +76,9 @@
         "original_wrapper_passed": false
       }
     },
-    "new_preset_cases_in_completed_classes": 48,
-    "new_capsule_only_preset_classes_completed": 22,
-    "new_capsule_only_preset_recall_restore_cases": 44,
+    "new_preset_cases_in_completed_classes": 50,
+    "new_capsule_only_preset_classes_completed": 23,
+    "new_capsule_only_preset_recall_restore_cases": 46,
     "new_hybrid_preset_classes_completed": 2,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -117,7 +118,9 @@
         "observed_model_before": "De-Tuner",
         "observed_model_after": "Transformer",
         "actual_value_changes_observed": true,
-        "legacy_no_state_change_status_is_misleading": true
+        "legacy_no_state_change_status_is_misleading": true,
+        "historical_failure_retained": true,
+        "current_new_schema_aware_accepted_cases": 2
       },
       "Open AIR": {
         "accepted_cases": 0,
@@ -140,8 +143,8 @@
     "Hardware metadata BMONO/BSTEREO/RESTORE complete143RPC/24fullprovider/24choice/3acceptedstages; Apreviousobservations reused. Original globalMacBook speakers/microphone48k512 restored actualUI/reopened. Do not replay completed stages. DSPchoices0 while actualGUI bus options exist. Review separate read-only exactGUI receiver before fresh bounded pilot; noportwrites/ping/audio.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "Ordinary unrun tail exhausted by68. Retain24/46classes49positivecases(48completed+1partialMixverb)22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
-    "Continue22remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
+    "Ordinary tail exhausted; VoiceFXR2 new schema-aware indices0/1complete. Retain25/46classes51positivecases(50completed+1partialMixverb),21remaining. OpenAIR singleton sentinel/default recall witness stilldesignonly; no completedreplays.",
+    "Continue21remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
@@ -153,9 +156,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "24/46classes,49positivecases (48incompletedclasses +1partialMixverb),22remain. Actualunit67 wrapperfailureimmutable, separateindependentactualtraceaudit accepts1hybridpilot. SecondMixverbcasepending.",
+  "last_measurement": "25/46classes,51positivecases (50incompletedclasses+1partialMixverb),21remain; VoiceFXR2 indices0/1 newaccepted, old66failureimmutable.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "VoiceFXR2 independentlyPASS newlyRootBOUND Native35; live owner running, read nov13-voicefx-schema-aware/r2/run/progress.json beforeanyDAWaction. ChorderfirstR2failed40reads/0writes fromtransientMode0Input-1; NoSaveclosedownerstopped/savedinputsunchanged. New siblingpreparedUIcheckpoint inofflinepreparation. DoNOTinstallNative36orchangeartifactswhileliveowner.",
+  "current_execution": "VoiceFXR2 complete154actualRPC/2cases/1class,appNoSaveclosedownerstopped/5savedhashesunchanged. Native35R3installed. NewpreparedChorder179UIcheckpointcandidate awaiting review; External36readonlycandidate sourcePASS, pilotpreparing, notinstalled. No currentowner.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -170,7 +173,11 @@
     "estimate_confidence": "low",
     "estimate_basis": "Native35 supporting API default-drift fixed/reviewed, separate addon persistent controller reassociation P2 adds R3 implementation/review/integration. Unit67 actual trace needs offline full-instance contract audit, not mutation replay. Dedicated model/persistence/graph roles still uncertain; add1h lower and3h upper for newly measured work.",
     "hardware_dependent_verification": "separate condition",
-    "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
+    "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates",
+    "rough_overall_remaining_hours": [
+      6,
+      19
+    ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
   "installed_native_sha256": "b4dd4e49213a882631d2786e279d1608bdae32675eeb50dcf2586f05e5af975f",
@@ -183,8 +190,8 @@
   "last_runtime_verified_native_unit": 34,
   "last_runtime_verified_source_commit": "3815714",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "External physical-only BMONO/BSTEREO/RESTORE metadata",
-  "last_completed_live_elapsed_seconds": 775.693,
+  "last_completed_live_unit": "VoiceFXR2 two fresh schema-aware preset cases",
+  "last_completed_live_elapsed_seconds": 116.953,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -281,6 +288,19 @@
       "cause": "Root_missing_transient_UI_preparation_Mode0_Input_minus1",
       "saved_inputs_unchanged": true,
       "first_model_mapping_accepted": false
+    },
+    "voicefx_schema_aware_R2_actual": {
+      "status": "complete",
+      "elapsed_seconds": 116.953,
+      "actual_rpc_journal_rows": 154,
+      "cases": 2,
+      "classes": 1,
+      "original_provider_records": 5,
+      "changed_provider_records": 6,
+      "original_full_pair_restored": true,
+      "class_requires_both_indices": true,
+      "app_and_owner_closed": true,
+      "all_five_saved_songs_unchanged": true
     }
   },
   "remaining_preset_class_names": [
@@ -297,7 +317,6 @@
     "Pedalboard",
     "Rumble Native",
     "Tuner",
-    "Voice FX",
     "VU Meter",
     "Multi Instrument",
     "SampleOne",
