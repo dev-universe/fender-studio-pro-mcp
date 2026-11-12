@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "input_pitch": 60,
+  "total_output_roles": 128,
+  "initial_output0_reused": true,
+  "initial_evidence": "2026-11-13-chorder-note-model.json",
+  "planned_new_chunks": 16,
+  "completed_new_chunks": 2,
+  "verified_output_pitches": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "verified_roles": 17,
+  "remaining_roles": 111,
+  "planned_remaining_new_RPC": 19481,
+  "completed": [
+    {
+      "chunk": 1,
+      "status": "complete",
+      "outputs": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 347.141,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "a2317665e33288f9bb0b7982b66f61cbac38f29081c15a9f0575ee66da3cab05"
+    },
+    {
+      "chunk": 2,
+      "status": "complete",
+      "outputs": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 402.619,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "534070ec63bf56f1eac1c8793923829cd534fb63f5134707ff84934a7bc2ed5b"
+    }
+  ],
+  "persistence_verified": false,
+  "audio_verified": false,
+  "all_input_output_combinations_verified": false
+}

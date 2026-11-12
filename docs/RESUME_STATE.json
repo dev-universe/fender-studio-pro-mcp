@@ -12,8 +12,8 @@
   "mcp_tools": 45,
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -151,7 +151,27 @@
         "persistence_verified": false
       }
     ],
-    "external_stereo_exact_GUI_metadata_units": 1
+    "external_stereo_exact_GUI_metadata_units": 1,
+    "chorder_model_membership_roles_verified": 17,
+    "chorder_verified_output_pitches_at_input60": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ]
   },
   "next_units_in_order": [
     "Hardwaremetadata/originalAudioSetuprestorecomplete. External36exactStereoGUIreadPASS37RPC; Autoaftereditor24identicalexactGUI24. Noneinteger-1/choices0 despiteactualSendMainmenu; portwriterNOTverified. Source-onlypublicSDKdynamicmenuinvestigation thenconcreteRootREA/Ghidraquestion. MonoexactGUIpilotstillseparate; nooldfailedreplays.",
@@ -170,9 +190,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "25/46classes,51positivecases (50incompletedclasses+1partialMixverb),21remain; VoiceFXR2 indices0/1 newaccepted, old66failureimmutable.",
+  "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder17/128currentoutputrolesverifiedatinput60,111remaining,2/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "No currentowner/appclosed. OpenAIRsentinelactual61RPC/136.58s seed.5pairvalid butissueddefaultdidNOTresetmix; nofollowoncapsuleload/repair,0accepted. All5savedhashesunchanged. Chorder127membershipchunksR1offlineaccountingblocker(noacceptunlesscleanup+savedpreservation), R2fixinprogressbeforelive. Native37readOnlymenuprivateABIprototype preparing; RootREA/Ghidra concretecallbackquestionnext.",
+  "current_execution": "Starting reviewedNative36membershipchunk03 outputs17..24. Read .local/next-state/chorder-membership-chunks-r2/chunks/03/run/progress.json beforeanyDAWaction. Keep installedNative36/main35/bridge andallruntimecodefrozenwhileowneractive. Native37menu candidatesPRIVATEONLY: wireR1contract1024fieldblocker underR2fix; nativeR1count-growth complete-enumerationblocker underreview. DoNOTlandorinstall37duringNative36queue.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -200,8 +220,8 @@
   "last_runtime_verified_native_unit": 36,
   "last_runtime_verified_source_commit": "baa9076",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "OpenAIR sentinel failed no reset; knownterminal NoSavecleanup",
-  "last_completed_live_elapsed_seconds": 136.58,
+  "last_completed_live_unit": "Chorder membership chunk02 outputs9..16 PASS",
+  "last_completed_live_elapsed_seconds": 402.619,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -559,6 +579,47 @@
       "prior_four_saved_sources_unchanged": true,
       "mcp_calls": 0,
       "app_closed": true
+    },
+    "Chorder_Membership_Persistence": {
+      "normal_save_as_observed": true,
+      "new_title": "MCP Chorder Membership Persistence Diagnostic",
+      "new_saved_sha256": "9666ac8e14a4eafe9faac66c56788fffcead2df6716f4672236f583037b3e7c4",
+      "elapsed_seconds": 126.069,
+      "prior_five_saved_sources_unchanged": true,
+      "MCP_calls": 0,
+      "parameter_writes": 0
     }
+  },
+  "chorder_membership_queue": {
+    "implementation": "chorder-membership-chunks-r2",
+    "completed_chunks": [
+      1,
+      2
+    ],
+    "verified_output_pitches": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "remaining_roles": 111,
+    "next_chunk": 3,
+    "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
+    "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
+    "current_chunk": 3,
+    "hardware_boundary_policy": "No new chunk starts after21:20UTC; close currentownedappbefore21:30UTC hardwaredetachmentwindow, continue static/docs during boundary; freshhardware/context recheckafterward. OriginalMacBookAudioSetupalreadyrestored."
   }
 }
