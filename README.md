@@ -123,11 +123,18 @@ in both directions, with all 908 exposed values checked twice and the original
 Chorder preset member restored byte for byte. Other chord-model edits remain
 separate work.
 
-The experimental `chorder_learning_get` and `chorder_learning_set` address only
-the already-open Chorder editor's learning mode and selected input pitch. Both
+The experimental `chorder_learning_get` reads the already-open Chorder editor's
+learning mode and selected input pitch. `chorder_learning_set` also admits one
+bounded chord-note membership intent. Both
 require `track`, Note FX `slot`, `expected_instance` and `expected_document`.
-The setter's closed `change` is either `{"kind":"learn_mode","enabled":true}`
-or `{"kind":"input_pitch","pitch":0}`. An explicit `pitch:null` clears the
+The setter's closed `change` accepts `{"kind":"learn_mode","enabled":true}`,
+`{"kind":"input_pitch","pitch":0}`, or
+`{"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true}`.
+The last intent requires Learn Mode1 and an already selected matching input.
+It changes no selector or mode implicitly and reports only GUI current-value
+verification. Stored-model mapping, restoration, persistence and audio need
+separate evidence; the first actual model pilot has not passed yet.
+An explicit `pitch:null` clears the
 selection; omitting `pitch` is an error. Pitches are MIDI 0..127. The getter's
 read-only discovery ceiling is 256 views; learning setter discovery is limited to
 144 views after an actual 131-view Mode-on measurement. The separate Auto Fill

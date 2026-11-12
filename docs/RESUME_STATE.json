@@ -4,16 +4,16 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
+  "product_source_commit": "eb29bc4",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 45,
-  "installed_native_unit": 34,
-  "installed_native_uuid": "64DF1790-3306-3068-ADC0-AF3F0EAE8F92",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
+  "installed_native_unit": 35,
+  "installed_native_uuid": "5F7778ED-A4AD-3021-B6F9-1358F2C53FE4",
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -137,10 +137,10 @@
     "partial_hybrid_cases": 1
   },
   "next_units_in_order": [
-    "Before06:30KST: executeNEWphysical-only BMONO→BSTEREO→RESTORE600sUIwait fromknown69native/actualcanonicalmatrix. Ametadataalreadyread55RPC8provider/8choiceall0, noA replay; mappedoverallwrapperfailureimmutable. ExactMain1→0prepbeforeUI. Noportwritesuntilunset-1path. Lastnewhardwarestart20:15UTC,globalAudioSetupUIrestorestartno-later21:05UTC; restoreearlierafterphysicalstages.",
+    "Hardware metadata BMONO/BSTEREO/RESTORE complete143RPC/24fullprovider/24choice/3acceptedstages; Apreviousobservations reused. Original globalMacBook speakers/microphone48k512 restored actualUI/reopened. Do not replay completed stages. DSPchoices0 while actualGUI bus options exist. Review separate read-only exactGUI receiver before fresh bounded pilot; noportwrites/ping/audio.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
+    "Ordinary unrun tail exhausted by68. Retain24/46classes49positivecases(48completed+1partialMixverb)22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
     "Continue22remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
@@ -154,8 +154,8 @@
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "24/46classes,49positivecases (48incompletedclasses +1partialMixverb),22remain. Actualunit67 wrapperfailureimmutable, separateindependentactualtraceaudit accepts1hybridpilot. SecondMixverbcasepending.",
-  "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed after mappedExternal unit730.966s: completed_io_stages[A],8provider/8choicepagesall0, overallwrapperfailedUI_BMONO_timeout/acceptedmetadata0. BMono physicalmatrixactualobservedbutnoAPIflagaccepted;4rowsremoved/MainLRrestoredNoSave/sourceunchanged. Newphysical-only BMONO→BSTEREO→RESTORE with600sUIwaitpreparing; doNOTrepeatA. Pilot179R2quiescencefixinprogress; VoiceFXreviewfoundEOF/boolID/latefailuregateblocks; native35R3+wireacceptedbutnotlandedinstalled.",
+  "binary_source_commit": "eb29bc4",
+  "current_execution": "VoiceFXR2 independentlyPASS newlyRootBOUND Native35; live owner running, read nov13-voicefx-schema-aware/r2/run/progress.json beforeanyDAWaction. ChorderfirstR2failed40reads/0writes fromtransientMode0Input-1; NoSaveclosedownerstopped/savedinputsunchanged. New siblingpreparedUIcheckpoint inofflinepreparation. DoNOTinstallNative36orchangeartifactswhileliveowner.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -173,18 +173,18 @@
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
-  "installed_native_sha256": "ff3e093c66fae05105c4343eddd67166c549370603decfe4b0d4aa7ebcd6cb2f",
-  "binary_sha256": "c303b0e1cd91414b07cd9d189bf29748f7e50fd40f680bd52c9d94d94be084f8",
+  "installed_native_sha256": "b4dd4e49213a882631d2786e279d1608bdae32675eeb50dcf2586f05e5af975f",
+  "binary_sha256": "bb78844f0bf14d4a3351d3c34b073847a6ec800942b6e4413e3ce668ce617fe6",
   "installed_bridge_files_sha256": {
     "BridgeComponent.js": "3a41b867e0c3cb911111e27bd9dd5ec9c7710e7442d70113db90693b0ef00ffe",
     "BridgeCore.js": "9165a23872a0af32866e9f400f874d74e8011b06ee5b951d1fee5b066fdfdd3c",
-    "NativePluginControls.js": "626e9cb4fa365d08ecdcdae40e9693ae5dd44f8f47f60c539d8a0c4faa8bb230"
+    "NativePluginControls.js": "d9a4968e87288ed102c7f3abeebaca0ee3a0956230c0272950bdcd16efcf75f3"
   },
   "last_runtime_verified_native_unit": 34,
   "last_runtime_verified_source_commit": "3815714",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": 67,
-  "last_completed_live_elapsed_seconds": 148.2,
+  "last_completed_live_unit": "External physical-only BMONO/BSTEREO/RESTORE metadata",
+  "last_completed_live_elapsed_seconds": 775.693,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -272,6 +272,15 @@
       "unrun_cases": 0,
       "runner_sha256": "aaa02ec3a98e6f12e4bb6187d55163088563b7cde05c168121ea51dc731911ec",
       "replay_policy": "completed_evidence_only_do_not_replay"
+    },
+    "chorder35_first_model_R2_result": {
+      "status": "failed_cleaned_up",
+      "elapsed_seconds": 110.462,
+      "rpc_calls": 40,
+      "model_setters": 0,
+      "cause": "Root_missing_transient_UI_preparation_Mode0_Input_minus1",
+      "saved_inputs_unchanged": true,
+      "first_model_mapping_accepted": false
     }
   },
   "remaining_preset_class_names": [
@@ -323,8 +332,8 @@
     "external_ping_verified": false,
     "cv_routing_verified": false,
     "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately.",
-    "daw_audio_device": "Volt 276 playback and recording; 48000Hz;512frames; actual UI observed in no-document state",
-    "original_daw_audio_setup_restore_required": true,
+    "daw_audio_device": "Original MacBook Pro speakers and microphone restored;48000Hz;512frames;actual UI reopened verified no document; app closed",
+    "original_daw_audio_setup_restore_required": false,
     "original_daw_audio_setup": {
       "playback": "MacBook Pro speakers",
       "recording": "MacBook Pro microphone",
@@ -390,6 +399,29 @@
       "original_IO_UI_restored": true,
       "source_song_unchanged": true,
       "global_AudioSetup_restore_required": true
+    },
+    "original_daw_audio_setup_restored_actual_UI": true,
+    "physical_only_unit": {
+      "status": "complete_cleaned_up",
+      "elapsed_seconds": 775.693,
+      "rpc_calls": 143,
+      "completed_io_stages": [
+        "BMONO",
+        "BSTEREO",
+        "RESTORE"
+      ],
+      "accepted_metadata_stages": 3,
+      "full_provider_reads": 24,
+      "choice_pages": 24,
+      "all_DSP_port_choice_counts": 0,
+      "original_IO_UI_and_native_fixture_restored": true,
+      "all_five_owned_saved_songs_unchanged": true,
+      "plugin_port_state_transport_save_actions": 0,
+      "main_preparation_writes": 1,
+      "actual_GUI_send_bus_choices_observed": true,
+      "actual_GUI_stereo_return_choice_observed": true,
+      "DSP_empty_does_not_prove_GUI_empty": true,
+      "physical_loopback_verified": false
     }
   },
   "tooling_update_checkpoint": {
@@ -424,8 +456,8 @@
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
   "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
   "native35_candidate": {
-    "status": "R3_and_wire_independent_PASS_integration_deferred_until_hardware_units_complete_firstmodelpilot_preparation",
-    "installed": false,
+    "status": "accepted_R3_and_wire_landed_normal_build_installed_first_readonly_baseline40_failed_transient_preparation_no_model_writes",
+    "installed": true,
     "wire_implemented": true,
     "addon_independent_review_complete": true,
     "freeze_sha256": "7306764b9e00dba3dc4fc04d8fb3b9cd113b218184553d87ef2b6ef249627471",
