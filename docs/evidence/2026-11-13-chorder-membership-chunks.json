@@ -6,7 +6,7 @@
   "initial_output0_reused": true,
   "initial_evidence": "2026-11-13-chorder-note-model.json",
   "planned_new_chunks": 16,
-  "completed_new_chunks": 2,
+  "completed_new_chunks": 4,
   "verified_output_pitches": [
     0,
     1,
@@ -24,11 +24,27 @@
     13,
     14,
     15,
-    16
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32
   ],
-  "verified_roles": 17,
-  "remaining_roles": 111,
-  "planned_remaining_new_RPC": 19481,
+  "verified_roles": 33,
+  "remaining_roles": 95,
+  "planned_remaining_new_RPC": 16673,
   "completed": [
     {
       "chunk": 1,
@@ -73,6 +89,50 @@
       "all_six_saved_songs_unchanged": true,
       "app_and_owner_closed": true,
       "result_sha256": "534070ec63bf56f1eac1c8793923829cd534fb63f5134707ff84934a7bc2ed5b"
+    },
+    {
+      "chunk": 3,
+      "status": "complete",
+      "outputs": [
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 290.721,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "c5a42f7896b8ac46e65ae551dc687cec5276945c441351d06561b23d5ef5e0e3"
+    },
+    {
+      "chunk": 4,
+      "status": "complete",
+      "outputs": [
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 429.244,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "2d719d93ab35f46ede8e0812bace50ac083893cbf85ed07a19533e0dd6eb3f38"
     }
   ],
   "persistence_verified": false,

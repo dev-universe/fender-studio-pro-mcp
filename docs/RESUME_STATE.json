@@ -152,7 +152,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 17,
+    "chorder_model_membership_roles_verified": 33,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -170,7 +170,23 @@
       13,
       14,
       15,
-      16
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32
     ]
   },
   "next_units_in_order": [
@@ -190,9 +206,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder17/128currentoutputrolesverifiedatinput60,111remaining,2/16chunkscomplete.",
+  "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "Starting reviewedNative36membershipchunk03 outputs17..24. Read .local/next-state/chorder-membership-chunks-r2/chunks/03/run/progress.json beforeanyDAWaction. Keep installedNative36/main35/bridge andallruntimecodefrozenwhileowneractive. Native37menu candidatesPRIVATEONLY: wireR1contract1024fieldblocker underR2fix; nativeR1count-growth complete-enumerationblocker underreview. DoNOTlandorinstall37duringNative36queue.",
+  "current_execution": "LIVE/preparingNative36membershipchunk05 outputs33..40. Read .local/next-state/chorder-membership-chunks-r2/chunks/05/run/progress.json beforeDAWactions. Allruntimecode/main/native/bridgesremainfrozen. Native37wireR2reviewPASS;nativeR1unstabletraversalFAIL, privateR2fixongoing; no37install. Mixverbindex1privateunderreview; sixthcopySaveRestartpilotpreparingonlyafterall16.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -220,8 +236,8 @@
   "last_runtime_verified_native_unit": 36,
   "last_runtime_verified_source_commit": "baa9076",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Chorder membership chunk02 outputs9..16 PASS",
-  "last_completed_live_elapsed_seconds": 402.619,
+  "last_completed_live_unit": "Chorder membership chunk04 outputs25..32 PASS",
+  "last_completed_live_elapsed_seconds": 429.244,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -594,7 +610,9 @@
     "implementation": "chorder-membership-chunks-r2",
     "completed_chunks": [
       1,
-      2
+      2,
+      3,
+      4
     ],
     "verified_output_pitches": [
       0,
@@ -613,13 +631,28 @@
       13,
       14,
       15,
-      16
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32
     ],
-    "remaining_roles": 111,
-    "next_chunk": 3,
+    "remaining_roles": 95,
+    "next_chunk": 5,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
-    "current_chunk": 3,
-    "hardware_boundary_policy": "No new chunk starts after21:20UTC; close currentownedappbefore21:30UTC hardwaredetachmentwindow, continue static/docs during boundary; freshhardware/context recheckafterward. OriginalMacBookAudioSetupalreadyrestored."
+    "current_chunk": 5
   }
 }
