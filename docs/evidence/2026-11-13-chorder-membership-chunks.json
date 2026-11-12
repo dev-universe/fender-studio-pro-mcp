@@ -6,7 +6,7 @@
   "initial_output0_reused": true,
   "initial_evidence": "2026-11-13-chorder-note-model.json",
   "planned_new_chunks": 16,
-  "completed_new_chunks": 6,
+  "completed_new_chunks": 7,
   "verified_output_pitches": [
     0,
     1,
@@ -56,11 +56,22 @@
     45,
     46,
     47,
-    48
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59
   ],
-  "verified_roles": 49,
-  "remaining_roles": 79,
-  "planned_remaining_new_RPC": 13865,
+  "verified_roles": 60,
+  "remaining_roles": 68,
+  "planned_remaining_new_RPC": 12461,
   "completed": [
     {
       "chunk": 1,
@@ -193,6 +204,45 @@
       "all_six_saved_songs_unchanged": true,
       "app_and_owner_closed": true,
       "result_sha256": "64b43712e22deb9534a22b9ff6e643b5cc68a8093228e9d8f99d73308241da74"
+    },
+    {
+      "chunk": 7,
+      "status": "complete",
+      "outputs": [
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 246.746,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "803ab8647498928d851295bcd4ec2b069dfa3d16000a9aa84c518ceffb562278"
+    },
+    {
+      "chunk": 8,
+      "status": "failed_cleaned_up",
+      "outputs": [
+        57,
+        58,
+        59
+      ],
+      "accepted_cases": 3,
+      "rpc_calls": 695,
+      "model_setters": 8,
+      "elapsed_seconds_with_UI_cleanup": 170.877,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "c090a586bbb971a757cf9fb1707e3a88df7f044f6950378d38ebea62a7d4630d"
     }
   ],
   "persistence_verified": false,
