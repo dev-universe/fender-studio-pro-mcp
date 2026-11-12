@@ -147,11 +147,11 @@
       "reason for changes in estimate"
     ],
     "estimated_overall_remaining_hours": [
-      5,
-      17
+      6,
+      20
     ],
     "estimate_confidence": "low",
-    "estimate_basis": "Unit68 completes4more ordinary classes8cases and exhausts unrun ordinary tail; reduce both bounds1hour. Dedicated model/persistence/graph roles remain uncertain; hardware physical cable checks separate.",
+    "estimate_basis": "Native35 supporting API default-drift fixed/reviewed, separate addon persistent controller reassociation P2 adds R3 implementation/review/integration. Unit67 actual trace needs offline full-instance contract audit, not mutation replay. Dedicated model/persistence/graph roles still uncertain; add1h lower and3h upper for newly measured work.",
     "hardware_dependent_verification": "separate condition",
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
@@ -359,7 +359,7 @@
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
   "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
   "native35_candidate": {
-    "status": "R2_supporting_API_independent_PASS_addon_review_and_private_wire_implementation_pending",
+    "status": "R2_supporting_API_PASS_addon_P2_requires_private_R3_terminal_binding_fix_wire_preparation_ongoing",
     "installed": false,
     "wire_implemented": false,
     "addon_independent_review_complete": false,
