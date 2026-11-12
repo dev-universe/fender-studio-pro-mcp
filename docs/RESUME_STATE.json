@@ -138,7 +138,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "24/46classes,48positivecases,22remain. Ordinary unrun tail0; OpenAIR singleton unobserved recall effect, VoiceFX schema-aware case pending. Previous4strict drift failures remain unaccepted.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed. External IO staged helper preparation for new owned copy; unit67 registry outcome contract fixed, independent rerun ongoing; Native35 R2 supporting API review ongoing. Restore original Audio Setup through actual UI before06:30KST.",
+  "current_execution": "App/owner closed after67:raw101RPC suite completed but finalgate rejected full4field actual instance vs fake2field shape. Zero new officially accepted cases; immutable raw trace offline audit pending. ExternalIO stagedhelper prep, Native35 addonreview/privatewire ongoing. OriginalAudioSetup UIrestore required before06:30KST.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -221,8 +221,17 @@
     },
     "67": {
       "path": ".local/next-state/unit67-mixverb-exact-restore",
-      "status": "registry_outcome_contract_fixed_independent_rerun_pending",
-      "execution_ready": false
+      "status": "actual101RPC_completed_wrapper_shape_rejected_closed_offline_audit_pending",
+      "execution_ready": false,
+      "started": true,
+      "completed": true,
+      "validation_passed": false,
+      "accepted_cases": 0,
+      "raw_rpc_count": 101,
+      "raw_ledger_events": 227,
+      "elapsed_seconds_including_UI_cleanup": 148.2,
+      "runner_sha256": "2b6f00488a38ee58eddcb17bbb58c3027ab63096b454ff8c8aeea0aac47f14f4",
+      "replay_policy": "preserve_completed_raw_trace_and_failure_no_repeat_before_offline_contract_audit"
     },
     "68": {
       "path": ".local/next-state/unit68-preset-remainder",
@@ -350,7 +359,7 @@
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
   "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
   "native35_candidate": {
-    "status": "R2_private_supporting_API_independent_rerun_pending",
+    "status": "R2_supporting_API_independent_PASS_addon_review_and_private_wire_implementation_pending",
     "installed": false,
     "wire_implemented": false,
     "addon_independent_review_complete": false,
