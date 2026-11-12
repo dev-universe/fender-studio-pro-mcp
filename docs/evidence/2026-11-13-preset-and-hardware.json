@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "date_kst": "2026-11-13",
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "main_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
+  "main_sha256": "c303b0e1cd91414b07cd9d189bf29748f7e50fd40f680bd52c9d94d94be084f8",
+  "native_unit": 34,
+  "new_preset_plan": {
+    "classes_total": 46,
+    "classes_complete": 20,
+    "accepted_cases": 40,
+    "classes_remaining": 26,
+    "capsule_only_classes": 18,
+    "capsule_only_cases": 36,
+    "hybrid_classes": 2,
+    "hybrid_cases": 4
+  },
+  "unit66": {
+    "elapsed_seconds_including_UI_cleanup": 209.528,
+    "overall_status": "failed_cleaned_up",
+    "previous_full_class_gates_retained": true,
+    "accepted_classes": [
+      {
+        "name": "Studio Verb",
+        "provider_records": 151,
+        "catalog_count": 121,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          9,
+          9
+        ]
+      },
+      {
+        "name": "Compressor",
+        "provider_records": 154,
+        "catalog_count": 89,
+        "issued_indices": [
+          1,
+          2
+        ],
+        "changed_writable_counts": [
+          7,
+          8
+        ]
+      }
+    ],
+    "not_accepted": {
+      "name": "Voice FX",
+      "provider_records": 5,
+      "indices": [
+        0,
+        1
+      ],
+      "reason": "no_observable_writable_value_change",
+      "restoration_and_release_verified": true
+    },
+    "unrun_classes": [
+      "Rotor",
+      "De-Esser",
+      "Vocoder",
+      "Vocal Tune",
+      "Open AIR"
+    ],
+    "unrun_selected_cases": 9,
+    "normal_saves": 0,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true
+  },
+  "unit65": {
+    "accepted_classes": 0,
+    "accepted_cases": 0,
+    "stopped_class": "Mixverb",
+    "reason": "exact_original_restoration_not_confirmed",
+    "postload_complete9record_reads": 8,
+    "normalized_predelay_original_bits": "3D23D70D",
+    "normalized_predelay_postload_bits": "3D23D70E",
+    "elapsed_seconds_including_UI_cleanup": 98.823,
+    "saved_source_unchanged": true
+  },
+  "hardware": {
+    "mcp_tools": 45,
+    "full_product_tests": 127,
+    "independent_inventory_tests": 17,
+    "independent_observer_tests": 29,
+    "audio_device_count": 5,
+    "midi_source_count": 3,
+    "midi_destination_count": 3,
+    "volt_input_channels": 2,
+    "volt_output_channels": 2,
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "observer_windows_ms": [
+      105,
+      5002,
+      102
+    ],
+    "observed_midi_events": 0,
+    "disconnect_statuses": [
+      0,
+      0,
+      0
+    ],
+    "port_dispose_statuses": [
+      0,
+      0,
+      0
+    ],
+    "physical_keys_verified": false,
+    "audio_verified": false,
+    "physical_loopback": false,
+    "native_client_lifetime": "one_per_process",
+    "actual_DAW_device_and_IO_UI_observed": true,
+    "original_AudioSetup_restoration_required": true
+  },
+  "first_External_readonly_unit": {
+    "status": "failed_cleaned_up_before_full_provider_or_choice_reads",
+    "reason": "UI_fader_minimum_not_exact_native_zero",
+    "Main_native_volume_after_UI_minimum": 6.309418287428427e-08,
+    "rpc_calls": 8,
+    "complete_provider_reads": 0,
+    "choice_pages": 0,
+    "accepted_instances": 0,
+    "elapsed_seconds_including_UI_cleanup": 218.139,
+    "parameter_writes": 0,
+    "normal_saves": 0,
+    "saved_source_unchanged": true
+  },
+  "all_builtins_fully_verified": false
+}

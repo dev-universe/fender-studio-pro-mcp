@@ -4,23 +4,24 @@ This follow-up extends the [previous 60-class validation](VALIDATION.md). It is
 still in progress. Current-provider enumeration and representative controls do
 not establish complete model, preset, nested-graph or writable-parameter coverage.
 
-The user paused the run again after the Native34 installation checkpoint on
-2026-11-12. Units64 and65 remain unstarted with pending bindings. Read the
-[latest handoff](LOOP_HANDOFF_2026-11-12.md) before an explicit resume.
-During this run Native32 passed a Chorder Mode roundtrip
-after the Native31 input-pitch case. The [current progress](PROGRESS_2026-11-12.md),
-[resume guide](RESUME.md) and [detailed handoff](LOOP_HANDOFF_2026-11-10.md)
-separate completed evidence from the remaining queue.
+The user resumed on2026-11-13. Native34's stored Chorder model getter passed
+unit64. Units65 and66 ran with fresh bindings; unit66 added Studio Verb and
+Compressor before stopping at Voice FX's unobserved writable-value changes.
+Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
+and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
+state and the complete remaining queue. Completed units are not replayed.
 
 | Area | Actual host evidence | Remaining scope |
 |---|---|---|
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two capsule-only cases each for 16 classes, plus two hybrid cases each for Expander and Gate. The finite 46-class plan has 18 complete classes | 28 classes, including stopped Multiband Dynamics, Surround Delay and Room Reverb |
+| Additional preset recalls | Two capsule-only cases each for18classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has20completeclasses/40positivecases |26classes, including4strict-restoration stops and VoiceFX no-value-change observations |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
+| Chorder stored model read | Two complete128-input passes,16fresh serializers and four original908-record checks | Membership edits, boundary mapping, Save/restart and audio |
+| Hardware local tools | Actual CoreAudio/CoreMIDI inventory and3finite empty MIDI windows with successful cleanup;45MCPtools | Physical keys, DAW instrument response, analog loopback/ping and CV isolation |
 | Chorder GUI learning controls | One input-pitch case, one Mode case and reset after a full restart without Save, with exact 908-record checks | Learned chord editing, other pitches and stored-model persistence |
 | Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
@@ -31,10 +32,10 @@ separate completed evidence from the remaining queue.
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.
 
-The 16 capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
+The18capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
 Limiter, Tricomp, RedlightDist, Bitcrusher, Phaser, Flanger, Chorus, X-Trem,
-Autofilter, Beat Delay, Groove Delay and Analog Delay. Their 32 cases plus
-Expander's two hybrid cases and Gate's two hybrid cases give 36 positive cases.
+Autofilter, Beat Delay, Groove Delay, Analog Delay, Studio Verb and Compressor.
+Their36cases plus Expander's two hybrid cases and Gate's two hybrid cases give40positivecases.
 Catalog enumeration is separate from applying selected issued indices.
 
 Starting with unit57, every original-restoration observation checks complete
@@ -43,8 +44,12 @@ full-provider observations must match all non-read-only values exactly before
 token release or the next preset. Read-only current values are observed rather
 than restored. An offline audit applied the same projection to 30 existing
 original observations from Channel Strip, Dual Pan and Limiter; all passed.
-It performed no new DAW actions. Multiband Dynamics, Surround Delay and Room Reverb each
-stopped at this strict restoration gate and count as zero accepted cases.
+It performed no new DAW actions. Multiband Dynamics, Surround Delay, Room Reverb
+and Mixverb each stopped at this strict restoration gate and count as zero accepted cases.
+Voice FX indices0and1 restored but showed no writable value change, so they also
+count as zero accepted cases. The remaining ordinary tail is5classes/9cases.
+See the [November13 checkpoint evidence](evidence/2026-11-13-preset-and-hardware.json)
+and [hardware guide](HARDWARE.md) for the distinct accepted scopes.
 
 The new Expander and Gate experiments used a separately planned intermediate
 profile before the single attack setter. Gate also allowed one finite read-only
