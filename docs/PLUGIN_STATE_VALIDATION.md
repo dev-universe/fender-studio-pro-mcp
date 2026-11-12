@@ -14,10 +14,11 @@ separate completed evidence from the remaining queue.
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two Mixtool and two Binaural Pan changed/restored cases | 44 other classes from the finite remaining plan |
+| Additional preset recalls | Two cases each for Mixtool, Binaural Pan, Channel Strip, Dual Pan and Limiter | 41 classes, including an Expander restoration failure |
+| Expander hybrid preset pilot | One recalled preset restored by one original capsule load plus one preplanned original attack setter, with all 14 records exact | Second planned preset, capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Chorder GUI learning controls | One Mode-off input-pitch case and one Mode-on/off/explicit-null case, with full 908-record restoration | Transient reset, learned chord editing and other pitches |
+| Chorder GUI learning controls | One input-pitch case, one Mode case and reset after a full restart without Save, with exact 908-record checks | Learned chord editing, other pitches and stored-model persistence |
 | Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
 | Other instruments | All 755 selected ordinary fields across Mojito, Mai Tai, SampleOne and Presence | MIDI roles, macros and other dedicated state |
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |

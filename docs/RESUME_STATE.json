@@ -17,8 +17,8 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native32 Chorder Mode on->off retained input->explicit null, full908 and GUI restored, all5 state captures unchanged",
-  "last_completed_unit_learning_setters": 3,
+  "last_completed_unit": "Native32 Expander presetindex1 hybrid:1originalcapsuleload+1preplannedattacksetter, full14exactoriginal; index2pending",
+  "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -31,16 +31,31 @@
     "preset_catalog_classes": 59,
     "new_preset_classes_completed": [
       "Mixtool",
-      "Binaural Pan"
+      "Binaural Pan",
+      "Channel Strip",
+      "Dual Pan",
+      "Limiter"
     ],
-    "new_preset_recall_restore_cases": 4,
-    "remaining_preset_classes": 44,
+    "new_preset_recall_restore_cases": 10,
+    "remaining_preset_classes": 41,
     "chorder_gui_input_pitch_current_value_cases": 1,
-    "chorder_gui_mode_current_value_cases": 1
+    "chorder_gui_mode_current_value_cases": 1,
+    "chorder_no_save_restart_reset_cases": 1,
+    "new_hybrid_preset_recall_restore_cases": 1,
+    "partial_preset_classes": {
+      "Expander": {
+        "completed_indices": [
+          1
+        ],
+        "remaining_indices": [
+          2
+        ]
+      }
+    }
   },
   "next_units_in_order": [
-    "Characterize transient reset and retained chord state separately from persistence",
-    "Resume 44 finite preset class controls using fresh issued catalogs",
+    "Verify preplanned exact capsule+attack restoration for Expander/Gate; resume remaining41presetclasses",
+    "Chorder stored-model read, fixed GUI child authority and learned-chord change/restore/persistence",
     "Vocal Tune direct bypass role plan and separate current-value pilot",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles",
     "Generic nested graph create/connect/delete with complete topology restoration",
@@ -51,9 +66,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-12.md",
-  "last_measurement": "Complete finite unit50 acceptedMode1;18 full908 reads,440RPC,3set/5capture/5release; noLoad/Save/Play; final exact original",
+  "last_measurement": "unit56hybrid1positive, fulltypedchanged/intermediate/finalschema+recordchecks; actual51first3typedfinalaudit30readspass",
   "binary_source_commit": "486d6115dcecbcbb96cbbbfd083e014af8eddbb0",
-  "current_execution": "unit50 complete, app/owner closed; transient Save/restart and preset batch preparation",
+  "current_execution": "appsownersclosed; strict typed final gate57 underindependentreview; Native33fixed GUIchildread designready, implementationpending",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",

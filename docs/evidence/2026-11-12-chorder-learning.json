@@ -37,7 +37,12 @@
     ".local/next-state/unit48b-discard-recovery-proof.json": "cb92c913883f13b2531184047c18366255561e19b6a2c5873198bc15d85b9769",
     ".local/next-state/unit49-learning-bound-fix/readiness.json": "c0184823c18341ea25e2bcdd8a01ff13e16c41c4c4f10fc44970292d2b9b4833",
     ".local/next-state/unit49-learning-bound-review/evidence.json": "b2dab51523c99532b6559dc2a1d766074a86454360d51522ea9d1eb9b5ef0a84",
-    ".local/next-state/unit50-mode-roundtrip-result.json": "c38b242171f8271699d728f2442ce54a65021bae56e2c24b949390525867b778"
+    ".local/next-state/unit50-mode-roundtrip-result.json": "c38b242171f8271699d728f2442ce54a65021bae56e2c24b949390525867b778",
+    ".local/next-state/unit52-transient-worker/run/result.json": "7b8a23f8d3deadc8da7897ec56732c7dbc9d6e94cbba809fbfc6e2a990f9b540",
+    ".local/next-state/unit52-transient-worker/run/save-as-differences.json": "0bf6f07d9664dd75e8536e6880d07b99e72163a75128b06fdf10ed12fb21ebf1",
+    ".local/next-state/unit53-transient-worker/run/result.json": "1c449a9a09b06a6a9c325831e616b8ef220d0ff8b55c9f73be38f61e90922caa",
+    ".local/next-state/unit53-transient-worker/run/root-save-disabled-observation.json": "938db589cadcf258bff9a8bb9f7feb09c5b6aeb1746175c1edd670b2739aae59",
+    ".local/next-state/unit55-no-save-reset-result.json": "915e1d69056caac49c86cf515f9010b9c9ae98cb552086b8fb665c4f2cb69109"
   },
   "source_learning_setter_view_limit": 144,
   "installed_native31_learning_setter_view_limit": 128,
@@ -74,5 +79,62 @@
     "owned_saved_song_unchanged_observed": true,
     "app_closed_confirmed": true,
     "owner_stopped": true
+  },
+  "transient_restart_preparation_stop": {
+    "native_unit": 32,
+    "accepted_reset_characterizations": 0,
+    "plugin_setters": 0,
+    "state_captures": 0,
+    "state_releases": 0,
+    "reason": "Save As changed the stored documentPath beyond the fixed title-only plan",
+    "saved_different_members": [
+      "Song/mediapool.xml",
+      "metainfo.xml"
+    ],
+    "chorder_member_unchanged": true,
+    "original_file_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "elapsed_seconds": 138.271
+  },
+  "mode_only_save_unavailable": {
+    "native_unit": 32,
+    "accepted_save_restart_cases": 0,
+    "plugin_setters": 1,
+    "state_captures": 1,
+    "state_releases": 1,
+    "state_loads": 0,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "ui_save_disabled": true,
+    "ui_revert_disabled": true,
+    "save_completion_flag_supplied": false,
+    "normal_close_without_save_prompt": true,
+    "original_and_prepared_copy_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "elapsed_seconds": 139.674,
+    "result_meaning": "stopped fixed Save/restart experiment; read-only restart endpoint still pending"
+  },
+  "no_save_restart_reset": {
+    "schema": 1,
+    "date": "2026-11-12",
+    "status": "actual_chorder_no_save_restart_reset_verified",
+    "native_unit": 32,
+    "full_provider_records": 908,
+    "full_original_reads_after_restart": 4,
+    "gui_getter_reads": 4,
+    "rpc_receipts": 78,
+    "parameter_setters": 0,
+    "state_actions": 0,
+    "transport_actions": 0,
+    "normal_saves": 0,
+    "fresh_session_and_document": true,
+    "reopened_mode": 0,
+    "reopened_gui_input_pitch": -1,
+    "all_original_records_and_gui_matched": true,
+    "stored_chord_and_saved_files_unchanged": true,
+    "save_persistence_verified": false,
+    "audio_verified": false,
+    "app_closed_then_owner_stopped": true,
+    "elapsed_seconds_including_ui_cleanup": 100.715
   }
 }

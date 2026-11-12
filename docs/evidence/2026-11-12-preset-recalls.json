@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "status": "three_preset_classes_verified_before_separate_expander_restore_failure",
+  "native_unit": 32,
+  "source_commit": "48bf48c70f90c2d61184b2d7ae9ce19599777a74",
+  "accepted_preset_classes": 3,
+  "accepted_recall_restore_cases": 6,
+  "classes": [
+    {
+      "plugin": "Channel Strip",
+      "provider_records": 19,
+      "catalog_count": 45,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.185
+    },
+    {
+      "plugin": "Dual Pan",
+      "provider_records": 8,
+      "catalog_count": 5,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.364
+    },
+    {
+      "plugin": "Limiter",
+      "provider_records": 13,
+      "catalog_count": 15,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.081
+    }
+  ],
+  "failed_class": "Expander",
+  "failed_class_accepted_cases": 0,
+  "restoration_difference_names": [
+    "attack"
+  ],
+  "unrun_classes": [
+    "Gate",
+    "Tricomp"
+  ],
+  "read_only_value_policy": "observed_not_restored",
+  "main_preparation_sets": 1,
+  "main_zero_explicit_null_guarded": true,
+  "terminal_tool_inputs": 0,
+  "song_saves": 0,
+  "audio_verified": false,
+  "app_closed_then_owner_stopped": true,
+  "saved_scratch_unchanged": true,
+  "elapsed_seconds_including_ui_and_cleanup": 130.62,
+  "raw_runtime_data_included": false,
+  "references_sha256": {
+    ".local/next-state/unit51-presets-partial-result.json": "b3008627f046c4204f23d21c1114bbee1b74aa4cebb368e86895091ff30f007e",
+    ".local/live/unit54-preset-batch/result.json": "c72d7e7c8bf2f16c3a467454d2d566f73bcd90ee1c9c40272f6b6b5f52d8a117",
+    ".local/next-state/unit56-expander-hybrid-result.json": "5efcbd852c0afe1133a9821f5e957b5b529adc9bae1b56f1e7f0bcacec2ea827",
+    ".local/next-state/unit57-preset-preparation/actual51-typed-final-audit.json": "1e750d34f9d464f0e2e3787693a78cbe675c6592fc727caa6812e89cccdd5fc8"
+  },
+  "subsequent_gate_stop": {
+    "accepted_preset_classes": 0,
+    "failed_class": "Gate",
+    "difference_names": [
+      "attack"
+    ],
+    "unrun_following_classes": 23,
+    "follow_on_mutations_after_failure": 0,
+    "saved_scratch_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "elapsed_seconds": 164.455
+  },
+  "expander_partial_hybrid": {
+    "schema": 1,
+    "date": "2026-11-12",
+    "status": "actual_expander_preset_index1_hybrid_exact_restoration_verified",
+    "native_unit": 32,
+    "preset_indices": [
+      1
+    ],
+    "planned_class_indices": [
+      1,
+      2
+    ],
+    "planned_class_complete": false,
+    "remaining_class_indices": [
+      2
+    ],
+    "preset_recalls": 1,
+    "original_capsule_loads": 1,
+    "preplanned_original_attack_setters": 1,
+    "complete_provider_records": 14,
+    "intermediate_full_reads": 4,
+    "final_original_full_reads": 2,
+    "capsule_only_restoration_verified": false,
+    "hybrid_restoration_verified": true,
+    "typed_metadata_and_unknown_record_fields_exact": true,
+    "state_and_catalog_released": true,
+    "expired_catalog_refused_unchanged": true,
+    "rpc_count": 97,
+    "execution_seconds": 7.505,
+    "elapsed_seconds_including_ui_cleanup": 146.104,
+    "terminal_tool_inputs": 0,
+    "saved_scratch_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "save_or_audio_verified": false
+  },
+  "existing_three_class_typed_audit": {
+    "all_passed": true,
+    "classes": 3,
+    "original_observations": 30,
+    "actual_daw_actions": 0
+  }
+}
