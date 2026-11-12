@@ -1,6 +1,6 @@
 # Chorder membership validation, November13
 
-Current accepted program union: **127/128 roles**, **1 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
+Current accepted program union: **128/128 roles at input60**, **0 remaining output roles**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
 
 The scope is every current output membership role at input60. The completed output0 pilot is reused. Each new role has fresh complete908-record and whole128-input model pairs before treatment, after treatment and after inverse restoration. Save/restart, input boundaries and audio remain separate.
 
@@ -50,3 +50,5 @@ Enabled-order unit3 target67 completed423RPC/6writes in143.275seconds. Full908/1
 Enabled-order unit4 target70 passed301RPC/4writes in122.646seconds; exact908/128/original581 restoration, NoSave/app/owner closure and6 saved archives unchanged. Remaining63,74.
 
 Enabled-order unit5 target74 passed179RPC/2writes in122.156seconds; exact908/128/original581 restoration, NoSave/app/owner closure and6 saved archives unchanged. Only63 remains. The failed02 terminal inventory is56 observed read replies plus1 plugin_editor_open applied_unverified reply, not57 observed reads; zero parameter writers.
+
+Fresh target63 replacementR2 completed545RPC/8writes in319.158seconds. Independent actualraw audit replayed545paired known requests and9whole908pairs/9whole128pairs, exact original581 signature, RootNoSave/appfalse/owner0/all6archives. An output-only inherited result string still namedr1; HERE/binding/PLAN/raw/files were exactr2 andr1hadnorun. Originalresult remains untouched; explicitcorrectionrecord SHA7f0568eb9441e4ca2956434ae5c589c862fbd6f0823a24935f233f29a62a6d5a and independentreport2f9065bf41f6e01e07359e8aff813c07086926f38a8a259dcd625fd43a599185 distinguish actualscope. Disjointunion128outputs atinput60; allinput/output combinations, Songpersistence and audio are unproved. Original16completionfalse.

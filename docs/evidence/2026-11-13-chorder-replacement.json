@@ -69,6 +69,7 @@
     60,
     61,
     62,
+    63,
     64,
     65,
     66,
@@ -134,11 +135,11 @@
     126,
     127
   ],
-  "verified_roles": 127,
-  "remaining_roles": 1,
+  "verified_roles": 128,
+  "remaining_roles": 0,
   "disabled_replacement_chunks_complete": 8,
   "disabled_replacement_chunks_total": 8,
-  "enabled_order_units_complete": 4,
+  "enabled_order_units_complete": 5,
   "enabled_order_units_total": 5,
   "disabled_completed": [
     {
@@ -353,6 +354,25 @@
       "all_six_saved_songs_unchanged": true,
       "result_sha256": "4288beae342453a1e41513df81fc5fea00976eafc397a1255954cde23cbfc26b",
       "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    },
+    {
+      "chunk": 2,
+      "candidate": "replacement63-r2",
+      "output_pitches": [
+        63
+      ],
+      "rpc_calls": 545,
+      "model_setters": 8,
+      "elapsed_seconds_with_UI_cleanup": 319.158,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "6f3fa7690fd6053ea742f180efd485361de8f66df38838ef3083738d35560bb2",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
+      "independent_actual_scope_audit": "PASS_label_only_summary_defect_preserved",
+      "correction_record_sha256": "7f0568eb9441e4ca2956434ae5c589c862fbd6f0823a24935f233f29a62a6d5a",
+      "audit_report_sha256": "2f9065bf41f6e01e07359e8aff813c07086926f38a8a259dcd625fd43a599185",
+      "original_summary_namespace_revision": "r1",
+      "actual_bound_runtime_revision": "r2"
     }
   ],
   "persistence_verified": false,
@@ -374,5 +394,7 @@
       "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
       "rpc_meaning": "56 observed read replies and1 plugin_editor_open applied_unverified reply; zero parameter writers"
     }
-  ]
+  ],
+  "scope": "all128output_membership_roles_at_input60",
+  "all_input_output_combinations_verified": false
 }

@@ -12,13 +12,13 @@
   "mcp_tools": 45,
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
-  "app_closed_observed": false,
-  "mcp_owner_stopped": false,
+  "app_closed_observed": true,
+  "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Room Reverb fresh serialized identity scoped pilot:156RPC/99.811s, all16 writable restored and fresh725-byte signatures equal, NoSave closed/owner stopped/all6 saved archives unchanged; global preset counts unchanged.",
-  "last_completed_unit_learning_setters": 0,
+  "last_completed_unit": "Chorder fresh63 replacementR2:545RPC/8writes/319.158s, independently audited exact full908/128/original581 restore;128/128 output roles at input60 complete. NoSave/appfalse/owner0/all6unchanged. Originalnamespace summaryliteralr1 preserved with independentlyreviewed actualr2 correction.",
+  "last_completed_unit_learning_setters": 8,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -154,7 +154,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 127,
+    "chorder_model_membership_roles_verified": 128,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -219,6 +219,7 @@
       60,
       61,
       62,
+      63,
       64,
       65,
       66,
@@ -289,7 +290,7 @@
   },
   "next_units_in_order": [
     "Keep Native36/main45/bridges frozen until all dependent six-original-archive units finish. Hardware detached; OS inventory2 and actual MacBook48kHz/512frames preferences are already verified. Reuse all completed immutable sweeps.",
-    "Chorder output role union127/128: old0..59, all8disabled replacement chunks63roles, enabled targets60/67/70/74 complete. Only target63 remains. Original enabled02 failed at Root UI checkpoint after57RPC and0writers; preserve failure. Independently review fresh chorder-enabled-order-replacement63/r1 and bind runtime63 with fresh context; exact545RPC/8writers/original581 order proof and all6 archive/app/owner/source guards. Do not replay old0..59 or failed originalchunk08/enabled02.",
+    "Chorder output roles at input60 complete128/128. Reuseold0..59+all63disabled+enabled60/67/70/74+fresh63r2. Preservefailedold08/enabled02 andoriginalall16false. Fresh63R2result hasr1summaryliteral; actualr2 full545 evidence independentlyverified and explicitcorrectionrecord mustbepinned by persistencegate. Do not replay.",
     "Selector boundary r1 was never live-bound and independent review found zero-send refusal could strand owner. Finish separate r2 and independent review before actual240RPC OFF null\u21920\u2192127\u2192null pilot. Exactly3selectorwrites, noMode/note/state/Save/transport, all908 and128models original restoration. Counts are separate boundarycases, not newnames/membershiproles.",
     "Vocal Tune receiver r1 was never live-bound and independent review found malformed detail/controller/schema acceptance. Finish separate r2 and independent review, then fresh normal36 actual17/22RPC readonly collector. Inspect real receiver metadata; Ghidra follow-up only with exact artifact/receiver evidence. Callback/inverse/mutation authority is not proved by metadata alone.",
     "Room fresh serialized identity pilot completed156RPC/99.811s and adds only one scoped writable/serialized pilot. Old all19 restoration failure remains. Design next distinct preset case only under explicit reviewed serialized scope if needed; global preset totals remain28/46classes/56cases,18classes left.",
@@ -307,13 +308,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": {
-    "unit": "Chorder output63 replacement r2",
-    "state": "live",
-    "fixed_rpc_calls": 545,
-    "model_writes": 8,
-    "accepted_roles_before": 127
-  },
+  "current_execution": null,
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -783,6 +778,7 @@
       60,
       61,
       62,
+      63,
       64,
       65,
       66,
@@ -848,7 +844,7 @@
       126,
       127
     ],
-    "remaining_roles": 1,
+    "remaining_roles": 0,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -903,7 +899,7 @@
       "independent_groups": 27,
       "rpc_calls": 2115,
       "setters": 30,
-      "actual_calls": 1627,
+      "actual_calls": 2172,
       "runtime_binding": "MIXED_BOUND_PER_UNIT",
       "current_unit": null,
       "fixed_output": null,
@@ -915,7 +911,9 @@
       ],
       "failed_units": [
         2
-      ]
+      ],
+      "replacement63_revision": "r2",
+      "replacement63_accepted_roles": 1
     }
   },
   "rough_overall_remaining_hours": [
@@ -979,8 +977,8 @@
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   },
   "rough_chorder_remaining_minutes": [
-    5,
-    15
+    0,
+    0
   ],
   "multiband_first_hybrid_independent_review": {
     "status": "PASS_WITH_LIMITS",
@@ -1132,11 +1130,13 @@
     "selector_boundary_r1": "review_failed_no_actual_calls",
     "selector_boundary_r2": "actual_complete",
     "replacement63_r1": "review_failed_zero_send_retention_no_actual_calls",
-    "replacement63_r2": "independent_review_pass_actual_running",
+    "replacement63_r2": "actual_complete_with_independent_namespace_correction",
     "vocal_receiver_r1": "review_failed_schema_admission_no_actual_calls",
     "vocal_receiver_r2": "schema_fixes_in_progress",
     "persistence_r2": "review_failed_runtime_metadata_admission_no_actual_calls",
-    "persistence_r3": "sealed_pending_independent_review"
+    "persistence_r3": "metadata_pass_execution_blocked",
+    "vocal_receiver_r3": "Root_binding_preflight_failed_before_owner_zero_requests_preserved",
+    "persistence_r4": "sealed_pending_independent_review"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1171,5 +1171,9 @@
     "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
     "bound_unit_freeze_sha256": "001b391c703f77ee5a3eabffa4b12a44c46610726f7d5d63f780b8ae5b803711",
     "independent_review_report_sha256": "12cf12326ddf2a71eba040bf87d90924d8d78bc37fcaec0dc24fe692c7b74324"
-  }
+  },
+  "rough_persistence_remaining_minutes": [
+    15,
+    40
+  ]
 }
