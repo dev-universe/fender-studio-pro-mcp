@@ -174,3 +174,120 @@ fn dsp_access_metadata_preserves_canonical_and_parameter_local_identity() {
     assert_eq!(missing["access_error"], "not exposed by direct Device");
     assert!(missing.get("writable").is_none());
 }
+
+#[test]
+fn explicit_external_read_uses_editor_three_even_when_direct_twenty_four_exists() {
+    for class in [
+        "873281D9-58DE-4B2D-B3BD-528F549B1AD9",
+        "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+    ] {
+        let direct = AtomicUsize::new(0);
+        let gui = AtomicUsize::new(0);
+        let count = external_read_provider(
+            class,
+            Source::Controller,
+            false,
+            || {
+                direct.fetch_add(1, Ordering::Relaxed);
+                Ok(24)
+            },
+            || {
+                gui.fetch_add(1, Ordering::Relaxed);
+                Ok(3)
+            },
+        )
+        .unwrap();
+        assert_eq!(count, 3);
+        assert_eq!(direct.load(Ordering::Relaxed), 0);
+        assert_eq!(gui.load(Ordering::Relaxed), 1);
+    }
+}
+
+#[test]
+fn forced_external_editor_failure_never_falls_back_to_available_direct_provider() {
+    for error in [
+        "editor closed",
+        "stale exact device",
+        "ambiguous editor",
+        "wrong canonical identity",
+    ] {
+        let direct = AtomicUsize::new(0);
+        let result = external_read_provider(
+            "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+            Source::Controller,
+            false,
+            || {
+                direct.fetch_add(1, Ordering::Relaxed);
+                Ok(24)
+            },
+            || Err(error.to_owned()),
+        );
+        assert_eq!(result, Err(error.to_owned()));
+        assert_eq!(direct.load(Ordering::Relaxed), 0);
+    }
+}
+
+#[test]
+fn external_editor_preference_never_changes_auto_dsp_mutation_or_other_classes() {
+    for class in [
+        "873281D9-58DE-4B2D-B3BD-528F549B1AD9",
+        "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "873281D9-58DE-4B2D-B3BD-528F549B1AD8",
+        "",
+    ] {
+        for source in [Source::Auto, Source::Dsp, Source::Controller] {
+            for mutation in [false, true] {
+                let exact_external = matches!(
+                    class,
+                    "873281D9-58DE-4B2D-B3BD-528F549B1AD9" | "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+                );
+                if exact_external && source == Source::Controller && !mutation {
+                    continue;
+                }
+                let result = external_read_provider(
+                    class,
+                    source,
+                    mutation,
+                    || Ok(24),
+                    || panic!("unexpected editor route"),
+                );
+                assert_eq!(result, Ok(24));
+            }
+        }
+    }
+}
+
+#[test]
+fn external_gui_read_authority_does_not_dispatch_a_same_source_port_write() {
+    for class in [
+        "873281D9-58DE-4B2D-B3BD-528F549B1AD9",
+        "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+    ] {
+        assert_eq!(
+            external_read_provider(class, Source::Controller, false, || Ok(24), || Ok(3)),
+            Ok(3)
+        );
+        for param in ["sendPort", "receivePort"] {
+            let refusal =
+                external_controller_port_refusal(class, Source::Controller, param).unwrap();
+            assert_eq!(refusal["ok"], false);
+            assert_eq!(refusal["outcome"], "not_applied");
+            assert_eq!(refusal["error"]["code"], "read_only_gui_provider");
+            for source in [Source::Dsp, Source::Auto] {
+                assert!(external_controller_port_refusal(class, source, param).is_none());
+            }
+        }
+        for param in ["latencyOffset", "pingAgain", "sendport", ""] {
+            assert!(external_controller_port_refusal(class, Source::Controller, param).is_none());
+        }
+    }
+    assert!(
+        external_controller_port_refusal(
+            "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+            Source::Controller,
+            "sendPort"
+        )
+        .is_none()
+    );
+}

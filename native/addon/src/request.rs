@@ -951,6 +951,63 @@ fn controller(ctx: &Context<'_>) -> Result<Controller, String> {
         )),
     }
 }
+fn external_editor_controller(ctx: &Context<'_>) -> Result<Controller, String> {
+    ctx.check()?;
+    let gui = fender_native_editor_api::GuiApi {
+        get_desktop: ctx.api.desktop,
+        get_constant_string: unsafe {
+            std::mem::transmute::<
+                ConstantString,
+                unsafe extern "C" fn(*const c_char) -> *const c_void,
+            >(constant_string().ok_or("text API unavailable")?)
+        },
+    };
+    let target = hold(ctx.target.0).ok_or("native target unavailable")?;
+    ctx.check()?;
+    let pointer = NonNull::new(target.0).expect("held target");
+    std::mem::forget(target);
+    let lease = unsafe { fender_native_editor_api::resolve_external_owned(pointer, gui) }
+        .map_err(|e| format!("explicit exact-device External Effect editor unavailable: {e}"))?;
+    ctx.check()?;
+    lease.check().map_err(|e| e.to_string())?;
+    let handle = hold(lease.controller().as_ptr()).ok_or("external controller unavailable")?;
+    ctx.check()?;
+    lease.check().map_err(|e| e.to_string())?;
+    Ok(Controller {
+        handle,
+        lease: Some(Box::new(lease)),
+    })
+}
+fn explicit_external_controller(class_uid: &str, source: Source) -> bool {
+    source == Source::Controller
+        && matches!(
+            class_uid,
+            "873281D9-58DE-4B2D-B3BD-528F549B1AD9" | "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+        )
+}
+fn external_controller_port_refusal(class_uid: &str, source: Source, param: &str) -> Option<Value> {
+    (explicit_external_controller(class_uid, source) && matches!(param, "sendPort" | "receivePort"))
+        .then(|| {
+            error(
+                "read_only_gui_provider",
+                "External GUI port metadata is read-only; no GUI port writer is registered",
+                "not_applied",
+            )
+        })
+}
+fn external_read_provider<T>(
+    class_uid: &str,
+    source: Source,
+    mutation: bool,
+    legacy: impl FnOnce() -> Result<T, String>,
+    editor: impl FnOnce() -> Result<T, String>,
+) -> Result<T, String> {
+    if !mutation && explicit_external_controller(class_uid, source) {
+        editor()
+    } else {
+        legacy()
+    }
+}
 fn direct_controller(ctx: &Context<'_>) -> Result<Controller, String> {
     ctx.check()?;
     let controller = Controller::direct(ctx.target.0)?;
@@ -1784,6 +1841,31 @@ fn dispatch_device(
             mutation,
         };
     }
+    if let Request::SetParameter { param, .. } = &request {
+        if let Some(mut value) =
+            external_controller_port_refusal(&ctx.instance.class_uid, source, param)
+        {
+            value["source"] = json!("controller");
+            value["instance"] = json!(ctx.instance);
+            value["provider_scope"] = json!("exact_external_editor_read_only");
+            value["mutation_capability"] = json!(false);
+            return Reply {
+                value,
+                catalog: None,
+                edit: None,
+                action: None,
+                presets: None,
+                auxiliary: None,
+                folder_preflight: None,
+                owner: None,
+                gui: None,
+                nodes: None,
+                provider: None,
+                context: Some(ctx),
+                mutation: true,
+            };
+        }
+    }
     if let Request::EditNumericParameter { param, value, .. } = request {
         let (mut value, edit) = numeric_edit::execute(&ctx, &param, value);
         value["instance"] = json!(ctx.instance);
@@ -2140,7 +2222,14 @@ fn dispatch_device(
         } => Some(*node_scope),
         _ => None,
     };
-    let (mut value, provider, owner, action) = match provider(&ctx, source, scalar) {
+    let selected = external_read_provider(
+        &ctx.instance.class_uid,
+        source,
+        mutation,
+        || provider(&ctx, source, scalar),
+        || external_editor_controller(&ctx).map(Provider::Controller),
+    );
+    let (mut value, provider, owner, action) = match selected {
         Ok(provider) => {
             let (mut value, owner, action) = match request {
                 Request::ParameterDetails {
@@ -2192,6 +2281,10 @@ fn dispatch_device(
         None
     };
     value["instance"] = json!(ctx.instance);
+    if !mutation && explicit_external_controller(&ctx.instance.class_uid, source) {
+        value["provider_scope"] = json!("exact_external_editor_read_only");
+        value["mutation_capability"] = json!(false);
+    }
     Reply {
         value,
         catalog: None,
