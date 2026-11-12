@@ -55,54 +55,35 @@
       "Vocoder",
       "Vocal Tune",
       "Voice FX",
-      "Mixverb"
+      "Mixverb",
+      "Surround Delay",
+      "Multiband Dynamics"
     ],
-    "new_preset_recall_restore_cases": 54,
-    "remaining_preset_classes": 20,
+    "new_preset_recall_restore_cases": 56,
+    "remaining_preset_classes": 18,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 8,
-    "partial_preset_classes": {
-      "Surround Delay": {
-        "accepted_cases": 1,
-        "issued_indices": [
-          0
-        ],
-        "remaining_planned_indices": [
-          1
-        ],
-        "ordinary_class_complete": false,
-        "acceptance_basis": "new_independently_reviewed_exact_two_scalar_hybrid_actual_unit"
-      },
-      "Multiband Dynamics": {
-        "accepted_cases": 1,
-        "issued_indices": [
-          1
-        ],
-        "remaining_planned_indices": [
-          2
-        ],
-        "ordinary_class_complete": false,
-        "acceptance_basis": "new_independently_reviewed_exact_five_scalar_hybrid_actual_unit"
-      }
-    },
-    "new_preset_cases_in_completed_classes": 52,
+    "new_hybrid_preset_recall_restore_cases": 10,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 56,
     "new_capsule_only_preset_classes_completed": 23,
     "new_capsule_only_preset_recall_restore_cases": 46,
-    "new_hybrid_preset_classes_completed": 3,
+    "new_hybrid_preset_classes_completed": 5,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
         "accepted_cases": 0,
         "reason": "strict_typed_original_restoration_not_confirmed",
         "historical_failure_retained": true,
-        "current_new_hybrid_cases": 1
+        "current_new_hybrid_cases": 2,
+        "current_hybrid_class_complete": true
       },
       "Surround Delay": {
         "accepted_cases": 0,
         "reason": "strict_typed_original_restoration_not_confirmed",
         "historical_failure_retained": true,
-        "current_new_hybrid_cases": 1
+        "current_new_hybrid_cases": 2,
+        "current_hybrid_class_complete": true
       },
       "Room Reverb": {
         "accepted_cases": 0,
@@ -161,8 +142,8 @@
     },
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1,
-    "new_hybrid_cases_in_completed_classes": 6,
-    "partial_hybrid_cases": 2,
+    "new_hybrid_cases_in_completed_classes": 10,
+    "partial_hybrid_cases": 0,
     "chorder_stored_model_edit_restore_pilot_cases": 1,
     "chorder_verified_model_mappings": [
       {
@@ -173,7 +154,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 92,
+    "chorder_model_membership_roles_verified": 116,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -266,7 +247,31 @@
       93,
       94,
       95,
-      96
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120
     ]
   },
   "next_units_in_order": [
@@ -289,7 +294,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "LIVE Native36 Chorderreplacementdisabled05 outputs97..104. Read chorder-disabled-remainder-r1/chunks/05/run/progress.json beforeDAWactions. BindingpinslatestRoomknownobservedterminalafterfailed_cleaned_up/appfalseownerstop/all6saved. Accepted92/12836remaining. RoomrawauditingRO250msfailure; no500readwasissued. Presets26/46classes54cases20remain. Assets/runtimefrozen,noSave.",
+  "current_execution": "LIVE Native36 Chorderreplacementdisabled08 outputs121..1271229RPC. Read chorder-disabled-remainder-r1/chunks/08/run/progress.json beforeDAWactions. Disabled07PASS1404RPC252.587s/all6savedappfalseownerstop. Accepted116/12812remain; enabled5unitsindependentPASSUNBOUND. Presets28/46classes56cases18remain. Nameunion6423/7112onlyhistorical92cutoff. Roomserialized146pilot/persistence339R2pendingreview; VocalTunereadonlyreceiverpreparing. Assets/runtimefrozen/noSave.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -481,8 +486,6 @@
     }
   },
   "remaining_preset_class_names": [
-    "Multiband Dynamics",
-    "Surround Delay",
     "Room Reverb",
     "Open AIR",
     "Spectrum Meter",
@@ -789,9 +792,33 @@
       93,
       94,
       95,
-      96
+      96,
+      97,
+      98,
+      99,
+      100,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120
     ],
-    "remaining_roles": 36,
+    "remaining_roles": 12,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -816,12 +843,15 @@
       "runtime_binding": "UNBOUND",
       "actual_calls": 0,
       "review_report_sha256": "9e58c7fdde470a4512a14b4c6404ccd5513d9d5835a99fd1c08bf5131ebc7322",
-      "current_chunk": 5,
+      "current_chunk": 8,
       "completed_chunks": [
         1,
         2,
         3,
-        4
+        4,
+        5,
+        6,
+        7
       ],
       "evidence_document": "docs/evidence/2026-11-13-chorder-replacement.json",
       "next_chunk": null
@@ -907,8 +937,8 @@
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   },
   "rough_chorder_remaining_minutes": [
-    35,
-    80
+    20,
+    50
   ],
   "multiband_first_hybrid_independent_review": {
     "status": "PASS_WITH_LIMITS",
@@ -955,5 +985,69 @@
     "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
     "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
     "first_failure_details": "pending_readonly_raw_audit"
+  },
+  "surround_second_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "groups": 44,
+    "report_sha256": "4617f66e90030277605cd59fae87b0a45a28d93698331dbdde6e694f273e6378",
+    "actual_calls_before_this_job": 0
+  },
+  "surround_index1_actual": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 98.645,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "f2d7e3b8a8c9a8e56c7cfeb216835ea9c332352fd7f20a7cdc72d920b1888786",
+    "raw_audit_sha256": "f0341e6ed26e19c77e418fa0889c2984078ed77a58c543b5f4fdd86d38981ba0"
+  },
+  "fixed_name_union_audit": {
+    "accepted_names": 6423,
+    "inventory_names": 7112,
+    "remaining_names": 689,
+    "historical_provider_pairs": 59,
+    "inventory_records": 8668,
+    "cutoff_chorder_roles": 92,
+    "later_roles_excluded": true,
+    "scope": "historical_fixed_writable_name_inventory",
+    "all_plugin_support_percentage": false,
+    "independent_review": "PASS_WITH_LIMITS",
+    "report_sha256": "213999823c06bc1b5685d1f9caff9771bb1cb33cf7b4e2a8d8f0666e0cb9bd05"
+  },
+  "multiband_second_independent_review": {
+    "status": "PASS_WITH_LIMITS",
+    "groups": 47,
+    "report_sha256": "9dad6566f470b9ac60aa574d046be9b2d4e8804e2ac4c4d5b22869d60160d387",
+    "actual_calls_before_this_job": 0
+  },
+  "multiband_index2_actual": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index1_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 88.578,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "8013452269d0dd4884efa987a4e9b1787b4dd1fa25ee75df4ded8843f01058c9",
+    "raw_audit_sha256": "fbee4bd521b00d4f52f8f27b4c9bd2fc66106d994aa78d4f578cab68f1fcb8ec"
   }
 }

@@ -7,15 +7,15 @@
   "native_unit": 35,
   "new_preset_plan": {
     "classes_total": 46,
-    "classes_complete": 26,
-    "accepted_cases": 54,
-    "classes_remaining": 20,
+    "classes_complete": 28,
+    "accepted_cases": 56,
+    "classes_remaining": 18,
     "capsule_only_classes": 23,
     "capsule_only_cases": 46,
-    "hybrid_classes": 3,
-    "hybrid_cases": 8,
-    "cases_in_completed_classes": 52,
-    "partial_hybrid_cases": 2
+    "hybrid_classes": 5,
+    "hybrid_cases": 10,
+    "cases_in_completed_classes": 56,
+    "partial_hybrid_cases": 0
   },
   "unit66": {
     "elapsed_seconds_including_UI_cleanup": 209.528,
@@ -558,5 +558,44 @@
     "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
     "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
     "first_failure_details": "pending_readonly_raw_audit"
+  },
+  "Surround_Delay_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 98.645,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "f2d7e3b8a8c9a8e56c7cfeb216835ea9c332352fd7f20a7cdc72d920b1888786",
+    "raw_audit_sha256": "f0341e6ed26e19c77e418fa0889c2984078ed77a58c543b5f4fdd86d38981ba0"
+  },
+  "Multiband_Dynamics_index2_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index1_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 88.578,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "8013452269d0dd4884efa987a4e9b1787b4dd1fa25ee75df4ded8843f01058c9",
+    "raw_audit_sha256": "fbee4bd521b00d4f52f8f27b4c9bd2fc66106d994aa78d4f578cab68f1fcb8ec"
   }
 }
