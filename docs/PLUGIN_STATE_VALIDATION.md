@@ -20,7 +20,7 @@ state and the complete remaining queue. Completed units are not replayed.
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
-| Chorder stored model read | Two complete128-input passes,16fresh serializers and four original908-record checks | Membership edits, boundary mapping, Save/restart and audio |
+| Chorder stored model | Read-only128-input unit plus one actual input60/output0 membership add/remove; six whole908 reads and six whole128-input passes restore the exact original | Other127membership roles, input boundaries, Save/restart and audio |
 | Hardware local tools | Actual CoreAudio/CoreMIDI inventory and3finite empty MIDI windows with successful cleanup;45MCPtools | Physical keys, DAW instrument response, analog loopback/ping and CV isolation |
 | Chorder GUI learning controls | One input-pitch case, one Mode case and reset after a full restart without Save, with exact 908-record checks | Learned chord editing, other pitches and stored-model persistence |
 | Impact | All 4,262 current exposed names: 4,227 direct, 33 current-pad Focus and two MIDI current-value roles | Other selected pads, event lifecycles, persistence and audible behavior |
@@ -900,3 +900,5 @@ the native add-on SHA256 is
 These hashes identify the tested artifacts, not every later source edit.
 Raw receipts, tokens, values, machine paths, songs and vendor resources stay
 outside Git. Source review, mocks and actual-host observations remain separate.
+
+The new Native35 input60/output0 member edit passed actual179RPC with independent stored-model witnesses. See [model edit evidence](evidence/2026-11-13-chorder-note-model.json). This one mapping does not establish all pitches or persistence.

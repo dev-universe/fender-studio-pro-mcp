@@ -39,7 +39,7 @@ USB 연결만으로 물리 ping이나 CV 출력 격리를 인정하지 않는다
 runtime token·instance·document·bridge session·UI flag는 다음 단위에서 재사용하지 않는다.
 PR #4는 Draft로 유지하며 미완료 범위를 전체 지원으로 승격하지 않는다.
 
-전체 예상 잔여 시간은6~19시간이며 신뢰도는 낮다.
+전체 예상 잔여 시간은5~18시간이며 신뢰도는 낮다.
 하드웨어 연결 마감과 전체 작업 종료 추정은 별개다.
 각 단위 종료 관측으로 추정을 갱신하고 하드웨어·배선이 필요한 항목을 따로 보고한다.
 
@@ -50,3 +50,5 @@ PR #4는 Draft로 유지하며 미완료 범위를 전체 지원으로 승격하
 Voice FX의 기존 no_state_change 상태는 구성 변경 시 빈 diff를 반환한 진단 표기다. 실제 De-Tuner→Transformer와5→6개 provider·값 변화가 관찰됐으나 별도 schema-aware case 전에는 완료 수에 넣지 않는다.
 
 Voice FX의 새 schema-aware R2는 두 고정 index의5→6구성과 원래5개 전체 복원을154RPC로 확인했다.116.953초·NoSave종료·5저장곡불변이다. 이전66실패를 수정하지 않고 새2사례·1종을 더했다. Native35는 정상설치됐지만 첫 모델 실기는 준비Mode0/input-1에서40읽기 뒤 중단해 모델쓰기0이며 새 UI준비checkpoint를 검토 중이다. External physical3단계는143RPC로 통과했고 원래 MacBook 스피커·마이크48k/512도 실제UI로 복원 완료했다. 최신 RESUME_STATE와 진행기록을 우선한다.
+
+최신 Chorder R3는 input60/output0 add/remove를179RPC·119.06초로 통과했다. 전체908pair/128modelpair가 원본 복원됐고5저장곡 불변이다. Native36 exactGUI read 경로를 설치했으며 첫 External 실기는 preeditor AutoDSP0에서 멈춰GUI조회0이었다. 과거24record는controller이고 DSP라는 예전 설명은 정정했다. 새editor-ready R2와 남은127Chorder member chunks를 준비한다.

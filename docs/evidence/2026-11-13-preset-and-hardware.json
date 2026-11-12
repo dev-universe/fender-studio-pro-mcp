@@ -375,5 +375,60 @@
       "155cfa7c12d2eb5d5ca42ace029f72c111991016cb4040cf453501df65714574"
     ],
     "result_sha256": "e0634ab0e5735dd31ba8c4953392973ca82ca9595b6da631efef751d401636c3"
+  },
+  "external_physical_mapping_metadata": {
+    "status": "complete",
+    "rpc_calls": 143,
+    "elapsed_seconds_with_UI_cleanup": 775.693,
+    "accepted_stages": [
+      "BMONO",
+      "BSTEREO",
+      "RESTORE"
+    ],
+    "complete24record_provider_reads": 24,
+    "complete_choice_pages": 24,
+    "actual_UI_software_bus_choices_observed": true,
+    "plugin_port_changes": 0,
+    "state_actions": 0,
+    "transport_actions": 0,
+    "Song_Save": 0,
+    "Main_exact1_to0_preparation": 1,
+    "original_IO_matrix_restored": true,
+    "original_native_fixture_restored": true,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true,
+    "physical_loopback_verified": false,
+    "ping_verified": false,
+    "audio_verified": false,
+    "result_sha256": "db289a05b7427bd3fffc5ae549cfb6ba41a1a5990ec26c46242c564d33a601dc",
+    "controller_send_receive_choice_counts_all_zero": true,
+    "controller_empty_does_not_establish_GUI_menu_empty": true,
+    "historical24record_provider_source": "controller",
+    "old_DSP_label_withdrawn": true
+  },
+  "global_audio_setup_restored": {
+    "actual_preferences_UI": true,
+    "reopened_after_OK": true,
+    "playback": "MacBook Pro speakers",
+    "recording": "MacBook Pro microphone",
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "whole_preference_files_overwritten": false
+  },
+  "external36_first_pilot": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds_with_UI_cleanup": 148.841,
+    "actual_receipts": 12,
+    "verified_requests_before_refusal": 11,
+    "preeditor_Auto_native_source": "dsp",
+    "preeditor_Auto_reported_count": 0,
+    "GUI_provider_reads": 0,
+    "GUI_choices_reads": 0,
+    "plugin_port_writes": 0,
+    "Main_preparation_sets": 1,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true
   }
 }

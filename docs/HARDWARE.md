@@ -54,4 +54,14 @@ Root tested the source-bound isolated release on macOS Apple Silicon with Volt27
 
 These results establish metadata and bounded passive-subscription behavior. Physical key performance, instrument response, audio capture, analog loopback, External Effect ping and CV output isolation remain unverified. USB-only connection provides no physical return cable.
 
-See [current progress](PROGRESS_2026-11-13.md) for actual Studio Pro Audio Setup observations and its temporary-setting restoration obligation. Raw device IDs, serial-bearing UIDs, private songs and runtime receipts stay outside public Git.
+See [current progress](PROGRESS_2026-11-13.md) for actual Studio Pro Audio Setup observations and the completed restoration of its temporary audio-device settings. Raw device IDs, serial-bearing UIDs, private songs and runtime receipts stay outside public Git.
+
+
+The separate External physical-mapping metadata unit completed143RPC in775.693seconds.
+Root observed exclusive Mono mapping, exclusive Stereo mapping and the original matrix restoration.
+The unit accepted three metadata stages with24complete24-record provider reads and24complete choice pages.
+The explicit controller send/return lists remained empty even after mapping. Actual editor dropdowns displayed software bus choices, so controller-list emptiness does not prove menu emptiness. Earlier DSP wording for these24records was incorrect.
+No plugin port was selected, and no ping, transport or audio action ran.
+The temporary logical buses were removed, the original native fixture returned, and all five saved diagnostic songs stayed unchanged.
+Root restored MacBook Pro speakers and microphone through the actual Preferences UI, then reopened it to verify both devices,48kHz and512frames.
+A separate read-only GUI receiver is installed. Its first pilot stopped before editor opening because Auto returned an empty DSP provider; GUI choices and None encoding remain unverified.
