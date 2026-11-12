@@ -152,7 +152,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 33,
+    "chorder_model_membership_roles_verified": 49,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -186,7 +186,23 @@
       29,
       30,
       31,
-      32
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48
     ]
   },
   "next_units_in_order": [
@@ -208,7 +224,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "LIVE/preparingNative36membershipchunk05 outputs33..40. Read .local/next-state/chorder-membership-chunks-r2/chunks/05/run/progress.json beforeDAWactions. Allruntimecode/main/native/bridgesremainfrozen. Native37wireR2reviewPASS;nativeR1unstabletraversalFAIL, privateR2fixongoing; no37install. Mixverbindex1privateunderreview; sixthcopySaveRestartpilotpreparingonlyafterall16.",
+  "current_execution": "Native36 membership chunks01..06 complete; next chunk07 outputs49..56. Read fresh progress before DAW actions. Runtime code/main/native/bridges remain frozen. Native37 nativeR2 and wireR2 independent PASS, private only; no37 install. Mixverb index1 offline independent PASS, not bound/run. Persistence plan12 tests PASS, live coordinator missing; no Save before all16 chunks.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -612,7 +628,9 @@
       1,
       2,
       3,
-      4
+      4,
+      5,
+      6
     ],
     "verified_output_pitches": [
       0,
@@ -647,12 +665,32 @@
       29,
       30,
       31,
-      32
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47,
+      48
     ],
-    "remaining_roles": 95,
-    "next_chunk": 5,
+    "remaining_roles": 79,
+    "next_chunk": 7,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
-    "current_chunk": 5
+    "hardware_boundary_policy": "Do not start a new chunk after 2026-11-12T21:20:00Z. Close current app and owner before 21:30Z; revalidate after USB detach before more live work.",
+    "rough_remaining_minutes": [
+      55,
+      85
+    ]
   }
 }

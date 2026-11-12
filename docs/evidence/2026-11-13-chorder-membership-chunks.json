@@ -6,7 +6,7 @@
   "initial_output0_reused": true,
   "initial_evidence": "2026-11-13-chorder-note-model.json",
   "planned_new_chunks": 16,
-  "completed_new_chunks": 4,
+  "completed_new_chunks": 6,
   "verified_output_pitches": [
     0,
     1,
@@ -40,11 +40,27 @@
     29,
     30,
     31,
-    32
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48
   ],
-  "verified_roles": 33,
-  "remaining_roles": 95,
-  "planned_remaining_new_RPC": 16673,
+  "verified_roles": 49,
+  "remaining_roles": 79,
+  "planned_remaining_new_RPC": 13865,
   "completed": [
     {
       "chunk": 1,
@@ -133,6 +149,50 @@
       "all_six_saved_songs_unchanged": true,
       "app_and_owner_closed": true,
       "result_sha256": "2d719d93ab35f46ede8e0812bace50ac083893cbf85ed07a19533e0dd6eb3f38"
+    },
+    {
+      "chunk": 5,
+      "status": "complete",
+      "outputs": [
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 366.699,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "5bad34992d62f214084f8e81f0cb39e2d459d296e10fa2b97333b5947ba4e125"
+    },
+    {
+      "chunk": 6,
+      "status": "complete",
+      "outputs": [
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48
+      ],
+      "accepted_cases": 8,
+      "rpc_calls": 1404,
+      "model_setters": 16,
+      "elapsed_seconds_with_UI_cleanup": 414.841,
+      "whole_provider_and_model_original_restoration": true,
+      "all_six_saved_songs_unchanged": true,
+      "app_and_owner_closed": true,
+      "result_sha256": "64b43712e22deb9534a22b9ff6e643b5cc68a8093228e9d8f99d73308241da74"
     }
   ],
   "persistence_verified": false,
