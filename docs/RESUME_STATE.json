@@ -12,8 +12,8 @@
   "mcp_tools": 45,
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -284,7 +284,8 @@
       126,
       127
     ],
-    "room_writable_serialized_restore_pilots": 1
+    "room_writable_serialized_restore_pilots": 1,
+    "chorder_input_selector_boundary_cases": 2
   },
   "next_units_in_order": [
     "Keep Native36/main45/bridges frozen until all dependent six-original-archive units finish. Hardware detached; OS inventory2 and actual MacBook48kHz/512frames preferences are already verified. Reuse all completed immutable sweeps.",
@@ -306,7 +307,13 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": null,
+  "current_execution": {
+    "unit": "Chorder output63 replacement r2",
+    "state": "live",
+    "fixed_rpc_calls": 545,
+    "model_writes": 8,
+    "accepted_roles_before": 127
+  },
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -1120,5 +1127,49 @@
     "root_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
     "bound_freeze_sha256": "0e6f36b54c21643cfd1f275fdbe1dbfcccec1c7b5c013cf50c98f960748a7752",
     "independent_review_report_sha256": "c7c235157b2a450c1e09cc37b6465755fb369f73df3c70f737f4a91c0502003b"
+  },
+  "offline_validation_helpers": {
+    "selector_boundary_r1": "review_failed_no_actual_calls",
+    "selector_boundary_r2": "actual_complete",
+    "replacement63_r1": "review_failed_zero_send_retention_no_actual_calls",
+    "replacement63_r2": "independent_review_pass_actual_running",
+    "vocal_receiver_r1": "review_failed_schema_admission_no_actual_calls",
+    "vocal_receiver_r2": "schema_fixes_in_progress",
+    "persistence_r2": "review_failed_runtime_metadata_admission_no_actual_calls",
+    "persistence_r3": "sealed_pending_independent_review"
+  },
+  "chorder_selector_boundary_actual": {
+    "schema": 1,
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "selector_sequence": [
+      0,
+      127,
+      null
+    ],
+    "learn_mode": 0,
+    "rpc_calls": 240,
+    "selector_writes": 3,
+    "whole908_provider_pairs": 4,
+    "whole128_model_pairs": 4,
+    "original_capture_bytes": 581,
+    "original_capture_restored": true,
+    "all_peer907_records_unchanged": true,
+    "selected_nonvalue_and_unknown_metadata_unchanged": true,
+    "selected_changed_display_observed_coherently": true,
+    "formatter_participation_proved": false,
+    "accepted_selector_boundary_cases": 2,
+    "accepted_new_parameter_names": 0,
+    "accepted_new_membership_roles": 0,
+    "elapsed_seconds_with_UI_cleanup": 149.056,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "persistence_verified": false,
+    "audio_verified": false,
+    "result_sha256": "c9c829d40b29b4a36cad6618a3a609a2a4442d505a729301e112281add17590c",
+    "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
+    "bound_unit_freeze_sha256": "001b391c703f77ee5a3eabffa4b12a44c46610726f7d5d63f780b8ae5b803711",
+    "independent_review_report_sha256": "12cf12326ddf2a71eba040bf87d90924d8d78bc37fcaec0dc24fe692c7b74324"
   }
 }
