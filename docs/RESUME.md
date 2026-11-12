@@ -24,11 +24,11 @@
 - unit64는117.091초였고 쓰기·state capsule·load·transport·Song Save는0회였다. 마지막 진단 문서는 저장 없이 닫았고 앱·owner가 종료됐다.
 - 새 증거는 현재 저장 모델의 읽기다. 모델 편집·복원·persistence·audio나 GUI child 출력 음정 매핑은 아직 확정하지 않는다.
 - 추가 프리셋46종 계획에서18종·36사례가 완료됐고28종이 남았다. unit64 때문에 이 수를 늘리지 않는다.
-- unit65의 일반 효과9종·17사례는 검토를 통과했지만 새 runtime binding과 실행은 남아 있다.
+- unit65는 Mixverb의 strict typed 복원 실패로 종료·정리됐다. 추가 성공0종, 저장본 불변. 미실행8종·15사례는 unit66으로 준비하며65를 재실행하지 않는다.
 - 사용자는 Volt 276과 Keystation 88 MK3를 한국 시간11월13일 오전6시30분까지 USB로만 연결한다. 물리 loopback 배선은 없다.
-- Volt의 OS audio 인식과 Keystation·Volt MIDI endpoint online 상태를 관찰했다. DAW 선택 장치·실제 키 event·물리 왕복은 별도 미검증이다.
-- 하드웨어 inventory·유한 MIDI observer는 Rust 소스 작업 중이다. 현재 설치43개와 계획45개를 구분한다.
-- REA·Craft 공식 패키지 해시를 확인했다. 이 첫 체크포인트에서 새 실행·등록·Ghidra 결과는 아직 확인하지 않았다.
+- 실제 Audio Setup에서 재생·녹음 Volt276·48kHz·512샘플을 확인했다. 원래 MacBook 스피커·마이크 설정의 UI 복원이 하드웨어 단위 종료 또는 마감 전에 반드시 필요하다. DAW I/O bus·External 선택지 확인은 남아 있다.
+- Rust inventory·bounded observer의 소스·독립 검토·실제 CLI/MCP 검증이 완료됐고 main은45개 도구다. 세 수신 창은 event0과 정리status0이며 실제 건반 연주 증거는 아니다. 소스7dedec2와 [하드웨어 안내](HARDWARE.md)를 참고한다.
+- REA6.9.0·portableNode26.12.1·Craft0.6.1 설치·실행과 Codex 등록 갱신, 새CLI+Ghidra12.1.4 분석을 확인했다. 기존 연결REA MCP는6.5.0이며 새CLI를 사용한다. Hopper는 사용하지 않았다.
 
 오전6시30분 전에는 장치·DAW I/O·읽기 전용 External 선택지와 passive MIDI 검증을 우선한다.
 USB 연결만으로 물리 ping이나 CV 출력 격리를 인정하지 않는다.
@@ -39,7 +39,7 @@ USB 연결만으로 물리 ping이나 CV 출력 격리를 인정하지 않는다
 runtime token·instance·document·bridge session·UI flag는 다음 단위에서 재사용하지 않는다.
 PR #4는 Draft로 유지하며 미완료 범위를 전체 지원으로 승격하지 않는다.
 
-전체 예상 잔여 시간은6~17시간이며 신뢰도는 낮다.
+전체 예상 잔여 시간은6~18시간이며 신뢰도는 낮다.
 하드웨어 연결 마감과 전체 작업 종료 추정은 별개다.
 각 단위 종료 관측으로 추정을 갱신하고 하드웨어·배선이 필요한 항목을 따로 보고한다.
 

@@ -4,12 +4,12 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "3815714",
+  "product_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
-  "mcp_tools": 43,
+  "mcp_tools": 45,
   "installed_native_unit": 34,
   "installed_native_uuid": "64DF1790-3306-3068-ADC0-AF3F0EAE8F92",
   "app_closed_observed": true,
@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native34 unit64 actual-host stored Chorder model read verified: two complete128-key passes,16 serializer reads,four908-record original reads,zero writes/loads/transport/Save; app and owner closed.",
+  "last_completed_unit": "Hardware inventory and bounded observer actual CLI/MCP verified; final45tool main promoted and source pushed7dedec2. Unit65 failed strict Mixverb restoration and cleaned up without Save.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -72,17 +72,26 @@
       "Room Reverb": {
         "accepted_cases": 0,
         "reason": "strict_typed_original_restoration_not_confirmed"
+      },
+      "Mixverb": {
+        "accepted_cases": 0,
+        "reason": "strict_typed_original_restoration_not_confirmed",
+        "postload_complete_reads": 8,
+        "provider_records": 9,
+        "writable_drift": [
+          "predelay"
+        ]
       }
     },
     "chorder_fixed_child_readonly_observations": 1,
     "chorder_complete_stored_model_readonly_units": 1
   },
   "next_units_in_order": [
-    "Before2026-11-13T06:30+09:00: verify the actual DAW Audio Setup and Volt I/O labels, then bounded read-only External send/receive choice pages and passive Keystation input where the verified setup permits. USB only; no physical loopback/ping or CV isolation claim.",
-    "Review and verify the native Rust hardware_devices and bounded midi_input_observe additions before installation or live use; preserve signed CoreMIDI UIDs and distinguish zero events from physical key proof.",
-    "Complete the authorized pinned REA and Craft Anything update/runtime checks; reuse existing Ghidra evidence and apply a bounded new probe only for a concrete unresolved receiver question.",
-    "When hardware priority permits, finalize the reviewed unit65 fresh binding and verify nine ordinary FX classes/17 selected cases; stop at the first nonpositive class.",
-    "Continue the exact remaining28-class preset list without completed replays; separately preplan strict scalar restoration for failed Multiband Dynamics, Surround Delay and Room Reverb; retain Music/CV and signal-routing guards.",
+    "Before2026-11-13T06:30+09:00: actualVoltAudioSetup and passiveMIDI lifecycle are verified. Finish actualDAW I/O buses and connected External Mono/Stereo complete provider/choice reads, then restore original speakers/microphone48k512 through UI. USB only; no physical loopback/ping/CV claim.",
+    "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
+    "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
+    "After hardware priority, bind reviewed unit66 fresh and run only unit65 unrun8ordinaryFXclasses15cases. Unit65 stopped atMixverb and must not replay.",
+    "Continue exact28remainingpresetclasses; separately predeclare exact scalar restoration for failed Multiband Dynamics, Surround Delay, Room Reverb and Mixverb. No generic tolerance widening or samefailedunit repair. Preserve Music/CV/signal guards.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
@@ -94,9 +103,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "Unit64 verifies the complete current stored Chorder model read only. Additional preset plan stays18of46classes complete,36positivecases,28remaining.",
-  "binary_source_commit": "3815714",
-  "current_execution": "After unit64 checkpoint: program resumed; hardware-first work before06:30KST is in progress. Unit65 remains reviewed but unbound and unstarted.",
+  "last_measurement": "Mixverb predelay after capsule load differs by1normalizedFloat32ULP with8identical complete9record profiles. No new preset acceptance:18/46classes,36cases,28remain. Hardware metadata/passiveAPIcleanup verified; physical performance false.",
+  "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
+  "current_execution": "Main45hardware feature complete and pushed; app/owner closed. External connected readonly unit preparing. Unit66 prepares only unit65 unrun8class15case tail. Original Audio Setup restoration remains required.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -106,16 +115,16 @@
     ],
     "estimated_overall_remaining_hours": [
       6,
-      17
+      18
     ],
     "estimate_confidence": "low",
-    "estimate_basis": "Unit64 removed the stored-model read uncertainty. New hardware inventory/MIDI work and remaining chord edits, model/graph/special roles keep the6-17hour range unchanged; physical cabling checks remain separate.",
+    "estimate_basis": "Hardware metadata and passive lifecycle implementation finished. New Mixverb strict drift adds a separate scalar restoration plan, raising upper bound1hour; chord model edits/persistence, nested graphs and dedicated roles remain uncertain. Physical cable checks separate.",
     "hardware_dependent_verification": "separate condition",
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
   "installed_native_sha256": "ff3e093c66fae05105c4343eddd67166c549370603decfe4b0d4aa7ebcd6cb2f",
-  "binary_sha256": "6dcd06ff927d6f0b8801095555e78b76a6326e260971e12f97bf5505e4969d85",
+  "binary_sha256": "c303b0e1cd91414b07cd9d189bf29748f7e50fd40f680bd52c9d94d94be084f8",
   "installed_bridge_files_sha256": {
     "BridgeComponent.js": "3a41b867e0c3cb911111e27bd9dd5ec9c7710e7442d70113db90693b0ef00ffe",
     "BridgeCore.js": "9165a23872a0af32866e9f400f874d74e8011b06ee5b951d1fee5b066fdfdd3c",
@@ -124,8 +133,8 @@
   "last_runtime_verified_native_unit": 34,
   "last_runtime_verified_source_commit": "3815714",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": 64,
-  "last_completed_live_elapsed_seconds": 117.091,
+  "last_completed_live_unit": 65,
+  "last_completed_live_elapsed_seconds": 98.823,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -147,12 +156,26 @@
       "path": ".local/next-state/unit65-preset-remainder",
       "independent_review": "passed",
       "execution_ready": false,
-      "started": false,
+      "started": true,
       "runner": "run_presets65_batch.py",
-      "runner_sha256": "3b9b02d9476e88f48dd9fa6005514259bcacdb9ac6b235b65d98f961fb6df8c1",
+      "runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
       "owner_sha256": "6d3a65b80ba091d42ed982b79cfb9686025cc22fb60545d02255bf705a66b20e",
       "classes": 9,
-      "selected_cases": 17
+      "selected_cases": 17,
+      "completed": true,
+      "validation_passed": false,
+      "accepted_classes": 0,
+      "accepted_cases": 0,
+      "unrun_classes": 8,
+      "unrun_cases": 15,
+      "replay_policy": "completed_failure_evidence_only_do_not_replay"
+    },
+    "66": {
+      "path": ".local/next-state/unit66-preset-remainder",
+      "status": "preparing_fixed_unrun_tail",
+      "execution_ready": false,
+      "classes": 8,
+      "selected_cases": 15
     }
   },
   "remaining_preset_class_names": [
@@ -204,28 +227,50 @@
     "physical_loopback_cabling": false,
     "os_audio_inventory_verified": true,
     "midi_endpoint_presence_verified": true,
-    "daw_audio_device_verified": false,
+    "daw_audio_device_verified": true,
     "physical_key_events_verified": false,
     "physical_loopback_verified": false,
     "external_ping_verified": false,
     "cv_routing_verified": false,
-    "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately."
+    "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately.",
+    "daw_audio_device": "Volt 276 playback and recording; 48000Hz;512frames; actual UI observed in no-document state",
+    "original_daw_audio_setup_restore_required": true,
+    "original_daw_audio_setup": {
+      "playback": "MacBook Pro speakers",
+      "recording": "MacBook Pro microphone",
+      "sample_rate_hz": 48000,
+      "buffer_frames": 512
+    },
+    "daw_io_buses_verified": false
   },
   "tooling_update_checkpoint": {
-    "scope": "Official acquisition verified; new runtime/configuration execution not yet verified at this checkpoint",
+    "scope": "Official acquisition, isolated CLI execution, Codex registration update and same-byte static analysis verified; existing connected MCP still6.5.0",
     "rea_requested_version": "6.9.0",
     "craft_requested_version": "0.6.1",
     "portable_node_version": "26.12.1",
     "acquired_artifact_hashes_verified": true,
-    "rea_update_execution_verified": false,
-    "craft_execution_verified": false,
+    "rea_update_execution_verified": true,
+    "craft_execution_verified": true,
     "ghidra_existing_version": "12.1.4 PUBLIC",
-    "hopper_use_allowed": false
+    "hopper_use_allowed": false,
+    "rea_cli_version": "6.9.0",
+    "rea_current_connected_mcp_version": "6.5.0",
+    "rea_registration_updated": true,
+    "ghidra_selected_doctor_healthy": true,
+    "ghidra_new_cli_function_analysis_verified": true,
+    "craft_function_boundary_crosscheck_verified": true,
+    "craft_returned_engine": "builtin",
+    "target_execution_requested": false
   },
   "planned_hardware_tools": {
-    "hardware_devices": "source_in_progress_not_installed",
-    "midi_input_observe": "source_in_progress_not_installed",
+    "hardware_devices": "implemented_independently_reviewed_cli_and_mcp_verified_promoted",
+    "midi_input_observe": "implemented_two_P2_fixed_independently_reviewed_cli_and_mcp_verified_promoted",
     "planned_total_mcp_tools": 45,
-    "currently_installed_total_mcp_tools": 43
-  }
+    "currently_installed_total_mcp_tools": 45,
+    "isolated_inventory_runtime_verified": true,
+    "source_commit": "7dedec2",
+    "physical_key_events_verified": false
+  },
+  "unit65_current_status": "failed_cleaned_up_no_cases_accepted",
+  "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb"
 }
