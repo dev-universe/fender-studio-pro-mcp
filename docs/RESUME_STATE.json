@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "External provider/choices-only:51RPC,2instances,8full24-record providers,8complete zero-count port pages; no graph claim. Normal SaveAs created separate External IO diagnostic copy with source originals unchanged.",
+  "last_completed_unit": "Unit67 actual101RPC/227events closed; wrapperfalse due wrong2fieldinstance assumption, separate exact4field independentactualtraceaudit PASS accepts1hybridpilot. Originalfailure retained; Mixverbclass incomplete.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -55,13 +55,26 @@
       "Vocoder",
       "Vocal Tune"
     ],
-    "new_preset_recall_restore_cases": 48,
+    "new_preset_recall_restore_cases": 49,
     "remaining_preset_classes": 22,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 4,
-    "partial_preset_classes": {},
+    "new_hybrid_preset_recall_restore_cases": 5,
+    "partial_preset_classes": {
+      "Mixverb": {
+        "accepted_cases": 1,
+        "issued_indices": [
+          0
+        ],
+        "remaining_planned_indices": [
+          1
+        ],
+        "ordinary_class_complete": false,
+        "acceptance_basis": "independent_retrospective_actual_primary_trace_audit",
+        "original_wrapper_passed": false
+      }
+    },
     "new_preset_cases_in_completed_classes": 48,
     "new_capsule_only_preset_classes_completed": 22,
     "new_capsule_only_preset_recall_restore_cases": 44,
@@ -86,7 +99,9 @@
         "provider_records": 9,
         "writable_drift": [
           "predelay"
-        ]
+        ],
+        "historical_failure_unit": 65,
+        "current_independently_audited_hybrid_cases": 1
       },
       "Voice FX": {
         "accepted_cases": 0,
@@ -117,14 +132,16 @@
       }
     },
     "chorder_fixed_child_readonly_observations": 1,
-    "chorder_complete_stored_model_readonly_units": 1
+    "chorder_complete_stored_model_readonly_units": 1,
+    "new_hybrid_cases_in_completed_classes": 4,
+    "partial_hybrid_cases": 1
   },
   "next_units_in_order": [
     "Before06:30KST: External provider-only51RPC complete. In separate normal-SaveAs External IO diagnostic copy, prepare/review staged logical/physical bus catalog observation with exact Main1→0 API prep. No port writes until native unset-1 restoration path exists. Restore original Audio Setup through actual UI after hardware work.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
     "Ordinary unrun tail exhausted by68. Retain24/46classes48positivecases22remaining. Plan separate VoiceFX schema-aware5→6/De-Tuner→Transformer cases and OpenAIR singleton sentinel/default recall witness; no completed replays.",
-    "Continue exact22remainingpresetclasses: unit67 first Mixverb predeclared one-preset/one-scalar exact restore, fix raw Journal proof gate before binding; later Surround2/Multiband5/Room1 plans. Preserve previous failures and no generic tolerance widening.",
+    "Continue22remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
     "Use the verified stored-model getter as an independent witness for fixed GUI child authority and one learned-chord change/restore/persistence unit. The getter alone establishes no edit authority.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles.",
@@ -136,9 +153,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "24/46classes,48positivecases,22remain. Ordinary unrun tail0; OpenAIR singleton unobserved recall effect, VoiceFX schema-aware case pending. Previous4strict drift failures remain unaccepted.",
+  "last_measurement": "24/46classes,49positivecases (48incompletedclasses +1partialMixverb),22remain. Actualunit67 wrapperfailureimmutable, separateindependentactualtraceaudit accepts1hybridpilot. SecondMixverbcasepending.",
   "binary_source_commit": "7dedec226593d3bb1ea53aa6d4bb77829f1a56d9",
-  "current_execution": "App/owner closed after67:raw101RPC suite completed but finalgate rejected full4field actual instance vs fake2field shape. Zero new officially accepted cases; immutable raw trace offline audit pending. ExternalIO stagedhelper prep, Native35 addonreview/privatewire ongoing. OriginalAudioSetup UIrestore required before06:30KST.",
+  "current_execution": "App/owner closed after readonly ExternalIO baseline preflight; all4savedowned sources unchanged. IOhelperreview found complete67channelcoverage/appendedroworder gaps; fixpending. Native35R3targetedreview andclosedwireindependentreviewongoing. RestoreglobalAudioSetupbefore06:30KST.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -166,8 +183,8 @@
   "last_runtime_verified_native_unit": 34,
   "last_runtime_verified_source_commit": "3815714",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": 68,
-  "last_completed_live_elapsed_seconds": 184.288,
+  "last_completed_live_unit": 67,
+  "last_completed_live_elapsed_seconds": 148.2,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -231,7 +248,14 @@
       "raw_ledger_events": 227,
       "elapsed_seconds_including_UI_cleanup": 148.2,
       "runner_sha256": "2b6f00488a38ee58eddcb17bbb58c3027ab63096b454ff8c8aeea0aac47f14f4",
-      "replay_policy": "preserve_completed_raw_trace_and_failure_no_repeat_before_offline_contract_audit"
+      "replay_policy": "preserve_completed_raw_trace_and_failure_no_repeat_before_offline_contract_audit",
+      "independent_actual_trace_audit": {
+        "verdict": "PASS",
+        "accepted_hybrid_pilot_cases": 1,
+        "ordinary_class_complete": false,
+        "original_wrapper_validation_passed": false,
+        "replay_required": false
+      }
     },
     "68": {
       "path": ".local/next-state/unit68-preset-remainder",
@@ -359,10 +383,11 @@
   "unit65_final_runner_sha256": "12c056c4cca018e855d52f42e0b2b1edb3142c0219deea4c7cae8c6efdbbeaeb",
   "unit66_current_status": "failed_cleaned_up_with2prior_classes4cases_accepted",
   "native35_candidate": {
-    "status": "R2_supporting_API_PASS_addon_P2_requires_private_R3_terminal_binding_fix_wire_preparation_ongoing",
+    "status": "R3_private_fix_frozen_targeted_review_pending_wire_independent_review_pending",
     "installed": false,
-    "wire_implemented": false,
+    "wire_implemented": true,
     "addon_independent_review_complete": false,
-    "freeze_sha256": "1573964b044aaaef775240a8a0e8f5eec91791975e6996dff4bb6bcc4f2a9998"
+    "freeze_sha256": "7306764b9e00dba3dc4fc04d8fb3b9cd113b218184553d87ef2b6ef249627471",
+    "wire_patch_sha256": "3d2014e97d12f64ec8e18330a99e5f4d73b9a3e86e29040e2a0262ddf19c74a6"
   }
 }

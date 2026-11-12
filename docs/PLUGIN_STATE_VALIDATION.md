@@ -16,7 +16,7 @@ state and the complete remaining queue. Completed units are not replayed.
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two capsule-only cases each for22classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has24completeclasses/48positivecases |22classes, including4strict-restoration stops and VoiceFX provider-schema transitions |
+| Additional preset recalls | Two capsule-only cases each for22classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has24completeclasses/49positivecases, including one partial Mixverb hybrid pilot |22classes, including4strict-restoration stops and VoiceFX provider-schema transitions |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -35,7 +35,8 @@ restoration checkpoint. In-progress cases and offline source tests are excluded.
 The22capsule-only classes are Mixtool, Binaural Pan, Channel Strip, Dual Pan,
 Limiter, Tricomp, RedlightDist, Bitcrusher, Phaser, Flanger, Chorus, X-Trem,
 Autofilter, Beat Delay, Groove Delay, Analog Delay, Studio Verb, Compressor, Rotor, De-Esser, Vocoder and Vocal Tune.
-Their44cases plus Expander's two hybrid cases and Gate's two hybrid cases give48positivecases.
+Their44cases plus Expander's two hybrid cases and Gate's two hybrid cases give48positivecases in completed classes.
+One additional Mixverb hybrid pilot is accepted through a separately versioned independent audit of the immutable actual101RPC/227event trace. The original wrapper failure and zero acceptance remain unchanged; its fake-only two-field instance contract was wrong. Exact four-field identity, raw and normalized restoration, final full-provider pair and releases pass the audit. Mixverb still needs its separately planned second case. Total49 includes this one partial case.
 Catalog enumeration is separate from applying selected issued indices.
 
 Starting with unit57, every original-restoration observation checks complete

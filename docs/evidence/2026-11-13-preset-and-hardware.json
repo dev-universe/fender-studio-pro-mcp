@@ -8,12 +8,14 @@
   "new_preset_plan": {
     "classes_total": 46,
     "classes_complete": 24,
-    "accepted_cases": 48,
+    "accepted_cases": 49,
     "classes_remaining": 22,
     "capsule_only_classes": 22,
     "capsule_only_cases": 44,
     "hybrid_classes": 2,
-    "hybrid_cases": 4
+    "hybrid_cases": 5,
+    "cases_in_completed_classes": 48,
+    "partial_hybrid_cases": 1
   },
   "unit66": {
     "elapsed_seconds_including_UI_cleanup": 209.528,
@@ -257,5 +259,36 @@
     "mcp_calls": 0,
     "app_closed": true,
     "original_AudioSetup_restoration_required": true
+  },
+  "unit67_independent_actual_trace_audit": {
+    "verdict": "PASS",
+    "original_wrapper_status": "failed_cleaned_up",
+    "original_wrapper_accepted_cases": 0,
+    "audit_accepted_hybrid_pilot_cases": 1,
+    "ordinary_class_complete": false,
+    "elapsed_seconds_including_UI_cleanup": 148.2,
+    "rpc_calls": 101,
+    "ledger_events": 227,
+    "issued_indices": [
+      0
+    ],
+    "original_capsule_loads": 1,
+    "predeclared_predelay_setters": 1,
+    "known_postload_complete9record_reads": 4,
+    "independent_exact_final_complete_reads": 2,
+    "exact_raw_and_normalized_original_verified": true,
+    "state_and_catalog_releases_verified": true,
+    "expired_catalog_refusal_verified": true,
+    "independent_groups_passed": 5,
+    "negative_counterexamples_refused": 14,
+    "correction": "exact four-field identity with literal AudioEffect/Mixverb; single clause only",
+    "actual_trace_sha256": "dfe77a893d86541516066e92adb4187d462a02d32b28a410bf80b88a43ea0118",
+    "original_validator_sha256": "30200620bc0b9ab0e0e268ccb27ab53d7e935272b829c81cba56c6e20c13cfbb",
+    "independent_audit_validator_sha256": "cd8e60795aadbae46fa0d7bf454919a97c78f9e08dcef793bbe573c54442c248",
+    "mutation_replay": false,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true,
+    "capsule_only_restoration_verified": false,
+    "audio_or_persistence_verified": false
   }
 }
