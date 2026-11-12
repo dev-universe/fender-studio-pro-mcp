@@ -456,5 +456,27 @@
     "ping_verified": false,
     "audio_verified": false,
     "result_sha256": "58ff7836cc06026d6d0832d0f5888c3b3a138e2c0be4e31815fbbfb5cd7dacd6"
+  },
+  "openair_sentinel_attempt": {
+    "status": "failed_cleaned_up",
+    "actual_rpc_receipts": 61,
+    "case_rpc_receipts": 51,
+    "elapsed_seconds_with_UI_cleanup": 136.58,
+    "seed_normalized": 0.5,
+    "seed_raw": 5000,
+    "seed_full94record_pair_verified": true,
+    "other93records_unchanged": true,
+    "seed_setters": 1,
+    "fresh_issued_index": 0,
+    "issued_recalls": 1,
+    "recall_reset_observed": false,
+    "following_original_capsule_loads": 0,
+    "following_repair_or_retry": 0,
+    "accepted_cases": 0,
+    "accepted_classes": 0,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true,
+    "result_sha256": "d99702f54cba2c071853a476a8a02a9a857770e55af84d57dfcf8d22a9a22bf3"
   }
 }

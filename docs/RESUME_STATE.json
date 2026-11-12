@@ -131,7 +131,11 @@
         "full_provider_records": 94,
         "catalog_count": 1,
         "baseline_schema_changed": false,
-        "restoration_and_release_verified": true
+        "restoration_and_release_verified": true,
+        "new_sentinel_attempt_accepted_cases": 0,
+        "new_sentinel_reason": "issued_singleton_recall_did_not_reset_independently_observed_seed",
+        "seed_full_peer_pair_verified": true,
+        "following_capsule_load_attempts": 0
       }
     },
     "chorder_fixed_child_readonly_observations": 1,
@@ -153,7 +157,7 @@
     "Hardwaremetadata/originalAudioSetuprestorecomplete. External36exactStereoGUIreadPASS37RPC; Autoaftereditor24identicalexactGUI24. Noneinteger-1/choices0 despiteactualSendMainmenu; portwriterNOTverified. Source-onlypublicSDKdynamicmenuinvestigation thenconcreteRootREA/Ghidraquestion. MonoexactGUIpilotstillseparate; nooldfailedreplays.",
     "Hardware inventory/observer implementation, source review, CLI/MCP tests and45tool main promotion complete; reuse frozen evidence, do not repeat merely to increase counts.",
     "REA6.9CLI/registration and Craft0.6.1 executed; Ghidra same-byte function analysis verified. Existing connectedREA MCP remains6.5. Use newCLI for concrete unresolved receiver questions.",
-    "Ordinary tail exhausted; VoiceFXR2 new schema-aware indices0/1complete. Retain25/46classes51positivecases(50completed+1partialMixverb),21remaining. OpenAIR singleton sentinel/default recall witness stilldesignonly; no completedreplays.",
+    "25/46presetclasses51positivecases21remaining. OpenAIRsentinelnow61RPCstoppedbecauseissueddefaultdidnotresetobservedmix.5;0accepted/nofollowonload, NoSaveclosedhashesunchanged. Investigatecatalogentryapplicationsemantics separately, noalternatesameunitretry. Ordinarytailcomplete; VoiceFXR2alreadyaccepted2cases.",
     "Continue21remainingclasses: unit67 oneMixverb hybridpilot accepted by separateindependentactualtraceaudit; preparedistinctsecondindex1case with correctedfull4fieldidentitygate. Previous65failureimmutable; Surround2/Multiband5/Room1 exactplans pending, no tolerance widening.",
     "First Chorder input60/output0 model edit+restore passed179RPC withsixwhole908/sixwhole128 passes. Execute reviewed finite chunks for remainingoutput1..127 (output0notreplayed), then separateinputboundaries/save+restartpersistence. Native35GUIreceipt itselfremainscurrentvalueonly.",
     "Vocal Tune direct bypass role plan and separate current-value pilot.",
@@ -168,7 +172,7 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46classes,51positivecases (50incompletedclasses+1partialMixverb),21remain; VoiceFXR2 indices0/1 newaccepted, old66failureimmutable.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": "No currentowner/appclosed. External36editor-readyR2PASS37RPC/8fullprovider/8choicepages. ExactGUIcontroller24==Autoaftereditor24; Noneinteger-1, choices0stillactualSendMenuMainrow. Noportwrites. READMEtemporaryfreezeversionrestoredtonewactualdocumentationafterclosedunit; futurebindingsexcludeonlydocsREADMEfrom58runtimewirechecks. AwaitreviewOpenAIRsentinel andfirstChorder8rolechunk; source-onlySDKmenuinvestigationongoing.",
+  "current_execution": "No currentowner/appclosed. OpenAIRsentinelactual61RPC/136.58s seed.5pairvalid butissueddefaultdidNOTresetmix; nofollowoncapsuleload/repair,0accepted. All5savedhashesunchanged. Chorder127membershipchunksR1offlineaccountingblocker(noacceptunlesscleanup+savedpreservation), R2fixinprogressbeforelive. Native37readOnlymenuprivateABIprototype preparing; RootREA/Ghidra concretecallbackquestionnext.",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -196,8 +200,8 @@
   "last_runtime_verified_native_unit": 36,
   "last_runtime_verified_source_commit": "baa9076",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "External36 exact GUI Stereo read-only metadata PASS",
-  "last_completed_live_elapsed_seconds": 103.882,
+  "last_completed_live_unit": "OpenAIR sentinel failed no reset; knownterminal NoSavecleanup",
+  "last_completed_live_elapsed_seconds": 136.58,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -335,6 +339,28 @@
       "source_auto_equals_exact_GUI_after_editor": true,
       "all_five_saved_songs_unchanged": true,
       "app_and_owner_closed": true
+    },
+    "OpenAIR_sentinel_actual": {
+      "status": "failed_cleaned_up",
+      "elapsed_seconds": 136.58,
+      "actual_rpc_receipts": 61,
+      "case_rpc": 51,
+      "accepted_cases": 0,
+      "seed_writes": 1,
+      "issued_recalls": 1,
+      "original_capsule_loads": 0,
+      "following_repair_or_retry": 0,
+      "all_five_saved_songs_unchanged": true,
+      "app_and_owner_closed": true
+    },
+    "Chorder_membership_chunks_R1": {
+      "status": "offline_review_accounting_blocker_before_live",
+      "planned_chunks": 16,
+      "remaining_outputs": 127,
+      "total_planned_RPC": 22289,
+      "first_chunk_RPC": 1404,
+      "actual_calls": 0,
+      "R2_fix_in_progress": true
     }
   },
   "remaining_preset_class_names": [
