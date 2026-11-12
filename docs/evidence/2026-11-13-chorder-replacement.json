@@ -75,9 +75,11 @@
     67,
     68,
     69,
+    70,
     71,
     72,
     73,
+    74,
     75,
     76,
     77,
@@ -132,11 +134,11 @@
     126,
     127
   ],
-  "verified_roles": 125,
-  "remaining_roles": 3,
+  "verified_roles": 127,
+  "remaining_roles": 1,
   "disabled_replacement_chunks_complete": 8,
   "disabled_replacement_chunks_total": 8,
-  "enabled_order_units_complete": 2,
+  "enabled_order_units_complete": 4,
   "enabled_order_units_total": 5,
   "disabled_completed": [
     {
@@ -325,6 +327,32 @@
       "all_six_saved_songs_unchanged": true,
       "result_sha256": "7d02b9bb5addfb82968a6b0d810a68fbb292838c624cfda1d56b52f2b88c9420",
       "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    },
+    {
+      "chunk": 4,
+      "output_pitches": [
+        70
+      ],
+      "rpc_calls": 301,
+      "model_setters": 4,
+      "elapsed_seconds_with_UI_cleanup": 122.646,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "94e5dedf44bbd8f83bf50cc8f5b9d2bc87b4e371612a212d30ec445133091732",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+    },
+    {
+      "chunk": 5,
+      "output_pitches": [
+        74
+      ],
+      "rpc_calls": 179,
+      "model_setters": 2,
+      "elapsed_seconds_with_UI_cleanup": 122.156,
+      "app_and_owner_closed": true,
+      "all_six_saved_songs_unchanged": true,
+      "result_sha256": "4288beae342453a1e41513df81fc5fea00976eafc397a1255954cde23cbfc26b",
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
     }
   ],
   "persistence_verified": false,
@@ -343,7 +371,8 @@
       "app_and_owner_closed": true,
       "all_six_saved_songs_unchanged": true,
       "result_sha256": "e7d3fdf9e75d530f9ab9e154aa55460d4d06c3c95f0f28ccf569fbdb38cd176e",
-      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e"
+      "root_final_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
+      "rpc_meaning": "56 observed read replies and1 plugin_editor_open applied_unverified reply; zero parameter writers"
     }
   ]
 }

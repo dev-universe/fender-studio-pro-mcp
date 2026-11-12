@@ -1,6 +1,6 @@
 # Chorder membership validation, November13
 
-Current accepted program union: **125/128 roles**, **3 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
+Current accepted program union: **127/128 roles**, **1 remaining**. See [replacement evidence](evidence/2026-11-13-chorder-replacement.json).
 
 The scope is every current output membership role at input60. The completed output0 pilot is reused. Each new role has fresh complete908-record and whole128-input model pairs before treatment, after treatment and after inverse restoration. Save/restart, input boundaries and audio remain separate.
 
@@ -46,3 +46,7 @@ Disabled replacement chunk8 completed outputs121–127:1229RPC,14writes,234.22se
 Enabled-order unit1 target60 completed667RPC/10writes in169.391seconds, including the predeclared suffix rotations and exact original node order restoration. Only target60 adds coverage. Unit2 target63 expired at the Root editor_context checkpoint after57reads and zero writes; its failed evidence and zero acceptance are retained. NoSave cleanup took420.92seconds and preserved all6 archives. A new independently reviewed target63 namespace is required. Remaining roles:63,67,70,74.
 
 Enabled-order unit3 target67 completed423RPC/6writes in143.275seconds. Full908/128 and exact original581 restoration, NoSave/app/owner closure and6 saved archive hashes passed. Remaining63,70,74.
+
+Enabled-order unit4 target70 passed301RPC/4writes in122.646seconds; exact908/128/original581 restoration, NoSave/app/owner closure and6 saved archives unchanged. Remaining63,74.
+
+Enabled-order unit5 target74 passed179RPC/2writes in122.156seconds; exact908/128/original581 restoration, NoSave/app/owner closure and6 saved archives unchanged. Only63 remains. The failed02 terminal inventory is56 observed read replies plus1 plugin_editor_open applied_unverified reply, not57 observed reads; zero parameter writers.

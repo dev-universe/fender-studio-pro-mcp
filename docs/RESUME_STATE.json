@@ -154,7 +154,7 @@
       }
     ],
     "external_stereo_exact_GUI_metadata_units": 1,
-    "chorder_model_membership_roles_verified": 125,
+    "chorder_model_membership_roles_verified": 127,
     "chorder_verified_output_pitches_at_input60": [
       0,
       1,
@@ -295,9 +295,9 @@
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
   "current_execution": {
-    "unit": "chorder-enabled-order-r1 unit4 target70",
+    "unit": "Room Reverb fresh serialized identity r1",
     "state": "live",
-    "accepted_roles_before_unit": 125
+    "global_preset_count_unchanged": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -774,9 +774,11 @@
       67,
       68,
       69,
+      70,
       71,
       72,
       73,
+      74,
       75,
       76,
       77,
@@ -831,7 +833,7 @@
       126,
       127
     ],
-    "remaining_roles": 3,
+    "remaining_roles": 1,
     "next_chunk": 9,
     "progress_document": "docs/CHORDER_MEMBERSHIP_2026-11-13.md",
     "source_freeze_sha256": "e5322e808ab2d45361d61a7ada95267eb36dfad6eabfe595dc3fcadaca950ff6",
@@ -886,13 +888,15 @@
       "independent_groups": 27,
       "rpc_calls": 2115,
       "setters": 30,
-      "actual_calls": 1147,
+      "actual_calls": 1627,
       "runtime_binding": "MIXED_BOUND_PER_UNIT",
-      "current_unit": 4,
-      "fixed_output": 70,
+      "current_unit": null,
+      "fixed_output": null,
       "completed_units": [
         1,
-        3
+        3,
+        4,
+        5
       ],
       "failed_units": [
         2
@@ -960,8 +964,8 @@
     "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
   },
   "rough_chorder_remaining_minutes": [
-    10,
-    25
+    5,
+    15
   ],
   "multiband_first_hybrid_independent_review": {
     "status": "PASS_WITH_LIMITS",
