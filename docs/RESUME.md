@@ -23,10 +23,10 @@
 - 입력128개의 저장 모델을 두 pass·총16회 serializer read로 읽었다. 전후908개 원본 네 번과 GUI getter 네 번도 일치했다.
 - unit64는117.091초였고 쓰기·state capsule·load·transport·Song Save는0회였다. 마지막 진단 문서는 저장 없이 닫았고 앱·owner가 종료됐다.
 - 새 증거는 현재 저장 모델의 읽기다. 모델 편집·복원·persistence·audio나 GUI child 출력 음정 매핑은 아직 확정하지 않는다.
-- 추가 프리셋46종 계획에서18종·36사례가 완료됐고28종이 남았다. unit64 때문에 이 수를 늘리지 않는다.
-- unit65는 Mixverb의 strict typed 복원 실패로 종료·정리됐다. 추가 성공0종, 저장본 불변. 미실행8종·15사례는 unit66으로 준비하며65를 재실행하지 않는다.
+- 추가 프리셋46종 계획에서20종·40사례가 완료됐고26종이 남았다. unit64 때문에 이 수를 늘리지 않는다.
+- unit65는 Mixverb의 strict typed 복원 실패로 종료·정리됐다. 추가 성공0종, 저장본 불변. unit66은 Studio Verb·Compressor2종·4사례를 추가하고 Voice FX의 무변화 관찰에서 멈췄다. 미실행5종·9사례는 unit68로 계획하며65·66을 재실행하지 않는다.
 - 사용자는 Volt 276과 Keystation 88 MK3를 한국 시간11월13일 오전6시30분까지 USB로만 연결한다. 물리 loopback 배선은 없다.
-- 실제 Audio Setup에서 재생·녹음 Volt276·48kHz·512샘플을 확인했다. 원래 MacBook 스피커·마이크 설정의 UI 복원이 하드웨어 단위 종료 또는 마감 전에 반드시 필요하다. DAW I/O bus·External 선택지 확인은 남아 있다.
+- 실제 Audio Setup에서 재생·녹음 Volt276·48kHz·512샘플을 확인했다. 원래 MacBook 스피커·마이크 설정의 UI 복원이 하드웨어 단위 종료 또는 마감 전에 반드시 필요하다. DAW I/O는 INPUT1·2/MONITOR L·R을 관찰했고 입력 bus는 비어 있다. External 전체 provider·선택지 확인은 남아 있다. 첫 UI Main 최솟값은 exact0이 아니어서 중단했으며 새 단위는 API Main1→0 준비1회를 선언한다.
 - Rust inventory·bounded observer의 소스·독립 검토·실제 CLI/MCP 검증이 완료됐고 main은45개 도구다. 세 수신 창은 event0과 정리status0이며 실제 건반 연주 증거는 아니다. 소스7dedec2와 [하드웨어 안내](HARDWARE.md)를 참고한다.
 - REA6.9.0·portableNode26.12.1·Craft0.6.1 설치·실행과 Codex 등록 갱신, 새CLI+Ghidra12.1.4 분석을 확인했다. 기존 연결REA MCP는6.5.0이며 새CLI를 사용한다. Hopper는 사용하지 않았다.
 
