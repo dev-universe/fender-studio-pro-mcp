@@ -16,6 +16,7 @@ use crate::{
     operation::{Operation, Request},
 };
 
+mod chorder_chords;
 mod chorder_learning;
 
 #[derive(Clone)]
@@ -100,7 +101,7 @@ fn require_learning_document(request: &Request) -> Result<(), OperationError> {
     {
         return Err(OperationError::new(
             "missing_precondition",
-            "Read host_status and supply expected_document for Chorder learning controls",
+            "Read host_status and supply expected_document for Chorder controls",
         ));
     }
     Ok(())
@@ -261,6 +262,12 @@ fn execute(
         && !chorder_learning::valid_get(query, &response.result)
     {
         chorder_learning::invalidate_get(&mut response.result);
+    }
+    if let Operation::ChorderChordsGet(query) = &operation
+        && response.ok
+        && !chorder_chords::valid_get(query, &response.result)
+    {
+        chorder_chords::invalidate_get(&mut response.result);
     }
     if let Operation::ChorderLearningSet(change) = &operation
         && response.ok
@@ -737,6 +744,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if matches!(operation, Operation::ChorderChordsGet(_)) {
+        chorder_chords::invalidate_get(result);
+        return;
+    }
     if matches!(operation, Operation::ChorderLearningGet(_)) {
         chorder_learning::invalidate_get(result);
         return;

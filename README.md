@@ -8,7 +8,7 @@ A native Rust MCP server that lets an LLM read and control Fender Studio Pro thr
 
 Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. The final native-extension run covered **60 built-in classes**, enumerated **8,668 indexed parameter records across 59 current providers**, and resolved every reported DSP parameter name. Splitter adds 16 fixed graph controls. Fifty-nine classes passed a parameter or graph change/readback/restore; Phase Meter passed slot bypass. External Effect Mono and Stereo passed gain, mix, manual latency, phase and Unicode-note roundtrips. The same build passed the bridge/EditTask regression. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for scope and evidence. Every GUI action, model and physical hardware path has not been certified.
 
-The 42 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
+The 43 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
 The ongoing [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records the newer model, preset, nested-fixture and full-parameter work. It includes successful actual-host cases and stopped restoration tests. Complete current-provider enumeration does not mean every writable parameter or model has passed a roundtrip. A new Chorder check found that live native parameter/model changes can fail to persist through Song Save/reopen; an opt-in edit-lifecycle pilot reproduced that persistence failure, and the receiver/model path remains under investigation.
 
@@ -149,19 +149,28 @@ menu disabled in that experiment.
 
 Capture `plugin_state` before changing a model or recalling a preset. Keep the returned opaque token, document token and native instance identity. `plugin_presets` lists an issued catalog and accepts only an index issued by that catalog; callers cannot supply preset paths or imported state bytes. State load and preset recall remain `applied_unverified` until independent reads establish the intended result. A capsule load can also introduce representational drift, so exact restoration must be checked. Release unused state and catalog tokens.
 
+The experimental `chorder_chords_get` reads stored chords through the matching
+native extension. Supply `track`, Note FX `slot`, `expected_instance`,
+`expected_document`, `offset` 0..127 and `limit` 1..16. Pages include empty input
+keys and sorted output MIDI pitches. Each page captures fresh state; compare
+the capture and model digests across pages. The bounded decoder accepts only
+the known Chorder serializer schema and exposes no XML, file path or state
+token. It grants no mutation authority or persistence/audio claim. Native34's
+source checks and independent reviews passed; actual-host verification is
+pending at this checkpoint.
+
 Native33's fixed Chorder child probe also passed in the actual 8.1.1 host.
 It observed `pitch61` and its local `learnChord` and `chordAssigned` metadata.
 Four complete 908-record reads stayed original before and after the probe.
 The probe grants no mutation authority or output-pitch mapping. Stored-chord
 editing, restoration and persistence remain pending.
 
-The finite additional-preset plan has completed 16 of 46 classes in the actual
-8.1.1 host. Fifteen classes passed two capsule-only recall/restore cases each.
-Expander passed two separate hybrid cases, each using one capsule load and one
-preplanned original attack setter. Gate has passed its first hybrid case; its
-second planned index remains pending. These are 33 positive cases, including
-the partial Gate class. Multiband Dynamics and Surround Delay stopped at exact
-restoration checks and contribute no accepted cases. Thirty classes remain.
+The finite additional-preset plan has completed 18 of 46 classes in the actual
+8.1.1 host. Sixteen classes passed two capsule-only recall/restore cases each.
+Expander and Gate each passed two separate hybrid cases, each using one capsule
+load and one preplanned original attack setter. These are 36 positive cases.
+Multiband Dynamics, Surround Delay and Room Reverb stopped at exact restoration
+checks and contribute no accepted cases. Twenty-eight classes remain.
 The [preset evidence](docs/evidence/2026-11-12-preset-recalls.json) separates
 completed classes, partial cases and failed units. The selected issued indices
 do not establish that every available preset, hidden value, saved state or

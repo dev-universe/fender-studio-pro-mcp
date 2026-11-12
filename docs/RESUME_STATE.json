@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native33 unit61 fixed Chorder pitch61 metadata observed; full908 original before/after, zero writes/state/transport/Save",
+  "last_completed_unit": "Native33 unit63 Analog Delay2capsule-only cases accepted; Room Reverb exact typed restoration failed0; next9classes notcalled; app/owner closed",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -45,29 +45,21 @@
       "Autofilter",
       "Beat Delay",
       "Groove Delay",
-      "Expander"
+      "Expander",
+      "Gate",
+      "Analog Delay"
     ],
-    "new_preset_recall_restore_cases": 33,
-    "remaining_preset_classes": 30,
+    "new_preset_recall_restore_cases": 36,
+    "remaining_preset_classes": 28,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 3,
-    "partial_preset_classes": {
-      "Gate": {
-        "completed_indices": [
-          1
-        ],
-        "remaining_indices": [
-          2
-        ],
-        "restoration": "capsule_then_one_preplanned_original_attack_setter"
-      }
-    },
-    "new_preset_cases_in_completed_classes": 32,
-    "new_capsule_only_preset_classes_completed": 15,
-    "new_capsule_only_preset_recall_restore_cases": 30,
-    "new_hybrid_preset_classes_completed": 1,
+    "new_hybrid_preset_recall_restore_cases": 4,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 36,
+    "new_capsule_only_preset_classes_completed": 16,
+    "new_capsule_only_preset_recall_restore_cases": 32,
+    "new_hybrid_preset_classes_completed": 2,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
         "accepted_cases": 0,
@@ -76,13 +68,17 @@
       "Surround Delay": {
         "accepted_cases": 0,
         "reason": "strict_typed_original_restoration_not_confirmed"
+      },
+      "Room Reverb": {
+        "accepted_cases": 0,
+        "reason": "strict_typed_original_restoration_not_confirmed"
       }
     },
     "chorder_fixed_child_readonly_observations": 1
   },
   "next_units_in_order": [
-    "Review and run Native33 Gate index2 and remaining11 ordinary preset classes; implement/review Native34 typed stored-chord getter before one GUI note-membership edit",
-    "Continue the remaining 30 preset classes, including Gate issued index 2 and separately planned exact restoration experiments for Multiband Dynamics and Surround Delay",
+    "Install reviewed Native34 matching native/bridge artifacts; verify full128-key stored Chorder model twice and908 original before/after in unit64",
+    "Continue28 remaining preset classes; unit65 nine ordinary unrun classes; preplan separate exact restoration for Multiband Dynamics, Surround Delay and Room Reverb",
     "Chorder stored-model read, fixed GUI child authority and learned-chord change/restore/persistence",
     "Vocal Tune direct bypass role plan and separate current-value pilot",
     "Remaining dedicated parameters, macros, model catalogs and MIDI/event roles",
@@ -94,9 +90,9 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-12.md",
-  "last_measurement": "Unit57 completed two Tricomp cases. Unit58 completed eighteen cases across nine classes. Expander indices 1 and 2 completed hybrid restoration. Gate index 1 is partial. The finite plan has 16 of 46 classes complete and 33 positive cases including partial Gate.",
+  "last_measurement": "unit62 Gateindex2 completes Gate; unit63 AnalogDelay2 accepted, RoomReverb strictrestore failed0;18/46classescomplete and36positivecases,28remaining",
   "binary_source_commit": "045c458c643efeea34d97c2e7354554f9c531241",
-  "current_execution": "unit61 checkpoint app and owner closed; Native34 typed stored-chord getter and Native33 preset62/63 preparation in progress",
+  "current_execution": "Native34 source reviews and R2 checks passed; matching package rebuilt; pending install/fresh read-only fullmodel unit64; unit65 remaining9 ordinary classes prepared",
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",

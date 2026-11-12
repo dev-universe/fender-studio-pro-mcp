@@ -225,6 +225,12 @@ impl McpServer {
                 "Read only Learn Mode and the learning input pitch on an already-open exact Chorder editor. Requires the current document and native instance. The fixed GUI discovery ceiling is 256 views; the report exposes measured coverage and sequential GUI values, with no mutation authority or DSP/persistence/audio verification.",
                 false,
             ),
+            named::<ChorderChordsGet>(
+                "chorder_chords_get",
+                "chorderChordsGet",
+                "Read a page of stored Chorder input chords from the exact Note FX instance. Requires the current document, instance, offset 0..127 and limit 1..16. Empty inputs are explicit. Compare model and capture digests across pages because each page is a fresh sequential observation. No GUI, imported XML, file path, mutation, audio or persistence claim is supplied.",
+                false,
+            ),
             named::<ChorderLearningSet>(
                 "chorder_learning_set",
                 "chorderLearningSet",
@@ -292,7 +298,7 @@ fn named<T: JsonSchema>(
 ) -> ToolSpec {
     let mut schema = serde_json::to_value(schemars::schema_for!(T)).expect("tool schema");
     if mutation
-        || operation == "chorderLearningGet"
+        || matches!(operation, "chorderLearningGet" | "chorderChordsGet")
         || matches!(
             operation,
             "pluginParams"
@@ -306,7 +312,7 @@ fn named<T: JsonSchema>(
     {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
     }
-    if mutation || operation == "chorderLearningGet" {
+    if mutation || matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
         let object = schema.as_object_mut().unwrap();
         object
             .entry("required")
@@ -316,7 +322,7 @@ fn named<T: JsonSchema>(
             .push(json!("expected_document"));
     }
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
-    if operation == "chorderLearningGet" {
+    if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     }
     ToolSpec {
@@ -480,6 +486,43 @@ mod tests {
     }
 
     #[test]
+    fn chorder_chords_tool_requires_all_paging_fields_and_explicit_document() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "chorder_chords_get")
+            .unwrap();
+        assert_eq!(spec.operation, Some("chorderChordsGet"));
+        assert_eq!(
+            spec.tool.annotations.as_ref().unwrap().read_only_hint,
+            Some(true)
+        );
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        for field in [
+            "track",
+            "slot",
+            "expected_instance",
+            "offset",
+            "limit",
+            "expected_document",
+        ] {
+            assert!(
+                schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!(field))
+            );
+        }
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(schema["properties"]["offset"]["maximum"], 127);
+        assert_eq!(schema["properties"]["limit"]["maximum"], 16);
+        for forbidden in [
+            "source", "path", "xml", "token", "change", "kind", "channel", "plugin",
+        ] {
+            assert!(schema["properties"].get(forbidden).is_none());
+        }
+    }
+
+    #[test]
     fn named_mutations_require_the_document_token() {
         let specs = McpServer::specs();
         for name in [
@@ -502,7 +545,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 42);
+        assert_eq!(specs.len(), 43);
     }
 
     #[test]

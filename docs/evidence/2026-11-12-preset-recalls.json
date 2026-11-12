@@ -1,19 +1,19 @@
 {
   "schema": 1,
   "date": "2026-11-12",
-  "status": "sixteen_finite_plan_classes_complete_with_one_partial_gate_case",
-  "checkpoint": "after_unit60",
-  "native_unit": 32,
-  "source_commit": "48bf48c70f90c2d61184b2d7ae9ce19599777a74",
+  "status": "eighteen_finite_plan_classes_complete",
+  "checkpoint": "after_unit63",
+  "native_unit": 33,
+  "source_commit": "045c458c643efeea34d97c2e7354554f9c531241",
   "finite_plan_classes": 46,
-  "accepted_preset_classes": 16,
-  "remaining_preset_classes": 30,
-  "accepted_recall_restore_cases": 33,
-  "accepted_cases_in_completed_classes": 32,
-  "capsule_only_completed_classes": 15,
-  "capsule_only_recall_restore_cases": 30,
-  "hybrid_completed_classes": 1,
-  "hybrid_recall_restore_cases": 3,
+  "accepted_preset_classes": 18,
+  "remaining_preset_classes": 28,
+  "accepted_recall_restore_cases": 36,
+  "accepted_cases_in_completed_classes": 36,
+  "capsule_only_completed_classes": 16,
+  "capsule_only_recall_restore_cases": 32,
+  "hybrid_completed_classes": 2,
+  "hybrid_recall_restore_cases": 4,
   "classes": [
     {
       "plugin": "Mixtool",
@@ -162,34 +162,34 @@
         "unit59"
       ],
       "capsule_only_restoration_verified": false
-    }
-  ],
-  "partial_classes": [
+    },
     {
       "plugin": "Gate",
       "provider_records": 19,
       "catalog_count": 22,
-      "completed_indices": [
-        1
-      ],
-      "remaining_indices": [
+      "recall_restore_cases": 2,
+      "issued_indices": [
+        1,
         2
       ],
-      "recall_restore_cases": 1,
       "restoration": "capsule_then_one_preplanned_original_attack_setter",
-      "preplanned_attack_setters": 1,
-      "readonly_prelude_observations": 1,
-      "readonly_prelude": "reduction_observed_not_restored",
-      "intermediate_full_reads": 4,
-      "final_original_full_reads": 2,
-      "rpc_count": 101,
-      "execution_seconds": 8.466,
-      "elapsed_seconds_including_ui_cleanup": 86.877,
-      "evidence_unit": "unit60",
-      "planned_class_complete": false,
+      "evidence_units": [
+        "unit60",
+        "unit62"
+      ],
       "capsule_only_restoration_verified": false
+    },
+    {
+      "plugin": "Analog Delay",
+      "provider_records": 24,
+      "catalog_count": 27,
+      "recall_restore_cases": 2,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit63",
+      "elapsed_seconds": 9.513
     }
   ],
+  "partial_classes": [],
   "new_units": [
     {
       "unit": 57,
@@ -257,6 +257,31 @@
       "rpc_count": 101,
       "execution_seconds": 8.466,
       "elapsed_seconds_including_ui_cleanup": 86.877
+    },
+    {
+      "unit": 62,
+      "plugin": "Gate",
+      "issued_indices": [
+        2
+      ],
+      "accepted_recall_restore_cases": 1,
+      "original_capsule_loads": 1,
+      "preplanned_original_attack_setters": 1,
+      "readonly_prelude_observations": 1,
+      "execution_seconds": 8.406,
+      "elapsed_seconds_including_ui_cleanup": 104.222
+    },
+    {
+      "unit": 63,
+      "completed_classes": [
+        "Analog Delay"
+      ],
+      "accepted_recall_restore_cases": 2,
+      "stopped_class": "Room Reverb",
+      "stopped_class_accepted_cases": 0,
+      "stop_reason": "complete_typed_original_restoration_not_confirmed",
+      "following_unrun_classes": 9,
+      "elapsed_seconds_including_ui_cleanup": 126.843
     }
   ],
   "strict_original_restoration_policy": {
@@ -376,8 +401,6 @@
     "save_or_audio_verified": false
   },
   "remaining_ordinary_unrun_classes": [
-    "Analog Delay",
-    "Room Reverb",
     "Mixverb",
     "Studio Verb",
     "Compressor",
@@ -412,6 +435,12 @@
     ".local/live/unit59-expander-index2/result.json": "23e45034567871e645df0b033f687f8892f16f36d852212da03e4d7a3da43256",
     ".local/live/unit60-gate-hybrid/result.json": "13e8eab705505cac87910ec58e9e80b8d2b4ccf9ccaff706023ad2e6ab137382",
     ".local/live/unit59-expander-index2/cases/expander/progress.json": "b9c33dc6e9f86138e1ce266352599c1c4629fcbfb195ec05acb6680abe8b519f",
-    ".local/live/unit60-gate-hybrid/cases/gate/progress.json": "e7b51107c795c286ee3bbb31abf138b35e844bbf0170872346f1cd5cd35cde18"
+    ".local/live/unit60-gate-hybrid/cases/gate/progress.json": "e7b51107c795c286ee3bbb31abf138b35e844bbf0170872346f1cd5cd35cde18",
+    ".local/live/unit62-gate-index2/result.json": "f8b693d8137639c5e56b6bfbf2764db13ee873755f1f0dfb37b14421a7da4c38",
+    ".local/live/unit63-preset-remainder/result.json": "935a8ba769c42c6fa0677fc473a7e573336ce482f31b40fc93eb6bc7060914f3"
+  },
+  "source_commits_by_native_unit": {
+    "32": "48bf48c70f90c2d61184b2d7ae9ce19599777a74",
+    "33": "045c458c643efeea34d97c2e7354554f9c531241"
   }
 }

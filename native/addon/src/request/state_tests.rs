@@ -12,6 +12,9 @@ struct Mock {
     storable: bool,
     bytes: Mutex<Vec<u8>>,
     saves: AtomicU32,
+    save_result: bool,
+    save_effect: Option<unsafe fn(*mut Mock)>,
+    uid_effect: Option<unsafe fn(*mut Mock)>,
     loads: AtomicU32,
     load_result: bool,
     stop_on_load: *mut Service,
@@ -54,6 +57,9 @@ unsafe extern "C" fn active(p: *mut c_void) -> *mut c_void {
     unsafe { (*p.cast::<Mock>()).active }
 }
 unsafe extern "C" fn object_uid(p: *mut c_void) -> *const Uid {
+    if let Some(effect) = unsafe { (*p.cast::<Mock>()).uid_effect } {
+        unsafe { effect(p.cast()) };
+    }
     unsafe { ptr::addr_of!((*p.cast::<Mock>()).uid) }
 }
 unsafe extern "C" fn class_uid(p: *mut c_void) -> *const Uid {
@@ -65,9 +71,11 @@ unsafe extern "C" fn save(p: *mut c_void, stream: *mut c_void) -> u8 {
     let bytes = mock.bytes.lock().unwrap().clone();
     let write: unsafe extern "C" fn(*mut c_void, *const c_void, i32) -> i32 =
         unsafe { method(stream, 4) };
-    u8::from(
-        unsafe { write(stream, bytes.as_ptr().cast(), bytes.len() as i32) } == bytes.len() as i32,
-    )
+    let count = unsafe { write(stream, bytes.as_ptr().cast(), bytes.len() as i32) };
+    if let Some(effect) = mock.save_effect {
+        unsafe { effect(p.cast()) };
+    }
+    u8::from(mock.save_result && count == bytes.len() as i32)
 }
 unsafe extern "C" fn load(p: *mut c_void, stream: *mut c_void) -> u8 {
     let mock = unsafe { &*p.cast::<Mock>() };
@@ -115,7 +123,7 @@ struct Fixture {
     parent: Box<Mock>,
     plugin: Box<Mock>,
     service: Box<Service>,
-    api: Box<Api>,
+    api: &'static Api,
 }
 fn service() -> Box<Service> {
     Box::new(Service {
@@ -170,6 +178,9 @@ impl Fixture {
                 storable: false,
                 bytes: Mutex::new(b"state".to_vec()),
                 saves: AtomicU32::new(0),
+                save_result: true,
+                save_effect: None,
+                uid_effect: None,
                 loads: AtomicU32::new(0),
                 load_result: true,
                 stop_on_load: ptr::null_mut(),
@@ -184,7 +195,7 @@ impl Fixture {
         plugin.table = plugin_table.as_ptr();
         plugin.storable = true;
         let service = service();
-        let api = Box::new(Api {
+        static API: Api = Api {
             gui: empty,
             objects: empty,
             main_thread: empty,
@@ -195,7 +206,8 @@ impl Fixture {
             scripting: empty,
             plugin_manager: empty,
             file_system: empty,
-        });
+        };
+        let api = &API;
         READY.store(true, Ordering::Release);
         Self {
             _table: table,
@@ -210,7 +222,7 @@ impl Fixture {
             api,
         }
     }
-    fn context(&mut self) -> Context<'_> {
+    fn context(&mut self) -> Context<'static> {
         Context {
             service: ptr::addr_of_mut!(*self.service),
             target: hold(ptr::addr_of_mut!(*self.device).cast()).unwrap(),
@@ -229,7 +241,7 @@ impl Fixture {
                 _model_identity: hold(ptr::addr_of_mut!(*self.model).cast()).unwrap(),
             },
             started: Instant::now(),
-            api: &self.api,
+            api: self.api,
         }
     }
 }
@@ -250,6 +262,173 @@ impl Drop for Fixture {
         assert_eq!(live_count(), 0);
         READY.store(false, Ordering::Release);
     }
+}
+fn chorder_fixture() -> Fixture {
+    let mut fixture = Fixture::new();
+    fixture.device.class = Uid {
+        a: 0xd2d9b002,
+        b: 0x12fc,
+        c: 0x4f1d,
+        d: [0xaf, 0xda, 0x70, 0x33, 0x6d, 0x1d, 0xc1, 0x08],
+    };
+    *fixture.plugin.bytes.lock().unwrap() = br#"<MusicEffectPreset cid="{D2D9B002-12FC-4F1D-AFDA-70336D1DC108}"><Attributes x:id="ComponentData"><Attributes x:id="chorder" transpose="-2" loKey="10" hiKey="118" autofill="0" filterOutsideRange="1"/></Attributes><Attributes x:id="AlgorithmData"><Attributes x:id="model"><Attributes inPitch="12"><Attributes outPitch="79"/><Attributes outPitch="3"/></Attributes></Attributes></Attributes></MusicEffectPreset>"#.to_vec();
+    fixture
+}
+fn chord_reply(ctx: Box<Context<'static>>, value: Value, alias: AliasLease) -> Reply {
+    let mut reply = Reply::unbound(value);
+    reply.context = Some(ctx);
+    reply.provider = Some(Provider::State(alias));
+    reply
+}
+#[test]
+fn chorder_read_uses_one_bounded_save_without_registering_or_loading_a_capsule() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = chorder_fixture();
+    let ctx = fixture.context();
+    for _ in 0..8 {
+        let (_, lease) = capture(&ctx).unwrap();
+        drop(lease);
+    }
+    assert_eq!(live_count(), 8);
+    let (value, alias) = super::super::chorder_chords::get(&ctx, 0, 16).unwrap();
+    assert_eq!(
+        value["chords"][12],
+        json!({"input_pitch":12,"output_pitches":[3,79]})
+    );
+    assert_eq!(
+        value["chords"][11],
+        json!({"input_pitch":11,"output_pitches":[]})
+    );
+    assert_eq!(value["source"], "component_alias");
+    assert_eq!(
+        value["instance"]["class_uid"],
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"
+    );
+    assert_eq!(value["mutation_capability"], false);
+    assert_eq!(value["persistence_verified"], false);
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 9);
+    assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
+    assert_eq!(live_count(), 8);
+    assert!(value.get("token").is_none());
+    if let Some(path) = std::env::var_os("FSP_CHORDER_GETTER_TEST_FIXTURE") {
+        std::fs::write(path, value.to_string()).unwrap();
+    }
+    drop(alias);
+    drop(ctx);
+}
+#[test]
+fn chorder_read_refuses_wrong_class_and_page_before_native_save() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = Fixture::new();
+    let ctx = fixture.context();
+    let failure = super::super::chorder_chords::get(&ctx, 0, 16)
+        .err()
+        .unwrap();
+    assert_eq!(failure.code(), "chorder_chords_unavailable");
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 0);
+    drop(ctx);
+    let mut fixture = chorder_fixture();
+    let ctx = fixture.context();
+    for (offset, limit) in [(128, 1), (0, 0), (0, 17)] {
+        assert!(super::super::chorder_chords::get(&ctx, offset, limit).is_err());
+    }
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 0);
+    drop(ctx);
+}
+unsafe fn detach_alias_on_save(plugin: *mut Mock) {
+    let device = unsafe { (*plugin).parent.cast::<Mock>() };
+    unsafe { (*device).alias = ptr::null_mut() };
+}
+unsafe fn detach_parent_on_save(plugin: *mut Mock) {
+    let device = unsafe { (*plugin).parent.cast::<Mock>() };
+    unsafe { (*device).parent = ptr::null_mut() };
+}
+unsafe fn stop_on_save(plugin: *mut Mock) {
+    unsafe {
+        (*(*plugin).stop_on_load)
+            .terminated
+            .store(true, Ordering::Release)
+    };
+}
+#[test]
+fn chorder_read_refuses_save_reentry_rejection_oversize_and_unsupported_schema() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for case in 0..6 {
+        let mut fixture = chorder_fixture();
+        fixture.plugin.parent = ptr::addr_of_mut!(*fixture.device).cast();
+        match case {
+            0 => fixture.plugin.save_effect = Some(detach_alias_on_save),
+            1 => fixture.plugin.save_effect = Some(detach_parent_on_save),
+            2 => {
+                fixture.plugin.stop_on_load = ptr::addr_of_mut!(*fixture.service);
+                fixture.plugin.save_effect = Some(stop_on_save);
+            }
+            3 => fixture.plugin.save_result = false,
+            4 => *fixture.plugin.bytes.lock().unwrap() = vec![b' '; 1_048_577],
+            _ => *fixture.plugin.bytes.lock().unwrap() = b"<unsupported/>".to_vec(),
+        }
+        let ctx = fixture.context();
+        let failure = super::super::chorder_chords::get(&ctx, 0, 16)
+            .err()
+            .unwrap();
+        assert_eq!(
+            failure.code(),
+            if case == 5 {
+                "chorder_schema_unsupported"
+            } else {
+                "chorder_chords_unavailable"
+            }
+        );
+        assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 1);
+        assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
+        assert_eq!(live_count(), 0);
+        drop(ctx);
+    }
+}
+unsafe fn detach_alias_on_uid(device: *mut Mock) {
+    unsafe { (*device).alias = ptr::null_mut() };
+}
+#[test]
+fn chorder_reply_rechecks_alias_after_target_uid_and_erases_late_positive_claims() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = chorder_fixture();
+    let ctx = Box::new(fixture.context());
+    let (value, alias) = super::super::chorder_chords::get(&ctx, 0, 16).unwrap();
+    let mut reply = chord_reply(ctx, value, alias);
+    fixture.device.uid_effect = Some(detach_alias_on_uid);
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    assert_eq!(reply.value["ok"], false);
+    assert_eq!(reply.value["outcome"], "not_applied");
+    for field in [
+        "chords",
+        "capture_sha256",
+        "capture_byte_count",
+        "model_sha256",
+        "schema",
+        "count",
+        "next",
+    ] {
+        assert!(reply.value.get(field).is_none());
+    }
+    drop(reply);
+}
+#[test]
+fn chorder_reply_holds_alias_and_document_until_receipt_release() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = chorder_fixture();
+    let ctx = Box::new(fixture.context());
+    let (value, alias) = super::super::chorder_chords::get(&ctx, 127, 16).unwrap();
+    let mut reply = chord_reply(ctx, value, alias);
+    assert!(reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    let receipt = reply.take_receipt().unwrap();
+    drop(reply);
+    assert!(fixture.plugin.refs.load(Ordering::Acquire) > 1);
+    assert!(fixture.device.refs.load(Ordering::Acquire) > 1);
+    assert!(fixture.document.refs.load(Ordering::Acquire) > 1);
+    drop(receipt);
+    assert_eq!(fixture.plugin.refs.load(Ordering::Acquire), 1);
+    assert_eq!(fixture.device.refs.load(Ordering::Acquire), 1);
+    assert_eq!(fixture.document.refs.load(Ordering::Acquire), 1);
 }
 #[test]
 fn saved_bytes_are_frozen_reusable_and_never_claim_semantic_verification() {

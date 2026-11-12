@@ -214,8 +214,8 @@ pub(crate) fn limits() -> Value {
     json!({"max_count":MAX_CAPSULES,"max_bytes_per_state":MAX_CAPSULE_BYTES,"max_total_bytes":MAX_TOTAL_BYTES})
 }
 
-fn save(ctx: &Context<'_>, lease: &AliasLease) -> Result<Arc<[u8]>, String> {
-    let stream = MemoryStream::capture(MAX_CAPSULE_BYTES);
+fn save(ctx: &Context<'_>, lease: &AliasLease, limit: usize) -> Result<Arc<[u8]>, String> {
+    let stream = MemoryStream::capture(limit);
     let save: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
         unsafe { method(lease.storable.0, 4) };
     lease.guard(ctx)?;
@@ -231,7 +231,7 @@ fn save(ctx: &Context<'_>, lease: &AliasLease) -> Result<Arc<[u8]>, String> {
 pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
     with_registry(ctx.service, |registry| registry.capacity(0))?;
     let lease = AliasLease::capture(ctx)?;
-    let bytes = save(ctx, &lease)?;
+    let bytes = save(ctx, &lease, MAX_CAPSULE_BYTES)?;
     let binding = Binding::capture(ctx, &lease)?;
     let sha256 = sha256(&bytes);
     let token = token();
@@ -248,6 +248,12 @@ pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> 
     with_registry(ctx.service, |registry| registry.entries.push(capsule));
     lease.guard(ctx)?;
     Ok((summary, lease))
+}
+pub(super) fn read_chorder(ctx: &Context<'_>) -> Result<(Arc<[u8]>, AliasLease), String> {
+    let lease = AliasLease::capture(ctx)?;
+    let bytes = save(ctx, &lease, super::chorder_chords::MAX_CAPTURE_BYTES)?;
+    lease.guard(ctx)?;
+    Ok((bytes, lease))
 }
 pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLease>) {
     let lease = match AliasLease::capture(ctx) {

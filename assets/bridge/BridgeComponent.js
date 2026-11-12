@@ -696,6 +696,21 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     chorderLearningGet(args) { return this.chorderLearning(args, false); }
     chorderLearningSet(args) { return this.chorderLearning(args, true); }
 
+    chorderChordsGet(args) {
+        const controls = new NativePluginControls(this);
+        const fields = ["track", "slot", "expected_instance", "offset", "limit"];
+        const failure = () => controls.chorderChordsFailure(null);
+        if (!controls.guiExact(args, fields) || typeof args.track !== "string" || !args.track.trim()
+            || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track) || !controls.guiInteger(args.slot, 0, 15)) return failure();
+        const request = { operation: "chorder_chords_get", expected_instance: args.expected_instance, offset: args.offset, limit: args.limit };
+        if (!controls.chorderChordsRequest(request)) return failure();
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure();
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return failure();
+        return Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+    }
+
     chorderLearning(args, setter) {
         const fields = setter ? ["track", "slot", "expected_instance", "change"] : ["track", "slot", "expected_instance"];
         const failure = message => setter ? {

@@ -16,6 +16,8 @@ mod alias_controller;
 use alias_controller::catalog;
 #[path = "request/capabilities.rs"]
 mod capabilities;
+#[path = "request/chorder_chords.rs"]
+mod chorder_chords;
 #[path = "request/details.rs"]
 mod details;
 #[path = "request/digest.rs"]
@@ -171,6 +173,11 @@ enum Request {
     ChorderLearningGet {
         expected_instance: String,
     },
+    ChorderChordsGet {
+        offset: u32,
+        limit: u32,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -255,6 +262,7 @@ impl Request {
             | Self::FormatValues { source, .. }
             | Self::SetParameter { source, .. } => *source,
             Self::StateCapture { .. }
+            | Self::ChorderChordsGet { .. }
             | Self::StateRestore { .. }
             | Self::StateRelease { .. }
             | Self::Presets { .. }
@@ -286,6 +294,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::ChorderLearningGet {
+                expected_instance, ..
+            }
+            | Self::ChorderChordsGet {
                 expected_instance, ..
             }
             | Self::ModelCatalog {
@@ -390,6 +401,9 @@ impl Request {
                 numeric_edit::validate(param, *value)
             }
             Self::ModelCatalog { offset, limit, .. } => catalog::validate_page(*offset, *limit),
+            Self::ChorderChordsGet { offset, limit, .. } => {
+                chorder_chords::validate_page(*offset, *limit)
+            }
             Self::ParameterDigest {
                 expected_instance: None,
                 ..
@@ -1318,6 +1332,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::EditChorderAutofill { .. }
         | Request::EditChorderModel { .. }
         | Request::ChorderLearningGet { .. }
+        | Request::ChorderChordsGet { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
@@ -1507,6 +1522,7 @@ impl Reply {
             .expect("object response")
             .remove("verified");
         digest::invalidate(&mut self.value);
+        chorder_chords::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
         gui_parameter::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
@@ -1594,6 +1610,13 @@ impl Reply {
                             .ok_or("GUI comparison scalar provider unavailable")?;
                         gui.check(ctx, controller)
                     })
+                })
+                .and_then(|_| {
+                    if self.value["operation"] == "chorder_chords_get" {
+                        self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                        ctx.check_document()?;
+                    }
+                    Ok(())
                 }),
             None => {
                 let service = unsafe { &*service };
@@ -1824,6 +1847,30 @@ fn dispatch_device(
             folder_preflight: None,
             owner: None,
             gui,
+            nodes: None,
+            provider,
+            context: Some(ctx),
+            mutation: false,
+        };
+    }
+    if let Request::ChorderChordsGet { offset, limit, .. } = request {
+        let (value, provider) = match chorder_chords::get(&ctx, offset, limit) {
+            Ok((value, alias)) => (value, Some(Provider::State(alias))),
+            Err(failure) => (
+                error(failure.code(), failure.message(), "not_applied"),
+                None,
+            ),
+        };
+        return Reply {
+            value,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
             nodes: None,
             provider,
             context: Some(ctx),

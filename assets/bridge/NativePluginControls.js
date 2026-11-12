@@ -56,6 +56,44 @@ class NativePluginControls {
         return typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
     }
 
+    chorderChordsRequest(request) {
+        return this.guiExact(request, ["operation", "expected_instance", "offset", "limit"])
+            && request.operation === "chorder_chords_get" && typeof request.expected_instance === "string"
+            && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000"
+            && this.guiInteger(request.offset, 0, 127) && this.guiInteger(request.limit, 1, 16);
+    }
+
+    chorderChordsResult(result, request) {
+        const fields = ["ok", "outcome", "operation", "scope", "schema", "serialization", "instance", "source", "total", "offset", "limit",
+            "count", "next", "chords", "capture_sha256", "capture_byte_count", "model_sha256", "value_semantics", "mutation_capability",
+            "persistence_verified", "audio_verified"];
+        const count = Math.min(request.limit, 128 - request.offset), next = request.offset + count;
+        if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "observed"
+            || result.operation !== "chorder_chords_get" || result.scope !== "component_alias_IStorable_chorder_chords"
+            || result.schema !== "chorder_music_effect_preset_v1" || result.serialization !== "component_alias_IStorable"
+            || result.source !== "component_alias" || result.total !== 128 || result.offset !== request.offset
+            || result.limit !== request.limit || result.count !== count || result.next !== (next < 128 ? next : null)
+            || result.value_semantics !== "sequential_snapshot" || result.mutation_capability !== false
+            || result.persistence_verified !== false || result.audio_verified !== false
+            || !this.guiExact(result.instance, ["object_uid", "class_uid", "native_class", "object_id"])
+            || result.instance.object_uid !== request.expected_instance || result.instance.class_uid !== "D2D9B002-12FC-4F1D-AFDA-70336D1DC108"
+            || ["native_class", "object_id"].some(key => typeof result.instance[key] !== "string" || result.instance[key].length > 512)
+            || ["capture_sha256", "model_sha256"].some(key => typeof result[key] !== "string" || !/^[0-9a-f]{64}$/.test(result[key]))
+            || !this.guiInteger(result.capture_byte_count, 1, 1048576) || !Array.isArray(result.chords) || result.chords.length !== count) return false;
+        return result.chords.every((chord, index) => this.guiExact(chord, ["input_pitch", "output_pitches"])
+            && chord.input_pitch === request.offset + index && Array.isArray(chord.output_pitches) && chord.output_pitches.length <= 128
+            && chord.output_pitches.every((pitch, output) => this.guiInteger(pitch, 0, 127)
+                && (output === 0 || chord.output_pitches[output - 1] < pitch)));
+    }
+
+    chorderChordsFailure(error) {
+        const valid = this.guiExact(error, ["code", "message"]) && typeof error.code === "string" && error.code.length > 0 && error.code.length <= 64
+            && typeof error.message === "string" && error.message.length <= 512;
+        return { ok: false, outcome: "not_applied", mutation_capability: false, persistence_verified: false, audio_verified: false,
+            error: valid ? error : { code: "invalid_chorder_chords_read", message: "The stored Chorder model observation was not established" } };
+    }
+
     guiBitsNumber(bits, width) {
         if (typeof bits !== "string" || !(width === 32 ? /^[0-9A-F]{8}$/ : /^[0-9A-F]{16}$/).test(bits)) return NaN;
         const high = parseInt(bits.slice(0, 8), 16);
@@ -646,7 +684,9 @@ class NativePluginControls {
         const guiEdit = request.operation === "edit_chorder_autofill";
         const guiLearning = request.operation === "chorder_learning_get" || request.operation === "edit_chorder_model";
         const guiLearningSet = request.operation === "edit_chorder_model";
+        const chorderChords = request.operation === "chorder_chords_get";
         try {
+            if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
                 throw new Error("invalid finite native GUI comparison request");
@@ -683,6 +723,10 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (chorderChords) {
+                if (result.ok === false) return this.chorderChordsFailure(result.error);
+                if (!this.chorderChordsResult(result, request)) throw new Error("invalid stored Chorder chord-page result");
+            }
             if (guiComparison) {
                 if (!result.ok) {
                     if (result.outcome !== "not_applied") throw new Error("invalid native GUI read failure outcome");
@@ -717,6 +761,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (chorderChords) return this.chorderChordsFailure(null);
             if (guiLearning) return this.guiLearningFailure(error, guiLearningSet, dispatched, parsed);
             if (guiComparison) return this.guiComparisonFailure(error);
             if (guiEdit) {

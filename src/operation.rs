@@ -87,6 +87,8 @@ pub enum Operation {
     EditChorderAutofill(ChorderAutofillSet),
     #[serde(rename = "chorderLearningGet", alias = "chorder_learning_get")]
     ChorderLearningGet(ChorderLearningGet),
+    #[serde(rename = "chorderChordsGet", alias = "chorder_chords_get")]
+    ChorderChordsGet(ChorderChordsGet),
     #[serde(rename = "chorderLearningSet", alias = "chorder_learning_set")]
     ChorderLearningSet(ChorderLearningSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
@@ -482,6 +484,20 @@ pub struct ChorderLearningGet {
     #[schemars(range(min = 0, max = 15))]
     pub slot: u32,
     pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderChordsGet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+    #[schemars(range(min = 0, max = 127))]
+    pub offset: u32,
+    #[schemars(range(min = 1, max = 16))]
+    pub limit: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1144,6 +1160,7 @@ impl Operation {
             | Self::PluginChoices(_)
             | Self::PluginParameterDetails(_)
             | Self::ChorderLearningGet(_)
+            | Self::ChorderChordsGet(_)
             | Self::PluginParameterFormat(_)
             | Self::PluginParameterDigest(_)
             | Self::PluginModels(_)
@@ -1164,7 +1181,7 @@ impl Operation {
     pub fn requires_explicit_document(&self) -> bool {
         matches!(
             self,
-            Self::ChorderLearningGet(_) | Self::ChorderLearningSet(_)
+            Self::ChorderLearningGet(_) | Self::ChorderLearningSet(_) | Self::ChorderChordsGet(_)
         )
     }
 
@@ -1250,10 +1267,18 @@ impl Operation {
                 }
             }
             Self::ChorderLearningGet(p) => {
-                validate_chorder_learning_target(&p.track, p.slot, &p.expected_instance)?;
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+            }
+            Self::ChorderChordsGet(p) => {
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+                if p.offset > 127 || !(1..=16).contains(&p.limit) {
+                    return Err(invalid(
+                        "Chorder chord pages require offset 0..127 and limit 1..16",
+                    ));
+                }
             }
             Self::ChorderLearningSet(p) => {
-                validate_chorder_learning_target(&p.track, p.slot, &p.expected_instance)?;
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
                 if let ChorderLearningChange::InputPitch { pitch } = &p.change
                     && pitch.0.is_some_and(|value| value > 127)
                 {
@@ -1747,11 +1772,7 @@ fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError
     Ok(())
 }
 
-fn validate_chorder_learning_target(
-    track: &str,
-    slot: u32,
-    instance: &str,
-) -> Result<(), OperationError> {
+fn validate_chorder_target(track: &str, slot: u32, instance: &str) -> Result<(), OperationError> {
     validate_splitter_name(track, "track")?;
     validate_instance_uid(Some(instance))?;
     if slot >= 16
@@ -1759,7 +1780,7 @@ fn validate_chorder_learning_target(
         || instance.bytes().any(|byte| byte.is_ascii_lowercase())
     {
         return Err(invalid(
-            "Chorder learning controls require slot 0..15 and a nonzero canonical native instance",
+            "Chorder controls require slot 0..15 and a nonzero canonical native instance",
         ));
     }
     Ok(())
@@ -1911,6 +1932,59 @@ mod tests {
             let mut args = target.clone();
             args["change"] = change;
             assert!(Operation::from_parts("chorder_learning_set", args).is_err());
+        }
+    }
+
+    #[test]
+    fn chorder_chords_get_is_a_closed_bounded_read_with_explicit_document() {
+        let args = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","offset":0,"limit":16});
+        let operation = Operation::from_parts("chorder_chords_get", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(operation.wire(), ("chorderChordsGet".into(), args.clone()));
+        for (key, value) in [
+            ("offset", json!(-1)),
+            ("offset", json!(128)),
+            ("offset", json!(0.5)),
+            ("offset", json!(true)),
+            ("limit", json!(0)),
+            ("limit", json!(17)),
+            ("limit", json!(1.5)),
+            ("limit", json!(null)),
+            ("slot", json!(16)),
+            ("track", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("path", json!("/unchecked")),
+            ("xml", json!("<Attributes/>")),
+            ("source", json!("dsp")),
+        ] {
+            let mut bad = args.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("chorder_chords_get", bad)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+        for key in ["track", "slot", "expected_instance", "offset", "limit"] {
+            let mut bad = args.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("chorder_chords_get", bad).is_err());
+        }
+        for offset in [0, 127] {
+            for limit in [1, 16] {
+                let mut valid = args.clone();
+                valid["offset"] = json!(offset);
+                valid["limit"] = json!(limit);
+                Operation::from_parts("chorder_chords_get", valid)
+                    .unwrap()
+                    .validate()
+                    .unwrap();
+            }
         }
     }
 
