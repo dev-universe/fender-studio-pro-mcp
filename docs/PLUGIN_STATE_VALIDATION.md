@@ -50,9 +50,14 @@ That observation is not a restoration claim. Final original comparisons,
 token release and expired-catalog refusal passed. The runs made no Song Save
 or audio-verification claim. See the [preset evidence](evidence/2026-11-12-preset-recalls.json).
 
-Native33's fixed Chorder child read is implemented and source-tested but remains
-uninstalled and unverified in the actual host at this checkpoint. It establishes
-no learned-chord edit capability or additional accepted runtime coverage.
+Native33's fixed Chorder child read passed in the actual 8.1.1 host in unit61.
+It observed the fixed `pitch61` child, its parent/controller/root identity and
+the local `learnChord` and `chordAssigned` descriptions. Four complete 908-record
+reads and four GUI getters stayed original before and after the one details
+request. The run made zero parameter writes, state actions, transport actions or
+Saves. App and owner cleanup and the unchanged saved-file hash passed in
+105.756 seconds including UI work. The descriptions grant no mutation authority
+or output-pitch mapping. Stored-chord editing and persistence remain pending.
 
 ## Actual 8.1.1 observations
 

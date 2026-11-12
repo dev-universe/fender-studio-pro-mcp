@@ -149,6 +149,12 @@ menu disabled in that experiment.
 
 Capture `plugin_state` before changing a model or recalling a preset. Keep the returned opaque token, document token and native instance identity. `plugin_presets` lists an issued catalog and accepts only an index issued by that catalog; callers cannot supply preset paths or imported state bytes. State load and preset recall remain `applied_unverified` until independent reads establish the intended result. A capsule load can also introduce representational drift, so exact restoration must be checked. Release unused state and catalog tokens.
 
+Native33's fixed Chorder child probe also passed in the actual 8.1.1 host.
+It observed `pitch61` and its local `learnChord` and `chordAssigned` metadata.
+Four complete 908-record reads stayed original before and after the probe.
+The probe grants no mutation authority or output-pitch mapping. Stored-chord
+editing, restoration and persistence remain pending.
+
 The finite additional-preset plan has completed 16 of 46 classes in the actual
 8.1.1 host. Fifteen classes passed two capsule-only recall/restore cases each.
 Expander passed two separate hybrid cases, each using one capsule load and one

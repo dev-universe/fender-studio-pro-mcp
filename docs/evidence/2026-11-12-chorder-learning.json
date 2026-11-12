@@ -136,5 +136,49 @@
     "audio_verified": false,
     "app_closed_then_owner_stopped": true,
     "elapsed_seconds_including_ui_cleanup": 100.715
+  },
+  "native33_fixed_learning_child": {
+    "status": "actual_host_observed",
+    "native_unit": 33,
+    "source_commit": "045c458c643efeea34d97c2e7354554f9c531241",
+    "fixed_child": "pitch61",
+    "root_child_count": 128,
+    "binding": {
+      "root_same_observer": true,
+      "parent_same_root": true,
+      "controller_same_child": true
+    },
+    "learnChord": {
+      "kind": "Toggle",
+      "value": 0,
+      "min": 0,
+      "max": 1,
+      "descriptor_writable": true
+    },
+    "chordAssigned": {
+      "kind": "Integer",
+      "value": 1,
+      "min": 0,
+      "max": 2,
+      "descriptor_writable": false
+    },
+    "mutation_capability": false,
+    "output_pitch_mapping": "not_established",
+    "full_provider_records": 908,
+    "full_original_reads": 4,
+    "gui_getter_reads": 4,
+    "details_reads": 1,
+    "editor_open_requests": 1,
+    "parameter_writes": 0,
+    "state_actions": 0,
+    "transport_actions": 0,
+    "normal_saves": 0,
+    "saved_file_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "elapsed_seconds_including_ui_cleanup": 105.756,
+    "stored_chord_edit_verified": false,
+    "persistence_verified": false,
+    "audio_verified": false,
+    "result_sha256": "49dc1d66822b153c7dda4b567dde8f89c3609e053db0199a485a12a393fdd0b9"
   }
 }
