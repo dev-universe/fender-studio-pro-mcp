@@ -49,7 +49,7 @@
 |---|---|---|---|---|
 |CONTROL-AMPIRE|Ampire|부분 완료|일반39개·catalog/owner 읽기|alias·micmix/linked·bypass/tuner·stomp 순서의 남은19역할을 올바른 대상에 변경·읽기·복원하고 연동 peer/구조를 보존한다.|
 |CONTROL-CV|CV Instrument|하드웨어 대기|provider/선택 범위와 역할97개 분류|config86·generator4·MIDI3의 유한 변경/복원, 포트 격리와 calibration2/monitor2의 실제 효과·중지·복원을 구분해 입증한다.|
-|CONTROL-CHORDER|Chorder|부분 완료|input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput R5는 양수1/역변경0 실패|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
+|CONTROL-CHORDER|Chorder|부분 완료|input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput60 R9는 양수/역변경·전체908/저장128 보존1건 완료|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
 |CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
@@ -92,7 +92,7 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 
 ## 현재 실행과 장치
 
-Root 최신 안내: R7은78개 요청·양수변경1회 뒤 코드 출력 표시 연동으로 중단했고 역변경/복원 성공0이다. NoSave/owner0/saved6/MIDI0/0으로 정리했고 R8의 모델 기반 비교를 준비 중이다. 이 문서는 live 상태를 판정하거나 숫자를 올리지 않는다.
+현재 실행 단위·성공과 실패·최근 종료 및 다음 순서는 `RESUME_STATE.json`을 우선한다. 이 표는 잔여 완료물의 기준이며 실행 중인 단위의 상태를 별도로 복제하지 않는다.
 
 사용자는 Volt276와 Keystation88 MK3를 분리했다. 과거 연결은 USB만이었으며 loopback 배선은 없었다. 따라서 External의 물리 ping/왕복지연, CV calibration/monitor, 실제 건반 수신은 장치/필요 배선 재연결까지 별도 대기다. Main0을 CV 포트 격리나 물리 무음으로 보지 않는다.
 

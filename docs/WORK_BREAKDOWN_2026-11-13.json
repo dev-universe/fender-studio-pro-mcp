@@ -22,7 +22,7 @@
     "preset_cases": 58,
     "remaining_preset_classes": 17
   },
-  "runtime_note": "Root 최신 안내: R7 원본78/부모77·양수1·역변경0·성공0, NoSave/owner0/saved6/MIDI0/0 정리. R8 모델 기반 비교 준비. live 상태는 RESUME_STATE를 우선한다.",
+  "runtime_note": "현재 실행과 최근 종료 및 다음 순서는 RESUME_STATE.json을 우선한다. 이 잔여표는 실행 상태를 별도로 복제하지 않는다.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -252,7 +252,7 @@
       "title": "Chorder",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput R5는 양수1/역변경0 실패",
+      "actually_verified": "input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput60 R9는 양수/역변경·전체908/저장128 보존1건 완료",
       "completion_predicate": "guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 133
