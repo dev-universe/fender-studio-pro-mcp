@@ -52,6 +52,9 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
     if query.provenance {
         fields.push("provenance");
     }
+    if query.include_check_only {
+        fields.push("check_only");
+    }
     if !exact_gui_object(value, &fields)
         || value["ok"] != true
         || value["outcome"] != "observed"
@@ -95,6 +98,14 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
         && (query.plugin != "External Effect Stereo"
             || !matches!(query.port, ExternalPort::Send)
             || !valid_provenance(&value["provenance"], rows))
+    {
+        return false;
+    }
+    if query.include_check_only
+        && (!query.provenance
+            || query.plugin != "External Effect Stereo"
+            || !matches!(query.port, ExternalPort::Send)
+            || !valid_check_only(&value["check_only"], &value["provenance"]))
     {
         return false;
     }
@@ -308,3 +319,58 @@ pub(super) fn invalidate(value: &mut Value, preserve_refusal: bool) {
 
 #[cfg(test)]
 mod tests;
+
+fn valid_check_only(value: &Value, provenance: &Value) -> bool {
+    if !exact_gui_object(
+        value,
+        &[
+            "leaves",
+            "flags",
+            "category_query_calls",
+            "check_only_calls",
+            "selection_calls",
+            "execution_calls",
+            "scope",
+            "read_only_intent",
+            "atomic_snapshot",
+            "global_command_filter_checked",
+            "menu_data_typed_values_observed",
+        ],
+    ) || value["flags"] != 1
+        || value["category_query_calls"] != 2
+        || value["check_only_calls"] != 2
+        || value["selection_calls"] != 0
+        || value["execution_calls"] != 0
+        || value["scope"] != "fixed_stereo_send_public_check_only"
+        || value["read_only_intent"] != true
+        || value["atomic_snapshot"] != false
+        || value["global_command_filter_checked"] != false
+        || value["menu_data_typed_values_observed"] != false
+    {
+        return false;
+    }
+    let Some(leaves) = value["leaves"].as_array().filter(|v| v.len() == 2) else {
+        return false;
+    };
+    let Some(proofs) = provenance["leaves"].as_array().filter(|v| v.len() == 2) else {
+        return false;
+    };
+    leaves.iter().zip(proofs).enumerate().all(|(i, (leaf, p))| {
+        exact_gui_object(leaf, &["path", "raw_category", "raw_check_only"])
+            && leaf["path"] == json!([i])
+            && leaf["raw_category"]
+                .as_u64()
+                .is_some_and(|n| (1..=255).contains(&n))
+            && leaf["raw_check_only"].as_u64().is_some_and(|n| n <= 255)
+            && [
+                "handler_matches_builder",
+                "data_handler_matches_builder",
+                "data_builder_matches_builder",
+                "data_parameter_is_selected",
+            ]
+            .iter()
+            .all(|k| p[*k] == true)
+            && p["original_is_selected"] == json!([true])
+            && p["original_end"] == json!({"kind":"self_reference"})
+    })
+}

@@ -238,7 +238,7 @@ impl McpServer {
             named::<ExternalPortMenu>(
                 "external_port_menu",
                 "externalPortMenu",
-                "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. Optional provenance=true is restricted to Stereo Send and its fixed first two Param leaves; it reports sequential public identity relations with current mapped-bank target checks before and after the native call. This read-only bracket does not prove atomicity or continuous active-mixer membership; menuData typed values remain unobserved. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
+                "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. Optional include_check_only=true requires provenance=true and exact Stereo Send; it queries the two fixed Param leaves using public checkOnly flags1, never flags0 execution or selection, and does not check the global command filter. Optional provenance=true is restricted to Stereo Send and its fixed first two Param leaves; it reports sequential public identity relations with current mapped-bank target checks before and after the native call. This read-only bracket does not prove atomicity or continuous active-mixer membership; menuData typed values remain unobserved. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
                 true,
             ),
             named::<ChorderChordsGet>(
@@ -499,6 +499,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
+        assert_eq!(McpServer::specs().len(), 46);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -524,6 +525,25 @@ mod tests {
         }
         assert_eq!(schema["additionalProperties"], false);
         assert_eq!(schema["properties"]["provenance"]["type"], "boolean");
+        assert_eq!(
+            schema["properties"]["include_check_only"]["type"],
+            "boolean"
+        );
+        assert!(
+            !schema["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("include_check_only"))
+        );
+        let union = McpServer::specs()
+            .into_iter()
+            .find(|s| s.tool.name == "operation_run")
+            .unwrap();
+        assert!(
+            serde_json::to_string(&*union.tool.input_schema)
+                .unwrap()
+                .contains("include_check_only")
+        );
         assert!(
             !schema["required"]
                 .as_array()

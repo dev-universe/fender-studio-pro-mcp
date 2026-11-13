@@ -71,11 +71,28 @@ fn check_selected(
     }
 }
 pub(super) fn observe(ctx: &Context<'_>, port: Port, provenance: bool) -> (Value, Option<Receipt>) {
+    observe_with_query(ctx, port, provenance, false)
+}
+pub(super) fn observe_with_query(
+    ctx: &Context<'_>,
+    port: Port,
+    provenance: bool,
+    include_check_only: bool,
+) -> (Value, Option<Receipt>) {
     let mut phase = parameters::MenuPhase::Prepared;
     let mut receipt = None;
     let result = (|| -> Result<Value, String> {
         if !explicit_external_controller(&ctx.instance.class_uid, Source::Controller) {
             return Err("External menu requires an exact supported class".into());
+        }
+        if include_check_only
+            && (!provenance
+                || !matches!(port, Port::Send)
+                || ctx.instance.class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+                || ctx.instance.native_class != "AudioEffect"
+                || ctx.instance.object_id != "External Effect Stereo")
+        {
+            return Err("checkOnly requires exact Stereo Send provenance".into());
         }
         let identity = if provenance {
             if !matches!(port, Port::Send) {
@@ -114,7 +131,13 @@ pub(super) fn observe(ctx: &Context<'_>, port: Port, provenance: bool) -> (Value
             guard()?;
         }
         let attempt = unsafe {
-            if provenance {
+            if include_check_only {
+                parameter.external_stereo_send_menu_check_only(
+                    NonNull::new(allocator.0).expect("owned allocator"),
+                    &ctx.instance.class_uid,
+                    &mut guard,
+                )
+            } else if provenance {
                 parameter.external_stereo_send_menu_provenance(
                     NonNull::new(allocator.0).expect("owned allocator"),
                     &ctx.instance.class_uid,
@@ -149,6 +172,17 @@ pub(super) fn observe(ctx: &Context<'_>, port: Port, provenance: bool) -> (Value
             .check(ctx)?;
         let rows:Vec<_>=observed.rows.iter().map(|r|json!({"path":r.path,"name":r.name,"title":r.title,"category":r.category,"checked":r.checked,"enabled":r.enabled,"has_submenu":r.has_submenu,"handler_present":r.handler_present,"kind":if r.has_submenu{"submenu"}else{"opaque"}})).collect();
         let mut result = json!({"ok":true,"outcome":"observed","operation":"external_port_menu","source":"controller","instance":ctx.instance,"port":port.text(),"parameter":{"name":port.native().name(),"tag":port.native().tag()},"menu_class":observed.menu_class,"coverage":{"complete":true,"max_rows":256,"max_depth":4,"max_total_text_bytes":32768,"max_text_bytes_each":1024,"row_count":rows.len()},"rows":rows,"menu_phase":"closed_checked","lifecycle":{"construct_calls":1,"build_calls":1,"owned_menu_references_released":true,"root_menu_final_release_count":observed.root_menu_final_release_count,"builder_final_release_count":observed.builder_final_release_count,"post_cleanup_binding_checked":true,"nested_callbacks":"not counted; prepare/build/extension/cleanup may reenter"},"selection_authority":false,"selection_calls":0,"scope":"exact_external_parameter_menu_read","persistence_verified":false,"audio_verified":false,"value_semantics":"sequential_menu_materialization"});
+        if include_check_only {
+            let queries = observed
+                .check_only
+                .as_ref()
+                .ok_or("missing fixed checkOnly result")?;
+            if queries.len() != 2 {
+                return Err("wrong fixed query count".into());
+            }
+            let leaves:Vec<_>=queries.iter().map(|q|json!({"path":q.path,"raw_category":q.raw_category,"raw_check_only":q.raw_check_only})).collect();
+            result["check_only"] = json!({"leaves":leaves,"flags":1,"category_query_calls":2,"check_only_calls":2,"selection_calls":0,"execution_calls":0,"scope":"fixed_stereo_send_public_check_only","read_only_intent":true,"atomic_snapshot":false,"global_command_filter_checked":false,"menu_data_typed_values_observed":false});
+        }
         if let Some(provenance) = &observed.provenance {
             result["provenance"] = provenance_value(provenance);
         }

@@ -11,7 +11,7 @@ use std::{
 
 #[path = "menu_provenance.rs"]
 pub(crate) mod provenance;
-pub use provenance::{LeafProvenance, MenuProvenance, ProvenanceChainEnd};
+pub use provenance::{LeafCheckOnly, LeafProvenance, MenuProvenance, ProvenanceChainEnd};
 
 const BUILDER_CLASS: Uid = Uid {
     a: 0xb56d5931,
@@ -87,6 +87,7 @@ pub struct MenuObservation {
     pub menu_class: String,
     pub rows: Vec<MenuRow>,
     pub provenance: Option<MenuProvenance>,
+    pub check_only: Option<Vec<LeafCheckOnly>>,
     pub root_menu_final_release_count: u32,
     pub builder_final_release_count: u32,
 }
@@ -394,7 +395,7 @@ impl RawParameter {
         port: ExternalPort,
         g: &mut G,
     ) -> MenuReadAttempt {
-        unsafe { self.external_port_menu_inner(allocator, port, g, false) }
+        unsafe { self.external_port_menu_inner(allocator, port, g, false, false) }
     }
 
     /// Fixed provenance primitive: class_uid comes from the retained native instance,
@@ -420,7 +421,28 @@ impl RawParameter {
                 lease: None,
             };
         }
-        unsafe { self.external_port_menu_inner(allocator, ExternalPort::Send, g, true) }
+        unsafe { self.external_port_menu_inner(allocator, ExternalPort::Send, g, true, false) }
+    }
+
+    /// Unregistered fixed query primitive; never selects an item or executes flags0.
+    /// # Safety
+    /// Same validated runtime/GUI-thread/retained Context, exact device/editor/parameter
+    /// requirements as external_stereo_send_menu_provenance. The class is a live
+    /// Context observation, never a caller assertion. Callback-sensitive, not atomic.
+    pub unsafe fn external_stereo_send_menu_check_only<G: FnMut() -> Result<(), String>>(
+        self,
+        allocator: NonNull<c_void>,
+        class_uid: &str,
+        g: &mut G,
+    ) -> MenuReadAttempt {
+        if class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4" {
+            return MenuReadAttempt {
+                result: Err(Error::InvalidData("exact Stereo source identity required")),
+                phase: MenuPhase::Prepared,
+                lease: None,
+            };
+        }
+        unsafe { self.external_port_menu_inner(allocator, ExternalPort::Send, g, true, true) }
     }
 
     unsafe fn external_port_menu_inner<G: FnMut() -> Result<(), String>>(
@@ -429,6 +451,7 @@ impl RawParameter {
         port: ExternalPort,
         g: &mut G,
         capture_provenance: bool,
+        check_only: bool,
     ) -> MenuReadAttempt {
         let mut phase = MenuPhase::Prepared;
         let mut lease = None;
@@ -528,6 +551,7 @@ impl RawParameter {
                 &mut guard,
             )?;
             check_snapshots(&mut resources, &mut guard)?;
+            let mut queries = None;
             let provenance = if capture_provenance {
                 let selected = l.binding.parameter().as_borrowed_raw().as_ptr();
                 let first = provenance::capture(
@@ -539,6 +563,18 @@ impl RawParameter {
                     &mut guard,
                 )?;
                 check_snapshots(&mut resources, &mut guard)?;
+                if check_only {
+                    queries = Some(provenance::query_fixed(
+                        menu,
+                        builder,
+                        selected,
+                        &rows,
+                        &first,
+                        &mut resources,
+                        &mut guard,
+                    )?);
+                    check_snapshots(&mut resources, &mut guard)?;
+                }
                 let second = provenance::capture(
                     menu,
                     builder,
@@ -555,7 +591,7 @@ impl RawParameter {
             } else {
                 None
             };
-            Ok((menu_class, rows, provenance))
+            Ok((menu_class, rows, provenance, queries))
         })();
         if phase.began() {
             phase = MenuPhase::ReleaseDispatched;
@@ -565,7 +601,7 @@ impl RawParameter {
         } else {
             resources.release(g)
         };
-        let result = result.and_then(|(menu_class, rows, provenance)| {
+        let result = result.and_then(|(menu_class, rows, provenance, queries)| {
             let (m, b) = cleaned?;
             if m != 0 || b != 0 {
                 return Err(Error::InvalidData("menu cleanup retained outside owners"));
@@ -576,6 +612,7 @@ impl RawParameter {
                 menu_class,
                 rows,
                 provenance,
+                check_only: queries,
                 root_menu_final_release_count: m,
                 builder_final_release_count: b,
             })

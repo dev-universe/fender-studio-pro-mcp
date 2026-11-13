@@ -3,6 +3,12 @@ use crate::menu::{ExternalPort, MenuPhase};
 #[derive(Default)]
 struct MenuStats {
     provenance: Cell<bool>,
+    check_only: Cell<bool>,
+    category_queries: Cell<usize>,
+    check_queries: Cell<usize>,
+    raw_query: Cell<u8>,
+    query_flags: RefCell<Vec<i32>>,
+    real_object_view: Cell<bool>,
     fault: Cell<u8>,
     data_parameter: Cell<*mut c_void>,
     data_calls: Cell<usize>,
@@ -52,11 +58,13 @@ fn new(kind: u8, state: Rc<MenuStats>, builder: *mut c_void, ordinal: i32) -> *m
     static B: OnceLock<[usize; 10]> = OnceLock::new();
     static M: OnceLock<[usize; 10]> = OnceLock::new();
     static I: OnceLock<[usize; 10]> = OnceLock::new();
+    static C: OnceLock<[usize; 10]> = OnceLock::new();
     let vt = table(
         match kind {
             0 => &F,
             1 => &B,
             2 => &M,
+            6 => &C,
             _ => &I,
         },
         || {
@@ -68,9 +76,14 @@ fn new(kind: u8, state: Rc<MenuStats>, builder: *mut c_void, ordinal: i32) -> *m
                 0 => create as *const () as usize,
                 1 => construct as *const () as usize,
                 2 => class as *const () as usize,
+                6 => query_category as *const () as usize,
                 _ => attribute as *const () as usize,
             };
-            v[4] = build as *const () as usize;
+            v[4] = if kind == 6 {
+                query_command as *const () as usize
+            } else {
+                build as *const () as usize
+            };
             v[5] = parent_menu as *const () as usize;
             v[6] = if kind == 2 {
                 menu_attribute as *const () as usize
@@ -138,6 +151,8 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
                 release(o.builder);
                 p_release(o.parameter.get());
             }
+        } else if matches!(o.kind, 5 | 6) {
+            unsafe { release(o.builder) };
         } else if o.kind == 3 {
             for child in o.items {
                 unsafe { release(child) };
@@ -150,6 +165,28 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
 unsafe extern "C" fn query(p: *mut c_void, i: *const Uid, out: *mut *mut c_void) -> i32 {
     let object = unsafe { n(p) };
     let iid = unsafe { *i };
+    if object.state.check_only.get() && object.kind == 3 && iid == ffi::OBJECT {
+        if object.state.fault.get() == 20 {
+            return ffi::NO_INTERFACE;
+        }
+        unsafe {
+            retain(p);
+            *out = new(5, object.state.clone(), p, object.ordinal);
+        }
+        return 0;
+    }
+    if object.state.check_only.get() && matches!(object.kind, 5 | 6) && iid == ffi::UNKNOWN {
+        let raw = if object.kind == 5 && object.state.fault.get() == 21 {
+            p
+        } else {
+            object.builder
+        };
+        unsafe {
+            retain(raw);
+            *out = raw;
+        }
+        return 0;
+    }
     if object.state.provenance.get() && object.kind == 4 {
         if iid == crate::menu::provenance::PARAMETER {
             if object.state.fault.get() == 2 {
@@ -165,6 +202,13 @@ unsafe extern "C" fn query(p: *mut c_void, i: *const Uid, out: *mut *mut c_void)
             }
             return 0;
         }
+        if iid == crate::menu::provenance::COMMAND && object.state.check_only.get() {
+            unsafe {
+                retain(object.builder);
+                *out = new(6, object.state.clone(), object.builder, 0);
+            }
+            return 0;
+        }
         if iid == crate::menu::provenance::COMMAND || iid == crate::menu::BUILDER_IID {
             unsafe {
                 retain(object.builder);
@@ -172,6 +216,14 @@ unsafe extern "C" fn query(p: *mut c_void, i: *const Uid, out: *mut *mut c_void)
             }
             return 0;
         }
+    }
+    if object.state.check_only.get() && object.kind == 1 && iid == crate::menu::provenance::COMMAND
+    {
+        unsafe {
+            retain(p);
+            *out = new(6, object.state.clone(), p, 0);
+        }
+        return 0;
     }
     if object.state.provenance.get()
         && object.kind == 1
@@ -1166,6 +1218,157 @@ fn provenance_context_after_parent_and_during_cleanup_cannot_publish() {
     };
     assert!(r.result.is_err());
     assert_eq!(r.phase, MenuPhase::ReleaseDispatched);
+    drop(r);
+    unsafe { release(a) };
+    assert_eq!(f.p().refs.get(), 1);
+}
+
+#[repr(C)]
+struct QueryCommand {
+    category: ffi::CStringRepr,
+    name: ffi::CStringRepr,
+    invoker: *mut c_void,
+    flags: i32,
+}
+unsafe extern "C" fn query_category(p: *mut c_void, category: *const ffi::CStringRepr) -> u8 {
+    let state = &unsafe { n(p) }.state;
+    state.category_queries.set(state.category_queries.get() + 1);
+    let c = unsafe { &*category };
+    assert!(c.owner.is_null());
+    assert_eq!(
+        unsafe { std::ffi::CStr::from_ptr(c.text) }.to_bytes(),
+        b"Param"
+    );
+    if state.fault.get() == 22 { 0 } else { 1 }
+}
+unsafe extern "C" fn query_command(p: *mut c_void, message: *const QueryCommand) -> u8 {
+    let state = &unsafe { n(p) }.state;
+    let m = unsafe { &*message };
+    state.check_queries.set(state.check_queries.get() + 1);
+    state.query_flags.borrow_mut().push(m.flags);
+    assert_eq!(m.flags, 1);
+    assert!(m.category.owner.is_null() && m.name.owner.is_null());
+    assert_eq!(
+        unsafe { std::ffi::CStr::from_ptr(m.category.text) }.to_bytes(),
+        b"Param"
+    );
+    let view = unsafe { n(m.invoker) };
+    assert_eq!(view.kind, 5);
+    let item = unsafe { n(view.builder) };
+    assert_eq!(item.kind, 3);
+    assert!(item.refs.get() > 1);
+    state.real_object_view.set(m.invoker != view.builder);
+    assert_eq!(
+        unsafe { std::ffi::CStr::from_ptr(m.name.text) }.to_bytes(),
+        if item.ordinal == 0 { b"0" } else { b"1" }
+    );
+    if state.fault.get() == 23 {
+        state.context.borrow().as_ref().unwrap().set(false);
+    }
+    state.raw_query.get()
+}
+fn check_only_fixture(e: &TextEnv) -> (Fixture, RawParameter, *mut c_void, Rc<MenuStats>) {
+    let (f, p, a, s) = fixture(e);
+    s.provenance.set(true);
+    s.check_only.set(true);
+    s.count.set(4);
+    (f, p, a, s)
+}
+#[test]
+fn check_only_retains_distinct_public_iobject_invokers_and_raw_query_bytes() {
+    for raw in [0, 255] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = check_only_fixture(&e);
+        s.raw_query.set(raw);
+        let r = unsafe {
+            p.external_stereo_send_menu_check_only(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        let v = r.result.as_ref().unwrap();
+        let q = v.check_only.as_ref().unwrap();
+        assert_eq!(q.len(), 2);
+        assert!(
+            q.iter()
+                .all(|x| x.raw_category == 1 && x.raw_check_only == raw)
+        );
+        assert_eq!(s.category_queries.get(), 2);
+        assert_eq!(s.check_queries.get(), 2);
+        assert!(s.real_object_view.get());
+        assert_eq!(*s.query_flags.borrow(), [1, 1]);
+        assert_eq!(f.p().writes.get(), 0);
+        assert_eq!(r.phase, MenuPhase::ClosedChecked);
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn check_only_missing_or_wrong_iobject_and_category_refusal_stop_before_query() {
+    for fault in [20, 21, 22] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = check_only_fixture(&e);
+        s.fault.set(fault);
+        let r = unsafe {
+            p.external_stereo_send_menu_check_only(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        assert!(r.result.is_err());
+        assert_eq!(s.check_queries.get(), 0);
+        assert!(s.category_queries.get() <= 1);
+        assert_eq!(f.p().writes.get(), 0);
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn check_only_context_loss_and_cleanup_loss_withhold_observation() {
+    for mode in [23, 24] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = check_only_fixture(&e);
+        if mode == 23 {
+            s.fault.set(23)
+        } else {
+            s.stop.set(3)
+        }
+        let r = unsafe {
+            p.external_stereo_send_menu_check_only(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        assert!(r.result.is_err());
+        assert_ne!(r.phase, MenuPhase::ClosedChecked);
+        assert_eq!(s.check_queries.get(), if mode == 23 { 1 } else { 2 });
+        assert_eq!(f.p().writes.get(), 0);
+        assert!(r.lease.is_some());
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn check_only_wrong_class_never_constructs_or_queries() {
+    let e = TextEnv::new();
+    let (f, p, a, s) = check_only_fixture(&e);
+    let r = unsafe {
+        p.external_stereo_send_menu_check_only(
+            NonNull::new(a).unwrap(),
+            "873281D9-58DE-4B2D-B3BD-528F549B1AD9",
+            &mut f.guard(),
+        )
+    };
+    assert!(r.result.is_err());
+    assert_eq!(r.phase, MenuPhase::Prepared);
+    assert!(s.trace.borrow().is_empty());
+    assert_eq!(s.check_queries.get(), 0);
     drop(r);
     unsafe { release(a) };
     assert_eq!(f.p().refs.get(), 1);

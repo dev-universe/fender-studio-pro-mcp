@@ -713,12 +713,15 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const fields = ["channel", "slot", "plugin", "expected_instance", "port"];
         const supplied = args && Object.prototype.hasOwnProperty.call(args, "provenance");
         if (supplied) fields.push("provenance");
-        if (!controls.guiExact(args, fields) || (supplied && typeof args.provenance !== "boolean")
+        const querySupplied = args && Object.prototype.hasOwnProperty.call(args, "include_check_only");
+        if (querySupplied) fields.push("include_check_only");
+        if ((querySupplied && typeof args.include_check_only !== "boolean") || (args.include_check_only === true && (args.provenance !== true || args.plugin !== "External Effect Stereo" || args.port !== "send")) || !controls.guiExact(args, fields) || (supplied && typeof args.provenance !== "boolean")
             || (args.provenance === true && (args.plugin !== "External Effect Stereo" || args.port !== "send"))
             || typeof args.channel !== "string" || !args.channel.trim() || controls.externalMenuTextBytes(args.channel) > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.channel)
             || !controls.guiInteger(args.slot, 0, 15) || ["External Effect Mono", "External Effect Stereo"].indexOf(args.plugin) < 0) return failure();
         const request = { operation: "external_port_menu", expected_instance: args.expected_instance, port: args.port };
         if (args.provenance === true) request.provenance = true;
+        if (args.include_check_only === true) request.include_check_only = true;
         if (!controls.externalMenuRequest(request)) return failure();
         const plug = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
         if (!plug || plug.error || plug.name !== args.plugin) return failure();

@@ -7,6 +7,7 @@ fn query() -> ExternalPortMenu {
         expected_instance: "12345678-1234-1234-1234-123456789ABC".into(),
         port: ExternalPort::Send,
         provenance: false,
+        include_check_only: false,
     }
 }
 fn row(path: Value, submenu: bool) -> Value {
@@ -310,4 +311,48 @@ fn external_menu_provenance_scope_needs_bridge_bracket_and_rejects_stronger_clai
         value["provenance"][key] = bad;
         assert!(!valid_get(&q, &value), "{key}");
     }
+}
+#[test]
+fn check_only_closed_schema_and_operation_union_flags() {
+    let base = json!({"channel":"Scratch","slot":0,"plugin":"External Effect Stereo","expected_instance":"12345678-1234-1234-1234-123456789ABC","port":"send","provenance":true,"include_check_only":true});
+    let op = Operation::from_parts("external_port_menu", base.clone()).unwrap();
+    assert!(op.validate().is_ok());
+    assert!(!op.is_read_only());
+    assert!(op.requires_explicit_document());
+    assert_eq!(op.wire().1["include_check_only"], true);
+    for (key, value) in [
+        ("include_check_only", json!(0)),
+        ("include_check_only", json!(1)),
+        ("include_check_only", Value::Null),
+    ] {
+        let mut bad = base.clone();
+        bad[key] = value;
+        assert!(Operation::from_parts("external_port_menu", bad).is_err());
+    }
+    for (key, value) in [
+        ("provenance", json!(false)),
+        ("port", json!("return")),
+        ("plugin", json!("External Effect Mono")),
+    ] {
+        let mut bad = base.clone();
+        bad[key] = value;
+        let op = Operation::from_parts("external_port_menu", bad).unwrap();
+        assert!(op.validate().is_err());
+    }
+    let good = json!({"leaves":[{"path":[0],"raw_category":1,"raw_check_only":0},{"path":[1],"raw_category":255,"raw_check_only":255}],"flags":1,"category_query_calls":2,"check_only_calls":2,"selection_calls":0,"execution_calls":0,"scope":"fixed_stereo_send_public_check_only","read_only_intent":true,"atomic_snapshot":false,"global_command_filter_checked":false,"menu_data_typed_values_observed":false});
+    let provenance = json!({"leaves":[{"handler_matches_builder":true,"data_handler_matches_builder":true,"data_builder_matches_builder":true,"data_parameter_is_selected":true,"original_is_selected":[true],"original_end":{"kind":"self_reference"}},{"handler_matches_builder":true,"data_handler_matches_builder":true,"data_builder_matches_builder":true,"data_parameter_is_selected":true,"original_is_selected":[true],"original_end":{"kind":"self_reference"}}]});
+    assert!(valid_check_only(&good, &provenance));
+    for (key, val) in [
+        ("flags", json!(0)),
+        ("flags", json!(3)),
+        ("execution_calls", json!(1)),
+        ("global_command_filter_checked", json!(true)),
+    ] {
+        let mut bad = good.clone();
+        bad[key] = val;
+        assert!(!valid_check_only(&bad, &provenance));
+    }
+    let mut bad = good.clone();
+    bad["leaves"][0]["raw_check_only"] = json!(false);
+    assert!(!valid_check_only(&bad, &provenance));
 }

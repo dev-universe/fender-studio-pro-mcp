@@ -99,6 +99,8 @@ enum Request {
         expected_instance: String,
         #[serde(default)]
         provenance: bool,
+        #[serde(default)]
+        include_check_only: bool,
     },
     Inspect {
         #[serde(default)]
@@ -368,6 +370,14 @@ impl Request {
             }
         }
         match self {
+            Self::ExternalPortMenu {
+                port,
+                provenance,
+                include_check_only: true,
+                ..
+            } if !provenance || !matches!(port, external_menu::Port::Send) => {
+                Err("checkOnly requires provenance and fixed Stereo Send".into())
+            }
             Self::InsertChainCapture {
                 bridge_session,
                 document_epoch,
@@ -1864,10 +1874,14 @@ fn dispatch_device(
         };
     }
     if let Request::ExternalPortMenu {
-        port, provenance, ..
+        port,
+        provenance,
+        include_check_only,
+        ..
     } = request
     {
-        let (value, menu) = external_menu::observe(&ctx, port, provenance);
+        let (value, menu) =
+            external_menu::observe_with_query(&ctx, port, provenance, include_check_only);
         return Reply {
             value,
             menu,
@@ -3747,6 +3761,41 @@ mod external_menu_request_tests {
             "audio_verified",
         ] {
             assert!(r.value.get(key).is_none());
+        }
+    }
+}
+#[cfg(test)]
+mod check_only_route_tests {
+    use super::*;
+    #[test]
+    fn check_only_native_closed_boolean_and_provenance_gate() {
+        let uid = "12345678-1234-1234-1234-123456789ABC";
+        let good = json!({"operation":"external_port_menu","port":"send","expected_instance":uid,"provenance":true,"include_check_only":true});
+        assert!(
+            serde_json::from_value::<Request>(good.clone())
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        for val in [json!(0), json!(1), Value::Null, json!("true")] {
+            let mut bad = good.clone();
+            bad["include_check_only"] = val;
+            assert!(serde_json::from_value::<Request>(bad).is_err());
+        }
+        for (key, val) in [("port", json!("return")), ("provenance", json!(false))] {
+            let mut bad = good.clone();
+            bad[key] = val;
+            assert!(
+                serde_json::from_value::<Request>(bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for key in ["flags", "command", "path", "offset"] {
+            let mut bad = good.clone();
+            bad[key] = json!(1);
+            assert!(serde_json::from_value::<Request>(bad).is_err());
         }
     }
 }

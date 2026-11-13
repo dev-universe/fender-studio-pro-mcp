@@ -280,3 +280,147 @@ pub(super) fn capture<G: FnMut() -> Result<(), String>>(
         identities,
     })
 }
+
+/// Two fixed public CommandMsg queries; no pointer, command name or flags are output.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LeafCheckOnly {
+    pub path: Vec<u32>,
+    pub raw_category: u8,
+    pub raw_check_only: u8,
+}
+#[repr(C)]
+struct CommandMsg {
+    category: ffi::CStringRepr,
+    name: ffi::CStringRepr,
+    invoker: *mut c_void,
+    flags: i32,
+}
+const _: () = {
+    assert!(std::mem::size_of::<CommandMsg>() == 48);
+    assert!(std::mem::align_of::<CommandMsg>() == 8);
+    assert!(std::mem::offset_of!(CommandMsg, category) == 0);
+    assert!(std::mem::offset_of!(CommandMsg, name) == 16);
+    assert!(std::mem::offset_of!(CommandMsg, invoker) == 32);
+    assert!(std::mem::offset_of!(CommandMsg, flags) == 40);
+};
+// Exact public IObject QI, used only as MenuItem::makeCommand's retained invoker.
+// It authorizes no property or method reflection/invocation.
+fn item_invoker<G: FnMut() -> Result<(), String>>(
+    item: *mut c_void,
+    r: &mut Resources,
+    g: &mut G,
+) -> Result<*mut c_void, Error> {
+    g().map_err(Error::Guard)?;
+    if r.borrowed.len() + 8 > MAX_PROVENANCE_BORROWED {
+        return Err(Error::InvalidData("fixed query reference ceiling"));
+    }
+    let held = unsafe { Owned::hold(item) }?;
+    r.borrowed.push(held);
+    g().map_err(Error::Guard)?;
+    let view = r
+        .borrowed
+        .last()
+        .expect("held item")
+        .query_optional(&ffi::OBJECT, "fixed menu item IObject invoker");
+    let pointer = match view {
+        Ok(Some(view)) => {
+            let raw = view.raw();
+            r.borrowed.push(view);
+            Ok(raw)
+        }
+        Ok(None) => Err(Error::MissingInterface("fixed menu item IObject invoker")),
+        Err(e) => Err(e),
+    };
+    // A successful QI owns its reference before callback reentry.
+    g().map_err(Error::Guard)?;
+    let pointer = pointer?;
+    if canonical(pointer, r, g)? != canonical(item, r, g)? {
+        return Err(Error::MetadataChanged);
+    }
+    Ok(pointer)
+}
+pub(super) fn query_fixed<G: FnMut() -> Result<(), String>>(
+    menu: *mut c_void,
+    builder: *mut c_void,
+    selected: *mut c_void,
+    rows: &[MenuRow],
+    before: &Capture,
+    r: &mut Resources,
+    g: &mut G,
+) -> Result<Vec<LeafCheckOnly>, Error> {
+    if before.observation.leaves.len() != 2
+        || before.observation.leaves.iter().any(|l| {
+            !l.handler_matches_builder
+                || !l.data_handler_matches_builder
+                || !l.data_builder_matches_builder
+                || !l.data_parameter_is_selected
+                || l.original_is_selected != [true]
+                || l.original_end != ProvenanceChainEnd::SelfReference
+        })
+    {
+        return Err(Error::InvalidData(
+            "fixed selected-parameter provenance required for query",
+        ));
+    }
+    let root = r
+        .snapshots
+        .iter()
+        .find(|s| s.raw == menu)
+        .ok_or(Error::InvalidData("missing root membership"))?;
+    if rows.len() != 4 || root.items.len() != 4 {
+        return Err(Error::MetadataChanged);
+    }
+    let items = [root.items[0].raw, root.items[1].raw];
+    let builder_id = canonical(builder, r, g)?;
+    let _selected_id = canonical(selected, r, g)?;
+    let mut observed = Vec::new();
+    for (index, item) in items.into_iter().enumerate() {
+        check_snapshots(r, g)?;
+        let invoker = item_invoker(item, r, g)?;
+        let handler = object_attribute(item, false, r, g)?;
+        let command = qi(handler, &COMMAND, r, g)?;
+        if canonical(command, r, g)? != builder_id {
+            return Err(Error::MetadataChanged);
+        }
+        let category = ffi::CStringRepr {
+            text: c"Param".as_ptr(),
+            owner: ptr::null_mut(),
+        };
+        g().map_err(Error::Guard)?;
+        let category_query: unsafe extern "C" fn(*mut c_void, *const ffi::CStringRepr) -> u8 =
+            unsafe { ffi::method(command, 3) };
+        let raw_category = unsafe { category_query(command, &category) };
+        g().map_err(Error::Guard)?;
+        if raw_category == 0 {
+            return Err(Error::InvalidData("fixed Param category query refused"));
+        }
+        check_snapshots(r, g)?;
+        let message = CommandMsg {
+            category,
+            name: ffi::CStringRepr {
+                text: if index == 0 {
+                    c"0".as_ptr()
+                } else {
+                    c"1".as_ptr()
+                },
+                owner: ptr::null_mut(),
+            },
+            invoker,
+            flags: 1,
+        };
+        // Both CString backing literals, the actual IObject view, item, handler,
+        // menu and builder are pinned through the call and normal cleanup.
+        g().map_err(Error::Guard)?;
+        let query: unsafe extern "C" fn(*mut c_void, *const CommandMsg) -> u8 =
+            unsafe { ffi::method(command, 4) };
+        let raw_check_only = unsafe { query(command, &message) };
+        g().map_err(Error::Guard)?;
+        check_snapshots(r, g)?;
+        observed.push(LeafCheckOnly {
+            path: vec![index as u32],
+            raw_category,
+            raw_check_only,
+        });
+    }
+    Ok(observed)
+}

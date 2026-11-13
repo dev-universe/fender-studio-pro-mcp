@@ -60,7 +60,9 @@ class NativePluginControls {
         const fields = ["operation", "port", "expected_instance"];
         const supplied = request && Object.prototype.hasOwnProperty.call(request, "provenance");
         if (supplied) fields.push("provenance");
-        return this.guiExact(request, fields) && (!supplied || typeof request.provenance === "boolean")
+        const querySupplied = request && Object.prototype.hasOwnProperty.call(request, "include_check_only");
+        if (querySupplied) fields.push("include_check_only");
+        return (!querySupplied || typeof request.include_check_only === "boolean") && (request.include_check_only !== true || request.provenance === true && request.port === "send") && this.guiExact(request, fields) && (!supplied || typeof request.provenance === "boolean")
             && (request.provenance !== true || request.port === "send")
             && request.operation === "external_port_menu" && ["send", "return"].indexOf(request.port) >= 0
             && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
@@ -97,6 +99,7 @@ class NativePluginControls {
         const fields = ["ok", "outcome", "operation", "instance", "source", "port", "parameter", "menu_class", "rows", "coverage", "menu_phase", "lifecycle",
             "selection_authority", "selection_calls", "scope", "persistence_verified", "audio_verified", "value_semantics"];
         if (request.provenance === true) fields.push("provenance");
+        if (request.include_check_only === true) fields.push("check_only");
         const classes = { "873281D9-58DE-4B2D-B3BD-528F549B1AD9": "External Effect Mono", "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4": "External Effect Stereo" };
         const uuid = value => typeof value === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(value) && value !== "00000000-0000-0000-0000-000000000000";
         if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "observed" || result.operation !== "external_port_menu"
@@ -118,6 +121,7 @@ class NativePluginControls {
             || result.coverage.max_total_text_bytes !== 32768 || result.coverage.max_text_bytes_each !== 1024 || result.coverage.row_count !== result.rows.length) return false;
         if (request.provenance === true && (result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
             || request.port !== "send" || !this.externalMenuProvenance(result.provenance, result.rows))) return false;
+        if (request.include_check_only === true && (!this.externalMenuCheckOnly(result.check_only, result.provenance) || result.instance.object_id !== "External Effect Stereo" || request.port !== "send")) return false;
         const parents = { "": { next: 0, submenu: true } };
         let previous = [], textBytes = 0;
         for (const row of result.rows) {
@@ -140,6 +144,17 @@ class NativePluginControls {
             }
         }
         return true;
+    }
+
+    externalMenuCheckOnly(value, provenance) {
+        if (!this.guiExact(value, ["leaves","flags","category_query_calls","check_only_calls","selection_calls","execution_calls","scope","read_only_intent","atomic_snapshot","global_command_filter_checked","menu_data_typed_values_observed"])
+            || value.flags !== 1 || value.category_query_calls !== 2 || value.check_only_calls !== 2 || value.selection_calls !== 0 || value.execution_calls !== 0
+            || value.scope !== "fixed_stereo_send_public_check_only" || value.read_only_intent !== true || value.atomic_snapshot !== false || value.global_command_filter_checked !== false || value.menu_data_typed_values_observed !== false
+            || !Array.isArray(value.leaves) || value.leaves.length !== 2 || !provenance || !Array.isArray(provenance.leaves) || provenance.leaves.length !== 2) return false;
+        return value.leaves.every((q,i) => this.guiExact(q,["path","raw_category","raw_check_only"]) && JSON.stringify(q.path)===JSON.stringify([i])
+            && this.guiInteger(q.raw_category,1,255) && this.guiInteger(q.raw_check_only,0,255)
+            && ["handler_matches_builder","data_handler_matches_builder","data_builder_matches_builder","data_parameter_is_selected"].every(k => provenance.leaves[i][k] === true)
+            && JSON.stringify(provenance.leaves[i].original_is_selected)==="[true]" && JSON.stringify(provenance.leaves[i].original_end)==='{"kind":"self_reference"}');
     }
 
     externalMenuProvenance(value, rows) {

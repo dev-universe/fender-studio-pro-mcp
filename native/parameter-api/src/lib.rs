@@ -10,8 +10,8 @@ mod ffi;
 mod menu;
 mod parameter;
 pub use menu::{
-    ExternalPort, LeafProvenance, MenuObservation, MenuPhase, MenuProvenance, MenuReadAttempt,
-    MenuReadLease, MenuRow, ProvenanceChainEnd,
+    ExternalPort, LeafCheckOnly, LeafProvenance, MenuObservation, MenuPhase, MenuProvenance,
+    MenuReadAttempt, MenuReadLease, MenuRow, ProvenanceChainEnd,
 };
 mod text;
 mod value;
