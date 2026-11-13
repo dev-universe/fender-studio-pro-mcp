@@ -8,7 +8,7 @@
 
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
-| 고정 현재값 이름 |6660/7112|452개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
+| 고정 현재값 이름 |6677/7112|435개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
 | 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
@@ -50,11 +50,11 @@
 |---|---|---|---|---|
 |CONTROL-AMPIRE|Ampire|부분 완료|일반39개·catalog/owner 읽기|alias·micmix/linked·bypass/tuner·stomp 순서의 남은19역할을 올바른 대상에 변경·읽기·복원하고 연동 peer/구조를 보존한다.|
 |CONTROL-CV|CV Instrument|하드웨어 대기|provider/선택 범위와 역할97개 분류|config86·generator4·MIDI3의 유한 변경/복원, 포트 격리와 calibration2/monitor2의 실제 효과·중지·복원을 구분해 입증한다.|
-|CONTROL-CHORDER|Chorder|부분 완료|input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput canonical1~48과60의49개 현재값·전체908/저장128 보존·정확49이름 수용 완료|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
+|CONTROL-CHORDER|Chorder|부분 완료|input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~49 및60의50개 현재값/정확50이름 수용. 별도49 AutoFill131요청·2쓰기·전체908/저장128·예측6반응/다른901복원 완료; 원래batch07실패 보존. MIDI/모델대응·noteoff·audio는별도|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
 |CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
-|CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 설정·provider/catalog·첫keyboard.pitch1.guiInput 현재값과전체388복원·Root정리·별도1이름수용 완료. 나머지127개와MIDI수명은미완료|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
+|CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 필터 설정·provider/catalog; keyboard.pitch1~17.guiInput17개 현재값/17이름·전체388복원과Root정리 완료. 나머지111개·MIDI수명은미완료|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
 |CONTROL-LEVEL|Level Meter|부분 완료|전체DSP7 읽기·controller2노드/1연결, useisl known miss 완료|resethold/resetloudness의 실제 reset 효과와 controller/숨은 설정 접근을 확인한다. 제한 metadata를 값/쓰기 권한으로 승격하지 않는다.|
 |CONTROL-LIMITER|Limiter|부분 완료|일반 설정과 두 프리셋 사례 완료|resetmin 명령의 별도 효과·완료·원래 환경 보존을 확인한다.|
 |CONTROL-MAITAI|Mai Tai|부분 완료|일반 선택 설정·preset 계열 완료|MIDI6 facade의 현재값/실제 전달과 character1.editchar의 GUI·조건부 모델 binding/복원을 검증한다.|
