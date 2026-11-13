@@ -12,10 +12,10 @@
   "mcp_tools": 45,
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
-  "owned_songs_closed_without_save": true,
-  "saved_owned_songs_unchanged": true,
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
+  "owned_songs_closed_without_save": false,
+  "saved_owned_songs_unchanged": false,
   "automatic_resume_scheduled": false,
   "last_completed_unit": "Chorder fresh63 replacementR2:545RPC/8writes/319.158s, independently audited exact full908/128/original581 restore;128/128 output roles at input60 complete. NoSave/appfalse/owner0/all6unchanged. Originalnamespace summaryliteralr1 preserved with independentlyreviewed actualr2 correction.",
   "last_completed_unit_learning_setters": 8,
@@ -321,9 +321,29 @@
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
   "current_execution": {
-    "unit": "Chorder persistence R7 offline preparation",
-    "actual_execution_started": false,
-    "predecessor_R6_cleanup_complete": true
+    "unit": "Chorder persistence R7",
+    "phase": "epoch_B_fresh_startup_after_first_save",
+    "actual_model_writers": 1,
+    "normal_saves": 1,
+    "started_at_KST": "2026-11-13T09:54:56+09:00",
+    "planned_requests": 339,
+    "planned_model_writers": 2,
+    "planned_normal_saves_sixth_copy_only": 2,
+    "planned_fresh_owners": 3,
+    "planned_restarts": 2,
+    "actual_bound_freeze_sha256": "e9a5bb2b4593cb32f8b77aeaa4fd6b16eb21a494415a87f7e2816b1587898be9",
+    "actual_artifact_binding_sha256": "151851caeb1d7371c83dad96f6ccdd1ab57cbca8374c7bfa323479f0acc4a05a",
+    "completion_manifest_sha256": "4637b10dff19cd987cebc5b3c3038301ec8c35b8e03a55e8e7e390ec1af1979e",
+    "independent_review_report_sha256": "b48b855b6fd8beddb7e56d5e48b61300a22f8aa94bcca3fb94a643a004a8cf91",
+    "nonruntime_metadata_erratum_sha256": "d35f42c4d490f84b6bd7a3dfe3d2649134965b87a059f8d8fac3b0dd5706bd98",
+    "mandatory_full_replay": true,
+    "per_DAW_request_seconds": 55,
+    "owner_readiness_seconds": 180,
+    "UI_and_latest_GUI_seconds": 30,
+    "whole_guard_seconds": 55,
+    "global_seconds": 3600,
+    "completed_requests": 118,
+    "remaining_requests": 221
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -1159,7 +1179,10 @@
     "persistence_r5": "review_pass_full23932replay309.41s_coldscan64.98s_exceeds55s",
     "name_union_128_delta": "independently_verified_and_promoted6459",
     "persistence_r6": "actual_failed_A57_known_zero_model_writes_exceptional_orphan_cleanup_complete",
-    "native37_composition": "independent_source_review_pass_not_landed_or_installed"
+    "native37_composition": "independent_source_review_pass_not_landed_or_installed",
+    "persistence_r7": "independent_review_pass_bound_actual_mandatory_preflight_started",
+    "multi_receiver_r1": "review_failed_stop_retention_no_actual",
+    "multi_receiver_r2": "independent_review_pass_future_native38_unbound"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1367,5 +1390,31 @@
     "helper_failure_reason": "The parent checked GUI freshness after16 slow model page reads. No editor_context UI challenge was issued. Child had no pending request but inherited EOF loop could not accept normal stop.",
     "persistence_verified": false,
     "audio_verified": false
+  },
+  "chorder_persistence_R7_epoch_A": {
+    "requests": 118,
+    "model_writers": 1,
+    "normal_saves_sixth_only": 1,
+    "elapsed_seconds": 724.652,
+    "saved_model_bytes": 612,
+    "saved_model_sha256": "403fe7f78be5f80a10c44e53d8d55c6c6d035a1665b8a47e4c89ac8714939736",
+    "saved_archive_sha256": "344364bb24ad9e0fdc973ac90283f0adae5c6162f0dbba051f3cb36ba63d1f07",
+    "saved_proof_sha256": "08564d0412bf0368c72ed3d32f5e7688d1b09c7debf7e68ee48bb20e51c72438",
+    "app_closed_observed": true,
+    "normal_owner_stop_before_epoch_B_observed": true,
+    "prior_five_saved_songs_unchanged": true,
+    "global_persistence_acceptance": 0,
+    "whole_program_complete": false
+  },
+  "prior_five_saved_songs_unchanged": true,
+  "authorized_sixth_diagnostic_archive_changed": true,
+  "multi_receiver_r2_review": {
+    "report_sha256": "288e64177c8185acdb610b3b3b22750f751599f9104a4933562b7418e377b874",
+    "freeze_sha256": "c307270bf35a794cb5db67294289f5055dbc6cdb8c48fe7b3e85fb2ca897032e",
+    "candidate_freeze_sha256": "887246d411e5af88b6767c6fc9c9bea7dfc285a2609fae7a75ea45562eb767cd",
+    "actual_requests": 0,
+    "future_runtime": "normal_native38",
+    "planned_requests_without_main_preparation": 25,
+    "planned_maximum_with_main_preparation": 30
   }
 }
