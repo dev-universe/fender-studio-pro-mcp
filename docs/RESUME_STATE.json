@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder R9는351.987초·173요청·파라미터2회로 guiInput60의0→5000→0 및 전체908/저장128 복원을 완료했다. Root 원장대조·NoSave·앱/owner0·저장6개/MIDI0/0을 확인했다. 별도 한 이름 수용도 통과해6611/7112·잔여501이다.",
+  "last_completed_unit": "Chorder batch01 R1은195.951초·원본58/부모57·양수1/역변경0으로 중단됐다. 빈저장모델에도 같은번호 출력live 표시가 켜졌다. NoSave/앱·owner종료/저장6개/MIDI0/0을 확인했고 추가완료0·이름6611/잔여501이다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -320,7 +320,8 @@
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6611/7112·잔여501개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder R9는351.987초·원본/부모173개·guiInput60 setter2회로 전체908/저장128 원본복원을 완료했고 Root 독립 대조/NoSave/owner0/저장6개/MIDI0/0을 확인했다. 기존R2~R8 실패는 보존하고 반복하지 않는다. 별도canonical name admission1건도 수용해6611/7112·잔여501이다. 다음은 데이터 기반 공유 수집기로 canonical 이름1..8의8개 현재값을 한정 검증하는 준비다. 이름은1..128이며 model_input과 자동 동일시하지 않는다. canonical128의 model_input은unbound다. pitch60은 재실행하지 않는다. 120초 양수/55초 복원여유·모델 기반 표시 기대값·전체908/128쌍과 unknown 보유를 유지한다. 새 후보는 오프라인 검토/현재binding 전에는 실제0이다. MIDI/audio/noteoff는 여전히 미검증이다.",
+    "Chorder R9 입력60 현재값1건과 별도canonical name1건은 완료해6611/7112·잔여501이다. 공유 batch01 R1은원본58/부모57·195.951초·guiInput1 양수1회 뒤 실제같은번호 outputPlayingLive도1이되어 중단됐다. 원본128 model의input1 outputs=[]만으로 출력표시없음을 가정한조건이 불완전했다. R1은NoSave/앱·owner0/저장6개/MIDI0/0으로 닫혔고 재실행하지않는다. 별도R2는 저장모델 빈목록 검증을 유지하고 빈모델의 같은번호 출력표시를 명시적 가설로 사전선언한다. 관측된1과 미검증2..8을 구분하고 전체908/128 복원·원래최대915/16쓰기·120초/55여유를 유지한다. 실제58행 재생과 합성후속 흐름/한정검토 뒤 새binding으로 시작한다. MIDI/실제noteoff/audio는 미검증이다.",
+    "Spectrum index2 FFT - CD all Curves의 두번째 고정설정 후보R3는Native41 공유기반/명시적선택1회로128요청·오프라인20검사까지 준비됐으나 독립검토에서 직전 대원장64MiB한도를 발견했다. 새검토/최신종료 연결 후 실행하며 첫사례index1은 반복하지않는다. Chorder915 원장128MiB와 Spectrum자체128요청 한도를 구별한다. 미완료클래스나프리셋집계는 아직늘리지않는다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은29/46종·58사례·17종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -336,7 +337,7 @@
   "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw609=accepted-unit280+failed329.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder R9/name admission complete; eight canonical1..8 and Spectrum index2 collectors preparing",
+    "unit": "Chorder batch01 R1 failed closed; empty-model display policy correction preparing",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -345,16 +346,17 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Chorder R9 exact whole restoration completed",
+    "latest_closed_DAW_unit": "Chorder batch01 R1 known empty-model output display guard refusal",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "9e6e164e-1484-4501-944f-968c2079b85e",
+    "latest_closed_job_id": "9633fbc9-7fb2-49f5-a876-9f50dca05352",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 453,
-    "native41_raw_requests_including_failed_unit": 782,
-    "job_id": "9e6e164e-1484-4501-944f-968c2079b85e",
-    "terminal_tool_inputs": 173,
-    "raw_tool_requests": 173,
-    "current_phase": "closed; Root independent audit PASS"
+    "native41_raw_requests_including_failed_unit": 840,
+    "job_id": "9633fbc9-7fb2-49f5-a876-9f50dca05352",
+    "terminal_tool_inputs": 57,
+    "raw_tool_requests": 58,
+    "current_phase": "Root known failure cleanup sealed",
+    "maximum_tool_requests": 915
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2823,7 +2825,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 782,
+  "native41_runtime_actual_total_requests": 840,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -2978,7 +2980,7 @@
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
   "native41_accepted_completed_unit_requests": 453,
-  "native41_failed_unit_raw_requests": 329,
+  "native41_failed_unit_raw_requests": 387,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
     "status": "complete",
@@ -3418,5 +3420,54 @@
     "historical_successful_requests_reused": 173,
     "setters_reused": 2,
     "all_plugin_support_percentage": false
+  },
+  "chorder_current_batch01_r1_failed": {
+    "at": "2026-11-13T13:35:02.376165+00:00",
+    "status": "failed_cleaned_up",
+    "job_id": "9633fbc9-7fb2-49f5-a876-9f50dca05352",
+    "actual_elapsed_seconds": 195.951,
+    "raw_tool_requests": 58,
+    "parent_verified_requests": 57,
+    "mixer_writes": 2,
+    "plugin_parameter_writes": 1,
+    "positive_setters": 1,
+    "inverse_setters": 0,
+    "accepted_cases": 0,
+    "failure": "empty stored input1 model still changed same-number outputPlayingLive; fixed positive policy omitted that readonly display",
+    "actual_failed_page_changed_indices": [
+      12,
+      14,
+      16
+    ],
+    "positive_target_value": 5000,
+    "input_playingLive": 1,
+    "same_number_outputPlayingLive": 1,
+    "full_changed908_read": false,
+    "whole_restoration_verified": false,
+    "original908_pair_verified": true,
+    "original_stored128_pair_verified": true,
+    "stored_input1_outputs": [],
+    "app_closed_observed": true,
+    "NoSave_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "result_sha256": "19e451e38edccfdc1820d7649a384cac8da6c2fd0e8a1739dc1940fcefa0f003",
+    "journal_sha256": "ccc61737f0cda1e0aefe0a455eda1f27e6432ca97ef406114a2b0192d8aa57ac",
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+    "native_unit": 41,
+    "product_source_commit": "c733ce5",
+    "parameter": "chorder.pitch1.guiInput",
+    "changed_display_names": [
+      "chorder.pitch1.guiInput",
+      "chorder.pitch1.playingLive",
+      "chorder.pitch1.outputPlayingLive"
+    ],
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "empty_model_pass_through_semantics": "not proved; same-number output live display observed only"
   }
 }
