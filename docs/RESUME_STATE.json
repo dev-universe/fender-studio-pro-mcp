@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder batch04 R1 canonical25~32를899.221초·915원장/부모·16setter·48전체908/48저장128으로복원했고Root대조/NoSave/앱·owner0/저장6/MIDI0/0을확인했다. 새8이름수용후6643/잔여469·현재값33개(1~32와60)다.",
+  "last_completed_unit": "Chorder batch05 R1 canonical33~40를905.228초·915원장/부모·16setter·48전체908/48저장128으로복원했고Root대조/NoSave/앱·owner0/저장6/MIDI0/0을확인했다. 새8이름수용후6651/잔여461·현재값41개(1~40과60)다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -300,7 +300,7 @@
     ],
     "room_writable_serialized_restore_pilots": 1,
     "chorder_input_selector_boundary_cases": 2,
-    "distinct_fixed_inventory_writable_names_verified": 6643,
+    "distinct_fixed_inventory_writable_names_verified": 6651,
     "vocal_tune_receiver_readonly_units": 1,
     "vocal_tune_direct_bypass_current_value_cases": 1,
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
@@ -312,7 +312,7 @@
     "level_meter_readonly_controller_metadata_units": 1,
     "external_stereo_public_check_only_units": 1,
     "tuner_fixed_preset_setting_and_fresh_serialization_cases": 2,
-    "chorder_gui_keyboard_fixed_current_value_cases": 33,
+    "chorder_gui_keyboard_fixed_current_value_cases": 41,
     "chorder_gui_keyboard_verified_input_pitches": [
       1,
       2,
@@ -346,15 +346,23 @@
       30,
       31,
       32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
       60
     ],
     "chorder_gui_keyboard_pitch_numbers_scope": "canonical parameter names only; MIDI and stored-model pitch mapping not proved"
   },
   "next_units_in_order": [
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
-    "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6643/7112·잔여469개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
+    "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6651/7112·잔여461개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder canonical1~32와60의현재값33개가실제전체복원됐다. 최근batch04R1은899.221초·915원장/부모·16setter·48전체908/48저장128·Root대조/NoSave/owner0/저장6/MIDI0/0 PASS다. 새8이름도별도수용해6643/잔여469다. 다음고정33~40는검토소스29와역할표가같고데이터3검사/Root신원대조를마쳤다. 현재종료문맥으로새binding/전체preflight후실행한다. 완료1~32/60과이전실기는반복하지않는다. 모든실패를보존하며MIDI/event/noteoff/audio는미검증이다.",
+    "Chorder canonical1~40과60의현재값41개가실제전체복원됐다. 최근batch05R1은905.228초·915원장/부모·16setter·48전체908/48저장128·Root대조/NoSave/owner0/저장6/MIDI0/0 PASS다. 새8이름도별도수용해6651/잔여461이다. 다음고정41~48은검토소스29와역할표가같고데이터3검사/Root신원대조를마쳤다. 현재종료문맥으로새binding/전체preflight후실행한다. 완료1~40/60과이전실기는반복하지않는다. 모든실패를보존하며MIDI/event/noteoff/audio는미검증이다.",
     "Spectrum index1/index2의서로다른고정설정두사례가Root별도클래스검토로수용됐다.30/46종·60사례·16종잔여이며Spectrum단독2는추가로늘리지않는다. 원래collector class0·실패는보존한다. PRESET-SPECTRUM완료로고정43목록중1개완료/42개잔여다. 첫사례나두번째실기를반복하지않는다. factory원산지/모든32항목/audio/지속저장은미검증이다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은30/46종·60사례·16종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
@@ -371,7 +379,7 @@
   "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw609=accepted-unit280+failed329.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder25..32 actual and eight-name admission complete; next33..40 ready for binding",
+    "unit": "Chorder33..40 actual and eight-name admission complete; next41..48 ready for binding",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -380,32 +388,32 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Chorder batch04 R1 canonical25..32 current values complete",
+    "latest_closed_DAW_unit": "Chorder batch05 R1 canonical33..40 current values complete",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "74dc7eca-793f-4f54-999f-d282f3518269",
+    "latest_closed_job_id": "7872c3be-ba4e-4b68-b724-c493c5a78be8",
     "pending_mutations": 0,
-    "completed_native41_accepted_unit_requests": 4241,
-    "native41_raw_requests_including_failed_unit": 4628,
-    "job_id": "74dc7eca-793f-4f54-999f-d282f3518269",
+    "completed_native41_accepted_unit_requests": 5156,
+    "native41_raw_requests_including_failed_unit": 5543,
+    "job_id": "7872c3be-ba4e-4b68-b724-c493c5a78be8",
     "terminal_tool_inputs": 915,
     "raw_tool_requests": 915,
-    "current_phase": "Root final actual/name8 admission PASS; next33..40 source identity verified",
+    "current_phase": "Root final actual/name8 admission PASS; next41..48 source identity verified",
     "maximum_tool_requests": 915,
-    "current_job_id": "74dc7eca-793f-4f54-999f-d282f3518269",
+    "current_job_id": "7872c3be-ba4e-4b68-b724-c493c5a78be8",
     "completed_subunits": [
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40
     ],
     "subunits_total": 8,
     "subunits_final_admission_pending": false,
-    "launcher_pid": 29076,
-    "owner_pid": 29093
+    "launcher_pid": 30311,
+    "owner_pid": 30327
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -1372,9 +1380,9 @@
     "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
   },
   "current_fixed_name_union": {
-    "accepted_names": 6643,
+    "accepted_names": 6651,
     "inventory_names": 7112,
-    "remaining_names": 469,
+    "remaining_names": 461,
     "base128_names": 6459,
     "new_vocal_bypass_names": 1,
     "tuple_key": [
@@ -1385,18 +1393,19 @@
     "scope": "fixed_fixture_current_value",
     "global_support_percentage": false,
     "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
-    "public_delta_sha256": "bb5f5cd66b83441f4e0dcae45f3f65e1be107fbd6a3a90a0a5c5f28cc148373a",
+    "public_delta_sha256": "dde12daafbddb4a5492ae1f8128734d839b3bba2b4830b489f54de95b41683eb",
     "new_multi_names": 150,
-    "previous_accepted_names": 6635,
-    "previous_public_delta_sha256": "c9466fe88f518a08f1c33b732b0f61cd6aae4ca90cbd79c9c11ed834b4d98b06",
+    "previous_accepted_names": 6643,
+    "previous_public_delta_sha256": "bb5f5cd66b83441f4e0dcae45f3f65e1be107fbd6a3a90a0a5c5f28cc148373a",
     "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470",
     "new_chorder_gui_input_names": 8,
     "chorder_gui_input60_independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4",
-    "total_chorder_gui_input_names": 33,
+    "total_chorder_gui_input_names": 41,
     "chorder_gui_input1_8_independent_review_sha256": "797a9c37e057565d2029e8ce45ecbb20d5850e1be048d3012ec60113a9b80b02",
     "chorder_gui_input9_16_independent_review_sha256": "fd0ae1e76eec6739e26e05a3c3a3d65d1eb8dfe7a8db52adf64d0004af4a7ff6",
     "chorder_gui_input17_24_independent_review_sha256": "5fe65442bd8025fbe59308987655c969338f1e0ea3ee258516cf7e09eec3a2f7",
-    "chorder_gui_input25_32_independent_review_sha256": "bf5c29bdf4dd7b44b7d77f1beca75a952ea2f0d4623ddf8357f83fcec1ab3bab"
+    "chorder_gui_input25_32_independent_review_sha256": "bf5c29bdf4dd7b44b7d77f1beca75a952ea2f0d4623ddf8357f83fcec1ab3bab",
+    "chorder_gui_input33_40_independent_review_sha256": "1a0df557fbe5117d300496a0cd70444d302253cc86e9453cd3e92211e5f3fc97"
   },
   "vocal_bypass_value_actual": {
     "schema": 1,
@@ -2878,7 +2887,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 4628,
+  "native41_runtime_actual_total_requests": 5543,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -3032,7 +3041,7 @@
     "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
-  "native41_accepted_completed_unit_requests": 4241,
+  "native41_accepted_completed_unit_requests": 5156,
   "native41_failed_unit_raw_requests": 387,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
@@ -4503,7 +4512,7 @@
     "independent_review_sha256": "bf5c29bdf4dd7b44b7d77f1beca75a952ea2f0d4623ddf8357f83fcec1ab3bab"
   },
   "inputfilter_guiinput_pilot_preparation": {
-    "status": "PARTIAL_DOMAIN_CORE_NOT_WRITE_READY_R2_INTEGRATION_REVIEW_PENDING",
+    "status": "R2_INDEPENDENT_REVIEW_PASS_UNBOUND_FRESH_PREFLIGHT_AND_ACTUAL_PENDING",
     "actual_calls": 0,
     "target": "keyboard.pitch1.guiInput",
     "provider_count": 388,
@@ -4512,16 +4521,224 @@
     "r1_domain_tests": 8,
     "r1_freeze_sha256": "f70f3dea50e31f35516aa54c63fd291513bddfea6278f86af5d3674e02c52ca5",
     "remaining_integration": [
-      "typed full388 baseline and reference length strictness",
-      "registered fresh instrumentOf Mojito8 ownership and actual mixer route",
-      "parent-child fixed99 owner/terminal journal and unknown hold",
-      "startup full/per-dispatch SHA/full end validation",
-      "Root actual UI and MIDI isolation/NoSave/owner0/saved6 cleanup",
-      "independent review and fresh Root binding before any live run"
+      "Root narrow source review and fresh binding/full preflight",
+      "actual registered Mojito8 ownership/routing before every setter",
+      "actual same-prefix RO2 observations and exact full388 restoration",
+      "actual Root UI/MIDI isolation and NoSave/appfalse/owner0/saved6/post-MIDI0/0",
+      "explicit successor closed-proof integration before cross-plugin continuation"
     ],
     "successor_closedproof_scope": "not broadened; InputFilter99 proof is not automatically accepted by existing Chorder predecessor validator",
     "new_backlog_items": 0,
     "r1_independent_core_review_freeze_sha256": "3eb7134ea6a7c3538fb29bc4b4ed45188e1ac337339b77c20f5fb23949f3c3e8",
-    "r1_independent_core_review_status": "COUNTEREXAMPLES_REPRODUCED_PARTIAL_NOT_EXECUTION_READY"
+    "r1_independent_core_review_status": "COUNTEREXAMPLES_REPRODUCED_PARTIAL_NOT_EXECUTION_READY",
+    "r2_freeze_sha256": "ad93166f2a7f73c65186c05fc796d68bd162c45dcae8699b7fca7fe6a02ac53d",
+    "r2_review_freeze_sha256": "9918cf8974c40ee657da0043761880ba0c86a450e034506bcbc2a50b7ed3ca26",
+    "r2_review_status": "PASS_WITH_RUNTIME_LIMITS",
+    "r2_focused_tests": 20,
+    "r2_independent_boundary_cases": 5,
+    "r1_typed_and_reference_length_defects_fixed": true
+  },
+  "chorder_current_batch05_r1_actual": {
+    "at": "2026-11-13T15:47:26.289211+00:00",
+    "status": "PASS",
+    "job_id": "7872c3be-ba4e-4b68-b724-c493c5a78be8",
+    "actual_elapsed_seconds": 905.228,
+    "raw_tool_requests": 915,
+    "parent_verified_requests": 915,
+    "mixer_writes": 2,
+    "track_selection_attempts": 1,
+    "plugin_parameter_writes": 16,
+    "state_actions": 0,
+    "port_Save_transport_writes": 0,
+    "accepted_fixed_current_value_cases": 8,
+    "strict_name_increment": 0,
+    "provider_records": 908,
+    "provider_snapshots": 48,
+    "stored_model_inputs": 128,
+    "stored_model_snapshots": 48,
+    "exact_full_restoration": true,
+    "model_unchanged": true,
+    "all_units_session_original_and_model_same": true,
+    "other905_peers_per_case_exact": true,
+    "all_nonvalue_unknown_exact": true,
+    "units": [
+      {
+        "canonical_pitch": 33,
+        "name": "chorder.pitch33.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 119.585,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 34,
+        "name": "chorder.pitch34.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 92.334,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 35,
+        "name": "chorder.pitch35.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 92.405,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 36,
+        "name": "chorder.pitch36.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 93.059,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 37,
+        "name": "chorder.pitch37.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 93.379,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 38,
+        "name": "chorder.pitch38.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 93.923,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 39,
+        "name": "chorder.pitch39.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 93.664,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 40,
+        "name": "chorder.pitch40.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 93.401,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      }
+    ],
+    "app_closed_observed": true,
+    "NoSave_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "result_sha256": "aef44de9e64e774cb43485a99ea536cb5833cfee00057dbcb80ab06745c446e7",
+    "journal_sha256": "4d5684050e414d9123978d776b9510bd2911e8252a55fba7496e0d0eca830f3e",
+    "proof_sha256": "17c8dafa931e207f8400be725491f55b584d25ca8314506606db9c16b4d62ce0",
+    "journal_bytes": 91915637,
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+    "product_source_commit": "c733ce5",
+    "native_unit": 41,
+    "scope": "eight fixed canonical33..40 DSP current values; not MIDI/model pitch mapping, events, noteoff or audio proof",
+    "independent_root_audit": "915 raw-parent pairs and unique request IDs;16 typed setters to full provider pages;48 provider908 and48 stored128 snapshots; exact metadata and unknown preservation",
+    "backlog_fixed_baseline": 43,
+    "remaining_deliverables": 42
+  },
+  "chorder_gui_input33_40_name_coverage_admission": {
+    "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+    "tuple_key": [
+      "class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "canonical_tuples": [
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch33.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch34.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch35.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch36.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch37.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch38.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch39.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch40.guiInput"
+      ]
+    ],
+    "previous_accepted": 6643,
+    "new_disjoint": 8,
+    "fixed_inventory": 7112,
+    "Chorder_remaining": 92,
+    "remaining_classes": 19,
+    "original_collector_strict_increment_unchanged": 0,
+    "backlog42_unchanged": true,
+    "actual_new_calls": 0,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "whole_Chorder_complete": false,
+    "accepted_after": 6651,
+    "remaining_after": 461,
+    "candidate_freeze_sha256": "dcc6ea11f18ee24728fda023ea2535d48c0db78e31586313f2c7455bbe45da9e",
+    "source_proposal_sha256": "b020686a811ac7ee68237f7c7d9729a51caeae536a5a320b3d939bd7bd01e98e",
+    "source_proposed_union_sha256": "62117f671e1efb71a330cbbb1c7683be73c80774a6d29e7372a4406d85cb1acf",
+    "independent_review_sha256": "1a0df557fbe5117d300496a0cd70444d302253cc86e9453cd3e92211e5f3fc97"
   }
 }
