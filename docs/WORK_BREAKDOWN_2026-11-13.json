@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "as_of": "2026-11-13",
+  "as_of": "2026-11-14",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
   "remaining_backlog_count": 42,
@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6627,
+    "accepted_names": 6635,
     "inventory_names": 7112,
-    "remaining_names": 485,
+    "remaining_names": 477,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,

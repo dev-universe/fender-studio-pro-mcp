@@ -8,7 +8,7 @@
 
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
-| 고정 현재값 이름 |6627/7112|485개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
+| 고정 현재값 이름 |6635/7112|477개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
 | 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
@@ -77,7 +77,7 @@
 |SHARED-EVENT|MIDI/키 입력 수명 계약|미착수|passive MIDI 조회·빈 관측창·일부 현재값만 확인|고정 press/release·neutral·중복 입력·문맥 소실·unknown 보유의 안전한 계약과 독립 event/held 증거를 구현·검증한다. 클래스별 적용은 CONTROL 항목에서 수용한다.|
 |SHARED-PERSISTENCE|저장·재시작 보장 범위|부분 완료|Chorder input60/output0의339요청·2Save·2restart property 완료|기존 property를 재사용하고 새 모델/그래프/설정에 주장할 Save/reopen 범위를 유한 사례로 검증해 지원표와 일치시킨다. 원래 곡을 덮어쓰지 않는다.|
 |SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native41/c733ce5/46도구의 정상 설치·실기 완료|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
-|SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6627 이름·30종/60사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
+|SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6635 이름·30종/60사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
 
 ### 하드웨어
 
@@ -85,7 +85,7 @@
 |---|---|---|---|---|
 |SHARED-PHYSICAL-KEYS|Keystation88 MK3 실제 입력 연동|하드웨어 대기|USB 연결 존재 및 빈 MIDI window만 과거 확인|장치 재연결 뒤 실제 key press/release와 DAW 수신·종료/설정 복원을 확인한다. USB 존재나 소프트웨어 현재값을 물리 연주로 세지 않는다.|
 
-## 485개 이름과 완료 기능을 혼동하지 않는 기준
+## 477개 이름과 완료 기능을 혼동하지 않는 기준
 
 19클래스의 이름 잔여 목록에는 이미 실제 검증한 Gate/Expander/Compressor의 swapfreqs3개도 scalar 집계 방식 때문에 남아 있다. 이는 **장부 분류 항목이며 새 실행 작업이 아니다**. Gate와 Expander를 별도 잔여 플러그인 기능 행에 넣지 않았다. 반대로 현재값이 끝난 Multi·Impact·Vocal은 할당/다른 focus/host callback 등의 미검증 기능이 있어 위 기능 행에 남겼다. 이름 숫자만으로 전체 기능 잔여를 산출할 수 없는 이유다.
 
@@ -103,7 +103,7 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 - [PROGRESS_2026-11-13.md](PROGRESS_2026-11-13.md): 최신 Chorder 실패와 후속 준비 및 단위 이력.
 - [PLUGIN_STATE_VALIDATION.md](PLUGIN_STATE_VALIDATION.md): 영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속.
 - [LOOP_HANDOFF_2026-11-12.md](LOOP_HANDOFF_2026-11-12.md): 13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함.
-- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6627/7112·485·19클래스의 현재값 전용 범위.
+- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6635/7112·477·19클래스의 현재값 전용 범위.
 
 현재 JSON의 accepted와 이름 합집합을 우선했다. 오래된 검증 문서/인수인계의 과거18·25·28종 숫자나 완료된 P0–P5 단위를 새 backlog로 되살리지 않았다. stale Tuner 배열은 작성자가 accepted 기준으로 정규화했고, 이후 Root가 현재 RESUME_STATE 배열도17종으로 맞췄다. 일반 편집·automation·bounce·process tap 등 최초 장기 범위는 이번 내장 플러그인 잔여 분모에 새로 얹지 않았다. 이미 구현·검증된 범위는 별도 과거 근거로 유지한다.
 
