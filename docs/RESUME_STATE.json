@@ -3075,6 +3075,11 @@
     "requires_fresh_external_output_isolation": true,
     "actual_calls": 0,
     "names_increment": 0,
-    "normal_note_release_audio_MIDI_unverified": true
+    "normal_note_release_audio_MIDI_unverified": true,
+    "reference_route_and_app_open_MIDI_verified": true,
+    "reference_instrument": "Mojito 9",
+    "reference_MIDI_sources": 0,
+    "reference_MIDI_destinations": 0,
+    "future_pilot_runtime_still_UNBOUND": true
   }
 }

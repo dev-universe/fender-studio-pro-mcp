@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-13T11:15:35.643251+00:00",
+  "app_open_observed": true,
+  "MIDI_sources": 0,
+  "MIDI_destinations": 0,
+  "membership_equal": true,
+  "streams_opened": 0,
+  "MIDI_sends": 0,
+  "DAW_calls": 0,
+  "UI_track_visible_index": 62,
+  "UI_instrument": "Mojito 9",
+  "UI_record_and_monitor_off": true,
+  "UI_track_selection_not_changed": true,
+  "routing_reference_only": true,
+  "positive_parameter_writes": 0,
+  "current_pilot_isolation_not_yet_bound": true,
+  "saved_route_mapping_matches_UI": true,
+  "reference_only": true,
+  "Main_and_Mojito_audio_minimum_not_yet_applied_for_pilot": true,
+  "next_runtime_requires_fresh_job_document_instance_and_isolation": true
+}
