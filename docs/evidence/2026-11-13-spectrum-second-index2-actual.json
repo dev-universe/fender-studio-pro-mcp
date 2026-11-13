@@ -1,0 +1,56 @@
+{
+  "at": "2026-11-13T13:48:18.351191+00:00",
+  "status": "PASS",
+  "job_id": "f6067ba4-0940-4bdc-a9e6-8eff0363a721",
+  "actual_elapsed_seconds": 175.458,
+  "raw_tool_requests": 128,
+  "parent_verified_requests": 128,
+  "mixer_writes": 1,
+  "track_selection_attempts": 1,
+  "plugin_parameter_writes": 0,
+  "preset_apply_attempts": 1,
+  "preset_index": 2,
+  "preset_name": "FFT - CD all Curves",
+  "state_capture_attempts": 2,
+  "state_restore_attempts": 1,
+  "state_release_attempts": 2,
+  "full_provider_records": 9,
+  "full_provider_reads": 14,
+  "changed_names": [
+    "maxlevel",
+    "viewmode"
+  ],
+  "changed_values": {
+    "maxlevel": {
+      "before": 144,
+      "after": 156
+    },
+    "viewmode": {
+      "before": 2,
+      "after": 3
+    }
+  },
+  "exact_full9_restoration": true,
+  "fresh_distinct_A_B_tokens": true,
+  "capture_byte_count": 584,
+  "capture_sha256": "ec09b4c76e840cfa1b926c97c3d49d137b69b6f59ec7e6176258b5b3b7edaea1",
+  "accepted_fixed_preset_setting_cases": 1,
+  "original_collector_class_increment": 0,
+  "app_closed_observed": true,
+  "NoSave_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "persistence_verified": false,
+  "audio_verified": false,
+  "result_sha256": "3bdf8381f3c3c6e51e2107d1dc529d7223c61715694747881c97ad3ab5843b44",
+  "journal_sha256": "fe50e1477f8c67a9533de2fd41535a16ce88c2a54b14a8730307545e7c44d0b3",
+  "proof_sha256": "4eea3f0b7b02f2609ec29e38e3bb539013bd1c4821c7d85b6d5a3b5e93456b49",
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "product_source_commit": "c733ce5",
+  "native_unit": 41,
+  "preset_class_increment_pending_separate_admission": false,
+  "separate_class_admission": "docs/evidence/2026-11-13-spectrum-preset-class-delta.json"
+}

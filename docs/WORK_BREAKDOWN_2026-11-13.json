@@ -3,9 +3,9 @@
   "as_of": "2026-11-13",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 43,
-  "completed_in_this_remaining_snapshot": 0,
-  "partial": 38,
+  "remaining_backlog_count": 42,
+  "completed_in_this_remaining_snapshot": 1,
+  "partial": 37,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -17,10 +17,10 @@
     "inventory_names": 7112,
     "remaining_names": 501,
     "remaining_name_classes": 19,
-    "preset_classes_completed": 29,
+    "preset_classes_completed": 30,
     "preset_classes_plan": 46,
-    "preset_cases": 58,
-    "remaining_preset_classes": 17
+    "preset_cases": 60,
+    "remaining_preset_classes": 16
   },
   "runtime_note": "현재 실행과 최근 종료 및 다음 순서는 RESUME_STATE.json을 우선한다. 이 잔여표는 실행 상태를 별도로 복제하지 않는다.",
   "bookkeeping_only_not_backlog": [
@@ -63,10 +63,10 @@
       "id": "PRESET-SPECTRUM",
       "group": "프리셋",
       "title": "Spectrum Meter",
-      "status": "partial",
+      "status": "completed",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "FFT - Bass Peak 설정·전체9 복원·새A/B 한 사례 완료. 반복 금지",
-      "completion_predicate": "기존 한 사례를 재사용하고 두 번째 다른 고정 사례 및46종 분류를 정리해 두 사례 기준을 충족한다. 첫 사례 재실행 금지.",
+      "actually_verified": "issued index1 FFT - Bass Peak와index2 FFT - CD all Curves의 두 고정사례·전체9정확복원·각새584byte A/B동등성·해제/만료·NoSave/owner0/저장보존을 별도클래스검토로수용했다.",
+      "completion_predicate": "완료: 기존 두 고정 issued-setting 기준 충족. 모든32프리셋/factory origin/audio/지속저장/전체플러그인 지원은 별도다. 두 실기는 반복하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0
     },
@@ -510,5 +510,6 @@
       "hardware_dependent": true,
       "inventory_remaining_names": 0
     }
-  ]
+  ],
+  "fixed_backlog_baseline": 43
 }

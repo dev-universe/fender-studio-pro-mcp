@@ -12,12 +12,12 @@
   "mcp_tools": 46,
   "installed_native_unit": 41,
   "installed_native_uuid": "16C018A4-B407-3FD9-8C09-4C357C9B832B",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
-  "owned_songs_closed_without_save": true,
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
+  "owned_songs_closed_without_save": false,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder batch01 R1은195.951초·원본58/부모57·양수1/역변경0으로 중단됐다. 빈저장모델에도 같은번호 출력live 표시가 켜졌다. NoSave/앱·owner종료/저장6개/MIDI0/0을 확인했고 추가완료0·이름6611/잔여501이다.",
+  "last_completed_unit": "Spectrum index2 FFT - CD all Curves는175.458초·128요청으로 설정변경·전체9복원·새584바이트A/B일치와Root원장대조/NoSave/owner0/저장6개를 완료했다. 클래스집계는 첫사례와의 별도수용대기다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -58,18 +58,19 @@
       "Mixverb",
       "Surround Delay",
       "Multiband Dynamics",
-      "Tuner"
+      "Tuner",
+      "Spectrum Meter"
     ],
-    "new_preset_recall_restore_cases": 58,
-    "remaining_preset_classes": 17,
+    "new_preset_recall_restore_cases": 60,
+    "remaining_preset_classes": 16,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
     "new_hybrid_preset_recall_restore_cases": 10,
     "partial_preset_classes": {},
-    "new_preset_cases_in_completed_classes": 58,
-    "new_capsule_only_preset_classes_completed": 24,
-    "new_capsule_only_preset_recall_restore_cases": 48,
+    "new_preset_cases_in_completed_classes": 60,
+    "new_capsule_only_preset_classes_completed": 25,
+    "new_capsule_only_preset_recall_restore_cases": 50,
     "new_hybrid_preset_classes_completed": 5,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -305,7 +306,7 @@
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
     "external_stereo_exact_opaque_menu_reader_units": 1,
     "external_mono_exact_opaque_menu_reader_units": 1,
-    "spectrum_fixed_preset_setting_and_fresh_serialization_cases": 1,
+    "spectrum_fixed_preset_setting_and_fresh_serialization_cases": 2,
     "multi_float1_fixed_current_value_cases": 1,
     "multi_fixed_current_value_cases": 150,
     "level_meter_readonly_controller_metadata_units": 1,
@@ -320,8 +321,8 @@
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6611/7112·잔여501개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder R9 입력60 현재값1건과 별도canonical name1건은 완료해6611/7112·잔여501이다. 공유 batch01 R1은원본58/부모57·195.951초·guiInput1 양수1회 뒤 실제같은번호 outputPlayingLive도1이되어 중단됐다. 원본128 model의input1 outputs=[]만으로 출력표시없음을 가정한조건이 불완전했다. R1은NoSave/앱·owner0/저장6개/MIDI0/0으로 닫혔고 재실행하지않는다. 별도R2는 저장모델 빈목록 검증을 유지하고 빈모델의 같은번호 출력표시를 명시적 가설로 사전선언한다. 관측된1과 미검증2..8을 구분하고 전체908/128 복원·원래최대915/16쓰기·120초/55여유를 유지한다. 실제58행 재생과 합성후속 흐름/한정검토 뒤 새binding으로 시작한다. MIDI/실제noteoff/audio는 미검증이다.",
-    "Spectrum index2 FFT - CD all Curves의 두번째 고정설정 후보R3는Native41 공유기반/명시적선택1회로128요청·오프라인20검사까지 준비됐으나 독립검토에서 직전 대원장64MiB한도를 발견했다. 새검토/최신종료 연결 후 실행하며 첫사례index1은 반복하지않는다. Chorder915 원장128MiB와 Spectrum자체128요청 한도를 구별한다. 미완료클래스나프리셋집계는 아직늘리지않는다.",
+    "Chorder R9 입력60+이름1개는완료해6611/7112·잔여501이다. batch01R1 원본58/부모57·195.951초·양수1/역변경0 실패는NoSave/앱·owner0/저장6/MIDI0/0으로봉인했다. 별도R2는저장모델[]을보존하고같은번호outputLive1만사전추가해actual58/synthetic857→915 흐름과Root9검사40.745초/독립검토를통과했다. 첫pitches-001-008만승인: 비어있지않은분기의roles초기화오류는현재1..8에서불가능하지만다른batch금지다. 작성자가R3한줄수정/실제R9nonempty witness를준비한다. Root는최신Spectrum종료로새binding/전체preflight를통과했고다음실제로첫8을진행한다. 915/16setter/120초·55여유·905peer/전체908/128 복원/unknown보유를유지한다. 다른완료나MIDI/audio/noteoff로승격하지않는다.",
+    "Spectrum index1/index2의서로다른고정설정두사례가Root별도클래스검토로수용됐다.30/46종·60사례·16종잔여이며Spectrum단독2는추가로늘리지않는다. 원래collector class0·실패는보존한다. PRESET-SPECTRUM완료로고정43목록중1개완료/42개잔여다. 첫사례나두번째실기를반복하지않는다. factory원산지/모든32항목/audio/지속저장은미검증이다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은29/46종·58사례·17종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -337,26 +338,35 @@
   "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw609=accepted-unit280+failed329.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder batch01 R1 failed closed; empty-model display policy correction preparing",
-    "DAW_live_unit_running": false,
+    "unit": "Chorder corrected R3 first1..8 actual run",
+    "DAW_live_unit_running": true,
     "REA_running": false,
-    "offline_preparation_running": true,
+    "offline_preparation_running": false,
     "current_product_source_commit": "c733ce5",
     "native_unit": 41,
     "main_tools": 46,
-    "current_app_closed": true,
-    "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Chorder batch01 R1 known empty-model output display guard refusal",
+    "current_app_closed": false,
+    "current_owner_stopped": false,
+    "latest_closed_DAW_unit": "Spectrum index2 full9 restoration and fresh584byte A/B complete",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "9633fbc9-7fb2-49f5-a876-9f50dca05352",
+    "latest_closed_job_id": "f6067ba4-0940-4bdc-a9e6-8eff0363a721",
     "pending_mutations": 0,
-    "completed_native41_accepted_unit_requests": 453,
-    "native41_raw_requests_including_failed_unit": 840,
-    "job_id": "9633fbc9-7fb2-49f5-a876-9f50dca05352",
-    "terminal_tool_inputs": 57,
-    "raw_tool_requests": 58,
-    "current_phase": "Root known failure cleanup sealed",
-    "maximum_tool_requests": 915
+    "completed_native41_accepted_unit_requests": 581,
+    "native41_raw_requests_including_failed_unit": 968,
+    "job_id": "966e3d03-1a9e-4f63-a71c-9d2290d64229",
+    "terminal_tool_inputs": 493,
+    "raw_tool_requests": null,
+    "current_phase": "chordercurrent1-p005-original_b-model-p016",
+    "maximum_tool_requests": 915,
+    "current_job_id": "966e3d03-1a9e-4f63-a71c-9d2290d64229",
+    "completed_subunits": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "subunits_total": 8,
+    "subunits_final_admission_pending": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -578,7 +588,6 @@
   "remaining_preset_class_names": [
     "Room Reverb",
     "Open AIR",
-    "Spectrum Meter",
     "Level Meter",
     "Scope",
     "Tone Generator",
@@ -2825,7 +2834,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 840,
+  "native41_runtime_actual_total_requests": 968,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -2979,7 +2988,7 @@
     "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
-  "native41_accepted_completed_unit_requests": 453,
+  "native41_accepted_completed_unit_requests": 581,
   "native41_failed_unit_raw_requests": 387,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
@@ -3287,12 +3296,14 @@
   "remaining_work_breakdown": {
     "document": "docs/WORK_BREAKDOWN_2026-11-13.md",
     "data": "docs/WORK_BREAKDOWN_2026-11-13.json",
-    "remaining_deliverables": 43,
-    "partial": 38,
+    "remaining_deliverables": 42,
+    "partial": 37,
     "unstarted": 1,
     "hardware_blocked": 4,
     "historical_total_unknown": true,
-    "counts_are_not_equal_effort": true
+    "counts_are_not_equal_effort": true,
+    "fixed_backlog_baseline": 43,
+    "completed_since_baseline": 1
   },
   "chorder_current_value_r8_failed": {
     "status": "failed_cleaned_up",
@@ -3469,5 +3480,154 @@
     "noteoff_verified": false,
     "audio_verified": false,
     "empty_model_pass_through_semantics": "not proved; same-number output live display observed only"
-  }
+  },
+  "spectrum_second_index2_actual": {
+    "at": "2026-11-13T13:48:18.351191+00:00",
+    "status": "PASS",
+    "job_id": "f6067ba4-0940-4bdc-a9e6-8eff0363a721",
+    "actual_elapsed_seconds": 175.458,
+    "raw_tool_requests": 128,
+    "parent_verified_requests": 128,
+    "mixer_writes": 1,
+    "track_selection_attempts": 1,
+    "plugin_parameter_writes": 0,
+    "preset_apply_attempts": 1,
+    "preset_index": 2,
+    "preset_name": "FFT - CD all Curves",
+    "state_capture_attempts": 2,
+    "state_restore_attempts": 1,
+    "state_release_attempts": 2,
+    "full_provider_records": 9,
+    "full_provider_reads": 14,
+    "changed_names": [
+      "maxlevel",
+      "viewmode"
+    ],
+    "changed_values": {
+      "maxlevel": {
+        "before": 144,
+        "after": 156
+      },
+      "viewmode": {
+        "before": 2,
+        "after": 3
+      }
+    },
+    "exact_full9_restoration": true,
+    "fresh_distinct_A_B_tokens": true,
+    "capture_byte_count": 584,
+    "capture_sha256": "ec09b4c76e840cfa1b926c97c3d49d137b69b6f59ec7e6176258b5b3b7edaea1",
+    "accepted_fixed_preset_setting_cases": 1,
+    "original_collector_class_increment": 0,
+    "app_closed_observed": true,
+    "NoSave_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "persistence_verified": false,
+    "audio_verified": false,
+    "result_sha256": "3bdf8381f3c3c6e51e2107d1dc529d7223c61715694747881c97ad3ab5843b44",
+    "journal_sha256": "fe50e1477f8c67a9533de2fd41535a16ce88c2a54b14a8730307545e7c44d0b3",
+    "proof_sha256": "4eea3f0b7b02f2609ec29e38e3bb539013bd1c4821c7d85b6d5a3b5e93456b49",
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+    "product_source_commit": "c733ce5",
+    "native_unit": 41,
+    "preset_class_increment_pending_separate_admission": true
+  },
+  "spectrum_preset_class_admission": {
+    "schema": 1,
+    "status": "ADMITTED_AFTER_ROOT_INDEPENDENT_REVIEW",
+    "scope": "finite46-class issued-preset recall/restore plan",
+    "plugin": "Spectrum Meter",
+    "class_uid": "0C6C94DF-CCE0-465C-886A-F1F01A142104",
+    "admission": {
+      "completed_class_increment": 1,
+      "existing_fixed_setting_cases_admitted": 2,
+      "new_actual_calls": 0,
+      "original_collector_class_increments_preserved": [
+        0,
+        0
+      ],
+      "no_third_case_or_standalone_recount": true
+    },
+    "cases": [
+      {
+        "preset_index": 1,
+        "preset_name": "FFT - Bass Peak",
+        "actual_requests": 127,
+        "elapsed_seconds": 186.042,
+        "full_provider_records": 9,
+        "full_provider_snapshots": 14,
+        "changed_names": [
+          "maxfreq",
+          "minlevel",
+          "viewmode"
+        ],
+        "all9_restored": true,
+        "fresh_capture_bytes_each": 584,
+        "distinct_tokens_and_equal_fresh_serializations": true
+      },
+      {
+        "preset_index": 2,
+        "preset_name": "FFT - CD all Curves",
+        "actual_requests": 128,
+        "elapsed_seconds": 175.458,
+        "full_provider_records": 9,
+        "full_provider_snapshots": 14,
+        "changed_names": [
+          "maxlevel",
+          "viewmode"
+        ],
+        "all9_restored": true,
+        "fresh_capture_bytes_each": 584,
+        "distinct_tokens_and_equal_fresh_serializations": true
+      }
+    ],
+    "proposed_counts": {
+      "preset_classes": {
+        "before": 29,
+        "after": 30,
+        "total": 46,
+        "remaining_before": 17,
+        "remaining_after": 16
+      },
+      "cases_in_completed_classes": {
+        "before": 58,
+        "after": 60
+      },
+      "spectrum_standalone_verified_settings": {
+        "before": 2,
+        "after": 2
+      },
+      "fixed_backlog": {
+        "closed_id": "PRESET-SPECTRUM",
+        "total_baseline": 43,
+        "remaining_before": 43,
+        "remaining_after": 42,
+        "remaining_partition": {
+          "partial": 37,
+          "unstarted": 1,
+          "hardware": 4
+        }
+      },
+      "parameter_names": {
+        "verified": 6611,
+        "total": 7112,
+        "remaining": 501,
+        "increment": 0
+      }
+    },
+    "factory_origin_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "opaque_resource_identity_verified": false,
+    "capability_meaning": "two fixed issued settings only; not every preset or full plugin behavior",
+    "same_exact_restore_and_NoSave_owner0_saved6_guards": true,
+    "candidate_freeze_sha256": "743a943c4c89d2d6676f8e566a668ad41399599d264d135ebc45b0a801d1072a",
+    "source_proposal_sha256": "6c1e7973b275b36ece69405766b6e48f0a1bb0ef0f13a33fcb512919bb0a99a2",
+    "independent_root_review_sha256": "d00bf335079696703a72b95df67bc3811567d4e0702e982a84ca3bf884ccd4ea"
+  },
+  "native41_total_requests_scope": "closed units only; current_execution reports open run separately"
 }
