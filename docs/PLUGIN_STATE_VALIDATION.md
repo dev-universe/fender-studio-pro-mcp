@@ -905,3 +905,8 @@ Latest November13 checkpoint: the new Mixverb index1 hybrid passed121 actual req
 
 
 Room Reverb has one separately accepted writable/serialized restore pilot from actual8.1.1:156RPC/99.811s, all16 writable rows restored, two fresh725-byte capture signatures equal, distinct tokens released, NoSave closure and6 saved archives unchanged. Two derived read-only current rows remain the known postload values, so global preset counts stay28/46classes/56cases; all19 restoration/persistence/audio/hidden memory remain unproved. Public evidence: `evidence/2026-11-13-room-serialized-identity.json`.
+
+
+### Chorder 고정 곡의 실제 저장과 재시작
+
+입력60·출력0의 고정 진단 곡에서339개 실제 요청, 모델 변경2회와 저장2회, 재시작2회를 별도 독립 원장 대조로 확인했다. 저장 모델581→612→581바이트와 재시작 뒤 전체 모델 읽기가 일치했다. 마지막 UI 종료 확인 전달 지연으로 원래 자동 결과는 실패·승인0건으로 보존한다. 별도 실제 동작 검증1건은 [공개 근거](evidence/2026-11-13-chorder-song-persistence.json)에 기록했다. 모든 음정 조합이나 오디오 검증을 뜻하지 않는다.
