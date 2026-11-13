@@ -5,18 +5,23 @@ use std::ffi::CStr;
 #[serde(rename_all = "snake_case")]
 pub(super) enum Action {
     SwapFilterFrequencies,
+    ResetMeterHold,
+    ResetMeterLoudness,
 }
 impl Action {
     fn name(self) -> &'static str {
         match self {
             Self::SwapFilterFrequencies => "swap_filter_frequencies",
+            Self::ResetMeterHold => "reset_meter_hold",
+            Self::ResetMeterLoudness => "reset_meter_loudness",
         }
     }
 }
 #[derive(Clone, Copy)]
 struct Spec {
     parameter: &'static CStr,
-    effects: [&'static str; 2],
+    effects: &'static [&'static str],
+    binding: Option<(u32, i32)>,
 }
 fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
     match (class_uid, action) {
@@ -25,14 +30,26 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             Action::SwapFilterFrequencies,
         ) => Ok(Spec {
             parameter: c"swapfreqs",
-            effects: ["filterlow", "filterhigh"],
+            effects: &["filterlow", "filterhigh"],
+            binding: None,
         }),
         ("36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B", Action::SwapFilterFrequencies) => Ok(Spec {
             parameter: c"studiocomp.swapfreqs",
-            effects: [
+            effects: &[
                 "studiocomp.sidechainfreqlow",
                 "studiocomp.sidechainfreqhigh",
             ],
+            binding: None,
+        }),
+        ("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", Action::ResetMeterHold) => Ok(Spec {
+            parameter: c"resethold",
+            effects: &[],
+            binding: Some((2, 1383298120)),
+        }),
+        ("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", Action::ResetMeterLoudness) => Ok(Spec {
+            parameter: c"resetloudness",
+            effects: &[],
+            binding: Some((4, 1383298124)),
         }),
         _ => Err("button action is not registered for this exact native class".into()),
     }
@@ -42,18 +59,20 @@ pub(super) struct ActionLease {
     parameter: RawParameter,
     owner: Option<parameters::ControllerOwner>,
     name: &'static CStr,
+    binding: Option<(u32, i32)>,
 }
 impl ActionLease {
     fn capture<G: FnMut() -> Result<(), String>>(
         parameter: RawParameter,
-        name: &'static CStr,
+        spec: Spec,
         guard: &mut G,
     ) -> Result<Self, String> {
         match parameter.controller_owner(guard) {
             Ok(owner) => Ok(Self {
                 parameter,
                 owner,
-                name,
+                name: spec.parameter,
+                binding: spec.binding,
             }),
             Err(error) => {
                 let before = guard();
@@ -99,6 +118,27 @@ impl ActionLease {
         if current != self.parameter.as_borrowed_raw().as_ptr() || current_owner != expected_owner {
             return Err("registered button parameter binding changed".into());
         }
+        if let Some((index, expected_tag)) = self.binding {
+            let at: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
+                unsafe { method(controller.handle.0, 4) };
+            let get_tag: unsafe extern "C" fn(*mut c_void) -> i32 = unsafe { method(current, 13) };
+            let indexed = unsafe { at(controller.handle.0, index as i32) };
+            let tag = unsafe { get_tag(current) };
+            if indexed != current || tag != expected_tag {
+                return Err("registered meter reset index or tag changed".into());
+            }
+            let get_name: unsafe extern "C" fn(*mut c_void) -> *const PlainCString =
+                unsafe { method(current, 4) };
+            let actual = unsafe { get_name(current) };
+            if actual.is_null() || unsafe { (*actual).text }.is_null() {
+                return Err("registered meter reset name changed".into());
+            }
+            for (index, expected) in self.name.to_bytes_with_nul().iter().enumerate() {
+                if unsafe { *(*actual).text.add(index) } as u8 != *expected {
+                    return Err("registered meter reset name changed".into());
+                }
+            }
+        }
         Ok(())
     }
 
@@ -127,6 +167,16 @@ pub(super) fn execute(
         Ok(spec) => spec,
         Err(reason) => return (refused(action, "unregistered_action", &reason), None),
     };
+    if spec.binding.is_some() && ctx.instance.native_class != "AudioEffect" {
+        return (
+            refused(
+                action,
+                "unregistered_action",
+                "meter resets require the exact AudioEffect class",
+            ),
+            None,
+        );
+    }
     let controller = match provider {
         Provider::DspValue(controller) => controller,
         _ => {
@@ -163,7 +213,7 @@ fn run<G: FnMut() -> Result<(), String>>(
             );
         }
     };
-    let lease = match ActionLease::capture(parameter, spec.parameter, guard) {
+    let lease = match ActionLease::capture(parameter, spec, guard) {
         Ok(lease) => lease,
         Err(reason) => {
             return (refused(action, "action_owner_unavailable", &reason), None);

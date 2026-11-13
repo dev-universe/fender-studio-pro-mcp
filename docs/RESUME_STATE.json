@@ -464,7 +464,7 @@
   "last_measurement": "6866/7112 names,246 remaining;30/46 preset classes,60 cases,16 remaining;Native41 raw26204=accepted25748+failed456.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder and Input Filter128 GUI inputs closed; Level Meter two finite reset actions isolated implementation and effect-witness preparation",
+    "unit": "Level Meter two reset actions isolated review fixes; no live DAW unit",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -14422,7 +14422,7 @@
     "actual_replay_required": false
   },
   "next_level_reset_unit": {
-    "status": "OFFLINE_IMPLEMENTATION_AND_WITNESS_PREPARATION",
+    "status": "FINAL_SOURCE_REVIEW_PASS_NORMAL_BUILD_INSTALL_NEXT",
     "actions": [
       "reset_meter_hold",
       "reset_meter_loudness"
@@ -14444,6 +14444,16 @@
       20,
       30
     ],
-    "overall_ETA": null
+    "overall_ETA": null,
+    "candidate_commit": "95b6aad045bb8eb27b6c7ea1e12a3557b9e318f4",
+    "independent_review": "PASS",
+    "review_blockers": [],
+    "remaining_focused_fix_review_minutes": [
+      5,
+      10
+    ],
+    "atomic_idle_promise_removed": true,
+    "existing_guarded_pulse_reused": true,
+    "current0_or1_supported": true
   }
 }

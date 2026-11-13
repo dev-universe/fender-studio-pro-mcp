@@ -910,10 +910,15 @@ class NativePluginControls {
             if (result.ok && request.operation === "set_parameter" && (typeof result.verified !== "boolean" || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object")) throw new Error("native mutation readback unavailable");
             if (result.ok && request.operation === "parameter_action"
                 && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
+                    || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness"].indexOf(request.action) < 0
+                    || (request.action !== "swap_filter_frequencies"
+                        && (result.instance.class_uid !== "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
+                            || result.param !== (request.action === "reset_meter_hold" ? "resethold" : "resetloudness")))
                     || result.verified !== false || result.effects_verified !== false || result.upper_dispatched !== true
                     || result.reset_dispatched !== true || result.reset_verified !== true
                     || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object"
-                    || !Array.isArray(result.effect_parameters) || result.effect_parameters.length !== 2
+                    || !Array.isArray(result.effect_parameters)
+                    || result.effect_parameters.length !== (request.action === "swap_filter_frequencies" ? 2 : 0)
                     || result.effect_parameters.some(name => typeof name !== "string" || !name || name.length > 512)))
                 throw new Error("native action phase evidence unavailable");
             return result;

@@ -793,7 +793,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (Object.keys(args).some(key => fields.indexOf(key) < 0)
             || typeof args.plugin !== "string" || !args.plugin.trim()
             || typeof args.expected_instance !== "string" || !args.expected_instance
-            || args.action !== "swap_filter_frequencies")
+            || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness"].indexOf(args.action) < 0)
             return { native_outcome: "not_applied", errors: [{ code: "invalid_action", message: "a fixed action, expected plugin and native instance are required" }] };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;

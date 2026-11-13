@@ -42,6 +42,22 @@ SPECS = {
                              ("studiocomp.sidechainfreqlow", "studiocomp.sidechainfreqhigh")),
 }
 
+LEVEL_RESET_SPECS = {
+    "reset_meter_hold": ("resethold", 2, 1383298120),
+    "reset_meter_loudness": ("resetloudness", 4, 1383298124),
+}
+
+
+def require_effect_witness(action, plugins):
+    if action in LEVEL_RESET_SPECS:
+        require(plugins == ["Level Meter"], "Meter resets require only the exact Level Meter fixture")
+        raise AcceptanceFailure(
+            "Meter reset verification is blocked before dispatch: an independent non-neutral "
+            "hold or integrated-loudness accumulator witness is unavailable. Toggle reset, ACK "
+            "and unchanged DSP settings cannot prove the effect or restore reset history.")
+    require(action == ACTION and all(plugin in SPECS for plugin in plugins),
+            "Filter swaps require only the registered Expander, Gate and Compressor fixtures")
+
 
 def explicitly_read_only(*parameters):
     return all(p.get("access_metadata_complete") is True and p.get("readOnly") is True
@@ -329,9 +345,10 @@ def main(argv=None):
     parser.add_argument("--fixtures", required=True)
     parser.add_argument("--scratch-title", required=True)
     parser.add_argument("--output-dir", default=".local/live/plugin-actions-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
-    parser.add_argument("--plugin", action="append", required=True, choices=tuple(SPECS))
+    parser.add_argument("--plugin", action="append", required=True, choices=(*SPECS, "Level Meter"))
+    parser.add_argument("--action", default=ACTION, choices=(ACTION, *LEVEL_RESET_SPECS))
     parser.add_argument("--run-actions", action="store_true", required=True,
-                        help="Explicitly run one filter-swap pulse and one conditional inverse per registered fixture")
+                        help="Run registered filter swaps; meter reset verification remains blocked without an independent effect witness")
     parser.add_argument("--pause", action="store_true", help="Start the MIDI owner before opening the DAW, then press Enter")
     parser.add_argument("--prepare-midi-fixtures", action="store_true")
     parser.add_argument("--settle-interval", type=float, default=0.1)
@@ -343,6 +360,7 @@ def main(argv=None):
             and all(isinstance(item, dict) and isinstance(item.get("plugin"), str) for item in fixtures),
             "Expected 1..128 finite fixture targets")
     plugins = list(dict.fromkeys(args.plugin))
+    require_effect_witness(args.action, plugins)
     require(0 < len(plugins) <= len(SPECS)
             and all(sum(item["plugin"] == plugin for item in fixtures) == 1 for plugin in plugins),
             "Every selected action plugin must match one exact fixture")

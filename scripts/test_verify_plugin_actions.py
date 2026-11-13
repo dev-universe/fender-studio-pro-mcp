@@ -557,6 +557,16 @@ class ActionAcceptanceTests(unittest.TestCase):
                   "--plugin", "Expander", "--run-actions"])
         client.assert_not_called()
 
+    def test_meter_reset_verification_stops_before_owner_without_independent_witness(self):
+        fixtures = Path(self.temporary.name) / "meter-fixtures.json"
+        fixtures.write_text(json.dumps([{**TARGET, "plugin": "Level Meter"}]))
+        for action in ("reset_meter_hold", "reset_meter_loudness"):
+            with self.subTest(action=action), patch("verify_plugin_actions.McpClient") as client:
+                with self.assertRaisesRegex(AcceptanceFailure, "independent non-neutral"):
+                    main(["--fixtures", str(fixtures), "--scratch-title", "MCP Validation Scratch",
+                          "--plugin", "Level Meter", "--action", action, "--run-actions"])
+                client.assert_not_called()
+
     def test_cli_unknown_outcome_records_failure_without_inverse(self):
         client = ActionClient()
         client.behavior[1] = "public_unknown"

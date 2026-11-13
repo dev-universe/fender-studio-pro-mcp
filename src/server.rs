@@ -196,7 +196,7 @@ impl McpServer {
             named::<PluginAction>(
                 "plugin_action",
                 "pluginAction",
-                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. The native pulse resets its own value but leaves musical effects unverified. Independently read both filter values and the whole provider; do not retry an unknown outcome.",
+                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require an independent non-neutral accumulator witness, which is not currently exposed. Never retry an unknown outcome.",
                 true,
             ),
             named::<PluginState>(
@@ -716,6 +716,25 @@ mod tests {
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
         assert_eq!(specs.len(), 46);
+    }
+
+    #[test]
+    fn button_action_schema_is_the_closed_three_action_set() {
+        let specs = McpServer::specs();
+        let tool = &specs
+            .iter()
+            .find(|s| s.tool.name == "plugin_action")
+            .unwrap()
+            .tool;
+        assert_eq!(
+            tool.input_schema["$defs"]["PluginButtonAction"]["enum"],
+            json!([
+                "swap_filter_frequencies",
+                "reset_meter_hold",
+                "reset_meter_loudness"
+            ])
+        );
+        assert_eq!(tool.input_schema["additionalProperties"], false);
     }
 
     #[test]

@@ -193,6 +193,55 @@ test('unknown actions and client-selected parameters refuse before resolving any
     assert.equal(h.component.pluginAction({ ...base, ...extra }).native_outcome, 'not_applied');
 });
 
+test('meter reset actions forward once and never infer effect success from Toggle zero', () => {
+  for (const action of ['reset_meter_hold', 'reset_meter_loudness']) {
+    const calls = [];
+    const h = harness({ getObjectByName() { return native((target, body) => {
+      calls.push(JSON.parse(body));
+      return JSON.stringify({ ...actionResult(), action, effect_parameters: [],
+        instance: { ...instance, class_uid: 'DF958D90-0196-434F-ADC3-1FC2BB7F4AF6' },
+        param: action === 'reset_meter_hold' ? 'resethold' : 'resetloudness' });
+    }); } });
+    h.device.findParameter = () => { throw new Error('no script reset fallback'); };
+    const args = { plugin: 'Level Meter', expected_instance: instance.object_uid, action };
+    const result = h.component.pluginAction(args);
+    assert.equal(result.native_outcome, 'applied_unverified');
+    assert.equal(result.effects_verified, false);
+    assert.equal(result.verified, false);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].action, action);
+    assert.deepEqual(Array.from(result.effect_parameters), []);
+    for (const field of ['upper_dispatched', 'reset_dispatched']) {
+      const unknown = harness({ getObjectByName() { return native(() => JSON.stringify({
+        ok: false, outcome: 'unknown', action, [field]: true, effects_verified: false
+      })); } });
+      assert.equal(unknown.component.pluginAction(args).native_outcome, 'unknown');
+    }
+  }
+});
+
+test('meter reset receipts accept initial Toggle one without claiming verified effects', () => {
+  for (const action of ['reset_meter_hold', 'reset_meter_loudness']) {
+    let calls = 0;
+    const h = harness({ getObjectByName() { return native(() => {
+      calls++;
+      return JSON.stringify({ ...actionResult(), action, effect_parameters: [],
+        instance: { ...instance, class_uid: 'DF958D90-0196-434F-ADC3-1FC2BB7F4AF6' },
+        param: action === 'reset_meter_hold' ? 'resethold' : 'resetloudness',
+        before: { value: 1 }, after: { value: 0 } });
+    }); } });
+    h.device.findParameter = () => { throw new Error('no script reset fallback'); };
+    const result = h.component.pluginAction({ plugin: 'Level Meter', expected_instance: instance.object_uid, action });
+    assert.equal(result.native_outcome, 'applied_unverified');
+    assert.equal(result.before.value, 1);
+    assert.equal(result.after.value, 0);
+    assert.equal(result.effects_verified, false);
+    assert.equal(result.verified, false);
+    assert.deepEqual(Array.from(result.effect_parameters), []);
+    assert.equal(calls, 1);
+  }
+});
+
 test('uncertain or malformed button receipts preserve unknown outcomes without retries', () => {
   const base = { plugin: 'Expected', expected_instance: instance.object_uid, action: 'swap_filter_frequencies' };
   for (const field of ['effects_verified', 'verified', 'reset_verified', 'upper_dispatched', 'source', 'action']) {

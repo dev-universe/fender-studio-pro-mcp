@@ -14,6 +14,14 @@ const NAME: PlainCString = PlainCString {
     text: c"swapfreqs".as_ptr(),
     owner: ptr::null_mut(),
 };
+const HOLD: PlainCString = PlainCString {
+    text: c"resethold".as_ptr(),
+    owner: ptr::null_mut(),
+};
+const LOUDNESS: PlainCString = PlainCString {
+    text: c"resetloudness".as_ptr(),
+    owner: ptr::null_mut(),
+};
 const VALUE: PlainCString = PlainCString {
     text: c"value".as_ptr(),
     owner: ptr::null_mut(),
@@ -40,6 +48,9 @@ struct Parameter {
     owner: Cell<*mut c_void>,
     next_owner: Cell<*mut c_void>,
     current: Cell<i64>,
+    value_reads: Cell<usize>,
+    name: Cell<*const PlainCString>,
+    tag: Cell<i32>,
     enabled: Cell<bool>,
     readonly: Cell<bool>,
     writes: RefCell<Vec<(i64, bool)>>,
@@ -56,6 +67,7 @@ struct Lookup {
     parameter: Cell<*mut c_void>,
     find_calls: Cell<u32>,
     owner_on_find: Cell<Option<*mut c_void>>,
+    index: Cell<u32>,
 }
 unsafe fn parameter<'a>(p: *mut c_void) -> &'a Parameter {
     unsafe { &*p.cast::<Parameter>() }
@@ -98,11 +110,11 @@ unsafe extern "C" fn query_mock(p: *mut c_void, iid: *const Uid, out: *mut *mut 
 unsafe extern "C" fn kind(_: *mut c_void) -> i32 {
     0
 }
-unsafe extern "C" fn name(_: *mut c_void) -> *const PlainCString {
-    &NAME
+unsafe extern "C" fn name(p: *mut c_void) -> *const PlainCString {
+    unsafe { parameter(p) }.name.get()
 }
-unsafe extern "C" fn tag(_: *mut c_void) -> i32 {
-    17
+unsafe extern "C" fn tag(p: *mut c_void) -> i32 {
+    unsafe { parameter(p) }.tag.get()
 }
 unsafe extern "C" fn enabled(p: *mut c_void) -> u8 {
     u8::from(unsafe { parameter(p) }.enabled.get())
@@ -117,7 +129,10 @@ unsafe extern "C" fn owner(p: *mut c_void) -> *mut c_void {
 unsafe extern "C" fn property(p: *mut c_void, out: *mut VariantOut, id: *const PlainCString) -> u8 {
     let f = unsafe { &*(*p.cast::<Object>()).parameter };
     let value = match unsafe { CStr::from_ptr((*id).text) } {
-        id if id == c"value" => f.current.get(),
+        id if id == c"value" => {
+            f.value_reads.set(f.value_reads.get() + 1);
+            f.current.get()
+        }
         id if id == c"min" => 0,
         id if id == c"max" => 1,
         _ => panic!("button action must not call other properties"),
@@ -163,13 +178,21 @@ unsafe extern "C" fn find(p: *mut c_void, name: *const PlainCString) -> *mut c_v
     let f = unsafe { &*p.cast::<Lookup>() };
     f.find_calls.set(f.find_calls.get() + 1);
     assert!(
-        matches!(unsafe{CStr::from_ptr((*name).text)},n if n==c"swapfreqs" || n==c"studiocomp.swapfreqs")
+        matches!(unsafe{CStr::from_ptr((*name).text)},n if n==c"swapfreqs" || n==c"studiocomp.swapfreqs" || n==c"resethold" || n==c"resetloudness")
     );
     let result = f.parameter.get();
     if let Some(owner) = f.owner_on_find.take() {
         unsafe { parameter(result) }.owner.set(owner);
     }
     result
+}
+unsafe extern "C" fn at(p: *mut c_void, index: i32) -> *mut c_void {
+    let lookup = unsafe { &*p.cast::<Lookup>() };
+    if index as u32 == lookup.index.get() {
+        lookup.parameter.get()
+    } else {
+        ptr::null_mut()
+    }
 }
 unsafe extern "C" fn text(name: *const c_char) -> *const PlainCString {
     match unsafe { CStr::from_ptr(name) } {
@@ -226,6 +249,7 @@ impl Fixture {
         let mut lt = Box::new([ptr::null(); 6]);
         lt[1] = lookup_retain as *const c_void;
         lt[2] = lookup_release as *const c_void;
+        lt[4] = at as *const c_void;
         lt[5] = find as *const c_void;
         let mut lookup = Box::new(Lookup {
             table: lt.as_ptr(),
@@ -233,6 +257,7 @@ impl Fixture {
             parameter: Cell::new(ptr::null_mut()),
             find_calls: Cell::new(0),
             owner_on_find: Cell::new(None),
+            index: Cell::new(0),
         });
         let mut parameter = Box::new(Parameter {
             table: pt.as_ptr(),
@@ -244,6 +269,9 @@ impl Fixture {
             owner: Cell::new(ptr::null_mut()),
             next_owner: Cell::new(ptr::null_mut()),
             current: Cell::new(0),
+            value_reads: Cell::new(0),
+            name: Cell::new(&NAME),
+            tag: Cell::new(17),
             enabled: Cell::new(true),
             readonly: Cell::new(false),
             writes: RefCell::new(vec![]),
@@ -273,13 +301,20 @@ impl Fixture {
         })
     }
     fn run(&self, provider: &Provider) -> (Value, Option<ActionLease>) {
+        self.run_action(provider, Action::SwapFilterFrequencies)
+    }
+    fn run_action(&self, provider: &Provider, action: Action) -> (Value, Option<ActionLease>) {
         run(
             provider.scalar().unwrap(),
             &api_mock(),
-            Action::SwapFilterFrequencies,
+            action,
             registered(
-                "831A0046-BD71-45BF-A419-6FC90D6E9F2F",
-                Action::SwapFilterFrequencies,
+                if action == Action::SwapFilterFrequencies {
+                    "831A0046-BD71-45BF-A419-6FC90D6E9F2F"
+                } else {
+                    "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
+                },
+                action,
             )
             .unwrap(),
             &mut || {
@@ -290,6 +325,18 @@ impl Fixture {
                     .ok_or_else(|| "synthetic context changed".into())
             },
         )
+    }
+    fn meter(action: Action) -> Self {
+        let fixture = Self::new();
+        let (name, index, tag) = match action {
+            Action::ResetMeterHold => (&HOLD, 2, 1383298120),
+            Action::ResetMeterLoudness => (&LOUDNESS, 4, 1383298124),
+            _ => unreachable!(),
+        };
+        fixture.parameter.name.set(name);
+        fixture.parameter.tag.set(tag);
+        fixture.lookup.index.set(index);
+        fixture
     }
 }
 impl Drop for Fixture {
@@ -330,6 +377,131 @@ fn request_accepts_only_the_registered_action_shape_and_required_instance() {
     let mut other = base;
     other["action"] = json!("reset_minimum");
     assert!(serde_json::from_value::<Request>(other).is_err());
+    for action in ["reset_meter_hold", "reset_meter_loudness"] {
+        let request: Request =
+            serde_json::from_value(json!({"operation":"parameter_action", "action":action,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"}))
+            .unwrap();
+        request.validate().unwrap();
+        assert_eq!(request.source(), Source::Dsp);
+    }
+}
+
+#[test]
+fn meter_resets_are_bounded_pulses_from_either_binary_value_without_effect_verification() {
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        for initial in [0, 1] {
+            for auto_reset in [false, true] {
+                let fixture = Fixture::meter(action);
+                fixture.parameter.current.set(initial);
+                fixture.parameter.auto_reset.set(auto_reset);
+                let provider = fixture.provider();
+                let (value, lease) = fixture.run_action(&provider, action);
+                assert_eq!(value["action"], action.name());
+                assert_eq!(value["outcome"], "applied_unverified");
+                assert_eq!(value["effects_verified"], false);
+                assert_eq!(value["verified"], false);
+                assert_eq!(value["reset_verified"], true);
+                assert_eq!(value["effect_parameters"], json!([]));
+                assert_eq!(value["before"]["native_value"]["data"]["value"], initial);
+                assert_eq!(value["after"]["native_value"]["data"]["value"], 0);
+                assert_eq!(value["before"]["tag"], fixture.parameter.tag.get());
+                assert_eq!(
+                    &*fixture.parameter.writes.borrow(),
+                    &[(1, true), (0, false)]
+                );
+                drop(lease);
+                drop(provider);
+            }
+        }
+        assert!(registered("831A0046-BD71-45BF-A419-6FC90D6E9F2F", action).is_err());
+        assert!(registered("Level Meter", action).is_err());
+        assert!(registered("df958d90-0196-434f-adc3-1fc2bb7f4af6", action).is_err());
+    }
+    assert!(
+        registered(
+            "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+            Action::SwapFilterFrequencies
+        )
+        .is_err()
+    );
+}
+
+#[test]
+fn meter_reset_rejects_wrong_index_tag_and_native_name_before_writes() {
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        for changed in 0..3 {
+            let fixture = Fixture::meter(action);
+            match changed {
+                0 => fixture.lookup.index.set(3),
+                1 => fixture.parameter.tag.set(17),
+                _ => fixture.parameter.name.set(&NAME),
+            }
+            let provider = fixture.provider();
+            let (value, lease) = fixture.run_action(&provider, action);
+            assert_eq!(value["outcome"], "not_applied");
+            assert_eq!(value["upper_dispatched"], false);
+            assert!(fixture.parameter.writes.borrow().is_empty());
+            drop(lease);
+            drop(provider);
+        }
+    }
+}
+
+#[test]
+fn meter_reset_requires_audio_effect_and_direct_dsp_before_lookup() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut host = guard_tests::Fixture::new();
+    let mut context = host.context();
+    context.instance.class_uid = "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6".into();
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        let fixture = Fixture::meter(action);
+        let provider = fixture.provider();
+        context.instance.native_class = "Controller".into();
+        let (value, lease) = execute(&context, &provider, action);
+        assert_eq!(value["outcome"], "not_applied");
+        assert!(lease.is_none());
+        context.instance.native_class = "AudioEffect".into();
+        let Provider::DspValue(controller) = provider else {
+            unreachable!()
+        };
+        let provider = Provider::Controller(controller);
+        let (value, lease) = execute(&context, &provider, action);
+        assert_eq!(value["error"]["code"], "unsupported_source");
+        assert!(lease.is_none());
+        assert_eq!(fixture.lookup.find_calls.get(), 0);
+        assert!(fixture.parameter.writes.borrow().is_empty());
+        drop(provider);
+    }
+}
+
+#[test]
+fn meter_reset_unknown_upper_and_lower_outcomes_never_repeat_dispatch() {
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        for change in 1..=4 {
+            let fixture = Fixture::meter(action);
+            let owner = Fixture::new();
+            fixture.parameter.owner.set(owner.pointer());
+            fixture.parameter.next_owner.set(ptr::null_mut());
+            if change == 4 {
+                fixture.parameter.ignore_reset.set(true);
+            } else {
+                fixture.parameter.change_after_upper.set(change);
+            }
+            let provider = fixture.provider();
+            let (value, lease) = fixture.run_action(&provider, action);
+            assert_eq!(value["outcome"], "unknown");
+            assert_eq!(value["effects_verified"], false);
+            assert_eq!(
+                fixture.parameter.writes.borrow().len(),
+                if change == 4 { 2 } else { 1 }
+            );
+            assert!(owner.parameter.refs.get() > 1);
+            assert!(lease.is_some());
+            drop(lease);
+            drop(provider);
+        }
+    }
 }
 #[test]
 fn class_registry_is_exact_and_uses_verified_canonical_fields() {
@@ -711,4 +883,46 @@ fn common_context_reentry_cannot_publish_a_stale_action_owner() {
         !valid,
         "last common context callback replaced owner after the action check"
     );
+}
+
+#[test]
+fn meter_reset_name_drift_during_guards_stops_further_writes() {
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        for after_upper in [false, true] {
+            let fixture = Fixture::meter(action);
+            let provider = fixture.provider();
+            let (value, lease) = run(
+                provider.scalar().unwrap(),
+                &api_mock(),
+                action,
+                registered("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", action).unwrap(),
+                &mut || {
+                    if if after_upper {
+                        !fixture.parameter.writes.borrow().is_empty()
+                    } else {
+                        fixture.parameter.value_reads.get() >= 2
+                    } {
+                        fixture.parameter.name.set(&NAME);
+                    }
+                    Ok(())
+                },
+            );
+            assert_eq!(
+                value["outcome"],
+                if after_upper {
+                    "unknown"
+                } else {
+                    "not_applied"
+                }
+            );
+            assert_eq!(value["upper_dispatched"], after_upper);
+            assert_eq!(
+                fixture.parameter.writes.borrow().len(),
+                usize::from(after_upper)
+            );
+            assert!(lease.is_some());
+            drop(lease);
+            drop(provider);
+        }
+    }
 }

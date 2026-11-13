@@ -53,7 +53,7 @@ nonzero native object UID returned in a prior response.
 | `format_values` | `param`, required explicit `source` of `dsp` or `controller`, `values` with 1..32 finite numbers, required `expected_instance` |
 | `choices` | `param`, `offset` (default0), `limit` (default64,1..128), `source`, `expected_instance` |
 | `set_parameter` | `param`, `mode`, `value`, `source`, `expected_instance` |
-| `parameter_action` | `action` of `swap_filter_frequencies`, required `expected_instance`; fixed direct DSP source |
+| `parameter_action` | `action` of `swap_filter_frequencies`, `reset_meter_hold` or `reset_meter_loudness`, required `expected_instance`; fixed direct DSP source |
 | `state_capture` | required `expected_instance` |
 | `state_restore` | issued `token`, required `expected_instance` |
 | `state_release` | issued `token`, required `expected_instance` |
@@ -186,8 +186,9 @@ alias, or the exact-device External Effect editor resolver. The External editor
 must already be open. The add-on never opens it or matches a device by title,
 selection or first-window position.
 
-`parameter_action` accepts only the source-backed Swap Filter Frequencies button
-on the exact registered Expander, Gate and Compressor classes. The caller cannot
+`parameter_action` accepts the source-backed Swap Filter Frequencies button
+on the exact registered Expander, Gate and Compressor classes, plus two Level
+Meter resets. The caller cannot
 supply a parameter, value, source or native method. It sends the native button
 sequence of maximum with notification, then minimum without notification. The
 same parameter and its controller association remain pinned through publication.
@@ -197,6 +198,20 @@ Independent reads of the two reported `effect_parameters` and the full provider
 must establish the actual swap and any reversal. A lost context, changed binding
 or owner, or failed reset after upper dispatch yields `unknown`; it never retries
 the pulse or completes a reset after an earlier failure.
+
+The Level Meter actions require exact class
+`DF958D90-0196-434F-ADC3-1FC2BB7F4AF6`, native class `AudioEffect` and direct DSP
+access. `reset_meter_hold` binds `resethold` at index 2, tag 1383298120.
+`reset_meter_loudness` binds `resetloudness` at index 4, tag 1383298124. Both require
+a writable Toggle with range 0..1 and current value 0 or 1. Both send the bounded
+maximum/update=true, then minimum/update=false pulse. Their `effect_parameters` array is empty
+because the exposed provider has no hold or integrated-loudness accumulator
+witness. An immediate return to Toggle 0 remains `applied_unverified` with
+`effects_verified:false`. Reset history cannot be restored by writing Toggle 0.
+Use only disposable owned scratch meter history. The finite verification script
+recognizes both actions but stops before dispatch until an independent non-neutral
+effect witness protocol exists. It never treats the filter permutation as a meter
+witness or attempts a reset inverse.
 
 `parameter_details` observes one named parameter and its bounded original chain.
 The response includes the current `parameter` and `details`, plus

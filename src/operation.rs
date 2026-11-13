@@ -733,6 +733,8 @@ pub struct PluginAction {
 #[serde(rename_all = "snake_case")]
 pub enum PluginButtonAction {
     SwapFilterFrequencies,
+    ResetMeterHold,
+    ResetMeterLoudness,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2257,6 +2259,14 @@ mod tests {
         operation.validate().unwrap();
         assert!(!operation.is_read_only());
         assert_eq!(operation.wire().0, "pluginAction");
+        for action in ["reset_meter_hold", "reset_meter_loudness"] {
+            let mut meter = args.clone();
+            meter["action"] = json!(action);
+            meter["plugin"] = json!("Level Meter");
+            let operation = Operation::from_parts("plugin_action", meter).unwrap();
+            operation.validate().unwrap();
+            assert_eq!(operation.wire().1["action"], action);
+        }
         for field in ["source", "param", "value", "method", "path", "token"] {
             let mut invalid = args.clone();
             invalid[field] = json!("unchecked");
