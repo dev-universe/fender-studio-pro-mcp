@@ -4,16 +4,17 @@
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
-한 단위는 “플러그인 또는 공통 하위시스템의 독립 기능 완료물”이다. 예를 들어 프리셋 수용과 일반 그래프 편집은 별도 결과이므로 별도 ID지만, 같은 증거를 재사용하며 같은 실기를 두 번 요구하지 않는다. 파라미터501개와 프리셋17종을 더해519개 작업이라고 하지 않는다.
+한 단위는 “플러그인 또는 공통 하위시스템의 독립 기능 완료물”이다. 예를 들어 프리셋 수용과 일반 그래프 편집은 별도 결과이므로 별도 ID지만, 같은 증거를 재사용하며 같은 실기를 두 번 요구하지 않는다. 파라미터 잔여 수와 프리셋 잔여 종 수를 같은 크기의 작업처럼 더하지 않는다.
 
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
-| 고정 현재값 이름 |6611/7112|501개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
+| 고정 현재값 이름 |6619/7112|493개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
-| 이 잔여 완료물 표 |역사 전체 분모 없음|43개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
+- **완료**: 이 목록의 완료 조건을 실제 검증과 별도 수용으로 충족했다. 플러그인의 모든 기능이 끝났다는 뜻은 아니다.
 - **부분 완료**: 관련 API·제한된 실제 증거가 있지만 해당 완료 조건 전체는 충족하지 못했다. 구현 여부와 실제 검증 범위는 아래에 별도 기록한다.
 - **미착수**: 이 표의 독립 완료물 수준에서는 실행 가능한 계약을 아직 만들지 못했다.
 - **하드웨어 대기**: 전체 완료에 재연결/배선/물리 관측이 필요하다. 해당 행의 소프트웨어 준비까지 모두 멈춘다는 뜻은 아니다.
@@ -49,7 +50,7 @@
 |---|---|---|---|---|
 |CONTROL-AMPIRE|Ampire|부분 완료|일반39개·catalog/owner 읽기|alias·micmix/linked·bypass/tuner·stomp 순서의 남은19역할을 올바른 대상에 변경·읽기·복원하고 연동 peer/구조를 보존한다.|
 |CONTROL-CV|CV Instrument|하드웨어 대기|provider/선택 범위와 역할97개 분류|config86·generator4·MIDI3의 유한 변경/복원, 포트 격리와 calibration2/monitor2의 실제 효과·중지·복원을 구분해 입증한다.|
-|CONTROL-CHORDER|Chorder|부분 완료|input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput60 R9는 양수/역변경·전체908/저장128 보존1건 완료|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
+|CONTROL-CHORDER|Chorder|부분 완료|input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput60과1..8은 전체908/저장128 보존 현재값9건 완료|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
 |CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
@@ -76,7 +77,7 @@
 |SHARED-EVENT|MIDI/키 입력 수명 계약|미착수|passive MIDI 조회·빈 관측창·일부 현재값만 확인|고정 press/release·neutral·중복 입력·문맥 소실·unknown 보유의 안전한 계약과 독립 event/held 증거를 구현·검증한다. 클래스별 적용은 CONTROL 항목에서 수용한다.|
 |SHARED-PERSISTENCE|저장·재시작 보장 범위|부분 완료|Chorder input60/output0의339요청·2Save·2restart property 완료|기존 property를 재사용하고 새 모델/그래프/설정에 주장할 Save/reopen 범위를 유한 사례로 검증해 지원표와 일치시킨다. 원래 곡을 덮어쓰지 않는다.|
 |SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native41/c733ce5/46도구의 정상 설치·실기 완료|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
-|SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6611 이름·29종/58사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
+|SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6619 이름·29종/58사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
 
 ### 하드웨어
 
@@ -84,7 +85,7 @@
 |---|---|---|---|---|
 |SHARED-PHYSICAL-KEYS|Keystation88 MK3 실제 입력 연동|하드웨어 대기|USB 연결 존재 및 빈 MIDI window만 과거 확인|장치 재연결 뒤 실제 key press/release와 DAW 수신·종료/설정 복원을 확인한다. USB 존재나 소프트웨어 현재값을 물리 연주로 세지 않는다.|
 
-## 501개 이름과 완료 기능을 혼동하지 않는 기준
+## 493개 이름과 완료 기능을 혼동하지 않는 기준
 
 19클래스의 이름 잔여 목록에는 이미 실제 검증한 Gate/Expander/Compressor의 swapfreqs3개도 scalar 집계 방식 때문에 남아 있다. 이는 **장부 분류 항목이며 새 실행 작업이 아니다**. Gate와 Expander를 별도 잔여 플러그인 기능 행에 넣지 않았다. 반대로 현재값이 끝난 Multi·Impact·Vocal은 할당/다른 focus/host callback 등의 미검증 기능이 있어 위 기능 행에 남겼다. 이름 숫자만으로 전체 기능 잔여를 산출할 수 없는 이유다.
 
@@ -102,7 +103,7 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 - [PROGRESS_2026-11-13.md](PROGRESS_2026-11-13.md): 최신 Chorder 실패와 후속 준비 및 단위 이력.
 - [PLUGIN_STATE_VALIDATION.md](PLUGIN_STATE_VALIDATION.md): 영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속.
 - [LOOP_HANDOFF_2026-11-12.md](LOOP_HANDOFF_2026-11-12.md): 13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함.
-- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6611/7112·501·19클래스의 현재값 전용 범위.
+- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6619/7112·493·19클래스의 현재값 전용 범위.
 
 현재 JSON의 accepted와 이름 합집합을 우선했다. 오래된 검증 문서/인수인계의 과거18·25·28종 숫자나 완료된 P0–P5 단위를 새 backlog로 되살리지 않았다. stale Tuner 배열은 작성자가 accepted 기준으로 정규화했고, 이후 Root가 현재 RESUME_STATE 배열도17종으로 맞췄다. 일반 편집·automation·bounce·process tap 등 최초 장기 범위는 이번 내장 플러그인 잔여 분모에 새로 얹지 않았다. 이미 구현·검증된 범위는 별도 과거 근거로 유지한다.
 
