@@ -1,0 +1,42 @@
+{
+  "status": "independently_verified_fixed_stereo_send_check_only_observation",
+  "tool_requests": 26,
+  "actual_elapsed_seconds": 266.669,
+  "full24_provider_reads": 4,
+  "full24_value_nonvalue_unknown_unchanged": true,
+  "Param_leaf_paths": [
+    [
+      0
+    ],
+    [
+      1
+    ]
+  ],
+  "raw_category": [
+    1,
+    1
+  ],
+  "raw_check_only": [
+    1,
+    1
+  ],
+  "category_query_calls": 2,
+  "check_only_calls": 2,
+  "flags": 1,
+  "selection_calls": 0,
+  "execution_calls": 0,
+  "global_command_filter_checked": false,
+  "atomic_snapshot": false,
+  "continuous_membership_proved": false,
+  "menu_data_typed_values_observed": false,
+  "selection_or_execution_authority": false,
+  "numeric_port_mapping_proved": false,
+  "Main_preparation_writes": 1,
+  "plugin_parameter_state_port_Save_transport_writes": 0,
+  "NoSave_app_closed_owner0_saved6_verified": true,
+  "audio_or_persistence_proved": false,
+  "strict_name_class_or_preset_increment": 0,
+  "new_actual_calls_by_auditor": 0,
+  "audit_freeze_sha256": "de70cf1314815423280a131996cd3177ba095a3ac63450542d71c40a3c47df35",
+  "audit_report_sha256": "9f146b52df350018df29e9eeffa614687f2aa0f51921974deb54014ff934a5d8"
+}

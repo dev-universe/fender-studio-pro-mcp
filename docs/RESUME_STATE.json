@@ -4,20 +4,20 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "8f29a89",
+  "product_source_commit": "c733ce5",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 40,
-  "installed_native_uuid": "CB8C035D-18F4-3E44-BB2E-1AD793270162",
+  "installed_native_unit": 41,
+  "installed_native_uuid": "16C018A4-B407-3FD9-8C09-4C357C9B832B",
   "app_closed_observed": true,
   "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native40 Level Meter readonly controller metadata: 253.385초·23개 실제 요청과 독립 감사PASS. 노드2/연결1·전체DSP7 네 번 보존·Main준비1 외변경0·NoSave/owner0/저장6개 보존.",
+  "last_completed_unit": "Chorder 정적 함수2개:550.480초,REA6.9/Ghidra12.1.4,타깃실행·DAW0/모듈불변/정상0종료. 값0은누락기본값일수있어해제성공으로추정하지않는다.",
   "last_completed_unit_learning_setters": 64,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -307,14 +307,16 @@
     "spectrum_fixed_preset_setting_and_fresh_serialization_cases": 1,
     "multi_float1_fixed_current_value_cases": 1,
     "multi_fixed_current_value_cases": 150,
-    "level_meter_readonly_controller_metadata_units": 1
+    "level_meter_readonly_controller_metadata_units": 1,
+    "external_stereo_public_check_only_units": 1
   },
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7·Spectrum R4·Float1 R2·진단24요청은 재실행하지 않는다. 원래 실패와 별도 검증 기록을 함께 보존한다.",
     "Float2~8 실제247.935초·187개·14쓰기·전체150개29묶음/87페이지의 독립 원장 대조PASS를 완료했다. 고정 현재값7건만 인정하고 strict_name_coverage_increment0을 유지한다. Float1 포함8개는 반복하지 않는다. 첫 UI경로 오류375.153초·DAW0 실패는 보존한다.",
     "External Normal39 실제26개·106.533초와 독립 감사PASS 완료. 반복하지 않는다. 최근성공종료문맥은Multi control32~63이며 각 runtime사본을 보존한다. 공개 checkOnly의 ABI/fake는검토됐고 실제invoker한정구현을준비한다. 선택·숫자포트값·None복원은미확인이다.",
     "Multi150개 현재값 변경·읽기·복원과8개 실제 감사 및 이름delta 독립 검토가 모두 완료됐다. 전체6610/7112·잔여502개에150개를 추가했으며 원래 pilot strict_increment0와 실패 자료는 보존한다. 완료한150개를 재실행하지 않는다.",
-    "External Future41의 고정 public checkOnly query route는 전체208소스 독립 검토PASS다. 현재 제품/설치는40이며41은 아직 미반영이다. 고정26 수집기를 독립 검토한 뒤 정상41 빌드·46metadata·manifest148·설치·최신Level40 종료문맥을 새로 연결한다. provenance=true/include_check_only=true가 실제 필드명이며 선택0이다.",
+    "Native41 External Stereo Send102 checkOnly 실제26개·266.669초·독립 감사PASS 완료. 두 leaf에서 category1/query1과flags1을 확인했고 선택/실행0·전체24개4회보존이다. 완료수집기는 반복하지 않는다. 다음 External 선택은 public global-command-filter 경계를 지키는 별도 구현·숫자포트/None복원 증명이 필요하다.",
+    "Chorder 기존자료와 새정적함수11a08/31c70 두 개를 재사용한다. 값조회0은 누락기본값일수있고5/6이름·IParamObserver slot·guiInput/실제해제는미확정이다. 다음은 정확히c5454 함수112바이트와f19e0부터48바이트표만 읽는다. 기존11390/166c0/167b0/10604 대규모분석을 반복하지 않는다.",
     "Native40 Level controller 실제23개·253.385초와 독립 감사PASS. 노드2/연결1의 한정 metadata만 확인했고 기존DSP7은 보존됐다. resethold/resetloudness 두 Toggle의 동작·효과는 남았다. useisl의 과거 직접DSP miss를 전체 controller 부재로 해석하지 않는다.",
     "Open AIR43개 쓰기값과 새2033바이트 A/B 일치는 완료했으나 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장은 남았다. Room16개 쓰기값·새725바이트 일치와 구분한다. 일반 프리셋28/46종·56사례·18종 잔여를 유지한다.",
     "남은 프리셋18종과 모델·동작의 의미를 계속 확인한다. 현재 고정 이름6610/7112·잔여502개/19클래스다. Multi150개 현재값 완료를 매크로 할당·MIDI·콜백·저장·그래프 완료로 확대하지 않는다.",
@@ -327,7 +329,7 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6610/7112 fixed current-value names,502 remaining;28/46 preset classes,56 cases,18 remaining;Multi150/150 independently audited;Level40 readonly2nodes/1edge,hiddenvalues0;External selection0.",
+  "last_measurement": "6610/7112 fixed current-value names,502 remaining;28/46 preset classes,56 cases,18 remaining;Multi150/150;Native40Level23 and Native41External query26 audited;selection0.",
   "binary_source_commit": "ff866cb",
   "current_execution": {
     "unit": "Multi controls000..031 actual active; first12 auditedPASS",
@@ -372,10 +374,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "External Stereo Send102 checkOnly query-only26 after reviewednormal41 integration",
+      "next_finite_unit": "Chorder static helper112bytes and table48bytes",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        10,
-        20
+        3,
+        6
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -396,7 +398,7 @@
   "last_runtime_verified_native_unit": 39,
   "last_runtime_verified_source_commit": "ff866cb",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Multi front-panel12 actual307 independently audited; Toggle8+Float4",
+  "last_completed_live_unit": "Native41 External fixedStereoSend checkOnly:266.669초/26요청/2category+2query/raw1/선택0·실행0/전체24개4회보존/NoSave·owner0·저장6개 보존/독립 감사PASS.",
   "last_completed_live_elapsed_seconds": 457.574,
   "prepared_units": {
     "64": {
@@ -2181,7 +2183,7 @@
     "independent_review_freeze_sha256": "bb9c5cce2c2d0d4ad33f8f942f14b3cba62c4b06f7fbc50ee036f2bc362c2e33"
   },
   "prior_normal38_source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
-  "current_product_source_authority_kind": "immutable_R2_plus_reviewed_standard_rustfmt_overlay_208",
+  "current_product_source_authority_kind": "reviewed_full41_query_source208",
   "native39_installation": {
     "normal_native_unit": 39,
     "native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
@@ -2569,16 +2571,17 @@
     "pending_cases": 0
   },
   "external_checkonly_native_candidate": {
-    "status": "PASS_UNREGISTERED_PRIVATE_SOURCE_ONLY",
-    "actual_calls": 0,
+    "status": "integrated_via_reviewed_full41_route_actual_query_observed",
+    "actual_calls": 26,
     "selection_calls": 0,
-    "installed": false,
-    "registered_route": false,
+    "installed": true,
+    "registered_route": true,
     "source_freeze_sha256": "8b6bdf9ebc5051b726aa3c48bca3aa257ee74ef9c60c75d7447bc78abf17769a",
     "review_freeze_sha256": "825c4d9a3930a4cc4d112ddb9646d8db192852494e8f1bf892d5050b1aa96c01",
     "review_report_sha256": "3bfb5c789129fb419b6d571bab5717b56fc281d22f315601321812d91209d6bd",
     "scope": "fixed StereoSend102 public retained IObject invoker flags1 only; native helper not yet registered",
-    "next": "private guarded query-only route; no selection authority"
+    "next": "private guarded query-only route; no selection authority",
+    "native_check_only_calls": 2
   },
   "native40_runtime_actual_total_requests": 23,
   "native40_installation": {
@@ -2749,9 +2752,9 @@
     "last_two_report_count_erratum_sha256": "4fe860718e856972d256919c7662d5fb9574c958eb264073fe9d2900bc3f91f5"
   },
   "external_checkonly_registered_route": {
-    "status": "private_full_source_and_collector_review_PASS_wait_normal41",
-    "actual_calls": 0,
-    "installed": false,
+    "status": "integrated_normal41_actual26_independent_audit_PASS",
+    "actual_calls": 26,
+    "installed": true,
     "selection_calls": 0,
     "source_freeze_sha256": "0b65d787f2f2b88d69985e72b0fdd344b59f64c164ed86db8cec75b25c7293f4",
     "review_freeze_sha256": "f20334d2ae11da04d5b207cedde356c0d407ddcef4440674c4f3751b32336971",
@@ -2760,6 +2763,112 @@
     "future_manifest_sources": 148,
     "tools": 46,
     "collector_review_freeze_sha256": "29ade11dc9361b9db2aefdd990c2704ad4596af504b184d694c85d6f56b63ef5",
-    "collector_review_report_sha256": "bcf589de8da1f4fed3439fdcb8f00585f0742916096a65b88e6a4ec240a720e8"
+    "collector_review_report_sha256": "bcf589de8da1f4fed3439fdcb8f00585f0742916096a65b88e6a4ec240a720e8",
+    "execution_calls": 0
+  },
+  "current_product_source_authority_sha256": "eae2c825c329b47ff8894229d977640cc0e3c970b074d246f45186c532809abd",
+  "native41_installation": {
+    "all208_sources_match": true,
+    "manifest_sources": 148,
+    "native_approved": 146,
+    "build_support": 2,
+    "manifest_sha256": "6ac6fb001c65616e8254d0b2cdce363bb088c73194982b4c8626a77d80d316fb",
+    "native_uuid": "16C018A4-B407-3FD9-8C09-4C357C9B832B",
+    "native_sha256": "ad5523d506c8b1b590d36232e6a9260f4705cb6f5ff16b2a63923daf17322c0f",
+    "main_sha256": "5b7cb330aa8a811751318156c53129f3eb027ea17e1014a00757aaf52278720b",
+    "metadata_sha256": "abf5ba056892ee3ff8c12e6534483aaed6207beaff521e8343be0499db7a2f7e",
+    "metadata46": true,
+    "source_commit": "c733ce5",
+    "installed": true,
+    "normal_bridge_install_exit_code": 0,
+    "normal_native_install_exit_code": 0,
+    "force_used": false,
+    "installed_package_four_hashes_match": true,
+    "installed_bridge_three_hashes_match": true,
+    "bridge_sha256": {
+      "BridgeComponent.js": "19048d15aa412a0ecbc5a0d76de626fba3679875b4b90d6649d3ef56f3d5a54d",
+      "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+      "NativePluginControls.js": "3ebcee8569c506eac6ee491bf82479d295a12e34a730e345a1335aae8efa7c14"
+    },
+    "focused_JS_tests": 23,
+    "focused_native_tests": 1,
+    "main_and_addon_fmt_passed": true,
+    "main_release_build_seconds": 21.15,
+    "native_release_build_seconds": 12.58,
+    "tool_count": 46,
+    "tools_schema_canonical_sha256": "abf5ba056892ee3ff8c12e6534483aaed6207beaff521e8343be0499db7a2f7e",
+    "changed_tools": [
+      "external_port_menu",
+      "operation_run"
+    ],
+    "main_binary_sha256": "5b7cb330aa8a811751318156c53129f3eb027ea17e1014a00757aaf52278720b",
+    "native_unit": 41,
+    "actual_runtime_requests": 26,
+    "first_zero_test_attempt_excluded": true,
+    "installation_DAW_tool_calls": 0,
+    "preinstall_DAW_tool_calls": 0
+  },
+  "native41_runtime_actual_total_requests": 26,
+  "external_checkonly_actual": {
+    "status": "independently_verified_fixed_stereo_send_check_only_observation",
+    "tool_requests": 26,
+    "actual_elapsed_seconds": 266.669,
+    "full24_provider_reads": 4,
+    "full24_value_nonvalue_unknown_unchanged": true,
+    "Param_leaf_paths": [
+      [
+        0
+      ],
+      [
+        1
+      ]
+    ],
+    "raw_category": [
+      1,
+      1
+    ],
+    "raw_check_only": [
+      1,
+      1
+    ],
+    "category_query_calls": 2,
+    "check_only_calls": 2,
+    "flags": 1,
+    "selection_calls": 0,
+    "execution_calls": 0,
+    "global_command_filter_checked": false,
+    "atomic_snapshot": false,
+    "continuous_membership_proved": false,
+    "menu_data_typed_values_observed": false,
+    "selection_or_execution_authority": false,
+    "numeric_port_mapping_proved": false,
+    "Main_preparation_writes": 1,
+    "plugin_parameter_state_port_Save_transport_writes": 0,
+    "NoSave_app_closed_owner0_saved6_verified": true,
+    "audio_or_persistence_proved": false,
+    "strict_name_class_or_preset_increment": 0,
+    "new_actual_calls_by_auditor": 0,
+    "audit_freeze_sha256": "de70cf1314815423280a131996cd3177ba095a3ac63450542d71c40a3c47df35",
+    "audit_report_sha256": "9f146b52df350018df29e9eeffa614687f2aa0f51921974deb54014ff934a5d8"
+  },
+  "chorder_guiinput_static_analysis": {
+    "status": "two_functions_complete_closed",
+    "REA": "6.9.0",
+    "Ghidra": "12.1.4",
+    "actual_elapsed_seconds": 550.479776,
+    "target_execution_calls": 0,
+    "DAW_calls": 0,
+    "target_unchanged": true,
+    "addresses": [
+      "0x11a08",
+      "0x31c70"
+    ],
+    "evidence_bundle_sha256": "09d279d8316574326a15a45268669c80621b06ec60e8e962ede2964675133735",
+    "interpretation_freeze_sha256": "e6b9135ec019e748a9b7e278b3f4f63e992a3eab0adac8a31f6e7ba106cdd70e",
+    "note_release_verified": false,
+    "next": [
+      "0xc5454 complete112bytes",
+      "0xf19e0 table48bytes"
+    ]
   }
 }
