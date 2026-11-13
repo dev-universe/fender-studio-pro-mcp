@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Tuner R1 환경비교실패:179.457초,실제조회5개모두observed/부모4개,메인·플러그인·프리셋·state·포트·Save·재생변경0,NoSave/앱·소유자종료/저장6개보존. 예전선택·다른악기자동arm/monitor기준오류를수정하는R2준비중이다.",
+  "last_completed_unit": "Tuner R2 index0:162.138초·127요청,440.0→415.0→440.0Hz,전체13개14회/정확복원·새242바이트A/B일치. Main준비1회외직접setter/포트/Save/재생0,NoSave/앱·소유자종료/저장6개보존. 부분프리셋1건추가,종수28/46·18잔여.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -59,16 +59,30 @@
       "Surround Delay",
       "Multiband Dynamics"
     ],
-    "new_preset_recall_restore_cases": 56,
+    "new_preset_recall_restore_cases": 57,
     "remaining_preset_classes": 18,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
     "new_hybrid_preset_recall_restore_cases": 10,
-    "partial_preset_classes": {},
+    "partial_preset_classes": {
+      "Tuner": {
+        "accepted_cases": 1,
+        "fixed_indices": [
+          0
+        ],
+        "fixed_names": [
+          "415 Hz Baroque"
+        ],
+        "whole_DSP13_restored": true,
+        "new_A_B_equal_bytes": 242,
+        "complete_class": false,
+        "verification": "Root direct actual receipt/cleanup verification after independent collector review"
+      }
+    },
     "new_preset_cases_in_completed_classes": 56,
     "new_capsule_only_preset_classes_completed": 23,
-    "new_capsule_only_preset_recall_restore_cases": 46,
+    "new_capsule_only_preset_recall_restore_cases": 47,
     "new_hybrid_preset_classes_completed": 5,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -308,12 +322,14 @@
     "multi_float1_fixed_current_value_cases": 1,
     "multi_fixed_current_value_cases": 150,
     "level_meter_readonly_controller_metadata_units": 1,
-    "external_stereo_public_check_only_units": 1
+    "external_stereo_public_check_only_units": 1,
+    "tuner_fixed_preset_setting_and_fresh_serialization_cases": 1
   },
   "next_units_in_order": [
-    "Tuner R1은프리셋적용전환경비교에서실제조회5개/부모4개·변경0으로실패후완전히정리했다. 같은R1은반복하지않는다. 실제원본5개와Root종료·저장6개근거를고정한별도R2에서현재선택/다른악기arm·monitor기준과직전실패종료문맥을수정한다. Tuner index0/415 Hz Baroque·DSP13/catalog5·127요청범위는그대로이며검토/새Root binding전실행하지않는다. 성공해도1건으로종수를자동증가하지않는다.",
+    "Tuner R2 index0/415 Hz Baroque는127개·162.138초·전체13정확복원·새242바이트A/B일치·Root실제대조/정리로완료했다. 같은R2는반복하지않는다. 다음은고정index1/430 Hz Classic 한건이며같은127요청·수명절차를재사용하는R3다. 현재UNBOUND로준비중이며검토·새Root binding후에만실행한다. R1실패5원본/부모4·변경0과Root종료자료는보존한다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
+    "Chorder의전체현재값검증을MIDI눌림/해제의미증명과불필요하게묶고있는지기존setter소스만3분한도로확인한다. 바이너리연구를다시시작하지않는다. 기존등록API와정확복원/종료로가능한파일럿인지,실제소스거부나숨은변경위험이있는지구분하며소스판단만으로완료수를늘리지않는다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은28/46종·56사례·18종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -326,27 +342,24 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6610/7112 fixed current-value names,502 remaining;28/46 preset classes,56 cases,18 remaining;Multi150/150;Native40Level23 and Native41External query26 audited;selection0.",
+  "last_measurement": "6610/7112 fixed names,502 remaining;28/46 completed preset classes,57 accepted preset cases=56 in completed classes+Tuner1 partial,18 classes remaining;TunerR2 actual127 complete, R1raw5 failure retained.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Tuner R2 preparation for corrected initial fixture and known-zero-write R1 closure",
+    "unit": "Tuner index1 second fixed preset collector preparation; current-value premise check offline only",
     "DAW_live_unit_running": false,
     "REA_running": false,
+    "offline_preparation_running": true,
     "current_product_source_commit": "c733ce5",
     "native_unit": 41,
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Tuner R1 known-zero-write fixture failure",
+    "latest_closed_DAW_unit": "Tuner R2 index0 complete127",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "completed_native41_actual_requests": 26,
+    "latest_closed_job_id": "19287589-4bd5-4cdb-969b-2eb48e656d9c",
     "pending_mutations": 0,
-    "offline_preparation_running": true,
-    "job_id": "72c523c0-9f07-4eab-9700-66f3aea5b0fe",
-    "terminal_tool_inputs": 4,
-    "active_requests_excluded_from_completed_total": true,
-    "raw_tool_requests": 5,
-    "latest_accepted_DAW_unit": "Native41 External Stereo checkOnly26"
+    "completed_native41_accepted_unit_requests": 153,
+    "native41_raw_requests_including_failed_unit": 158
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2812,7 +2825,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 31,
+  "native41_runtime_actual_total_requests": 158,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -2935,9 +2948,9 @@
     "next_unresolved_boundary": "notification thunk destination/body and canonical guiInput registration/held-release contract; no immediate analysis queued"
   },
   "tuner_preset_next": {
-    "status": "R1_failed_collector_fixture_before_preset_apply_cleaned_up",
-    "fixed_index": 0,
-    "fixed_name": "415 Hz Baroque",
+    "status": "R3_preparation_UNBOUND_not_executed",
+    "fixed_index": 1,
+    "fixed_name": "430 Hz Classic",
     "catalog_count": 5,
     "DSP_count": 13,
     "estimated_tool_requests": 127,
@@ -2947,15 +2960,13 @@
     "fresh_capture": 2,
     "direct_parameter_seed_or_repair": 0,
     "Save_or_transport": 0,
-    "actual_calls": 5,
+    "actual_calls": 0,
     "automatic_class_increment": false,
     "finite_unit_minutes_estimate": [
-      20,
-      35
+      10,
+      18
     ],
-    "whole_program_ETA": null,
-    "parent_verified_calls": 4,
-    "accepted_cases": 0
+    "whole_program_ETA": null
   },
   "tuner_preset_r1_failed": {
     "status": "failed_cleaned_up",
@@ -2979,6 +2990,57 @@
     "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
-  "native41_accepted_completed_unit_requests": 26,
-  "native41_failed_unit_raw_requests": 5
+  "native41_accepted_completed_unit_requests": 153,
+  "native41_failed_unit_raw_requests": 5,
+  "tuner_preset_r2_actual": {
+    "at": "2026-11-13T10:28:12.394484+00:00",
+    "status": "complete",
+    "job_id": "19287589-4bd5-4cdb-969b-2eb48e656d9c",
+    "actual_elapsed_seconds": 162.138,
+    "raw_tool_requests": 127,
+    "parent_verified_requests": 127,
+    "all127_parent_raw_receipts_identical": true,
+    "unique_request_ids": 127,
+    "same_document_session": true,
+    "full13_snapshots": 14,
+    "other12_peer_and_all_nonvalue_unchanged": true,
+    "original_full13_snapshots_equal": 12,
+    "changed_pair_equal": true,
+    "calibration_display": [
+      "440.0 Hz",
+      "415.0 Hz",
+      "440.0 Hz"
+    ],
+    "calibration_raw": [
+      5000,
+      0,
+      5000
+    ],
+    "normalization_linearity_assumed": false,
+    "fresh_A_B_byte_count": 242,
+    "fresh_A_B_sha256": "4aeae9908fbc86d4b20bdfbbe7e17ad8d734936640b935c33b1fe4dedcc7f30a",
+    "new_distinct_capture_tokens": true,
+    "Main_preparation_writes": 1,
+    "preset_apply_calls": 1,
+    "state_restore_calls": 1,
+    "state_capture_calls": 2,
+    "state_release_calls": 2,
+    "catalog_release_calls": 1,
+    "expected_expiry_refusal_calls": 1,
+    "direct_plugin_parameter_writes": 0,
+    "port_Save_transport_actions": 0,
+    "app_closed_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "accepted_fixed_setting_cases": 1,
+    "accepted_classes_increment": 0,
+    "accepted_names_increment": 0,
+    "audio_or_persistence_verified": false,
+    "result_sha256": "bba2b7f756f9b71c89e25cece3cb167a974d127b91273f64cdbbaa5a11c05ac5",
+    "journal_sha256": "3e88128ccb5b504f046a95a6a644184b18fc3dcf7919a2c9ab3e931984719c6f",
+    "source32_data48_unchanged": true,
+    "Root_actual_review": "direct actual receipts and cleanup; independent collector review reused, no separate actual audit",
+    "collector_source_freeze_sha256": "285e83a9d372bf8ede06e8d76041d6b5e9ac97297b4e2bcb3951cd73586e7c06",
+    "collector_review_freeze_sha256": "12ee45df0ec44280ebcb6fcb8743351d9e2fe15b4a43fa210c4788c45679d450"
+  }
 }
