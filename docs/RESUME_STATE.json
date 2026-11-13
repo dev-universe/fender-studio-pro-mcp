@@ -17,8 +17,8 @@
   "owned_songs_closed_without_save": false,
   "saved_owned_songs_unchanged": false,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Multi R7 읽기 검증29요청/165.019초/독립전수감사 통과:150개전후일치·34노드36연결·세부6개,Main준비1 외쓰기0,NoSave·정상소유자종료·6개저장본보존.",
-  "last_completed_unit_learning_setters": 8,
+  "last_completed_unit": "Spectrum R4 actual127/186.042초 고정설정1 및 Float1 R2 actual43/168.618초 고정현재값1 독립감사PASS. 원래R3실패0·전역수불변·NoSave/owner0/6저장본보존.",
+  "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -303,12 +303,14 @@
     "vocal_tune_direct_bypass_current_value_cases": 1,
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
     "external_stereo_exact_opaque_menu_reader_units": 1,
-    "external_mono_exact_opaque_menu_reader_units": 1
+    "external_mono_exact_opaque_menu_reader_units": 1,
+    "spectrum_fixed_preset_setting_and_fresh_serialization_cases": 1,
+    "multi_float1_fixed_current_value_cases": 1
   },
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7의170요청은 재실행하지 않는다. 원래 실패 결과들과 별도 독립 검증 기록을 모두 보존한다.",
-    "Native38 정상 설치와 Multi R7 실제29개·150개 전후/34노드36연결/세부6개 및 독립 감사는 완료했다. 이 읽기 단위는 반복하지 않는다. R4~R6 실패 승인0을 보존한다. 다음 즉시 단위는 Spectrum R2의 알려진 metadata-only 종료 수정 검토와117/127개 유한 프리셋 검증이다. R1은 실제0이며 오프라인 검토 P2로 보류됐다. 기존65트랙·MCP Keys 이벤트3개를 보존한다. 그 뒤 Multi float-1의 기존DSP guarded setter로 raw2500/norm0.25 현재값 변경·원본0복원에 필요한 의미/권한부터 확인하고, MacroControlSet·MIDI할당·모델·중첩그래프 경로를 계속한다. 현재 Multi 엄격 setter accepted0/잔여150이며 읽기 성공을 쓰기 범위에 더하지 않는다.",
-    "External Stereo와Mono 메뉴 읽기는 실제35요청씩 완료했다. 소프트웨어 포트 선택은 아직 미구현이다. 공개 SDK selectItem ABI 독립 검토와 현재 바이너리에 대한 한정 REA/Ghidra 분석을 활용해 실제 메뉴 데이터·파라미터·소유권 의미를 확인한 뒤 구현한다. 행 이름이나 숫자를 포트 값으로 추정하지 않는다.",
+    "Native38 Multi R7 읽기29개·Spectrum R4 고정설정127개·Multi Float1 R2 고정현재값43개와 독립감사를 완료했다. 원래R3실패0을 보존하며 이 단위들은 같은 조건으로 반복하지 않는다. Spectrum은 고정설정/새직렬화1건·클래스0, Float1은 고정현재값1건·strict_name_increment0이다. 전체 이름6460/7112/잔여652와 일반프리셋28/46/56사례/잔여18종을 유지한다. 이후 Multi 모델·매크로/CC 할당·중첩그래프의 가장 작은 미확인 의미를 소스/제한API 근거로 선택한다. 현재 strict Multi 전역이름은0/150이며 이번 고정사례를 자동 합산하지 않는다.",
+    "조회 오류 진단 R2 Unicode 후보는 독립PASS WITH LIMITS·실제0·미반영이다. Spectrum·Float1 두 Normal38 실제단위와 독립감사가 완료돼 선행 조건은 충족됐다. 다음은 Root의 현재상태 재확인·검토된 제품 반영·정상빌드/브리지/도구 검증이다. 다음실제검증은 바뀐 source의 새전체입력/설치pin으로 연결한다. External Stereo/Mono 메뉴읽기35개씩은 완료했고 R1/R2 정적·ABI근거는 포트변경이 아니다. 선택은 아직 미구현이며 실제메뉴/파라미터/소유권 의미를 먼저확인한다.",
     "Open AIR R7는43개 쓰기 가능 값 복원과 새2033바이트 A/B 직렬화 일치1건을 완료했다. 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장 검증은 남았다. 일반 프리셋 완료 수는28/46종·56사례·18종 잔여를 유지한다. Room 별도16개 쓰기값·새 상태 캡처 일치와 구분한다.",
     "남은 프리셋18종과 모델·프리셋 전체 열거를 계속한다. 완료 종이나 과거 실패를 같은 조건으로 재실행하지 않고 미확인 의미와 정확한 복원 조건을 먼저 해결한다.",
     "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 전용 제한 API와 구체적 관측 근거로 구현·검증한다. 현재값 변경과 이벤트 전달 증거를 구분한다.",
@@ -320,15 +322,18 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
+  "last_measurement": "6460/7112 fixed names,652 remaining;28/46 preset classes,56 cases,18 remaining;Spectrum fixed setting1/class0;Float1 fixed current-value1/name increment0.",
   "binary_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
   "current_execution": {
-    "unit": "OpenAIR R7 expected catalog refusal parent handling offline correction",
+    "unit": "Both Normal38 pilots independently audited; reviewed Unicode inspection diagnostic landing pending Root state recheck",
     "DAW_live_unit_running": false,
-    "OpenAIR_R6_observed_raw_calls": 158,
-    "OpenAIR_R6_parent_consumed_calls": 157,
-    "OpenAIR_R6_original_acceptance": 0,
-    "OpenAIR_R6_NoSave_normal_failed_cleanup_complete": true
+    "Spectrum_R4_actual_requests": 127,
+    "Spectrum_R4_fixed_setting_cases": 1,
+    "Multi_Float1_R2_actual_requests": 43,
+    "Multi_Float1_fixed_current_value_cases": 1,
+    "current_app_closed": true,
+    "current_owner_stopped": true,
+    "current_six_archives_preserved": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -347,18 +352,18 @@
     "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
-  "installed_native_sha256": "f9a1dfc0ad9ab06203ec4ef4c7226d4b61212c8b42bdcead12a6e02c0725f6c9",
+  "installed_native_sha256": "2b06fe13bad11ecccba70bb44ac630abad9cabcdafb2fa1bbca19ec6e495e05f",
   "binary_sha256": "c33cf8760693786fc066d222fee207220cbb7e087ae7a6ba4482aa77262b46cf",
   "installed_bridge_files_sha256": {
     "BridgeComponent.js": "1665a3461d8f46e7740b6acc323a647bbef426133f9cb16abd2cea70450fb236",
     "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
     "NativePluginControls.js": "be99b580f1b91d0055da4e80e1aad2e9a85d519c3551c2e67b3ce126866f12b1"
   },
-  "last_runtime_verified_native_unit": 37,
-  "last_runtime_verified_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
+  "last_runtime_verified_native_unit": 38,
+  "last_runtime_verified_source_commit": "031ee56",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native37 Mono current-baseline exact port menu35 independently verified",
-  "last_completed_live_elapsed_seconds": 108.79,
+  "last_completed_live_unit": "Multi Float1 R2 fixed current value change/read/restore43 independently audited",
+  "last_completed_live_elapsed_seconds": 168.618,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -1590,7 +1595,8 @@
     "Mono": "external37-mono-menu-live-pilot/r4 actual35 complete",
     "OpenAIR": "nov13-openair-fresh-serialization/r7 actual170 complete; independent audit passed",
     "Multi": "nov13-multi-receiver-collector/r7 actual29 complete; independent audit passed; do not replay",
-    "Spectrum": "nov13-spectrum-meter-preset-pilot/r1 offline review found known-bootstrap cleanup P2; separate r2 fix pending"
+    "Spectrum": "R4 actual127 complete; independently audited fixed setting1/fresh serialization; R3 failed0 preserved; do not replay",
+    "Multi_float1": "R2 actual43 complete; independently audited fixed current-value1; strict global name increment0; do not replay"
   },
   "normal_native37_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
   "openair_r6_actual_partial": {
@@ -1789,18 +1795,175 @@
     "independent_freeze_sha256": "b7cc953f961dc33aee6f0447fa9993892bc97231492db65a58caf170401b659a",
     "independent_evidence_sha256": "b0b0797c17b291898df28c918a9fdffd748ddd772135d08fb0757a0408ba1dac"
   },
-  "native38_runtime_actual_total_requests": 73,
+  "native38_runtime_actual_total_requests": 249,
   "native38_runtime_request_breakdown": {
     "R4_selection_failure": 12,
     "R5_graph_failure": 16,
     "R6_schema_failure_with_actual_controller_read": 16,
-    "R7_readonly_complete": 29
+    "R7_readonly_complete": 29,
+    "Spectrum_R3_Main_preparation_contract_failure": 6,
+    "Spectrum_R4_fixed_preset_complete": 127,
+    "Multi_Float1_R2_current_value_complete": 43
   },
   "inspection_error_reporting_candidate": {
-    "status": "private_source_review_in_progress",
-    "source_freeze_sha256": "29381eecbd21583e71720cdb9909317700fbadf1affc0ae318e4b17c58a48bfa",
+    "status": "Unicode_R2_independent_PASS_WITH_LIMITS_actual0_uninstalled",
+    "revision": 2,
+    "source_freeze_sha256": "1071b105e51044405a253c03eced69f8b54a935f944f693982d14a6dedc1f447",
+    "author_report_sha256": "90bc83f3beba4743b263b2c2350da2e78362b94319b6b62111213f38377f5f11",
+    "prior_R1_source_freeze_sha256": "29381eecbd21583e71720cdb9909317700fbadf1affc0ae318e4b17c58a48bfa",
     "actual_calls": 0,
     "landed": false,
-    "keep_current38_until_bound_pilots_done": true
+    "keep_current38_until_bound_pilots_done": true,
+    "land_after": [
+      "Spectrum Normal38 pilot",
+      "Float1 Normal38 pilot"
+    ],
+    "independent_review": {
+      "status": "PASS_WITH_LIMITS",
+      "freeze_sha256": "3cb9c1e181e2fe9aa94a6361e96c5db0bc53daa766ec5324a1e2e1a493e94d0e",
+      "report_sha256": "a6998f145cd3477f99ea85290a28a51081a882699088bba7514a4c9ecfc7eb80",
+      "actual_calls": 0,
+      "installed": false
+    },
+    "both_Normal38_pilots_and_audits_completed": true,
+    "next_action": "Root state recheck, reviewed landing and normal verification; not landed at this checkpoint"
+  },
+  "spectrum_r3_actual_failure": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds": 230.386,
+    "actual_raw_requests": 6,
+    "parent_consumed_requests": 5,
+    "verified_main_preparation_writes": 1,
+    "main_preparation_before": 1,
+    "main_preparation_after": 0,
+    "main_preparation_outcome": "applied_verified",
+    "plugin_calls": 0,
+    "plugin_parameter_writes": 0,
+    "preset_calls": 0,
+    "state_actions": 0,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "accepted_cases": 0,
+    "accepted_preset_classes": 0,
+    "original_failure_preserved": true,
+    "NoSave_app_closed_confirmed": true,
+    "normal_owner_exit_code": 0,
+    "saved_archives_preserved": 6,
+    "consumer_error": "한 번의 선언된 Main1→0만 허용",
+    "masked_parent_error": "고정 만료 거부 역할만 허용",
+    "consumer_contract_mismatch": "actual named channel_set applied_verified result has before/after/channel/field/text; consumer expected applied_unverified with result.error and result.native_error null",
+    "independent_audit": {
+      "freeze_sha256": "bc99b7a8c45c0d5ad278b543121a88c598514c2f2d8849ed18e430ebcda6fcb4",
+      "report_sha256": "b57d463ed82de056ba9faa0e9aa490735e5c4523660ba5a18c6889e5b9a88176",
+      "evidence_sha256": "f55a0f2c21bff1f8934f817114b5dad8b1dda4d8a877ebec83f3e1dac1a239ed"
+    },
+    "next_revision": "R4",
+    "next_status": "R4_complete127_independently_audited_single_fixed_setting1_class0"
+  },
+  "multi_float1_r2_artifact_review": {
+    "status": "PASS_ARTIFACT_DELTA_ONLY",
+    "freeze_sha256": "ec3dd9093eb66b360937239b05a5776284e87ec688519e34fceb02616c5abf58",
+    "report_sha256": "b62013f43edc1552ef4f5f9d83a6047e938b26d98fe9d7b06688051c9fcac506",
+    "evidence_sha256": "014d7157ec80bb177ec118978b23ccd6e3f3b4e2e2ddd171ac3048abb4da44fa",
+    "actual_calls": 0,
+    "accepted_names": 0,
+    "normal_calls": 38,
+    "maximum_calls": 43,
+    "full_actual_preflight_pending": true,
+    "subsequent_actual_run_completed": true
+  },
+  "spectrum_r4_review": {
+    "status": "PASS",
+    "freeze_sha256": "22c479ebf01bc0f6d9ea495b7fc00d8efd3265fca5110dc2814c654e30c85989",
+    "report_sha256": "8f44d5896c629825d36111fc9baaa38e3d6fbdd84703faeca5eddec720f17b76",
+    "actual_calls": 0,
+    "fresh_actual_preflight_pending": true
+  },
+  "fresh_prebinding_wait": {
+    "status": "historical_resolved_delay_before_completed_R4",
+    "archive_OS_open_wait_observed": true,
+    "metadata_and_repository_reads_completed": true,
+    "cause_established": false,
+    "macOS_access_confirmation_pending": false,
+    "current_six_archives_must_verify_before_owner_start": true,
+    "app_closed_observed": true,
+    "MCP_owner_running": false,
+    "Spectrum_R4_actual_calls": 0,
+    "no_guard_waiver": true,
+    "actual_archive_read_completed_at_UTC": "2026-11-13T04:40:44Z",
+    "current_six_archives_verified": true,
+    "current_six_archive_hashes_match": true,
+    "approved_source_count_matched": 206,
+    "normal_manifest_source_files_matched": 146,
+    "installed_package_files_matched": 4,
+    "installed_bridge_files_matched": 3,
+    "TCC_access_allowed_user_consent_observed": true
+  },
+  "last_completed_unit_plugin_parameter_setters": 2,
+  "spectrum_r4_actual_audit": {
+    "status": "PASS_SINGLE_FIXED_SETTING_AND_FRESH_SERIALIZATION_ONLY",
+    "actual_requests": 127,
+    "elapsed_seconds": 186.042,
+    "fixed_setting_cases": 1,
+    "global_classes_added": 0,
+    "full9_snapshots": 14,
+    "all9_original_restored": true,
+    "fresh_separate_captures": 2,
+    "serialized_bytes_each": 584,
+    "same_serialized_size_and_sha256": true,
+    "distinct_capture_tokens": true,
+    "direct_scalar_parameter_writes": 0,
+    "main_preparation_writes": 1,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "NoSave_appfalse_owner0": true,
+    "saved_archives_preserved": 6,
+    "freeze_sha256": "ba498c9edcdaa4be2c63a797bd0d4784cbbb97a6f093b129168e6be1097116dc",
+    "report_sha256": "95e611312278a44a3eda4a2faafff925c30921759a9ae719012cb2f981108be3",
+    "evidence_sha256": "1db72efa5bda225a63f583103258ff9287172ed7d9280bd15309d7ac2ceff0bc"
+  },
+  "multi_float1_r2_actual_audit": {
+    "status": "PASS_SINGLE_FIXED_FLOAT1_CURRENT_VALUE_ONLY",
+    "actual_requests": 43,
+    "elapsed_seconds": 168.618,
+    "fixed_current_value_cases": 1,
+    "strict_name_coverage_increment": 0,
+    "raw_sequence": [
+      0,
+      2500,
+      0
+    ],
+    "normalized_sequence": [
+      0,
+      0.25,
+      0
+    ],
+    "plugin_parameter_writes": 2,
+    "main_preparation_writes": 1,
+    "full150_snapshots": 5,
+    "peer_records_preserved": 149,
+    "all150_original_restored": true,
+    "state_actions": 0,
+    "port_writes": 0,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "NoSave_appfalse_owner0": true,
+    "saved_archives_preserved": 6,
+    "assignment_verified": false,
+    "MIDI_verified": false,
+    "callback_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "freeze_sha256": "98b392b2e046e2812f5c5b57fda0d161a795a9f44feb2b7a809c77d55dd94062",
+    "report_sha256": "5450960e67ed1333ceb64a71185d753d467f347c02c026718e74b9a15a5210c7",
+    "evidence_sha256": "c70a8a62a1cd35998b8ef1bc6d6051d05f01da5d22ef53f15da2fdab40a723f7"
+  },
+  "current_archive_access_state": {
+    "status": "allowed_current_exact_archive_read_immediate",
+    "last_observed_at_UTC": "2026-11-13T04:56:38Z",
+    "expected_archive_hash_matched": true,
+    "permission_reset_or_change": false,
+    "workaround_performed": false,
+    "new_actual_DAW_calls": 0
   }
 }
