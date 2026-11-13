@@ -12,13 +12,13 @@
   "mcp_tools": 46,
   "installed_native_unit": 39,
   "installed_native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
-  "app_closed_observed": true,
-  "mcp_owner_stopped": true,
+  "app_closed_observed": false,
+  "mcp_owner_stopped": false,
   "owned_songs_closed_without_save": false,
   "saved_owned_songs_unchanged": false,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Spectrum R4 actual127/186.042초 고정설정1 및 Float1 R2 actual43/168.618초 고정현재값1 독립감사PASS. 원래R3실패0·전역수불변·NoSave/owner0/6저장본보존.",
-  "last_completed_unit_learning_setters": 0,
+  "last_completed_unit": "Multi control0~31: 실제768.751초·787요청·64setter·32Float·전체150개129묶음/387페이지와 독립 감사PASS. 원본150복원·149peer/unknown보존·NoSave/owner0/저장6개보존.",
+  "last_completed_unit_learning_setters": 64,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -310,8 +310,8 @@
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7·Spectrum R4·Float1 R2·진단24요청은 재실행하지 않는다. 원래 실패와 별도 검증 기록을 함께 보존한다.",
     "Float2~8 실제247.935초·187개·14쓰기·전체150개29묶음/87페이지의 독립 원장 대조PASS를 완료했다. 고정 현재값7건만 인정하고 strict_name_coverage_increment0을 유지한다. Float1 포함8개는 반복하지 않는다. 첫 UI경로 오류375.153초·DAW0 실패는 보존한다.",
-    "External provenance Normal39의26요청·106.533초와 실제 두Param관계·24개4회 보존·NoSave·소유자0·6저장본 보존의 독립 대조PASS가 완료됐다. 반복하지 않는다. 최신 종료문맥은 이 실제26개 결과이며 과거sevenfloat 문맥은 별도 before사본에 보존했다. 다음은 공개 SDK의 메뉴 명령 경계 소스 조사이며 아직 숫자 포트값이나 선택 권한은 확정하지 않는다.",
-    "Multi 공통 수집기R1의 P2는 별도R2에서 전체 typed canonical startup binding 비교로 수정하고 집중 재검토PASS를 완료했다. R1실패·반례·미실행0을 보존한다. 첫12개는307요청/24setter/457.574초와 독립 감사PASS이며 Toggle8+Float pad4다. Integer setter는없었다. Float1~8 포함20개를 반복하지 않는다. 현재controls0~31의32개가787최대요청으로 실행중이며 이후32/32/32/2로130개잔여를 진행한다.20분/64MiB와현재39설치를유지하고이전run의runtime binding/flags/context를스냅샷으로보존한뒤 다음job에새문맥을연결한다.",
+    "External provenance Normal39 실제26개·106.533초와 독립 감사PASS는 완료했다. 반복하지 않는다. 현재 마지막 성공 종료 문맥은 Multi control0~31이며 각각 runtime사본을 보존한다. 다음 External은 공개 checkOnly와 실제 invoker 경계의 제한 통합이며 선택·숫자 포트값·None복원은 아직 미확인이다.",
+    "Multi 공통R2는 검토PASS다. Float1~8·첫12개·control0~31 총52개를 반복하지 않는다. 현재control32~63 새실행이고 이후64~95,96~127,128~129의98개/4묶음이 남았다. 첫control32~63은 Root UI대기 만료로 실제0·495.557초 실패 후 NoSave/owner0/저장6개 보존하여 따로 보관했다. 현재39설치/20분/64MiB/소스는 그대로다.",
     "Level Meter useisl R2 실제14개의 마지막 고정 DSP details는 알려진 unavailable이었다. 다른 이름·도메인 fallback 없이 종료했다. 같은 조건을 다시 실행하지 않고 기존 controller/provider의 소스와 실제 capability에서 별도 제한 읽기 경로를 조사한다. 고정 preset 자료의 지원 설정 차이는0이며 ComponentData6개·callback 의미는 미확인이다.",
     "Open AIR43개 쓰기값과 새2033바이트 A/B 일치는 완료했으나 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장은 남았다. Room16개 쓰기값·새725바이트 일치와 구분한다. 일반 프리셋28/46종·56사례·18종 잔여를 유지한다.",
     "남은 프리셋18종과 모델·전체 파라미터의 의미를 계속 확인한다. Multi Float1~8 현재값 증거를 매크로 할당·MIDI·콜백·저장·전역 이름 완료로 승격하지 않는다. 현재 이름6460/7112·잔여652다.",
@@ -343,7 +343,7 @@
     "after_each_completed_unit": [
       "actual elapsed time",
       "completed and remaining counts",
-      "overall remaining time range",
+      "fixed remaining work estimate, with unresolved research explicitly unestimated",
       "reason for changes in estimate"
     ],
     "estimated_overall_remaining_hours": null,
@@ -358,13 +358,16 @@
     ],
     "estimate_reporting_policy": {
       "current_live_unit": "measured elapsed and remaining requests plus actual recent throughput; include UI and cleanup separately",
-      "fixed_next_Multi_130_roles_minutes": [
-        40,
-        80
-      ],
       "overall_research_completion": "not reliably estimable yet; do not repeat obsolete6-20h as a current forecast",
       "new_work": "identify original planned scope versus newly discovered blocker and added time",
-      "hardware": "separate waiting condition"
+      "hardware": "separate waiting condition",
+      "fixed_next_Multi_roles": 98,
+      "fixed_next_Multi_batches": 4,
+      "fixed_next_Multi_minutes": [
+        35,
+        60
+      ],
+      "observed_32_case_elapsed_seconds": 768.751
     }
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
@@ -2179,7 +2182,7 @@
     "normal_native_install_exit_code": 0,
     "force_used": false,
     "DAW_tool_calls": 0,
-    "runtime_verification_pending": true,
+    "runtime_verification_pending": false,
     "schema": 1,
     "source_commit": "ff866cb",
     "approved_total_sources": 208,
@@ -2205,8 +2208,8 @@
     "continuous_mixer_membership_verified": false
   },
   "multi_remaining_current_value_plan": {
-    "remaining_roles": 130,
-    "completed_fixed_current_value_roles": 20,
+    "remaining_roles": 98,
+    "completed_fixed_current_value_roles": 52,
     "fixed_batches": 6,
     "batch_role_counts": [
       12,
@@ -2224,7 +2227,7 @@
     "max_owner_journal_bytes": 67108864,
     "strict_name_coverage_increment": 0,
     "plan_freeze_sha256": "d4d46e928050e88bbd0bf9af62a061167519b34e8e39fefe7b8ec754f1e04b48",
-    "implementation": "R2reviewPASS_first12_actual_auditPASS_next32_running",
+    "implementation": "R2_review_PASS_first12_and_control0_31_actual_audit_PASS_next32_running",
     "replay_completed_eight": false,
     "R1_source_freeze_sha256": "944ae3c4ddb561cf4561fb968bda30902e81fb8436f54610cc36794cd9afbc8f",
     "R1_independent_review_freeze_sha256": "50fc7c57c5caae888cf6ca7110158708c1803fdf6a22d7a0bfd6082f14c2a1d3",
@@ -2232,19 +2235,24 @@
     "R1_actual_calls": 0,
     "R1_Root_binding_performed": false,
     "failure_scope": "private QA child guard did not compare entire fresh binding to immutable startup binding",
-    "next_action": "Review focusedR2 full typed canonical binding guard before any12-roleactual",
+    "next_action": "Finish controls32..63, then64..95,96..127,128..129; do not replay completed52",
     "R2_source_freeze_sha256": "6473ddd2a4ab7756fcb10ec7f78ad883881f5bb549ff8fdeaef2d6e6ff534f9e",
     "R2_review_freeze_sha256": "5109994059ed5bb7c5619eeb6fa3eb4ee9f96514a013bc918bb3b1e1f829986f",
     "R2_review_report_sha256": "870a22761f7dbf09494837c985646a53a62fd86f678126058f6e28173ff65894",
     "actual_first12_status": "complete_independently_audited",
-    "remaining_batches": 5,
+    "remaining_batches": 4,
     "first12_actual_kinds": {
       "Toggle": 8,
       "Float": 4,
       "Integer": 0
     },
     "first12_audit_freeze_sha256": "c96c603049dc751858b7ed31b8aa2301beac3090721b178bca6d459c8304adcc",
-    "replay_completed_twenty": false
+    "replay_completed_twenty": false,
+    "completed_batches": [
+      "front-panel-12",
+      "controls-000-031"
+    ],
+    "replay_completed_fifty_two": false
   },
   "level_meter_controller_route_plan": {
     "status": "source_gap_identified_candidate_preparing",
@@ -2292,7 +2300,7 @@
     "audit_report_sha256": "da966be7a33acc3da7e7aa94aa81e3d87e11aadacc24a431855a584934e0e5cb",
     "audit_freeze_sha256": "94c7279ac04270f57b02f08815cb0cd3fbd6a99ac154c6c72ddf23172a609143"
   },
-  "native39_runtime_actual_total_requests": 333,
+  "native39_runtime_actual_total_requests": 1120,
   "native40_level_candidate": {
     "status": "source_review_PASS_wait_native39_six_batches",
     "source_count": 208,
@@ -2360,6 +2368,78 @@
   },
   "native39_runtime_request_breakdown": {
     "External_provenance_actual": 26,
-    "Multi_front_panel_12_actual": 307
+    "Multi_front_panel_12_actual": 307,
+    "Multi_controls_000_031_actual": 787
+  },
+  "latest_root_observation_at": "2026-11-13T07:53:58.361604+00:00",
+  "current_live_unit": {
+    "fixed_batch_id": "controls-032-063",
+    "job_id": "c413693a-1d3d-4aa8-b807-a24ef89ee8c7",
+    "status": "running",
+    "attempt": 2,
+    "maximum_requests": 787,
+    "cases": 32,
+    "estimated_total_minutes": [
+      10,
+      13
+    ]
+  },
+  "multi_controls_000_031_actual": {
+    "status": "independently_verified_actual_current_value_batch",
+    "plugin": "Multi Instrument",
+    "fixed_scope": "control0 through control31",
+    "accepted_current_value_cases": 32,
+    "DAW_tool_requests": 787,
+    "parameter_setters": 64,
+    "changed_raw_value": 2500,
+    "restored_raw_value": 0,
+    "native_kind": "Float",
+    "native_variant_tag": 2,
+    "full150_snapshots": 129,
+    "provider_pages": 387,
+    "exact_original_restored_each_case": true,
+    "all149_peer_values_nonvalue_unknown_preserved": true,
+    "control11_original_value": 0,
+    "control11_default_value": 10000,
+    "normalization_linearity_assumed": false,
+    "Main_preparation_writes": 1,
+    "Save_actions": 0,
+    "transport_actions": 0,
+    "state_actions": 0,
+    "port_writes": 0,
+    "actual_elapsed_seconds": 768.751,
+    "NoSave_app_closed_owner_stopped_saved6_verified": true,
+    "previous_completed_roles_not_written": true,
+    "strict_name_coverage_increment": 0,
+    "MIDI_verified": false,
+    "callback_verified": false,
+    "assignment_verified": false,
+    "graph_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "audit_new_DAW_calls": 0,
+    "audit_freeze_sha256": "1e4473bf1009724444f2cefc1343f0b6cc31abb8eea7ecf14d696e4010b59068",
+    "audit_report_sha256": "8ab45fa9ad5170d2c34802dd9f12153346d954af57beaa42d053f3a2e78a82f9",
+    "audit_evidence_sha256": "a3113dc813b693a8a3b2b609cdfe2fec618518e803832901804b9662bea0a1fa"
+  },
+  "multi_controls_032_063_first_attempt": {
+    "status": "failed_cleaned_up",
+    "job_id": "2a9dc551-e110-4d1c-80cf-4d510c665b50",
+    "elapsed_seconds": 495.557,
+    "DAW_requests": 0,
+    "setters": 0,
+    "reason": "Root first UI checkpoint acknowledgement missed deadline",
+    "original_failure_preserved": true,
+    "NoSave_appfalse_owner0_saved6_verified": true,
+    "last_actual_DAW_context_retained": true
+  },
+  "level_meter_controller_live_collector": {
+    "status": "R1_NEEDS_CHANGES_single_P2_R2_focused_fix",
+    "actual_calls": 0,
+    "runtime_binding": "UNBOUND",
+    "R1_review_freeze_sha256": "6fef826b3537a29e7b5ad44f843d673b5febc9248b35ae3f7a3c24724126b485",
+    "R1_review_report_sha256": "255d38ffe1f4c0791c425c1ac20b6b68a93561d85d233f52e950d5c4d2837c20",
+    "issue": "latest Root closure/result job/hash and same-run host pairing",
+    "scope_unchanged": true
   }
 }
