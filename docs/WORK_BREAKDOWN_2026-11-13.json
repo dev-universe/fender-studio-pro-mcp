@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6610,
+    "accepted_names": 6611,
     "inventory_names": 7112,
-    "remaining_names": 502,
+    "remaining_names": 501,
     "remaining_name_classes": 19,
     "preset_classes_completed": 29,
     "preset_classes_plan": 46,
@@ -34,7 +34,7 @@
     "docs/PROGRESS_2026-11-13.md": "최신 실패와 후속 준비 및 단위 이력",
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
-    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6610/7112·502·19클래스의 현재값 전용 범위"
+    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6611/7112·501·19클래스의 현재값 전용 범위"
   },
   "items": [
     {
@@ -252,10 +252,10 @@
       "title": "Chorder",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "input60의 출력128 모델·selector 경계·고정Song 저장은 완료; guiInput60 R9는 양수/역변경·전체908/저장128 보존1건 완료",
+      "actually_verified": "input60의 출력128 모델·selector 경계·고정Song 저장 완료; guiInput60 R9의 전체908/저장128 보존 현재값1건과 canonical 이름1개 수용 완료",
       "completion_predicate": "guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 133
+      "inventory_remaining_names": 132
     },
     {
       "id": "CONTROL-COMPRESSOR",

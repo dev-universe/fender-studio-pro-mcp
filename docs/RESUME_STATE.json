@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder R9는351.987초·173요청·파라미터2회로 guiInput60의0→5000→0 및 전체908/저장128 복원을 완료했다. Root 원장대조·NoSave·앱/owner0·저장6개/MIDI0/0을 확인했다. 별도 이름 합집합 반영 전이므로6610/7112·502를 유지한다.",
+  "last_completed_unit": "Chorder R9는351.987초·173요청·파라미터2회로 guiInput60의0→5000→0 및 전체908/저장128 복원을 완료했다. Root 원장대조·NoSave·앱/owner0·저장6개/MIDI0/0을 확인했다. 별도 한 이름 수용도 통과해6611/7112·잔여501이다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -299,7 +299,7 @@
     ],
     "room_writable_serialized_restore_pilots": 1,
     "chorder_input_selector_boundary_cases": 2,
-    "distinct_fixed_inventory_writable_names_verified": 6610,
+    "distinct_fixed_inventory_writable_names_verified": 6611,
     "vocal_tune_receiver_readonly_units": 1,
     "vocal_tune_direct_bypass_current_value_cases": 1,
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
@@ -318,9 +318,9 @@
   },
   "next_units_in_order": [
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
-    "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
+    "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6611/7112·잔여501개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder R9는351.987초·원본/부모173개·guiInput60 setter2회로 전체908/저장128 원본복원을 완료했고 Root 독립 대조/NoSave/owner0/저장6개/MIDI0/0을 확인했다. 기존R2~R8 실패는 보존하고 반복하지 않는다. 다음은 이 실제 근거의 별도canonical name admission1건과 데이터 기반 공유 수집기로 입력0..7의8개 현재값을 한정 검증하는 준비다. pitch60은 재실행하지 않는다. 120초 양수/55초 복원여유·모델 기반 표시 기대값·전체908/128쌍과 unknown 보유를 유지한다. 새 후보는 오프라인 검토/현재binding 전에는 실제0이다. MIDI/audio/noteoff는 여전히 미검증이다.",
+    "Chorder R9는351.987초·원본/부모173개·guiInput60 setter2회로 전체908/저장128 원본복원을 완료했고 Root 독립 대조/NoSave/owner0/저장6개/MIDI0/0을 확인했다. 기존R2~R8 실패는 보존하고 반복하지 않는다. 별도canonical name admission1건도 수용해6611/7112·잔여501이다. 다음은 데이터 기반 공유 수집기로 canonical 이름1..8의8개 현재값을 한정 검증하는 준비다. 이름은1..128이며 model_input과 자동 동일시하지 않는다. canonical128의 model_input은unbound다. pitch60은 재실행하지 않는다. 120초 양수/55초 복원여유·모델 기반 표시 기대값·전체908/128쌍과 unknown 보유를 유지한다. 새 후보는 오프라인 검토/현재binding 전에는 실제0이다. MIDI/audio/noteoff는 여전히 미검증이다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은29/46종·58사례·17종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -336,7 +336,7 @@
   "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw609=accepted-unit280+failed329.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder R9 complete; next eight-input shared collector and offline name admission",
+    "unit": "Chorder R9/name admission complete; eight canonical1..8 and Spectrum index2 collectors preparing",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -1322,9 +1322,9 @@
     "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
   },
   "current_fixed_name_union": {
-    "accepted_names": 6610,
+    "accepted_names": 6611,
     "inventory_names": 7112,
-    "remaining_names": 502,
+    "remaining_names": 501,
     "base128_names": 6459,
     "new_vocal_bypass_names": 1,
     "tuple_key": [
@@ -1335,11 +1335,13 @@
     "scope": "fixed_fixture_current_value",
     "global_support_percentage": false,
     "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
-    "public_delta_sha256": "c4d621f8d37145b1c8ca29d7bc8c6a4db8d07792d18dd7a091598297dcaa269f",
+    "public_delta_sha256": "ae0081c74c0b48460a8ae9c0306bf16315b99550628598b283a11c57adf01d7b",
     "new_multi_names": 150,
-    "previous_accepted_names": 6460,
-    "previous_public_delta_sha256": "03da36166b1af8946327fcb2c01fa76c43a44141417173e8422355b79e3b084d",
-    "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470"
+    "previous_accepted_names": 6610,
+    "previous_public_delta_sha256": "c4d621f8d37145b1c8ca29d7bc8c6a4db8d07792d18dd7a091598297dcaa269f",
+    "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470",
+    "new_chorder_gui_input_names": 1,
+    "chorder_gui_input60_independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4"
   },
   "vocal_bypass_value_actual": {
     "schema": 1,
@@ -2579,7 +2581,9 @@
     "mapping_freeze_sha256": "8fc0d234e79d3482f7d761bbddb5f91516be816aa095e3c8e01cd226cfa925e0",
     "mapping_review_freeze_sha256": "823c4f631f20a9ff57b32c9acb0ce5c63d828487fab5578e369721fa67b6aafc",
     "pending_cases_not_accepted": true,
-    "pending_cases": 0
+    "pending_cases": 0,
+    "counts_are_historical_at_multi150_admission": true,
+    "latest_counts_source": "current_fixed_name_union"
   },
   "external_checkonly_native_candidate": {
     "status": "integrated_via_reviewed_full41_route_actual_query_observed",
@@ -3379,5 +3383,40 @@
     "presets_completed": 29,
     "presets_total": 46,
     "preset_cases": 58
+  },
+  "chorder_gui_input60_name_coverage_admission": {
+    "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_NAME_DELTA",
+    "tuple_key": [
+      "class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "canonical_tuples": [
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch60.guiInput"
+      ]
+    ],
+    "previous_accepted": 6610,
+    "new_disjoint": 1,
+    "fixed_inventory": 7112,
+    "remaining_classes": 19,
+    "original_collector_strict_increment_unchanged": 0,
+    "backlog43_unchanged": true,
+    "actual_new_calls": 0,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "whole_Chorder_complete": false,
+    "accepted_after": 6611,
+    "remaining_after": 501,
+    "source_proposal_sha256": "225b796dd38b33eb29472674190a20e54dcb621145af4a1e11036dbd05570c04",
+    "source_proposed_union_sha256": "04d20f3b6ae18e90f25f4d231bf9779f61002546d92eaf032fedf0b1858957fd",
+    "independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4",
+    "candidate_freeze_sha256": "5231a62cae52bd56184278b9471f0c38f79ac9565a35a00b43ac8c39634d7f47",
+    "historical_successful_requests_reused": 173,
+    "setters_reused": 2,
+    "all_plugin_support_percentage": false
   }
 }

@@ -1,0 +1,35 @@
+{
+  "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_NAME_DELTA",
+  "tuple_key": [
+    "class_uid",
+    "source",
+    "canonical_name"
+  ],
+  "canonical_tuples": [
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch60.guiInput"
+    ]
+  ],
+  "previous_accepted": 6610,
+  "new_disjoint": 1,
+  "fixed_inventory": 7112,
+  "remaining_classes": 19,
+  "original_collector_strict_increment_unchanged": 0,
+  "backlog43_unchanged": true,
+  "actual_new_calls": 0,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "whole_Chorder_complete": false,
+  "accepted_after": 6611,
+  "remaining_after": 501,
+  "source_proposal_sha256": "225b796dd38b33eb29472674190a20e54dcb621145af4a1e11036dbd05570c04",
+  "source_proposed_union_sha256": "04d20f3b6ae18e90f25f4d231bf9779f61002546d92eaf032fedf0b1858957fd",
+  "independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4",
+  "candidate_freeze_sha256": "5231a62cae52bd56184278b9471f0c38f79ac9565a35a00b43ac8c39634d7f47",
+  "historical_successful_requests_reused": 173,
+  "setters_reused": 2,
+  "all_plugin_support_percentage": false
+}
