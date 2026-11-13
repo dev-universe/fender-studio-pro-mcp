@@ -1,0 +1,43 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 185.673,
+  "raw_tool_requests": 77,
+  "parent_verified_requests": 76,
+  "Main_and_Mojito9_volume_preparation_writes": 2,
+  "plugin_parameter_writes": 1,
+  "state_port_Save_transport_writes": 0,
+  "positive_isolation_checkpoint_reached": true,
+  "accepted_cases": 0,
+  "failure": "two exact same-pitch read-only live flags changed with guiInput; strict unchanged-peer guard stopped collection",
+  "target_guiInput_raw": [
+    0,
+    5000
+  ],
+  "derived_readonly_changes": [
+    {
+      "name": "chorder.pitch60.playingLive",
+      "index": 427,
+      "tag": 428,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "name": "chorder.pitch60.outputPlayingLive",
+      "index": 429,
+      "tag": 430,
+      "before": 0,
+      "after": 1
+    }
+  ],
+  "original_stored_model_unchanged_before_positive": true,
+  "inverse_setter_issued": false,
+  "parameter_restoration_verified": false,
+  "changed_full908_snapshot_complete": false,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "result_sha256": "2058be4958318c693c09759e792e636813a3907949807a0c6515acab995c5956",
+  "journal_sha256": "71d2a624d04f7e8c205e09227141c9923ac8808d1caac187286317b16ab44805"
+}

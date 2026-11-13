@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder R4는173.562초·64요청으로 전체908/저장128 원본쌍을 읽었다. MCP 자체 가상 MIDI 입력1개가 입력0 조건에서 거부돼 파라미터쓰기0·성공0으로 정리했다. 앱·소유자 종료 뒤 입력0·출력0, 저장6개 보존.",
+  "last_completed_unit": "Chorder R5는185.673초·원본77/부모76에서 guiInput60의0→5000 변경1회와 같은 음의 읽기 전용 live 표시2개의0→1을 확인했다. 다른 값 불변 조건에서 중단해 역변경·전체 복원 성공0이다. NoSave/앱·owner 종료/저장6개 및 MIDI0/0을 확인했다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -313,10 +313,10 @@
     "tuner_fixed_preset_setting_and_fresh_serialization_cases": 2
   },
   "next_units_in_order": [
-    "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R4 격리 거부 종료가 현재 최신 Scratch 문맥이다.",
+    "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R5 읽기 전용 연동 거부 종료가 현재 최신 Scratch 문맥이다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder R4는 raw64/parent64로 전체908과 저장128의 두 원본 읽기를 통과했다. 현재 MCP owner의 정상 wakeup virtual source1개를 엄격한 입력0 조건이 거부해 양수쓰기 전 정리됐다. 같은R4는 반복하지 않는다. R5는 실제 owner profile에서 계산한 고유ID와 정확한 이름·전후 안정성·단일source·destination0 및 owner 전후 source0을 확인해 내부 제어 입력과 외부 장치를 구별한다. 기존162/172표·raw5000/0·전체908/저장128·격리 freshness를 유지한다. 현재 실제0/UNBOUND, 최신 선행 종료는R4다.",
+    "Chorder R5는 고유 내부 MIDI입력 격리를 통과했고 guiInput60을0→5000으로 변경했다. 원본77/부모76에서 같은 음의 읽기 전용 playingLive/index427/tag428과 outputPlayingLive/index429/tag430만0→1로 바뀐 페이지가 다른 값 불변 조건에서 거부됐다. 변경1·역변경0·성공0 실패를 보존하고 반복하지 않는다. R6는 정확한 두 표시의 양수시1 연동만 허용하며 비값/다른905개·전체128 모델을 보존하고0 복원 뒤 전체908 원본일치를 필수로 한다. MIDI/audio/noteoff 의미는 승격하지 않는다. 현재 실제0/UNBOUND이고 최신 선행 종료는R5다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은29/46종·58사례·17종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -329,10 +329,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw384=accepted-unit280+failed104.",
+  "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw461=accepted-unit280+failed181.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder R5 exact MCP wakeup-source isolation correction",
+    "unit": "Chorder R6 exact two derived read-only live flags and full original restoration",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -341,15 +341,15 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Chorder R4 known zero-source isolation refusal; own virtual source; zero plugin writes",
+    "latest_closed_DAW_unit": "Chorder R5 known live-flag coupling refusal; positive1; inverse0; accepted0",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "08479cc9-8537-41f6-96b1-a408e1d91186",
+    "latest_closed_job_id": "784885f8-9e3a-4f0e-88cb-69792ef1a986",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 280,
-    "native41_raw_requests_including_failed_unit": 384,
-    "job_id": "08479cc9-8537-41f6-96b1-a408e1d91186",
-    "terminal_tool_inputs": 64,
-    "raw_tool_requests": 64
+    "native41_raw_requests_including_failed_unit": 461,
+    "job_id": "784885f8-9e3a-4f0e-88cb-69792ef1a986",
+    "terminal_tool_inputs": 76,
+    "raw_tool_requests": 77
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -381,10 +381,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "Chorder R5 own wakeup-source isolation correction, then one current-value case",
+      "next_finite_unit": "Chorder R6 exact observed live-flag coupling, then full original restoration",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        8,
-        14
+        9,
+        12
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -405,8 +405,8 @@
   "last_runtime_verified_native_unit": 39,
   "last_runtime_verified_source_commit": "ff866cb",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Chorder R4는173.562초·64요청으로 전체908/저장128 원본쌍을 읽었다. MCP 자체 가상 MIDI 입력1개가 입력0 조건에서 거부돼 파라미터쓰기0·성공0으로 정리했다. 앱·소유자 종료 뒤 입력0·출력0, 저장6개 보존.",
-  "last_completed_live_elapsed_seconds": 173.562,
+  "last_completed_live_unit": "Chorder R5는185.673초·원본77/부모76에서 guiInput60의0→5000 변경1회와 같은 음의 읽기 전용 live 표시2개의0→1을 확인했다. 다른 값 불변 조건에서 중단해 역변경·전체 복원 성공0이다. NoSave/앱·owner 종료/저장6개 및 MIDI0/0을 확인했다.",
+  "last_completed_live_elapsed_seconds": 185.673,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2970,7 +2970,7 @@
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
   "native41_accepted_completed_unit_requests": 280,
-  "native41_failed_unit_raw_requests": 104,
+  "native41_failed_unit_raw_requests": 181,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
     "status": "complete",
@@ -3155,5 +3155,48 @@
     "result_sha256": "4fbdb88a8dde468313c39c1afd2c47d5cc49dc4d3030dfb4ff313ccc896c239c",
     "journal_sha256": "93f97015b4f0f53433caf63df7b0596e964a7220df4423d520e09d61006ec3d1",
     "not_a_product_parameter_failure": true
+  },
+  "chorder_current_value_r5_failed": {
+    "status": "failed_cleaned_up",
+    "actual_elapsed_seconds": 185.673,
+    "raw_tool_requests": 77,
+    "parent_verified_requests": 76,
+    "Main_and_Mojito9_volume_preparation_writes": 2,
+    "plugin_parameter_writes": 1,
+    "state_port_Save_transport_writes": 0,
+    "positive_isolation_checkpoint_reached": true,
+    "accepted_cases": 0,
+    "failure": "two exact same-pitch read-only live flags changed with guiInput; strict unchanged-peer guard stopped collection",
+    "target_guiInput_raw": [
+      0,
+      5000
+    ],
+    "derived_readonly_changes": [
+      {
+        "name": "chorder.pitch60.playingLive",
+        "index": 427,
+        "tag": 428,
+        "before": 0,
+        "after": 1
+      },
+      {
+        "name": "chorder.pitch60.outputPlayingLive",
+        "index": 429,
+        "tag": 430,
+        "before": 0,
+        "after": 1
+      }
+    ],
+    "original_stored_model_unchanged_before_positive": true,
+    "inverse_setter_issued": false,
+    "parameter_restoration_verified": false,
+    "changed_full908_snapshot_complete": false,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "app_closed_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "result_sha256": "2058be4958318c693c09759e792e636813a3907949807a0c6515acab995c5956",
+    "journal_sha256": "71d2a624d04f7e8c205e09227141c9923ac8808d1caac187286317b16ab44805"
   }
 }
