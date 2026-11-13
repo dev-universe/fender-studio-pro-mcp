@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder91..98 fixed current values and eight names accepted;915 requests/16 setters;whole908/model128 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
+  "last_completed_unit": "Input Filter74..81 fixed current values and eight names accepted;659 requests/16 setters;whole388 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -445,9 +445,9 @@
   },
   "next_units_in_order": [
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
-    "완료한 Multi150개·3752요청·300setter·8개감사와 이름150개 delta는 반복하지 않는다. 현재6781/7112·잔여331개다. Native40 Level23·Native41 External checkOnly26은 조회 완료이며 선택/실행 근거가 아니다.",
+    "완료한 Multi150개·3752요청·300setter·8개감사와 이름150개 delta는 반복하지 않는다. 현재6789/7112·잔여323개다. Native40 Level23·Native41 External checkOnly26은 조회 완료이며 선택/실행 근거가 아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder canonical1~98의98현재값/98이름과 Input Filter1~73의73현재값/73이름 완료. 현재6781/7112·잔여331, Chorder35/Input55. Chorder91~98은915요청/16쓰기·전체908/모델128·Root정리와 별도8이름 수용 완료. 다음 준비된 Input Filter74~81 후보를 최신 종료 문맥으로 새 연결하고 전체 사전 검사 뒤 실행한다. Chorder99~106과 Input Filter82~89는 오프라인 검토된 UNBOUND 후속 후보이다. 128은 별도 경계다. 일반 MIDI/모델대응으로 해석하거나 완료/실패를 반복하지 않는다.",
+    "Chorder canonical1~98의98현재값/98이름과 Input Filter1~81의81현재값/81이름 완료. 현재6789/7112·잔여323, Chorder35/Input47. 최신 Input74~81은508.773초·659요청/16쓰기·48전체388/336페이지·다른385/unknown/공통원본/전체복원·Root정리와8이름 수용 완료. 현재 Chorder99~106을 최신 종료 문맥으로 새 연결·전체 사전 검사 뒤 실제 검증 중이며 최종 복원·정리·이름수용 전에는 완료로 세지 않는다. Input82~89와 Chorder107~114는 오프라인 검토된 UNBOUND 후속 후보이다. 128은 별도 경계다. 일반 MIDI/모델대응으로 해석하거나 완료/실패를 반복하지 않는다.",
     "Spectrum index1/index2의서로다른고정설정두사례가Root별도클래스검토로수용됐다.30/46종·60사례·16종잔여이며Spectrum단독2는추가로늘리지않는다. 원래collector class0·실패는보존한다. PRESET-SPECTRUM완료로고정43목록중1개완료/42개잔여다. 첫사례나두번째실기를반복하지않는다. factory원산지/모든32항목/audio/지속저장은미검증이다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은30/46종·60사례·16종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
@@ -461,10 +461,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6781/7112 names,331 remaining;30/46 preset classes,60 cases,16 remaining;Native41 raw18216=accepted17760+failed456.",
+  "last_measurement": "6789/7112 names,323 remaining;30/46 preset classes,60 cases,16 remaining;Native41 raw18875=accepted18419+failed456.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Input Filter74..81 actual running after Chorder98 name admission",
+    "unit": "Chorder99..106 outside-window actual running after Input Filter81 name admission",
     "DAW_live_unit_running": true,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -473,45 +473,24 @@
     "main_tools": 46,
     "current_app_closed": false,
     "current_owner_stopped": false,
-    "latest_closed_DAW_unit": "Chorder canonical91..98 fixed current values complete",
+    "latest_closed_DAW_unit": "Input Filter canonical74..81 fixed current values complete",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "8be37876-eaac-40a8-b28f-e21b9ecf8863",
+    "latest_closed_job_id": "d59a6c85-5fc3-4d50-849c-8fbe9d97bd3b",
     "pending_mutations": 0,
-    "completed_native41_accepted_unit_requests": 17760,
-    "native41_raw_requests_including_failed_unit": 18216,
-    "job_id": "d59a6c85-5fc3-4d50-849c-8fbe9d97bd3b",
-    "terminal_tool_inputs": 128,
-    "raw_tool_requests": 128,
+    "completed_native41_accepted_unit_requests": 18419,
+    "native41_raw_requests_including_failed_unit": 18875,
+    "job_id": "66c00709-19f0-421e-99b8-01970833ea50",
+    "terminal_tool_inputs": 115,
+    "raw_tool_requests": 115,
     "current_phase": "request_verified",
-    "maximum_tool_requests": 659,
-    "current_job_id": "d59a6c85-5fc3-4d50-849c-8fbe9d97bd3b",
-    "completed_subunits": [
-      {
-        "canonical_pitch": 74,
-        "canonical_name": "keyboard.pitch74.guiInput",
-        "requests": 80,
-        "setters": 2,
-        "whole388_restored": true,
-        "other385_exact": true,
-        "provider_phase_sha256": {
-          "original_a": "2c5a01e31404eb03a8c896be444266c4c08aa4ea3727b13438b115a0403d4d53",
-          "original_b": "2c5a01e31404eb03a8c896be444266c4c08aa4ea3727b13438b115a0403d4d53",
-          "positive_a": "0a39f7fdd4ddcd0a039ea68d382575c0ffc084722bfc4b5e5a776e2df3873eb9",
-          "positive_b": "0a39f7fdd4ddcd0a039ea68d382575c0ffc084722bfc4b5e5a776e2df3873eb9",
-          "restored_a": "2c5a01e31404eb03a8c896be444266c4c08aa4ea3727b13438b115a0403d4d53",
-          "restored_b": "2c5a01e31404eb03a8c896be444266c4c08aa4ea3727b13438b115a0403d4d53"
-        },
-        "setter_sha256": {
-          "5000": "f77217d1ed88cf2820b7847d0b712997b4c5489b4a9b6a3ec783003145f0d9f5",
-          "0": "4b08e469de3ed46819de54229e339d9a092e58439482fb43a5eb44b4f717960d"
-        }
-      }
-    ],
+    "maximum_tool_requests": 915,
+    "current_job_id": "66c00709-19f0-421e-99b8-01970833ea50",
+    "completed_subunits": [],
     "subunits_total": 8,
     "subunits_final_admission_pending": true,
-    "launcher_pid": 61843,
-    "owner_pid": 61844,
-    "current_elapsed_seconds": 183.358
+    "launcher_pid": 62504,
+    "owner_pid": 62505,
+    "current_elapsed_seconds": 218.549
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -567,8 +546,8 @@
   "last_runtime_verified_native_unit": 41,
   "last_runtime_verified_source_commit": "c733ce5",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Chorder91..98 fixed current values and eight names accepted;915 requests/16 setters;whole908/model128 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
-  "last_completed_live_elapsed_seconds": 1082.238,
+  "last_completed_live_unit": "Input Filter74..81 fixed current values and eight names accepted;659 requests/16 setters;whole388 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
+  "last_completed_live_elapsed_seconds": 508.773,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -1478,9 +1457,9 @@
     "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
   },
   "current_fixed_name_union": {
-    "accepted_names": 6781,
+    "accepted_names": 6789,
     "inventory_names": 7112,
-    "remaining_names": 331,
+    "remaining_names": 323,
     "base128_names": 6459,
     "new_vocal_bypass_names": 1,
     "tuple_key": [
@@ -1491,10 +1470,10 @@
     "scope": "fixed_fixture_current_value",
     "global_support_percentage": false,
     "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
-    "public_delta_sha256": "94b1638bf36ed2e5a693bb91fb4c252373a2410e27acf3a3addf112d9d8adc5d",
+    "public_delta_sha256": "6e91decd7f1061c9c303d42ead6694c5d6747187975b61ee3a643c702ad8f2b6",
     "new_multi_names": 150,
-    "previous_accepted_names": 6773,
-    "previous_public_delta_sha256": "9fa4b988665a2d4f8a132569c86be4482daaf85862bec22005bbef0d91dad1c3",
+    "previous_accepted_names": 6781,
+    "previous_public_delta_sha256": "94b1638bf36ed2e5a693bb91fb4c252373a2410e27acf3a3addf112d9d8adc5d",
     "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470",
     "new_chorder_gui_input_names": 8,
     "chorder_gui_input60_independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4",
@@ -1506,7 +1485,7 @@
     "chorder_gui_input33_40_independent_review_sha256": "1a0df557fbe5117d300496a0cd70444d302253cc86e9453cd3e92211e5f3fc97",
     "chorder_gui_input41_48_independent_review_sha256": "02c4746511fe0b92ea81ee22e12efa0065db017c1e00ec83000972ce2f75d677",
     "new_inputfilter_gui_input_names": 8,
-    "total_inputfilter_gui_input_names": 73,
+    "total_inputfilter_gui_input_names": 81,
     "inputfilter_gui_input1_independent_review_sha256": "6d4f58ac11fa4a2564c1528790b711ac8d817ec0f98b1da35bb5d8fcb23596ef",
     "inputfilter_gui_input2_9_independent_review_sha256": "07daed8b6af8ca01ff18883c508344734c0ad337b911e5c650a0da726f860e03",
     "chorder_gui_input49_independent_review_sha256": "11f1032b52007e4b709c5d4b9ed3ab50681ec52f65df5d9eddbd8cb51b0d3931",
@@ -1525,7 +1504,8 @@
     "inputfilter_gui_input58_65_independent_review_sha256": "ad12017cb68d41a5ddbcb2f41daa70820a33bc3737f414e7cdf6bfe2d3739a1f",
     "chorder_gui_input83_90_independent_review_sha256": "a8b50018885fbff247abefc3b63314e6cd1677e56e42f620ee215835f7f60098",
     "inputfilter_gui_input66_73_independent_review_sha256": "6b74363edad58c6b1badf0e50a731bc814d10d2bf3a15ed7505ea6f258b7d38e",
-    "chorder_gui_input91_98_independent_review_sha256": "485b86be40ae549b1e9f7479bd4409d15464d263c491e5cf8631794df9e6b75c"
+    "chorder_gui_input91_98_independent_review_sha256": "485b86be40ae549b1e9f7479bd4409d15464d263c491e5cf8631794df9e6b75c",
+    "inputfilter_gui_input74_81_independent_review_sha256": "60d4ac44ab153dfabbd664b79714556e9d867fbb5e4c22d2fe57cb984f3eaf1a"
   },
   "vocal_bypass_value_actual": {
     "schema": 1,
@@ -2609,7 +2589,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-13T20:40:45.710621+00:00",
+  "latest_root_observation_at": "2026-11-13T20:51:40.447620+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -3009,7 +2989,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 18216,
+  "native41_runtime_actual_total_requests": 18875,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -3163,7 +3143,7 @@
     "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
-  "native41_accepted_completed_unit_requests": 17760,
+  "native41_accepted_completed_unit_requests": 18419,
   "native41_failed_unit_raw_requests": 456,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
@@ -9771,7 +9751,7 @@
     "scope": "eight fixed canonical83..90 outside-window current values only; not general MIDI/model mapping, events, noteoff, audio or persistence"
   },
   "prepared_future_inputfilter74_81": {
-    "status": "ROOT_BOUND_FULL_PREFLIGHT_PASSED_ACTUAL_RUNNING",
+    "status": "CLOSED_ACTUAL_AND_EIGHT_NAMES_ADMITTED",
     "at": "2026-11-13T20:12:08.698570+00:00",
     "candidate_freeze_sha256": "8c75da8af67d6807b54fd8c6ca886ed013bb32b4569fa72638a516fe65cb8f05",
     "source_pins": 56,
@@ -9785,7 +9765,7 @@
     "helper": ".local/next-state/inputfilter-guiinput-current-batch10/r1",
     "root_binding": ".local/next-state/native41-normal/inputfilter-guiinput-batch10-r1-root-binding",
     "maximum_requests": 659,
-    "runtime": "RUNNING",
+    "runtime": "CLOSED",
     "current_job_id": "d59a6c85-5fc3-4d50-849c-8fbe9d97bd3b",
     "actual_calls_at_preparation": 0
   },
@@ -10144,7 +10124,7 @@
     "scope": "eight fixed canonical66..73 current values only; not MIDI pitch mapping, noteoff, events, audio or persistence"
   },
   "prepared_future_chorder99_106": {
-    "status": "PASS_OFFLINE_CANDIDATE_AND_ROOT_NARROW_REVIEW",
+    "status": "ROOT_BOUND_FULL_PREFLIGHT_PASSED_ACTUAL_RUNNING",
     "helper": ".local/next-state/chorder-guiinput99-106-outside-window/r1",
     "pristine_freeze_sha256": "65a7050b125b34a52d5e04bc947d9da2d4b43ab2b8a9426d562d1822b78861b0",
     "source_pins": 41,
@@ -10153,13 +10133,14 @@
     "focused_checks": 3,
     "focused_checks_seconds": 9.048,
     "root_exact_runtime_source_reconstruction": true,
-    "runtime": "UNBOUND",
+    "runtime": "RUNNING",
     "actual_calls_at_preparation": 0,
     "requires": "current Chorder91..98 Root closure and name admission, then Input Filter74..81 Root closure and fresh exact binding/full preflight",
     "normal_requests": 905,
     "maximum_requests": 915,
     "setters": 16,
-    "canonical128_separate": true
+    "canonical128_separate": true,
+    "current_job_id": "66c00709-19f0-421e-99b8-01970833ea50"
   },
   "prepared_future_inputfilter82_89": {
     "status": "PASS_OFFLINE_CANDIDATE_AND_ROOT_NARROW_REVIEW",
@@ -10427,5 +10408,375 @@
     "product_source_commit": "c733ce5",
     "native_unit": 41,
     "scope": "eight fixed canonical91..98 outside-window current values only; not general MIDI/model mapping, events, noteoff, audio or persistence"
+  },
+  "prepared_future_chorder107_114": {
+    "status": "PASS",
+    "at": "2026-11-13T20:43:46.530930+00:00",
+    "candidate_freeze_sha256": "7ff55798701090427649b56d1eaf168ec16cb923268c8852e6081a2ccf151a6a",
+    "source_pins_verified": 43,
+    "data_pins_verified": 180,
+    "prior_sources_unchanged": 39,
+    "Root_exact_runtime_source_reconstruction": true,
+    "other_guard_ASTs_unchanged": true,
+    "focused3checks_seconds": 9.507,
+    "runtime": "UNBOUND",
+    "requires_Input74_81_closed_admitted_thenChorder99_106_closed_admitted_thenInput82_89closed": true,
+    "helper": ".local/next-state/chorder-guiinput107-114-outside-window/r1",
+    "root_binding": ".local/next-state/native41-normal/chorder-guiinput107-114-outside-window-r1-root-binding",
+    "actual_calls_at_preparation": 0
+  },
+  "inputfilter_gui_input74_81_name_coverage_admission": {
+    "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+    "tuple_key": [
+      "class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "canonical_tuples": [
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch74.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch75.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch76.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch77.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch78.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch79.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch80.guiInput"
+      ],
+      [
+        "A7E3529F-6316-4E52-9A07-31739B027C88",
+        "dsp",
+        "keyboard.pitch81.guiInput"
+      ]
+    ],
+    "previous_accepted": 6781,
+    "new_disjoint": 8,
+    "fixed_inventory": 7112,
+    "InputFilter_remaining": 47,
+    "Chorder_remaining_unchanged": 35,
+    "remaining_classes": 19,
+    "original_collector_strict_increment_unchanged": 0,
+    "backlog42_unchanged": true,
+    "preset30_of46_unchanged": true,
+    "actual_new_calls": 0,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "whole_InputFilter_complete": false,
+    "accepted_after": 6789,
+    "remaining_after": 323,
+    "proposal_freeze_sha256": "7418086f4b76f27848532c267e85c3426a91485bd519381657c033651d2c97bf",
+    "root_review_sha256": "60d4ac44ab153dfabbd664b79714556e9d867fbb5e4c22d2fe57cb984f3eaf1a",
+    "accepted_union_sha256": "3fa291874cb68db5c901629df6f82d945d5d62685215a96f8255f35cef3d05df"
+  },
+  "inputfilter_current_batch10_r1_actual": {
+    "at": "2026-11-13T20:46:21.937764+00:00",
+    "status": "PASS",
+    "job_id": "d59a6c85-5fc3-4d50-849c-8fbe9d97bd3b",
+    "actual_elapsed_seconds": 508.773,
+    "raw_tool_requests": 659,
+    "parent_verified_requests": 659,
+    "mixer_writes": 2,
+    "track_selection_attempts": 1,
+    "plugin_parameter_writes": 16,
+    "state_actions": 0,
+    "state_port_transport_Save_actions": 0,
+    "accepted_fixed_current_value_cases": 8,
+    "strict_name_increment": 0,
+    "provider_records": 388,
+    "provider_snapshots": 48,
+    "provider_pages": 336,
+    "exact_full_restoration": true,
+    "all_units_session_original_same": true,
+    "other385_exact": true,
+    "all_nonvalue_unknown_exact": true,
+    "actual_same_selected_track_instrument": "Mojito 7",
+    "actual_unique_channel_index": 59,
+    "instrument_verified_before_any_setter": true,
+    "units": [
+      {
+        "canonical_pitch": 74,
+        "name": "keyboard.pitch74.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 223,
+            "name": "keyboard.pitch74.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 224,
+            "name": "keyboard.pitch74.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 225,
+            "name": "keyboard.pitch74.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 75,
+        "name": "keyboard.pitch75.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 226,
+            "name": "keyboard.pitch75.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 227,
+            "name": "keyboard.pitch75.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 228,
+            "name": "keyboard.pitch75.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 76,
+        "name": "keyboard.pitch76.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 229,
+            "name": "keyboard.pitch76.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 230,
+            "name": "keyboard.pitch76.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 231,
+            "name": "keyboard.pitch76.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 77,
+        "name": "keyboard.pitch77.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 232,
+            "name": "keyboard.pitch77.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 233,
+            "name": "keyboard.pitch77.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 234,
+            "name": "keyboard.pitch77.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 78,
+        "name": "keyboard.pitch78.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 235,
+            "name": "keyboard.pitch78.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 236,
+            "name": "keyboard.pitch78.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 237,
+            "name": "keyboard.pitch78.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 79,
+        "name": "keyboard.pitch79.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 238,
+            "name": "keyboard.pitch79.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 239,
+            "name": "keyboard.pitch79.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 240,
+            "name": "keyboard.pitch79.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 80,
+        "name": "keyboard.pitch80.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 241,
+            "name": "keyboard.pitch80.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 242,
+            "name": "keyboard.pitch80.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 243,
+            "name": "keyboard.pitch80.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      },
+      {
+        "canonical_pitch": 81,
+        "name": "keyboard.pitch81.guiInput",
+        "setters": 2,
+        "whole388_restored": true,
+        "other385_exact": true,
+        "observed_values": [
+          {
+            "index": 244,
+            "name": "keyboard.pitch81.guiInput",
+            "original": 0,
+            "positive": 5000,
+            "restored": 0
+          },
+          {
+            "index": 245,
+            "name": "keyboard.pitch81.playingLive",
+            "original": 0,
+            "positive": 1,
+            "restored": 0
+          },
+          {
+            "index": 246,
+            "name": "keyboard.pitch81.playingScheduled",
+            "original": 0,
+            "positive": 0,
+            "restored": 0
+          }
+        ]
+      }
+    ],
+    "app_closed_observed": true,
+    "NoSave_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "result_sha256": "b7036db1c85d279e932cbf12a38c6d03b74aa1b5c297432df53729dc574dc142",
+    "journal_sha256": "047dbff136d3919b5092976ff7161abd3f8cd89c8bb97731c15928ac0afbf36c",
+    "proof_sha256": "b6024995988738dedcf6ffb6e7b05aff08bcd8fbc85be6eecac6661341f5bf9e",
+    "journal_bytes": 40859000,
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+    "product_source_commit": "c733ce5",
+    "native_unit": 41,
+    "scope": "eight fixed Input Filter canonical74..81 current values only; not general MIDI/pitch mapping, events, noteoff, audio or persistence"
   }
 }
