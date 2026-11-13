@@ -1,0 +1,24 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 185.67,
+  "raw_tool_requests": 6,
+  "parent_verified_requests": 6,
+  "mixer_writes": 0,
+  "plugin_parameter_writes": 0,
+  "state_port_Save_transport_writes": 0,
+  "accepted_cases": 0,
+  "failure": "initial independent selection read showed two selected tracks despite Root UI click",
+  "selected_tracks": [
+    "FSP Verify Surround Panner",
+    "FSP Verify NoteFX Chorder"
+  ],
+  "model_derived_positive_logic_reached": false,
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "no_save_prompt_because_no_dirty_change": true,
+  "result_sha256": "91d21f5bfac23626a6d900958e0c994b176a2c09953d6047015c42183a5985fc",
+  "journal_sha256": "75f8b5eb8692d00fdd617f17a0125a7cd40adca4a25f7c0b37eaa4c13fecfbe8"
+}

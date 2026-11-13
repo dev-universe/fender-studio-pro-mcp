@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder R7는230.271초·원본78/부모77에서 양수 변경1회 뒤 코드 출력63/67/70의 읽기 전용 표시 연동으로 중단했다. 역변경0·복원성공0, NoSave/앱·owner 종료/저장6개/MIDI0/0이다.",
+  "last_completed_unit": "Chorder R8는185.670초·6요청에서 단일 선택 검사로 중단했다. 실제 선택은 Surround Panner와 목표 Chorder 두개였고 파라미터·볼륨쓰기0이다. 저장 없이 앱/owner를 닫고 저장6개/MIDI0/0을 확인했다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -313,10 +313,10 @@
     "tuner_fixed_preset_setting_and_fresh_serialization_cases": 2
   },
   "next_units_in_order": [
-    "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R7 코드 출력 표시 연동 거부 종료가 현재 최신 Scratch 문맥이다.",
+    "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R8 단일 선택 거부 종료가 현재 최신 Scratch 문맥이다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder R7는 고정 두RO 표시 외에 저장 코드 출력63/67/70의 outputPlayingLive가 함께1로 바뀌어 원본78/부모77에서 중단했다. 양수1·역변경0·복원성공0과230.271초/NoSave/owner0/저장6개를 보존한다. R8는 원본128 모델의 input60=[60,63,67,70,74]와908 이름에서 input60.playingLive 및 이 다섯 outputPlayingLive를 양수 전 고정한다. pitch74는 아직 변경 후 미관측이며 기대값 검증 대상이다. 정확한6개RO만 양수1을 허용하고 다른901개·비값·전체 모델 및 복원 후 전체908 원본일치를 유지한다. 현재 실제0/UNBOUND, 최신 선행 종료R7다.",
+    "Chorder R8는 코드 기반6개RO 기대값을 준비했지만 첫6개 읽기에서 실제 선택 두개를 확인해 양수 전 중단했다. 185.670초·볼륨/파라미터0·NoSave/owner0/저장6개/MIDI0/0 실패를 보존한다. R9는 기존 operation_run selectTrack의 exclusive 선택1회를 첫host 문맥 뒤에 선언하고 known terminal 후 Root가 target record/monitor off를 확인한 뒤 기존 immutable baseline을 시작한다. 독립 song/tracks 읽기에서 단일 선택을 다시 요구한다. 제품API 추가 없이 최대173개로 한정하고 모델6개RO/전체908복원/128모델/양수120초를 유지한다. 현재 실제0/UNBOUND, 최신 선행 종료는R8다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은29/46종·58사례·17종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -329,10 +329,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw603=accepted-unit280+failed323.",
+  "last_measurement": "6610/7112 names,502 remaining;29/46 preset classes,58 cases,17 remaining;Native41 raw609=accepted-unit280+failed329.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder R8 model-derived output live flags",
+    "unit": "Chorder R9 existing MCP exclusive track selection preparation",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -341,15 +341,15 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Chorder R7 stored chord output live flags refusal; positive1/inverse0/accepted0",
+    "latest_closed_DAW_unit": "Chorder R8 independent multiple-selection refusal; zero mixer/plugin writes",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "47606c61-eeda-48bb-bda8-494dc15fafa7",
+    "latest_closed_job_id": "ad273677-e6d8-4f63-90a5-a40657480f4d",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 280,
-    "native41_raw_requests_including_failed_unit": 603,
-    "job_id": "47606c61-eeda-48bb-bda8-494dc15fafa7",
-    "terminal_tool_inputs": 77,
-    "raw_tool_requests": 78
+    "native41_raw_requests_including_failed_unit": 609,
+    "job_id": "ad273677-e6d8-4f63-90a5-a40657480f4d",
+    "terminal_tool_inputs": 6,
+    "raw_tool_requests": 6
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -405,8 +405,8 @@
   "last_runtime_verified_native_unit": 39,
   "last_runtime_verified_source_commit": "ff866cb",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Chorder R7는230.271초·원본78/부모77에서 양수 변경1회 뒤 코드 출력63/67/70의 읽기 전용 표시 연동으로 중단했다. 역변경0·복원성공0, NoSave/앱·owner 종료/저장6개/MIDI0/0이다.",
-  "last_completed_live_elapsed_seconds": 230.271,
+  "last_completed_live_unit": "Chorder R8는185.670초·6요청에서 단일 선택 검사로 중단했다. 실제 선택은 Surround Panner와 목표 Chorder 두개였고 파라미터·볼륨쓰기0이다. 저장 없이 앱/owner를 닫고 저장6개/MIDI0/0을 확인했다.",
+  "last_completed_live_elapsed_seconds": 185.67,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2969,7 +2969,7 @@
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
   "native41_accepted_completed_unit_requests": 280,
-  "native41_failed_unit_raw_requests": 323,
+  "native41_failed_unit_raw_requests": 329,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
     "status": "complete",
@@ -3282,5 +3282,29 @@
     "hardware_blocked": 4,
     "historical_total_unknown": true,
     "counts_are_not_equal_effort": true
+  },
+  "chorder_current_value_r8_failed": {
+    "status": "failed_cleaned_up",
+    "actual_elapsed_seconds": 185.67,
+    "raw_tool_requests": 6,
+    "parent_verified_requests": 6,
+    "mixer_writes": 0,
+    "plugin_parameter_writes": 0,
+    "state_port_Save_transport_writes": 0,
+    "accepted_cases": 0,
+    "failure": "initial independent selection read showed two selected tracks despite Root UI click",
+    "selected_tracks": [
+      "FSP Verify Surround Panner",
+      "FSP Verify NoteFX Chorder"
+    ],
+    "model_derived_positive_logic_reached": false,
+    "app_closed_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "no_save_prompt_because_no_dirty_change": true,
+    "result_sha256": "91d21f5bfac23626a6d900958e0c994b176a2c09953d6047015c42183a5985fc",
+    "journal_sha256": "75f8b5eb8692d00fdd617f17a0125a7cd40adca4a25f7c0b37eaa4c13fecfbe8"
   }
 }
