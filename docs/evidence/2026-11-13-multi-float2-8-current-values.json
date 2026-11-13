@@ -1,0 +1,46 @@
+{
+  "schema": "multi-seven-float-current-value-actual-audit-v1",
+  "verdict": "PASS_SEVEN_FIXED_CURRENT_VALUE_CASES_ONLY",
+  "original_status": "complete",
+  "actual_elapsed_seconds": 247.935,
+  "requests": 187,
+  "parent_known_terminals": 187,
+  "fixed_names": [
+    "float-2",
+    "float-3",
+    "float-4",
+    "float-5",
+    "float-6",
+    "float-7",
+    "float-8"
+  ],
+  "raw_sequence_each": [
+    0,
+    2500,
+    0
+  ],
+  "plugin_parameter_writes": 14,
+  "full150_snapshots": 29,
+  "full_parameter_pages": 87,
+  "peer_rows_preserved_each": 149,
+  "full_original_restored_after_each": true,
+  "strict_name_coverage_increment": 0,
+  "accepted_fixed_current_value_cases": 7,
+  "accepted_batch_units": 1,
+  "Main_preparation_writes": 1,
+  "state_preset_port_Save_transport_calls": 0,
+  "NoSave_app_closed_normal_owner_stop_and_saved6_verified": true,
+  "first_attempt": {
+    "status": "failed_cleaned_up",
+    "actual_elapsed_seconds": 375.153,
+    "DAW_calls": 0,
+    "accepted_cases": 0,
+    "cause_scope": "Root UI checkpoint file location error; original preserved"
+  },
+  "assignment_MIDI_callback_graph_audio_persistence_verified": false,
+  "new_actual_calls_by_auditor": 0,
+  "original_result_sha256": "c5fe443a2cd437593b419a7723086955b13d8d3feec7f345e99faffc11e7d56e",
+  "evidence_sha256": "e81be3262cd6c820535d3fffa9e136bf129dcb08eddccedbeb3c9e93d46e641b",
+  "audit_report_sha256": "6453c88ecbba19f3f6e5a38119b2b8e467e972550ec449c43374f26180f219d2",
+  "audit_freeze_sha256": "8dffac584b1db3db765a6134946da735bb646100880dd3a489a203af2eb821d7"
+}
