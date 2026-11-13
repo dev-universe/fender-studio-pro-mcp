@@ -4,7 +4,7 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "031ee56",
+  "product_source_commit": "fab605b",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
@@ -309,8 +309,8 @@
   },
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7의170요청은 재실행하지 않는다. 원래 실패 결과들과 별도 독립 검증 기록을 모두 보존한다.",
-    "Native38 Multi R7 읽기29개·Spectrum R4 고정설정127개·Multi Float1 R2 고정현재값43개와 독립감사를 완료했다. 원래R3실패0을 보존하며 이 단위들은 같은 조건으로 반복하지 않는다. Spectrum은 고정설정/새직렬화1건·클래스0, Float1은 고정현재값1건·strict_name_increment0이다. 전체 이름6460/7112/잔여652와 일반프리셋28/46/56사례/잔여18종을 유지한다. 이후 Multi 모델·매크로/CC 할당·중첩그래프의 가장 작은 미확인 의미를 소스/제한API 근거로 선택한다. 현재 strict Multi 전역이름은0/150이며 이번 고정사례를 자동 합산하지 않는다.",
-    "조회 오류 진단 R2 Unicode 후보는 독립PASS WITH LIMITS·실제0·미반영이다. Spectrum·Float1 두 Normal38 실제단위와 독립감사가 완료돼 선행 조건은 충족됐다. 다음은 Root의 현재상태 재확인·검토된 제품 반영·정상빌드/브리지/도구 검증이다. 다음실제검증은 바뀐 source의 새전체입력/설치pin으로 연결한다. External Stereo/Mono 메뉴읽기35개씩은 완료했고 R1/R2 정적·ABI근거는 포트변경이 아니다. 선택은 아직 미구현이며 실제메뉴/파라미터/소유권 의미를 먼저확인한다.",
+    "Spectrum R4 실제127/186.042초와 Multi Float-1 R2 실제43/168.618초의 독립 감사가 완료됐다. 각 고정 속성1건만 인정하며 재실행하지 않는다. 전역 이름6460/7112·잔여652, 일반 프리셋28/46종·56사례·18종 잔여는 그대로다. 진단 R2 소스 fab605b를 빌드·설치했고 Native38/46도구/입력 스키마는 유지했다. 다음 즉시 단위는 새206소스·실제 설치·새46목록에 연결한 Multi graph의 원인 메시지 읽기 검증이다. 성공한 target 조회와 전체150 전후 보존도 좁게 확인하며 기존 R7 전체 수집기를 반복하지 않는다.",
+    "External 메뉴 provenance의 공개 getter2개 ABI와 Rust 수명 prototype을 비공개로 준비 중이다. 독립 검토 뒤 선택0의 실제 읽기 관측을 진행하며 현재 포트 선택 권한은 추가하지 않는다. Level Meter Movie Score Classic의 실제 저장 자료에서 지원 설정 차이는0이었다. useisl와 ComponentData6개는 미확인이며 먼저 정확한 useisl 이름의 제한된 읽기 조회를 준비한다. 다른 이름·프리셋·도메인을 자동으로 대신 조회하지 않는다.",
     "Open AIR R7는43개 쓰기 가능 값 복원과 새2033바이트 A/B 직렬화 일치1건을 완료했다. 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장 검증은 남았다. 일반 프리셋 완료 수는28/46종·56사례·18종 잔여를 유지한다. Room 별도16개 쓰기값·새 상태 캡처 일치와 구분한다.",
     "남은 프리셋18종과 모델·프리셋 전체 열거를 계속한다. 완료 종이나 과거 실패를 같은 조건으로 재실행하지 않고 미확인 의미와 정확한 복원 조건을 먼저 해결한다.",
     "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 전용 제한 API와 구체적 관측 근거로 구현·검증한다. 현재값 변경과 이벤트 전달 증거를 구분한다.",
@@ -323,9 +323,9 @@
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "6460/7112 fixed names,652 remaining;28/46 preset classes,56 cases,18 remaining;Spectrum fixed setting1/class0;Float1 fixed current-value1/name increment0.",
-  "binary_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
+  "binary_source_commit": "fab605b",
   "current_execution": {
-    "unit": "Both Normal38 pilots independently audited; reviewed Unicode inspection diagnostic landing pending Root state recheck",
+    "unit": "Diagnostic R2 built and installed; finite live negative-reason and Level Meter useisl collectors preparing",
     "DAW_live_unit_running": false,
     "Spectrum_R4_actual_requests": 127,
     "Spectrum_R4_fixed_setting_cases": 1,
@@ -333,7 +333,10 @@
     "Multi_Float1_fixed_current_value_cases": 1,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "current_six_archives_preserved": true
+    "current_six_archives_preserved": true,
+    "current_product_source_commit": "fab605b",
+    "current_product_actual_DAW_calls": 0,
+    "current_product_runtime_validation_pending": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -349,13 +352,14 @@
     "estimate_confidence": "low",
     "estimate_basis": "First actual GUI member edit reached independent stored model and restored whole908/128 pairs, removing major mapping uncertainty. Remaining127memberroles, save/restart, dedicatedroles andgenericgraph stillpending.",
     "hardware_dependent_verification": "separate condition",
-    "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates"
+    "permission_preference": "Proceed within existing authorization; batch reviewed finite jobs to minimize repeated external-terminal input prompts; do not self-approve or bypass managed gates",
+    "language": "사용자 보고는 한국어, 내부 작업 지시는 한국어 또는 영어만 사용한다."
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
   "installed_native_sha256": "2b06fe13bad11ecccba70bb44ac630abad9cabcdafb2fa1bbca19ec6e495e05f",
-  "binary_sha256": "c33cf8760693786fc066d222fee207220cbb7e087ae7a6ba4482aa77262b46cf",
+  "binary_sha256": "722cbfb08bbc719490cf672d5275ec7413a66895a9b5f53c44c45957d59c7b75",
   "installed_bridge_files_sha256": {
-    "BridgeComponent.js": "1665a3461d8f46e7740b6acc323a647bbef426133f9cb16abd2cea70450fb236",
+    "BridgeComponent.js": "16cd0474c93ae0b220b82d8339dcefded3edd811eb2d6034dca07c84c1b016a2",
     "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
     "NativePluginControls.js": "be99b580f1b91d0055da4e80e1aad2e9a85d519c3551c2e67b3ce126866f12b1"
   },
@@ -1806,13 +1810,13 @@
     "Multi_Float1_R2_current_value_complete": 43
   },
   "inspection_error_reporting_candidate": {
-    "status": "Unicode_R2_independent_PASS_WITH_LIMITS_actual0_uninstalled",
+    "status": "reviewed_source_applied_built_installed_actual_validation_pending",
     "revision": 2,
     "source_freeze_sha256": "1071b105e51044405a253c03eced69f8b54a935f944f693982d14a6dedc1f447",
     "author_report_sha256": "90bc83f3beba4743b263b2c2350da2e78362b94319b6b62111213f38377f5f11",
     "prior_R1_source_freeze_sha256": "29381eecbd21583e71720cdb9909317700fbadf1affc0ae318e4b17c58a48bfa",
     "actual_calls": 0,
-    "landed": false,
+    "landed": true,
     "keep_current38_until_bound_pilots_done": true,
     "land_after": [
       "Spectrum Normal38 pilot",
@@ -1826,7 +1830,13 @@
       "installed": false
     },
     "both_Normal38_pilots_and_audits_completed": true,
-    "next_action": "Root state recheck, reviewed landing and normal verification; not landed at this checkpoint"
+    "next_action": "Root state recheck, reviewed landing and normal verification; not landed at this checkpoint",
+    "product_source_commit": "fab605b",
+    "installed": true,
+    "installed_native_unit": 38,
+    "current_source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
+    "main_binary_sha256": "722cbfb08bbc719490cf672d5275ec7413a66895a9b5f53c44c45957d59c7b75",
+    "normal46_schema_canonical_sha256": "212c7c33261ef670bb192b39ed8a2972bcbf8c72fb857cb30779806255306aeb"
   },
   "spectrum_r3_actual_failure": {
     "status": "failed_cleaned_up",
@@ -1965,5 +1975,28 @@
     "permission_reset_or_change": false,
     "workaround_performed": false,
     "new_actual_DAW_calls": 0
+  },
+  "current_product_source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
+  "current_normal46_tool_schema_canonical_sha256": "212c7c33261ef670bb192b39ed8a2972bcbf8c72fb857cb30779806255306aeb",
+  "level_meter_fixed_payload": {
+    "status": "SUPPORTED_SETTING_DELTA_EMPTY",
+    "artifact_sha256": "8ce0017cdf97aa65f768249e629a288c08aba430852b674a2950c3d83c0a441c",
+    "class_uid": "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+    "name": "Movie Score Classic",
+    "supported_settings_differing": 0,
+    "unmapped_parameter_data": [
+      "useisl"
+    ],
+    "unmapped_component_fields": [
+      "mode",
+      "rmsLength",
+      "vuHold",
+      "holdLength",
+      "loudnessInLUFS",
+      "loudnessEBU18"
+    ],
+    "actual_calls": 0,
+    "preset_executor_created": false,
+    "next": "bounded useisl read-only observation"
   }
 }
