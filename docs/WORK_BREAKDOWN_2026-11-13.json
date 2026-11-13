@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6701,
+    "accepted_names": 6709,
     "inventory_names": 7112,
-    "remaining_names": 411,
+    "remaining_names": 403,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,
@@ -34,7 +34,7 @@
     "docs/PROGRESS_2026-11-13.md": "최신 실패와 후속 준비 및 단위 이력",
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
-    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6701/7112·411·19클래스의 현재값 전용 범위"
+    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6709/7112·403·19클래스의 현재값 전용 범위"
   },
   "items": [
     {
@@ -296,10 +296,10 @@
       "title": "Input Filter",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "일반 필터 설정·provider/catalog; keyboard.pitch1~25.guiInput25개 현재값/25이름·전체388복원과Root정리 완료. 나머지103개·MIDI수명은미완료",
+      "actually_verified": "일반 필터 설정·provider/catalog; keyboard.pitch1~33.guiInput33개 현재값/33이름·전체388복원과Root정리 완료. 나머지95개·MIDI수명은미완료",
       "completion_predicate": "keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 103
+      "inventory_remaining_names": 95
     },
     {
       "id": "CONTROL-LEVEL",

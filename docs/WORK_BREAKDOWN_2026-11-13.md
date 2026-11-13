@@ -8,7 +8,7 @@
 
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
-| 고정 현재값 이름 |6701/7112|411개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
+| 고정 현재값 이름 |6709/7112|403개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
 | 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
@@ -54,7 +54,7 @@
 |CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
-|CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 필터 설정·provider/catalog; keyboard.pitch1~25.guiInput25개 현재값/25이름·전체388복원과Root정리 완료. 나머지103개·MIDI수명은미완료|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
+|CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 필터 설정·provider/catalog; keyboard.pitch1~33.guiInput33개 현재값/33이름·전체388복원과Root정리 완료. 나머지95개·MIDI수명은미완료|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
 |CONTROL-LEVEL|Level Meter|부분 완료|전체DSP7 읽기·controller2노드/1연결, useisl known miss 완료|resethold/resetloudness의 실제 reset 효과와 controller/숨은 설정 접근을 확인한다. 제한 metadata를 값/쓰기 권한으로 승격하지 않는다.|
 |CONTROL-LIMITER|Limiter|부분 완료|일반 설정과 두 프리셋 사례 완료|resetmin 명령의 별도 효과·완료·원래 환경 보존을 확인한다.|
 |CONTROL-MAITAI|Mai Tai|부분 완료|일반 선택 설정·preset 계열 완료|MIDI6 facade의 현재값/실제 전달과 character1.editchar의 GUI·조건부 모델 binding/복원을 검증한다.|
@@ -85,7 +85,7 @@
 |---|---|---|---|---|
 |SHARED-PHYSICAL-KEYS|Keystation88 MK3 실제 입력 연동|하드웨어 대기|USB 연결 존재 및 빈 MIDI window만 과거 확인|장치 재연결 뒤 실제 key press/release와 DAW 수신·종료/설정 복원을 확인한다. USB 존재나 소프트웨어 현재값을 물리 연주로 세지 않는다.|
 
-## 461개 이름과 완료 기능을 혼동하지 않는 기준
+## 이름 수와 완료 기능을 혼동하지 않는 기준
 
 19클래스의 이름 잔여 목록에는 이미 실제 검증한 Gate/Expander/Compressor의 swapfreqs3개도 scalar 집계 방식 때문에 남아 있다. 이는 **장부 분류 항목이며 새 실행 작업이 아니다**. Gate와 Expander를 별도 잔여 플러그인 기능 행에 넣지 않았다. 반대로 현재값이 끝난 Multi·Impact·Vocal은 할당/다른 focus/host callback 등의 미검증 기능이 있어 위 기능 행에 남겼다. 이름 숫자만으로 전체 기능 잔여를 산출할 수 없는 이유다.
 
@@ -103,7 +103,7 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 - [PROGRESS_2026-11-13.md](PROGRESS_2026-11-13.md): 최신 Chorder 실패와 후속 준비 및 단위 이력.
 - [PLUGIN_STATE_VALIDATION.md](PLUGIN_STATE_VALIDATION.md): 영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속.
 - [LOOP_HANDOFF_2026-11-12.md](LOOP_HANDOFF_2026-11-12.md): 13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함.
-- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6651/7112·461·19클래스의 현재값 전용 범위.
+- [PARAMETER_NAME_UNION_CURRENT.md](PARAMETER_NAME_UNION_CURRENT.md): 6709/7112·403·19클래스의 현재값 전용 범위.
 
 현재 JSON의 accepted와 이름 합집합을 우선했다. 오래된 검증 문서/인수인계의 과거18·25·28종 숫자나 완료된 P0–P5 단위를 새 backlog로 되살리지 않았다. stale Tuner 배열은 작성자가 accepted 기준으로 정규화했고, 이후 Root가 현재 RESUME_STATE 배열도17종으로 맞췄다. 일반 편집·automation·bounce·process tap 등 최초 장기 범위는 이번 내장 플러그인 잔여 분모에 새로 얹지 않았다. 이미 구현·검증된 범위는 별도 과거 근거로 유지한다.
 
