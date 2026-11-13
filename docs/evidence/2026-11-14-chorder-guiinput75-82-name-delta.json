@@ -1,0 +1,71 @@
+{
+  "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+  "tuple_key": [
+    "class_uid",
+    "source",
+    "canonical_name"
+  ],
+  "canonical_tuples": [
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch75.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch76.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch77.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch78.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch79.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch80.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch81.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch82.guiInput"
+    ]
+  ],
+  "previous_accepted": 6741,
+  "new_disjoint": 8,
+  "fixed_inventory": 7112,
+  "Chorder_remaining": 51,
+  "InputFilter_remaining_unchanged": 71,
+  "remaining_classes": 19,
+  "original_collector_strict_increment_unchanged": 0,
+  "backlog42_unchanged": true,
+  "preset30_of46_unchanged": true,
+  "old_failed_batch07_acceptance_unchanged": 0,
+  "actual_new_calls": 0,
+  "MIDI_verified": false,
+  "model_mapping_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "whole_Chorder_complete": false,
+  "accepted_after": 6749,
+  "remaining_after": 363,
+  "proposal_freeze_sha256": "71873c4f09ffc341fb5c032639022d11187982a39beda3927b26fb8788da0f01",
+  "root_review_sha256": "819aea43b3d2106915192be9351d11d1c2c2ebf1c61ce2347dbb7cfb8121c91c",
+  "accepted_union_sha256": "e84882aa4228a42bcda61fbf133e1b0810c363d1af14bef4deac586452dc0c07"
+}
