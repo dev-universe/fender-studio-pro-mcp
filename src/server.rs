@@ -238,7 +238,7 @@ impl McpServer {
             named::<ExternalPortMenu>(
                 "external_port_menu",
                 "externalPortMenu",
-                "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
+                "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. Optional provenance=true is restricted to Stereo Send and its fixed first two Param leaves; it reports sequential public identity relations with current mapped-bank target checks before and after the native call. This read-only bracket does not prove atomicity or continuous active-mixer membership; menuData typed values remain unobserved. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
                 true,
             ),
             named::<ChorderChordsGet>(
@@ -523,6 +523,13 @@ mod tests {
             );
         }
         assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(schema["properties"]["provenance"]["type"], "boolean");
+        assert!(
+            !schema["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("provenance"))
+        );
         for key in [
             "action", "source", "param", "path", "value", "token", "max_rows", "kind", "track",
         ] {

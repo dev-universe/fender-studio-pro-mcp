@@ -57,7 +57,11 @@ class NativePluginControls {
     }
 
     externalMenuRequest(request) {
-        return this.guiExact(request, ["operation", "port", "expected_instance"])
+        const fields = ["operation", "port", "expected_instance"];
+        const supplied = request && Object.prototype.hasOwnProperty.call(request, "provenance");
+        if (supplied) fields.push("provenance");
+        return this.guiExact(request, fields) && (!supplied || typeof request.provenance === "boolean")
+            && (request.provenance !== true || request.port === "send")
             && request.operation === "external_port_menu" && ["send", "return"].indexOf(request.port) >= 0
             && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
             && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
@@ -92,6 +96,7 @@ class NativePluginControls {
     externalMenuResult(result, request) {
         const fields = ["ok", "outcome", "operation", "instance", "source", "port", "parameter", "menu_class", "rows", "coverage", "menu_phase", "lifecycle",
             "selection_authority", "selection_calls", "scope", "persistence_verified", "audio_verified", "value_semantics"];
+        if (request.provenance === true) fields.push("provenance");
         const classes = { "873281D9-58DE-4B2D-B3BD-528F549B1AD9": "External Effect Mono", "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4": "External Effect Stereo" };
         const uuid = value => typeof value === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(value) && value !== "00000000-0000-0000-0000-000000000000";
         if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "observed" || result.operation !== "external_port_menu"
@@ -111,6 +116,8 @@ class NativePluginControls {
             || !this.guiExact(result.coverage, ["complete", "max_rows", "max_depth", "max_total_text_bytes", "max_text_bytes_each", "row_count"])
             || result.coverage.complete !== true || result.coverage.max_rows !== 256 || result.coverage.max_depth !== 4
             || result.coverage.max_total_text_bytes !== 32768 || result.coverage.max_text_bytes_each !== 1024 || result.coverage.row_count !== result.rows.length) return false;
+        if (request.provenance === true && (result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+            || request.port !== "send" || !this.externalMenuProvenance(result.provenance, result.rows))) return false;
         const parents = { "": { next: 0, submenu: true } };
         let previous = [], textBytes = 0;
         for (const row of result.rows) {
@@ -131,6 +138,38 @@ class NativePluginControls {
                 const size = this.externalMenuTextBytes(row[key]);
                 if (size > 1024 || (textBytes += size) > 32768) return false;
             }
+        }
+        return true;
+    }
+
+    externalMenuProvenance(value, rows) {
+        if (!this.guiExact(value, ["leaves", "menu_data_typed_values_observed", "selection_authority", "selection_calls", "proof_scope", "read_only_intent", "atomic_snapshot", "continuous_active_mixer_membership_verified"])
+            || value.menu_data_typed_values_observed !== false || value.selection_authority !== false || value.selection_calls !== 0
+            || value.proof_scope !== "held_target_sequential_read_only" || value.read_only_intent !== true
+            || value.atomic_snapshot !== false || value.continuous_active_mixer_membership_verified !== false
+            || !Array.isArray(rows) || rows.length !== 4 || !Array.isArray(value.leaves) || value.leaves.length !== 2) return false;
+        for (let i = 2; i < 4; i++) {
+            const r = rows[i];
+            if (!r || JSON.stringify(r.path) !== JSON.stringify([i]) || r.name !== (i === 2 ? "" : "Setup")
+                || r.title !== (i === 2 ? "-" : "오디오 I/O 설정") || r.category !== (i === 2 ? "" : "Console")
+                || r.checked !== false || r.enabled !== true || r.handler_present !== (i === 3) || r.has_submenu !== false) return false;
+        }
+        for (let i = 0; i < 2; i++) {
+            const r = rows[i], p = value.leaves[i];
+            if (!r || JSON.stringify(r.path) !== JSON.stringify([i]) || r.name !== String(i)
+                || r.title !== (i === 0 ? "없음" : "메인 - 1 + 2") || r.category !== "Param"
+                || r.checked !== (i === 0) || r.enabled !== true || r.handler_present !== true || r.has_submenu !== false
+                || !this.guiExact(p, ["path", "handler_matches_builder", "data_handler_matches_builder", "data_builder_matches_builder", "data_parameter_is_selected", "original_is_selected", "original_end"])
+                || JSON.stringify(p.path) !== JSON.stringify([i])
+                || ["handler_matches_builder", "data_handler_matches_builder", "data_builder_matches_builder", "data_parameter_is_selected"].some(k => typeof p[k] !== "boolean")
+                || !Array.isArray(p.original_is_selected) || p.original_is_selected.length < 1 || p.original_is_selected.length > 8 || p.original_is_selected.some(v => typeof v !== "boolean")) return false;
+            const e = p.original_end;
+            if (!e || typeof e !== "object" || Array.isArray(e)) return false;
+            if (e.kind === "cycle") {
+                if (!this.guiExact(e, ["kind", "index"]) || !this.guiInteger(e.index, 0, p.original_is_selected.length - 2)) return false;
+            } else if (!this.guiExact(e, ["kind"]) || ["self_reference", "missing_original", "limit"].indexOf(e.kind) < 0
+                || (e.kind === "limit" && p.original_is_selected.length !== 8)
+                || (e.kind !== "limit" && p.original_is_selected.length >= 8)) return false;
         }
         return true;
     }

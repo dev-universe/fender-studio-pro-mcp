@@ -710,17 +710,30 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
 
     externalPortMenu(args) {
         const controls = new NativePluginControls(this), failure = () => controls.externalMenuFailure(false, null);
-        if (!controls.guiExact(args, ["channel", "slot", "plugin", "expected_instance", "port"])
+        const fields = ["channel", "slot", "plugin", "expected_instance", "port"];
+        const supplied = args && Object.prototype.hasOwnProperty.call(args, "provenance");
+        if (supplied) fields.push("provenance");
+        if (!controls.guiExact(args, fields) || (supplied && typeof args.provenance !== "boolean")
+            || (args.provenance === true && (args.plugin !== "External Effect Stereo" || args.port !== "send"))
             || typeof args.channel !== "string" || !args.channel.trim() || controls.externalMenuTextBytes(args.channel) > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.channel)
             || !controls.guiInteger(args.slot, 0, 15) || ["External Effect Mono", "External Effect Stereo"].indexOf(args.plugin) < 0) return failure();
         const request = { operation: "external_port_menu", expected_instance: args.expected_instance, port: args.port };
+        if (args.provenance === true) request.provenance = true;
         if (!controls.externalMenuRequest(request)) return failure();
         const plug = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
         if (!plug || plug.error || plug.name !== args.plugin) return failure();
         const native = this.nativePluginRequest(plug.device, request);
         if (!native) return failure();
         if (native.ok === true && native.instance.object_id !== args.plugin) return controls.externalMenuFailure(true, null);
-        return Object.assign({}, native, { plugin: args.plugin, native_outcome: native.outcome });
+        if (args.provenance === true) {
+            const current = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
+            if (!current || current.error || current.name !== plug.name || current.device !== plug.device
+                || current.component !== plug.component || current.element !== plug.element) return controls.externalMenuFailure(true, null);
+        }
+        const result = Object.assign({}, native, { plugin: args.plugin, native_outcome: native.outcome });
+        if (args.provenance === true && native.ok === true) result.provenance = Object.assign({}, native.provenance,
+            { proof_scope: "bracketed_current_mapped_bank_sequential_read_only" });
+        return result;
     }
 
     chorderChordsGet(args) {

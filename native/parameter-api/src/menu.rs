@@ -9,13 +9,17 @@ use std::{
     ptr::{self, NonNull},
 };
 
+#[path = "menu_provenance.rs"]
+pub(crate) mod provenance;
+pub use provenance::{LeafProvenance, MenuProvenance, ProvenanceChainEnd};
+
 const BUILDER_CLASS: Uid = Uid {
     a: 0xb56d5931,
     b: 0x2225,
     c: 0x42bf,
     d: [0x8c, 0x93, 0xe7, 0x61, 0x8e, 0xf1, 0x71, 0x35],
 };
-const BUILDER_IID: Uid = Uid {
+pub(crate) const BUILDER_IID: Uid = Uid {
     a: 0x8e75cc94,
     b: 0x8a53,
     c: 0x4ff3,
@@ -82,6 +86,7 @@ pub struct MenuRow {
 pub struct MenuObservation {
     pub menu_class: String,
     pub rows: Vec<MenuRow>,
+    pub provenance: Option<MenuProvenance>,
     pub root_menu_final_release_count: u32,
     pub builder_final_release_count: u32,
 }
@@ -285,7 +290,7 @@ fn check_snapshots<G: FnMut() -> Result<(), String>>(
     g: &mut G,
 ) -> Result<(), Error> {
     let snapshots = std::mem::take(&mut resources.snapshots);
-    for snapshot in snapshots {
+    for snapshot in &snapshots {
         if menu_count(snapshot.raw, g)? != snapshot.items.len() as i32 {
             return Err(Error::InvalidData("menu membership changed"));
         }
@@ -304,6 +309,7 @@ fn check_snapshots<G: FnMut() -> Result<(), String>>(
             return Err(Error::InvalidData("menu membership changed"));
         }
     }
+    resources.snapshots = snapshots;
     Ok(())
 }
 fn walk<G: FnMut() -> Result<(), String>>(
@@ -387,6 +393,42 @@ impl RawParameter {
         allocator: NonNull<c_void>,
         port: ExternalPort,
         g: &mut G,
+    ) -> MenuReadAttempt {
+        unsafe { self.external_port_menu_inner(allocator, port, g, false) }
+    }
+
+    /// Fixed provenance primitive: class_uid comes from the retained native instance,
+    /// never a request assertion. Guard must revalidate document/session,
+    /// exact instance, open editor/controller and selected parameter.
+    /// This performs no selection and observes no menuData typed values.
+    ///
+    /// # Safety
+    /// The allocator/runtime/GUI thread and retained device/editor/document
+    /// must satisfy external_port_menu's contract. The class must be read
+    /// from the validated native instance, not a caller assertion. The guard
+    /// must reject any document, session, instance, editor or route change.
+    pub unsafe fn external_stereo_send_menu_provenance<G: FnMut() -> Result<(), String>>(
+        self,
+        allocator: NonNull<c_void>,
+        class_uid: &str,
+        g: &mut G,
+    ) -> MenuReadAttempt {
+        if class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4" {
+            return MenuReadAttempt {
+                result: Err(Error::InvalidData("exact Stereo source identity required")),
+                phase: MenuPhase::Prepared,
+                lease: None,
+            };
+        }
+        unsafe { self.external_port_menu_inner(allocator, ExternalPort::Send, g, true) }
+    }
+
+    unsafe fn external_port_menu_inner<G: FnMut() -> Result<(), String>>(
+        self,
+        allocator: NonNull<c_void>,
+        port: ExternalPort,
+        g: &mut G,
+        capture_provenance: bool,
     ) -> MenuReadAttempt {
         let mut phase = MenuPhase::Prepared;
         let mut lease = None;
@@ -486,7 +528,34 @@ impl RawParameter {
                 &mut guard,
             )?;
             check_snapshots(&mut resources, &mut guard)?;
-            Ok((menu_class, rows))
+            let provenance = if capture_provenance {
+                let selected = l.binding.parameter().as_borrowed_raw().as_ptr();
+                let first = provenance::capture(
+                    menu,
+                    builder,
+                    selected,
+                    &rows,
+                    &mut resources,
+                    &mut guard,
+                )?;
+                check_snapshots(&mut resources, &mut guard)?;
+                let second = provenance::capture(
+                    menu,
+                    builder,
+                    selected,
+                    &rows,
+                    &mut resources,
+                    &mut guard,
+                )?;
+                check_snapshots(&mut resources, &mut guard)?;
+                if first != second {
+                    return Err(Error::MetadataChanged);
+                }
+                Some(first.observation)
+            } else {
+                None
+            };
+            Ok((menu_class, rows, provenance))
         })();
         if phase.began() {
             phase = MenuPhase::ReleaseDispatched;
@@ -496,7 +565,7 @@ impl RawParameter {
         } else {
             resources.release(g)
         };
-        let result = result.and_then(|(menu_class, rows)| {
+        let result = result.and_then(|(menu_class, rows, provenance)| {
             let (m, b) = cleaned?;
             if m != 0 || b != 0 {
                 return Err(Error::InvalidData("menu cleanup retained outside owners"));
@@ -506,6 +575,7 @@ impl RawParameter {
             Ok(MenuObservation {
                 menu_class,
                 rows,
+                provenance,
                 root_menu_final_release_count: m,
                 builder_final_release_count: b,
             })

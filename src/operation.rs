@@ -498,6 +498,14 @@ pub struct ExternalPortMenu {
     pub plugin: String,
     pub expected_instance: String,
     pub port: ExternalPort,
+    #[serde(default, skip_serializing_if = "is_false_provenance")]
+    #[schemars(
+        description = "Defaults to false. True brackets current mapped-bank target resolution around sequential fixed Stereo Send public identity reads. It proves neither atomicity nor continuous active-mixer membership; menuData typed values and selection authority remain unavailable."
+    )]
+    pub provenance: bool,
+}
+fn is_false_provenance(value: &bool) -> bool {
+    !*value
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -1321,6 +1329,9 @@ impl Operation {
                 validate_splitter_name(&p.channel, "channel")?;
                 validate_instance_uid(Some(&p.expected_instance))?;
                 if p.slot > 15
+                    || (p.provenance
+                        && (p.plugin != "External Effect Stereo"
+                            || !matches!(p.port, ExternalPort::Send)))
                     || !matches!(
                         p.plugin.as_str(),
                         "External Effect Mono" | "External Effect Stereo"

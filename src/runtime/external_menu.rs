@@ -27,31 +27,33 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
         "External Effect Stereo" => "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
         _ => return false,
     };
-    if !exact_gui_object(
-        value,
-        &[
-            "ok",
-            "outcome",
-            "native_outcome",
-            "operation",
-            "instance",
-            "source",
-            "port",
-            "parameter",
-            "menu_class",
-            "rows",
-            "coverage",
-            "menu_phase",
-            "lifecycle",
-            "selection_authority",
-            "selection_calls",
-            "scope",
-            "persistence_verified",
-            "audio_verified",
-            "value_semantics",
-            "plugin",
-        ],
-    ) || value["ok"] != true
+    let mut fields = vec![
+        "ok",
+        "outcome",
+        "native_outcome",
+        "operation",
+        "instance",
+        "source",
+        "port",
+        "parameter",
+        "menu_class",
+        "rows",
+        "coverage",
+        "menu_phase",
+        "lifecycle",
+        "selection_authority",
+        "selection_calls",
+        "scope",
+        "persistence_verified",
+        "audio_verified",
+        "value_semantics",
+        "plugin",
+    ];
+    if query.provenance {
+        fields.push("provenance");
+    }
+    if !exact_gui_object(value, &fields)
+        || value["ok"] != true
         || value["outcome"] != "observed"
         || value["native_outcome"] != "observed"
         || value["operation"] != "external_port_menu"
@@ -86,6 +88,13 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
     };
     if value["coverage"]
         != json!({"complete":true,"max_rows":256,"max_depth":4,"max_total_text_bytes":32768,"max_text_bytes_each":1024,"row_count":rows.len()})
+    {
+        return false;
+    }
+    if query.provenance
+        && (query.plugin != "External Effect Stereo"
+            || !matches!(query.port, ExternalPort::Send)
+            || !valid_provenance(&value["provenance"], rows))
     {
         return false;
     }
@@ -153,6 +162,108 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
             if text_bytes > 32768 {
                 return false;
             }
+        }
+    }
+    true
+}
+
+fn valid_provenance(value: &Value, rows: &[Value]) -> bool {
+    if !exact_gui_object(
+        value,
+        &[
+            "leaves",
+            "menu_data_typed_values_observed",
+            "selection_authority",
+            "selection_calls",
+            "proof_scope",
+            "read_only_intent",
+            "atomic_snapshot",
+            "continuous_active_mixer_membership_verified",
+        ],
+    ) || value["menu_data_typed_values_observed"] != false
+        || value["proof_scope"] != "bracketed_current_mapped_bank_sequential_read_only"
+        || value["read_only_intent"] != true
+        || value["atomic_snapshot"] != false
+        || value["continuous_active_mixer_membership_verified"] != false
+        || value["selection_authority"] != false
+        || value["selection_calls"] != 0
+        || rows.len() != 4
+    {
+        return false;
+    }
+    let Some(leaves) = value["leaves"].as_array().filter(|a| a.len() == 2) else {
+        return false;
+    };
+    for i in 2..4 {
+        let r = &rows[i];
+        if r["path"] != json!([i])
+            || r["name"] != if i == 2 { "" } else { "Setup" }
+            || r["title"] != if i == 2 { "-" } else { "오디오 I/O 설정" }
+            || r["category"] != if i == 2 { "" } else { "Console" }
+            || r["checked"] != false
+            || r["enabled"] != true
+            || r["handler_present"] != (i == 3)
+            || r["has_submenu"] != false
+        {
+            return false;
+        }
+    }
+    for (i, p) in leaves.iter().enumerate() {
+        let r = &rows[i];
+        if r["path"] != json!([i])
+            || r["name"] != i.to_string()
+            || r["title"] != if i == 0 { "없음" } else { "메인 - 1 + 2" }
+            || r["category"] != "Param"
+            || r["checked"] != (i == 0)
+            || r["enabled"] != true
+            || r["handler_present"] != true
+            || r["has_submenu"] != false
+            || !exact_gui_object(
+                p,
+                &[
+                    "path",
+                    "handler_matches_builder",
+                    "data_handler_matches_builder",
+                    "data_builder_matches_builder",
+                    "data_parameter_is_selected",
+                    "original_is_selected",
+                    "original_end",
+                ],
+            )
+            || p["path"] != json!([i])
+            || [
+                "handler_matches_builder",
+                "data_handler_matches_builder",
+                "data_builder_matches_builder",
+                "data_parameter_is_selected",
+            ]
+            .iter()
+            .any(|k| !p[k].is_boolean())
+        {
+            return false;
+        }
+        let Some(chain) = p["original_is_selected"]
+            .as_array()
+            .filter(|a| (1..=8).contains(&a.len()) && a.iter().all(Value::is_boolean))
+        else {
+            return false;
+        };
+        let end = &p["original_end"];
+        let valid = match end["kind"].as_str() {
+            Some("cycle") => {
+                exact_gui_object(end, &["kind", "index"])
+                    && end["index"]
+                        .as_u64()
+                        .is_some_and(|n| n < chain.len().saturating_sub(1) as u64)
+            }
+            Some("limit") => exact_gui_object(end, &["kind"]) && chain.len() == 8,
+            Some("self_reference" | "missing_original") => {
+                exact_gui_object(end, &["kind"]) && chain.len() < 8
+            }
+            _ => false,
+        };
+        if !valid {
+            return false;
         }
     }
     true

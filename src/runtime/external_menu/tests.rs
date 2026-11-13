@@ -6,6 +6,7 @@ fn query() -> ExternalPortMenu {
         plugin: "External Effect Stereo".into(),
         expected_instance: "12345678-1234-1234-1234-123456789ABC".into(),
         port: ExternalPort::Send,
+        provenance: false,
     }
 }
 fn row(path: Value, submenu: bool) -> Value {
@@ -201,4 +202,112 @@ fn external_menu_requires_exact_contract_per_text_byte_bound() {
     v = good();
     v["coverage"]["unchecked"] = json!(1024);
     assert!(!valid_get(&q, &v));
+}
+
+fn provenance_good() -> Value {
+    let mut v = good();
+    let rows = [
+        ("0", "없음", "Param", true, true),
+        ("1", "메인 - 1 + 2", "Param", false, true),
+        ("", "-", "", false, false),
+        ("Setup", "오디오 I/O 설정", "Console", false, true),
+    ];
+    v["rows"] = Value::Array(rows.into_iter().enumerate().map(|(i,(name,title,category,checked,handler))| json!({"path":[i],"name":name,"title":title,"category":category,"checked":checked,"enabled":true,"has_submenu":false,"handler_present":handler,"kind":"opaque"})).collect());
+    v["coverage"]["row_count"] = json!(4);
+    v["provenance"] = json!({"leaves":([0,1].map(|i|json!({"path":[i],"handler_matches_builder":true,"data_handler_matches_builder":false,"data_builder_matches_builder":false,"data_parameter_is_selected":false,"original_is_selected":[false,true],"original_end":{"kind":"self_reference"}}))),"menu_data_typed_values_observed":false,"selection_authority":false,"selection_calls":0,"proof_scope":"bracketed_current_mapped_bank_sequential_read_only","read_only_intent":true,"atomic_snapshot":false,"continuous_active_mixer_membership_verified":false});
+    v
+}
+#[test]
+fn external_menu_provenance_is_typed_bounded_and_never_value_or_selection_authority() {
+    let mut q = query();
+    q.provenance = true;
+    let good = provenance_good();
+    assert!(valid_get(&q, &good));
+    for (pointer, bad) in [
+        ("/provenance/selection_calls", json!(1)),
+        ("/provenance/menu_data_typed_values_observed", json!(true)),
+        ("/provenance/leaves/0/handler_matches_builder", json!(1)),
+        ("/provenance/leaves/0/original_is_selected", json!([0])),
+        (
+            "/provenance/leaves/0/original_end",
+            json!({"kind":"cycle","index":false}),
+        ),
+        (
+            "/provenance/leaves/0/original_end",
+            json!({"kind":"cycle","index":u64::MAX}),
+        ),
+        ("/provenance/leaves/0/original_end", json!({"kind":"limit"})),
+        ("/rows/3/title", json!("Changed")),
+        ("/rows/2/handler_present", json!(true)),
+    ] {
+        let mut v = good.clone();
+        *v.pointer_mut(pointer).unwrap() = bad;
+        assert!(!valid_get(&q, &v), "{pointer}");
+    }
+    let mut v = good.clone();
+    v["provenance"]["pointer"] = json!(123);
+    assert!(!valid_get(&q, &v));
+    q.provenance = false;
+    assert!(!valid_get(&q, &good));
+    q.provenance = true;
+    q.port = ExternalPort::Return;
+    assert!(!valid_get(&q, &good));
+}
+#[test]
+fn external_menu_optional_provenance_preserves_old_wire_and_rejects_bad_intents() {
+    let q = query();
+    let wire = serde_json::to_value(&q).unwrap();
+    assert!(wire.get("provenance").is_none());
+    assert!(
+        !serde_json::from_value::<ExternalPortMenu>(wire.clone())
+            .unwrap()
+            .provenance
+    );
+    for bad in [json!(0), json!(1), json!(null), json!("true")] {
+        let mut v = wire.clone();
+        v["provenance"] = bad;
+        assert!(serde_json::from_value::<ExternalPortMenu>(v).is_err());
+    }
+    let mut q = q;
+    q.provenance = true;
+    assert!(
+        crate::operation::Operation::ExternalPortMenu(q.clone())
+            .validate()
+            .is_ok()
+    );
+    q.port = ExternalPort::Return;
+    assert!(
+        crate::operation::Operation::ExternalPortMenu(q.clone())
+            .validate()
+            .is_err()
+    );
+    q.port = ExternalPort::Send;
+    q.plugin = "External Effect Mono".into();
+    assert!(
+        crate::operation::Operation::ExternalPortMenu(q)
+            .validate()
+            .is_err()
+    );
+}
+
+#[test]
+fn external_menu_provenance_scope_needs_bridge_bracket_and_rejects_stronger_claims() {
+    let mut q = query();
+    q.provenance = true;
+    let good = provenance_good();
+    assert!(valid_get(&q, &good));
+    for (key, bad) in [
+        ("proof_scope", json!("held_target_sequential_read_only")),
+        ("proof_scope", json!("atomic")),
+        ("read_only_intent", json!(false)),
+        ("read_only_intent", json!(1)),
+        ("atomic_snapshot", json!(true)),
+        ("atomic_snapshot", json!(0)),
+        ("continuous_active_mixer_membership_verified", json!(true)),
+        ("continuous_active_mixer_membership_verified", json!(0)),
+    ] {
+        let mut value = good.clone();
+        value["provenance"][key] = bad;
+        assert!(!valid_get(&q, &value), "{key}");
+    }
 }

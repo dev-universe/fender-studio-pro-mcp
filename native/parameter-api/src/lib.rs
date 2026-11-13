@@ -9,7 +9,10 @@
 mod ffi;
 mod menu;
 mod parameter;
-pub use menu::{ExternalPort, MenuObservation, MenuPhase, MenuReadAttempt, MenuReadLease, MenuRow};
+pub use menu::{
+    ExternalPort, LeafProvenance, MenuObservation, MenuPhase, MenuProvenance, MenuReadAttempt,
+    MenuReadLease, MenuRow, ProvenanceChainEnd,
+};
 mod text;
 mod value;
 

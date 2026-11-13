@@ -2,6 +2,11 @@ use super::*;
 use crate::menu::{ExternalPort, MenuPhase};
 #[derive(Default)]
 struct MenuStats {
+    provenance: Cell<bool>,
+    fault: Cell<u8>,
+    data_parameter: Cell<*mut c_void>,
+    data_calls: Cell<usize>,
+    alternate_handler: Cell<*mut c_void>,
     trace: RefCell<Vec<&'static str>>,
     stats: Rc<Stats>,
     context: RefCell<Option<Rc<Cell<bool>>>>,
@@ -30,6 +35,7 @@ struct MenuStats {
 #[repr(C)]
 struct N {
     vt: *const usize,
+    data: Cell<*mut c_void>,
     refs: Cell<u32>,
     kind: u8,
     state: Rc<MenuStats>,
@@ -65,13 +71,19 @@ fn new(kind: u8, state: Rc<MenuStats>, builder: *mut c_void, ordinal: i32) -> *m
                 _ => attribute as *const () as usize,
             };
             v[4] = build as *const () as usize;
-            v[6] = sub as *const () as usize;
+            v[5] = parent_menu as *const () as usize;
+            v[6] = if kind == 2 {
+                menu_attribute as *const () as usize
+            } else {
+                sub as *const () as usize
+            };
             v[8] = count as *const () as usize;
             v[9] = item as *const () as usize;
             v
         },
     );
     Box::into_raw(Box::new(N {
+        data: Cell::new(std::ptr::null_mut()),
         vt,
         refs: Cell::new(1),
         kind,
@@ -100,6 +112,9 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
             for p in o.items {
                 unsafe { release(p) };
             }
+            if !o.data.get().is_null() {
+                unsafe { release(o.data.get()) };
+            }
             unsafe { release(o.builder) };
         } else if o.kind == 1 {
             o.state.trace.borrow_mut().push("builder-cleanup");
@@ -118,6 +133,11 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
             if !p.is_null() {
                 unsafe { p_release(p) };
             }
+        } else if o.kind == 4 {
+            unsafe {
+                release(o.builder);
+                p_release(o.parameter.get());
+            }
         } else if o.kind == 3 {
             for child in o.items {
                 unsafe { release(child) };
@@ -128,7 +148,42 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
     v
 }
 unsafe extern "C" fn query(p: *mut c_void, i: *const Uid, out: *mut *mut c_void) -> i32 {
-    if unsafe { *i } == ffi::UNKNOWN {
+    let object = unsafe { n(p) };
+    let iid = unsafe { *i };
+    if object.state.provenance.get() && object.kind == 4 {
+        if iid == crate::menu::provenance::PARAMETER {
+            if object.state.fault.get() == 2 {
+                return ffi::NO_INTERFACE;
+            }
+            if object.state.fault.get() == 9 {
+                return 0;
+            }
+            let target = object.parameter.get();
+            unsafe {
+                p_retain(target);
+                *out = target;
+            }
+            return 0;
+        }
+        if iid == crate::menu::provenance::COMMAND || iid == crate::menu::BUILDER_IID {
+            unsafe {
+                retain(object.builder);
+                *out = object.builder;
+            }
+            return 0;
+        }
+    }
+    if object.state.provenance.get()
+        && object.kind == 1
+        && (iid == crate::menu::provenance::COMMAND || iid == crate::menu::BUILDER_IID)
+    {
+        unsafe {
+            retain(p);
+            *out = p;
+        }
+        return 0;
+    }
+    if iid == ffi::UNKNOWN {
         unsafe {
             retain(p);
             *out = p
@@ -241,6 +296,48 @@ unsafe extern "C" fn attribute(p: *mut c_void, a: *mut Variant, id: i32) -> u8 {
         return 1;
     }
 
+    if o.state.provenance.get() {
+        match id {
+            0 | 1 | 11 => {
+                let value = match (o.ordinal, id) {
+                    (0, 0) => "0",
+                    (0, 1) => "없음",
+                    (0, 11) => "Param",
+                    (1, 0) => "1",
+                    (1, 1) => "메인 - 1 + 2",
+                    (1, 11) => "Param",
+                    (2, 1) => "-",
+                    (3, 0) => "Setup",
+                    (3, 1) => "오디오 I/O 설정",
+                    (3, 11) => "Console",
+                    _ => "",
+                };
+                out.tag = 19;
+                out.payload = string_new(value, o.state.stats.clone()) as usize as u64;
+                return 1;
+            }
+            12 => {
+                if o.ordinal == 2 {
+                    out.tag = 4; // actual separator has a known absent object handler
+                    out.payload = 0;
+                    return 1;
+                }
+                let parent = unsafe { n(o.builder) };
+                let handler = if o.state.alternate_handler.get().is_null() {
+                    parent.builder
+                } else {
+                    o.state.alternate_handler.get()
+                };
+                unsafe {
+                    retain(handler);
+                }
+                out.tag = 20;
+                out.payload = handler as usize as u64;
+                return 1;
+            }
+            _ => {}
+        }
+    }
     match id {
         0 | 1 | 11 => {
             out.tag = 19;
@@ -300,6 +397,20 @@ unsafe extern "C" fn build(p: *mut c_void, _: *mut c_void) -> *mut c_void {
         unsafe { retain(q) };
     }
     b.state.menu.set(q);
+    if b.state.provenance.get() {
+        let data = new(4, b.state.clone(), p, 0);
+        let parameter = if b.state.data_parameter.get().is_null() {
+            b.parameter.get()
+        } else {
+            b.state.data_parameter.get()
+        };
+        unsafe {
+            retain(p);
+            p_retain(parameter);
+            n(data).parameter.set(parameter);
+            n(q).data.set(data);
+        }
+    }
     if b.state.stop.get() == 2 {
         if let Some(c) = b.state.context.borrow().as_ref() {
             c.set(false)
@@ -735,4 +846,327 @@ fn menu_revalidation_binding_loss_keeps_one_cleanup_and_no_selection() {
     assert_eq!(f.p().writes.get(), 0);
     drop(r);
     unsafe { release(a) };
+}
+
+unsafe extern "C" fn parent_menu(p: *mut c_void) -> *mut c_void {
+    let o = unsafe { n(p) };
+    if o.state.fault.get() == 1 {
+        o.state.context.borrow().as_ref().unwrap().set(false);
+    }
+    if o.state.fault.get() == 5 {
+        unsafe { n(o.builder) }.builder
+    } else {
+        o.builder
+    }
+}
+unsafe extern "C" fn menu_attribute(p: *mut c_void, out: *mut Variant, id: i32) -> u8 {
+    let o = unsafe { n(p) };
+    assert_eq!(id, 3);
+    o.state.data_calls.set(o.state.data_calls.get() + 1);
+    if o.state.fault.get() == 3 {
+        unsafe {
+            (*out).tag = 1;
+            (*out).payload = 0;
+        }
+        return 1;
+    }
+    let data = o.data.get();
+    if o.state.fault.get() == 6 && o.state.data_calls.get() == 1 {
+        o.state.replace_during_attr.set(true);
+    }
+    if o.state.fault.get() == 4 {
+        unsafe {
+            (*out).tag = 4;
+            (*out).payload = data as usize as u64;
+        }
+    } else {
+        unsafe {
+            retain(data);
+            (*out).tag = 20;
+            (*out).payload = data as usize as u64;
+        }
+    }
+    if o.state.fault.get() == 8 { 0 } else { 1 }
+}
+#[test]
+fn provenance_fixed_two_leaves_shared_and_borrowed_variants_close_balanced() {
+    for fault in [0, 4] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        s.provenance.set(true);
+        s.count.set(4);
+        s.fault.set(fault);
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        let observed = r.result.as_ref().unwrap();
+        let v = observed.provenance.as_ref().unwrap();
+        assert_eq!(v.leaves.len(), 2);
+        assert!(!v.selection_authority);
+        assert_eq!(v.selection_calls, 0);
+        assert!(!v.menu_data_typed_values_observed);
+        for leaf in &v.leaves {
+            assert!(
+                leaf.handler_matches_builder
+                    && leaf.data_handler_matches_builder
+                    && leaf.data_builder_matches_builder
+                    && leaf.data_parameter_is_selected
+            );
+            assert_eq!(leaf.original_is_selected, [true]);
+            assert_eq!(leaf.original_end, crate::ProvenanceChainEnd::SelfReference);
+        }
+        assert_eq!(observed.root_menu_final_release_count, 0);
+        assert_eq!(observed.builder_final_release_count, 0);
+        assert_eq!(f.p().writes.get(), 0);
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn provenance_failures_missing_qi_wrong_variant_parent_rebind_release_once() {
+    for fault in [1, 2, 3, 5, 6, 8, 9] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        s.provenance.set(true);
+        s.count.set(4);
+        s.fault.set(fault);
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        assert!(r.result.is_err(), "fault {fault}");
+        assert_eq!(f.p().writes.get(), 0);
+        assert_eq!(
+            s.trace
+                .borrow()
+                .iter()
+                .filter(|t| **t == "builder-cleanup")
+                .count(),
+            1
+        );
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+}
+#[test]
+fn provenance_target_gate_and_context_bits_refuse_without_build() {
+    {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        s.provenance.set(true);
+        s.count.set(4);
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "wrong",
+                &mut f.guard(),
+            )
+        };
+        assert!(r.result.is_err());
+        assert!(s.trace.borrow().is_empty());
+        drop(r);
+        unsafe { release(a) };
+    }
+    for reason in ["document", "instance", "editor"] {
+        let e = TextEnv::new();
+        let (_f, p, a, s) = fixture(&e);
+        s.provenance.set(true);
+        s.count.set(4);
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut || Err(reason.into()),
+            )
+        };
+        assert!(r.result.is_err());
+        assert!(s.trace.borrow().is_empty());
+        drop(r);
+        unsafe { release(a) };
+    }
+}
+#[test]
+fn provenance_distinct_parameter_original_link_and_canonical_view_attribution() {
+    for same_view in [false, true] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        let (alias, alias_owner) = list_fixture(&e, -1, -1);
+        s.provenance.set(true);
+        s.count.set(4);
+        s.data_parameter.set(alias.pointer);
+        if same_view {
+            alias.p().details.canonical.set(f.pointer);
+        } else {
+            alias.p().details.original.set(Some(f.pointer));
+        }
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        let obs = r.result.as_ref().unwrap().provenance.as_ref().unwrap();
+        assert_eq!(obs.leaves[0].data_parameter_is_selected, same_view);
+        assert_eq!(
+            obs.leaves[0].original_is_selected,
+            if same_view {
+                vec![true]
+            } else {
+                vec![false, true]
+            }
+        );
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(alias.p().refs.get(), 2);
+        drop(alias_owner);
+    }
+}
+
+#[test]
+fn provenance_original_cycle_missing_and_eight_node_limit_are_bounded() {
+    for mode in [0, 1, 2] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        let aliases: Vec<_> = (0..9).map(|_| list_fixture(&e, -1, -1)).collect();
+        for i in 0..8 {
+            aliases[i]
+                .0
+                .p()
+                .details
+                .original
+                .set(Some(aliases[i + 1].0.pointer));
+        }
+        if mode == 1 {
+            aliases[1]
+                .0
+                .p()
+                .details
+                .original
+                .set(Some(aliases[0].0.pointer));
+        }
+        if mode == 2 {
+            aliases[0]
+                .0
+                .p()
+                .details
+                .original
+                .set(Some(std::ptr::null_mut()));
+        }
+        s.provenance.set(true);
+        s.count.set(4);
+        s.data_parameter.set(aliases[0].0.pointer);
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut f.guard(),
+            )
+        };
+        let v = r.result.as_ref().unwrap().provenance.as_ref().unwrap();
+        let leaf = &v.leaves[0];
+        match mode {
+            0 => {
+                assert_eq!(leaf.original_end, crate::ProvenanceChainEnd::Limit);
+                assert_eq!(leaf.original_is_selected.len(), 8);
+                assert_eq!(aliases[7].0.p().details.original_calls.get(), 0);
+                assert_eq!(aliases[8].0.p().details.original_calls.get(), 0);
+            }
+            1 => assert_eq!(
+                leaf.original_end,
+                crate::ProvenanceChainEnd::Cycle { index: 0 }
+            ),
+            _ => assert_eq!(
+                leaf.original_end,
+                crate::ProvenanceChainEnd::MissingOriginal
+            ),
+        }
+        assert!(!leaf.original_is_selected.iter().any(|x| *x));
+        drop(r);
+        unsafe { release(a) };
+        for (alias, _) in &aliases {
+            assert_eq!(alias.p().refs.get(), 2);
+        }
+    }
+}
+#[test]
+fn provenance_false_handler_equality_remains_observation_without_authority() {
+    let e = TextEnv::new();
+    let (f, p, a, s) = fixture(&e);
+    s.provenance.set(true);
+    s.count.set(4);
+    let other = new(1, s.clone(), std::ptr::null_mut(), 0);
+    s.alternate_handler.set(other);
+    let r = unsafe {
+        p.external_stereo_send_menu_provenance(
+            NonNull::new(a).unwrap(),
+            "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+            &mut f.guard(),
+        )
+    };
+    let v = r.result.as_ref().unwrap().provenance.as_ref().unwrap();
+    assert!(!v.leaves[0].handler_matches_builder);
+    assert!(v.leaves[0].data_builder_matches_builder);
+    assert!(!v.selection_authority);
+    drop(r);
+    unsafe {
+        release(a);
+        release(other)
+    };
+    assert_eq!(f.p().refs.get(), 1);
+}
+#[test]
+fn provenance_context_after_parent_and_during_cleanup_cannot_publish() {
+    for reason in ["document", "instance", "editor"] {
+        let e = TextEnv::new();
+        let (f, p, a, s) = fixture(&e);
+        s.provenance.set(true);
+        s.count.set(4);
+        s.fault.set(1);
+        let context = f.p().context.clone();
+        let r = unsafe {
+            p.external_stereo_send_menu_provenance(
+                NonNull::new(a).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                &mut || {
+                    if context.get() {
+                        Ok(())
+                    } else {
+                        Err(reason.into())
+                    }
+                },
+            )
+        };
+        assert!(r.result.is_err());
+        assert_eq!(s.data_calls.get(), 0);
+        drop(r);
+        unsafe { release(a) };
+        assert_eq!(f.p().refs.get(), 1);
+    }
+    let e = TextEnv::new();
+    let (f, p, a, s) = fixture(&e);
+    s.provenance.set(true);
+    s.count.set(4);
+    s.stop.set(3);
+    let r = unsafe {
+        p.external_stereo_send_menu_provenance(
+            NonNull::new(a).unwrap(),
+            "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+            &mut f.guard(),
+        )
+    };
+    assert!(r.result.is_err());
+    assert_eq!(r.phase, MenuPhase::ReleaseDispatched);
+    drop(r);
+    unsafe { release(a) };
+    assert_eq!(f.p().refs.get(), 1);
 }

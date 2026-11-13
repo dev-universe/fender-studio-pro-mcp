@@ -97,6 +97,8 @@ enum Request {
     ExternalPortMenu {
         port: external_menu::Port,
         expected_instance: String,
+        #[serde(default)]
+        provenance: bool,
     },
     Inspect {
         #[serde(default)]
@@ -1861,8 +1863,8 @@ fn dispatch_device(
             mutation,
         };
     }
-    if let Request::ExternalPortMenu { port, .. } = request {
-        let (value, menu) = external_menu::observe(&ctx, port);
+    if let Request::ExternalPortMenu { port, provenance, .. } = request {
+        let (value, menu) = external_menu::observe(&ctx, port, provenance);
         return Reply {
             value,
             menu,
@@ -3304,7 +3306,10 @@ mod guard_tests {
         let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
         let mut fixture = Fixture::new();
         let context = fixture.context();
-        let (value, lease) = external_menu::observe(&context, external_menu::Port::Send);
+        let (value, lease) = external_menu::observe(&context, external_menu::Port::Send, false);
+        let (provenance_value, provenance_lease) = external_menu::observe(&context, external_menu::Port::Send, true);
+        assert_eq!(provenance_value["outcome"], "not_applied");
+        assert!(provenance_lease.is_none());
         assert_eq!(value["outcome"], "not_applied");
         assert_eq!(value["menu_phase"], "prepared");
         assert!(lease.is_none());
@@ -3690,7 +3695,12 @@ mod external_menu_request_tests {
             assert_eq!(r.source(), Source::Controller);
             assert_eq!(r.expected(), Some(uid));
         }
+        for provenance in [json!(true), json!(false)] {
+            let x = json!({"operation":"external_port_menu","port":"send","expected_instance":uid,"provenance":provenance});
+            assert!(serde_json::from_value::<Request>(x).unwrap().validate().is_ok());
+        }
         for extra in [
+            json!({"provenance":0}), json!({"provenance":1}), json!({"provenance":null}), json!({"provenance":"true"}),
             json!({"port":"setup"}),
             json!({"port":0}),
             json!({"source":"auto"}),
@@ -3708,7 +3718,7 @@ mod external_menu_request_tests {
     #[test]
     fn external_menu_late_invalidation_strips_every_positive_claim() {
         let mut r = Reply::unbound(
-            json!({"ok":true,"outcome":"observed","operation":"external_port_menu","menu_phase":"closed_checked","rows":[],"instance":{},"source":"controller","lifecycle":{},"selection_authority":false,"selection_calls":0,"persistence_verified":false,"audio_verified":false}),
+            json!({"ok":true,"outcome":"observed","operation":"external_port_menu","menu_phase":"closed_checked","provenance":{"must":"be stripped"},"rows":[],"instance":{},"source":"controller","lifecycle":{},"selection_authority":false,"selection_calls":0,"persistence_verified":false,"audio_verified":false}),
         );
         r.mutation = true;
         r.invalidate("synthetic context loss".into());
