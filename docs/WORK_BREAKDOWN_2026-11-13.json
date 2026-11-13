@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6635,
+    "accepted_names": 6643,
     "inventory_names": 7112,
-    "remaining_names": 477,
+    "remaining_names": 469,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,
