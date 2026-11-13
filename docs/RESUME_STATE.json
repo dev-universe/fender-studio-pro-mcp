@@ -4,20 +4,20 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "ff866cb",
+  "product_source_commit": "8f29a89",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 39,
-  "installed_native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
-  "app_closed_observed": false,
-  "mcp_owner_stopped": false,
-  "owned_songs_closed_without_save": false,
-  "saved_owned_songs_unchanged": false,
+  "installed_native_unit": 40,
+  "installed_native_uuid": "CB8C035D-18F4-3E44-BB2E-1AD793270162",
+  "app_closed_observed": true,
+  "mcp_owner_stopped": true,
+  "owned_songs_closed_without_save": true,
+  "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Multi control64~95: 실제 732.323초·787요청·64setter. Float27개 2500→0, Integer5개 64→0 및 전체150개129묶음/387페이지 복원을 독립 대조했다. NoSave/owner0/저장6개 보존.",
+  "last_completed_unit": "Native40 Level Meter readonly controller metadata: 253.385초·23개 실제 요청과 독립 감사PASS. 노드2/연결1·전체DSP7 네 번 보존·Main준비1 외변경0·NoSave/owner0/저장6개 보존.",
   "last_completed_unit_learning_setters": 64,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -298,23 +298,26 @@
     ],
     "room_writable_serialized_restore_pilots": 1,
     "chorder_input_selector_boundary_cases": 2,
-    "distinct_fixed_inventory_writable_names_verified": 6460,
+    "distinct_fixed_inventory_writable_names_verified": 6610,
     "vocal_tune_receiver_readonly_units": 1,
     "vocal_tune_direct_bypass_current_value_cases": 1,
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
     "external_stereo_exact_opaque_menu_reader_units": 1,
     "external_mono_exact_opaque_menu_reader_units": 1,
     "spectrum_fixed_preset_setting_and_fresh_serialization_cases": 1,
-    "multi_float1_fixed_current_value_cases": 1
+    "multi_float1_fixed_current_value_cases": 1,
+    "multi_fixed_current_value_cases": 150,
+    "level_meter_readonly_controller_metadata_units": 1
   },
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7·Spectrum R4·Float1 R2·진단24요청은 재실행하지 않는다. 원래 실패와 별도 검증 기록을 함께 보존한다.",
     "Float2~8 실제247.935초·187개·14쓰기·전체150개29묶음/87페이지의 독립 원장 대조PASS를 완료했다. 고정 현재값7건만 인정하고 strict_name_coverage_increment0을 유지한다. Float1 포함8개는 반복하지 않는다. 첫 UI경로 오류375.153초·DAW0 실패는 보존한다.",
     "External Normal39 실제26개·106.533초와 독립 감사PASS 완료. 반복하지 않는다. 최근성공종료문맥은Multi control32~63이며 각 runtime사본을 보존한다. 공개 checkOnly의 ABI/fake는검토됐고 실제invoker한정구현을준비한다. 선택·숫자포트값·None복원은미확인이다.",
-    "Multi Float1~8·첫12개·control0~95 총116개는 실제·독립 감사 완료다. 현재 control96~127을 실행하고 마지막128~129의 2개를 진행한다. 잔여34개/2묶음이며 완료116개를 반복하지 않는다. Native39 설치/20분/64MiB/소스를 유지한다.",
-    "Level Meter useisl R2 실제14개의 마지막 고정 DSP details는 알려진 unavailable이었다. 다른 이름·도메인 fallback 없이 종료했다. 같은 조건을 다시 실행하지 않고 기존 controller/provider의 소스와 실제 capability에서 별도 제한 읽기 경로를 조사한다. 고정 preset 자료의 지원 설정 차이는0이며 ComponentData6개·callback 의미는 미확인이다.",
+    "Multi150개 현재값 변경·읽기·복원과8개 실제 감사 및 이름delta 독립 검토가 모두 완료됐다. 전체6610/7112·잔여502개에150개를 추가했으며 원래 pilot strict_increment0와 실패 자료는 보존한다. 완료한150개를 재실행하지 않는다.",
+    "External Future41의 고정 public checkOnly query route는 전체208소스 독립 검토PASS다. 현재 제품/설치는40이며41은 아직 미반영이다. 고정26 수집기를 독립 검토한 뒤 정상41 빌드·46metadata·manifest148·설치·최신Level40 종료문맥을 새로 연결한다. provenance=true/include_check_only=true가 실제 필드명이며 선택0이다.",
+    "Native40 Level controller 실제23개·253.385초와 독립 감사PASS. 노드2/연결1의 한정 metadata만 확인했고 기존DSP7은 보존됐다. resethold/resetloudness 두 Toggle의 동작·효과는 남았다. useisl의 과거 직접DSP miss를 전체 controller 부재로 해석하지 않는다.",
     "Open AIR43개 쓰기값과 새2033바이트 A/B 일치는 완료했으나 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장은 남았다. Room16개 쓰기값·새725바이트 일치와 구분한다. 일반 프리셋28/46종·56사례·18종 잔여를 유지한다.",
-    "남은 프리셋18종과 모델·전체 파라미터의 의미를 계속 확인한다. Multi Float1~8 현재값 증거를 매크로 할당·MIDI·콜백·저장·전역 이름 완료로 승격하지 않는다. 현재 이름6460/7112·잔여652다.",
+    "남은 프리셋18종과 모델·동작의 의미를 계속 확인한다. 현재 고정 이름6610/7112·잔여502개/19클래스다. Multi150개 현재값 완료를 매크로 할당·MIDI·콜백·저장·그래프 완료로 확대하지 않는다.",
     "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 제한 API와 실제 관측으로 구현·검증한다.",
     "일반 중첩 그래프 생성·연결·순서 변경·삭제와 정확한 전체 구조 복원을 구현·검증한다. 기존 고정 그래프나 Multi controller34노드36연결의 읽기를 전체 그래프 지원으로 주장하지 않는다.",
     "물리 외부 효과·왕복 지연·CV 격리·실제 건반 연주는 장치 재연결과 필요한 배선 이후 별도 수행한다. 두 장치는 분리됐고 과거 USB 연결만으로 물리 왕복을 검증하지 않는다.",
@@ -324,7 +327,7 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6460/7112 fixed names,652 remaining;28/46 preset classes,56 cases,18 remaining;Multi currentvalue20/150,130remaining (Float125/Integer5); External fixedStereoSend provenance1,selection0.",
+  "last_measurement": "6610/7112 fixed current-value names,502 remaining;28/46 preset classes,56 cases,18 remaining;Multi150/150 independently audited;Level40 readonly2nodes/1edge,hiddenvalues0;External selection0.",
   "binary_source_commit": "ff866cb",
   "current_execution": {
     "unit": "Multi controls000..031 actual active; first12 auditedPASS",
@@ -361,14 +364,25 @@
       "overall_research_completion": "not reliably estimable yet; do not repeat obsolete6-20h as a current forecast",
       "new_work": "identify original planned scope versus newly discovered blocker and added time",
       "hardware": "separate waiting condition",
-      "fixed_next_Multi_roles": 34,
-      "fixed_next_Multi_batches": 2,
+      "fixed_next_Multi_roles": 0,
+      "fixed_next_Multi_batches": 0,
       "fixed_next_Multi_minutes": [
-        15,
-        20
+        0,
+        0
       ],
       "observed_32_case_elapsed_seconds": 768.751,
-      "observed_latest_32_case_elapsed_seconds": 732.323
+      "observed_latest_32_case_elapsed_seconds": 732.323,
+      "next_finite_unit": "External Stereo Send102 checkOnly query-only26 after reviewednormal41 integration",
+      "next_finite_unit_preparation_and_runtime_minutes": [
+        10,
+        20
+      ],
+      "post_Multi_bookkeeping_report_minutes_observed": 12,
+      "post_Multi_bookkeeping_prior_estimate_minutes": [
+        3,
+        6
+      ],
+      "bookkeeping_overrun_reason": "underestimated reconciliation/report time while integrating and installing Level40; not new plugin scope"
     }
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
@@ -1295,9 +1309,9 @@
     "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
   },
   "current_fixed_name_union": {
-    "accepted_names": 6460,
+    "accepted_names": 6610,
     "inventory_names": 7112,
-    "remaining_names": 652,
+    "remaining_names": 502,
     "base128_names": 6459,
     "new_vocal_bypass_names": 1,
     "tuple_key": [
@@ -1308,7 +1322,11 @@
     "scope": "fixed_fixture_current_value",
     "global_support_percentage": false,
     "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
-    "public_delta_sha256": "03da36166b1af8946327fcb2c01fa76c43a44141417173e8422355b79e3b084d"
+    "public_delta_sha256": "c4d621f8d37145b1c8ca29d7bc8c6a4db8d07792d18dd7a091598297dcaa269f",
+    "new_multi_names": 150,
+    "previous_accepted_names": 6460,
+    "previous_public_delta_sha256": "03da36166b1af8946327fcb2c01fa76c43a44141417173e8422355b79e3b084d",
+    "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470"
   },
   "vocal_bypass_value_actual": {
     "schema": 1,
@@ -2209,8 +2227,8 @@
     "continuous_mixer_membership_verified": false
   },
   "multi_remaining_current_value_plan": {
-    "remaining_roles": 34,
-    "completed_fixed_current_value_roles": 116,
+    "remaining_roles": 0,
+    "completed_fixed_current_value_roles": 150,
     "fixed_batches": 6,
     "batch_role_counts": [
       12,
@@ -2228,7 +2246,7 @@
     "max_owner_journal_bytes": 67108864,
     "strict_name_coverage_increment": 0,
     "plan_freeze_sha256": "d4d46e928050e88bbd0bf9af62a061167519b34e8e39fefe7b8ec754f1e04b48",
-    "implementation": "R2_review_PASS_first12_and_controls0_95_actual_audit_PASS",
+    "implementation": "all150_actual_and_independent_audits_complete_names_admitted",
     "replay_completed_eight": false,
     "R1_source_freeze_sha256": "944ae3c4ddb561cf4561fb968bda30902e81fb8436f54610cc36794cd9afbc8f",
     "R1_independent_review_freeze_sha256": "50fc7c57c5caae888cf6ca7110158708c1803fdf6a22d7a0bfd6082f14c2a1d3",
@@ -2236,12 +2254,12 @@
     "R1_actual_calls": 0,
     "R1_Root_binding_performed": false,
     "failure_scope": "private QA child guard did not compare entire fresh binding to immutable startup binding",
-    "next_action": "Finish controls96..127, then128..129; do not replay completed116",
+    "next_action": "Do not replay any of the completed150 current-value cases",
     "R2_source_freeze_sha256": "6473ddd2a4ab7756fcb10ec7f78ad883881f5bb549ff8fdeaef2d6e6ff534f9e",
     "R2_review_freeze_sha256": "5109994059ed5bb7c5619eeb6fa3eb4ee9f96514a013bc918bb3b1e1f829986f",
     "R2_review_report_sha256": "870a22761f7dbf09494837c985646a53a62fd86f678126058f6e28173ff65894",
     "actual_first12_status": "complete_independently_audited",
-    "remaining_batches": 2,
+    "remaining_batches": 0,
     "first12_actual_kinds": {
       "Toggle": 8,
       "Float": 4,
@@ -2253,11 +2271,21 @@
       "front-panel-12",
       "controls-000-031",
       "controls-032-063",
-      "controls-064-095"
+      "controls-064-095",
+      "controls-096-127",
+      "controls-128-129"
     ],
     "replay_completed_fifty_two": false,
     "replay_completed_eighty_four": false,
-    "replay_completed_116": false
+    "replay_completed_116": false,
+    "actual_six_batch_requests": 3522,
+    "actual_all_eight_unit_requests": 3752,
+    "actual_all_eight_unit_setters": 300,
+    "native_kind_counts": {
+      "Float": 137,
+      "Toggle": 8,
+      "Integer": 5
+    }
   },
   "level_meter_controller_route_plan": {
     "status": "source_gap_identified_candidate_preparing",
@@ -2305,17 +2333,17 @@
     "audit_report_sha256": "da966be7a33acc3da7e7aa94aa81e3d87e11aadacc24a431855a584934e0e5cb",
     "audit_freeze_sha256": "94c7279ac04270f57b02f08815cb0cd3fbd6a99ac154c6c72ddf23172a609143"
   },
-  "native39_runtime_actual_total_requests": 2694,
+  "native39_runtime_actual_total_requests": 3548,
   "native40_level_candidate": {
-    "status": "source_review_PASS_wait_native39_six_batches",
+    "status": "integrated_normal40_actual23_independent_audit_PASS",
     "source_count": 208,
     "changed_files": 3,
     "future_manifest_source_count": 148,
     "author_test_groups": 37,
     "freeze_sha256": "4fe8fd88a44cbd6e6e77e441e20c3926229a20069406e93e9a4681157a500670",
     "source_map_sha256": "aa2755c1d24dc8e8b3eaab037a4d5aa154ebe4a441ff3a39687bf53b2c05adbc",
-    "actual_calls": 0,
-    "installed": false,
+    "actual_calls": 23,
+    "installed": true,
     "scope": "exact LevelMeter alias-provider controller metadata only; no scalar/model/preset authority",
     "independent_review_freeze_sha256": "7db774b587c63afac8b271305ba6a5482858019637f30935c393ee08fb1045dd",
     "independent_review_report_sha256": "85af7585b89156aac0765b870f914813254c5b3d566d9d122bbb84b4c6267979",
@@ -2376,21 +2404,12 @@
     "Multi_front_panel_12_actual": 307,
     "Multi_controls_000_031_actual": 787,
     "Multi_controls_032_063_actual": 787,
-    "Multi_controls_064_095_actual": 787
+    "Multi_controls_064_095_actual": 787,
+    "Multi_controls_096_127_actual": 787,
+    "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-13T08:26:36.617086+00:00",
-  "current_live_unit": {
-    "fixed_batch_id": "controls-096-127",
-    "job_id": "366645f2-774d-4fad-8e9c-551ca6bb1b28",
-    "status": "running",
-    "maximum_requests": 787,
-    "cases": 32,
-    "Float": 32,
-    "estimated_total_minutes": [
-      10,
-      13
-    ]
-  },
+  "latest_root_observation_at": "2026-11-13T09:03:43.839183+00:00",
+  "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
     "plugin": "Multi Instrument",
@@ -2441,9 +2460,9 @@
     "last_actual_DAW_context_retained": true
   },
   "level_meter_controller_live_collector": {
-    "status": "R2_focused_review_PASS_UNBOUND_wait_normal40_and_last_Multi",
-    "actual_calls": 0,
-    "runtime_binding": "UNBOUND",
+    "status": "actual23_complete_independently_audited",
+    "actual_calls": 23,
+    "runtime_binding": "ROOT_BOUND",
     "R1_review_freeze_sha256": "6fef826b3537a29e7b5ad44f843d673b5febc9248b35ae3f7a3c24724126b485",
     "R1_review_report_sha256": "255d38ffe1f4c0791c425c1ac20b6b68a93561d85d233f52e950d5c4d2837c20",
     "issue": "latest Root closure/result job/hash and same-run host pairing",
@@ -2452,7 +2471,8 @@
     "R2_review_freeze_sha256": "2d6d54c63bac60f2bf052f59f9463c77e3db11f2bccf4fc156df02ba8f6ea2f2",
     "R2_review_report_sha256": "ed9a74ed2cb41af1d5b472cb49ef40d0f0cd560df80c10643b238ba27d2a6c47",
     "focused_regressions": 7,
-    "independent_regressions": 2
+    "independent_regressions": 2,
+    "lifecycle_closed": true
   },
   "multi_controls_032_063_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -2533,9 +2553,9 @@
     "audit_evidence_sha256": "ab11d664547cf0dadf2619cda93adb777091629b55d664a8b45484e7e3069ddc"
   },
   "multi150_name_reconciliation": {
-    "status": "mapping_independently_reviewed_actual116_final34_pending",
-    "current_global_names": 6460,
-    "current_global_remaining": 652,
+    "status": "admitted_after_independent_actual150_name_delta_review",
+    "current_global_names": 6610,
+    "current_global_remaining": 502,
     "Multi_names_in_original_denominator": 150,
     "Multi_overlap_with_accepted6460": 0,
     "conditional_final_after_all150_admitted": {
@@ -2545,7 +2565,8 @@
     "new_DAW_sweeps_required_for_mapping": false,
     "mapping_freeze_sha256": "8fc0d234e79d3482f7d761bbddb5f91516be816aa095e3c8e01cd226cfa925e0",
     "mapping_review_freeze_sha256": "823c4f631f20a9ff57b32c9acb0ce5c63d828487fab5578e369721fa67b6aafc",
-    "pending_cases_not_accepted": true
+    "pending_cases_not_accepted": true,
+    "pending_cases": 0
   },
   "external_checkonly_native_candidate": {
     "status": "PASS_UNREGISTERED_PRIVATE_SOURCE_ONLY",
@@ -2558,5 +2579,187 @@
     "review_report_sha256": "3bfb5c789129fb419b6d571bab5717b56fc281d22f315601321812d91209d6bd",
     "scope": "fixed StereoSend102 public retained IObject invoker flags1 only; native helper not yet registered",
     "next": "private guarded query-only route; no selection authority"
+  },
+  "native40_runtime_actual_total_requests": 23,
+  "native40_installation": {
+    "source_commit": "8f29a89",
+    "all208_sources_match": true,
+    "manifest_sources": 148,
+    "native_approved": 146,
+    "build_support": 2,
+    "manifest_sha256": "d520ac253a3458e510bb8e464bae079b39ab688f6eba4bd70e82be1ce539e4c9",
+    "native_uuid": "CB8C035D-18F4-3E44-BB2E-1AD793270162",
+    "native_sha256": "92f3da0a17445b38da48f06b56cfcbe8a583206746af62902635161a7bb02e85",
+    "existing_installed_bridge_matches_current62": true,
+    "bridge_sha256": {
+      "BridgeComponent.js": "e879c6916f07895074d52c09fdc35d79f33dac5624ace31205ab5d2fdd0eb570",
+      "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+      "NativePluginControls.js": "43433279dcf1393a49e4f627dbd6d6f517d1d17d458b783267eb4a75011d025a"
+    },
+    "installed": true,
+    "normal_install_exit_code": 0,
+    "force_used": false,
+    "installed_package_four_hashes_match": true,
+    "main_release_build_seconds": 19.77,
+    "native_release_build_seconds": 9.59,
+    "focused_Level_tests": 6,
+    "main_and_addon_fmt_passed": true,
+    "metadata_tool_count": 46,
+    "main_binary_sha256": "e736fd72dc319681cfeb7ae42d3935652cff808d659fb2961cae3e37397bb216",
+    "tools_schema_canonical_sha256": "8146ca2efa5938356d865f6a3528e55b20460d14a79e5adb812634ee66634a53",
+    "changed_tools": [
+      "plugin_inspect"
+    ],
+    "normal_native_unit": 40,
+    "source_authority_sha256": "71f851978565640e1f80f7248978e28be5509e7b946c784a82795fd84ceff0a6",
+    "actual_runtime_requests": 23
+  },
+  "level_meter_controller_actual": {
+    "status": "independently_verified_actual_Level40_readonly_controller_observation",
+    "actual_requests": 23,
+    "elapsed_seconds": 253.385,
+    "main_minimum_preparation": 1,
+    "full_direct_DSP_parameter_count": 7,
+    "unchanged_full_DSP_snapshots": 4,
+    "controller_nodes": 2,
+    "controller_edges": 1,
+    "root_types": [
+      "IsLevelMeterComponent",
+      "LevelMeterComponent"
+    ],
+    "bounded_report_complete": true,
+    "atomic_snapshot": false,
+    "plugin_parameter_writes": 0,
+    "state_or_port_writes": 0,
+    "Save_or_transport_actions": 0,
+    "hidden_parameter_values_verified": false,
+    "new_write_authority": false,
+    "reset_or_preset_cases_added": 0,
+    "name_coverage_increment": 0,
+    "audio_or_persistence_verified": false,
+    "Root_NoSave_app_closed_owner_stopped_saved6_preserved": true,
+    "audit_freeze_sha256": "74984e36034cd7c2a2241bc7095f4ef94daedb92b375b1fd38529bd3cebd92fe",
+    "audit_report_sha256": "2f7f077fcaf4265d5ec5493c13ada7d9bbd29fc35f2472cead93e31c41e2f378"
+  },
+  "multi_controls_096_127_actual": {
+    "status": "independently_verified_actual_current_value_batch",
+    "plugin": "Multi Instrument",
+    "fixed_scope": "control96 through control127",
+    "accepted_current_value_cases": 32,
+    "DAW_tool_requests": 787,
+    "parameter_setters": 64,
+    "changed_raw_value": 2500,
+    "restored_raw_value": 0,
+    "native_kind_counts": {
+      "Float": 32,
+      "Integer": 0
+    },
+    "native_variant_tag": 2,
+    "full150_snapshots": 129,
+    "provider_pages": 387,
+    "exact_original_restored_each_case": true,
+    "all149_peer_values_nonvalue_unknown_preserved": true,
+    "normalization_linearity_assumed": false,
+    "Main_preparation_writes": 1,
+    "Save_actions": 0,
+    "transport_actions": 0,
+    "state_actions": 0,
+    "port_writes": 0,
+    "actual_elapsed_seconds": 755.167,
+    "NoSave_app_closed_owner_stopped_saved6_verified": true,
+    "previous_completed_roles_not_written": true,
+    "strict_name_coverage_increment": 0,
+    "MIDI_verified": false,
+    "callback_verified": false,
+    "assignment_verified": false,
+    "graph_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "audit_new_DAW_calls": 0,
+    "audit_freeze_sha256": "e8dbac596164f22cde033b3301e53418d3893edb5807ad2328b39fa68f0121ad",
+    "audit_report_sha256": "dad598e751a457c5c3948a8cc60fe97d11dc5fcac9fce8c4cdedf45cae952e0c"
+  },
+  "multi_controls_128_129_actual": {
+    "status": "independently_verified_actual_current_value_batch",
+    "plugin": "Multi Instrument",
+    "fixed_scope": "control128 through control129",
+    "accepted_current_value_cases": 2,
+    "DAW_tool_requests": 67,
+    "parameter_setters": 4,
+    "changed_raw_value": 2500,
+    "restored_raw_values": {
+      "control128": 5000,
+      "control129": 0
+    },
+    "native_kind_counts": {
+      "Float": 2,
+      "Integer": 0
+    },
+    "native_variant_tag": 2,
+    "full150_snapshots": 9,
+    "provider_pages": 27,
+    "exact_original_restored_each_case": true,
+    "all149_peer_values_nonvalue_unknown_preserved": true,
+    "normalization_linearity_assumed": false,
+    "Main_preparation_writes": 1,
+    "Save_actions": 0,
+    "transport_actions": 0,
+    "state_actions": 0,
+    "port_writes": 0,
+    "actual_elapsed_seconds": 292.5,
+    "NoSave_app_closed_owner_stopped_saved6_verified": true,
+    "previous_completed_roles_not_written": true,
+    "strict_name_coverage_increment": 0,
+    "MIDI_verified": false,
+    "callback_verified": false,
+    "assignment_verified": false,
+    "graph_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "audit_new_DAW_calls": 0,
+    "audit_freeze_sha256": "269eab3f637371a620c7a2cfc6bcac530d9cf3fbad89bffd702ee9f504d26d3d",
+    "audit_report_sha256": "0b04be09c76038ae141eacd7d4ddaaecc5d2aee67e5fbfffb3e75308fd3a3df9"
+  },
+  "multi150_name_coverage_admission": {
+    "status": "ACCEPTED_INDEPENDENTLY_REVIEWED_NAME_DELTA",
+    "tuple_key": [
+      "native_class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "previous_accepted": 6460,
+    "new_disjoint": 150,
+    "fixed_inventory": 7112,
+    "actual_new_calls": 0,
+    "original_pilot_strict_name_increment_unchanged": 0,
+    "all_plugin_support_percentage": false,
+    "accepted_after": 6610,
+    "remaining_after": 502,
+    "source_proposal_sha256": "0f7924a5c9fb3697dacac734aae1ff1c46279533179198e8a35df188d12db43e",
+    "independent_review_freeze_sha256": "39d4665e6976901db461e1e615ad34c546b9b8589e1d8d0ab41c7cd1a64ed7b0",
+    "independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470",
+    "successful_requests_reused": 3752,
+    "setters_reused": 300,
+    "actual_new_DAW_calls": 0,
+    "native_kind_counts": {
+      "Float": 137,
+      "Toggle": 8,
+      "Integer": 5
+    },
+    "last_two_report_count_erratum_sha256": "4fe860718e856972d256919c7662d5fb9574c958eb264073fe9d2900bc3f91f5"
+  },
+  "external_checkonly_registered_route": {
+    "status": "private_full_source_and_collector_review_PASS_wait_normal41",
+    "actual_calls": 0,
+    "installed": false,
+    "selection_calls": 0,
+    "source_freeze_sha256": "0b65d787f2f2b88d69985e72b0fdd344b59f64c164ed86db8cec75b25c7293f4",
+    "review_freeze_sha256": "f20334d2ae11da04d5b207cedde356c0d407ddcef4440674c4f3751b32336971",
+    "review_report_sha256": "6284448be011bc97dae931df5fc18e60abe6a6161f2b4b3444f328578a377e5d",
+    "source_count": 208,
+    "future_manifest_sources": 148,
+    "tools": 46,
+    "collector_review_freeze_sha256": "29ade11dc9361b9db2aefdd990c2704ad4596af504b184d694c85d6f56b63ef5",
+    "collector_review_report_sha256": "bcf589de8da1f4fed3439fdcb8f00585f0742916096a65b88e6a4ec240a720e8"
   }
 }

@@ -1,0 +1,27 @@
+{
+  "status": "independently_verified_actual_Level40_readonly_controller_observation",
+  "actual_requests": 23,
+  "elapsed_seconds": 253.385,
+  "main_minimum_preparation": 1,
+  "full_direct_DSP_parameter_count": 7,
+  "unchanged_full_DSP_snapshots": 4,
+  "controller_nodes": 2,
+  "controller_edges": 1,
+  "root_types": [
+    "IsLevelMeterComponent",
+    "LevelMeterComponent"
+  ],
+  "bounded_report_complete": true,
+  "atomic_snapshot": false,
+  "plugin_parameter_writes": 0,
+  "state_or_port_writes": 0,
+  "Save_or_transport_actions": 0,
+  "hidden_parameter_values_verified": false,
+  "new_write_authority": false,
+  "reset_or_preset_cases_added": 0,
+  "name_coverage_increment": 0,
+  "audio_or_persistence_verified": false,
+  "Root_NoSave_app_closed_owner_stopped_saved6_preserved": true,
+  "audit_freeze_sha256": "74984e36034cd7c2a2241bc7095f4ef94daedb92b375b1fd38529bd3cebd92fe",
+  "audit_report_sha256": "2f7f077fcaf4265d5ec5493c13ada7d9bbd29fc35f2472cead93e31c41e2f378"
+}
