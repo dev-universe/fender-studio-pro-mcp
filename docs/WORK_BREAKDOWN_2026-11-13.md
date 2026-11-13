@@ -8,7 +8,7 @@
 
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
-| 고정 현재값 이름 |6693/7112|419개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
+| 고정 현재값 이름 |6701/7112|411개·19클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
 | 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
@@ -50,7 +50,7 @@
 |---|---|---|---|---|
 |CONTROL-AMPIRE|Ampire|부분 완료|일반39개·catalog/owner 읽기|alias·micmix/linked·bypass/tuner·stomp 순서의 남은19역할을 올바른 대상에 변경·읽기·복원하고 연동 peer/구조를 보존한다.|
 |CONTROL-CV|CV Instrument|하드웨어 대기|provider/선택 범위와 역할97개 분류|config86·generator4·MIDI3의 유한 변경/복원, 포트 격리와 calibration2/monitor2의 실제 효과·중지·복원을 구분해 입증한다.|
-|CONTROL-CHORDER|Chorder|부분 완료|input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~57 및60의58개 현재값/정확58이름 수용. AutoFill49~57의예측6반응·다른901·전체908/저장128복원 완료. MIDI/모델대응·noteoff·audio는별도|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
+|CONTROL-CHORDER|Chorder|부분 완료|input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~66의66개 현재값/정확66이름 수용. AutoFill 고정사례별예측6반응·다른901·전체908/저장128복원 완료. MIDI/모델대응·noteoff·audio는별도|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
 |CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
