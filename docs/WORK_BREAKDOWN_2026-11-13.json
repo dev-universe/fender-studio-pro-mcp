@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6757,
+    "accepted_names": 6765,
     "inventory_names": 7112,
-    "remaining_names": 355,
+    "remaining_names": 347,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,
@@ -34,7 +34,7 @@
     "docs/PROGRESS_2026-11-13.md": "최신 실패와 후속 준비 및 단위 이력",
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
-    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6757/7112·355·19클래스의 현재값 전용 범위"
+    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6765/7112·347·19클래스의 현재값 전용 범위"
   },
   "items": [
     {
@@ -252,10 +252,10 @@
       "title": "Chorder",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~82의82개 현재값/정확82이름 수용. 75~82의8사례842.047초·915요청·변경16회·전체908/저장128 각48묶음/384페이지·각자 입력/출력의2RO만1·다른905/비값/unknown/공통 원본 보존. 전체 복원·Root NoSave정리·저장6해시동일·MIDI0/0 완료. 나머지51개·일반MIDI/모델대응·이벤트·noteoff·audio·지속저장은별도",
+      "actually_verified": "input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~90의90개 현재값/정확90이름 수용. 83~90의8사례800.657초·915요청·변경16회·전체908/저장128 각48묶음/384페이지·각자 입력/출력의2RO만1·다른905/비값/unknown/공통 원본 보존. 각capture·모델·전체 복원·Root NoSave정리·저장6해시동일·MIDI0/0 완료. 나머지43개·일반MIDI/모델대응·이벤트·noteoff·audio·지속저장은별도",
       "completion_predicate": "guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 51
+      "inventory_remaining_names": 43
     },
     {
       "id": "CONTROL-COMPRESSOR",
