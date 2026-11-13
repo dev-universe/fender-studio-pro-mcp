@@ -160,7 +160,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity. Its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -910,6 +910,8 @@ mod tests {
         for phrase in [
             "exact Mustang Native and Rumble Native classes",
             "exact Multi Instrument AudioSynth identity",
+            "exact Level Meter AudioEffect identity",
+            "provider may return no controller",
             "read-only metadata may be partial",
             "no model catalog or mutation capability",
         ] {

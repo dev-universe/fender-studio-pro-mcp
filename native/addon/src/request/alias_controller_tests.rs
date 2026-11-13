@@ -533,3 +533,159 @@ fn actual_context_instance_guard_still_precedes_alias_capture() {
     assert!(matches!(result,Err(reason) if reason=="native target identity changed"));
     drop(context);
 }
+
+fn level_instance() -> Instance {
+    Instance {
+        object_uid: "12345678-1234-1234-1234-123456789ABC".into(),
+        class_uid: "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6".into(),
+        native_class: "AudioEffect".into(),
+        object_id: "Level Meter".into(),
+    }
+}
+#[test]
+fn exact_level_metadata_admission_does_not_admit_catalog_or_other_effects() {
+    let exact = level_instance();
+    assert!(inspection_supported(&exact));
+    assert!(!supported(&exact.class_uid));
+    for field in 0..5 {
+        let f = Fixture::new(true);
+        let mut wrong = exact.clone();
+        match field {
+            0 => wrong.class_uid = "831A0046-BD71-45BF-A419-6FC90D6E9F2F".into(),
+            1 => wrong.native_class = "AudioSynth".into(),
+            2 => wrong.object_id = "Other Meter".into(),
+            3 => wrong.object_uid = ZERO_UID.into(),
+            _ => wrong.object_uid = "not-a-native-uid".into(),
+        }
+        assert!(multi_capture(&f, &wrong, &mut || Ok(())).is_err());
+        assert!(
+            f.objects
+                .iter()
+                .all(|o| o.gets.get() == 0 && o.queries.borrow().is_empty())
+        );
+        f.released();
+    }
+}
+#[test]
+fn level_present_non_node_controller_keeps_unknown_types_limits_and_no_values() {
+    let f = Fixture::new(true);
+    let inventory = multi_capture(&f, &level_instance(), &mut || Ok(())).unwrap();
+    let value = inventory.value();
+    assert_eq!(
+        value["coverage"],
+        "bounded_alias_declared_controller_metadata"
+    );
+    assert_eq!(value["scope"], "alias_declared_controller_observation");
+    assert_eq!(value["mutation_capability"], false);
+    assert_eq!(value["atomic_snapshot"], false);
+    assert_eq!(value["nodes"].as_array().unwrap().len(), 1);
+    assert_eq!(value["nodes"][0]["identity"], Value::Null);
+    assert_eq!(value["nodes"][0]["reflection"]["available"], false);
+    assert_eq!(
+        value["limits"],
+        json!({"nodes":96,"depth":5,"ancestors":0,"children_per_node":32})
+    );
+    for field in ["catalog", "params", "parameter_values", "preset_support"] {
+        assert!(value.get(field).is_none());
+    }
+    assert!(f.objects[4].refs.get() > 1);
+    inventory.check(&mut || Ok(())).unwrap();
+    drop(inventory);
+    f.released();
+}
+#[test]
+fn level_missing_provider_or_null_controller_is_not_positive_support() {
+    for bad_out in [false, true] {
+        let f = Fixture::new(true);
+        if bad_out {
+            f.objects[3].failed_out.set(Some(CONTROLLER_PROVIDER));
+        } else {
+            f.objects[3].provider.set(ptr::null_mut());
+        }
+        assert!(multi_capture(&f, &level_instance(), &mut || Ok(())).is_err());
+        f.released();
+    }
+    let f = Fixture::new(false);
+    let inventory = multi_capture(&f, &level_instance(), &mut || Ok(())).unwrap();
+    let value = inventory.value();
+    assert_eq!(value["controller"], Value::Null);
+    assert_eq!(value["complete"], false);
+    assert_eq!(value["diagnostics"][0]["kind"], "controller_absent");
+    drop(inventory);
+    f.released();
+}
+#[test]
+fn level_parent_alias_provider_controller_and_canonical_replacement_rejects() {
+    for change in 0..7 {
+        let f = Fixture::new(true);
+        let inventory = multi_capture(&f, &level_instance(), &mut || Ok(())).unwrap();
+        match change {
+            0 => f.objects[2].member.set(f.pointer(5)),
+            1 => f.objects[0].parent.set(f.pointer(5)),
+            2 => f.objects[3].member.set(f.pointer(5)),
+            3 => f.objects[3].provider.set(f.pointer(5)),
+            4 => f.objects[3].canonical.set(f.pointer(5)),
+            5 => f.objects[4].canonical.set(f.pointer(5)),
+            _ => f.objects[1].canonical.set(f.pointer(5)),
+        }
+        assert!(inventory.check(&mut || Ok(())).is_err(), "route {change}");
+        drop(inventory);
+        f.released();
+    }
+}
+#[test]
+fn level_late_final_guard_cannot_hide_parent_alias_or_controller_replacement() {
+    for change in 0..3 {
+        let f = Fixture::new(true);
+        let inventory = multi_capture(&f, &level_instance(), &mut || Ok(())).unwrap();
+        let mut total = 0;
+        inventory
+            .check(&mut || {
+                total += 1;
+                Ok(())
+            })
+            .unwrap();
+        let mut seen = 0;
+        let result = inventory.check(&mut || {
+            seen += 1;
+            if seen == total {
+                match change {
+                    0 => f.objects[2].member.set(f.pointer(5)),
+                    1 => f.objects[0].parent.set(f.pointer(5)),
+                    _ => f.objects[3].member.set(f.pointer(5)),
+                }
+            }
+            Ok(())
+        });
+        assert!(result.is_err());
+        drop(inventory);
+        f.released();
+    }
+}
+#[test]
+fn level_context_loss_at_each_capture_guard_releases_all_held_objects() {
+    let baseline = Fixture::new(true);
+    let mut count = 0;
+    drop(
+        multi_capture(&baseline, &level_instance(), &mut || {
+            count += 1;
+            Ok(())
+        })
+        .unwrap(),
+    );
+    baseline.released();
+    for stop in 1..=count {
+        let f = Fixture::new(true);
+        let mut calls = 0;
+        let result = multi_capture(&f, &level_instance(), &mut || {
+            calls += 1;
+            if calls >= stop {
+                Err("Level document or instance changed".into())
+            } else {
+                Ok(())
+            }
+        });
+        assert!(result.is_err(), "guard {stop}");
+        f.released();
+    }
+}
