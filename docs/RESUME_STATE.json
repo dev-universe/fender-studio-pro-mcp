@@ -286,7 +286,8 @@
       127
     ],
     "room_writable_serialized_restore_pilots": 1,
-    "chorder_input_selector_boundary_cases": 2
+    "chorder_input_selector_boundary_cases": 2,
+    "distinct_fixed_inventory_writable_names_verified": 6459
   },
   "next_units_in_order": [
     "Keep Native36/main45/bridges frozen until all dependent six-original-archive units finish. Hardware detached; OS inventory2 and actual MacBook48kHz/512frames preferences are already verified. Reuse all completed immutable sweeps.",
@@ -1141,7 +1142,7 @@
     "vocal_receiver_r4": "source_schema_and_bootstrap_fix_in_progress",
     "vocal_bypass_value_r2": "prerequisite_revision_pending",
     "persistence_r5": "sealed_pending_independent_review",
-    "name_union_128_delta": "proposal6459_pending_independent_review"
+    "name_union_128_delta": "independently_verified_and_promoted6459"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1187,5 +1188,18 @@
     "owner_ready_emitted": false,
     "recovery": "independent source trace and log prove schema rejection before any tools/call; empty app quit observed; only failed coordinator terminated; oldrun preserved",
     "independent_diagnosis_freeze_sha256": "97e50cacaa89d6453b01ebc3b4e89aedf4522630f42b157e422e0e113a143dad"
+  },
+  "fixed_name_union_128_delta": {
+    "accepted_names": 6459,
+    "inventory_names": 7112,
+    "remaining_names": 653,
+    "previous_accepted_names": 6423,
+    "new_disjoint_names": 36,
+    "cutoff_chorder_roles": 128,
+    "input_pitch": 60,
+    "global_support_percentage": false,
+    "independent_review": "PASS_WITH_LIMITS",
+    "review_report_sha256": "cb1e810cd53c89ffd5bbf88beb17a0cf0bcabd7b7d5fad4c2ad81f94f3b2e2db",
+    "public_evidence_sha256": "8dca290b9e6e096b74a4ce911011fb799da53755cf2538154b9469f5d16882a0"
   }
 }
