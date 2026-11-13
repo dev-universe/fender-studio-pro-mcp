@@ -13,7 +13,7 @@
   "installed_native_unit": 36,
   "installed_native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
   "app_closed_observed": true,
-  "mcp_owner_stopped": false,
+  "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -303,7 +303,7 @@
     "vocal_tune_direct_bypass_current_value_cases": 1
   },
   "next_units_in_order": [
-    "R6 실패 원본을 보존한다. A57개 요청이 모두 알려진 종료 상태인지 독립 검토하고, 저장 없는 실제 앱 종료·6개 저장본 원본 해시·정확한 고립 프로세스 증거를 확인한 뒤 검토된 정리만 수행한다. 모델 쓰기0회·저장0회·성공 사례0개를 유지한다. 자동 재시도나 불명확한 실행 종료는 하지 않는다.",
+    "R6 실패57요청·모델쓰기0회·저장0회는 원본 결과를 보존하고 별도 독립 검토와 정리를 완료했다. 정상 종료 코드나 저장 검증 성공으로 기록하지 않는다. 이 실패 실행을 다시 시작하지 않는다.",
     "Native36·도구45개·브리지를 유지한 채 별도 R7 저장·재시작 검증기를 준비하고 독립 검토한다. 화면 확인 직전에 새 고정 읽기로 전송·메트로놈·마스터·GUI 조건을 확인한다. 여섯 번째 전용 사본에 저장2회, 기존5개 저장본 보존, 모델 추가·제거 각1회, 세 실행과 재시작2회를 검증한다. 완료된 128역할·선택기·Vocal 단위는 반복하지 않는다.",
     "검증된 Native37 nativeR2+wireR2 결합 패치206개 파일을 정상 제품에 반영하고 필요한 검사·정상 빌드·설치·새 UUID 및 실행 바인딩을 만든다. 검토된35요청 Stereo 메뉴 읽기를 실제 수행한 뒤 Mono를 별도 검증한다. 불투명 메뉴 순서로 포트 쓰기 권한을 추론하지 않는다.",
     "Native38 Multi Instrument 읽기 전용 후보 R2는 독립 소스 검토를 통과했다. 실제37 검증 후 반영·정상 빌드·설치하고 실제 인터페이스 제공 여부부터 확인한다. 기존 모델 쓰기 허용 목록은 유지한다. 이후150개 파라미터와 매크로·MIDI·컨트롤러 관계를 읽고 근거를 확보한 뒤 변경 경로를 구현한다.",
@@ -321,16 +321,9 @@
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
   "current_execution": {
-    "unit": "Chorder persistence R6 failure cleanup",
-    "terminal_tool_inputs": 57,
-    "model_writers": 0,
-    "normal_saves": 0,
-    "error": "Fixture guard stale at UI boundary",
-    "app_closed_without_save_observed": true,
-    "all_six_original_archives_unchanged": true,
-    "owner_stop_observed": false,
-    "failure_result_preserved": true,
-    "next": "reviewed known-terminal orphan recovery, then separately reviewed R7 with fresh boundary guards"
+    "unit": "Chorder persistence R7 offline preparation",
+    "actual_execution_started": false,
+    "predecessor_R6_cleanup_complete": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -1165,7 +1158,7 @@
     "vocal_bypass_value_r2": "actual_complete_independently_audited36",
     "persistence_r5": "review_pass_full23932replay309.41s_coldscan64.98s_exceeds55s",
     "name_union_128_delta": "independently_verified_and_promoted6459",
-    "persistence_r6": "actual_failed_before_model_writes_A57_stale_fixture_guard_owner_retained",
+    "persistence_r6": "actual_failed_A57_known_zero_model_writes_exceptional_orphan_cleanup_complete",
     "native37_composition": "independent_source_review_pass_not_landed_or_installed"
   },
   "chorder_selector_boundary_actual": {
@@ -1203,8 +1196,8 @@
     "independent_review_report_sha256": "12cf12326ddf2a71eba040bf87d90924d8d78bc37fcaec0dc24fe692c7b74324"
   },
   "rough_persistence_remaining_minutes": [
-    15,
-    35
+    35,
+    55
   ],
   "vocal_bootstrap_failure": {
     "daw_tool_calls": 0,
@@ -1351,5 +1344,28 @@
     "review_freeze_sha256": "45c10e0eb6ef634f7c80c91661f0e8215c7ec9439cb0412acc24a33f46945778",
     "actual_Multi_provider_QI_verified": false,
     "dependency": "complete actual Native37 menu pilot before Native38 product landing"
+  },
+  "chorder_persistence_r6_failure": {
+    "schema": 1,
+    "status": "known_read_prefix_failed_helper_cleanup_complete",
+    "daw_tool_calls": 57,
+    "model_writers": 0,
+    "normal_saves": 0,
+    "accepted_persistence_cases": 0,
+    "all_known_paired_receipts": true,
+    "actual_parent_execution_seconds": 899.31,
+    "root_elapsed_seconds_through_cleanup": 1532.556,
+    "actual_app_closed_without_save": true,
+    "all_six_original_saved_archives_unchanged": true,
+    "exceptional_known_orphan_owner_SIGTERM": true,
+    "both_owner_and_MCP_child_absent": true,
+    "normal_owner_exit_zero_claimed": false,
+    "MCP_child_exit_code_observed": false,
+    "original_result_preserved_sha256": "17ff8608603de9744cd1eb36f0c1eb89bef9390ef7539fc9c8b170c8fa8c8d4e",
+    "independent_failure_review_report_sha256": "7a251944c72d0c4a83c53f20c39caa6b119694410c5baa84d039e3c0feb78fc4",
+    "independent_failure_review_freeze_sha256": "7b7dc3b0c1b91ed9ebd8966ed6485f6ad5b97163a204ded0c82c36f8e68e9b94",
+    "helper_failure_reason": "The parent checked GUI freshness after16 slow model page reads. No editor_context UI challenge was issued. Child had no pending request but inherited EOF loop could not accept normal stop.",
+    "persistence_verified": false,
+    "audio_verified": false
   }
 }
