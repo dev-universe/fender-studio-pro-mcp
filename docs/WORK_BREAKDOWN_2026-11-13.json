@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6651,
+    "accepted_names": 6659,
     "inventory_names": 7112,
-    "remaining_names": 461,
+    "remaining_names": 453,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,
@@ -34,7 +34,7 @@
     "docs/PROGRESS_2026-11-13.md": "최신 실패와 후속 준비 및 단위 이력",
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
-    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6619/7112·493·19클래스의 현재값 전용 범위"
+    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6659/7112·453·19클래스의 현재값 전용 범위"
   },
   "items": [
     {
@@ -252,10 +252,10 @@
       "title": "Chorder",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "input60 출력128 모델·selector·고정Song저장 완료; guiInput60과canonical1..8의전체908/저장128보존 현재값9개 및그9canonical이름수용 완료",
+      "actually_verified": "input60 출력128 모델·selector·고정Song저장 완료; guiInput canonical1~48과60의49개 현재값·전체908/저장128보존·정확49이름수용 완료",
       "completion_predicate": "guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 124
+      "inventory_remaining_names": 84
     },
     {
       "id": "CONTROL-COMPRESSOR",
@@ -296,7 +296,7 @@
       "title": "Input Filter",
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "일반 필터 설정·provider/catalog 완료",
+      "actually_verified": "일반 필터 설정·provider/catalog 완료. R2는 실제 소유악기Mojito7 확인 뒤 기대Mojito8 불일치로 파라미터/volume쓰기0에서 중단·정리. R3 식별값 정정 준비 중",
       "completion_predicate": "keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 128
