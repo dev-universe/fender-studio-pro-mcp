@@ -1,0 +1,25 @@
+{
+  "native_version_unit": 38,
+  "native_uuid": "C58977A7-FF77-3F88-9251-C3FBFFD7CFFF",
+  "native_sha256": "2b06fe13bad11ecccba70bb44ac630abad9cabcdafb2fa1bbca19ec6e495e05f",
+  "binary_sha256": "c33cf8760693786fc066d222fee207220cbb7e087ae7a6ba4482aa77262b46cf",
+  "native_manifest_sha256": "b1eff20c49df6731ac80a5e1c10bac8c994200c1ca4fa4c605ff78e3dc9f5947",
+  "native_sources": 144,
+  "wire_sources": 62,
+  "manifest_total_source_files": 146,
+  "installed_package_files": 4,
+  "installed_bridge_sha256": {
+    "BridgeComponent.js": "1665a3461d8f46e7740b6acc323a647bbef426133f9cb16abd2cea70450fb236",
+    "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+    "NativePluginControls.js": "be99b580f1b91d0055da4e80e1aad2e9a85d519c3551c2e67b3ce126866f12b1"
+  },
+  "normal_build_source": true,
+  "app_closed_before_install_observed": true,
+  "owned_MCP_absent_before_install_observed": true,
+  "normal_tool_count": 46,
+  "scoped_native_tests_passed": 29,
+  "native_test_execution_seconds": 0.02,
+  "native_test_compilation_seconds": 7.09,
+  "native_release_compilation_seconds": 8.21,
+  "actual_native38_DAW_requests": 0
+}

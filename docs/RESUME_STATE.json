@@ -10,14 +10,14 @@
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 37,
-  "installed_native_uuid": "1B06BBB0-ED5C-395A-B0BC-6E72F1B5F699",
+  "installed_native_unit": 38,
+  "installed_native_uuid": "C58977A7-FF77-3F88-9251-C3FBFFD7CFFF",
   "app_closed_observed": true,
   "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": false,
   "saved_owned_songs_unchanged": false,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder fresh63 replacementR2:545RPC/8writes/319.158s, independently audited exact full908/128/original581 restore;128/128 output roles at input60 complete. NoSave/appfalse/owner0/all6unchanged. Originalnamespace summaryliteralr1 preserved with independentlyreviewed actualr2 correction.",
+  "last_completed_unit": "Native38 정상 빌드·설치: 관련29개 테스트·206개 소스·설치4개 파일 대조 통과. Multi R4 첫 시도는 대상 트랙 선택 전 거부12요청으로 정리; 컨트롤러 제공 여부 미확인.",
   "last_completed_unit_learning_setters": 8,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -302,20 +302,19 @@
     "vocal_tune_receiver_readonly_units": 1,
     "vocal_tune_direct_bypass_current_value_cases": 1,
     "chorder_fixed_song_membership_persistence_properties_independently_verified": 1,
-    "external_stereo_exact_opaque_menu_reader_units": 1
+    "external_stereo_exact_opaque_menu_reader_units": 1,
+    "external_mono_exact_opaque_menu_reader_units": 1
   },
   "next_units_in_order": [
-    "R6 실패57요청은 보존하고 정리 완료했다. R7는339개 실제 요청·변경2회·저장2회·재시작2회로 고정 곡 지속 저장 동작을 독립 검증했다. 마지막 종료 확인 전달 지연의 자동 결과0건/실패는 보존한다. R6 또는 R7 실제339회를 다시 실행하지 않는다.",
-    "별도 검토된 R7 실제 동작 수용 기록을 새 네 수집기에 명시적으로 연결한다. 자동 결과 파일을 성공으로 고치거나 정정 기록으로 위장하지 않는다. 현재 Native37 제품 패치206개 파일 반영과 회귀 검사·정상 빌드 중이며 앱과 기존 소유자는 모두 닫혀 있다. 완료된128역할·선택기·Vocal 검증도 반복하지 않는다.",
-    "정상 Native37 설치와 도구46개 메타데이터 확인, Stereo R3 실제35개 요청과 독립 감사가 완료됐다. 이를 반복하지 않는다. Mono R3는 과거 latencyTotal 값과 현재 값 차이로19개 요청 뒤 첫 메뉴 전에 중단하고 저장 없이 정상 정리했다. 정확한 현재102.0625 값6개 필드만 고정한 별도 Mono R4를 검토해35개 요청으로 실행한다. 원인을 추정하거나 알 수 없는 메타데이터를 무시하지 않는다.",
-    "Native37 메뉴 두 검증 뒤 Native38로 바꾸기 전에 Open AIR 새 직렬화 R5의 최대170개 요청 검증을 실행한다. 본문159회·새 식별1회·준비10회,43개 쓰기 가능 값·전체94개 메타데이터·고정 읽기 전용16개와 독립 새 캡처 B를 확인한다. 프리셋 전체 완료 수를 임의로 늘리지 않는다.",
-    "Native38 Multi Instrument 읽기 전용 후보 R2는 독립 소스 검토를 통과했다. 실제37 검증 후 반영·정상 빌드·설치하고 실제 인터페이스 제공 여부부터 확인한다. 기존 모델 쓰기 허용 목록은 유지한다. 이후150개 파라미터와 매크로·MIDI·컨트롤러 관계를 읽고 근거를 확보한 뒤 변경 경로를 구현한다.",
-    "Open AIR 정정 결과를 따른다. index0 뒤 mix는5000에서 원래2000.0000298023224로 돌아왔고 엄격한 비교는 읽기 전용16개 차이로 중단됐다. 현재 잠금 상태·리소스 소유권·새 최종 직렬화는 미확인이다. 두 실패를 재실행하거나 임의 시드를 선택하지 않고 소스 근거가 있는 별도 검증을 설계한다.",
-    "남은 프리셋18종과 모델·프리셋 전체 열거를 계속한다. Room의16개 쓰기 가능 값·새 직렬화 일치1건은 별도 범위이며 전체19개 현재값 복원이나 전체 프리셋 완료로 계산하지 않는다. 현재28/46종·56사례를 보존한다.",
-    "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 전용 제한 API와 구체적 관측 근거로 구현·검증한다. 현재값 읽기·변경은 이벤트 전달 증거와 구분한다.",
-    "일반 중첩 그래프 생성·연결·순서 변경·삭제와 정확한 전체 구조 복원을 구현하고 검증한다. 기존 고정 그래프 검증으로 전체 그래프 지원을 주장하지 않는다.",
-    "물리 외부 효과 오디오·왕복 지연·CV 출력 격리·실제 건반 연주는 하드웨어·배선 조건이 갖춰진 때 별도 수행한다. 사용자는 두 USB 장치를 분리했으며 USB만 연결된 과거 기록은 물리 왕복 검증이 아니다.",
-    "현재 고정 이름 합집합6460/7112·잔여652를 사용한다. 과거92역할6423 및128역할6459 증거는 보존한다. 새 실제 증거를 독립 확인한 뒤 중복 없는 이름만 추가한다. PR4는 Draft로 유지하고 모든 내장 플러그인 완료나 전체 지원률을 미리 주장하지 않는다."
+    "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7의170요청은 재실행하지 않는다. 원래 실패 결과들과 별도 독립 검증 기록을 모두 보존한다.",
+    "Native38 읽기 전용 후보 R2는 독립 검토·정상 빌드·설치와 관련29개 테스트를 완료했다. 실제 Multi R4는 대상 악기 트랙 선택이 안 되어12번째 요청에서 거부됐다. 정확한 대상 선택 확인만 추가한 별도 R5를 독립 검토·새 연결 후 실행한다. 실제150개 파라미터 전후·컨트롤러와 매크로·MIDI 관계를 먼저 관찰하며 모델 쓰기 허용 목록은 확대하지 않는다.",
+    "External Stereo와Mono 메뉴 읽기는 실제35요청씩 완료했다. 소프트웨어 포트 선택은 아직 미구현이다. 공개 SDK selectItem ABI 독립 검토와 현재 바이너리에 대한 한정 REA/Ghidra 분석을 활용해 실제 메뉴 데이터·파라미터·소유권 의미를 확인한 뒤 구현한다. 행 이름이나 숫자를 포트 값으로 추정하지 않는다.",
+    "Open AIR R7는43개 쓰기 가능 값 복원과 새2033바이트 A/B 직렬화 일치1건을 완료했다. 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장 검증은 남았다. 일반 프리셋 완료 수는28/46종·56사례·18종 잔여를 유지한다. Room 별도16개 쓰기값·새 상태 캡처 일치와 구분한다.",
+    "남은 프리셋18종과 모델·프리셋 전체 열거를 계속한다. 완료 종이나 과거 실패를 같은 조건으로 재실행하지 않고 미확인 의미와 정확한 복원 조건을 먼저 해결한다.",
+    "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 전용 제한 API와 구체적 관측 근거로 구현·검증한다. 현재값 변경과 이벤트 전달 증거를 구분한다.",
+    "일반 중첩 그래프 생성·연결·순서 변경·삭제와 정확한 전체 구조 복원을 구현·검증한다. 기존 고정 그래프 검증으로 전체 그래프 지원을 주장하지 않는다.",
+    "물리 외부 효과 오디오·왕복 지연·CV 출력 격리·실제 건반 연주는 두 장치 재연결과 필요한 배선이 갖춰진 뒤 별도 수행한다. 두 USB 장치는 현재 분리됐으며 과거 USB 연결은 물리 왕복 증거가 아니다.",
+    "고정 이름 합집합6460/7112·잔여652, 프리셋28/46종·56사례를 사용한다. 실제 새 근거를 독립 확인한 뒤 중복 없는 범위만 추가한다. 단위마다 체크리스트·실제 소요·완료와 잔여 수·예상 남은 시간을 보고한다. PR4는 Draft로 유지한다."
   ],
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
@@ -324,8 +323,12 @@
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
   "current_execution": {
-    "unit": "Mono current baseline R4 offline preparation and Native37 version checkpoint",
-    "DAW_live_unit_running": false
+    "unit": "OpenAIR R7 expected catalog refusal parent handling offline correction",
+    "DAW_live_unit_running": false,
+    "OpenAIR_R6_observed_raw_calls": 158,
+    "OpenAIR_R6_parent_consumed_calls": 157,
+    "OpenAIR_R6_original_acceptance": 0,
+    "OpenAIR_R6_NoSave_normal_failed_cleanup_complete": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -354,8 +357,8 @@
   "last_runtime_verified_native_unit": 37,
   "last_runtime_verified_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native37 Stereo exact port menu read actual35 independently verified; Mono19 baseline difference preserved",
-  "last_completed_live_elapsed_seconds": 131.268,
+  "last_completed_live_unit": "Native37 Mono current-baseline exact port menu35 independently verified",
+  "last_completed_live_elapsed_seconds": 108.79,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -1174,9 +1177,11 @@
     "external37_mono_pilot_r2": "typed_raw_pairing_fix_in_progress_no_actual",
     "external37_stereo_pilot_r3": "actual35_complete_independent_audit_pass",
     "external37_mono_pilot_r3": "actual19_failed_historical_latency_value_difference_normal_NoSave_cleanup",
-    "external37_mono_pilot_r4": "exact_current_baseline_candidate_in_progress",
-    "openair_fresh_serialization_r5": "independent_property_admission_review_pass_normal37_unbound",
-    "multi_receiver_r4": "independent_property_admission_review_pass_future_normal38_unbound"
+    "external37_mono_pilot_r4": "actual35_complete_independently_verified",
+    "openair_fresh_serialization_r5": "metadata_only_bootstrap_schema_failure_zero_DAW_normal_exit",
+    "multi_receiver_r4": "independent_property_admission_review_pass_future_normal38_unbound",
+    "openair_fresh_serialization_r6": "actual158_expected_negative_parent_error_failed_cleaned_up",
+    "openair_fresh_serialization_r7": "narrow_parent_expected_negative_fix_in_progress"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1355,7 +1360,7 @@
     }
   },
   "native38_multi_controller_candidate": {
-    "status": "independent_source_review_pass_not_landed_or_installed",
+    "status": "landed_normal_built_and_installed; actual interface availability not yet observed",
     "candidate_freeze_sha256": "d4a73ec92dbebc6e331e4b0d9be7f74714de8e1666f4dafa290e1c4066e8729a",
     "review_report_sha256": "07a99ea6e70b2bf86e07193224c2a48ea8a8f77d4b14f3f35aaeb4dd120f3d09",
     "review_freeze_sha256": "45c10e0eb6ef634f7c80c91661f0e8215c7ec9439cb0412acc24a33f46945778",
@@ -1503,7 +1508,6 @@
     "app_closed_before_install_observed": true,
     "owned_MCP_absent_before_install_observed": true,
     "normal_build_source": true,
-    "actual37_DAW_requests": 54,
     "normal_tool_count": 46,
     "actual_MCP_schema_metadata_verified": true,
     "actual_MCP_schema_sha256": "8db3f9d468de922724f0094a732a67e1e9d61317c9e76002361ba7283a074150",
@@ -1560,13 +1564,125 @@
     "audio_verified": false,
     "physical_loopback_verified": false,
     "ping_executed": false,
-    "source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c"
+    "source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
+    "Mono_current_baseline_actual": {
+      "requests": 35,
+      "elapsed_seconds": 108.79,
+      "send_menu_rows": 3,
+      "return_menu_rows": 3,
+      "whole24_parameter_reads": 8,
+      "latencyTotal_current_fixed_value": 102.0625,
+      "other23_values_and_all24_nonvalue_metadata_preserved": true,
+      "main_preparation_writes": 1,
+      "plugin_parameter_writes": 0,
+      "port_selection_writes": 0,
+      "normal_saves": 0,
+      "app_and_owner_closed": true,
+      "all_six_current_archives_unchanged": true,
+      "independent_report_sha256": "ee5c6f604d75f9f57a0706e544c312c48ed8045a3cda7477f4af17625b4c45ac",
+      "independent_audit_freeze_sha256": "d15660844bab8919486428b4737482690c60f7323f68a652738131a49ce67ab4"
+    },
+    "actual37_menu_program_requests_including_failed_Mono19": 89,
+    "accepted_menu_reader_units": 2
   },
   "current_helper_versions": {
     "Stereo": "external37-menu-live-pilot/r3 actual35 complete",
-    "Mono": "external37-mono-menu-live-pilot/r4 current102.0625 baseline candidate only",
-    "OpenAIR": "nov13-openair-fresh-serialization/r5 normal37 unbound",
-    "Multi": "nov13-multi-receiver-collector/r4 future normal38 unbound"
+    "Mono": "external37-mono-menu-live-pilot/r4 actual35 complete",
+    "OpenAIR": "nov13-openair-fresh-serialization/r7 actual170 complete; independent audit passed",
+    "Multi": "nov13-multi-receiver-collector/r4 actual12 known failure; explicit target UI checkpoint R5 in preparation"
   },
-  "normal_native37_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c"
+  "normal_native37_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
+  "openair_r6_actual_partial": {
+    "actual_requests": 158,
+    "parent_consumed_requests": 157,
+    "planned_requests": 170,
+    "missing_final_requests": 12,
+    "full94_reads": 16,
+    "provider_pages": 32,
+    "writable_records_restored_at_observed_postload_pairs": 43,
+    "fresh_captures": 2,
+    "fresh_capture_bytes": 2033,
+    "fresh_captures_equal": true,
+    "capture_tokens_distinct": true,
+    "released": [
+      "B",
+      "A",
+      "catalog"
+    ],
+    "last_response": "not_applied/native_rejected expected expired catalog",
+    "owner_protocol_consumed_expected_refusal": true,
+    "parent_general_error_check_stopped": true,
+    "original_accepted_pilots": 0,
+    "all_six_saved_archives_unchanged": true,
+    "app_and_owner_closed": true,
+    "audit_report_sha256": "16da21f7e0bc6a69d9689b945793b5966124e25643e9b301dba2f3b94489d381"
+  },
+  "openair_r7_actual": {
+    "판정": "한정된 실제 쓰기값과 새 직렬화 관측 검증",
+    "대상": "Open AIR",
+    "정상_네이티브": 37,
+    "실제_요청": 170,
+    "전체94개_관찰": 18,
+    "페이지": 36,
+    "Mix_쓰기": 1,
+    "Main_준비": 1,
+    "43개_쓰기값_원본일치": true,
+    "새A_B_별도저장": true,
+    "새A_B_바이트": 2033,
+    "새A_B_해시일치": true,
+    "새A_B_토큰다름": true,
+    "예정된_만료거부와_최종쌍_완료": true,
+    "일반_프리셋_완료_증가": 0,
+    "전체94_원래복원": false,
+    "읽기전용16_원래복원": false,
+    "리소스_오디오_저장_검증": false,
+    "전역_이름_범위_증가": 0,
+    "NoSave_정상종료_저장6개보존": true,
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+    "elapsed_seconds": 140.532,
+    "independent_report_sha256": "dae9cfeb58d1e11cc98e49eee703d55ed5c3e044b0d6bba88b217b5970070210",
+    "independent_freeze_sha256": "673ef1b9221695381fcfa6530d55acfdf4ffcf8f2cc7d126b377291a8203ce39",
+    "independent_evidence_sha256": "1612a58ab9f2cb5b3358d81ab765e52312cfe4131859f326503b498148924079",
+    "reviewed_proposal_sha256": "2f4e5119ca3c662a87d9b67fdaa40d7f5339b1fe630868e2303380c6104df601"
+  },
+  "native38_actual_installation": {
+    "native_version_unit": 38,
+    "native_uuid": "C58977A7-FF77-3F88-9251-C3FBFFD7CFFF",
+    "native_sha256": "2b06fe13bad11ecccba70bb44ac630abad9cabcdafb2fa1bbca19ec6e495e05f",
+    "binary_sha256": "c33cf8760693786fc066d222fee207220cbb7e087ae7a6ba4482aa77262b46cf",
+    "native_manifest_sha256": "b1eff20c49df6731ac80a5e1c10bac8c994200c1ca4fa4c605ff78e3dc9f5947",
+    "native_sources": 144,
+    "wire_sources": 62,
+    "manifest_total_source_files": 146,
+    "installed_package_files": 4,
+    "installed_bridge_sha256": {
+      "BridgeComponent.js": "1665a3461d8f46e7740b6acc323a647bbef426133f9cb16abd2cea70450fb236",
+      "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+      "NativePluginControls.js": "be99b580f1b91d0055da4e80e1aad2e9a85d519c3551c2e67b3ce126866f12b1"
+    },
+    "normal_build_source": true,
+    "app_closed_before_install_observed": true,
+    "owned_MCP_absent_before_install_observed": true,
+    "normal_tool_count": 46,
+    "scoped_native_tests_passed": 29,
+    "native_test_execution_seconds": 0.02,
+    "native_test_compilation_seconds": 7.09,
+    "native_release_compilation_seconds": 8.21,
+    "actual_native38_DAW_requests": 0
+  },
+  "multi_r4_actual_failure": {
+    "raw_requests": 12,
+    "parent_consumed_requests": 11,
+    "elapsed_seconds": 83.029,
+    "last_error_code": "host_rejected",
+    "last_error_message": "select the unique target instrument track first",
+    "controller_query_reached": false,
+    "plugin_writes": 0,
+    "main_preparation_writes": 1,
+    "normal_saves": 0,
+    "saved_six_unchanged": true,
+    "app_and_owner_closed": true,
+    "independent_audit": "pending"
+  }
 }

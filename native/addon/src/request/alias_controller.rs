@@ -22,6 +22,15 @@ fn supported(class: &str) -> bool {
     )
 }
 
+// Read-only inspection admission is separate from the model-catalog policy.
+// Multi uses only the same declared alias/provider QIs, with no fallback route.
+fn inspection_supported(instance: &Instance) -> bool {
+    supported(&instance.class_uid)
+        || (instance.class_uid == "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
+            && instance.native_class == "AudioSynth"
+            && instance.object_id == "Multi Instrument")
+}
+
 pub(super) struct AliasBinding {
     provider_identity: Owned,
     provider: Owned,
@@ -298,26 +307,43 @@ fn observe<G: FnMut() -> Result<(), String>>(
     Ok(inventory)
 }
 
+fn capture_bound<G: FnMut() -> Result<(), String>>(
+    instance: &Instance,
+    target: *mut c_void,
+    node: *mut c_void,
+    text: TextApi,
+    limits: Limits,
+    guard: &mut G,
+) -> Result<Inventory, String> {
+    guard()?;
+    if !inspection_supported(instance) {
+        return Err(
+            "plugin_controller scope requires the observed Mustang Native or Rumble Native class, or exact Multi Instrument AudioSynth"
+                .into(),
+        );
+    }
+    let result = AliasBinding::capture(target, node, guard)
+        .and_then(|binding| observe(binding, text, limits, guard));
+    if let Err(reason) = guard() {
+        release(result, guard)?;
+        return Err(reason);
+    }
+    result
+}
+
 pub(super) fn capture(
     ctx: &Context<'_>,
     text: TextApi,
     limits: Limits,
 ) -> Result<Inventory, String> {
-    ctx.check()?;
-    if !supported(&ctx.instance.class_uid) {
-        return Err(
-            "plugin_controller scope requires the observed Mustang Native or Rumble Native class"
-                .into(),
-        );
-    }
-    let mut guard = || ctx.check();
-    let result = AliasBinding::capture(ctx.target.0, ctx.node.0, &mut guard)
-        .and_then(|binding| observe(binding, text, limits, &mut guard));
-    if let Err(reason) = guard() {
-        release(result, &mut guard)?;
-        return Err(reason);
-    }
-    result
+    capture_bound(
+        &ctx.instance,
+        ctx.target.0,
+        ctx.node.0,
+        text,
+        limits,
+        &mut || ctx.check(),
+    )
 }
 
 #[cfg(test)]

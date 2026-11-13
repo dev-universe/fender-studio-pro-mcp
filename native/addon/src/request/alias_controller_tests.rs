@@ -412,3 +412,124 @@ fn changed_attachment_before_publication_discards_all_controller_metadata() {
     drop(reply);
     fixture.released();
 }
+
+fn multi_instance() -> Instance {
+    Instance {
+        object_uid: "12345678-1234-1234-1234-123456789ABC".into(),
+        class_uid: "B9D410AD-E47D-495E-8AEE-10D2B2987CC7".into(),
+        native_class: "AudioSynth".into(),
+        object_id: "Multi Instrument".into(),
+    }
+}
+fn multi_capture<G: FnMut() -> Result<(), String>>(
+    fixture: &Fixture,
+    instance: &Instance,
+    guard: &mut G,
+) -> Result<Inventory, String> {
+    capture_bound(
+        instance,
+        fixture.pointer(0),
+        fixture.pointer(0),
+        TextApi {
+            get_constant_string: constant,
+        },
+        node_inspect::limits(node_inspect::Scope::PluginController),
+        guard,
+    )
+}
+#[test]
+fn exact_multi_readonly_admission_cannot_admit_its_model_catalog_or_other_namespace() {
+    let instance = multi_instance();
+    assert!(inspection_supported(&instance));
+    assert!(!supported(&instance.class_uid)); // catalog keeps its original two classes
+    for field in 0..3 {
+        let fixture = Fixture::new(true);
+        let mut wrong = instance.clone();
+        match field {
+            0 => wrong.class_uid = "831A0046-BD71-45BF-A419-6FC90D6E9F2F".into(),
+            1 => wrong.native_class = "Device".into(),
+            _ => wrong.object_id = "Other Multi".into(),
+        }
+        assert!(multi_capture(&fixture, &wrong, &mut || Ok(())).is_err());
+        assert!(
+            fixture
+                .objects
+                .iter()
+                .all(|o| o.gets.get() == 0 && o.queries.borrow().is_empty())
+        );
+        fixture.released();
+    }
+}
+#[test]
+fn exact_multi_fake_uses_declared_interfaces_retains_owners_and_keeps_bounds() {
+    let fixture = Fixture::new(true);
+    let inventory = multi_capture(&fixture, &multi_instance(), &mut || Ok(())).unwrap();
+    let value = inventory.value();
+    assert_eq!(value["mutation_capability"], false);
+    assert_eq!(value["atomic_snapshot"], false);
+    assert_eq!(
+        value["limits"],
+        json!({"nodes":96,"depth":5,"ancestors":0,"children_per_node":32})
+    );
+    assert!(fixture.objects[4].refs.get() > 1);
+    assert!(
+        fixture.objects[3]
+            .queries
+            .borrow()
+            .contains(&CONTROLLER_PROVIDER)
+    );
+    inventory.check(&mut || Ok(())).unwrap();
+    drop(inventory);
+    fixture.released();
+}
+#[test]
+fn multi_wrong_instance_context_is_refused_before_any_native_dispatch() {
+    let fixture = Fixture::new(true);
+    assert!(
+        multi_capture(&fixture, &multi_instance(), &mut || Err(
+            "expected instance changed".into()
+        ))
+        .is_err()
+    );
+    assert!(
+        fixture
+            .objects
+            .iter()
+            .all(|o| o.gets.get() == 0 && o.queries.borrow().is_empty())
+    );
+    fixture.released();
+}
+#[test]
+fn multi_missing_declared_provider_never_falls_back_and_null_controller_stays_unavailable() {
+    let fixture = Fixture::new(true);
+    fixture.objects[3].provider.set(ptr::null_mut());
+    assert!(multi_capture(&fixture, &multi_instance(), &mut || Ok(())).is_err());
+    fixture.released();
+    let fixture = Fixture::new(false);
+    let inventory = multi_capture(&fixture, &multi_instance(), &mut || Ok(())).unwrap();
+    assert_eq!(inventory.value()["controller"], Value::Null);
+    assert_eq!(inventory.value()["complete"], false);
+    assert_eq!(
+        inventory.value()["diagnostics"][0]["kind"],
+        "controller_absent"
+    );
+    drop(inventory);
+    fixture.released();
+}
+
+#[test]
+fn actual_context_instance_guard_still_precedes_alias_capture() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut host = guard_tests::Fixture::new();
+    let mut context = host.context();
+    context.instance.object_uid = "00000000-0000-0000-0000-000000000000".into();
+    let result = capture(
+        &context,
+        TextApi {
+            get_constant_string: constant,
+        },
+        node_inspect::limits(node_inspect::Scope::PluginController),
+    );
+    assert!(matches!(result,Err(reason) if reason=="native target identity changed"));
+    drop(context);
+}

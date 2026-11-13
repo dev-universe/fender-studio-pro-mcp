@@ -15,7 +15,6 @@
   "app_closed_before_install_observed": true,
   "owned_MCP_absent_before_install_observed": true,
   "normal_build_source": true,
-  "actual37_DAW_requests": 54,
   "normal_tool_count": 46,
   "actual_MCP_schema_metadata_verified": true,
   "actual_MCP_schema_sha256": "8db3f9d468de922724f0094a732a67e1e9d61317c9e76002361ba7283a074150",
@@ -72,5 +71,24 @@
   "audio_verified": false,
   "physical_loopback_verified": false,
   "ping_executed": false,
-  "source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c"
+  "source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
+  "Mono_current_baseline_actual": {
+    "requests": 35,
+    "elapsed_seconds": 108.79,
+    "send_menu_rows": 3,
+    "return_menu_rows": 3,
+    "whole24_parameter_reads": 8,
+    "latencyTotal_current_fixed_value": 102.0625,
+    "other23_values_and_all24_nonvalue_metadata_preserved": true,
+    "main_preparation_writes": 1,
+    "plugin_parameter_writes": 0,
+    "port_selection_writes": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_current_archives_unchanged": true,
+    "independent_report_sha256": "ee5c6f604d75f9f57a0706e544c312c48ed8045a3cda7477f4af17625b4c45ac",
+    "independent_audit_freeze_sha256": "d15660844bab8919486428b4737482690c60f7323f68a652738131a49ce67ab4"
+  },
+  "actual37_menu_program_requests_including_failed_Mono19": 89,
+  "accepted_menu_reader_units": 2
 }

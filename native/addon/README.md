@@ -129,7 +129,13 @@ No auxiliary method, property setter, object factory or arbitrary API is called.
 
 `inspect` with `include_nodes:true` and `node_scope:plugin_controller` observes
 the wrapped plugin's declared `IControllerProvider` controller for the exact
-Mustang Native or Rumble Native Device. This scope requires `expected_instance`.
+Mustang Native, Rumble Native, or exact Multi Instrument AudioSynth. The Multi
+class additionally requires its observed native class and object identifier. This
+read-only admission does not admit Multi to `model_catalog`. It uses only the
+same declared alias/provider interfaces; absent interfaces fail explicitly, with
+no direct-controller, namespace or editor fallback. Actual Multi controller
+availability and assignments remain unverified until a guarded live observation.
+This scope requires `expected_instance`.
 It retains the Device parent, alias, plugin, provider and returned controller
 through publication. Node/type inspection is bounded to96 nodes, depth5,
 zero ancestors and32 children per node. A stable null controller returns
