@@ -287,7 +287,9 @@
     ],
     "room_writable_serialized_restore_pilots": 1,
     "chorder_input_selector_boundary_cases": 2,
-    "distinct_fixed_inventory_writable_names_verified": 6459
+    "distinct_fixed_inventory_writable_names_verified": 6460,
+    "vocal_tune_receiver_readonly_units": 1,
+    "vocal_tune_direct_bypass_current_value_cases": 1
   },
   "next_units_in_order": [
     "Keep Native36/main45/bridges frozen until all dependent six-original-archive units finish. Hardware detached; OS inventory2 and actual MacBook48kHz/512frames preferences are already verified. Reuse all completed immutable sweeps.",
@@ -309,7 +311,12 @@
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "25/46presetclasses51positivecases21remaining; Chorder33/128currentoutputrolesatinput60,95remaining,4/16chunkscomplete.",
   "binary_source_commit": "eb29bc4",
-  "current_execution": null,
+  "current_execution": {
+    "unit": "Chorder persistence r6",
+    "stage": "mandatory offline full raw evidence preflight",
+    "DAW_owner_started": false,
+    "normal_saves_so_far": 0
+  },
   "progress_reporting": {
     "after_each_completed_unit": [
       "actual elapsed time",
@@ -1139,10 +1146,12 @@
     "vocal_receiver_r3": "Root_binding_preflight_failed_before_owner_zero_requests_preserved",
     "persistence_r4": "review_failed_Root_flag_type_admission",
     "vocal_receiver_r3_reissue1": "known_zero_DAW_bootstrap_schema_failure_recovered_source_diagnosis",
-    "vocal_receiver_r4": "source_schema_and_bootstrap_fix_in_progress",
-    "vocal_bypass_value_r2": "prerequisite_revision_pending",
-    "persistence_r5": "sealed_pending_independent_review",
-    "name_union_128_delta": "independently_verified_and_promoted6459"
+    "vocal_receiver_r4": "actual_complete22",
+    "vocal_bypass_value_r2": "actual_complete_independently_audited36",
+    "persistence_r5": "review_pass_full23932replay309.41s_coldscan64.98s_exceeds55s",
+    "name_union_128_delta": "independently_verified_and_promoted6459",
+    "persistence_r6": "review_pass_bound_preflight_running",
+    "native37_composition": "independent_source_review_pass_not_landed_or_installed"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1180,7 +1189,7 @@
   },
   "rough_persistence_remaining_minutes": [
     15,
-    40
+    35
   ],
   "vocal_bootstrap_failure": {
     "daw_tool_calls": 0,
@@ -1201,5 +1210,98 @@
     "independent_review": "PASS_WITH_LIMITS",
     "review_report_sha256": "cb1e810cd53c89ffd5bbf88beb17a0cf0bcabd7b7d5fad4c2ad81f94f3b2e2db",
     "public_evidence_sha256": "8dca290b9e6e096b74a4ce911011fb799da53755cf2538154b9469f5d16882a0"
+  },
+  "vocal_receiver_actual": {
+    "schema": 1,
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "plugin": "Vocal Tune",
+    "source": "dsp",
+    "param": "bypass",
+    "accepted_readonly_receiver_units": 1,
+    "provider_records": 26,
+    "full_provider_reads": 4,
+    "parameter_details_reads": 2,
+    "daw_tool_calls": 22,
+    "tools_list_metadata_calls_separate": 1,
+    "main_preparation_writes": 1,
+    "plugin_parameter_writes": 0,
+    "elapsed_seconds_with_UI_cleanup": 181.356,
+    "parameter_native_class": "DeviceParam",
+    "controller_metadata_observed": true,
+    "callback_proved": false,
+    "inverse_semantics_proved": false,
+    "mutation_capability": false,
+    "host_bypass_equivalence_proved": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "a2c28737c2162107e9d98aa7c74283b95aa93a49f1c91042849fa3f4bfc0854b",
+    "raw_audit_sha256": "bcd53e24ce641cfccd867605a38b822c51e57ae8324e7e86c813364507ff501e",
+    "receiver_proof_sha256": "39d7b8c6bcc89bf0e3aa6aaa012a71bce456a02a07005dfc26213c0f60ef6d5e",
+    "root_observation_sha256": "cf37e7148a5c1eadc711abaada0632860260b6e89b430b8dc808d4450c8d849e",
+    "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
+  },
+  "current_fixed_name_union": {
+    "accepted_names": 6460,
+    "inventory_names": 7112,
+    "remaining_names": 652,
+    "base128_names": 6459,
+    "new_vocal_bypass_names": 1,
+    "tuple_key": [
+      "class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "scope": "fixed_fixture_current_value",
+    "global_support_percentage": false,
+    "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
+    "public_delta_sha256": "03da36166b1af8946327fcb2c01fa76c43a44141417173e8422355b79e3b084d"
+  },
+  "vocal_bypass_value_actual": {
+    "schema": 1,
+    "status": "independent_saved_actual_current_value_verified",
+    "canonical_tuple": [
+      "90D01A1C-EB13-4C5F-8C45-904F4AD0AFC0",
+      "dsp",
+      "bypass"
+    ],
+    "tool_requests": 36,
+    "direct_parameter_writers": 2,
+    "full26_provider_reads": 8,
+    "unchanged_peer_records": 25,
+    "strict_writable_names_in_fixed_Vocal_inventory": 19,
+    "raw_float64_sequence": [
+      0,
+      1,
+      0
+    ],
+    "setter_outcomes": [
+      "applied_verified",
+      "applied_verified"
+    ],
+    "full26_final_restored": true,
+    "coherent_selected_display": true,
+    "normal_saves": 0,
+    "historical_root_appfalse_nosave_owner_exit0_and_six_preservation_verified": true,
+    "callback_proved": false,
+    "audio_verified": false,
+    "host_alias_equivalence_proved": false,
+    "persistence_verified": false,
+    "new_disjoint_canonical_names": 1,
+    "accepted_union_after": 6460,
+    "fixed_inventory_names": 7112,
+    "remaining_names": 652,
+    "elapsed_seconds_with_UI_cleanup": 179.918,
+    "main_preparation_writes": 1,
+    "tools_list_metadata_calls_separate": 1,
+    "independent_review": {
+      "verdict": "PASS_CURRENT_VALUE",
+      "report_sha256": "8865a36e840c4f58e9df5156d440b7b17335687b0beb816300e0b03044364aa1",
+      "evidence_sha256": "17cace8a6e06f6d439059a7f994e7dd448462949bc5eeb51e7b4400d575d9df1",
+      "reviewed_proposal_sha256": "380dde6ef3f5e3a111946ccf934a032c1008d7666d8d0d70bc896ec94b080d44"
+    },
+    "result_sha256": "b6b503a4e7c75aea014d6025725d1eb3de07fdd17f80ce5d2e0849f01eff7382",
+    "base_union_evidence": "2026-11-13-name-union-128.json"
   }
 }
