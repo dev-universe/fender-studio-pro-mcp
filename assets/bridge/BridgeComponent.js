@@ -651,7 +651,19 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const result = { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
         if (plug.track) result.focusedTrackState = this.focusedTrackState();
         const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance, include_nodes: args.include_nodes, node_scope: args.node_scope });
-        if (args.expected_instance !== undefined && (!native || !native.ok || !native.instance || native.instance.object_uid !== args.expected_instance)) return { error: "the expected native plugin instance changed" };
+        if (args.expected_instance !== undefined) {
+            if (native === null || native === undefined) return { error: "native plugin inspection unavailable" };
+            if (typeof native !== "object" || Array.isArray(native)) return { error: "native plugin inspection response is malformed" };
+            if (native.ok === false) {
+                const message = native.error && typeof native.error.message === "string"
+                    ? native.error.message.replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").slice(0, 512).replace(/[\uD800-\uDBFF]$/, "").trim() : "";
+                return { error: message ? "native plugin inspection failed: " + message : "native plugin inspection failed" };
+            }
+            if (native.ok !== true || !native.instance || typeof native.instance.object_uid !== "string" || !native.instance.object_uid
+                || typeof native.instance.class_uid !== "string" || !native.instance.class_uid || native.error !== undefined && native.error !== null)
+                return { error: "native plugin inspection response is malformed" };
+            if (native.instance.object_uid !== args.expected_instance) return { error: "the expected native plugin instance changed" };
+        }
         if (native) result.native = native;
         return result;
     }

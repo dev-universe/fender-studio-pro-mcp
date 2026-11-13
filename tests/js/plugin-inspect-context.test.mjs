@@ -203,3 +203,100 @@ test('stale expected bridge context refuses before observation or native dispatc
   }
   assert.equal(h.calls.length, 0); assert.deepEqual(h.writes, []);
 });
+
+
+test('bound inspection reports the native query failure without claiming an instance change', () => {
+  const h = harness();
+  h.state.native = { ok: false, outcome: 'not_applied', instance,
+    error: { code: 'node_inspection_failed', message: 'graph scope requires the verified AudioInsertSlot/Inserts/Combinator/Graph family' },
+    extra: { mutation_capability: true } };
+  const result = h.requestContext({ include_context: false });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'native plugin inspection failed: graph scope requires the verified AudioInsertSlot/Inserts/Combinator/Graph family');
+  assert.equal(result.result, undefined);
+  assert.equal(h.calls.length, 1); assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+});
+
+test('bound inspection distinguishes an absent or malformed native reply from a changed instance', () => {
+  for (const [native, error] of [
+    [null, 'native plugin inspection unavailable'],
+    [undefined, 'native plugin inspection unavailable'],
+    [false, 'native plugin inspection response is malformed'],
+    [[], 'native plugin inspection response is malformed'],
+    [{ ok: 1, instance }, 'native plugin inspection response is malformed'],
+    [{ ok: true }, 'native plugin inspection response is malformed'],
+    [{ ok: true, instance: { object_uid: instance.object_uid } }, 'native plugin inspection response is malformed'],
+    [{ ok: true, instance, error: { message: 'contradictory success' } }, 'native plugin inspection response is malformed'],
+  ]) {
+    const h = harness();
+    h.component.nativePluginRequest = () => native;
+    const result = h.requestContext({ include_context: false });
+    assert.equal(result.ok, false); assert.equal(result.error, error);
+    assert.equal(result.result, undefined); assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+  }
+});
+
+test('bound inspection exposes only a bounded plain native error message', () => {
+  for (const error of [null, {}, { message: 7 }, { message: { hidden: 'private' } }, { message: '' }]) {
+    const h = harness(); h.state.native = { ok: false, error, private_metadata: 'do not stringify' };
+    const result = h.requestContext({ include_context: false });
+    assert.equal(result.ok, false); assert.equal(result.error, 'native plugin inspection failed');
+    assert.equal(result.result, undefined);
+  }
+  const h = harness();
+  h.state.native = { ok: false, error: { message: '\u0000\n\r\t\u007f\u0085' + 'x'.repeat(900) } };
+  const result = h.requestContext({ include_context: false });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'native plugin inspection failed: ' + 'x'.repeat(506));
+  assert.equal(/[\u0000-\u001f\u007f-\u009f]/.test(result.error), false);
+});
+
+test('a successful inspection of a different UID remains refused', () => {
+  const h = harness();
+  h.component.nativePluginRequest = () => ({ ok: true,
+    instance: { ...instance, object_uid: '99999999-9999-9999-9999-999999999999' } });
+  const result = h.requestContext({ include_context: false });
+  assert.equal(result.ok, false); assert.equal(result.error, 'the expected native plugin instance changed');
+  assert.equal(result.result, undefined); assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+  const throughNative = harness();
+  throughNative.state.native = { ok: true, instance: { ...instance, object_uid: '99999999-9999-9999-9999-999999999999' } };
+  const rejected = throughNative.requestContext({ include_context: false });
+  assert.equal(rejected.ok, false); assert.match(rejected.error, /native target instance changed/);
+  assert.equal(throughNative.calls.length, 1); assert.deepEqual(throughNative.writes, []);
+});
+
+test('unbound inspection preserves legacy native observation and successful bound metadata', () => {
+  for (const native of [null, { ok: false, error: { message: 'query failed' }, extra: { retained: true } }]) {
+    const h = harness(); h.component.nativePluginRequest = () => native;
+    const result = h.requestContext({ include_context: false, expected_instance: undefined });
+    assert.equal(result.ok, true);
+    if (native === null) assert.equal(Object.hasOwn(result.result, 'native'), false);
+    else assert.deepEqual(result.result.native, native);
+    assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+  }
+  const h = harness(); h.state.native.extra = { retained: ['unknown', { count: 2 }] };
+  const result = h.requestContext({ include_context: false });
+  assert.equal(result.ok, true); assert.deepEqual(result.result.native.extra, h.state.native.extra);
+  assert.deepEqual(h.calls, [{ operation: 'inspect', source: 'dsp', expected_instance: instance.object_uid }]);
+  assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+});
+
+
+test('bound native error prefixes preserve complete supplementary characters within 512 UTF-16 units', () => {
+  for (const [message, expected] of [
+    ['x'.repeat(510) + '🎸', 'x'.repeat(510) + '🎸'],
+    ['x'.repeat(511) + '🎸', 'x'.repeat(511)],
+    ['x'.repeat(512) + '🎸', 'x'.repeat(512)],
+    ['🎸'.repeat(256), '🎸'.repeat(256)],
+    ['🎸'.repeat(257), '🎸'.repeat(256)],
+    ['\u0000\n\r\t\u007f\u0085' + 'x'.repeat(504) + '🎸', 'x'.repeat(504) + '🎸'],
+  ]) {
+    const h = harness();
+    h.state.native = { ok: false, outcome: 'not_applied', error: { message } };
+    const result = h.requestContext({ include_context: false });
+    assert.equal(result.ok, false);
+    assert.equal(result.error, 'native plugin inspection failed: ' + expected);
+    assert.equal(result.error.slice('native plugin inspection failed: '.length).length <= 512, true);
+    assert.equal(result.result, undefined); assert.deepEqual(h.writes, []); assert.deepEqual(h.effects, []);
+  }
+});
