@@ -13,9 +13,9 @@
   "whole_program_percent": null,
   "overall_ETA": null,
   "baseline": {
-    "accepted_names": 6619,
+    "accepted_names": 6627,
     "inventory_names": 7112,
-    "remaining_names": 493,
+    "remaining_names": 485,
     "remaining_name_classes": 19,
     "preset_classes_completed": 30,
     "preset_classes_plan": 46,
@@ -494,7 +494,7 @@
       "title": "최종 지원표·증거·PR/재개 문서",
       "status": "partial",
       "implemented": "공개 근거와 이름 합집합·PR4 Draft·재개 문서 있음",
-      "actually_verified": "6610 이름·29종/58사례 및 다수 독립 검토 완료",
+      "actually_verified": "6610 이름·30종/60사례 및 다수 독립 검토 완료",
       "completion_predicate": "read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0
