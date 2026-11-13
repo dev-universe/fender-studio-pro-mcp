@@ -18,6 +18,7 @@ use crate::{
 
 mod chorder_chords;
 mod chorder_learning;
+mod external_menu;
 
 #[derive(Clone)]
 pub struct RuntimeHandle {
@@ -101,7 +102,7 @@ fn require_learning_document(request: &Request) -> Result<(), OperationError> {
     {
         return Err(OperationError::new(
             "missing_precondition",
-            "Read host_status and supply expected_document for Chorder controls",
+            "Read host_status and supply expected_document for context-bound native controls",
         ));
     }
     Ok(())
@@ -231,7 +232,10 @@ fn execute(
                 json!({"source":"metadata_unavailable","completeness":"unknown"});
         }
     }
-    if response.document != context.document {
+    if response.document != context.document
+        || matches!(operation, Operation::ExternalPortMenu(_))
+            && response.session != context.session
+    {
         invalidate_gui_evidence(&operation, &mut response.result);
         return Ok(Receipt {
             request_id,
@@ -263,6 +267,12 @@ fn execute(
     {
         chorder_learning::invalidate_get(&mut response.result);
     }
+    if let Operation::ExternalPortMenu(query) = &operation
+        && response.ok
+        && !external_menu::valid_get(query, &response.result)
+    {
+        external_menu::invalidate(&mut response.result, true);
+    }
     if let Operation::ChorderChordsGet(query) = &operation
         && response.ok
         && !chorder_chords::valid_get(query, &response.result)
@@ -282,7 +292,9 @@ fn execute(
         soft_error.map(|error| OperationError::new("host_rejected", error.to_string()))
     };
     let outcome = if let Some(error) = &error {
-        if read_only
+        if matches!(operation, Operation::ExternalPortMenu(_)) {
+            external_menu::failure_outcome(&response.result)
+        } else if read_only
             || [
                 "session_changed",
                 "document_changed",
@@ -296,7 +308,7 @@ fn execute(
         } else {
             Outcome::Unknown
         }
-    } else if read_only {
+    } else if read_only || matches!(operation, Operation::ExternalPortMenu(_)) {
         Outcome::Observed
     } else {
         let outcome = mutation_outcome(&response.result);
@@ -324,7 +336,11 @@ fn execute(
         };
     }
     if error.is_some() {
-        invalidate_gui_evidence(&operation, &mut response.result);
+        if matches!(operation, Operation::ExternalPortMenu(_)) {
+            external_menu::invalidate(&mut response.result, true);
+        } else {
+            invalidate_gui_evidence(&operation, &mut response.result);
+        }
     }
     Ok(Receipt {
         request_id,
@@ -744,6 +760,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if matches!(operation, Operation::ExternalPortMenu(_)) {
+        external_menu::invalidate(result, false);
+        return;
+    }
     if matches!(operation, Operation::ChorderChordsGet(_)) {
         chorder_chords::invalidate_get(result);
         return;

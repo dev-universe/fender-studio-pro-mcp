@@ -453,6 +453,7 @@ fn reply(
 ) -> Reply {
     Reply {
         value,
+        menu: None,
         catalog: None,
         edit: None,
         action: Some(lease),

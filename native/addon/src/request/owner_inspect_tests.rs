@@ -150,6 +150,7 @@ fn reply(context: Box<Context<'static>>, owner: OwnerInspection) -> Reply {
     value["instance"] = json!(context.instance);
     Reply {
         value,
+        menu: None,
         catalog: None,
         edit: None,
         action: None,

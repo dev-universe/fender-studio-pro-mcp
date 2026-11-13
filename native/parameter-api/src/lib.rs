@@ -1,4 +1,5 @@
-//! Owned CCL 5.1.2 parameter data access. No resolver, IPC, service or loader.
+//! Owned CCL 5.1.2 parameter access and fixed menu observation.
+//! Runtime interfaces are supplied by an already validated native integration.
 //!
 //! The caller verifies the exact native ABI and GUI thread before creating an
 //! owned parameter, and supplies its document/target context guard for writes.
@@ -6,14 +7,16 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod ffi;
+mod menu;
 mod parameter;
+pub use menu::{ExternalPort, MenuObservation, MenuPhase, MenuReadAttempt, MenuReadLease, MenuRow};
 mod text;
 mod value;
 
 pub use parameter::{
     ControllerOwner, IntegerEditProfile, NumericEditAttempt, NumericEditLease, NumericEditPhase,
-    PulseError, PulseOutcome, PulseReceipt, PulseState, RawParameter, ScalarBindingLease,
-    ScalarReadLease,
+    ParameterBindingReadLease, PulseError, PulseOutcome, PulseReceipt, PulseState, RawParameter,
+    ScalarBindingLease, ScalarReadLease,
 };
 use std::ffi::{c_char, c_void};
 

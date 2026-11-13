@@ -676,6 +676,7 @@ fn reply(context: Box<Context<'static>>, catalog: Catalog) -> Reply {
     value["instance"] = json!(context.instance);
     Reply {
         value,
+        menu: None,
         catalog: Some(catalog),
         edit: None,
         action: None,

@@ -235,6 +235,12 @@ impl McpServer {
                 "Read only Learn Mode and the learning input pitch on an already-open exact Chorder editor. Requires the current document and native instance. The fixed GUI discovery ceiling is 256 views; the report exposes measured coverage and sequential GUI values, with no mutation authority or DSP/persistence/audio verification.",
                 false,
             ),
+            named::<ExternalPortMenu>(
+                "external_port_menu",
+                "externalPortMenu",
+                "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
+                true,
+            ),
             named::<ChorderChordsGet>(
                 "chorder_chords_get",
                 "chorderChordsGet",
@@ -346,6 +352,8 @@ fn named<T: JsonSchema>(
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
+    } else if operation == "externalPortMenu" {
+        tool = tool.with_annotations(ToolAnnotations::default().read_only(false));
     }
     ToolSpec {
         operation: Some(operation),
@@ -488,6 +496,39 @@ impl ServerHandler for McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn external_menu_schema_is_closed_and_completion_sensitive() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|s| s.tool.name == "external_port_menu")
+            .unwrap();
+        assert_eq!(spec.operation, Some("externalPortMenu"));
+        assert_eq!(
+            spec.tool.annotations.as_ref().unwrap().read_only_hint,
+            Some(false)
+        );
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        for key in [
+            "channel",
+            "slot",
+            "plugin",
+            "expected_instance",
+            "port",
+            "expected_document",
+        ] {
+            assert!(
+                schema["required"].as_array().unwrap().contains(&json!(key)),
+                "{key}"
+            );
+        }
+        assert_eq!(schema["additionalProperties"], false);
+        for key in [
+            "action", "source", "param", "path", "value", "token", "max_rows", "kind", "track",
+        ] {
+            assert!(schema["properties"].get(key).is_none(), "{key}");
+        }
+    }
 
     #[test]
     fn hardware_inventory_is_a_closed_local_read() {
@@ -647,7 +688,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 45);
+        assert_eq!(specs.len(), 46);
     }
 
     #[test]
@@ -894,7 +935,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 45);
+        assert_eq!(specs.len(), 46);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

@@ -20,8 +20,8 @@ pub use owner::ControllerOwner;
 #[path = "numeric_edit.rs"]
 mod numeric_edit;
 pub use numeric_edit::{
-    IntegerEditProfile, NumericEditAttempt, NumericEditLease, NumericEditPhase, ScalarBindingLease,
-    ScalarReadLease,
+    IntegerEditProfile, NumericEditAttempt, NumericEditLease, NumericEditPhase,
+    ParameterBindingReadLease, ScalarBindingLease, ScalarReadLease,
 };
 #[path = "pulse.rs"]
 mod pulse;

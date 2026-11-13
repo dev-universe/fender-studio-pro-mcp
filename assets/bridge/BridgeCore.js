@@ -160,11 +160,11 @@ class Bridge {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet")
+        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu")
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             code = "native_context_lost";
-            result = fail("the Chorder learning document lease changed before publication");
+            result = fail("the native editor document lease changed before publication");
         }
         if (!isFail(result) && req.op === "insertChainState"
             && (context.open !== true || afterContext.open !== true
@@ -270,6 +270,7 @@ class Bridge {
         if (args.include_context !== undefined && op !== "pluginInspect")
             return fail("context observations apply only to pluginInspect");
         switch (op) {
+            case "externalPortMenu": return this.fromComponent(c => c.externalPortMenu(args));
             case "chorderChordsGet": return this.fromComponent(c => c.chorderChordsGet(args));
             case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));

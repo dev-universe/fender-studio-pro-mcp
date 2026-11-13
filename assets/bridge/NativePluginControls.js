@@ -56,6 +56,85 @@ class NativePluginControls {
         return typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
     }
 
+    externalMenuRequest(request) {
+        return this.guiExact(request, ["operation", "port", "expected_instance"])
+            && request.operation === "external_port_menu" && ["send", "return"].indexOf(request.port) >= 0
+            && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
+    }
+
+    externalMenuFailure(dispatched, result) {
+        const refused = result && result.ok === false && result.outcome === "not_applied"
+            && Object.keys(result).every(key => ["ok", "outcome", "error", "menu_phase"].indexOf(key) >= 0)
+            && this.guiExact(result.error, ["code", "message"]) && typeof result.error.code === "string" && result.error.code.length > 0 && result.error.code.length <= 64
+            && typeof result.error.message === "string" && result.error.message.length <= 512
+            && (result.menu_phase === undefined || result.menu_phase === "prepared");
+        const outcome = !dispatched || refused ? "not_applied" : "unknown";
+        return { ok: false, outcome, native_outcome: outcome, error: { code: "external_menu_unconfirmed", message: "The exact External menu lifecycle observation was not established" } };
+    }
+
+    externalMenuTextBytes(value) {
+        let size = 0;
+        for (let i = 0; i < value.length; i++) {
+            const c = value.charCodeAt(i);
+            if (c < 128) size++;
+            else if (c < 2048) size += 2;
+            else if (c >= 55296 && c <= 56319) {
+                const next = value.charCodeAt(++i);
+                if (!(next >= 56320 && next <= 57343)) return Infinity;
+                size += 4;
+            } else if (c >= 56320 && c <= 57343) return Infinity;
+            else size += 3;
+        }
+        return size;
+    }
+
+    externalMenuResult(result, request) {
+        const fields = ["ok", "outcome", "operation", "instance", "source", "port", "parameter", "menu_class", "rows", "coverage", "menu_phase", "lifecycle",
+            "selection_authority", "selection_calls", "scope", "persistence_verified", "audio_verified", "value_semantics"];
+        const classes = { "873281D9-58DE-4B2D-B3BD-528F549B1AD9": "External Effect Mono", "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4": "External Effect Stereo" };
+        const uuid = value => typeof value === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(value) && value !== "00000000-0000-0000-0000-000000000000";
+        if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "observed" || result.operation !== "external_port_menu"
+            || result.source !== "controller" || result.port !== request.port || result.menu_phase !== "closed_checked"
+            || result.scope !== "exact_external_parameter_menu_read" || result.selection_authority !== false || result.selection_calls !== 0
+            || result.persistence_verified !== false || result.audio_verified !== false || result.value_semantics !== "sequential_menu_materialization"
+            || !uuid(result.menu_class) || !this.guiExact(result.instance, ["object_uid", "class_uid", "native_class", "object_id"])
+            || result.instance.object_uid !== request.expected_instance || !uuid(result.instance.object_uid) || !classes[result.instance.class_uid]
+            || result.instance.native_class !== "AudioEffect" || result.instance.object_id !== classes[result.instance.class_uid]
+            || !this.guiExact(result.parameter, ["name", "tag"]) || result.parameter.name !== (request.port === "send" ? "sendPort" : "receivePort")
+            || result.parameter.tag !== (request.port === "send" ? 102 : 103)
+            || !this.guiExact(result.lifecycle, ["construct_calls", "build_calls", "owned_menu_references_released", "root_menu_final_release_count", "builder_final_release_count", "post_cleanup_binding_checked", "nested_callbacks"])
+            || result.lifecycle.construct_calls !== 1 || result.lifecycle.build_calls !== 1 || result.lifecycle.owned_menu_references_released !== true
+            || result.lifecycle.root_menu_final_release_count !== 0 || result.lifecycle.builder_final_release_count !== 0 || result.lifecycle.post_cleanup_binding_checked !== true
+            || result.lifecycle.nested_callbacks !== "not counted; prepare/build/extension/cleanup may reenter"
+            || !Array.isArray(result.rows) || result.rows.length > 256
+            || !this.guiExact(result.coverage, ["complete", "max_rows", "max_depth", "max_total_text_bytes", "max_text_bytes_each", "row_count"])
+            || result.coverage.complete !== true || result.coverage.max_rows !== 256 || result.coverage.max_depth !== 4
+            || result.coverage.max_total_text_bytes !== 32768 || result.coverage.max_text_bytes_each !== 1024 || result.coverage.row_count !== result.rows.length) return false;
+        const parents = { "": { next: 0, submenu: true } };
+        let previous = [], textBytes = 0;
+        for (const row of result.rows) {
+            if (!this.guiExact(row, ["path", "name", "title", "category", "checked", "enabled", "has_submenu", "handler_present", "kind"])
+                || !Array.isArray(row.path) || row.path.length < 1 || row.path.length > 4 || !row.path.every(n => this.guiInteger(n, 0, 255))) return false;
+            const path = row.path, parent = parents[path.slice(0, -1).join("/")];
+            let order = 0;
+            for (let i = 0; i < Math.min(path.length, previous.length); i++) { if (path[i] !== previous[i]) { order = path[i] > previous[i] ? 1 : -1; break; } }
+            if (order === 0) order = path.length > previous.length ? 1 : -1;
+            if (previous.length && order <= 0 || !parent || !parent.submenu || path[path.length - 1] !== parent.next) return false;
+            parent.next++;
+            if (typeof row.has_submenu !== "boolean" || row.kind !== (row.has_submenu ? "submenu" : "opaque")) return false;
+            parents[path.join("/")] = { next: 0, submenu: row.has_submenu };
+            previous = path;
+            for (const key of ["checked", "enabled", "handler_present"]) if (row[key] !== null && typeof row[key] !== "boolean") return false;
+            for (const key of ["name", "title", "category"]) if (row[key] !== null) {
+                if (typeof row[key] !== "string") return false;
+                const size = this.externalMenuTextBytes(row[key]);
+                if (size > 1024 || (textBytes += size) > 32768) return false;
+            }
+        }
+        return true;
+    }
+
     chorderChordsRequest(request) {
         return this.guiExact(request, ["operation", "expected_instance", "offset", "limit"])
             && request.operation === "chorder_chords_get" && typeof request.expected_instance === "string"
@@ -703,7 +782,9 @@ class NativePluginControls {
         const guiLearning = request.operation === "chorder_learning_get" || request.operation === "edit_chorder_model";
         const guiLearningSet = request.operation === "edit_chorder_model";
         const chorderChords = request.operation === "chorder_chords_get";
+        const externalMenu = request.operation === "external_port_menu";
         try {
+            if (externalMenu && !this.externalMenuRequest(request)) throw new Error("invalid fixed External menu request");
             if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
@@ -718,14 +799,14 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning) throw new Error("native Chorder learning extension unavailable");
+                if (guiLearning || externalMenu) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning) throw new Error("native Chorder learning extension unavailable");
+                if (guiLearning || externalMenu) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
@@ -741,6 +822,10 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (externalMenu) {
+                if (result.ok === false) return this.externalMenuFailure(true, result);
+                if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
+            }
             if (chorderChords) {
                 if (result.ok === false) return this.chorderChordsFailure(result.error);
                 if (!this.chorderChordsResult(result, request)) throw new Error("invalid stored Chorder chord-page result");
@@ -779,6 +864,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (externalMenu) return this.externalMenuFailure(dispatched, null);
             if (chorderChords) return this.chorderChordsFailure(null);
             if (guiLearning) return this.guiLearningFailure(error, guiLearningSet, dispatched, parsed);
             if (guiComparison) return this.guiComparisonFailure(error);

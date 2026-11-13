@@ -820,3 +820,35 @@ fn controller_pointer(parameter: *mut c_void) -> *mut c_void {
         unsafe { ffi::method(parameter, 14) };
     unsafe { get(parameter) }
 }
+
+/// Retains original/controller associations without a scalar profile or edit.
+pub struct ParameterBindingReadLease {
+    binding: NumericEditLease,
+}
+impl ParameterBindingReadLease {
+    pub fn parameter(&self) -> &RawParameter {
+        &self.binding.parameter
+    }
+    pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
+        self.binding.check(guard)
+    }
+}
+impl RawParameter {
+    pub fn pin_binding_read<G: FnMut() -> Result<(), String>>(
+        self,
+        guard: &mut G,
+    ) -> Result<ParameterBindingReadLease, Error> {
+        let mut binding = NumericEditLease {
+            links: Vec::new(),
+            numeric: None,
+            parameter: self,
+            phase: NumericEditPhase::Prepared,
+            binding_complete: false,
+            witness: None,
+            profile: EditProfile::General,
+        };
+        binding.parameter.check_thread()?;
+        binding.capture(guard)?;
+        Ok(ParameterBindingReadLease { binding })
+    }
+}

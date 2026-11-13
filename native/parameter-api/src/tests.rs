@@ -18,6 +18,8 @@ mod details_tests;
 mod display_tests;
 #[path = "formatting_tests.rs"]
 mod formatting_tests;
+#[path = "menu_tests.rs"]
+mod menu_tests;
 #[path = "numeric_edit_tests.rs"]
 mod numeric_edit_tests;
 

@@ -356,6 +356,7 @@ fn reply(context: Box<Context<'static>>, inventory: Inventory) -> Reply {
     let nodes = node_inspect::Inventory::PluginController(inventory);
     Reply {
         value: json!({"ok":true,"node_report":nodes.value()}),
+        menu: None,
         catalog: None,
         edit: None,
         action: None,

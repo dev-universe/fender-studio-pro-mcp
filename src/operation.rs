@@ -61,6 +61,8 @@ pub enum Operation {
     EditEvents(EditEvents),
     #[serde(rename = "pluginParams", alias = "plugin_parameters")]
     PluginParams(PluginParams),
+    #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
+    ExternalPortMenu(ExternalPortMenu),
     #[serde(rename = "pluginChoices", alias = "plugin_parameter_choices")]
     PluginChoices(PluginChoices),
     #[serde(rename = "pluginParameterDetails", alias = "plugin_parameter_details")]
@@ -484,6 +486,25 @@ pub struct ChorderLearningGet {
     #[schemars(range(min = 0, max = 15))]
     pub slot: u32,
     pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ExternalPortMenu {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub port: ExternalPort,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExternalPort {
+    Send,
+    Return,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1205,7 +1226,10 @@ impl Operation {
     pub fn requires_explicit_document(&self) -> bool {
         matches!(
             self,
-            Self::ChorderLearningGet(_) | Self::ChorderLearningSet(_) | Self::ChorderChordsGet(_)
+            Self::ChorderLearningGet(_)
+                | Self::ChorderLearningSet(_)
+                | Self::ChorderChordsGet(_)
+                | Self::ExternalPortMenu(_)
         )
     }
 
@@ -1292,6 +1316,22 @@ impl Operation {
             }
             Self::ChorderLearningGet(p) => {
                 validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+            }
+            Self::ExternalPortMenu(p) => {
+                validate_splitter_name(&p.channel, "channel")?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.slot > 15
+                    || !matches!(
+                        p.plugin.as_str(),
+                        "External Effect Mono" | "External Effect Stereo"
+                    )
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance.bytes().any(|b| b.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "External menus require an exact External Effect plugin, slot 0..15 and a canonical nonzero native instance",
+                    ));
+                }
             }
             Self::ChorderChordsGet(p) => {
                 validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;

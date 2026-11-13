@@ -27,6 +27,8 @@ mod digest;
 mod direct_tests;
 #[path = "request/document_context.rs"]
 pub(super) mod document_context;
+#[path = "request/external_menu.rs"]
+mod external_menu;
 #[path = "request/folder_context.rs"]
 mod folder_context;
 #[path = "request/format.rs"]
@@ -92,6 +94,10 @@ fn supplied_folder<'de, D: serde::Deserializer<'de>>(
 #[derive(Debug, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Request {
+    ExternalPortMenu {
+        port: external_menu::Port,
+        expected_instance: String,
+    },
     Inspect {
         #[serde(default)]
         source: Source,
@@ -247,6 +253,7 @@ enum Request {
 impl Request {
     fn source(&self) -> Source {
         match self {
+            Self::ExternalPortMenu { .. } => Source::Controller,
             Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
@@ -278,6 +285,9 @@ impl Request {
     }
     fn expected(&self) -> Option<&str> {
         match self {
+            Self::ExternalPortMenu {
+                expected_instance, ..
+            } => Some(expected_instance.as_str()),
             Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. } => None,
@@ -1384,7 +1394,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 ),
             };
         }
-        Request::ParameterAction { .. }
+        Request::ExternalPortMenu { .. }
+        | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
         | Request::EditChorderModel { .. }
@@ -1512,6 +1523,7 @@ impl ParameterEditLease {
     }
 }
 pub(crate) struct ReceiptLease {
+    _menu: Option<external_menu::Receipt>,
     _catalog: Option<catalog::Catalog>,
     _edit: Option<ParameterEditLease>,
     _action: Option<action::ActionLease>,
@@ -1526,6 +1538,7 @@ pub(crate) struct ReceiptLease {
 }
 pub(super) struct Reply {
     value: Value,
+    menu: Option<external_menu::Receipt>,
     catalog: Option<catalog::Catalog>,
     edit: Option<ParameterEditLease>,
     action: Option<action::ActionLease>,
@@ -1543,6 +1556,7 @@ impl Reply {
     pub(super) fn unbound(value: Value) -> Self {
         Self {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -1578,6 +1592,7 @@ impl Reply {
             .as_object_mut()
             .expect("object response")
             .remove("verified");
+        external_menu::invalidate(&mut self.value);
         digest::invalidate(&mut self.value);
         chorder_chords::invalidate(&mut self.value);
         owner_inspect::invalidate(&mut self.value);
@@ -1657,6 +1672,7 @@ impl Reply {
                         .as_ref()
                         .map_or(Ok(()), |preflight| preflight.check(ctx))
                 })
+                .and_then(|_| self.menu.as_ref().map_or(Ok(()), |menu| menu.check(ctx)))
                 .and_then(|_| self.edit.as_ref().map_or(Ok(()), |edit| edit.check(ctx)))
                 .and_then(|_| {
                     self.gui.as_ref().map_or(Ok(()), |gui| {
@@ -1698,6 +1714,7 @@ impl Reply {
     }
     pub(super) fn take_receipt(&mut self) -> Option<ReceiptLease> {
         self.context.take().map(|context| ReceiptLease {
+            _menu: self.menu.take(),
             _catalog: self.catalog.take(),
             _edit: self.edit.take(),
             _action: self.action.take(),
@@ -1712,6 +1729,7 @@ impl Reply {
         })
     }
     pub(super) fn release_context(&mut self) {
+        drop(self.menu.take());
         drop(self.edit.take());
         drop(self.catalog.take());
         drop(self.action.take());
@@ -1812,7 +1830,8 @@ fn dispatch_device(
     let source = request.source();
     let mutation = matches!(
         request,
-        Request::SetParameter { .. }
+        Request::ExternalPortMenu { .. }
+            | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
             | Request::EditChorderModel { .. }
@@ -1827,6 +1846,7 @@ fn dispatch_device(
     {
         return Reply {
             value: error("context_guard_failed", &reason, "not_applied"),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -1841,6 +1861,25 @@ fn dispatch_device(
             mutation,
         };
     }
+    if let Request::ExternalPortMenu { port, .. } = request {
+        let (value, menu) = external_menu::observe(&ctx, port);
+        return Reply {
+            value,
+            menu,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
     if let Request::SetParameter { param, .. } = &request {
         if let Some(mut value) =
             external_controller_port_refusal(&ctx.instance.class_uid, source, param)
@@ -1851,6 +1890,7 @@ fn dispatch_device(
             value["mutation_capability"] = json!(false);
             return Reply {
                 value,
+                menu: None,
                 catalog: None,
                 edit: None,
                 action: None,
@@ -1872,6 +1912,7 @@ fn dispatch_device(
         value["source"] = json!("dsp");
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: edit.map(|lease| ParameterEditLease::Direct(Box::new(lease))),
             action: None,
@@ -1893,6 +1934,7 @@ fn dispatch_device(
         }
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: edit.map(|lease| ParameterEditLease::ChorderModel(Box::new(lease))),
             action: None,
@@ -1921,6 +1963,7 @@ fn dispatch_device(
         }
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -1945,6 +1988,7 @@ fn dispatch_device(
         };
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -1964,6 +2008,7 @@ fn dispatch_device(
         value["instance"] = json!(ctx.instance);
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: edit.map(|lease| ParameterEditLease::ChorderGui(Box::new(lease))),
             action: None,
@@ -1994,6 +2039,7 @@ fn dispatch_device(
         };
         let mut reply = Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2023,6 +2069,7 @@ fn dispatch_device(
         };
         let mut reply = Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2062,6 +2109,7 @@ fn dispatch_device(
         };
         let mut reply = Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2087,6 +2135,7 @@ fn dispatch_device(
         value["source"] = json!("native_slot_preset_catalog");
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2115,6 +2164,7 @@ fn dispatch_device(
         value["instance"] = json!(ctx.instance);
         return Reply {
             value,
+            menu: None,
             catalog,
             edit: None,
             action: None,
@@ -2150,6 +2200,7 @@ fn dispatch_device(
         value["source"] = json!("component_alias_storable");
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2191,6 +2242,7 @@ fn dispatch_device(
         value["instance"] = json!(ctx.instance);
         return Reply {
             value,
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -2287,6 +2339,7 @@ fn dispatch_device(
     }
     Reply {
         value,
+        menu: None,
         catalog: None,
         edit: None,
         action,
@@ -3247,6 +3300,17 @@ mod guard_tests {
         drop(context);
     }
     #[test]
+    fn external_menu_wrong_class_refuses_before_gui_resolution() {
+        let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut fixture = Fixture::new();
+        let context = fixture.context();
+        let (value, lease) = external_menu::observe(&context, external_menu::Port::Send);
+        assert_eq!(value["outcome"], "not_applied");
+        assert_eq!(value["menu_phase"], "prepared");
+        assert!(lease.is_none());
+        assert!(value.get("rows").is_none());
+    }
+    #[test]
     fn previous_receipt_cleanup_is_checked_after_new_context_capture() {
         let _serial = super::super::tests::TEST_LOCK.lock().unwrap();
         let mut fixture = Fixture::new();
@@ -3254,6 +3318,7 @@ mod guard_tests {
         retain_receipt(
             fixture.service,
             ReceiptLease {
+                _menu: None,
                 _catalog: None,
                 _edit: None,
                 _action: None,
@@ -3300,6 +3365,7 @@ mod guard_tests {
         let context = fixture.context();
         let reply = Reply {
             value: json!({"ok":true,"verified":true,"outcome":"observed","instance":context.instance,"source":"controller"}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3343,6 +3409,7 @@ mod guard_tests {
         let report = inspection.value();
         let reply = Reply {
             value: json!({"ok":true,"node_report":report,"instance":context.instance,"source":"dsp"}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3384,6 +3451,7 @@ mod guard_tests {
         let inspection = inspection_for(&context);
         let mut reply = Reply {
             value: json!({"ok":true,"instance":context.instance,"source":"dsp"}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3420,6 +3488,7 @@ mod guard_tests {
         assert!(report.get("instance").is_none());
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","auxiliary_report":report}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3452,6 +3521,7 @@ mod guard_tests {
         let auxiliary = inspection_for(&context).into_auxiliary();
         let mut reply = Reply {
             value: json!({"ok":true,"outcome":"observed"}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3503,6 +3573,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","scope":"insert_folder_ancestry_observation",
                 "ancestor_matches_active_model":false,"insert_folder_ancestry_report":report}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3563,6 +3634,7 @@ mod guard_tests {
         let reply = Reply {
             value: json!({"ok":true,"outcome":"observed","hash_format_version":"fsp-parameter-digest-v1",
                 "schema_sha256":"a".repeat(64),"all_values_sha256":"b".repeat(64),"non_read_only_values_sha256":"c".repeat(64),"access_complete":true}),
+            menu: None,
             catalog: None,
             edit: None,
             action: None,
@@ -3600,5 +3672,59 @@ mod guard_tests {
         }
         assert_eq!(LIVE_RECEIPTS.load(Ordering::Acquire), 0);
         super::super::tests::clear_output(&mut out);
+    }
+}
+
+#[cfg(test)]
+mod external_menu_request_tests {
+    use super::*;
+    #[test]
+    fn external_menu_is_a_closed_two_port_intent() {
+        let uid = "9F23A567-19CF-DA40-AD2A-31C27DB0061F";
+        for port in ["send", "return"] {
+            let r: Request = serde_json::from_value(
+                json!({"operation":"external_port_menu","port":port,"expected_instance":uid}),
+            )
+            .unwrap();
+            assert!(r.validate().is_ok());
+            assert_eq!(r.source(), Source::Controller);
+            assert_eq!(r.expected(), Some(uid));
+        }
+        for extra in [
+            json!({"port":"setup"}),
+            json!({"port":0}),
+            json!({"source":"auto"}),
+            json!({"param":"sendPort"}),
+            json!({"action":"select"}),
+        ] {
+            let mut x =
+                json!({"operation":"external_port_menu","port":"send","expected_instance":uid});
+            for (k, v) in extra.as_object().unwrap() {
+                x[k] = v.clone();
+            }
+            assert!(serde_json::from_value::<Request>(x).is_err());
+        }
+    }
+    #[test]
+    fn external_menu_late_invalidation_strips_every_positive_claim() {
+        let mut r = Reply::unbound(
+            json!({"ok":true,"outcome":"observed","operation":"external_port_menu","menu_phase":"closed_checked","rows":[],"instance":{},"source":"controller","lifecycle":{},"selection_authority":false,"selection_calls":0,"persistence_verified":false,"audio_verified":false}),
+        );
+        r.mutation = true;
+        r.invalidate("synthetic context loss".into());
+        assert_eq!(r.value["outcome"], "unknown");
+        assert_eq!(r.value.as_object().unwrap().len(), 4);
+        for key in [
+            "rows",
+            "instance",
+            "source",
+            "lifecycle",
+            "selection_authority",
+            "selection_calls",
+            "persistence_verified",
+            "audio_verified",
+        ] {
+            assert!(r.value.get(key).is_none());
+        }
     }
 }

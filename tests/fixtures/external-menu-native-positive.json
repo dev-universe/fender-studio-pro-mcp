@@ -1,0 +1,57 @@
+{
+  "ok": true,
+  "outcome": "observed",
+  "operation": "external_port_menu",
+  "instance": {
+    "object_uid": "12345678-1234-1234-1234-123456789ABC",
+    "class_uid": "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+    "native_class": "AudioEffect",
+    "object_id": "External Effect Stereo"
+  },
+  "port": "send",
+  "parameter": {
+    "name": "sendPort",
+    "tag": 102
+  },
+  "menu_class": "12345678-AAAA-BBBB-CCCC-123456789ABC",
+  "rows": [
+    {
+      "path": [
+        0
+      ],
+      "name": null,
+      "title": "Main",
+      "category": null,
+      "checked": false,
+      "enabled": true,
+      "has_submenu": false,
+      "handler_present": true,
+      "kind": "opaque"
+    }
+  ],
+  "coverage": {
+    "complete": true,
+    "max_rows": 256,
+    "max_depth": 4,
+    "row_count": 1,
+    "max_total_text_bytes": 32768,
+    "max_text_bytes_each": 1024
+  },
+  "menu_phase": "closed_checked",
+  "lifecycle": {
+    "construct_calls": 1,
+    "build_calls": 1,
+    "owned_menu_references_released": true,
+    "root_menu_final_release_count": 0,
+    "builder_final_release_count": 0,
+    "post_cleanup_binding_checked": true,
+    "nested_callbacks": "not counted; prepare/build/extension/cleanup may reenter"
+  },
+  "selection_authority": false,
+  "selection_calls": 0,
+  "scope": "exact_external_parameter_menu_read",
+  "persistence_verified": false,
+  "audio_verified": false,
+  "value_semantics": "sequential_menu_materialization",
+  "source": "controller"
+}

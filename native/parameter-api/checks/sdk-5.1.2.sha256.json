@@ -33,6 +33,8 @@
     "ccl/public/plugservices.h": "491ad33d6aeef72e486bdc594d02fa643406906072e576c536f5f39a1c2d53cc",
     "ccl/public/base/iformatter.h": "97c3c346568cceab330576209d276249c7a6bdcb0d4d6b501a9a6629a97eaea6",
     "ccl/public/base/unknown.h": "b175c22256638abb1d392693b236e6adc15f977ea323c2629a1162f007fafaba",
-    "ccl/public/text/istringprivate.h": "cd0c296e67dc53746151d4feec6622045d47f84be26cad2d929ff2e8a2845220"
+    "ccl/public/text/istringprivate.h": "cd0c296e67dc53746151d4feec6622045d47f84be26cad2d929ff2e8a2845220",
+    "ccl/public/gui/framework/imenu.h": "c9868053676681b3240f15ca8b6a61130fcf47f0e7cc655a71ff78d153932afa",
+    "ccl/public/gui/framework/iparametermenu.h": "94cb36f318788731135f5380e775f13683e0870e601c65878f76dd720b12c2e7"
   }
 }
