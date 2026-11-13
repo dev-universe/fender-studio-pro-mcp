@@ -1,0 +1,23 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 122.467,
+  "raw_tool_requests": 17,
+  "parent_verified_requests": 16,
+  "Main_and_Mojito9_volume_preparation_writes": 2,
+  "plugin_parameter_writes": 0,
+  "state_port_Save_transport_writes": 0,
+  "positive_isolation_checkpoint_reached": false,
+  "accepted_cases": 0,
+  "failure": "NoteFX inspection requires unique target instrument track selection",
+  "last_raw_outcome": "not_applied",
+  "last_raw_error": {
+    "code": "host_rejected",
+    "message": "select the unique target instrument track first"
+  },
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "result_sha256": "8de6d32740fbc80b8df1d05d2854ef9159de5c7b91ab63f764cc711e73fd6840",
+  "journal_sha256": "a386d5974449eb601834e71b4520bb18ff69ec052e8cd152ed46102374935b2f",
+  "not_a_parameter_setter_failure": true
+}

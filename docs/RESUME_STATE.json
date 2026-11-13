@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Tuner R3 index1:139.800초·127개,440.0→430.0→440.0Hz,전체13정확복원·새242바이트A/B일치·NoSave/앱·소유자종료/저장6개보존. Tuner두사례완료로29/46종·58사례·17종잔여.",
+  "last_completed_unit": "Chorder 현재값R2는목표트랙선택조건에서122.467초·실제17/부모16으로중단. Main/Mojito9준비2외파라미터/state/포트/Save/재생0,NoSave/앱·소유자종료/저장6개보존. 성공0이며R3에서고유트랙선택을시작조건으로명시한다.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -316,7 +316,7 @@
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. 현재직전종료는R3의새Scratch문맥이다.",
     "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "다음은기존등록raw setter로Chorder DSP guiInput 한이름의현재값을변경·읽기·정확복원하는파일럿이다. 실제외부MIDI/오디오출력격리·Main0·정지·unarmed/noMonitor·learnOFF를먼저관측한다. 전체908/저장128/selector/model/비값unknown보존과2독립읽기를요구한다. MIDI눌림·정상해제·오디오의미와분리하며바이너리분석은재개하지않는다. 현재구현/실제/이름증가0이다.",
+    "Chorder 현재값R2는원래기존NoteFX고유대상트랙선택조건을만족하지않아plugin_inspect에서거부됐다. 실제17/부모16·준비볼륨2·목표파라미터0,NoSave/앱·소유자종료/저장6개보존을완료했다. 같은실기는반복하지않는다. R3는정확한FSP Verify NoteFX Chorder 고유선택과대상record/monitor해제를첫RPC전Root준비조건으로명시하고이정확한실패종료문맥을새로연결한다. 기존162/172표·raw5000/0·전체908/저장128·격리조건은유지한다. 아직실제0/UNBOUND다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은28/46종·56사례·18종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
     "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
@@ -332,7 +332,7 @@
   "last_measurement": "6610/7112 names,502remaining;29/46 presetclasses,58cases,17remaining;Tuner0and1bothfull13restore;Native41raw285=accepted-unit280+failed5.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Tuner two fixed cases complete; Chorder single-current-value pilot isolation preparation",
+    "unit": "Chorder R3 narrow target-selection/predecessor correction preparation",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -341,12 +341,15 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Tuner R3 index1 complete127",
+    "latest_closed_DAW_unit": "Chorder R2 known target-selection refusal, zero plugin writes",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "7300ed84-fc2a-4748-ac9b-a8ebf117e7a9",
+    "latest_closed_job_id": "cb7918cf-4d56-4e50-bd79-124b76ce3a71",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 280,
-    "native41_raw_requests_including_failed_unit": 285
+    "native41_raw_requests_including_failed_unit": 302,
+    "job_id": "cb7918cf-4d56-4e50-bd79-124b76ce3a71",
+    "terminal_tool_inputs": 16,
+    "raw_tool_requests": 17
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2812,7 +2815,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 285,
+  "native41_runtime_actual_total_requests": 302,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -2967,7 +2970,7 @@
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
   "native41_accepted_completed_unit_requests": 280,
-  "native41_failed_unit_raw_requests": 5,
+  "native41_failed_unit_raw_requests": 22,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
     "status": "complete",
@@ -3081,5 +3084,29 @@
     "reference_MIDI_sources": 0,
     "reference_MIDI_destinations": 0,
     "future_pilot_runtime_still_UNBOUND": true
+  },
+  "chorder_current_value_r2_failed": {
+    "at": "2026-11-13T11:39:37.963399+00:00",
+    "status": "failed_cleaned_up",
+    "job_id": "cb7918cf-4d56-4e50-bd79-124b76ce3a71",
+    "actual_elapsed_seconds": 122.467,
+    "raw_tool_requests": 17,
+    "parent_verified_requests": 16,
+    "Main_and_Mojito9_volume_preparation_writes": 2,
+    "plugin_parameter_writes": 0,
+    "state_port_Save_transport_writes": 0,
+    "positive_isolation_checkpoint_reached": false,
+    "accepted_cases": 0,
+    "failure": "NoteFX inspection requires unique target instrument track selection",
+    "last_raw_outcome": "not_applied",
+    "last_raw_error": {
+      "code": "host_rejected",
+      "message": "select the unique target instrument track first"
+    },
+    "app_closed_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "result_sha256": "8de6d32740fbc80b8df1d05d2854ef9159de5c7b91ab63f764cc711e73fd6840",
+    "journal_sha256": "a386d5974449eb601834e71b4520bb18ff69ec052e8cd152ed46102374935b2f"
   }
 }
