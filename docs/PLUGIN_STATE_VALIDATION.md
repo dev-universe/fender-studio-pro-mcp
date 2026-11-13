@@ -50,9 +50,7 @@ and Mixverb each stopped at this strict restoration gate and count as zero accep
 Voice FX indices0and1 switched De-Tuner to Transformer and changed5records to6.
 The old verifier emits an empty changed-value list on schema mismatch; its
 no_state_change status is misleading. The fixed-provider gate does not accept
-this transition. A new schema-aware R2 unit now accepts both fixed indices with complete changed6-record pairs and restored original5-record pairs; the old unit66 zero acceptance remains unchanged. Unit68 added four ordinary classes; its Open AIR singleton showed no observable
-value or schema change. It restored and released but counts as zero accepted
-cases. The unrun ordinary tail is exhausted.
+this transition. A new schema-aware R2 unit now accepts both fixed indices with complete changed6-record pairs and restored original5-record pairs; the old unit66 zero acceptance remains unchanged. Unit68 added four ordinary classes; its Open AIR singleton showed no writable or schema change, while16 readonly geometry/tap rows differed. It loaded/released the original capsule but did not restore the complete94-row current profile; accepted cases stay0. A later sentinel did reset mix5000 to original2000.0000298023224, but its generic failure text concealed the16-readonly mismatch. See `evidence/2026-11-13-openair-correction.json`. The unrun ordinary tail is exhausted.
 See the [November13 checkpoint evidence](evidence/2026-11-13-preset-and-hardware.json)
 and [hardware guide](HARDWARE.md) for the distinct accepted scopes.
 

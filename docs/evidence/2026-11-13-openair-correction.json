@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "accepted_OpenAIR_cases_remain": 0,
+  "historical_failure_results_preserved": true,
+  "incorrect_claim": "The sentinel mix seed stayed5000 after index0 recall",
+  "corrected_observation": "The first complete post-apply94 read shows mix restored to original2000.0000298023224; the strict full94 gate rejected16 changed readonly records",
+  "original_mix_bits": "409F400007D00000",
+  "seed_mix_bits": "40B3880000000000",
+  "after_apply_mix_bits": "409F400007D00000",
+  "readonly_changes": 16,
+  "writable_differences_from_original_after_apply": 0,
+  "all94_nonvalue_metadata_equal": true,
+  "post_apply_full_provider_observations": 1,
+  "second_post_apply_observation_not_dispatched": true,
+  "new_actual_requests": 0,
+  "current_lock_value_observed": false,
+  "source_recon_report_sha256": "2780592d88ace5c1f5fd559e659c49559dda4b67d7cbdc09d695604cfa4e7c81",
+  "source_recon_freeze_sha256": "6d665204e7ecf82911eebdc2adb63c57db2d14a6aaa345eaef3e20c11500b31c",
+  "independent_review": {
+    "verdict": "PASS_FACTUAL_CORRECTION",
+    "report_sha256": "a7a076ca0145eb1e010475ceb23912ed2a7bc348b5a77fcbbb492e2e652c68d1",
+    "evidence_sha256": "f33d9c4caf6a3fb206c77969efff9c910cd50577281c2e4ebc94c3c2506b7710",
+    "freeze_sha256": "2a57fbeaf8fd1ef1c1e013e1f65ad29482e3e44fa2f7126d60282936fec1afe4"
+  }
+}
