@@ -17,8 +17,8 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Chorder 정적 함수2개:550.480초,REA6.9/Ghidra12.1.4,타깃실행·DAW0/모듈불변/정상0종료. 값0은누락기본값일수있어해제성공으로추정하지않는다.",
-  "last_completed_unit_learning_setters": 64,
+  "last_completed_unit": "Chorder 알림 식별자16바이트/함수1개:164.003초,공개ISubject일치·8바이트조정함수확인,원본불변·정상0종료·DAW0. 실제눌림/해제미확정으로조사보류후Tuner고정프리셋1건을준비한다.",
+  "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
     "impact_current_exposed_names": 4262,
@@ -311,38 +311,37 @@
     "external_stereo_public_check_only_units": 1
   },
   "next_units_in_order": [
-    "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7·Spectrum R4·Float1 R2·진단24요청은 재실행하지 않는다. 원래 실패와 별도 검증 기록을 함께 보존한다.",
-    "Float2~8 실제247.935초·187개·14쓰기·전체150개29묶음/87페이지의 독립 원장 대조PASS를 완료했다. 고정 현재값7건만 인정하고 strict_name_coverage_increment0을 유지한다. Float1 포함8개는 반복하지 않는다. 첫 UI경로 오류375.153초·DAW0 실패는 보존한다.",
-    "External Normal39 실제26개·106.533초와 독립 감사PASS 완료. 반복하지 않는다. 최근성공종료문맥은Multi control32~63이며 각 runtime사본을 보존한다. 공개 checkOnly의 ABI/fake는검토됐고 실제invoker한정구현을준비한다. 선택·숫자포트값·None복원은미확인이다.",
-    "Multi150개 현재값 변경·읽기·복원과8개 실제 감사 및 이름delta 독립 검토가 모두 완료됐다. 전체6610/7112·잔여502개에150개를 추가했으며 원래 pilot strict_increment0와 실패 자료는 보존한다. 완료한150개를 재실행하지 않는다.",
-    "Native41 External Stereo Send102 checkOnly 실제26개·266.669초·독립 감사PASS 완료. 두 leaf에서 category1/query1과flags1을 확인했고 선택/실행0·전체24개4회보존이다. 완료수집기는 반복하지 않는다. 다음 External 선택은 public global-command-filter 경계를 지키는 별도 구현·숫자포트/None복원 증명이 필요하다.",
-    "Chorder 기존자료와 새정적함수11a08/31c70 두 개를 재사용한다. 값조회0은 누락기본값일수있고5/6이름·IParamObserver slot·guiInput/실제해제는미확정이다. 다음은 정확히c5454 함수112바이트와f19e0부터48바이트표만 읽는다. 기존11390/166c0/167b0/10604 대규모분석을 반복하지 않는다.",
-    "Native40 Level controller 실제23개·253.385초와 독립 감사PASS. 노드2/연결1의 한정 metadata만 확인했고 기존DSP7은 보존됐다. resethold/resetloudness 두 Toggle의 동작·효과는 남았다. useisl의 과거 직접DSP miss를 전체 controller 부재로 해석하지 않는다.",
-    "Open AIR43개 쓰기값과 새2033바이트 A/B 일치는 완료했으나 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장은 남았다. Room16개 쓰기값·새725바이트 일치와 구분한다. 일반 프리셋28/46종·56사례·18종 잔여를 유지한다.",
-    "남은 프리셋18종과 모델·동작의 의미를 계속 확인한다. 현재 고정 이름6610/7112·잔여502개/19클래스다. Multi150개 현재값 완료를 매크로 할당·MIDI·콜백·저장·그래프 완료로 확대하지 않는다.",
-    "공유 건반 이벤트와 눌림·해제 수명, 미터·Scope 명령, Ampire/Pedalboard 연결 값, Mustang/Rumble 모델, Chorder 지우기·복사·붙여넣기·미리듣기를 제한 API와 실제 관측으로 구현·검증한다.",
-    "일반 중첩 그래프 생성·연결·순서 변경·삭제와 정확한 전체 구조 복원을 구현·검증한다. 기존 고정 그래프나 Multi controller34노드36연결의 읽기를 전체 그래프 지원으로 주장하지 않는다.",
-    "물리 외부 효과·왕복 지연·CV 격리·실제 건반 연주는 장치 재연결과 필요한 배선 이후 별도 수행한다. 두 장치는 분리됐고 과거 USB 연결만으로 물리 왕복을 검증하지 않는다.",
-    "각 실제 단위가 끝날 때 실제 시간·체크리스트·완료와 잔여 수·전체 예상 잔여 범위와 변경 근거를 한국어로 보고한다. 내부 지시는 한국어 또는 영어만 쓴다. PR4 Draft와 GitHub 버전 관리를 유지한다."
+    "현재다음고정단위는Tuner index0/415 Hz Baroque 프리셋1건이다. 전체DSP13·catalog5의127요청수집기를UNBOUND로준비하며현재Native41·최신External실제26종료문맥에서새Root binding후에만실행한다. Main준비1회·프리셋적용1회·state복원1회·A/B새캡처외seed/repair/Save/재생0이다. 실패/nochange/읽기전용변화면재시도하지않는다. 1건만으로클래스완료를자동증가하지않는다.",
+    "완료한Multi150개·3752요청·300setter·8개감사·이름150개delta는재실행하지않는다. 현재6610/7112·잔여502개다. Native40Level23과Native41External26·독립감사도완료됐으며선택/실행권한증거가아니다.",
+    "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
+    "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
+    "일반프리셋은28/46종·56사례·18종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
+    "공유건반이벤트눌림·해제수명, Ampire/Pedalboard연결값, Mustang/Rumble모델, Chorder지우기·복사·붙여넣기·미리듣기와남은프리셋을제한API/실제관측으로진행한다. 새장애와원래미완료범위를구분한다.",
+    "일반중첩그래프생성·연결·순서변경·삭제·정확한전체구조복원을구현·검증한다. 고정그래프읽기를전체지원으로승격하지않는다.",
+    "External선택은공개global-command-filter경계와숫자포트/None복원증명이필요하다. 실제checkOnly26은반복하지않는다. 물리효과·왕복지연·CV·실제건반은장치재연결/배선이필요하다. 현재두장치는분리됐다.",
+    "완료한Chorder128역할·selector240·Vocal·R7저장339·Native37메뉴·Open AIR R7·SpectrumR4·Multi실기는재실행하지않고원래실패와별도검증을보존한다. 현재설치는Native41/c733ce5/MCP46이다.",
+    "단위완료마다실제시간·체크리스트·완료/잔여·현재고정단위의남은시간을한국어로보고한다. 전체조사종료시각은근거가없어미정이며옛6~20시간추정을재사용하지않는다. 내부지시는한국어/영어만쓴다. PR4Draft·GitHub버전관리를유지한다."
   ],
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
   "last_measurement": "6610/7112 fixed current-value names,502 remaining;28/46 preset classes,56 cases,18 remaining;Multi150/150;Native40Level23 and Native41External query26 audited;selection0.",
-  "binary_source_commit": "ff866cb",
+  "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Multi controls000..031 actual active; first12 auditedPASS",
-    "DAW_live_unit_running": true,
-    "job_id": "3bb2c1d9-cb0f-41bf-8741-81361ac88cf1",
-    "fixed_batch_id": "controls-000-031",
-    "current_product_source_commit": "ff866cb",
-    "native_unit": 39,
+    "unit": "Tuner fixed index0 preset collector preparation; Chorder static research parked",
+    "DAW_live_unit_running": false,
+    "REA_running": false,
+    "current_product_source_commit": "c733ce5",
+    "native_unit": 41,
     "main_tools": 46,
-    "current_app_closed": false,
-    "current_owner_stopped": false,
-    "completed_native39_actual_requests": 333,
-    "active_requests_excluded_from_completed_total": true
+    "current_app_closed": true,
+    "current_owner_stopped": true,
+    "latest_closed_DAW_unit": "Native41 External Stereo public checkOnly actual26",
+    "latest_closed_DAW_document": "MCP External IO Diagnostic",
+    "completed_native41_actual_requests": 26,
+    "pending_mutations": 0,
+    "offline_preparation_running": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2579,8 +2578,8 @@
     "source_freeze_sha256": "8b6bdf9ebc5051b726aa3c48bca3aa257ee74ef9c60c75d7447bc78abf17769a",
     "review_freeze_sha256": "825c4d9a3930a4cc4d112ddb9646d8db192852494e8f1bf892d5050b1aa96c01",
     "review_report_sha256": "3bfb5c789129fb419b6d571bab5717b56fc281d22f315601321812d91209d6bd",
-    "scope": "fixed StereoSend102 public retained IObject invoker flags1 only; native helper not yet registered",
-    "next": "private guarded query-only route; no selection authority",
+    "scope": "historical private helper integrated through independently reviewed Native41 registered fixed StereoSend102 query-only route",
+    "next": "public global-command-filter proof before any future selection; current route query-only",
     "native_check_only_calls": 2
   },
   "native40_runtime_actual_total_requests": 23,
@@ -2866,9 +2865,89 @@
     "evidence_bundle_sha256": "09d279d8316574326a15a45268669c80621b06ec60e8e962ede2964675133735",
     "interpretation_freeze_sha256": "e6b9135ec019e748a9b7e278b3f4f63e992a3eab0adac8a31f6e7ba106cdd70e",
     "note_release_verified": false,
-    "next": [
+    "historical_planned_followup": [
       "0xc5454 complete112bytes",
       "0xf19e0 table48bytes"
-    ]
+    ],
+    "followup_observations_completed": true
+  },
+  "chorder_guiinput_static_helper_table": {
+    "status": "complete_closed",
+    "REA": "6.9.0",
+    "Ghidra": "12.1.4",
+    "active_unit_start_UTC": "2026-11-13T09:45:21.605005+00:00",
+    "closed_UTC": "2026-11-13T09:47:09.051615+00:00",
+    "active_unit_elapsed_seconds": 107.447,
+    "worker_lifetime_seconds": 402.794,
+    "initial_idle_before_open_seconds": 295.347,
+    "observations": [
+      {
+        "address": "0xc5454",
+        "complete_function_bytes": 112
+      },
+      {
+        "address": "0xf19e0",
+        "table_bytes": 48
+      }
+    ],
+    "target_unchanged": true,
+    "target_execution_calls": 0,
+    "DAW_calls": 0,
+    "worker_exit_code": 0,
+    "worker_and_node_absent": true,
+    "bundle_bytes": 91757,
+    "bundle_sha256": "44a4772736800d57946642144bd6d65ca8960aaf0167b251201702f4c1dd2c4d",
+    "note_release_verified": false,
+    "current_value_names_added": 0,
+    "interpretation_pending": false,
+    "interpretation_report_sha256": "07bfa72bcfc648297c2e45e5c6b423121d7377445e8d29f31945feec03585af2"
+  },
+  "chorder_guiinput_static_notification": {
+    "status": "complete_closed",
+    "REA": "6.9.0",
+    "Ghidra": "12.1.4",
+    "unit_start_UTC": "2026-11-13T09:50:25.161985+00:00",
+    "closed_UTC": "2026-11-13T09:53:09.165447+00:00",
+    "unit_elapsed_seconds": 164.003,
+    "from_open_command_seconds": 155.415,
+    "observed_IID_matches_public_ISubject": true,
+    "observed_IID": "defb56d5-495e-4f17-9d52-fad48b2fc871",
+    "notification_entry_is_8byte_this_adjustment_thunk": true,
+    "thunk_adjustment": -32,
+    "thunk_destination": "0x11d10",
+    "destination_not_newly_analyzed": true,
+    "target_unchanged": true,
+    "target_execution_calls": 0,
+    "DAW_calls": 0,
+    "worker_exit_code": 0,
+    "worker_and_node_absent": true,
+    "bundle_sha256": "d281a647e9d9686b617363bedec26dda233b386e938745e5af007aa943a89ec6",
+    "bundle_bytes": 19524,
+    "guiInput_mapping_verified": false,
+    "note_release_verified": false,
+    "current_value_names_added": 0,
+    "research_parked_for_finite_preset_unit": true,
+    "next_unresolved_boundary": "notification thunk destination/body and canonical guiInput registration/held-release contract; no immediate analysis queued"
+  },
+  "tuner_preset_next": {
+    "status": "private_collector_preparation_UNBOUND",
+    "fixed_index": 0,
+    "fixed_name": "415 Hz Baroque",
+    "catalog_count": 5,
+    "DSP_count": 13,
+    "estimated_tool_requests": 127,
+    "Main_preparation": 1,
+    "preset_apply": 1,
+    "state_restore": 1,
+    "fresh_capture": 2,
+    "direct_parameter_seed_or_repair": 0,
+    "Save_or_transport": 0,
+    "actual_calls": 0,
+    "automatic_class_increment": false,
+    "finite_unit_minutes_estimate": [
+      20,
+      35
+    ],
+    "whole_program_ETA": null
   }
 }
