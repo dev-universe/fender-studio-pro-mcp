@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Input Filter82..89 fixed current values and eight names accepted;659 requests/16 setters;whole388 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
+  "last_completed_unit": "Chorder107..114 fixed current values and eight names accepted;915 requests/16 setters;whole908/model128 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -445,9 +445,9 @@
   },
   "next_units_in_order": [
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
-    "완료한 Multi150개·3752요청·300setter·8개감사와 이름150개 delta는 반복하지 않는다. 현재6805/7112·잔여307개다. Native40 Level23·Native41 External checkOnly26은 조회 완료이며 선택/실행 근거가 아니다.",
+    "완료한 Multi150개·3752요청·300setter·8개감사와 이름150개 delta는 반복하지 않는다. 현재6813/7112·잔여299개다. Native40 Level23·Native41 External checkOnly26은 조회 완료이며 선택/실행 근거가 아니다.",
     "Chorder 정적 연결함수/표와후속식별자16바이트/조정함수는완료했다. 공개ISubject일치와8바이트조정함수를확인했지만실제눌림·해제나canonical guiInput는미확정이다. 추가연구는당장확대하지않고Tuner고정단위뒤에우선순위를재평가한다. 기존대규모분석은반복하지않는다.",
-    "Chorder canonical1~106의106현재값/106이름과 Input Filter1~89의89현재값/89이름 완료. 현재6805/7112·잔여307, Chorder27/Input39. 최신 Input82~89는512.152초·659요청/16쓰기·48전체388/336페이지·다른385/unknown/공통원본/전체복원·Root정리와8이름 수용 완료. 현재 Chorder107~114를 최신 종료 문맥으로 새 연결·전체 사전 검사 뒤 실제 검증 중이며 최종 복원·정리·이름수용 전에는 완료로 세지 않는다. Input90~97는 오프라인 검토된 UNBOUND 후속 후보이다. 128은 별도 scalar 경계이며 후보와 독립 부분/전체131 모의검사 근거는 준비됐고 Root 최종 소스·모의근거 및1~127번 전체 선행 현재값·이름 근거 확인이 남는다. 일반 MIDI/모델대응으로 해석하거나 완료/실패를 반복하지 않는다.",
+    "Chorder canonical1~114의114현재값/114이름과 Input Filter1~89의89현재값/89이름 완료. 현재6813/7112·잔여299, Chorder19/Input39. 최신 Chorder107~114는926.383초·915요청/16쓰기·48전체908/48모델128·다른905/unknown/공통원본/전체복원·Root정리와8이름 수용 완료. 다음 준비된 Input Filter90~97 후보를 최신 종료 문맥으로 새 연결하고 전체 사전 검사 뒤 실행한다. Chorder115~122는 오프라인 검토된 UNBOUND 후속 후보이며 Chorder123~127는5사례 후보 준비/Root 검토 대기다. 128은 별도 scalar 경계이며 후보와 독립 부분/전체131 모의검사 및 Root 모의근거 검토는 완료됐고1~127번 전체 선행 현재값·이름 근거와 새로운 실제 검증이 남는다. 일반 MIDI/모델대응으로 해석하거나 완료/실패를 반복하지 않는다.",
     "Spectrum index1/index2의서로다른고정설정두사례가Root별도클래스검토로수용됐다.30/46종·60사례·16종잔여이며Spectrum단독2는추가로늘리지않는다. 원래collector class0·실패는보존한다. PRESET-SPECTRUM완료로고정43목록중1개완료/42개잔여다. 첫사례나두번째실기를반복하지않는다. factory원산지/모든32항목/audio/지속저장은미검증이다.",
     "Native40Level의resethold/resetloudness 두Toggle 동작·효과와Scope명령을남은범위로유지한다. 제한controller2노드/1연결metadata를전체값접근으로해석하지않는다.",
     "일반프리셋은30/46종·60사례·16종잔여다. Room16개쓰기값/새725바이트와Open AIR43개/새2033바이트의완료증거를반복하지않는다. 원래읽기전용표시값·전체구조/리소스/오디오/저장은별도잔여다.",
@@ -461,10 +461,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-13.md",
-  "last_measurement": "6805/7112 names,307 remaining;30/46 preset classes,60 cases,16 remaining;Native41 raw20449=accepted19993+failed456.",
+  "last_measurement": "6813/7112 names,299 remaining;30/46 preset classes,60 cases,16 remaining;Native41 raw21364=accepted20908+failed456.",
   "binary_source_commit": "c733ce5",
   "current_execution": {
-    "unit": "Chorder107..114 outside-window actual running after Input Filter89 name admission",
+    "unit": "Input Filter90..97 fixed current-value actual running after Chorder114 name admission",
     "DAW_live_unit_running": true,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -473,24 +473,24 @@
     "main_tools": 46,
     "current_app_closed": false,
     "current_owner_stopped": false,
-    "latest_closed_DAW_unit": "Input Filter canonical82..89 fixed current values complete",
+    "latest_closed_DAW_unit": "Chorder canonical107..114 fixed current values complete",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "1da388d9-193a-4aba-9e02-afffb24576a1",
+    "latest_closed_job_id": "85acbf4d-9fa2-4515-a76c-1b922fbbd031",
     "pending_mutations": 0,
-    "completed_native41_accepted_unit_requests": 19993,
-    "native41_raw_requests_including_failed_unit": 20449,
-    "job_id": "85acbf4d-9fa2-4515-a76c-1b922fbbd031",
-    "terminal_tool_inputs": 89,
-    "raw_tool_requests": 89,
-    "current_phase": "request_verified",
-    "maximum_tool_requests": 915,
-    "current_job_id": "85acbf4d-9fa2-4515-a76c-1b922fbbd031",
+    "completed_native41_accepted_unit_requests": 20908,
+    "native41_raw_requests_including_failed_unit": 21364,
+    "job_id": "1cea0125-6910-4d78-8c81-0782b421a4cd",
+    "terminal_tool_inputs": 0,
+    "raw_tool_requests": 0,
+    "current_phase": "waiting_for_ui",
+    "maximum_tool_requests": 659,
+    "current_job_id": "1cea0125-6910-4d78-8c81-0782b421a4cd",
     "completed_subunits": [],
     "subunits_total": 8,
     "subunits_final_admission_pending": true,
-    "launcher_pid": 64479,
-    "owner_pid": 64480,
-    "current_elapsed_seconds": 193.866
+    "launcher_pid": 65613,
+    "owner_pid": 65616,
+    "current_elapsed_seconds": 4.838
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -546,8 +546,8 @@
   "last_runtime_verified_native_unit": 41,
   "last_runtime_verified_source_commit": "c733ce5",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Input Filter82..89 fixed current values and eight names accepted;659 requests/16 setters;whole388 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
-  "last_completed_live_elapsed_seconds": 512.152,
+  "last_completed_live_unit": "Chorder107..114 fixed current values and eight names accepted;915 requests/16 setters;whole908/model128 restored;Root NoSave/app and owner stopped/saved6 unchanged/MIDI0/0.",
+  "last_completed_live_elapsed_seconds": 926.383,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -1457,9 +1457,9 @@
     "independent_review_report_sha256": "d1b21234f8b787173bdc452a4aadd463f04d0389ab2d047a2f2910bdf648ffaa"
   },
   "current_fixed_name_union": {
-    "accepted_names": 6805,
+    "accepted_names": 6813,
     "inventory_names": 7112,
-    "remaining_names": 307,
+    "remaining_names": 299,
     "base128_names": 6459,
     "new_vocal_bypass_names": 1,
     "tuple_key": [
@@ -1470,14 +1470,14 @@
     "scope": "fixed_fixture_current_value",
     "global_support_percentage": false,
     "public_document": "docs/PARAMETER_NAME_UNION_CURRENT.md",
-    "public_delta_sha256": "df0e1512ab812efe4e80419cfc2c77fc3c325dcae9bee7ba33cac8b66f23b6d7",
+    "public_delta_sha256": "72cbe8ab9026a06401d41ca247d7853d17eddd7c8186f7a134d668ecf3dd9710",
     "new_multi_names": 150,
-    "previous_accepted_names": 6797,
-    "previous_public_delta_sha256": "4defc27b31be11a86e12fe935209b861fdf1df92c5df8a94104b8f5faf757292",
+    "previous_accepted_names": 6805,
+    "previous_public_delta_sha256": "df0e1512ab812efe4e80419cfc2c77fc3c325dcae9bee7ba33cac8b66f23b6d7",
     "multi150_independent_review_report_sha256": "86e2f42dc9be4fef26e2aab9a79578329f0b8a196d126ccefbf6f7fad3017470",
     "new_chorder_gui_input_names": 8,
     "chorder_gui_input60_independent_review_sha256": "688b9b452190e500a63ef36dc1ea0173b02ffae73719401f35ca1417877b1fa4",
-    "total_chorder_gui_input_names": 106,
+    "total_chorder_gui_input_names": 114,
     "chorder_gui_input1_8_independent_review_sha256": "797a9c37e057565d2029e8ce45ecbb20d5850e1be048d3012ec60113a9b80b02",
     "chorder_gui_input9_16_independent_review_sha256": "fd0ae1e76eec6739e26e05a3c3a3d65d1eb8dfe7a8db52adf64d0004af4a7ff6",
     "chorder_gui_input17_24_independent_review_sha256": "5fe65442bd8025fbe59308987655c969338f1e0ea3ee258516cf7e09eec3a2f7",
@@ -1507,7 +1507,8 @@
     "chorder_gui_input91_98_independent_review_sha256": "485b86be40ae549b1e9f7479bd4409d15464d263c491e5cf8631794df9e6b75c",
     "inputfilter_gui_input74_81_independent_review_sha256": "60d4ac44ab153dfabbd664b79714556e9d867fbb5e4c22d2fe57cb984f3eaf1a",
     "chorder_gui_input99_106_independent_review_sha256": "407155fe6fcb709c372c411c7be8ba2ad6ab70a8276017ba36cf5f6ef8568749",
-    "inputfilter_gui_input82_89_independent_review_sha256": "df251928ef2c226b63bbe46d93c637eaad44c66f9420c9bee687d612256dce85"
+    "inputfilter_gui_input82_89_independent_review_sha256": "df251928ef2c226b63bbe46d93c637eaad44c66f9420c9bee687d612256dce85",
+    "chorder_gui_input107_114_independent_review_sha256": "88b559669cffea53d5beb1d6b4f003b04baf0a50d44bd3f2fd7572783baf3b7b"
   },
   "vocal_bypass_value_actual": {
     "schema": 1,
@@ -2591,7 +2592,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-13T21:18:26.394793+00:00",
+  "latest_root_observation_at": "2026-11-13T21:31:41.222730+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -2991,7 +2992,7 @@
     "installation_DAW_tool_calls": 0,
     "preinstall_DAW_tool_calls": 0
   },
-  "native41_runtime_actual_total_requests": 20449,
+  "native41_runtime_actual_total_requests": 21364,
   "external_checkonly_actual": {
     "status": "independently_verified_fixed_stereo_send_check_only_observation",
     "tool_requests": 26,
@@ -3145,7 +3146,7 @@
     "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
     "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
   },
-  "native41_accepted_completed_unit_requests": 19993,
+  "native41_accepted_completed_unit_requests": 20908,
   "native41_failed_unit_raw_requests": 456,
   "tuner_preset_r2_actual": {
     "at": "2026-11-13T10:28:12.394484+00:00",
@@ -10413,7 +10414,7 @@
     "scope": "eight fixed canonical91..98 outside-window current values only; not general MIDI/model mapping, events, noteoff, audio or persistence"
   },
   "prepared_future_chorder107_114": {
-    "status": "ROOT_BOUND_FULL_PREFLIGHT_PASSED_ACTUAL_RUNNING",
+    "status": "CLOSED_ACTUAL_AND_EIGHT_NAMES_ADMITTED",
     "at": "2026-11-13T20:43:46.530930+00:00",
     "candidate_freeze_sha256": "7ff55798701090427649b56d1eaf168ec16cb923268c8852e6081a2ccf151a6a",
     "source_pins_verified": 43,
@@ -10422,7 +10423,7 @@
     "Root_exact_runtime_source_reconstruction": true,
     "other_guard_ASTs_unchanged": true,
     "focused3checks_seconds": 9.507,
-    "runtime": "RUNNING",
+    "runtime": "CLOSED",
     "requires_Input74_81_closed_admitted_thenChorder99_106_closed_admitted_thenInput82_89closed": true,
     "helper": ".local/next-state/chorder-guiinput107-114-outside-window/r1",
     "root_binding": ".local/next-state/native41-normal/chorder-guiinput107-114-outside-window-r1-root-binding",
@@ -10804,8 +10805,12 @@
     "candidate_source_pins": 45,
     "candidate_data_pins": 186,
     "execution_ready": false,
-    "full131_lifecycle_cleanup_mock_pending": true,
-    "all127_predecessor_proof_pending": true
+    "full131_lifecycle_cleanup_mock_pending": false,
+    "all127_predecessor_proof_pending": true,
+    "full131_lifecycle_check_freeze_sha256": "fbe54bd0393233960b7b011422337f01cea9a2240eabfad38c90ff970beca317",
+    "root_lifecycle_evidence_review_sha256": "a3cf6633973664a55e5c54687d8254f1b22a20f1fafc07a3b6ad2ca802bf0b2d",
+    "full131_synthetic_check_seconds": 9.688,
+    "known65_and_unknown57_mock_cases_reviewed": true
   },
   "chorder_gui_input99_106_name_coverage_admission": {
     "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
@@ -11410,5 +11415,254 @@
     "product_source_commit": "c733ce5",
     "native_unit": 41,
     "scope": "eight fixed Input Filter canonical82..89 current values only; not general MIDI/pitch mapping, events, noteoff, audio or persistence"
+  },
+  "prepared_future_chorder115_122": {
+    "status": "PASS",
+    "at": "2026-11-13T21:20:24.921126+00:00",
+    "candidate_freeze_sha256": "48ca9a3c8386b24dd324cd854e3a14e819ceb51464ba667ae09e65381bf7eaae",
+    "source_pins_verified": 45,
+    "data_pins_verified": 186,
+    "prior_sources_unchanged": 41,
+    "Root_exact_runtime_source_reconstruction": true,
+    "other_guard_ASTs_unchanged": true,
+    "focused3checks_seconds": 9.02,
+    "runtime": "UNBOUND",
+    "requires_Chorder107_114_closed_admitted_thenInput90_97closed": true,
+    "helper": ".local/next-state/chorder-guiinput115-122-outside-window/r1",
+    "root_binding": ".local/next-state/native41-normal/chorder-guiinput115-122-outside-window-r1-root-binding",
+    "actual_calls_at_preparation": 0
+  },
+  "chorder_gui_input107_114_name_coverage_admission": {
+    "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+    "tuple_key": [
+      "class_uid",
+      "source",
+      "canonical_name"
+    ],
+    "canonical_tuples": [
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch107.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch108.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch109.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch110.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch111.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch112.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch113.guiInput"
+      ],
+      [
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        "dsp",
+        "chorder.pitch114.guiInput"
+      ]
+    ],
+    "previous_accepted": 6805,
+    "new_disjoint": 8,
+    "fixed_inventory": 7112,
+    "Chorder_remaining": 19,
+    "InputFilter_remaining_unchanged": 39,
+    "remaining_classes": 19,
+    "original_collector_strict_increment_unchanged": 0,
+    "backlog42_unchanged": true,
+    "preset30_of46_unchanged": true,
+    "old_failed_batch07_acceptance_unchanged": 0,
+    "actual_new_calls": 0,
+    "MIDI_verified": false,
+    "model_mapping_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "whole_Chorder_complete": false,
+    "accepted_after": 6813,
+    "remaining_after": 299,
+    "proposal_freeze_sha256": "8e5be044a4e29f27dcf5fa2495f3794df43f2f59a22f1dd172aebb5a36ce290e",
+    "root_review_sha256": "88b559669cffea53d5beb1d6b4f003b04baf0a50d44bd3f2fd7572783baf3b7b",
+    "accepted_union_sha256": "75054f0bc2eb3f82efc9233e730c4eb5b1bcda05c17da09a828a2e7160eaca33"
+  },
+  "chorder_guiinput107_114_outside_window_actual": {
+    "at": "2026-11-13T21:30:51.635568+00:00",
+    "status": "PASS",
+    "job_id": "85acbf4d-9fa2-4515-a76c-1b922fbbd031",
+    "actual_elapsed_seconds": 926.383,
+    "raw_tool_requests": 915,
+    "parent_verified_requests": 915,
+    "mixer_writes": 2,
+    "track_selection_attempts": 1,
+    "plugin_parameter_writes": 16,
+    "state_actions": 0,
+    "port_Save_transport_writes": 0,
+    "accepted_fixed_current_value_cases": 8,
+    "strict_name_increment": 0,
+    "provider_records": 908,
+    "provider_snapshots": 48,
+    "provider_pages": 384,
+    "stored_model_inputs": 128,
+    "stored_model_snapshots": 48,
+    "stored_model_pages": 384,
+    "exact_full_restoration": true,
+    "model_unchanged": true,
+    "all_units_session_original_and_model_same": true,
+    "other905_peers_per_case_exact": true,
+    "all_nonvalue_unknown_exact": true,
+    "units": [
+      {
+        "canonical_pitch": 107,
+        "name": "chorder.pitch107.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 106.242,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 108,
+        "name": "chorder.pitch108.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 80.657,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 109,
+        "name": "chorder.pitch109.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.174,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 110,
+        "name": "chorder.pitch110.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.302,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 111,
+        "name": "chorder.pitch111.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.912,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 112,
+        "name": "chorder.pitch112.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.516,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 113,
+        "name": "chorder.pitch113.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.283,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      },
+      {
+        "canonical_pitch": 114,
+        "name": "chorder.pitch114.guiInput",
+        "setters": 2,
+        "approx_elapsed_seconds": 81.454,
+        "whole908_restored": true,
+        "whole128_unchanged": true,
+        "input_live_positive": 1,
+        "own_output_live_positive": 1,
+        "other905_exact": true
+      }
+    ],
+    "app_closed_observed": true,
+    "NoSave_observed": true,
+    "owner_processes_absent": true,
+    "saved6_same_hash": true,
+    "post_owner_midi_sources": 0,
+    "post_owner_midi_destinations": 0,
+    "positive_predicted_output_canonical_names": {
+      "107": [
+        107
+      ],
+      "108": [
+        108
+      ],
+      "109": [
+        109
+      ],
+      "110": [
+        110
+      ],
+      "111": [
+        111
+      ],
+      "112": [
+        112
+      ],
+      "113": [
+        113
+      ],
+      "114": [
+        114
+      ]
+    },
+    "two_readonly_predictions_observed_exact": true,
+    "model_mapping_verified": false,
+    "MIDI_verified": false,
+    "noteoff_verified": false,
+    "audio_verified": false,
+    "result_sha256": "7b42315083207f66f0a8bf9f1751098224716f52222b75eb7a98f1078dbba14e",
+    "journal_sha256": "f8dce89ad78ebde5c1abd57e89228504eca55949df033410b1d6f6a3cabb48a3",
+    "proof_sha256": "88e454b5194d12eda6a8b787ce9309ad5badfcd795f3758c8cf6a5cd457bea2a",
+    "journal_bytes": 91915613,
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+    "product_source_commit": "c733ce5",
+    "native_unit": 41,
+    "scope": "eight fixed canonical107..114 outside-window current values only; not general MIDI/model mapping, events, noteoff, audio or persistence"
   }
 }
