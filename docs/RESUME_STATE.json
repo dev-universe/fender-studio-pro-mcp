@@ -1136,7 +1136,12 @@
     "persistence_r2": "review_failed_runtime_metadata_admission_no_actual_calls",
     "persistence_r3": "metadata_pass_execution_blocked",
     "vocal_receiver_r3": "Root_binding_preflight_failed_before_owner_zero_requests_preserved",
-    "persistence_r4": "sealed_pending_independent_review"
+    "persistence_r4": "review_failed_Root_flag_type_admission",
+    "vocal_receiver_r3_reissue1": "known_zero_DAW_bootstrap_schema_failure_recovered_source_diagnosis",
+    "vocal_receiver_r4": "source_schema_and_bootstrap_fix_in_progress",
+    "vocal_bypass_value_r2": "prerequisite_revision_pending",
+    "persistence_r5": "sealed_pending_independent_review",
+    "name_union_128_delta": "proposal6459_pending_independent_review"
   },
   "chorder_selector_boundary_actual": {
     "schema": 1,
@@ -1175,5 +1180,12 @@
   "rough_persistence_remaining_minutes": [
     15,
     40
-  ]
+  ],
+  "vocal_bootstrap_failure": {
+    "daw_tool_calls": 0,
+    "metadata_initialize_and_tools_list_executed": true,
+    "owner_ready_emitted": false,
+    "recovery": "independent source trace and log prove schema rejection before any tools/call; empty app quit observed; only failed coordinator terminated; oldrun preserved",
+    "independent_diagnosis_freeze_sha256": "97e50cacaa89d6453b01ebc3b4e89aedf4522630f42b157e422e0e113a143dad"
+  }
 }
