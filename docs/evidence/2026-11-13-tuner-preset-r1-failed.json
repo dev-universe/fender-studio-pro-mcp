@@ -1,0 +1,22 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 179.457,
+  "raw_tool_requests": 5,
+  "all_raw_receipts_observed": true,
+  "parent_verified_requests": 4,
+  "fixed_preset_setting_cases": 0,
+  "preset_apply_state_restore_and_capture": 0,
+  "Main_plugin_port_Save_transport_writes": 0,
+  "failure_boundary": "collector initial historical fixture comparison",
+  "changed_fixture_categories": [
+    "track_selection",
+    "other_instrument_monitor_and_record_arm"
+  ],
+  "same_failed_attempt_replayed": false,
+  "R2_preparation": true,
+  "Root_appfalse_owners0_saved6": true,
+  "result_sha256": "47d7deb0f4f083406aab6106c6cb224cf9d2c3de43806bc8230b58c137e9db62",
+  "journal_sha256": "9d0878ebf05cf178ee73babb9f28940dc0d861211927978bc40a7f5f917ed0d1",
+  "collector_source_freeze_sha256": "b39b56076dd2a7baffcbb409363e07ce42ee9aa599e16ed5973b2bd08a55eb65",
+  "collector_review_freeze_sha256": "09683ef7e39e9de0ab59d84b316d6c49b52714ed4fbc80ba6ba77359c1cfeb85"
+}
