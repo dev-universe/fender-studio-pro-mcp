@@ -1,0 +1,23 @@
+{
+  "판정": "전용 getController와 제한 메타데이터는 실제 성공, 수집기 승인0 보존",
+  "대상": "Multi Instrument",
+  "정상네이티브": 38,
+  "실제요청": 16,
+  "소비": 15,
+  "전용_getController": true,
+  "관측노드": 34,
+  "관측연결": 36,
+  "관측macro노드": 20,
+  "전체type": 64,
+  "complete": false,
+  "mutation_capability": false,
+  "중단원인": "다중 공유 type 예산을 단일 fresh-root 조건으로 검사한 수집기 오류",
+  "뒤_필수요청_미실행": 13,
+  "전체150_전후검증": false,
+  "쓰기_오디오_저장_이름범위_증가": 0,
+  "NoSave_정상실패정리_저장6개보존": true,
+  "schema": 1,
+  "independent_report_sha256": "ffe6b0eb075523d78cb9036461101bae31b0694b598bb1ce542515afd480a20b",
+  "independent_freeze_sha256": "288ce9428434894d27f27dd3de8a0dab8217bcadee1e6648ea5867c01722275e",
+  "schema_diagnosis_sha256": "ba9fde4e666ee0873567ddf91eb527cc03dce4ce4a31581e2b6cf70771e70d5a"
+}

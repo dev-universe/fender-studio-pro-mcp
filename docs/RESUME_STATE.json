@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": false,
   "saved_owned_songs_unchanged": false,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native38 정상 빌드·설치: 관련29개 테스트·206개 소스·설치4개 파일 대조 통과. Multi R4 첫 시도는 대상 트랙 선택 전 거부12요청으로 정리; 컨트롤러 제공 여부 미확인.",
+  "last_completed_unit": "Multi R7 읽기 검증29요청/165.019초/독립전수감사 통과:150개전후일치·34노드36연결·세부6개,Main준비1 외쓰기0,NoSave·정상소유자종료·6개저장본보존.",
   "last_completed_unit_learning_setters": 8,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -307,7 +307,7 @@
   },
   "next_units_in_order": [
     "완료한 Chorder128역할·선택기240요청·Vocal·R7저장339요청·Native37 Stereo와Mono 메뉴·Open AIR R7의170요청은 재실행하지 않는다. 원래 실패 결과들과 별도 독립 검증 기록을 모두 보존한다.",
-    "Native38 독립 검토·정상 빌드·설치·관련29개 테스트는 완료했다. Multi R4의 선택 전 거부12요청과 R5의 graph 거부16요청은 정리·독립 감사 완료로 보존한다. R5에서150개 첫 읽기와 alias provider QI 가능 플래그는 실제 관측했다. 전용 getController 경로는 아직 미실행이다. 기존 insert 전용 graph 요청1개만 제외한 R6를 검토·새 연결 후24/29개 유한 읽기로 이어간다. 전체150개 전후·세부6개·문서/4필드인스턴스/소유자/두 UI 확인을 유지한다. Multi 중첩 그래프는 별도 미확인 작업이며 모델 변경 권한을 확대하지 않는다.",
+    "Native38 정상 설치와 Multi R7 실제29개·150개 전후/34노드36연결/세부6개 및 독립 감사는 완료했다. 이 읽기 단위는 반복하지 않는다. R4~R6 실패 승인0을 보존한다. 다음 즉시 단위는 Spectrum R2의 알려진 metadata-only 종료 수정 검토와117/127개 유한 프리셋 검증이다. R1은 실제0이며 오프라인 검토 P2로 보류됐다. 기존65트랙·MCP Keys 이벤트3개를 보존한다. 그 뒤 Multi float-1의 기존DSP guarded setter로 raw2500/norm0.25 현재값 변경·원본0복원에 필요한 의미/권한부터 확인하고, MacroControlSet·MIDI할당·모델·중첩그래프 경로를 계속한다. 현재 Multi 엄격 setter accepted0/잔여150이며 읽기 성공을 쓰기 범위에 더하지 않는다.",
     "External Stereo와Mono 메뉴 읽기는 실제35요청씩 완료했다. 소프트웨어 포트 선택은 아직 미구현이다. 공개 SDK selectItem ABI 독립 검토와 현재 바이너리에 대한 한정 REA/Ghidra 분석을 활용해 실제 메뉴 데이터·파라미터·소유권 의미를 확인한 뒤 구현한다. 행 이름이나 숫자를 포트 값으로 추정하지 않는다.",
     "Open AIR R7는43개 쓰기 가능 값 복원과 새2033바이트 A/B 직렬화 일치1건을 완료했다. 읽기 전용16개의 원래 표시값·전체94개 복원·리소스·오디오·저장 검증은 남았다. 일반 프리셋 완료 수는28/46종·56사례·18종 잔여를 유지한다. Room 별도16개 쓰기값·새 상태 캡처 일치와 구분한다.",
     "남은 프리셋18종과 모델·프리셋 전체 열거를 계속한다. 완료 종이나 과거 실패를 같은 조건으로 재실행하지 않고 미확인 의미와 정확한 복원 조건을 먼저 해결한다.",
@@ -1360,11 +1360,11 @@
     }
   },
   "native38_multi_controller_candidate": {
-    "status": "landed_normal_built_and_installed; actual interface availability not yet observed",
+    "status": "normal38_actual_getController_and_bounded_receiver_observation_verified",
     "candidate_freeze_sha256": "d4a73ec92dbebc6e331e4b0d9be7f74714de8e1666f4dafa290e1c4066e8729a",
     "review_report_sha256": "07a99ea6e70b2bf86e07193224c2a48ea8a8f77d4b14f3f35aaeb4dd120f3d09",
     "review_freeze_sha256": "45c10e0eb6ef634f7c80c91661f0e8215c7ec9439cb0412acc24a33f46945778",
-    "actual_Multi_provider_QI_verified": false,
+    "actual_Multi_provider_QI_verified": true,
     "dependency": "complete actual Native37 menu pilot before Native38 product landing"
   },
   "chorder_persistence_r6_failure": {
@@ -1589,7 +1589,8 @@
     "Stereo": "external37-menu-live-pilot/r3 actual35 complete",
     "Mono": "external37-mono-menu-live-pilot/r4 actual35 complete",
     "OpenAIR": "nov13-openair-fresh-serialization/r7 actual170 complete; independent audit passed",
-    "Multi": "nov13-multi-receiver-collector/r5 actual16 known failure; r6 removes unproved insert-family graph request"
+    "Multi": "nov13-multi-receiver-collector/r7 actual29 complete; independent audit passed; do not replay",
+    "Spectrum": "nov13-spectrum-meter-preset-pilot/r1 offline review found known-bootstrap cleanup P2; separate r2 fix pending"
   },
   "normal_native37_source_commit": "0d7d293829d6a10050ba4def182e82046aa7558c",
   "openair_r6_actual_partial": {
@@ -1717,5 +1718,89 @@
       "graph_failure_moment_parent_verified": false
     },
     "capability_addendum_report_sha256": "fe02e7a9123be7da0fbf3539c4fbe9d5b7a10585e49fddf762eb1f72072491b4"
+  },
+  "multi_r6_actual": {
+    "raw_requests": 16,
+    "parent_consumed_requests": 15,
+    "elapsed_seconds": 260.599,
+    "status": "failed_cleaned_up",
+    "original_accepted_units": 0,
+    "native_getController_succeeded": true,
+    "observed_nodes": 34,
+    "observed_edges": 36,
+    "observed_types": 64,
+    "observed_methods": 49,
+    "observed_properties": 51,
+    "full150_DSP_observations": 1,
+    "final13_not_dispatched": true,
+    "native_complete": false,
+    "native_diagnostics": [
+      "ancestor_limit"
+    ],
+    "later20_reflection_issue": "type_limit",
+    "mutation_capability": false,
+    "helper_failure": "shared64 type budget was validated as separate fresh-root inspections",
+    "same_four_field_instance": true,
+    "plugin_writes": 0,
+    "main_preparation_writes": 1,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "saved_current_six_unchanged": true,
+    "independent_report_sha256": "ffe6b0eb075523d78cb9036461101bae31b0694b598bb1ce542515afd480a20b",
+    "independent_freeze_sha256": "288ce9428434894d27f27dd3de8a0dab8217bcadee1e6648ea5867c01722275e"
+  },
+  "multi_r7_actual": {
+    "actual_requests": 29,
+    "all_150_parameter_writes_verified": false,
+    "assignment_verified": false,
+    "audio_verified": false,
+    "controller_edges": 36,
+    "controller_nodes": 34,
+    "controller_report_complete": false,
+    "controller_report_limits_preserved": [
+      "ancestor_limit",
+      "type_limit"
+    ],
+    "elapsed_seconds": 165.019,
+    "global_parameter_name_coverage_increment": 0,
+    "graph_mutation_verified": false,
+    "host_version": "8.1.1 Build 113103",
+    "main_preparation_writes": 1,
+    "midi_delivery_verified": false,
+    "mutation_authority": false,
+    "native_unit": 38,
+    "no_save_closed_and_owner_stopped": true,
+    "normal_saves": 0,
+    "parameter_details_with_owner": 6,
+    "parameter_owner_metadata_reports_complete": 6,
+    "plugin": "Multi Instrument",
+    "plugin_writes": 0,
+    "prior_failed_runs_preserved": true,
+    "provider_parameters_each": 150,
+    "provider_snapshot_count": 2,
+    "provider_values_and_metadata_unchanged": true,
+    "saved_archives_preserved": 6,
+    "state_actions": 0,
+    "status": "verified_readonly_multi_receiver_observation",
+    "transport_actions": 0,
+    "schema": 1,
+    "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+    "independent_report_sha256": "ca109d6ec36849e1387d21f981ad63947ece261e9723a66f5d0d4288ac66bc1d",
+    "independent_freeze_sha256": "b7cc953f961dc33aee6f0447fa9993892bc97231492db65a58caf170401b659a",
+    "independent_evidence_sha256": "b0b0797c17b291898df28c918a9fdffd748ddd772135d08fb0757a0408ba1dac"
+  },
+  "native38_runtime_actual_total_requests": 73,
+  "native38_runtime_request_breakdown": {
+    "R4_selection_failure": 12,
+    "R5_graph_failure": 16,
+    "R6_schema_failure_with_actual_controller_read": 16,
+    "R7_readonly_complete": 29
+  },
+  "inspection_error_reporting_candidate": {
+    "status": "private_source_review_in_progress",
+    "source_freeze_sha256": "29381eecbd21583e71720cdb9909317700fbadf1affc0ae318e4b17c58a48bfa",
+    "actual_calls": 0,
+    "landed": false,
+    "keep_current38_until_bound_pilots_done": true
   }
 }
