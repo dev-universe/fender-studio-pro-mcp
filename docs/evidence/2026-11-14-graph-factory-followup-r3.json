@@ -1,0 +1,41 @@
+{
+  "status": "ROOT_BOUNDED_STATIC_FACTORY_RETRIEVAL_PASS_CLOSED",
+  "elapsed_seconds": 589.88,
+  "new_records": 9,
+  "bundle_total_records": 48,
+  "DAW_requests": 0,
+  "product_changes": 0,
+  "artifact_sha256": "c6b326d8dfac4d468f8730508abcf8687997c6cd96a977a560600fda785a2e6e",
+  "analysis_profile_digest": "11d2ec66a15afbf17c4fda7ad01c92dcd41ee88c6ea4510ff03dbc3f696f750a",
+  "constructor": "0x100d6c178",
+  "resolved_direct_callers": [
+    "0x100bc15fc",
+    "0x100c49560",
+    "0x100e4ee28"
+  ],
+  "base_allocator": "0x100bc15fc",
+  "base_allocation_bytes": 80,
+  "two_derived_allocators_bytes": 88,
+  "allocator_only_xref": "0x1021e215a",
+  "allocator_xref_is_uleb128_data_not_runtime_factory_binding": true,
+  "class_name_string": "0x1018994d3",
+  "class_name": "AudioFXGraphEditFunctions",
+  "class_name_incoming_refs_observed": 0,
+  "empty_refs_are_not_absence_proof": true,
+  "typed_owner_factory_UID_and_endpoint_transaction_ABI": "UNRESOLVED",
+  "no_native_invocation_authority": true,
+  "completed_counts_delta": 0,
+  "exported_closed_and_reset": true,
+  "bundle_sha256": "1403b49def582a0578c891e72340a27b3d56f9b01db896397d4ff5dbbd546977",
+  "snapshot_sha256": "2c3b01e5b6b9890ff40f34e123b3a8c366a68c707f060a821f5f547df897e387",
+  "schema": "fsp.static-graph-factory-followup.v1",
+  "host": "Fender Studio Pro 8.1.1 Build113103 arm64",
+  "provider": "Ghidra12.1.4",
+  "counts_delta": 0,
+  "limitations": [
+    "No typed owner factory retrieval UID resolved",
+    "No verified endpoint or transaction ABI",
+    "No graph mutation or runtime invocation authority",
+    "Empty analyzed class-string xrefs are not absence proof"
+  ]
+}
