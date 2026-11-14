@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Private-copy readiness r54 closed STARTUP_BLOCKED before Song/DAQ0. Exact microphone authorization completion pending loop grounded; existing Studio Pro mic toggle on, no permission/security change. Original same8.1.1 normal start and GUIquit r55 comparison closedDAQ0. Preserve both outcomes and fixedcounts. Private22 and mute36 remain unexecuted. Need official same-version artifact/modelmodule comparison or operator-resolved normal private readiness, never TCC reset/security bypass/manualcallback/loop patch. Meanwhile continue original-app remaining software controls, next bounded Limiter resetmin source/effect grounding. Root actual DAW serial, source176/artifact13 revalidate and fresh runtime/ownedScratch/Main0/context before any new live unit; reuse immutable completed evidence.",
+    "Implement/review finite Limiter reset_minimum_reduction action in isolated feature/limiter-minimum-reduction-reset worktree. Selected explicit fourth action after two designs and independentjudge, exactclass61B18D53-26FA-4220-8614-89944A1990EC/resetmin/tag1383288146 with existingretainedpulse, noABI. Include BridgeComponent inputfrontdoor, NativePluginControls resultadmission, mainenum/schema/native registry andfocusedtests. Rootmustreview/build/install freshNative53 onlyafterverifiedsource. Parallel finite48DAQ offlineTone->Limiter recipe: actualparameterthresholdrel, freshTonelevel0dB formatting/prep/exactrestore, oneToneOnOff andonepulse; nooldcount/neutral10000 or -36dB assumptions, exact independentquietretainednonneutral->freshneutral witness andRootclosure. DAQ0, notexecutionready. ExistingNative52 installed unchanged. Privateapp22/mute36 plans unexecuted anddeferred; official8.1.1 artifact path questionpending, no userextensionstaging becauseduplicateIDpriorityunknown. Preserveallother8queueitems/fixedcounts.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -17955,5 +17955,36 @@
     "original_app_4086_after_equal": true,
     "private_22_unexecuted": true,
     "public_evidence": "docs/evidence/2026-11-15-private-app-startup-block-native52.json"
-  }
+  },
+  "limiter_minimum_reduction_next": {
+    "status": "isolated_implementation_and_offline_recipe_in_progress",
+    "current_Root_product_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
+    "currently_installed_native_unit": 52,
+    "planned_native_unit": 53,
+    "action": "reset_minimum_reduction",
+    "exact_class_uid": "61B18D53-26FA-4220-8614-89944A1990EC",
+    "parameter": "resetmin",
+    "tag": 1383288146,
+    "effect_parameters": [],
+    "effects_verified_by_pulse": false,
+    "design_candidates": 2,
+    "independent_judge_base": "A",
+    "grounding_elapsed_seconds": 229.364,
+    "prospective_DAQ_budget": 48,
+    "actual_DAQ_count": 0,
+    "previous_unexecuted_budget": 45,
+    "budget_change_reason": "Actual thresholdrel identity/domain and default Tone -24dB require fresh level formatter, one0dB prep and exact restore; changes before allDAQ.",
+    "execution_ready": false
+  },
+  "model_user_extension_loader_grounding": {
+    "status": "NO_STAGING_WITH_CURRENT_PROOF",
+    "elapsed_seconds": 160.505,
+    "DAQ_count": 0,
+    "input_pins": 16,
+    "existing_package_id": "fender.mustangmodels.mac",
+    "duplicate_ID_resolution": "unknown",
+    "profile_app_or_security_changes": false
+  },
+  "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
+  "last_closed_runtime_unit": "Original app normal startup comparison;0DAQ89.879seconds; no plugin-control completion"
 }
