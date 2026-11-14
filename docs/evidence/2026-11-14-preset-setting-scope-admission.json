@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "status": "ROOT_SEPARATE_PRESET_SETTING_ADMISSION_FROM_IMMUTABLE_ACTUAL_EVIDENCE",
+  "at": "2026-11-14T00:41:53.779713+00:00",
+  "new_actual_calls": 0,
+  "scope": "Issued preset setting; positive writable change, all writable typed values and all provider nonvalue/unknown metadata restored, independent fresh alias IStorable bytes equal, readonly values observed with no full-current restoration claim.",
+  "required_distinct_cases": "min(2, complete nonempty issued catalog count); zero entries never pass",
+  "prior_strict_failed_ledgers_and_original_global0_preserved": true,
+  "OpenAIR": {
+    "admitted_distinct_setting_cases": 1,
+    "issued_index": 0,
+    "issued_count": 1,
+    "class_complete_for_scoped_setting": true,
+    "required_distinct_cases": 1,
+    "writable_restored": 43,
+    "metadata_records": 94,
+    "readonly_changed_observed_count": 16,
+    "full_current_restored": false,
+    "no_replay_required": true
+  },
+  "Room": {
+    "admitted_distinct_setting_cases": 1,
+    "issued_index": 0,
+    "issued_count": 73,
+    "class_complete": false,
+    "next_unique_index": 1,
+    "next_name": "BD - Inside",
+    "writable_restored": 16,
+    "metadata_records": 19,
+    "readonly_remaining_observation_names": [
+      "outdepth",
+      "outwidth",
+      "outheight"
+    ],
+    "full_current_restored": false
+  },
+  "Root_decision_sha256": "c54af9b985eb30dd04155d85c3dda88a1b90eea0061fdfe364f49c65416c81e1",
+  "independent_review_sha256": "3f52d16dcbd174e6acc4cffe6b304694ace950141955b6d64dd849aca1ae670e",
+  "prior_immutable_pins_rechecked": 24,
+  "historical_global_preset_class_count": 30,
+  "accepted_current_scope_class_count": 31,
+  "fixed_plan_classes": 46,
+  "remaining_classes": 15,
+  "cases_in_completed_classes": 61,
+  "additional_partial_Room_cases": 1,
+  "fixed_remaining_list_baseline": 43,
+  "fixed_completed_items": 2,
+  "fixed_remaining_items": 41,
+  "strict_name_increment": 0,
+  "all_builtin_plugins_complete": false
+}

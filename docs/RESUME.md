@@ -19,15 +19,15 @@
 
 ## 현재 상태 요약
 
-- 현재 제품은 `bb1659f`/Native43·MCP46개다. main/bridge 바이트는 `bd43f35`와 같다. 정상 native 설치의 소스148개·패키지4개와 doctor를 확인했다.
+- 현재 제품은 `c7747f6`/Native44·MCP46개다. main/bridge 바이트는 `bd43f35`와 같다. 정상 native 설치의 소스150개·패키지4개와 doctor를 확인했다.
 - 고정 현재값 이름6,866/7,112개·잔여246개·18클래스다. Chorder와 Input Filter guiInput1~128의 각128개 현재값·정확한 이름은 모두 완료했으므로 반복하지 않는다. Chorder는 동작5개가 남고 Input Filter 이름 잔여는0이다. 일반 이벤트·MIDI·모델 대응·오디오·저장은 별도다.
-- 프리셋은 두 사례 기준30/46종·60사례, 잔여16종이다.
-- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중1개 완료·42개 잔여다. 부분37·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
+- 프리셋 설정은31/46종·완료 종61사례와 별도 부분 Room1사례, 잔여15종이다. issued 선택지가 하나인 Open AIR는 [명시적 설정 기준](PRESET_SETTING_ACCEPTANCE.md)의 singleton1/1로 별도 수용했고 원래 전체94/readonly16 복원 실패는 보존한다.
+- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중2개 완료·41개 잔여다. 부분36·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
 - Native43 R3는612.174초·MCP tool43회로 Level 초기화 두 효과를 별도 UI 관측으로 확인했다. 실제 문서 응답42회와 시작 화면의 읽기 timeout1회는 구분한다. 적분 음량과 inf 유지 피크를 초기 상태로 돌렸고 Tone10개·Level 쓰기6개·Hold Length2초 원복을 확인했다. 제품의 effects_verified:false는 유지한다.
 - 두 reset 실기와 Native40 Level23 조회는 반복하지 않는다. CONTROL-LEVEL은 원래의 controller/숨은 설정 MCP 접근이 남아 부분 완료다. 메뉴를 수동 조작한 것은 MCP 지원이 아니다.
 - Native42 R1의8개 준비 요청 실패, R2의30개 요청 뒤 reset 사전 거부는 보존한다. 공개 format 이름 생성 문제와 DSP metadata/direct controller 순서 혼동은 수정해 R3에서 실제 동작을 확인했다.
 - Root가 저장하지 않고 종료했고 앱·owner 부재, 저장본6개 해시 동일, 사후 MIDI0/0을 확인했다. 하드웨어 두 장치는 분리된 상태다.
-- 다음은 기존 여섯 ComponentData 필드의 제한된 접근 경로 검토다. 새 단위 전 최신 상태·설치·문서를 대조하고 fresh runtime binding을 만든다. 전체 종료 시각은 미정이며 다음 유한 단위의 ETA만 근거와 함께 갱신한다.
+- Native44는235.563초·9요청으로 정확한 두 객체의 IController 정체성과 개수8/25를 관측했다. 새 controller의 이름·타입·값이나 쓰기 권한은 아직 확인하지 않았다. 실제 단위는 저장 없이 종료했고 saved6/MIDI0을 보존했다. 다음은 두 객체의 제한된 descriptor/current-value 읽기이며 쓰기는 추가하지 않는다. 기존 여섯 ComponentData 필드의 의미·쓰기 mapping은 별도다. 새 단위 전 최신 상태·설치·문서를 대조하고 fresh runtime binding을 만든다. 전체 종료 시각은 미정이며 다음 유한 단위의 ETA만 근거와 함께 갱신한다.
 
 아래 체크포인트와 추가 기록은 누적 이력이다. 현재 실행 여부·다음 순서는 `RESUME_STATE.json`의 `current_execution`과 `next_units_in_order`를 우선한다.
 

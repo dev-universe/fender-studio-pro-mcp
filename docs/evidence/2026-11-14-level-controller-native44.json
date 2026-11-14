@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "status": "ROOT_ACCEPTED_FIXED_TWO_OBJECT_QI_IDENTITY_COUNTS_ONLY",
+  "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+  "job_id": "bc86ec70-658b-4307-836d-b4f65b111510",
+  "product_source_commit": "c7747f60b7e2de156c43c92cafe3b90f40c08198",
+  "native_unit": 44,
+  "actual_elapsed_seconds": 235.563,
+  "raw_DAW_requests": 9,
+  "metadata_MCP_requests": 2,
+  "paired_unique_receipts": 9,
+  "mixer_preparation_writes": 1,
+  "plugin_parameter_writes": 0,
+  "state_or_preset_actions": 0,
+  "reset_actions": 0,
+  "Song_Save_or_transport_actions": 0,
+  "new_capability_observations": 1,
+  "capability": {
+    "api": "exact-level-controller-capability-v1",
+    "atomic_snapshot": false,
+    "max_count": 128,
+    "mutation_capability": false,
+    "nodes": [
+      {
+        "controller": {
+          "canonical_identity_matches": true,
+          "count": 8,
+          "status": "present"
+        },
+        "id": "AudioEffect",
+        "node_index": 0
+      },
+      {
+        "controller": {
+          "canonical_identity_matches": true,
+          "count": 25,
+          "status": "present"
+        },
+        "id": "OutLevels",
+        "node_index": 1
+      }
+    ],
+    "status": "observed"
+  },
+  "hidden_setting_write_authority": false,
+  "whole_Level_complete": false,
+  "strict_name_increment": 0,
+  "preset_cases_increment": 0,
+  "NoSave_observed": true,
+  "app_closed_observed": true,
+  "owner_process_absent": true,
+  "owner_exit_code": 0,
+  "saved6_hashes_unchanged": true,
+  "post_owner_MIDI_sources": 0,
+  "post_owner_MIDI_destinations": 0,
+  "request_journal_sha256": "cad511641d3e799a96f26b1d130effcf952c4a5d943c2897fd0a6f319e3ac2d8",
+  "response_journal_sha256": "df721b97fcea2112b3cda6ca64ae27bb26c261ef3689025c3ee9577548fa6428",
+  "installation_proof_sha256": "a3c9147059a24225079970ac07be6d380915a13546b578e987b513ef8d8a7a35",
+  "finished_at": "2026-11-14T00:37:38.310420+00:00",
+  "new_controller_parameter_names_values_or_kinds_read": false
+}

@@ -3,9 +3,9 @@
   "as_of": "2026-11-14",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 42,
-  "completed_in_this_remaining_snapshot": 1,
-  "partial": 37,
+  "remaining_backlog_count": 41,
+  "completed_in_this_remaining_snapshot": 2,
+  "partial": 36,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -17,10 +17,11 @@
     "inventory_names": 7112,
     "remaining_names": 246,
     "remaining_name_classes": 18,
-    "preset_classes_completed": 30,
+    "preset_classes_completed": 31,
     "preset_classes_plan": 46,
-    "preset_cases": 60,
-    "remaining_preset_classes": 16
+    "preset_cases": 61,
+    "remaining_preset_classes": 15,
+    "additional_partial_setting_cases": 1
   },
   "runtime_note": "현재 실행과 최근 종료 및 다음 순서는 RESUME_STATE.json을 우선한다. 이 잔여표는 실행 상태를 별도로 복제하지 않는다.",
   "bookkeeping_only_not_backlog": [
@@ -35,7 +36,8 @@
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
     "docs/PARAMETER_NAME_UNION_CURRENT.md": "6866/7112·246·18클래스의 현재값 전용 범위",
-    "docs/PROGRESS_2026-11-14.md": "현재 Native43 두 reset 효과·수정·원복·종료와 다음 hidden 경로"
+    "docs/PROGRESS_2026-11-14.md": "현재 Native43 두 reset 효과·수정·원복·종료와 다음 hidden 경로",
+    "docs/PRESET_SETTING_ACCEPTANCE.md": "Room/Open AIR의 별도 명시적 writable-setting 수용과 catalog cardinality 기준"
   },
   "items": [
     {
@@ -44,8 +46,8 @@
       "title": "Room Reverb",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "쓰기16개 복원·새725바이트 직렬화 완료. 원래 읽기전용 표시 복원은 미확인",
-      "completion_predicate": "이미 완료한 writable/새직렬화 증거를 재사용하고, 원래 derived/read-only 상태와 프리셋 종 완료 기준의 간극을 소스 근거와 새 유한 조건으로 해결한다. 같은 실패 gate를 재시도하지 않는다.",
+      "actually_verified": "index0 Arena의 쓰기16개/전체19 metadata/새725바이트 A/B 동일과 정리를 별도 설정 사례1개로 수용. readonly2/전체19 current 원복은 false.",
+      "completion_predicate": "수용한 index0을 반복하지 않고 index1 BD - Inside 한 사례를 PRESET_SETTING_ACCEPTANCE의 정확한 쓰기값/전체metadata/새직렬화·readonly관측·정리 기준으로 확인한다. 전체readonly복원 주장은 유지하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0
     },
@@ -53,12 +55,13 @@
       "id": "PRESET-OPENAIR",
       "group": "프리셋",
       "title": "Open AIR",
-      "status": "partial",
+      "status": "completed",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "쓰기43개 복원·새2033바이트 직렬화 완료. 읽기전용16개 원래 복원은 미확인",
-      "completion_predicate": "이미 완료한 writable/새직렬화 증거를 재사용하고, 원래 derived/read-only 상태와 프리셋 종 완료 기준의 간극을 소스 근거와 새 유한 조건으로 해결한다. 같은 실패 gate를 재시도하지 않는다.",
+      "actually_verified": "issued singleton index0 default의 쓰기43개·전체94 비값 metadata·새2033바이트 A/B 동일과 수명/Root 정리를 별도 명시적 설정 범위로 수용. readonly16/전체94 current 원래 복원은 false로 보존.",
+      "completion_predicate": "완료: min(2, complete nonempty issued count1) 기준의 고정 preset-setting1/1. 전체readonly/IR리소스/audio/Save/전체플러그인 지원은 별도이며 원래 strict 실패0을 보존.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "evidence": "docs/evidence/2026-11-14-preset-setting-scope-admission.json"
     },
     {
       "id": "PRESET-SPECTRUM",
@@ -486,7 +489,7 @@
       "title": "macOS 배포/설치·업데이트·복구",
       "status": "partial",
       "implemented": "Rust main/native bridge 정상 빌드·설치와 GitHub repo 있음",
-      "actually_verified": "현재 Native43/bb1659f/46도구 정상 설치·두 reset 실기 완료; main/bridge bd43f35 바이트 재사용",
+      "actually_verified": "현재 Native44/c7747f6/46도구 정상 설치·미터 IController8/25 실제 읽기 완료; Native43 reset 근거 재사용; main/bridge bd43f35 바이트",
       "completion_predicate": "최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0

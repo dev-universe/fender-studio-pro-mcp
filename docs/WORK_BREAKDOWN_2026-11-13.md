@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중1개를 완료했고42개가 남았다: 프리셋16 + 프리셋 외 플러그인 기능20 + 공통6.** 남은 상태는부분37개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM은 두 고정설정 사례의 별도 수용을 마쳐 완료로 기록한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중2개를 완료했고41개가 남았다: 프리셋15 + 프리셋 외 플러그인 기능20 + 공통6.** 남은 상태는부분36개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 설정 사례를 별도 수용해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -9,8 +9,8 @@
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
-| 추가 프리셋 종 |30/46|16종|완료60사례. catalog59종과는 다른 지표|
-| 고정한 완료물 목록 |43개 중1개 완료|42개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 추가 프리셋 설정 종 |31/46|15종|완료 종61사례와 별도 부분 Room1사례. catalog59종과 다른 지표|
+| 고정한 완료물 목록 |43개 중2개 완료|41개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -26,8 +26,8 @@
 
 | ID | 완료물 | 상태 | 기존 구현/실제 근거 | 남은 완료 조건 |
 |---|---|---|---|---|
-|PRESET-ROOM|Room Reverb|부분 완료|쓰기16개 복원·새725바이트 직렬화 완료. 원래 읽기전용 표시 복원은 미확인|이미 완료한 writable/새직렬화 증거를 재사용하고, 원래 derived/read-only 상태와 프리셋 종 완료 기준의 간극을 소스 근거와 새 유한 조건으로 해결한다. 같은 실패 gate를 재시도하지 않는다.|
-|PRESET-OPENAIR|Open AIR|부분 완료|쓰기43개 복원·새2033바이트 직렬화 완료. 읽기전용16개 원래 복원은 미확인|이미 완료한 writable/새직렬화 증거를 재사용하고, 원래 derived/read-only 상태와 프리셋 종 완료 기준의 간극을 소스 근거와 새 유한 조건으로 해결한다. 같은 실패 gate를 재시도하지 않는다.|
+|PRESET-ROOM|Room Reverb|부분 완료|index0 Arena의 쓰기16개/전체19 metadata/새725바이트 A/B 동일과 정리를 별도 설정 사례1개로 수용. readonly2/전체19 current 원복은 false.|수용한 index0을 반복하지 않고 index1 BD - Inside 한 사례를 PRESET_SETTING_ACCEPTANCE의 정확한 쓰기값/전체metadata/새직렬화·readonly관측·정리 기준으로 확인한다. 전체readonly복원 주장은 유지하지 않는다.|
+|PRESET-OPENAIR|Open AIR|완료|issued singleton index0 default의 쓰기43개·전체94 비값 metadata·새2033바이트 A/B 동일과 수명/Root 정리를 별도 명시적 설정 범위로 수용. readonly16/전체94 current 원래 복원은 false로 보존.|완료: min(2, complete nonempty issued count1) 기준의 고정 preset-setting1/1. 전체readonly/IR리소스/audio/Save/전체플러그인 지원은 별도이며 원래 strict 실패0을 보존.|
 |PRESET-SPECTRUM|Spectrum Meter|완료|서로 다른 issued index1/2의 두 고정설정·각전체9복원·새584byte A/B·해제/만료·NoSave/owner0/저장6개 보존을 수용|두 실기를 반복하지 않는다. 모든32항목·factory origin·audio·지속저장·전체플러그인 지원의 완료는 아니다.|
 |PRESET-LEVEL|Level Meter|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-SCOPE|Scope|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
@@ -76,7 +76,7 @@
 |SHARED-GRAPH|일반 중첩 그래프 API|부분 완료|Splitter42·두 Mixtool Inserts 왕복 완료|닫힌 create/connect/reorder/delete API를 구현하고 소유권·stale handle·sibling 보존·전체 topology/state의 정확한 복원을 실제 작은 fixture에서 확인한다.|
 |SHARED-EVENT|MIDI/키 입력 수명 계약|미착수|passive MIDI 조회·빈 관측창·일부 현재값만 확인|고정 press/release·neutral·중복 입력·문맥 소실·unknown 보유의 안전한 계약과 독립 event/held 증거를 구현·검증한다. 클래스별 적용은 CONTROL 항목에서 수용한다.|
 |SHARED-PERSISTENCE|저장·재시작 보장 범위|부분 완료|Chorder input60/output0의339요청·2Save·2restart property 완료|기존 property를 재사용하고 새 모델/그래프/설정에 주장할 Save/reopen 범위를 유한 사례로 검증해 지원표와 일치시킨다. 원래 곡을 덮어쓰지 않는다.|
-|SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native43/bb1659f/46도구 정상 설치·두 reset 실기 완료; main/bridge bd43f35 바이트 재사용|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
+|SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native44/c7747f6/46도구 정상 설치·미터 IController8/25 실제 읽기 완료; Native43 reset 근거 재사용; main/bridge bd43f35 바이트|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
 |SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6651 이름·30종/60사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
 
 ### 하드웨어
