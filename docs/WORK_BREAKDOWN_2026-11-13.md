@@ -29,7 +29,7 @@
 |PRESET-ROOM|Room Reverb|완료|서로 다른 index0 Arena와 index1 BD - Inside의 쓰기16개/전체19 metadata/독립 fresh725바이트 A/B 동일과 Root 정리를 별도 설정2/2로 수용. Native46 index1은1435.281초·DAW40회·입력검증거부2회.|완료: 명시적 preset-setting 범위. readonly2/전체19 current 및 preset 표시 이름 복원은 false로 보존. 전체 plugin/audio/resource/Save 완료로 확장하지 않고 두 사례를 반복하지 않는다.|
 |PRESET-OPENAIR|Open AIR|완료|issued singleton index0 default의 쓰기43개·전체94 비값 metadata·새2033바이트 A/B 동일과 수명/Root 정리를 별도 명시적 설정 범위로 수용. readonly16/전체94 current 원래 복원은 false로 보존.|완료: min(2, complete nonempty issued count1) 기준의 고정 preset-setting1/1. 전체readonly/IR리소스/audio/Save/전체플러그인 지원은 별도이며 원래 strict 실패0을 보존.|
 |PRESET-SPECTRUM|Spectrum Meter|완료|서로 다른 issued index1/2의 두 고정설정·각전체9복원·새584byte A/B·해제/만료·NoSave/owner0/저장6개 보존을 수용|두 실기를 반복하지 않는다. 모든32항목·factory origin·audio·지속저장·전체플러그인 지원의 완료는 아니다.|
-|PRESET-LEVEL|Level Meter|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-LEVEL|Level Meter|부분 완료|Native47 index1 Movie Score Classic의mode1 긍정변화·전체13값/metadata 복원·새406바이트 A/B 동일·수명/Root정리로1/2 사례 완료|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-SCOPE|Scope|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-TONEGEN|Tone Generator|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-AMPIRE|Ampire|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
@@ -108,3 +108,5 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 현재 JSON의 accepted와 이름 합집합을 우선했다. 오래된 검증 문서/인수인계의 과거18·25·28종 숫자나 완료된 P0–P5 단위를 새 backlog로 되살리지 않았다. stale Tuner 배열은 작성자가 accepted 기준으로 정규화했고, 이후 Root가 현재 RESUME_STATE 배열도17종으로 맞췄다. 일반 편집·automation·bounce·process tap 등 최초 장기 범위는 이번 내장 플러그인 잔여 분모에 새로 얹지 않았다. 이미 구현·검증된 범위는 별도 과거 근거로 유지한다.
 
 이 고정 목록43개를 더 쪼개거나 범위를 발견하면 기존 ID와 변경 사유를 보존하고 분모 변경을 명시해야 한다. 새 장애 수정은 원래 완료물의 하위 작업으로 기록하며 조용히 새 목표로 늘리지 않는다. 장치 대기와 소프트웨어 잔여를 나눠 보고하고, 단위별 ETA만 측정값으로 제공한다.
+
+현재 프리셋 완료 종32/46·63사례 외에 Level Meter의 별도 부분1/2 사례가 있다. index1은 반복하지 않고 index2 한 사례만 새 문맥에서 확인한다.

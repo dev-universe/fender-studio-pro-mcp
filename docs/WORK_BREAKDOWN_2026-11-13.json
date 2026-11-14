@@ -21,7 +21,7 @@
     "preset_classes_plan": 46,
     "preset_cases": 63,
     "remaining_preset_classes": 14,
-    "additional_partial_setting_cases": 0
+    "additional_partial_setting_cases": 1
   },
   "runtime_note": "Native47/95eeb72 installed; six registered Level settings R2 accepted after57DAQ/14setters and Root closure. Fixed CONTROL-LEVEL complete; Level presets/audio/Save remain separate. Native46 failed R1 and profile observations preserved.",
   "bookkeeping_only_not_backlog": [
@@ -81,10 +81,11 @@
       "title": "Level Meter",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음",
+      "actually_verified": "Native47 index1 Movie Score Classic:mode1 positive; whole13 typed/current/metadata exact restore with single Aload, correction0; fresh406byte A/B equal, lifecycle and Root closure. Partial1/2 distinct setting cases.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "remaining_after_verified_actions": "One distinct issued index2 Pop Rock case with same13 union and exact restored settings/fresh serialization/lifecycle/NoSave; do not replay completed index1."
     },
     {
       "id": "PRESET-SCOPE",
