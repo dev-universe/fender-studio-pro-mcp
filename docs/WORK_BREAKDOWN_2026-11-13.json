@@ -28,13 +28,14 @@
     "Expander.swapfreqs",
     "Compressor.studiocomp.swapfreqs"
   ],
-  "stale_metadata_note": "accepted 기준17종이며 Root가 RESUME_STATE의 Tuner 잔존도 정정했다.",
+  "stale_metadata_note": "accepted30종/60사례·16종 잔여, 현재 고정 이름6866; 과거 값은 역사 checkpoint로만 읽는다.",
   "sources": {
     "docs/RESUME_STATE.json": "현재 상태·accepted/next_units/hardware; stale remaining_preset array는 accepted에서 정규화",
     "docs/PROGRESS_2026-11-13.md": "최신 실패와 후속 준비 및 단위 이력",
     "docs/PLUGIN_STATE_VALIDATION.md": "영역별 완료/미검증; 오래된 숫자는 현재JSON에 종속",
     "docs/LOOP_HANDOFF_2026-11-12.md": "13.2~13.5 기존 잔여 범위만 재사용; 완료 P0-P5 재큐잉 안함",
-    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6866/7112·246·18클래스의 현재값 전용 범위"
+    "docs/PARAMETER_NAME_UNION_CURRENT.md": "6866/7112·246·18클래스의 현재값 전용 범위",
+    "docs/PROGRESS_2026-11-14.md": "현재 Native43 두 reset 효과·수정·원복·종료와 다음 hidden 경로"
   },
   "items": [
     {
@@ -306,11 +307,13 @@
       "group": "프리셋 외 플러그인 기능",
       "title": "Level Meter",
       "status": "partial",
-      "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "전체DSP7 읽기·controller2노드/1연결, useisl known miss 완료",
+      "implemented": "정확한 Level class/name/tag/owner/context에 제한한 두 reset action API 구현; 기존 pulse 재사용. 숨은 ComponentData MCP 접근은 아직 미완료",
+      "actually_verified": "Native40 DSP7/controller2노드1연결/useisl known miss; Native43 R3 두 reset 실제 효과·Tone10/쓰기6개·Hold Length2초 원복·Root NoSave/owner0/저장6개/MIDI0 확인",
       "completion_predicate": "resethold/resetloudness의 실제 reset 효과와 controller/숨은 설정 접근을 확인한다. 제한 metadata를 값/쓰기 권한으로 승격하지 않는다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 2
+      "inventory_remaining_names": 2,
+      "remaining_after_verified_actions": "기존 mode/rmsLength/vuHold/holdLength/loudnessInLUFS/loudnessEBU18의 제한 typed MCP 접근",
+      "evidence": "docs/evidence/2026-11-14-level-reset-native43-r3.json"
     },
     {
       "id": "CONTROL-LIMITER",
@@ -483,7 +486,7 @@
       "title": "macOS 배포/설치·업데이트·복구",
       "status": "partial",
       "implemented": "Rust main/native bridge 정상 빌드·설치와 GitHub repo 있음",
-      "actually_verified": "현재 Native41/c733ce5/46도구의 정상 설치·실기 완료",
+      "actually_verified": "현재 Native43/bb1659f/46도구 정상 설치·두 reset 실기 완료; main/bridge bd43f35 바이트 재사용",
       "completion_predicate": "최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0

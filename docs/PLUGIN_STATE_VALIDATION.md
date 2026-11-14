@@ -11,12 +11,20 @@ Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
 and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
+Current checkpoint: Native43 / `bb1659f`, 46 MCP tools; 6,866/7,112 fixed
+current-value names, 246 remaining; 30/46 additional preset classes, 60 cases,
+16 remaining. The fixed remaining-work snapshot has one of43 items complete
+and42 remaining. These are different denominators, not whole-product coverage.
+Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
+narratives below. Both Level reset effects now have independent live GUI
+witnesses; hidden-setting MCP access remains partial.
+
 | Area | Actual host evidence | Remaining scope |
 |---|---|---|
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset recalls | Two capsule-only cases each for23classes, plus two hybrid cases each for Expander and Gate. The finite46-class plan has25completeclasses/51positivecases, including one partial Mixverb hybrid pilot |21classes, including4strict-restoration stops |
+| Additional preset recalls | Two independently accepted cases each for30classes;60cases |16classes; historical failures remain preserved |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -28,6 +36,7 @@ state and the complete remaining queue. Completed units are not replayed.
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
 | Vocal Tune scale state | Root and all 12 note masks changed, read back and capsule-restored | Host bypass callback, persistence and audio |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
+| Level Meter reset actions | Native43 independently observed non-neutral integral and infinite-held peaks reset by two fixed typed actions; Tone10, writable6 and original2s hold setting restored | Hidden settings through MCP; automatic typed effect verification, persistence and physical audio |
 
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.
