@@ -3,9 +3,9 @@
   "as_of": "2026-11-14",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 40,
-  "completed_in_this_remaining_snapshot": 3,
-  "partial": 35,
+  "remaining_backlog_count": 39,
+  "completed_in_this_remaining_snapshot": 4,
+  "partial": 34,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -23,7 +23,7 @@
     "remaining_preset_classes": 14,
     "additional_partial_setting_cases": 0
   },
-  "runtime_note": "현재 실행과 최근 종료 및 다음 순서는 RESUME_STATE.json을 우선한다. 이 잔여표는 실행 상태를 별도로 복제하지 않는다.",
+  "runtime_note": "Native47/95eeb72 installed; six registered Level settings R2 accepted after57DAQ/14setters and Root closure. Fixed CONTROL-LEVEL complete; Level presets/audio/Save remain separate. Native46 failed R1 and profile observations preserved.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -310,14 +310,14 @@
       "id": "CONTROL-LEVEL",
       "group": "프리셋 외 플러그인 기능",
       "title": "Level Meter",
-      "status": "partial",
-      "implemented": "정확한 Level class/name/tag/owner/context에 제한한 두 reset action API 구현; 기존 pulse 재사용. 숨은 ComponentData MCP 접근은 아직 미완료",
-      "actually_verified": "Native40 DSP7/controller metadata; Native43 reset2효과/원복; Native44 IController8/25; Native45 전체33 descriptor/current/owner 일치·원복/종료. getter route setterfalse.",
+      "status": "completed",
+      "implemented": "Exact Level DSP controls/two registered reset actions plus bounded six-setting level_meter source with observed mode/count profiles; arbitrary measurement/menu writes remain unavailable.",
+      "actually_verified": "Native40 metadata, Native43 two reset GUI effects, Native45 complete33 descriptions in25-entry mode, Native46 five GUI count profiles, Native47 R2 six setting changes/read/exact restore:57DAQ/14setters/438.119s, GUI and Root closure/saved6/MIDI0.",
       "completion_predicate": "resethold/resetloudness의 실제 reset 효과와 controller/숨은 설정 접근을 확인한다. 제한 metadata를 값/쓰기 권한으로 승격하지 않는다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 2,
-      "remaining_after_verified_actions": "정확히 식별한 여섯 OutLevels 설정의 제한 source choices/변경/읽기/복원; 측정/미등록쓰기 권한 없음",
-      "evidence": "docs/evidence/2026-11-14-level-descriptors-native45.json"
+      "remaining_after_verified_actions": "Fixed CONTROL-LEVEL predicate complete. Separate PRESET-LEVEL, persistence/audio/hardware and EBU fixed33 descriptor completeness remain unverified.",
+      "evidence": "docs/evidence/2026-11-14-level-six-settings-native47-r2.json"
     },
     {
       "id": "CONTROL-LIMITER",

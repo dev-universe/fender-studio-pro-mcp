@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중3개를 완료했고40개가 남았다: 프리셋14 + 프리셋 외 플러그인 기능20 + 공통6.** 남은 상태는부분35개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중4개를 완료했고39개가 남았다: 프리셋14 + 프리셋 외 플러그인 기능19 + 공통6.** 남은 상태는부분34개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -10,7 +10,7 @@
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 설정 종 |32/46|14종|완료 종63사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중3개 완료|40개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 고정한 완료물 목록 |43개 중4개 완료|39개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -55,7 +55,7 @@
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
 |CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 필터 설정·provider/catalog; keyboard.pitch1~128.guiInput128개 현재값/128이름 모두 수용·전체388복원과Root정리 완료. 122~128의7사례406.206초·579요청·변경14회·42전체/294페이지·사전Mojito7관계확인·다른385/비값/unknown/공통 원본 보존. 전체 복원·Root NoSave정리·저장6해시동일·MIDI0/0 완료. 앞선114~121 R1은요청0·변경0·수용0 실패로보존. 남은이름0개이나 일반MIDI/음정대응·이벤트수명·noteoff·audio·지속저장은별도|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
-|CONTROL-LEVEL|Level Meter|부분 완료|Native40 DSP7/controller metadata; Native43 reset2효과/원복; Native44 IController8/25; Native45 전체33 descriptor/current/owner 일치·원복/종료. getter route setterfalse.|완료한 reset/metadata/33열거는반복하지않는다. 식별한6개설정의제한변경·읽기·원복을확인한다. 측정값과미등록이름의metadata를쓰기권한으로승격하지않는다.|
+|CONTROL-LEVEL|Level Meter|완료|Native43 두 reset 효과, Native45 전체33 getter, Native46 다섯 GUI 모드 count와 Native47 등록6설정의 실제변경·독립읽기·전체typed/metadata정확복원·GUI·Root정리 확인. R2는438.119초·57요청·14setter다.|완료: 기존 일반 DSP/두 reset/등록6숨은설정의 고정 제어 범위. PRESET-LEVEL·오디오·Save/재시작은 별도이고 EBU fixed33 descriptor 완전성은 false. 완료 실기는 반복하지 않는다.|
 |CONTROL-LIMITER|Limiter|부분 완료|일반 설정과 두 프리셋 사례 완료|resetmin 명령의 별도 효과·완료·원래 환경 보존을 확인한다.|
 |CONTROL-MAITAI|Mai Tai|부분 완료|일반 선택 설정·preset 계열 완료|MIDI6 facade의 현재값/실제 전달과 character1.editchar의 GUI·조건부 모델 binding/복원을 검증한다.|
 |CONTROL-MOJITO|Mojito|부분 완료|일반 선택 설정 완료|afterTouch/modWheel/pitchBend3역할의 현재값·수신·neutral 복원/종료를 검증한다.|
@@ -76,7 +76,7 @@
 |SHARED-GRAPH|일반 중첩 그래프 API|부분 완료|Splitter42·두 Mixtool Inserts 왕복 완료|닫힌 create/connect/reorder/delete API를 구현하고 소유권·stale handle·sibling 보존·전체 topology/state의 정확한 복원을 실제 작은 fixture에서 확인한다.|
 |SHARED-EVENT|MIDI/키 입력 수명 계약|미착수|passive MIDI 조회·빈 관측창·일부 현재값만 확인|고정 press/release·neutral·중복 입력·문맥 소실·unknown 보유의 안전한 계약과 독립 event/held 증거를 구현·검증한다. 클래스별 적용은 CONTROL 항목에서 수용한다.|
 |SHARED-PERSISTENCE|저장·재시작 보장 범위|부분 완료|Chorder input60/output0의339요청·2Save·2restart property 완료|기존 property를 재사용하고 새 모델/그래프/설정에 주장할 Save/reopen 범위를 유한 사례로 검증해 지원표와 일치시킨다. 원래 곡을 덮어쓰지 않는다.|
-|SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native46/570979c/46도구 정상 설치·Level33 descriptor 읽기 및 Room2/2 완료; 여섯 설정 source의 실제 쓰기는 대기|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
+|SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native47/95eeb72/46도구 정상 설치·Level 등록6설정 실기와 Room2/2 완료; main/bridge570979c 재사용|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
 |SHARED-DOCS-RELEASE|최종 지원표·증거·PR/재개 문서|부분 완료|6651 이름·30종/60사례 및 다수 독립 검토 완료|read/write/current/state/Save/event/audio/hardware 지원표를 최종 증거와 맞추고 실패를 보존한다. 지원 범위가 닫힌 뒤 PR/릴리스 상태를 갱신한다. 완료 이름 재감사/재실기를 반복하지 않는다.|
 
 ### 하드웨어

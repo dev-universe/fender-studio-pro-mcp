@@ -11,14 +11,15 @@ Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
 and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
-Current checkpoint: Native46 / `570979c`, 46 MCP tools; 6,866/7,112 fixed
+Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
 current-value names, 246 remaining; 32/46 preset-setting classes, 63 cases in completed classes,
-14 remaining. The fixed remaining-work snapshot has three of43 items complete
-and40 remaining. These are different denominators, not whole-product coverage.
+14 remaining. The fixed remaining-work snapshot has four of43 items complete
+and39 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
-Native45 read all33 typed controller descriptions/current values/owners. The new
-explicit Level source permits only six registered settings; live writes remain pending.
+Native45 read all33 typed controller descriptions/current values/owners. Native47 changed/read/restored all six registered Level settings with independent
+whole-six typed/metadata checks and GUI witnesses. CONTROL-LEVEL is complete within
+that fixed scope; Level presets, audio and persistence remain separate.
 [Explicit setting acceptance](PRESET_SETTING_ACCEPTANCE.md) records Open AIR1/1 and
 Room2/2 while preserving full-current/readonly failures and Room's display-label difference.
 
@@ -39,7 +40,7 @@ Room2/2 while preserving full-current/readonly failures and Room's display-label
 | Additional ordinary controls | Ampire 39, Mustang 3, Pedalboard 2, Rumble 3 and Vocal Tune 4 | Other coupled, model, routing and event roles |
 | Vocal Tune scale state | Root and all 12 note masks changed, read back and capsule-restored | Host bypass callback, persistence and audio |
 | Nested graph | 42 Splitter controls and a two-Mixtool whole-folder roundtrip | Generic topology editing and other graphs |
-| Level Meter reset actions | Native43 independently observed non-neutral integral and infinite-held peaks reset by two fixed typed actions; Tone10, writable6 and original2s hold setting restored | Hidden settings through MCP; automatic typed effect verification, persistence and physical audio |
+| Level Meter reset actions | Native43 independently observed non-neutral integral and infinite-held peaks reset by two fixed typed actions; Tone10, writable6 and original2s hold setting restored | Native47 also verified six hidden settings through MCP; remaining scope is presets, automatic typed reset-effect verification, persistence and physical audio |
 
 Each completed live unit is counted only after its final full-provider
 restoration checkpoint. In-progress cases and offline source tests are excluded.

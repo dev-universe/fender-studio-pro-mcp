@@ -19,14 +19,14 @@
 
 ## 현재 상태 요약
 
-- 현재 제품은 `570979c`/Native46·MCP46개다. main SHA256 `49e59d2d81ed5af8346a5ec12a401e3cc96297e84693dffa566a8add7f8ce9d9`, native UUID `C6DCCD2F-DA06-3753-9D8E-AC273813B1B7`이며 정상 설치의 소스154개·패키지4개와 doctor를 대조했다.
+- 현재 제품은 `95eeb72`/Native47·MCP46개다. main SHA256 `49e59d2d81ed5af8346a5ec12a401e3cc96297e84693dffa566a8add7f8ce9d9`, native UUID `0F6E8E5B-5FC3-3F18-B68B-68EB9D652A30`이며 정상 설치의 소스154개·패키지4개와 doctor를 대조했다.
 - 고정 현재값 이름6,866/7,112개·잔여246개·18클래스다. Chorder와 Input Filter guiInput의 각128개 현재값·정확한 이름은 모두 완료했으므로 반복하지 않는다. 일반 이벤트·MIDI·모델 대응·오디오·저장은 별도다.
 - 프리셋 설정은32/46종·완료 종63사례·잔여14종이다. Open AIR singleton1/1과 Room의 서로 다른 두 사례를 [명시적 설정 기준](PRESET_SETTING_ACCEPTANCE.md)으로 수용했다. 원래 전체 current/readonly 복원 실패를 보존하며 전체 플러그인 완료로 확장하지 않는다.
-- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중3개 완료·40개 잔여다. 부분35·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
+- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중4개 완료·39개 잔여다. 부분34·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
 - 최신 Room index1은1435.281초·실제 DAW40회·별도 MCP 입력 거부2회였다. 쓰기16개와 전체19개 metadata, 서로 다른 fresh A/B725바이트 일치를 확인했다. readonly2/전체19 current와 프리셋 표시 이름 복원은 false다. index0과 이번 index1은 반복하지 않는다.
-- Level은 Native43 초기화 두 효과, Native44 controller8/25, Native45 전체33 typed descriptor/current/owner 읽기를 완료했다. Native46은 정확히6개 설정만 기존 파라미터 API의 `source:"level_meter"`로 제공한다. 테스트 main149/native321/JavaScript335 및 정상 빌드·설치는 통과했지만 여섯 설정의 실제 쓰기는 아직 미검증이다. 측정값·메뉴·명령에는 새 쓰기 권한이 없다.
-- 최신 Level R1은296.194초·21요청 뒤 첫 mode 변경의 count25→23에서 unknown으로 중단했다. UI EBU R128/readonly23은 관측했고 재시도·역변경 없이 NoSave/owner EOF/저장6을 보존했다. 쓰기·복원 수용0이다. 다음은 모드별 count 전환 가드의 제한 수정과 새 문맥R2 검증이다. 완료한 초기화와33개 열거를 반복하지 않는다.
-- Root가 최신 Room 문서를 저장하지 않고 종료했다. 앱·owner 부재, 저장본6개 해시 동일, 사후 MIDI0/0과 pending mutation0을 확인했다. 두 하드웨어 장치는 분리 상태다.
+- Level은 기존 reset2 효과·33개 조회에 이어 Native47 R2의6설정 변경/독립읽기/정확원복·GUI를438.119초·57요청·14setter로 완료했다. 고정 CONTROL-LEVEL 제어 범위 완료이며 프리셋/audio/Save는 별도다. 다른 K모드의 MCP 쓰기와 EBU fixed33 descriptor 완전성은 미검증이다.
+- Native46 R1의 mode25→23 unknown 실패21요청과 별도 GUI 모드 관측22요청은 보존한다. 최신 제한 profile 수정은 native328/Level22 검사와 정상12.10초 build/install을 통과했다. main/bridge는570979c 바이트를 재사용했다. 동일 실기와 실패 실행을 반복하지 않는다.
+- 최신 앱·owner는 종료됐고 저장본6개 동일·MIDI0/0을 확인했다. 두 물리 장치는 분리됐다. 다음은 Native47을 유지하고 Level 프리셋 DSP7+등록6설정 union/fresh 직렬화/수명/NoSave의 유한 사례를 준비한다.
 - 전체 종료 시각은 미정이다. 단위 완료마다 실제 시간·체크리스트·완료/잔여와 다음 유한 단위 ETA를 보고한다. 구체적 다음 순서는 `RESUME_STATE.json`을 따른다.
 
 아래 체크포인트와 추가 기록은 누적 이력이다. 현재 실행 여부·다음 순서는 `RESUME_STATE.json`의 `current_execution`과 `next_units_in_order`를 우선한다.
