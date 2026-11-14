@@ -21,9 +21,9 @@
     "preset_classes_plan": 46,
     "preset_cases": 72,
     "remaining_preset_classes": 9,
-    "additional_partial_setting_cases": 0
+    "additional_partial_setting_cases": 1
   },
-  "runtime_note": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
+  "runtime_note": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -234,10 +234,11 @@
       "title": "Repeater",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음",
-      "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
+      "actually_verified": "issued index0 80s Dream을75요청·365.674초로 수용했다. 실제15개 변화와 전체141개 writable current/metadata 정확 복원, 한 Aload·보정0회, 새2989바이트 A/B 일치·수명·Root NoSave/owner0/저장6/MIDI0을 확인했다. 대표1/2이며 표시이름 원복false다.",
+      "completion_predicate": "서로 다른 두 번째 issued index의 실제 설정 변화·독립 안정쌍·전체141개 원래값/스키마 복원·token 해제/거부·NoSave 정리를 확인한다. 수용한 index0과 완료141개 scalar sweep은 반복하지 않는다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "evidence": "docs/evidence/2026-11-14-repeater-preset-index0-native47.json"
     },
     {
       "id": "CONTROL-AMPIRE",

@@ -13,7 +13,7 @@ state and the complete remaining queue. Completed units are not replayed.
 
 Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
 current-value names, 246 remaining; 37/46 preset-setting classes, 72 cases in completed classes,
-9 remaining. The fixed remaining-work snapshot has nine of43 items complete
+9 remaining, plus one separate partial Repeater case. The fixed remaining-work snapshot has nine of43 items complete
 and34 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
@@ -932,3 +932,5 @@ VU Meter indices1/2 each passed39DAQ with actual sensitivity/scale changes, one 
 Mojito Native47 R2 passed independent Music/audio mute isolation and observed20 stable writable changes after one Acid Dreams apply. Its sole Aload left two writable LFO speeds one normalized Float32 step away from the original and readonly lfoBeats3to7. It stopped at30DAQ/706.132s before call33, without correction, B capture or release, and closed via Root NoSave/owner0/saved6/MIDI0. Accepted cases0; strict original restoration and capsule equality remain unproved. [Failure evidence](evidence/2026-11-14-mojito-preset-index0-native47-r2-failed.json). Existing36/46 classes and70 cases remain unchanged.
 
 Mojito's distinct Acid Dreams0 and Basslead1 scoped hybrid cases now complete representative settings2/2. Each used57DAQ, one Aload and two predeclared exact LFO corrections, all35 writable/all37 metadata exact comparisons, fresh895byte A/B equality and lifecycle/Root closure. Readonly lfoBeats/full37 current, preset-label restoration, legacy pan, whole-plugin, audio and persistence remain unverified. The [second proof](evidence/2026-11-14-mojito-preset-index1-native47.json) links the immutable first success. Both earlier failures remain failed. Current37/46classes,72cases,9remaining and fixed9/43complete,34remaining supersede the historical counts above.
+
+Repeater issued index0 80s Dream passed its first distinct representative setting case with75DAQ/365.674s. Its15 positive writable changes, all141 current values and all141 nonvalue/unknown metadata were independently compared across three pages per observation. One Aload restored the exact original with no scalar correction, and fresh distinct2989byte A/B saves matched. Lifecycle, expected released-catalog refusal and Root NoSave/owner0/saved6/MIDI0 closure passed. Preset-label restoration remainsfalse. The [first proof](evidence/2026-11-14-repeater-preset-index0-native47.json) admits1/2 cases only; whole-plugin, MIDI processing, audio and persistence remain unproved. Current37/46classes and72completed-class cases plus one partial Repeater case give73 accepted setting cases. Fixed9/43complete,34remaining and6866/7112names remain unchanged. The existing141-field scalar sweep is reused.

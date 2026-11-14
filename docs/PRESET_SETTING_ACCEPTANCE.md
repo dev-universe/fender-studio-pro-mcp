@@ -59,3 +59,9 @@ Native47 R2는 실제 격리와 프리셋 변화20개를 확인했지만 한 Alo
 Acid Dreams index0과 Basslead index1은 서로 다른 새 문맥에서 각57요청으로 수용했다. 한 Aload 뒤 사전에 고정한 두 LFO 속도만 정밀 setter1회씩으로 보정했고, 쓰기35개 모든 현재값 carrier와 전체37 비값/unknown metadata가 정확히 원래로 돌아왔다. 독립 full37 쌍은 첫 보정의 peer 보존부터 마지막 수명 종료 뒤까지 확인했다. 별도 fresh895바이트 A/B의 source/serialization/SHA256 일치와 RootNoSave/owner0/저장6/MIDI0도 검증했다.
 
 이 결과는 capsule-only 복원이 아니다. readonly lfoBeats의 마지막 native current7/최초3와 전체37 current 원복false, 표시 이름 원복false, legacy pan provider 미확정을 남긴다. 기존 실패R1/R2는 사후 합격 처리하지 않는다. [두 번째 증거](evidence/2026-11-14-mojito-preset-index1-native47.json)가 첫 성공 사례를 연결한다. 현재37/46종·72사례·9종 잔여, 별도 부분0과 고정9/43 완료·34잔여다.
+
+## Repeater의 첫 capsule-only 설정 사례
+
+issued index0 80s Dream을75요청·365.674초로 수용했다. 실제15개 쓰기값 변화 뒤 전체141개 writable current와 모든 비값/unknown metadata가 한 Aload로 정확히 원래로 돌아왔다. 세 페이지64/64/13을 합친 독립 전체 관측14회/7쌍과 별도 새2989바이트 A/B 일치, 수명·Root 정리를 확인했다. scalar seed·보정·readonly 예외·허용 오차는0이다. 각 페이지 complete=false를 전체 provider 완전성으로 바꾸지 않고 모든141개 인덱스를 모아 대조했다.
+
+[첫 실제 증거](evidence/2026-11-14-repeater-preset-index0-native47.json)는 대표1/2만 수용한다. 표시이름 원복false와 실제 MIDI 처리·오디오·저장 미검증을 남긴다. 두 번째 서로 다른 issued entry가 필요하므로 완료 종37/46·완료 종72사례·잔여9종은 그대로다. 별도 부분 Repeater1사례를 더한 총 수용은73사례이며 고정9/43 완료·34잔여도 유지한다. 앞선 부분0 집계는 Mojito 완료 당시의 이력이다.
