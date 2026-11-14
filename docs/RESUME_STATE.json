@@ -604,7 +604,7 @@
     "new_preset_recall_restore_cases_scope": "74 cases in38 completed classes; no separate partial setting cases"
   },
   "next_units_in_order": [
-    "Keep Native47/95eeb72/MCP46. Repeater distinct indices0/1 complete PRESET-REPEATER scoped settings2/2 with each75DAQ, all141 writable current/all141 metadata exact after one Aload/no scalar corrections, fresh2989byte A/B equal and lifecycle/RootNoSave/owner0/saved6/MIDI0. Reuse both cases and completed141 scalar sweep. Next Root runs one bounded20-30minute Ghidra investigation of confirmed createFunctions, graph QI/vtables and transaction/readback paths. The offline ownership-manifest design is preparation only; no generic create/connect/reorder/delete or audio-edge capability is verified. Do not rebuild unchanged product; create fresh runtime bindings before the next live unit.",
+    "Complete selected native graph ownership manifest implementation, tests and independent review, then Root normal build/install and fresh doctor/source pins before one finite actual8.1.1 read-only ownership unit. Follow docs/GRAPH_OWNERSHIP_PLAN.md. Automatic manifest uses existing plugin_inspect graph request, fixed32 children/97nodes, focused class metadata, absentSlot witnesses and full report invalidation; no new MCP tool/field or graph mutation authority. Root Ghidra pass39records is closed/exported; reuse static evidence rather than repeating the same broad investigation. Preserve all accepted Repeater indices0/1 and prior completed sweeps.",
     "고정43개 중10개 완료/33개 잔여(부분28·미착수1·하드웨어4)다. 모든 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않고 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정38/46종·완료 종74사례·8종 잔여이며 별도 부분 사례0이다. Repeater는 서로 다른index0/1을 각141개 전체·한 load·보정0회·새2989바이트 A/B 일치로 수용했다. 표시이름 원복false와 MIDI 처리·오디오·Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater 사례와 기존141개 sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -621,10 +621,10 @@
   "last_measurement": "6866/7112 names,246 remaining;38/46 preset-setting classes,74 completed-class cases,8 classes remaining,partial0;fixed43 completed10/remaining33;Native47 raw677=accepted627+nonadmitted50.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Repeater preset-setting2/2 accepted; next bounded Ghidra graph edit-path investigation",
+    "unit": "Graph ownership manifest implementation and finite live preparation",
     "DAW_live_unit_running": false,
     "REA_running": false,
-    "offline_preparation_running": false,
+    "offline_preparation_running": true,
     "current_product_source_commit": "95eeb72",
     "native_unit": 47,
     "main_tools": 46,
@@ -639,7 +639,7 @@
     "job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 75,
-    "current_phase": "REPEATER_DISTINCT_TWO_CASES_ACCEPTED_NEXT_GRAPH_EDIT_INVESTIGATION",
+    "current_phase": "GRAPH_OWNERSHIP_IMPLEMENTATION_PENDING_TEST_REVIEW_INSTALL_LIVE",
     "maximum_tool_requests": 75,
     "current_job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "completed_subunits": [
@@ -871,6 +871,25 @@
       "first_chunk_RPC": 1404,
       "actual_calls": 0,
       "R2_fix_in_progress": true
+    },
+    "graph_ownership_manifest": {
+      "status": "SELECTED_IMPLEMENTATION_IN_ISOLATED_WORKTREE_NOT_INSTALLED_OR_LIVE_VERIFIED",
+      "plan": "docs/GRAPH_OWNERSHIP_PLAN.md",
+      "base": "874a4af",
+      "new_MCP_tools": 0,
+      "new_public_request_fields": 0,
+      "fixed_children_max": 32,
+      "fixed_retained_nodes_max": 97,
+      "required_grafts": [
+        "focused identity and first native class metadata",
+        "negative Slot attachment witnesses",
+        "full graph report invalidation"
+      ],
+      "Root_Ghidra_static_records": 39,
+      "Root_Ghidra_closed_and_reset": true,
+      "native_mutation_ABI_ready": false,
+      "actual_DAW_calls": 0,
+      "new_completion_credit": 0
     }
   },
   "remaining_preset_class_names": [
@@ -15646,7 +15665,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T08:23:36.544859+00:00",
+  "last_progress_update_utc": "2026-11-14T08:50:26.146674+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
