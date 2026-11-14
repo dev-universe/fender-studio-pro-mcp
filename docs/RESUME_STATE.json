@@ -13,7 +13,7 @@
   "installed_native_unit": 55,
   "installed_native_uuid": "52EFF0D5-FC83-3CF7-AE23-FD669D821098",
   "app_closed_observed": true,
-  "mcp_owner_stopped": true,
+  "mcp_owner_stopped": false,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -607,7 +607,7 @@
     "new_preset_recall_restore_cases_scope": "77cases in40completedclasses,partial0; SampleOne issuedsingleton1of1/full235 exactOandP/fresh5222byteA/B/oneAload; MIDI/model/audio/Save separate"
   },
   "next_units_in_order": [
-    "r64 Native55 Scope effect R1 CLOSED_NOT_ACCEPTED after46DAQ IDs3..48: secondf2image21863ms>20000; everyrequestguardPASS, no49/retrigger/off/inverse. RootNoSave/appfalse/immediateCUA/EOF0/hardwarethenps/locks/saved10/MIDI0 verified. Do not reuseclosedowner/session orreplaythisfailedruntime. Next finiteR4 prospectivecapturepair automation/closedimageperioddiagnostic isprivateoffline; futureScope namespace r66 needsfreshmetadata/context andreview. r65 reservedCV output-None readiness10request prep; Rootreview/actualselectionprecondition pending. Source4f9d7f2/Native55/source177/artifact13 unchanged; noinstallrepeat. Fixed14of43complete29remain, presets40of46/77, hardware4disconnected.",
+    "Current r66 fresh normal Native55 metadata-only owner ACTIVE; appclosed/DAQ0. DoNOTresendinitialize/toolslist. R5 prospective reference-aware rule isfrozen andindependentreviewpending; noactualplan/Toneadmissionyet. Rootmustreadreview, verifycurrent177/13/saved10, openfreshownedScratch andbindnewnativeidentities/banned10oldsessions, capturefirstoriginalemitfalse thenclock1000ms thensecondoriginal theninspect. LearnfixedreferenceonlyfromfreshflatpairbeforeOn, preserve81literalwires/12originals/oneOn/onepulse/Offbeforerestore. AnyunexpectedresultSTOPDAQ/RootNoSaveonly. Closedr64 46DAQ/21863ms imagefailure remainsunaccepted/noretriggerever. R65CV routeNone prep isseparate andneedsnewRootadmission; properexistingselectTrack replacesEditfocus-onlyhypothesis. Userexplicitlyskippedofficialinstallercomparison: nofile/loginaskorwait. Fixed14of43complete29remain, presets40of46/77, hardware4disconnected.",
     "고정43개 중14개 완료·29개 잔여(부분24·미착수1·하드웨어4)다. 소프트웨어25개이며 기존 ID와 완료조건을 유지한다. 단위별 노력과 요청 수가 달라 전체 시간 비율로 쓰지 않는다.",
     "프리셋 설정40/46종·완료 종77사례·6종 잔여·부분0이다. SampleOne singletondefault1/1은 Native54 전체235 exactO/P·새5222바이트A/B·한load·수명·Root정리로 수용했다. 완료 Level/Tone/Scope/VU/Mojito/Repeater/Chorder/SampleOne 프리셋과 scalar sweep은 반복하지 않는다. 전체 Control/MIDI/모델/audio/Save는 별도다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -624,21 +624,17 @@
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases/partial0,6classesremaining;fixed43completed14remaining29;Native54raw177=accepted169+nonadmitted8,plus1historicalMCPpredispatch.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "namespace": "r64",
-    "status": "CLOSED_NOT_ACCEPTED_IMAGE_DEADLINE_FAILURE",
-    "actual_DAQ": 46,
-    "request_guards_passed": 46,
-    "unknown_outcomes": 0,
-    "MCP_predispatch_rejections": 0,
-    "owner_stopped": true,
+    "namespace": "r66",
+    "status": "METADATA_ONLY_FRESH_OWNER_R5_RULE_REVIEW_PENDING",
+    "actual_DAQ": 0,
+    "metadata_intents": 3,
+    "metadata_unique_responses": 2,
+    "owner_stopped": false,
     "app_closed": true,
-    "saved10_equal": true,
-    "Tone_On_episodes": 1,
-    "Scope_retrigger_pulses": 0,
-    "all41_final_restoration_reached": false,
-    "Root_NoSave": true,
-    "unplanned_recovery_DAQ": 0,
-    "fixed_count_increment": 0
+    "tools": 46,
+    "actions": 5,
+    "state_actions": 7,
+    "Tone_activation_admitted": false
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2764,7 +2760,7 @@
     "Multi_controls_128_129_actual": 67
   },
   "latest_root_observation_at": "2026-11-14T22:32:04.715283+00:00",
-  "current_live_unit": null,
+  "current_live_unit": "r66 metadata-only owner, app closed; prospective R5 rule review pending",
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
     "plugin": "Multi Instrument",
@@ -18435,7 +18431,7 @@
     }
   },
   "previous_tool_schema_canonical_sha256": "46a0d62d85a194c2400526c72faa055706721cc083af7568196995d913208b02",
-  "current_tool_schema_status": "Native55 fresh46/action5/state7; r64 actual46 native inspect/read/scalar requests, no pulse; owner closed",
+  "current_tool_schema_status": "Fresh r66 Native55 tools46/action5/state7 exactly equal audited schema; actual r66DAQ0; owner active",
   "native54_compressor_reset_qualified": {
     "schema": 1,
     "status": "ACCEPTED_CONTROL_COMPRESSOR_EFFECT_AND_LIFECYCLE_ONLY",
@@ -19328,5 +19324,41 @@
     "same_saved_scratch_r64_initial_CV_selected": false,
     "CV_direct_execution_admission": false,
     "known_precondition_blocker": "r64 original tracks_list7: Surround Panner selected; existing CV Music index60 not selected. Do not run the r65 kit to rediscover this; select/monitor coupling requires a separate prospectively scoped preparation."
+  },
+  "official_installer_comparison_user_decision": {
+    "date": "2026-11-15",
+    "status": "SKIPPED_BY_EXPLICIT_USER_INSTRUCTION",
+    "official_installer_path_or_MyFender_login_request_closed": true,
+    "do_not_request_again": true,
+    "do_not_wait_for_official_artifact": true,
+    "overrides_previous_official_download_wait": true,
+    "existing_installation_model_signature_problem_remains_unverified": true,
+    "other_implementation_and_actual_validation_continue": true,
+    "model_control_goal_not_cancelled": true
+  },
+  "scope_primary_effect_followup": {
+    "R4_status": "NOT_READY_REAL_JPEG_REFERENCE_COLLISION_PRESERVED",
+    "R4_elapsed_seconds": 303.982,
+    "R4_report_sha256": "efa4b4f30cdba9a7744e4c0ce921f8420dc6112fa3b10df4b008475e53026c42",
+    "R5_status": "FROZEN_OFFLINE_READY_INDEPENDENT_REVIEW_PENDING",
+    "R5_elapsed_seconds": 393.944,
+    "R5_report_sha256": "6dcd403e794e94ded971d7fe7f25da8ab4b694730b25378367221f55b3a06197",
+    "R5_manifest_sha256": "7f5004254ea95cb7e92ca8bd75a31803666410c18dbc378fdf5ce39d26eb288c",
+    "new_prospective_limits": {
+      "reference_margin_pixels": 8,
+      "opposite_side_intersection_max_columns": 12,
+      "intersection_max_fraction": 0.2,
+      "ordinary_gap_max_columns": 6,
+      "ordinary_gap_max_fraction": 0.1,
+      "ordinary_anchor_max_span_pixels": 12
+    },
+    "color_excursion_period_count_tolerances_and_sine_fit_unchanged": true,
+    "reference_learned_only_from_fresh_pre_On_flat_pair": true,
+    "failed_r64_unchanged_unaccepted": true,
+    "literal_plan_DAQ": 81,
+    "original_images": 12,
+    "next_actual_namespace": "r66",
+    "existing_fresh_r66_metadata_must_not_be_resent": true,
+    "actual_DAQ": 0
   }
 }
