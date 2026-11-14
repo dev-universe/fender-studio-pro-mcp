@@ -1392,8 +1392,6 @@ fn focused_final_borrowed_pass_rejects_absence_change_after_metadata_cleanup() {
     let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
     result.check(&mut || Ok(())).unwrap();
     result.check_borrowed_attachments(&mut || Ok(())).unwrap();
-    // A separate retained context's metadata cleanup can change an absent edge
-    // after the focused reflection pass. The final pass creates no owners.
     child
         .delegates
         .borrow_mut()

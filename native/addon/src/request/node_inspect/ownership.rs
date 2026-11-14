@@ -426,8 +426,6 @@ mod tests {
             value: GraphOwnershipValue::read(&report(), folder.identity().clone()).unwrap(),
             folder,
         };
-        // The synthetic node proof tests Reply ownership and serialization;
-        // native focused traversal/receipt stability is covered in node-api.
         ownership.folder.check().unwrap();
         folder_fixture.switch_document();
         assert!(ownership.check(&mut || Ok(())).is_err());
