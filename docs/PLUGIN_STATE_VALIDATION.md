@@ -982,3 +982,12 @@ Native52 adds read_rumble_named_parameters while retaining46 tools and the previ
 A confirmed source-review defect allowed coherently forged GUIDs and their recomputed digest to pass without comparison to retained model IDs. The fixed shared owner compares every ordered wire GUID with retained actual models. Independent rejection checks and104 slot/mode/publication combinations pass; legitimate named/indexed bytes remain unchanged. The installed source4a6e115 passed Root175 Rust and372 Node tests, identical addon391 tests and native676 unit/20 doc tests. Existing native lint warnings remain documented. Normal installation and fresh actual schema were verified.
 
 All26 model IDs,22 current numeric settings and DSP39 stayed exact around the named reads. Final refusal and known closure passed. Final content pixels remain unknown despite exact AX title. No writer, model/preset selection, audio or persistence claim is added. A separate unmute availability hypothesis is being prepared with unchanged software, three named observation phases, strict current-state brackets, and target mute restoration.
+
+
+### Limiter minimum reduction reset
+
+Native53의 `reset_minimum_reduction`은 정확한 Limiter 클래스와 `resetmin` Toggle에 한정된다. 명령 응답은 `applied_unverified`, `verified=false`, `effects_verified=false`를 유지한다. 버튼의 눌림과 해제만으로 누적 미터의 효과를 확인했다고 표시하지 않는다.
+
+[별도 실제 효과 수용 근거](evidence/2026-11-15-limiter-minimum-reset-qualified-native53.json)는 R4의48요청·465.609초 중 긍정47개를 다룬다. 한 번의 Tone 켜기와 끄기 뒤 유지된 최소값 -35.55dB를 독립적으로 두 번 읽었다. 초기화 한 번 뒤 두 관측이 최초0.00dB와 정확히 같았다. 현재 미터는 자신의 새 무입력 참조로 돌아왔고 Tone10개와 Limiter13개의 전체 값·메타데이터가 정확히 복원됐다. 실제 편집기 표시, 소유 Scratch의 저장 없는 종료, 앱·owner 종료, 두 잠금 해제, 저장본10개와 MIDI0 보존을 확인했다.
+
+마지막 가짜 UID 요청의 외부 결과는 `outcome_unknown`이며 미수용이다. 내부 `not_applied` 본문만으로 외부 결과를 성공이나 확정 거부로 바꾸지 않았다. 원래48요청 전체 절차의 실패와 앞선 세 실패도 보존한다. 기존 `CONTROL-LIMITER` 효과·완료·환경 보존 조건만 완료로 반영해 고정12/43개 완료·31개 잔여다. 프리셋 표시 이름, 오디오·저장·하드웨어와 전체 플러그인 지원은 이 근거의 범위에 포함하지 않는다.
