@@ -21,9 +21,9 @@
     "preset_classes_plan": 46,
     "preset_cases": 68,
     "remaining_preset_classes": 11,
-    "additional_partial_setting_cases": 0
+    "additional_partial_setting_cases": 1
   },
-  "runtime_note": "Native47 Scope issued default singleton:46DAQ/329.338s; declared showSecondary preparation, one apply/one Aload restores all31 O exactly, fresh758byte A/B equal, lifecycle, final all31 P exact, Root NoSave/owner0/saved6/MIDI0. PRESET-SCOPE1/1 complete; trigger effects remain separate.",
+  "runtime_note": "Native47 VU index1 Cosy Master:39DAQ/312.738s, sens1.00to0.30 positive, all11 current/metadata exact restore via one Aload/no correction, fresh131byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Representative1of2; label restorationfalse.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -153,10 +153,12 @@
       "title": "VU Meter",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음",
+      "actually_verified": "First distinct issued index1 Cosy Master:39DAQ/312.738s; sensitivity positive, all11 values/metadata exactly restored by one Aload/no correction; fresh131byte A/B equal, lifecycle and Root closure. Representative1of2.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "remaining_after_verified_actions": "One distinct index2 Fast Detection remains, no replay of index1. Preset display label original restoration false; no wholeplugin/audio/Save claim.",
+      "evidence": "docs/evidence/2026-11-14-vu-preset-index1-native47.json"
     },
     {
       "id": "PRESET-MULTI",

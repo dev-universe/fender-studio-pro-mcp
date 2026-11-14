@@ -35,7 +35,7 @@
 |PRESET-AMPIRE|Ampire|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-PEDALBOARD|Pedalboard|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-RUMBLE|Rumble Native|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-VUMETER|VU Meter|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-VUMETER|VU Meter|부분 완료|index1 Cosy Master 첫 사례:312.738초·39요청, sens 실제변화·전체11값/metadata 정확복원·새131바이트 A/B 동일·수명/Root정리 완료|대표2건 중1건 남음: 별도 index2 Fast Detection. 첫 사례 반복 금지. 프리셋 표시이름 원복false·전체plugin/audio/Save 미검증.|
 |PRESET-MULTI|Multi Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
@@ -114,3 +114,5 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 Tone의 서로다른 두 사례도 수용해 현재34/46종·67사례·12종 잔여이며 별도 부분 사례0이다. 위33/46 Level 체크포인트는 이력이다.
 
 Scope singleton을 새로 수용한 현재 집계는35/46종·68사례·11종 잔여, 고정43개 중7개 완료·36개 잔여(부분31·미착수1·하드웨어4)다. 앞선 Tone34/46 체크포인트는 이력이다.
+
+VU Meter 첫 사례는 별도 부분1건이다. 완료 종35/46·완료 종68사례·고정7/43은 두 번째 서로 다른 사례를 수용하기 전까지 늘리지 않는다.

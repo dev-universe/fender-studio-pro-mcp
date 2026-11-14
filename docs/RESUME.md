@@ -26,7 +26,7 @@
 - 최신 Room index1은1435.281초·실제 DAW40회·별도 MCP 입력 거부2회였다. 쓰기16개와 전체19개 metadata, 서로 다른 fresh A/B725바이트 일치를 확인했다. readonly2/전체19 current와 프리셋 표시 이름 복원은 false다. index0과 이번 index1은 반복하지 않는다.
 - Level은 기존 reset2 효과·33개 조회에 이어 Native47 R2의6설정 변경/독립읽기/정확원복·GUI를438.119초·57요청·14setter로 완료했다. 고정 CONTROL-LEVEL 제어 범위 완료이며 프리셋/audio/Save는 별도다. 다른 K모드의 MCP 쓰기와 EBU fixed33 descriptor 완전성은 미검증이다.
 - Native46 R1의 mode25→23 unknown 실패21요청과 별도 GUI 모드 관측22요청은 보존한다. 최신 제한 profile 수정은 native328/Level22 검사와 정상12.10초 build/install을 통과했다. main/bridge는570979c 바이트를 재사용했다. 동일 실기와 실패 실행을 반복하지 않는다.
-- 최신 앱·owner는 종료됐고 저장본6개 동일·MIDI0/0을 확인했다. 두 물리 장치는 분리됐다. Level 프리셋 index1/2도 각51요청·전체13복원·새406바이트 A/B/정리로2/2 완료했다. 표시이름 원복은 false다. Tone index3/5도 각40요청·전체10복원·새371바이트 A/B/정리로2/2 완료했다. Scope singleton도329.338초·46요청으로 완료했다. 전체31의 준비O를 한 load로 정확히 복원하고 새758바이트 A/B 일치·초기P 전체복원·정리까지 확인했다. Scope 두 트리거 효과는 별도다. 다음은 VU Meter·Repeater·Mojito 중 가장 작은 프리셋 설정 사례의 기존 근거를 오프라인으로 준비한다.
+- 최신 앱·owner는 종료됐고 저장본6개 동일·MIDI0/0을 확인했다. 두 물리 장치는 분리됐다. Level 프리셋 index1/2도 각51요청·전체13복원·새406바이트 A/B/정리로2/2 완료했다. 표시이름 원복은 false다. Tone index3/5도 각40요청·전체10복원·새371바이트 A/B/정리로2/2 완료했다. Scope singleton도329.338초·46요청으로 완료했다. 전체31의 준비O를 한 load로 정확히 복원하고 새758바이트 A/B 일치·초기P 전체복원·정리까지 확인했다. Scope 두 트리거 효과는 별도다. VU index1 Cosy Master도312.738초·39요청으로 전체11값/metadata 복원·새131바이트 A/B·정리를 완료해 별도 부분1/2 사례다. 다음은 준비된 VU index2 Fast Detection을 별도 fresh 문맥에서 최대39요청으로 검증한다. 표시이름 원복false를 보존하고 첫 사례를 반복하지 않는다.
 - 전체 종료 시각은 미정이다. 단위 완료마다 실제 시간·체크리스트·완료/잔여와 다음 유한 단위 ETA를 보고한다. 구체적 다음 순서는 `RESUME_STATE.json`을 따른다.
 
 아래 체크포인트와 추가 기록은 누적 이력이다. 현재 실행 여부·다음 순서는 `RESUME_STATE.json`의 `current_execution`과 `next_units_in_order`를 우선한다.
