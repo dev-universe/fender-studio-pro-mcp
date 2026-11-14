@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Reuse accepted Native51 actual23DAQ: all26 fixed immediate IControllers present/count0, metadata pair exact, serialized22 native-name-coverage0. Source9eef6f0/Native51 installed46tools, model26/current22/fullDSP39 bracket and known closure verified. Do not repeat census or Native50 accepted/failed witnesses. Next bounded SOURCE investigation of declared IController findParameter slot5/CString named route, with existing gui_parameter/controller_probe and level_settings reuse; count0 does not prove named lookup absence. Ground lifetime/owner/name attachment/model/doc guards before any closed new reader. No arbitrary caller names/paths/writes. If sound, implement/review/normalinstall/freshfinite named-read unit. Otherwise separate Main0/Noneinput/emptyAudio targetmute0->1 processing initialization hypothesis, no transport/event/private lifecycle without separate finite contract. Existing broad resources/monitor/vmmap/catalog analyses carry; do not replay. Preserve remaining32/hardware4 queue.",
+    "Native51 actual23DAQ remains accepted scoped all26 IControllers present/count0, namedcoverage0/22, exact26models/22numbers/DSP39 and closure. Do not replay it. Bounded named SOURCE grounding and2designs/judge complete; chosen B uses shared Rumble fixed-controller ownership and closed Indexed/Named modes, trusted mode outside optional lease; no unrelatedGUI extraction. Native52 read_rumble_named_parameters contract frozen native25/adapted27/failure10; sourceoperationrumble_named_parameters_read. Three isolated writers now implement native, main/JS, private finite23DAQ recipe. After commits independentreview, Root normalbuild/install/fresh46tool enum7 schema and new23DAQ namedreadpair15/16/refusal25 with model26/current22+DSP39 brackets/UI/closure. Native-derived ASCII key sets bounded64bytes/64slot/256total; model ANDname sets bracketed; count0permitsnamedfind, namedcountdriftfailswhole, nofakeindex/noarbitrarycallername/no writer. Currentinstalledsource9eef6f0 Native51 remains untilreviewedNormal52 install. ExistingNative50/51 evidence, full remaining32 and hardware4 queue preserved. Only if namedroutefails consider separatelycontracted root-qualified or processinginitializationhypotheses; no silentprefix/retry or repeatedbroadinventories.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -17742,5 +17742,27 @@
   },
   "native51_raw_requests": 23,
   "native51_accepted_scoped_read_requests": 23,
-  "native51_failed_or_nonadmitted_requests": 0
+  "native51_failed_or_nonadmitted_requests": 0,
+  "native52_named_reader_preparation": {
+    "status": "IMPLEMENTATION_IN_ISOLATED_WORKTREES_NOT_INSTALLED_NOT_LIVE",
+    "base_commit": "414916d",
+    "design_selected": "B_shared_Rumble_ownership_with_trusted_mode_outside_optional_lease",
+    "same_model_independent_design_scores": {
+      "A": 9,
+      "B": 9
+    },
+    "contract_sha256": "126dd7fdc8ccac1419af987641a734c56e072761ef255c368f27247f0944bede",
+    "planned_action": "read_rumble_named_parameters",
+    "planned_native_operation": "rumble_named_parameters_read",
+    "planned_native_unit": 52,
+    "planned_DAQ": 23,
+    "DAQ_executed": 0,
+    "native_success_fields": 25,
+    "adapted_success_fields": 27,
+    "failure_fields": 10,
+    "no_unrelated_GUI_extraction": true,
+    "hardware_items_blocked": 4,
+    "fixed43_increment": 0,
+    "source_review_build_install_and_live_pending": true
+  }
 }
