@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
+  "last_completed_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -66,28 +66,19 @@
       "Tone Generator",
       "Scope",
       "VU Meter",
-      "Mojito"
+      "Mojito",
+      "Repeater"
     ],
-    "new_preset_recall_restore_cases": 72,
-    "remaining_preset_classes": 9,
+    "new_preset_recall_restore_cases": 74,
+    "remaining_preset_classes": 8,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
     "new_hybrid_preset_recall_restore_cases": 12,
-    "partial_preset_classes": {
-      "Repeater": {
-        "accepted_cases": 1,
-        "issued_indices": [
-          0
-        ],
-        "required_distinct_cases": 2,
-        "class_complete": false,
-        "scope": "capsule-only exposed writable preset settings; label restorationfalse; no whole-plugin/audio/Save claim"
-      }
-    },
-    "new_preset_cases_in_completed_classes": 72,
-    "new_capsule_only_preset_classes_completed": 28,
-    "new_capsule_only_preset_recall_restore_cases": 55,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 74,
+    "new_capsule_only_preset_classes_completed": 29,
+    "new_capsule_only_preset_recall_restore_cases": 57,
     "new_hybrid_preset_classes_completed": 6,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -608,14 +599,14 @@
     },
     "level_meter_six_registered_settings_changed_read_restored": 6,
     "level_meter_reset_effects_independently_verified": 2,
-    "partial_capsule_only_preset_setting_cases": 1,
-    "new_preset_total_accepted_setting_cases_including_partial": 73,
-    "new_preset_recall_restore_cases_scope": "72 cases in completed classes; separate partial Repeater1 gives73 accepted setting cases overall"
+    "partial_capsule_only_preset_setting_cases": 0,
+    "new_preset_total_accepted_setting_cases_including_partial": 74,
+    "new_preset_recall_restore_cases_scope": "74 cases in38 completed classes; no separate partial setting cases"
   },
   "next_units_in_order": [
-    "Keep Native47/95eeb72/MCP46. Repeater issued index0 80s Dream passed75DAQ/365.674s with15 actual changes, all141 writable current/all141 metadata exactly restored by one Aload/no scalar corrections, fresh2989byte A/B equal and lifecycle/RootNoSave/owner0/saved6/MIDI0. Reuse this first1/2 case. Next Root checks exact Analog Machine index1 payload, freezes one finite positive/whole141/isolation/restore contract and budget, then uses fresh runtime bindings for the distinct second case. Do not repeat completed141 scalar sweep or rebuild unchanged product. Nested graph offline design is preparation only; generic create/connect/reorder/delete remains open.",
-    "고정43개 중9개 완료/34개 잔여(부분29·미착수1·하드웨어4)다. 모든 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않고 분모를 조용히 늘리지 않는다.",
-    "현재 프리셋 설정37/46종·완료 종72사례·9종 잔여이며 별도 부분 Repeater1사례로 총 수용73사례다. Repeater index0은141개 전체를 한 load로 정확 복원했고 새2989바이트 A/B가 같았다. 표시이름 원복false와 두 번째 서로 다른 사례 미완료를 보존한다. 완료한 Level/Tone/Scope/VU/Mojito와 이번 Repeater 첫 사례·기존141개 sweep을 반복하지 않는다. 전체plugin/audio/Save로 확장하지 않는다.",
+    "Keep Native47/95eeb72/MCP46. Repeater distinct indices0/1 complete PRESET-REPEATER scoped settings2/2 with each75DAQ, all141 writable current/all141 metadata exact after one Aload/no scalar corrections, fresh2989byte A/B equal and lifecycle/RootNoSave/owner0/saved6/MIDI0. Reuse both cases and completed141 scalar sweep. Next Root runs one bounded20-30minute Ghidra investigation of confirmed createFunctions, graph QI/vtables and transaction/readback paths. The offline ownership-manifest design is preparation only; no generic create/connect/reorder/delete or audio-edge capability is verified. Do not rebuild unchanged product; create fresh runtime bindings before the next live unit.",
+    "고정43개 중10개 완료/33개 잔여(부분28·미착수1·하드웨어4)다. 모든 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않고 분모를 조용히 늘리지 않는다.",
+    "현재 프리셋 설정38/46종·완료 종74사례·8종 잔여이며 별도 부분 사례0이다. Repeater는 서로 다른index0/1을 각141개 전체·한 load·보정0회·새2989바이트 A/B 일치로 수용했다. 표시이름 원복false와 MIDI 처리·오디오·Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater 사례와 기존141개 sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
     "공유press/release/neutral·문맥소실·unknown보유계약과독립witness를준비한다. ChorderGUI directsetValue근거를begin/end나임의notify호출허가로바꾸지않는다. scheduled-note-to-Level은내부신호관측만입증하며GUI/물리키완료로세지않는다. 기존분석을넓게반복하지않는다.",
     "Ampire/Pedalboard alias/linkedmix/hostbypass와구조복원,Mustang/Rumble실제modeldomain,Chorder5동작·다른입력모델,instrumentMIDI/macros/다른padfocus와남은프리셋을각유한계약/실제관측으로진행한다. 새장애는기존완료물의하위수정으로구분한다.",
@@ -627,10 +618,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-14.md",
-  "last_measurement": "6866/7112 names,246 remaining;37/46 preset-setting classes,72 completed-class cases plus1 partial Repeater case,9 classes remaining;fixed43 completed9/remaining34;Native47 raw602=accepted552+nonadmitted50.",
+  "last_measurement": "6866/7112 names,246 remaining;38/46 preset-setting classes,74 completed-class cases,8 classes remaining,partial0;fixed43 completed10/remaining33;Native47 raw677=accepted627+nonadmitted50.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Repeater preset-setting1/2 accepted; next bounded Analog Machine payload and contract preparation",
+    "unit": "Repeater preset-setting2/2 accepted; next bounded Ghidra graph edit-path investigation",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": false,
@@ -639,26 +630,26 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
+    "latest_closed_DAW_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "31ca37f4-f9e2-4888-b087-ee9c06f5e4ec",
+    "latest_closed_job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "31ca37f4-f9e2-4888-b087-ee9c06f5e4ec",
+    "job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 75,
-    "current_phase": "REPEATER_FIRST_CASE_ACCEPTED_SECOND_DISTINCT_CASE_PENDING",
+    "current_phase": "REPEATER_DISTINCT_TWO_CASES_ACCEPTED_NEXT_GRAPH_EDIT_INVESTIGATION",
     "maximum_tool_requests": 75,
-    "current_job_id": "31ca37f4-f9e2-4888-b087-ee9c06f5e4ec",
+    "current_job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "completed_subunits": [
-      "Repeater distinct80s Dream index0 capsule-only setting case"
+      "Repeater distinct Analog Machine index1 capsule-only setting case"
     ],
     "subunits_total": 1,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 365.674
+    "current_elapsed_seconds": 299.143
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -690,10 +681,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "Repeater Analog Machine index1 exact payload review, fresh141-setting contract and one distinct live case",
+      "next_finite_unit": "Bounded Ghidra investigation of graph createFunctions, QI/vtables, transaction and independent topology readback",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        10,
-        20
+        20,
+        30
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -702,10 +693,10 @@
       ],
       "bookkeeping_overrun_reason": "underestimated reconciliation/report time while integrating and installing Level40; not new plugin scope"
     },
-    "next_finite_unit": "Repeater Analog Machine index1 exact payload review, fresh141-setting contract and one distinct live case",
+    "next_finite_unit": "Bounded Ghidra investigation of graph createFunctions, QI/vtables, transaction and independent topology readback",
     "next_finite_unit_preparation_and_runtime_minutes": [
-      10,
-      20
+      20,
+      30
     ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
@@ -719,8 +710,8 @@
   "last_runtime_verified_native_unit": 47,
   "last_runtime_verified_source_commit": "95eeb72",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
-  "last_completed_live_elapsed_seconds": 365.674,
+  "last_completed_live_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
+  "last_completed_live_elapsed_seconds": 299.143,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -890,8 +881,7 @@
     "SampleOne",
     "Impact",
     "CV Instrument",
-    "Chorder",
-    "Repeater"
+    "Chorder"
   ],
   "previous_pause": {
     "observed_at": "2026-11-12T09:50:26.559375+00:00",
@@ -3629,14 +3619,14 @@
   "remaining_work_breakdown": {
     "document": "docs/WORK_BREAKDOWN_2026-11-13.md",
     "data": "docs/WORK_BREAKDOWN_2026-11-13.json",
-    "remaining_deliverables": 34,
-    "partial": 29,
+    "remaining_deliverables": 33,
+    "partial": 28,
     "unstarted": 1,
     "hardware_blocked": 4,
     "historical_total_unknown": true,
     "counts_are_not_equal_effort": true,
     "fixed_backlog_baseline": 43,
-    "completed_since_baseline": 9
+    "completed_since_baseline": 10
   },
   "chorder_current_value_r8_failed": {
     "status": "failed_cleaned_up",
@@ -15094,7 +15084,7 @@
   "native46_runtime_actual_total_requests": 83,
   "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
-  "last_runtime_verified_scope": "Repeater issued index0 representative preset setting1/2:all141 writable current and metadata exact after one Aload, independent fresh2989byte serialization and closure. Preset label restorationfalse; no whole-plugin/audio/Save claim.",
+  "last_runtime_verified_scope": "Repeater distinct issued indices0/1 representative preset settings2/2: all141 writable current and metadata exact after one Aload per case, independent fresh2989byte serialization and closure. Preset label restorationfalse; MIDI processing, whole-plugin, audio and Save remain unverified.",
   "native46_level_settings_r1_failed": {
     "schema": 1,
     "status": "CLOSED_FAILED_POST_MODE_COUNT_GUARD_NO_RETRY_NO_INVERSE",
@@ -15142,8 +15132,8 @@
     "post_owner_MIDI_destinations": 0
   },
   "native46_failed_unit_requests": 21,
-  "last_closed_live_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
-  "last_closed_live_elapsed_seconds": 365.674,
+  "last_closed_live_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
+  "last_closed_live_elapsed_seconds": 299.143,
   "native46_mode_profiles_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_BOUNDED_GUI_MODE_PROFILE_OBSERVATION_ONLY",
@@ -15287,8 +15277,8 @@
     "response_journal_sha256": "1f21a22fbbafb99dd65265993a3a8c975ada865136d13b8617b17a637cb92722",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "native47_runtime_actual_total_requests": 602,
-  "native47_accepted_completed_unit_requests": 552,
+  "native47_runtime_actual_total_requests": 677,
+  "native47_accepted_completed_unit_requests": 627,
   "native_source_commit": "95eeb72",
   "previous_product_source_map_sha256": "0a9ed52ac536b1e6ac205c89036b5b9bca7272c3eb23f35a990b05c2698d2c6e",
   "next_collector_requires_fresh_full_source_and_runtime_binding": true,
@@ -15360,9 +15350,7 @@
   },
   "level_preset_current_distinct_setting_cases": 2,
   "level_preset_required_distinct_setting_cases": 2,
-  "current_partial_preset_setting_cases": {
-    "Repeater": 1
-  },
+  "current_partial_preset_setting_cases": {},
   "native47_level_preset_index2_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_LEVEL_INDEX2_AND_TWO_DISTINCT_SCOPED_SETTING_CASES_AFTER_CLOSURE",
@@ -15658,7 +15646,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T08:16:38.669919+00:00",
+  "last_progress_update_utc": "2026-11-14T08:23:36.544859+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
@@ -15888,8 +15876,8 @@
     "response_journal_sha256": "b2c0954068278388dc51bae9a802ec9007c7c726b95c821ccf224d3c450e3306",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "last_closed_DAW_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
-  "last_accepted_DAW_unit": "Native47 Repeater 80s Dream index0:75DAQ/365.674s,15 positive changes;all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. First distinct preset-setting case1/2; preset label restorationfalse and class incomplete.",
+  "last_closed_DAW_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
+  "last_accepted_DAW_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
   "mojito_legacy_pan_gap": {
     "status": "UNRESOLVED_LEGACY_STORED_ATTRIBUTE_CURRENT_PROVIDER",
     "fixed_backlog_owner": "CONTROL-MOJITO",
@@ -16367,7 +16355,7 @@
     ],
     "previous_failures_preserved": true
   },
-  "repeater_preset_current_distinct_setting_cases": 1,
+  "repeater_preset_current_distinct_setting_cases": 2,
   "repeater_preset_required_distinct_setting_cases": 2,
   "native47_repeater_preset_index0_actual": {
     "schema": 1,
@@ -16474,5 +16462,148 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "root_contract_sha256": "8e8e14191801870f8b1b96c027e7caea3eb2ff2bd3fcbe51b488f511a191cf3f",
     "UI_budget_amendment_sha256": "58198c2661ba10607acf62691f90d1ba18f781241f1ef2cf54538dd8d5c99e6c"
+  },
+  "native47_repeater_preset_index1_actual": {
+    "schema": 1,
+    "status": "ROOT_ACCEPTED_SECOND_DISTINCT_CAPSULE_PRESET_SETTING_CASE",
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "native_unit": 47,
+    "product_source_commit": "95eeb728289f712fd932817132427543c36e3530",
+    "job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
+    "closed_at": "2026-11-14T08:23:36.544859+00:00",
+    "actual_elapsed_seconds": 299.143,
+    "raw_DAW_requests": 75,
+    "metadata_requests": 2,
+    "paired_unique_DAW_receipts": 75,
+    "unknown_DAW_outcomes": 0,
+    "MCP_predispatch_errors": 0,
+    "counts": {
+      "host_status": 1,
+      "session_get": 4,
+      "channels_list": 5,
+      "channel_set": 2,
+      "tracks_list": 4,
+      "operation_run": 1,
+      "plugin_inspect": 4,
+      "plugin_editor_open": 3,
+      "plugin_parameters": 42,
+      "plugin_state.capture": 2,
+      "plugin_presets.list": 2,
+      "plugin_presets.apply": 1,
+      "plugin_state.restore": 1,
+      "plugin_state.release": 2,
+      "plugin_presets.release": 1
+    },
+    "issued_index": 1,
+    "issued_name": "Analog Machine",
+    "issued_catalog_count": 15,
+    "metadata_title": "Analog Machine",
+    "full_provider_records": 141,
+    "writable": 141,
+    "readonly": 0,
+    "provider_pages_per_observation": 3,
+    "provider_page_callbacks": 42,
+    "complete_provider_reads": 14,
+    "independent_provider_pairs": 7,
+    "native_individual_pages_complete_flag": false,
+    "complete141_reconstructed_from_all_pages": true,
+    "positive_changed_writable_names": [
+      "timeFreq",
+      "useNoteVelocity",
+      "repeatpattern.stepCount",
+      "repeatpattern.baseVelocity",
+      "repeatpattern.individualPitch",
+      "repeatpattern.individualVelocity",
+      "repeatpattern.step1.velocity",
+      "repeatpattern.step1.gate",
+      "repeatpattern.step2.velocity",
+      "repeatpattern.step2.transpose",
+      "repeatpattern.step3.velocity",
+      "repeatpattern.step3.transpose",
+      "repeatpattern.step4.velocity",
+      "repeatpattern.step5.velocity",
+      "repeatpattern.step5.transpose",
+      "repeatpattern.step6.velocity",
+      "repeatpattern.step6.transpose",
+      "repeatpattern.step7.velocity",
+      "repeatpattern.step7.transpose",
+      "repeatpattern.step8.velocity",
+      "repeatpattern.step9.velocity",
+      "repeatpattern.step10.velocity",
+      "repeatpattern.step10.gate",
+      "repeatpattern.step10.transpose",
+      "repeatpattern.step11.velocity",
+      "repeatpattern.step12.velocity",
+      "repeatpattern.step12.transpose",
+      "repeatpattern.step13.velocity",
+      "repeatpattern.step13.transpose",
+      "repeatpattern.step14.velocity",
+      "repeatpattern.step15.velocity",
+      "repeatpattern.step15.transpose",
+      "repeatpattern.step16.velocity",
+      "repeatpattern.step16.transpose"
+    ],
+    "all141_writable_current_original_exact": true,
+    "all141_nonvalue_unknown_metadata_exact": true,
+    "capsule_only_writable_original_restoration": true,
+    "scalar_seed_or_correction_setters": 0,
+    "readonly_exception_or_tolerance": false,
+    "fresh_independent_A_B_equal": true,
+    "distinct_capture_requests_and_tokens": true,
+    "serialized_byte_count": 2989,
+    "serialized_sha256": "9d454f140e51e12b4f8affae5b8f538794039fb4217a82a00e1a65e031fc2105",
+    "serialization": "component_alias_IStorable",
+    "serialization_source": "component_alias_storable",
+    "release_B_A_catalog_verified": true,
+    "released_catalog_refused_not_applied": true,
+    "timed_expiry_verified": false,
+    "expected_released_catalog_refusal_has_native_rejected_envelope": true,
+    "Music_track_mute1_separately_verified": true,
+    "associated_audio_output_mute1_verified": true,
+    "Main_volume0_verified": true,
+    "target_audio_fader_unchanged": true,
+    "MIDI_input_None_actual_UI_verified": true,
+    "record_monitor0_and_stopped_verified": true,
+    "Root_actual_GUI_initial_changed_restored_observed": true,
+    "original_preset_display": "default*",
+    "final_preset_display": "Analog Machine*",
+    "preset_display_original_restored": false,
+    "new_case_accepted": 1,
+    "current_distinct_cases_for_class": 2,
+    "required_distinct_cases_for_class": 2,
+    "class_complete": true,
+    "whole_plugin_complete": false,
+    "strict_fixed_name_increment": 0,
+    "hardware_audio_MIDI_processing_or_Song_Save_proven": false,
+    "Root_NoSave": true,
+    "app_closed_observed": true,
+    "owner_EOF_exit_code": 0,
+    "owner_process_absent": true,
+    "saved6_unchanged": true,
+    "MIDI_sources": 0,
+    "MIDI_destinations": 0,
+    "request_journal_sha256": "b636d113dfafbd0b4ad6ce6c05d13a2553ce6ce6bb8d90f29d20da1ef718abe1",
+    "response_journal_sha256": "ce84a58b002359a70b8a87337de1554dd2bfabfc60685e18faa073c6c267020c",
+    "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
+    "root_contract_sha256": "f7756a425adfe5845a33f947805247cb45f79be33bf57a4ca3a6ed362fb673ec",
+    "distinct_accepted_indices": [
+      0,
+      1
+    ],
+    "prior_case_evidence": "docs/evidence/2026-11-14-repeater-preset-index0-native47.json",
+    "prior_case_evidence_sha256": "0b87bf1ceadeec4b28a5d1d431e2a2af83d176bcf7f581eeacd1791a2d6c41c8"
+  },
+  "repeater_preset_class_admission": {
+    "distinct_indices": [
+      0,
+      1
+    ],
+    "completed": true,
+    "scope": "DSP141 writable141/all141 metadata, one capsule load per case, no scalar corrections, independent fresh serialized identity; preset labels, MIDI processing, whole plugin, audio and Save excluded",
+    "evidence": [
+      "docs/evidence/2026-11-14-repeater-preset-index0-native47.json",
+      "docs/evidence/2026-11-14-repeater-preset-index1-native47.json"
+    ],
+    "previous_first_case_history_preserved": true
   }
 }

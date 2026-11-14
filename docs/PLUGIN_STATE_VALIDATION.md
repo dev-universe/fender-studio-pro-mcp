@@ -12,9 +12,9 @@ and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
 Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
-current-value names, 246 remaining; 37/46 preset-setting classes, 72 cases in completed classes,
-9 remaining, plus one separate partial Repeater case. The fixed remaining-work snapshot has nine of43 items complete
-and34 remaining. These are different denominators, not whole-product coverage.
+current-value names, 246 remaining; 38/46 preset-setting classes, 74 cases in completed classes,
+8 remaining and no separate partial setting cases. The fixed remaining-work snapshot has ten of43 items complete
+and33 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
 Native45 read all33 typed controller descriptions/current values/owners. Native47 changed/read/restored all six registered Level settings with independent
@@ -29,7 +29,7 @@ Room2/2 and Level2/2 while preserving full-current/readonly failures and Room's 
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset settings | Two accepted cases each for35classes plus Open AIR and Scope issued singletons1/1;72completed-class cases |9classes; full-current/readonly failures remain preserved |
+| Additional preset settings | Two accepted cases each for36classes plus Open AIR and Scope issued singletons1/1;74completed-class cases |8classes; full-current/readonly failures remain preserved |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -934,3 +934,5 @@ Mojito Native47 R2 passed independent Music/audio mute isolation and observed20 
 Mojito's distinct Acid Dreams0 and Basslead1 scoped hybrid cases now complete representative settings2/2. Each used57DAQ, one Aload and two predeclared exact LFO corrections, all35 writable/all37 metadata exact comparisons, fresh895byte A/B equality and lifecycle/Root closure. Readonly lfoBeats/full37 current, preset-label restoration, legacy pan, whole-plugin, audio and persistence remain unverified. The [second proof](evidence/2026-11-14-mojito-preset-index1-native47.json) links the immutable first success. Both earlier failures remain failed. Current37/46classes,72cases,9remaining and fixed9/43complete,34remaining supersede the historical counts above.
 
 Repeater issued index0 80s Dream passed its first distinct representative setting case with75DAQ/365.674s. Its15 positive writable changes, all141 current values and all141 nonvalue/unknown metadata were independently compared across three pages per observation. One Aload restored the exact original with no scalar correction, and fresh distinct2989byte A/B saves matched. Lifecycle, expected released-catalog refusal and Root NoSave/owner0/saved6/MIDI0 closure passed. Preset-label restoration remainsfalse. The [first proof](evidence/2026-11-14-repeater-preset-index0-native47.json) admits1/2 cases only; whole-plugin, MIDI processing, audio and persistence remain unproved. Current37/46classes and72completed-class cases plus one partial Repeater case give73 accepted setting cases. Fixed9/43complete,34remaining and6866/7112names remain unchanged. The existing141-field scalar sweep is reused.
+
+Repeater issued index1 Analog Machine passed a second distinct representative setting case with75DAQ/299.143s. Its34 positive writable changes and all141 current values and metadata were independently compared. One Aload restored the exact original without scalar corrections. Fourteen full141 observations across42 page callbacks, fresh distinct2989byte A/B equality, lifecycle and Root closure passed. The [second proof](evidence/2026-11-14-repeater-preset-index1-native47.json) links the immutable first case. Distinct indices0/1 complete PRESET-REPEATER only. Preset-label restoration remainsfalse, and Repeater MIDI roles, processing, whole-plugin state, audio and persistence remain unproved. Current38/46classes,74completed-class cases,8remaining and partial0 supersede the historical counts above. Fixed10/43complete and33remaining include28partial,1unstarted and4hardware-blocked items. Names6866/7112 and246remaining are unchanged. Native47 totals677 requests,627 accepted and50 nonadmitted. The next bounded Ghidra graph investigation does not yet confer graph mutation or audio-edge capability.

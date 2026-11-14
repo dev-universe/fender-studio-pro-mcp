@@ -65,3 +65,11 @@ Acid Dreams index0과 Basslead index1은 서로 다른 새 문맥에서 각57요
 issued index0 80s Dream을75요청·365.674초로 수용했다. 실제15개 쓰기값 변화 뒤 전체141개 writable current와 모든 비값/unknown metadata가 한 Aload로 정확히 원래로 돌아왔다. 세 페이지64/64/13을 합친 독립 전체 관측14회/7쌍과 별도 새2989바이트 A/B 일치, 수명·Root 정리를 확인했다. scalar seed·보정·readonly 예외·허용 오차는0이다. 각 페이지 complete=false를 전체 provider 완전성으로 바꾸지 않고 모든141개 인덱스를 모아 대조했다.
 
 [첫 실제 증거](evidence/2026-11-14-repeater-preset-index0-native47.json)는 대표1/2만 수용한다. 표시이름 원복false와 실제 MIDI 처리·오디오·저장 미검증을 남긴다. 두 번째 서로 다른 issued entry가 필요하므로 완료 종37/46·완료 종72사례·잔여9종은 그대로다. 별도 부분 Repeater1사례를 더한 총 수용은73사례이며 고정9/43 완료·34잔여도 유지한다. 앞선 부분0 집계는 Mojito 완료 당시의 이력이다.
+
+## Repeater의 서로 다른 capsule-only 대표2/2 수용
+
+새 문맥의 issued index1 Analog Machine을75요청·299.143초로 수용했다. 쓰기34개의 실제 변화 뒤 전체141개 writable current와 비값/unknown metadata를 한 Aload로 정확히 복원했다. 독립 전체 관측14회/7쌍과 새2989바이트 A/B 일치·수명·Root NoSave/owner0/저장6/MIDI0을 확인했다. scalar seed·보정·readonly 예외·허용 오차는0이다.
+
+[두 번째 증거](evidence/2026-11-14-repeater-preset-index1-native47.json)가 첫 index0의 증거를 연결한다. 서로 다른 index0/1의 대표 설정2/2와 PRESET-REPEATER를 완료했다. 표시이름 원복false와 실제 MIDI 처리·오디오·저장 미검증은 유지한다. Repeater의 MIDI 역할은 별도다.
+
+현재38/46종·완료 종74사례·잔여8종이며 별도 부분 사례0이다. capsule-only29종57사례, 하이브리드6종12사례, 명시적 설정scope3종5사례다. 고정43개 중10개 완료·33잔여이며 현재값 이름6866/7112·246잔여는 그대로다. 앞선 Repeater1/2와37/46 집계는 첫 사례 당시의 이력으로 보존한다.
