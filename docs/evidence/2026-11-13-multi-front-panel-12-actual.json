@@ -1,0 +1,29 @@
+{
+  "status": "independently_audited",
+  "application": "Fender Studio Pro 8.1.1",
+  "native_unit": 39,
+  "scope": "Multi Instrument fixed front-panel current-value cases",
+  "fixed_cases": 12,
+  "types": {
+    "Toggle": 8,
+    "Float": 4
+  },
+  "actual_tool_requests": 307,
+  "parameter_setters": 24,
+  "whole_provider_size": 150,
+  "provider_snapshots": 49,
+  "provider_pages": 147,
+  "original_values_restored": true,
+  "peers_and_metadata_preserved": true,
+  "NoSave_app_closed_owner_stopped_saved_inputs_preserved": true,
+  "elapsed_seconds": 457.574,
+  "strict_name_coverage_increment": 0,
+  "MIDI_verified": false,
+  "callbacks_verified": false,
+  "assignments_verified": false,
+  "graph_verified": false,
+  "audio_verified": false,
+  "persistence_verified": false,
+  "audit_report_sha256": "369a206c8a354eb6d18c9d527a3b0b31c085fa90a6fcc48086c540ffedab671c",
+  "audit_freeze_sha256": "c96c603049dc751858b7ed31b8aa2301beac3090721b178bca6d459c8304adcc"
+}

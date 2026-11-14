@@ -1,0 +1,524 @@
+{
+  "schema": 1,
+  "date": "2026-11-12",
+  "status": "eighteen_finite_plan_classes_complete",
+  "checkpoint": "after_unit63",
+  "native_unit": 33,
+  "source_commit": "045c458c643efeea34d97c2e7354554f9c531241",
+  "finite_plan_classes": 46,
+  "accepted_preset_classes": 18,
+  "remaining_preset_classes": 28,
+  "accepted_recall_restore_cases": 36,
+  "accepted_cases_in_completed_classes": 36,
+  "capsule_only_completed_classes": 16,
+  "capsule_only_recall_restore_cases": 32,
+  "hybrid_completed_classes": 2,
+  "hybrid_recall_restore_cases": 4,
+  "classes": [
+    {
+      "plugin": "Mixtool",
+      "recall_restore_cases": 2,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit46p"
+    },
+    {
+      "plugin": "Binaural Pan",
+      "recall_restore_cases": 2,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit46p"
+    },
+    {
+      "plugin": "Channel Strip",
+      "provider_records": 19,
+      "catalog_count": 45,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.185,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit51"
+    },
+    {
+      "plugin": "Dual Pan",
+      "provider_records": 8,
+      "catalog_count": 5,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.364,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit51"
+    },
+    {
+      "plugin": "Limiter",
+      "provider_records": 13,
+      "catalog_count": 15,
+      "recall_restore_cases": 2,
+      "rpc_count": 106,
+      "elapsed_seconds": 9.081,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit51"
+    },
+    {
+      "plugin": "Tricomp",
+      "provider_records": 17,
+      "catalog_count": 23,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.884,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit57"
+    },
+    {
+      "plugin": "RedlightDist",
+      "provider_records": 10,
+      "catalog_count": 8,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.881,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Bitcrusher",
+      "provider_records": 12,
+      "catalog_count": 19,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.816,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Phaser",
+      "provider_records": 16,
+      "catalog_count": 25,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.782,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Flanger",
+      "provider_records": 12,
+      "catalog_count": 25,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.796,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Chorus",
+      "provider_records": 14,
+      "catalog_count": 44,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.86,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "X-Trem",
+      "provider_records": 27,
+      "catalog_count": 20,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.921,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Autofilter",
+      "provider_records": 44,
+      "catalog_count": 48,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.952,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Beat Delay",
+      "provider_records": 14,
+      "catalog_count": 29,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.566,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Groove Delay",
+      "provider_records": 55,
+      "catalog_count": 15,
+      "recall_restore_cases": 2,
+      "elapsed_seconds": 8.74,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit58"
+    },
+    {
+      "plugin": "Expander",
+      "provider_records": 14,
+      "catalog_count": 20,
+      "recall_restore_cases": 2,
+      "issued_indices": [
+        1,
+        2
+      ],
+      "restoration": "capsule_then_one_preplanned_original_attack_setter",
+      "evidence_units": [
+        "unit56",
+        "unit59"
+      ],
+      "capsule_only_restoration_verified": false
+    },
+    {
+      "plugin": "Gate",
+      "provider_records": 19,
+      "catalog_count": 22,
+      "recall_restore_cases": 2,
+      "issued_indices": [
+        1,
+        2
+      ],
+      "restoration": "capsule_then_one_preplanned_original_attack_setter",
+      "evidence_units": [
+        "unit60",
+        "unit62"
+      ],
+      "capsule_only_restoration_verified": false
+    },
+    {
+      "plugin": "Analog Delay",
+      "provider_records": 24,
+      "catalog_count": 27,
+      "recall_restore_cases": 2,
+      "restoration": "capsule_only",
+      "evidence_unit": "unit63",
+      "elapsed_seconds": 9.513
+    }
+  ],
+  "partial_classes": [],
+  "new_units": [
+    {
+      "unit": 57,
+      "completed_classes": [
+        "Tricomp"
+      ],
+      "accepted_recall_restore_cases": 2,
+      "stopped_class": "Multiband Dynamics",
+      "stopped_class_accepted_cases": 0,
+      "restoration_difference_names": [
+        "releaseband1",
+        "releaseband2",
+        "releaseband3",
+        "releaseband4",
+        "releaseband5"
+      ],
+      "following_unrun_classes": 21,
+      "elapsed_seconds_including_ui_cleanup": 283.163
+    },
+    {
+      "unit": 58,
+      "completed_classes": [
+        "RedlightDist",
+        "Bitcrusher",
+        "Phaser",
+        "Flanger",
+        "Chorus",
+        "X-Trem",
+        "Autofilter",
+        "Beat Delay",
+        "Groove Delay"
+      ],
+      "accepted_recall_restore_cases": 18,
+      "stopped_class": "Surround Delay",
+      "stopped_class_accepted_cases": 0,
+      "stop_reason": "complete_typed_original_restoration_not_confirmed",
+      "following_unrun_classes": 11,
+      "elapsed_seconds_including_ui_cleanup": 385.284
+    },
+    {
+      "unit": 59,
+      "plugin": "Expander",
+      "issued_indices": [
+        2
+      ],
+      "accepted_recall_restore_cases": 1,
+      "original_capsule_loads": 1,
+      "preplanned_original_attack_setters": 1,
+      "intermediate_full_reads": 4,
+      "final_original_full_reads": 2,
+      "rpc_count": 97,
+      "execution_seconds": 8.086,
+      "elapsed_seconds_including_ui_cleanup": 303.367
+    },
+    {
+      "unit": 60,
+      "plugin": "Gate",
+      "issued_indices": [
+        1
+      ],
+      "accepted_recall_restore_cases": 1,
+      "original_capsule_loads": 1,
+      "preplanned_original_attack_setters": 1,
+      "readonly_prelude_observations": 1,
+      "rpc_count": 101,
+      "execution_seconds": 8.466,
+      "elapsed_seconds_including_ui_cleanup": 86.877
+    },
+    {
+      "unit": 62,
+      "plugin": "Gate",
+      "issued_indices": [
+        2
+      ],
+      "accepted_recall_restore_cases": 1,
+      "original_capsule_loads": 1,
+      "preplanned_original_attack_setters": 1,
+      "readonly_prelude_observations": 1,
+      "execution_seconds": 8.406,
+      "elapsed_seconds_including_ui_cleanup": 104.222
+    },
+    {
+      "unit": 63,
+      "completed_classes": [
+        "Analog Delay"
+      ],
+      "accepted_recall_restore_cases": 2,
+      "stopped_class": "Room Reverb",
+      "stopped_class_accepted_cases": 0,
+      "stop_reason": "complete_typed_original_restoration_not_confirmed",
+      "following_unrun_classes": 9,
+      "elapsed_seconds_including_ui_cleanup": 126.843
+    }
+  ],
+  "strict_original_restoration_policy": {
+    "applies_from_unit": 57,
+    "complete_typed_schema_required": true,
+    "unknown_nonvalue_metadata_exact": true,
+    "native_default_and_access_flags_exact": true,
+    "last_two_complete_non_read_only_value_projections_exact": true,
+    "opaque_exclusions": 0,
+    "changed_preset_schema_may_differ": true
+  },
+  "existing_three_class_typed_audit": {
+    "all_passed": true,
+    "classes": 3,
+    "original_observations": 30,
+    "actual_daw_actions": 0
+  },
+  "historical_unit51": {
+    "schema": 1,
+    "date": "2026-11-12",
+    "status": "three_preset_classes_verified_before_separate_expander_restore_failure",
+    "native_unit": 32,
+    "source_commit": "48bf48c70f90c2d61184b2d7ae9ce19599777a74",
+    "accepted_preset_classes": 3,
+    "accepted_recall_restore_cases": 6,
+    "classes": [
+      {
+        "plugin": "Channel Strip",
+        "provider_records": 19,
+        "catalog_count": 45,
+        "recall_restore_cases": 2,
+        "rpc_count": 106,
+        "elapsed_seconds": 9.185
+      },
+      {
+        "plugin": "Dual Pan",
+        "provider_records": 8,
+        "catalog_count": 5,
+        "recall_restore_cases": 2,
+        "rpc_count": 106,
+        "elapsed_seconds": 9.364
+      },
+      {
+        "plugin": "Limiter",
+        "provider_records": 13,
+        "catalog_count": 15,
+        "recall_restore_cases": 2,
+        "rpc_count": 106,
+        "elapsed_seconds": 9.081
+      }
+    ],
+    "failed_class": "Expander",
+    "failed_class_accepted_cases": 0,
+    "restoration_difference_names": [
+      "attack"
+    ],
+    "unrun_classes": [
+      "Gate",
+      "Tricomp"
+    ],
+    "read_only_value_policy": "observed_not_restored",
+    "main_preparation_sets": 1,
+    "main_zero_explicit_null_guarded": true,
+    "terminal_tool_inputs": 0,
+    "song_saves": 0,
+    "audio_verified": false,
+    "app_closed_then_owner_stopped": true,
+    "saved_scratch_unchanged": true,
+    "elapsed_seconds_including_ui_and_cleanup": 130.62,
+    "raw_runtime_data_included": false,
+    "subsequent_gate_stop": {
+      "accepted_preset_classes": 0,
+      "failed_class": "Gate",
+      "difference_names": [
+        "attack"
+      ],
+      "unrun_following_classes": 23,
+      "follow_on_mutations_after_failure": 0,
+      "saved_scratch_unchanged": true,
+      "app_closed_then_owner_stopped": true,
+      "elapsed_seconds": 164.455
+    }
+  },
+  "historical_unit56_index1": {
+    "schema": 1,
+    "date": "2026-11-12",
+    "status": "actual_expander_preset_index1_hybrid_exact_restoration_verified",
+    "native_unit": 32,
+    "preset_indices": [
+      1
+    ],
+    "planned_class_indices": [
+      1,
+      2
+    ],
+    "planned_class_complete": false,
+    "remaining_class_indices": [
+      2
+    ],
+    "preset_recalls": 1,
+    "original_capsule_loads": 1,
+    "preplanned_original_attack_setters": 1,
+    "complete_provider_records": 14,
+    "intermediate_full_reads": 4,
+    "final_original_full_reads": 2,
+    "capsule_only_restoration_verified": false,
+    "hybrid_restoration_verified": true,
+    "typed_metadata_and_unknown_record_fields_exact": true,
+    "state_and_catalog_released": true,
+    "expired_catalog_refused_unchanged": true,
+    "rpc_count": 97,
+    "execution_seconds": 7.505,
+    "elapsed_seconds_including_ui_cleanup": 146.104,
+    "terminal_tool_inputs": 0,
+    "saved_scratch_unchanged": true,
+    "app_closed_then_owner_stopped": true,
+    "save_or_audio_verified": false
+  },
+  "remaining_ordinary_unrun_classes": [
+    "Mixverb",
+    "Studio Verb",
+    "Compressor",
+    "Voice FX",
+    "Rotor",
+    "De-Esser",
+    "Vocoder",
+    "Vocal Tune",
+    "Open AIR"
+  ],
+  "read_only_value_policy": "observed_not_restored",
+  "terminal_tool_inputs": 0,
+  "song_saves": 0,
+  "all_available_presets_verified": false,
+  "all_writable_parameters_verified": false,
+  "opaque_contents_verified": false,
+  "preset_display_verified": false,
+  "persistence_verified": false,
+  "audio_verified": false,
+  "app_closed_then_owner_stopped": true,
+  "saved_scratch_unchanged": true,
+  "raw_runtime_data_included": false,
+  "references_sha256": {
+    ".local/next-state/unit51-presets-partial-result.json": "b3008627f046c4204f23d21c1114bbee1b74aa4cebb368e86895091ff30f007e",
+    ".local/live/unit54-preset-batch/result.json": "c72d7e7c8bf2f16c3a467454d2d566f73bcd90ee1c9c40272f6b6b5f52d8a117",
+    ".local/next-state/unit56-expander-hybrid-result.json": "5efcbd852c0afe1133a9821f5e957b5b529adc9bae1b56f1e7f0bcacec2ea827",
+    ".local/next-state/unit57-preset-preparation/actual51-typed-final-audit.json": "1e750d34f9d464f0e2e3787693a78cbe675c6592fc727caa6812e89cccdd5fc8",
+    ".local/next-state/unit46p-mixtool-result.json": "9d4149e011d1500b491291067ecb5dbc64cdc9898329135a476e985329124234",
+    ".local/next-state/unit46p-binaural-result.json": "0700bd7744deb47cc5e1956573723fe55c7b2f7ac72ba66fa25f7913d5e3a221",
+    ".local/live/unit57-preset-batch/result.json": "3221732bd7d4a8477e4ef79066f55558a9afcfb5bcf121d3afcd3f3e42f16503",
+    ".local/live/unit58-preset-batch/result.json": "19bce459f687d3b04a5bb2bc11943217cbec667ebda5f70502b66bb32c269c29",
+    ".local/live/unit59-expander-index2/result.json": "23e45034567871e645df0b033f687f8892f16f36d852212da03e4d7a3da43256",
+    ".local/live/unit60-gate-hybrid/result.json": "13e8eab705505cac87910ec58e9e80b8d2b4ccf9ccaff706023ad2e6ab137382",
+    ".local/live/unit59-expander-index2/cases/expander/progress.json": "b9c33dc6e9f86138e1ce266352599c1c4629fcbfb195ec05acb6680abe8b519f",
+    ".local/live/unit60-gate-hybrid/cases/gate/progress.json": "e7b51107c795c286ee3bbb31abf138b35e844bbf0170872346f1cd5cd35cde18",
+    ".local/live/unit62-gate-index2/result.json": "f8b693d8137639c5e56b6bfbf2764db13ee873755f1f0dfb37b14421a7da4c38",
+    ".local/live/unit63-preset-remainder/result.json": "935a8ba769c42c6fa0677fc473a7e573336ce482f31b40fc93eb6bc7060914f3"
+  },
+  "source_commits_by_native_unit": {
+    "32": "48bf48c70f90c2d61184b2d7ae9ce19599777a74",
+    "33": "045c458c643efeea34d97c2e7354554f9c531241"
+  },
+  "finite_plan_class_names": [
+    "Channel Strip",
+    "Mixtool",
+    "Binaural Pan",
+    "Dual Pan",
+    "Limiter",
+    "Expander",
+    "Gate",
+    "Tricomp",
+    "Multiband Dynamics",
+    "RedlightDist",
+    "Bitcrusher",
+    "Phaser",
+    "Flanger",
+    "Chorus",
+    "X-Trem",
+    "Autofilter",
+    "Beat Delay",
+    "Groove Delay",
+    "Surround Delay",
+    "Analog Delay",
+    "Room Reverb",
+    "Mixverb",
+    "Open AIR",
+    "Spectrum Meter",
+    "Level Meter",
+    "Scope",
+    "Tone Generator",
+    "Ampire",
+    "Pedalboard",
+    "Rumble Native",
+    "Studio Verb",
+    "Compressor",
+    "Tuner",
+    "Voice FX",
+    "Rotor",
+    "De-Esser",
+    "Vocoder",
+    "VU Meter",
+    "Vocal Tune",
+    "Multi Instrument",
+    "SampleOne",
+    "Impact",
+    "CV Instrument",
+    "Mojito",
+    "Chorder",
+    "Repeater"
+  ],
+  "remaining_preset_class_names": [
+    "Multiband Dynamics",
+    "Surround Delay",
+    "Room Reverb",
+    "Mixverb",
+    "Open AIR",
+    "Spectrum Meter",
+    "Level Meter",
+    "Scope",
+    "Tone Generator",
+    "Ampire",
+    "Pedalboard",
+    "Rumble Native",
+    "Studio Verb",
+    "Compressor",
+    "Tuner",
+    "Voice FX",
+    "Rotor",
+    "De-Esser",
+    "Vocoder",
+    "VU Meter",
+    "Vocal Tune",
+    "Multi Instrument",
+    "SampleOne",
+    "Impact",
+    "CV Instrument",
+    "Mojito",
+    "Chorder",
+    "Repeater"
+  ]
+}

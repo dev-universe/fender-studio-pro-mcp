@@ -1,0 +1,19 @@
+{
+  "판정": "대상 트랙 선택 조건의 알려진 거부",
+  "대상": "Multi Instrument",
+  "정상_네이티브": 38,
+  "실제_요청": 12,
+  "부모_소비": 11,
+  "승인": 0,
+  "Main_준비": 1,
+  "플러그인_쓰기": 0,
+  "Native38_QI_도달": false,
+  "전체150개_관측": 0,
+  "선택_조건": "정확한 대상 Music 트랙 하나의 선택 필요",
+  "NoSave_정상실패종료_저장6개보존": true,
+  "오디오_이름_지원범위_증가": 0,
+  "schema": 1,
+  "independent_report_sha256": "59557ff5270a0ed2d33f6ce34895b32f5661c00252d425f9b691afa19a08606e",
+  "independent_freeze_sha256": "270b8ed9bce8bfd738d3140d0241e1fe61914a5305a4810b590867f7ffe2669c",
+  "independent_evidence_sha256": "749210f2ffb363bc92378cf31ca1e9fe6978198d1b7eecc047a486e890cd3b5e"
+}

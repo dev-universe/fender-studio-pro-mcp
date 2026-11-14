@@ -1,0 +1,32 @@
+{
+  "tag": "ccl-5.1.2",
+  "commit": "ad5876b1a7b64aa247f4378c86a7862e7c284ba3",
+  "headers": {
+    "ccl/public/app/ipreset.h": "539592cd23ff776802ad075ae3c8390fa735f393074a7e6cd620e6997521b18a",
+    "ccl/public/base/cclmacros.h": "39141d09f08e4ca4bd7d66b0b029d4ca16b871739db0ea17e17d8128af025cfa",
+    "ccl/public/base/debug.h": "0ac8af79f79fca957774d27f644749cb88d6361d97e2bd6a9e737d1db56b51b3",
+    "ccl/public/base/imessage.h": "568d1de5b9ddca20705345177623a946ca6c9aa5475ae7c249154f19c84fec3d",
+    "ccl/public/base/iobject.h": "296d8eba44018e081ae6088608001dd5e3e9e419ba097c0ded5b81a009421002",
+    "ccl/public/base/iobjectnode.h": "46200a254ea88930fbb5c602bf586108523632496f0698989b23c1d9a03b7675",
+    "ccl/public/base/iunknown.h": "378b9e524c24968d767018a532ceb39143c3b7772d631564e188d188cf036c75",
+    "ccl/public/base/platform.h": "5c199f37a88670cd90a380aa9665009ccb8b55031361b73044c40c9629871c17",
+    "ccl/public/base/smartptr.h": "48bd46ee4f15050e946e38d22fa3f1ffb3eb5cd83634cc8417dae1684fde1eee",
+    "ccl/public/base/uiddef.h": "5630b2865abe2aa38d47d71c50c0b44d942c4ffffca231a9cc797bc80d99938b",
+    "ccl/public/cclexports.h": "324e9a5255b84abe9de87a2393d30ffd658313ebaec2584625e5867e358cbb0b",
+    "ccl/public/storage/filetype.h": "3cd5501c5df75385a88340acde8e58059a8bc13bb6b491b1709c9384bbed9ba1",
+    "ccl/public/storage/istorage.h": "beb6a84f3e1fd1ab164fd4891eb0c906835ae6927757b6c22449856be1f28223",
+    "ccl/public/text/cclstring.h": "ce6b2312c6a64ec4b54c26d78b1ba1eeb930b740ff374d80fc0449296fb61317",
+    "ccl/public/text/istring.h": "42aac089e442e4ceae0817baf19cc4731d7a59b4ddf7e7bb98a9e28d37e53274",
+    "ccl/public/text/istringprivate.h": "cd0c296e67dc53746151d4feec6622045d47f84be26cad2d929ff2e8a2845220",
+    "ccl/public/text/textencoding.h": "cbb606f9c1968af2ccdb49c791f9a975dc81e91ae38eb6574200021532e6b340",
+    "ccl/public/textservices.h": "45dc40d03d09d4a879d6be878e88da72f71c86c409efdf541001c1d96d6ec304",
+    "core/public/corebasicmacros.h": "9b879c0b7d7c02ba55e881c2cc768f04f60aa2e8d6d2834cf4afe43e6ca5d0ce",
+    "core/public/coreclassmacros.h": "f67174739f108e57b6fdf4fe0a64a7c9df2a38b69841a97bb6ad8b762652ac77",
+    "core/public/coreclibrary.h": "be34ea81e1ef1f42c0f66df7584757089e75f1e41df835db2075a21c629f26bc",
+    "core/public/coremacros.h": "d2827dfd0182e53757411849b4e582e5a2d4926814a0d21720472432a0ef7829",
+    "core/public/coremalloc.h": "619ed30f6e89ed3bb27c9179819864a7069a123e9c96ad5b950f5494729f14ff",
+    "core/public/coreplatform.h": "c0c45a8fcce4d694ff6b440a64769c30dcf0a8592c5e24a27d48dc7ac5e854d1",
+    "core/public/coretypes.h": "42caf0a821eb374df5fe0e8b14b3ea1fa368ce06c025710b47abb5a71f247a68",
+    "core/public/coreuid.h": "aac2bbacbb5cc1663753e377b851f8d7fed0ccfb7e977dbc02bf5cb2750ad667"
+  }
+}

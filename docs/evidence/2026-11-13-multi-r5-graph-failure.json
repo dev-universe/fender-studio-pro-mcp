@@ -1,0 +1,30 @@
+{
+  "판정": "graph 관측에서 알려진 실패, 승인0 보존",
+  "대상": "Multi Instrument",
+  "정상_네이티브": 38,
+  "실제_요청": 16,
+  "소비": 15,
+  "완료한_전체150관측": 1,
+  "전후_전체쌍_완료": false,
+  "graph_성공": false,
+  "plugin_controller_제공여부": "UNKNOWN",
+  "객체교체_입증": false,
+  "원시_native_실패원인": "브리지 치환으로 미확인",
+  "플러그인_쓰기": 0,
+  "NoSave_정상실패정리_저장6개보존": true,
+  "지원_이름_오디오_범위_증가": 0,
+  "schema": 1,
+  "independent_report_sha256": "e772acc97a306bcaa39cecc735bdd29f80dc4271665fb002acc88bd73c53b5c2",
+  "independent_freeze_sha256": "d7a8899d350b4406b539f6f8b47cea907554cd28206ea9d9c956ac08baf8b8cf",
+  "source_diagnosis_sha256": "28fc7189856ccd7f5b04275d84a873fc756cf8df02052f6af99381792147bf23",
+  "initial_capability_observation": {
+    "alias_present": true,
+    "alias_controller_provider": true,
+    "alias_native_class": "SynthCombinatorPlugin",
+    "parent_native_class": "AudioSynthSlot",
+    "getController_and_metadata_verified": false,
+    "graph_failure_moment_parent_verified": false
+  },
+  "capability_addendum_report_sha256": "fe02e7a9123be7da0fbf3539c4fbe9d5b7a10585e49fddf762eb1f72072491b4",
+  "capability_addendum_freeze_sha256": "a90eaafb422d43bee8ddbfb8c80afef414f605e42704a9c3207d032a02ee4c82"
+}

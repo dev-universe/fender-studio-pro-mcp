@@ -37,6 +37,154 @@ function mteWrite(name, value) {
 
 function mteFn(obj, key) { return !!obj && typeof obj[key] === "function"; }
 
+// Only legacy identity reads may omit outcome. Final observations must report
+// observed; every present status/error field must agree with a known read.
+function mteNativeReadObserved(value, legacyIdentity) {
+	if (!value || typeof value !== "object" || Array.isArray(value) || value.ok !== true) return false;
+	if (legacyIdentity !== true && value.outcome !== "observed") return false;
+	var has = Object.prototype.hasOwnProperty;
+	var outcomes = ["outcome", "native_outcome"];
+	for (var i = 0; i < outcomes.length; i++) {
+		if (has.call(value, outcomes[i]) && value[outcomes[i]] !== "observed") return false;
+	}
+	var errors = ["error", "native_error"];
+	for (var j = 0; j < errors.length; j++) {
+		if (has.call(value, errors[j]) && value[errors[j]] !== null) return false;
+	}
+	if (has.call(value, "errors") && (!Array.isArray(value.errors) || value.errors.length !== 0)) return false;
+	return true;
+}
+
+function mteDocumentEnvironmentSignature(value) {
+	if (!value || typeof value !== "object" || Array.isArray(value)
+		|| value.scope !== "fixed_active_document_controller_environment"
+		|| value.mutation_capability !== false || value.atomic_snapshot !== false) return null;
+	var keys = Object.keys(value).sort().join(",");
+	if (value.status === "observed" && typeof value.ancestor_matches === "boolean"
+		&& keys === "ancestor_matches,atomic_snapshot,mutation_capability,scope,status") return JSON.stringify([value.status, value.ancestor_matches]);
+	if (value.status === "unavailable" && typeof value.reason === "string" && value.reason.length > 0 && value.reason.length <= 512
+		&& keys === "atomic_snapshot,mutation_capability,reason,scope,status") return JSON.stringify([value.status, value.reason]);
+	return null;
+}
+
+function mteGraphReflection(channel, graphFunctions) {
+	try {
+		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
+		var slot = mteFn(inserts, "find") ? inserts.find("FX01") : null;
+		var device = mteFn(slot, "find") ? slot.find("Device") : null;
+		var objects = Host.Objects;
+		var service = mteFn(objects, "getObjectByName") ? objects.getObjectByName("FenderMcpNative") : null;
+		if (!device || !graphFunctions || !service || !mteFn(service, "capabilities") || !mteFn(service, "request")) return null;
+		var capabilities = JSON.parse(service.capabilities());
+		if (!capabilities.ok || capabilities.api !== "fender-mcp-native-v1") return null;
+		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
+		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
+		var identity = JSON.parse(identityText);
+		if (!mteNativeReadObserved(identity, true) || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
+		var text = service.request(device, JSON.stringify({ operation: "inspect_aux", expected_instance: identity.instance.object_uid }), graphFunctions);
+		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native reflection response" };
+		var result = JSON.parse(text);
+		if (!mteNativeReadObserved(result) || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+			|| result.scope !== "auxiliary_type_observation" || result.mutation_capability !== false) return { error: "native reflection identity or scope unavailable" };
+		return result;
+	} catch (error) { return { error: String(error).slice(0, 512) }; }
+}
+
+// Fixed parent-chain observation of this channel's actual Inserts folder.
+// The existing auxiliary metadata helper keeps its original one-node profile.
+function mteInsertFolderAncestry(channel) {
+	try {
+		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
+		var slot = mteFn(inserts, "find") ? inserts.find("FX01") : null;
+		var device = mteFn(slot, "find") ? slot.find("Device") : null;
+		var objects = Host.Objects;
+		var service = mteFn(objects, "getObjectByName") ? objects.getObjectByName("FenderMcpNative") : null;
+		if (!device || !inserts || !service || !mteFn(service, "capabilities") || !mteFn(service, "request")) return null;
+		var capabilities = JSON.parse(service.capabilities());
+		if (!capabilities.ok || capabilities.api !== "fender-mcp-native-v1") return null;
+		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
+		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
+		var identity = JSON.parse(identityText);
+		if (!mteNativeReadObserved(identity, true) || !identity.instance || typeof identity.instance.object_uid !== "string") return { error: "native target identity unavailable" };
+		var text = service.request(device, JSON.stringify({ operation: "inspect_insert_folder_ancestry", expected_instance: identity.instance.object_uid }), inserts);
+		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native ancestry response" };
+		var result = JSON.parse(text);
+		if (!mteNativeReadObserved(result) || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+			|| result.scope !== "insert_folder_ancestry_observation" || result.mutation_capability !== false || result.atomic_snapshot !== false
+			|| typeof result.ancestor_matches_active_model !== "boolean" || !result.insert_folder_ancestry_report
+			|| result.insert_folder_ancestry_report.traversal !== "parent_chain_only"
+			|| result.insert_folder_ancestry_report.ancestor_matches_active_model !== result.ancestor_matches_active_model) return { error: "native ancestry identity or scope unavailable" };
+		if (Object.prototype.hasOwnProperty.call(result, "document_environment_observation")
+			|| Object.prototype.hasOwnProperty.call(result.insert_folder_ancestry_report, "document_environment_observation")) {
+			var environment = mteDocumentEnvironmentSignature(result.document_environment_observation);
+			if (environment === null || environment !== mteDocumentEnvironmentSignature(result.insert_folder_ancestry_report.document_environment_observation))
+				return { error: "native document Environment observation unavailable" };
+		}
+		return result;
+	} catch (error) { return { error: String(error).slice(0, 512) }; }
+}
+
+function mteCanonicalUid(value) {
+	return typeof value === "string" && /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(value)
+		&& value !== "00000000-0000-0000-0000-000000000000";
+}
+
+function mteInsertFolderPresetPreflight(channel) {
+	try {
+		var inserts = mteFn(channel, "find") ? channel.find("Inserts") : null;
+		var slot = mteFn(inserts, "find") ? inserts.find("FX01") : null;
+		var device = mteFn(slot, "find") ? slot.find("Device") : null;
+		var objects = Host.Objects;
+		var service = mteFn(objects, "getObjectByName") ? objects.getObjectByName("FenderMcpNative") : null;
+		if (!device || !inserts || !service || !mteFn(service, "capabilities") || !mteFn(service, "request"))
+			return { status: "unavailable", reason: "fixed native folder preset preflight unavailable" };
+		var capabilities = JSON.parse(service.capabilities());
+		if (!mteNativeReadObserved(capabilities, true) || capabilities.api !== "fender-mcp-native-v1")
+			return { error: "native preset preflight capability response unavailable" };
+		if (capabilities.insert_folder_preset_preflight_observation !== true)
+			return { status: "unavailable", reason: "native folder preset preflight capability unavailable" };
+		var identityText = service.request(device, JSON.stringify({ operation: "inspect" }));
+		if (typeof identityText !== "string" || identityText.length > 262144) return { error: "invalid native identity response" };
+		var identity = JSON.parse(identityText);
+		if (!mteNativeReadObserved(identity, true) || !identity.instance || !mteCanonicalUid(identity.instance.object_uid)
+			|| !mteCanonicalUid(identity.instance.class_uid) || typeof identity.instance.native_class !== "string" || !identity.instance.native_class
+			|| typeof identity.instance.object_id !== "string" || !identity.instance.object_id) return { error: "native target identity unavailable" };
+		var text = service.request(device, JSON.stringify({ operation: "inspect_insert_folder_preset_preflight", expected_instance: identity.instance.object_uid }), inserts);
+		if (typeof text !== "string" || text.length > 262144) return { error: "invalid native preset preflight response" };
+		var result = JSON.parse(text);
+		if (!mteNativeReadObserved(result) || !result.instance || result.instance.object_uid !== identity.instance.object_uid
+			|| result.instance.class_uid !== identity.instance.class_uid || result.instance.native_class !== identity.instance.native_class
+			|| result.instance.object_id !== identity.instance.object_id || result.scope !== "insert_folder_preset_preflight_observation"
+			|| result.mutation_capability !== false || result.atomic_snapshot !== false) return { error: "native preset preflight identity or scope unavailable" };
+		var allowed = ["ok", "outcome", "native_outcome", "error", "native_error", "errors", "instance", "scope", "mutation_capability", "atomic_snapshot", "status"];
+		if (result.status === "unavailable") {
+			allowed.push("reason");
+			if (typeof result.reason !== "string" || !result.reason || result.reason.length > 512) return { error: "invalid native preset unavailability" };
+		} else if (result.status === "observed") {
+			allowed = allowed.concat(["anchor_slot_bound", "folder", "document_environment_observation", "target_flags", "metadata"]);
+			var folder = result.folder, metadata = result.metadata;
+			if (result.anchor_slot_bound !== true || !folder || Object.keys(folder).sort().join(",") !== "class_uid,id,native_class,object_uid"
+				|| folder.id !== "Inserts" || folder.native_class !== "AudioInsertFolder" || !mteCanonicalUid(folder.object_uid)
+				|| (folder.class_uid !== null && !mteCanonicalUid(folder.class_uid))
+				|| mteDocumentEnvironmentSignature(result.document_environment_observation) !== JSON.stringify(["observed", true])
+				|| typeof result.target_flags !== "number" || result.target_flags % 1 !== 0 || result.target_flags < 3 || result.target_flags > 2147483647
+				|| (result.target_flags & 3) !== 3 || !metadata
+				|| Object.keys(metadata).sort().join(",") !== "attribute_count,class_category,class_name,class_vendor"
+				|| typeof metadata.attribute_count !== "number" || metadata.attribute_count % 1 !== 0 || metadata.attribute_count < 0 || metadata.attribute_count > 64)
+				return { error: "native preset preflight binding or metadata unavailable" };
+			var fields = ["class_name", "class_vendor", "class_category"];
+			for (var i = 0; i < fields.length; i++) {
+				var value = metadata[fields[i]];
+				if (value !== null && (typeof value !== "string" || value.length > 256 || value.indexOf("\u0000") >= 0))
+					return { error: "native preset preflight text unavailable" };
+			}
+		} else return { error: "native preset preflight status unavailable" };
+		var keys = Object.keys(result);
+		for (var k = 0; k < keys.length; k++) if (allowed.indexOf(keys[k]) < 0) return { error: "unexpected native preset preflight field" };
+		return result;
+	} catch (error) { return { error: String(error).slice(0, 512) }; }
+}
+
 // Which of `names` exist on obj, and as what (for the probe).
 function mteShape(obj, names) {
 	var out = {};
@@ -142,6 +290,12 @@ function mteApply(context, ops) {
 				else {
 					var channel = matches[0].channel;
 					r.target = { label: op.channel, children: {} };
+					r.graphReflection = mteGraphReflection(channel, graphFunctions);
+					r.contextEditorReflection = mteGraphReflection(channel, context.editor);
+					var insertFolder = mteFn(channel, "find") ? channel.find("Inserts") : null;
+					r.insertFolderReflection = mteGraphReflection(channel, insertFolder);
+					r.insertFolderAncestry = mteInsertFolderAncestry(channel);
+					r.insertFolderPresetPreflight = mteInsertFolderPresetPreflight(channel);
 					var panner = mteFn(channel, "find") ? channel.find("Panner") : null;
 					r.target.pannerParameters = [];
 					var pannerNames = ["pannerType", "panMode", "stereoMode", "panX1", "panX2", "panWidth", "effectClass"];

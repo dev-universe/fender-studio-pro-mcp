@@ -1,0 +1,19 @@
+{
+  "status": "PASS_ZERO_REQUEST_FAILED_JOB_CLOSED",
+  "at": "2026-11-13T14:29:57.424527+00:00",
+  "job_id": "ee3bf02a-6190-4873-8a6e-764d2c1e97bc",
+  "raw_tool_requests": 0,
+  "parameter_writes": 0,
+  "app_closed_observed": true,
+  "app_did_not_offer_Save_because_unmodified": true,
+  "owner_stopped": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "previous_RPC_bound_context_unchanged": true,
+  "failure": "Root copy_opened confirmation included extra description keys; exact equality rejected before first request",
+  "result_sha256": "f9ee75d74e7e4d053bf088e2a56b2210c27e98c5d6f71991a093e9f0eb99281e",
+  "actual_elapsed_seconds": 72.048,
+  "parent_verified_requests": 0,
+  "accepted_cases": 0
+}

@@ -19,6 +19,7 @@ with tempfile.TemporaryDirectory(prefix="parameter-abi-regression-") as director
     assembly = Path(directory) / "newer.s"
     subprocess.run([
         "clang++", "-std=c++20", "-arch", "arm64", f"-I{newer}",
+        "-DFENDER_PARAMETER_CHECK_OFFSETS_ONLY",
         "-Werror", "-Wno-return-type-c-linkage", "-O1", "-S",
         str(Path(__file__).with_name("abi_calls.cpp")), "-o", str(assembly),
     ], check=True, capture_output=True, text=True)

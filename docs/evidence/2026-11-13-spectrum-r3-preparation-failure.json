@@ -1,0 +1,189 @@
+{
+  "schema": 1,
+  "date": "2026-11-13",
+  "host_version": "8.1.1 Build 113103",
+  "installed_native_unit": 38,
+  "product_source_commit": "031ee56",
+  "main_tool_count": 46,
+  "status": "both_Normal38_pilots_audited_fixed_scope_only",
+  "spectrum_R3": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds": 230.386,
+    "actual_raw_requests": 6,
+    "parent_consumed_requests": 5,
+    "verified_main_preparation_writes": 1,
+    "main_preparation_before": 1,
+    "main_preparation_after": 0,
+    "main_preparation_outcome": "applied_verified",
+    "plugin_calls": 0,
+    "plugin_parameter_writes": 0,
+    "preset_calls": 0,
+    "state_actions": 0,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "accepted_cases": 0,
+    "accepted_preset_classes": 0,
+    "original_failure_preserved": true,
+    "NoSave_app_closed_confirmed": true,
+    "normal_owner_exit_code": 0,
+    "saved_archives_preserved": 6,
+    "consumer_error": "한 번의 선언된 Main1→0만 허용",
+    "masked_parent_error": "고정 만료 거부 역할만 허용",
+    "consumer_contract_mismatch": "actual named channel_set applied_verified result has before/after/channel/field/text; consumer expected applied_unverified with result.error and result.native_error null",
+    "independent_audit": {
+      "freeze_sha256": "bc99b7a8c45c0d5ad278b543121a88c598514c2f2d8849ed18e430ebcda6fcb4",
+      "report_sha256": "b57d463ed82de056ba9faa0e9aa490735e5c4523660ba5a18c6889e5b9a88176",
+      "evidence_sha256": "f55a0f2c21bff1f8934f817114b5dad8b1dda4d8a877ebec83f3e1dac1a239ed"
+    },
+    "next_revision": "R4",
+    "next_status": "R4_complete127_independently_audited_single_fixed_setting1_class0"
+  },
+  "float1_R2": {
+    "artifact_review": {
+      "status": "PASS_ARTIFACT_DELTA_ONLY",
+      "freeze_sha256": "ec3dd9093eb66b360937239b05a5776284e87ec688519e34fceb02616c5abf58",
+      "report_sha256": "b62013f43edc1552ef4f5f9d83a6047e938b26d98fe9d7b06688051c9fcac506",
+      "evidence_sha256": "014d7157ec80bb177ec118978b23ccd6e3f3b4e2e2ddd171ac3048abb4da44fa"
+    },
+    "actual_calls": 43,
+    "accepted_current_value_names": 0,
+    "native_source_projection": 144,
+    "normal_manifest_total_sources": 146,
+    "guarded_setters_planned": 2,
+    "normal_calls_planned": 38,
+    "maximum_calls_planned": 43,
+    "actual_execution_pending": false
+  },
+  "inspection_error_reporting_R2": {
+    "status": "Unicode_candidate_independent_PASS_WITH_LIMITS",
+    "landed": false,
+    "actual_calls": 0,
+    "must_land_after": [
+      "Spectrum Normal38 pilot",
+      "Float1 Normal38 pilot"
+    ],
+    "independent_review": {
+      "status": "PASS_WITH_LIMITS",
+      "freeze_sha256": "3cb9c1e181e2fe9aa94a6361e96c5db0bc53daa766ec5324a1e2e1a493e94d0e",
+      "report_sha256": "a6998f145cd3477f99ea85290a28a51081a882699088bba7514a4c9ecfc7eb80",
+      "actual_calls": 0,
+      "installed": false
+    },
+    "both_prerequisite_pilots_and_audits_complete": true,
+    "next_action": "Root reviewed landing and normal verification; still unlanded at checkpoint"
+  },
+  "External_static_R1_R2": {
+    "scope": "bounded_static_source_and_ABI_analysis_only",
+    "port_mutations": 0,
+    "selection_authority": false,
+    "physical_loopback_verified": false
+  },
+  "totals_unchanged": {
+    "accepted_fixed_names": 6460,
+    "inventory_names": 7112,
+    "remaining_names": 652,
+    "completed_preset_classes": 28,
+    "preset_classes_in_scope": 46,
+    "accepted_preset_cases": 56,
+    "remaining_preset_classes": 18
+  },
+  "pull_request": {
+    "number": 4,
+    "draft": true
+  },
+  "new_actual_calls_for_this_documentation_checkpoint": 0,
+  "spectrum_R4_review": {
+    "status": "PASS",
+    "freeze_sha256": "22c479ebf01bc0f6d9ea495b7fc00d8efd3265fca5110dc2814c654e30c85989",
+    "report_sha256": "8f44d5896c629825d36111fc9baaa38e3d6fbdd84703faeca5eddec720f17b76",
+    "actual_calls": 0,
+    "fresh_actual_preflight_pending": true
+  },
+  "fresh_prebinding_wait": {
+    "status": "historical_resolved_delay_before_completed_R4",
+    "archive_OS_open_wait_observed": true,
+    "metadata_and_repository_reads_completed": true,
+    "cause_established": false,
+    "macOS_access_confirmation_pending": false,
+    "current_six_archives_must_verify_before_owner_start": true,
+    "app_closed_observed": true,
+    "MCP_owner_running": false,
+    "Spectrum_R4_actual_calls": 0,
+    "no_guard_waiver": true,
+    "actual_archive_read_completed_at_UTC": "2026-11-13T04:40:44Z",
+    "current_six_archives_verified": true,
+    "current_six_archive_hashes_match": true,
+    "approved_source_count_matched": 206,
+    "normal_manifest_source_files_matched": 146,
+    "installed_package_files_matched": 4,
+    "installed_bridge_files_matched": 3,
+    "TCC_access_allowed_user_consent_observed": true
+  },
+  "spectrum_R4_actual_audit": {
+    "status": "PASS_SINGLE_FIXED_SETTING_AND_FRESH_SERIALIZATION_ONLY",
+    "actual_requests": 127,
+    "elapsed_seconds": 186.042,
+    "fixed_setting_cases": 1,
+    "global_classes_added": 0,
+    "full9_snapshots": 14,
+    "all9_original_restored": true,
+    "fresh_separate_captures": 2,
+    "serialized_bytes_each": 584,
+    "same_serialized_size_and_sha256": true,
+    "distinct_capture_tokens": true,
+    "direct_scalar_parameter_writes": 0,
+    "main_preparation_writes": 1,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "NoSave_appfalse_owner0": true,
+    "saved_archives_preserved": 6,
+    "freeze_sha256": "ba498c9edcdaa4be2c63a797bd0d4784cbbb97a6f093b129168e6be1097116dc",
+    "report_sha256": "95e611312278a44a3eda4a2faafff925c30921759a9ae719012cb2f981108be3",
+    "evidence_sha256": "1db72efa5bda225a63f583103258ff9287172ed7d9280bd15309d7ac2ceff0bc"
+  },
+  "multi_float1_R2_actual_audit": {
+    "status": "PASS_SINGLE_FIXED_FLOAT1_CURRENT_VALUE_ONLY",
+    "actual_requests": 43,
+    "elapsed_seconds": 168.618,
+    "fixed_current_value_cases": 1,
+    "strict_name_coverage_increment": 0,
+    "raw_sequence": [
+      0,
+      2500,
+      0
+    ],
+    "normalized_sequence": [
+      0,
+      0.25,
+      0
+    ],
+    "plugin_parameter_writes": 2,
+    "main_preparation_writes": 1,
+    "full150_snapshots": 5,
+    "peer_records_preserved": 149,
+    "all150_original_restored": true,
+    "state_actions": 0,
+    "port_writes": 0,
+    "normal_saves": 0,
+    "transport_actions": 0,
+    "NoSave_appfalse_owner0": true,
+    "saved_archives_preserved": 6,
+    "assignment_verified": false,
+    "MIDI_verified": false,
+    "callback_verified": false,
+    "audio_verified": false,
+    "persistence_verified": false,
+    "freeze_sha256": "98b392b2e046e2812f5c5b57fda0d161a795a9f44feb2b7a809c77d55dd94062",
+    "report_sha256": "5450960e67ed1333ceb64a71185d753d467f347c02c026718e74b9a15a5210c7",
+    "evidence_sha256": "c70a8a62a1cd35998b8ef1bc6d6051d05f01da5d22ef53f15da2fdab40a723f7"
+  },
+  "current_archive_access_state": {
+    "status": "allowed_current_exact_archive_read_immediate",
+    "last_observed_at_UTC": "2026-11-13T04:56:38Z",
+    "expected_archive_hash_matched": true,
+    "permission_reset_or_change": false,
+    "workaround_performed": false,
+    "new_actual_DAW_calls": 0
+  },
+  "current_Normal38_pilots_completed_and_independently_audited": true
+}

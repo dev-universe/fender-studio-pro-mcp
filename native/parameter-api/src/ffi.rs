@@ -7,8 +7,9 @@ use std::{
 };
 
 pub(crate) const OK: i32 = 0;
+pub(crate) const NO_INTERFACE: i32 = 0x80004002u32 as i32;
 #[repr(C)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) struct Uid {
     pub a: u32,
     pub b: u16,
@@ -20,6 +21,18 @@ pub(crate) const OBJECT: Uid = Uid {
     b: 0x522c,
     c: 0x4108,
     d: [0x98, 0x62, 0x0c, 0xd5, 0x71, 0x79, 0x52, 0x49],
+};
+pub(crate) const UNKNOWN: Uid = Uid {
+    a: 0,
+    b: 0,
+    c: 0,
+    d: [0xc0, 0, 0, 0, 0, 0, 0, 0x46],
+};
+pub(crate) const LIST_PARAMETER: Uid = Uid {
+    a: 0x143641b5,
+    b: 0x92a0,
+    c: 0x4a2e,
+    d: [0xb7, 0x0c, 0x84, 0xc5, 0x7e, 0x8f, 0xbd, 0xb3],
 };
 #[repr(C)]
 pub(crate) struct CStringRepr {
@@ -75,6 +88,26 @@ impl Owned {
         }
         let out = NonNull::new(out).ok_or(Error::MissingInterface("IObject"))?;
         Ok(unsafe { Self::take(out) })
+    }
+    pub(crate) fn query_optional(
+        &self,
+        iid: &Uid,
+        name: &'static str,
+    ) -> Result<Option<Self>, Error> {
+        let get: unsafe extern "C" fn(*mut c_void, *const Uid, *mut *mut c_void) -> i32 =
+            unsafe { method(self.raw(), 0) };
+        let mut out = std::ptr::null_mut();
+        let result = unsafe { get(self.raw(), iid, &mut out) };
+        if result == NO_INTERFACE && out.is_null() {
+            return Ok(None);
+        }
+        // A successful QI transfers one reference. A failed QI has no valid
+        // output reference to own, even if a provider violates the null rule.
+        if result != OK {
+            return Err(Error::NativeFailure(name, result));
+        }
+        let out = NonNull::new(out).ok_or(Error::MissingInterface(name))?;
+        Ok(Some(unsafe { Self::take(out) }))
     }
 }
 impl Drop for Owned {

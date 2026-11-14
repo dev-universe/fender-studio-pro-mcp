@@ -164,7 +164,6 @@ fn stop_during_register(object: *mut c_void) {
     let calls = unsafe { (*owner).calls.load(Ordering::Acquire) };
     let mut out = VariantOut {
         kind: 1,
-        padding: [0; 6],
         payload: 777,
     };
     let mut msg = message(c"capabilities", 0);
@@ -341,6 +340,61 @@ pub(super) fn clear_output(out: &mut VariantOut) {
     out.payload = 0;
 }
 
+#[test]
+fn foreign_empty_output_initializes_only_the_cpp_fields() {
+    let mut storage = std::mem::MaybeUninit::<VariantOut>::uninit();
+    let output = storage.as_mut_ptr();
+    unsafe {
+        ptr::addr_of_mut!((*output).kind).write(0);
+        ptr::addr_of_mut!((*output).payload).write(0);
+        super::clear_output(output);
+    }
+    let output = unsafe { storage.assume_init() };
+    assert_eq!((output.kind, output.payload), (0, 0));
+}
+
+#[test]
+fn foreign_shared_output_preserves_string_transfer_and_releases_once() {
+    let _serial = TEST_LOCK.lock().unwrap();
+    install_mock_api();
+    assert!(!FAIL_ASSIGN.load(Ordering::Acquire));
+    assert!(ASSIGN_REENTER_STOP.load(Ordering::Acquire).is_null());
+    let strings = LIVE_STRINGS.load(Ordering::Acquire);
+    let old = prepare_json(r#"{"old":true}"#, api().unwrap()).unwrap();
+    let external = hold(old.0).unwrap();
+    let pointer = old.0;
+    assert_eq!(
+        unsafe { &*pointer.cast::<MockString>() }
+            .refs
+            .load(Ordering::Acquire),
+        2
+    );
+    std::mem::forget(old);
+    let mut storage = std::mem::MaybeUninit::<VariantOut>::uninit();
+    let output = storage.as_mut_ptr();
+    unsafe {
+        ptr::addr_of_mut!((*output).kind).write(3 | 16);
+        ptr::addr_of_mut!((*output).payload).write(pointer as u64);
+    }
+    assert!(return_json(output, "한글 🎵", api().unwrap()));
+    let mut output = unsafe { storage.assume_init() };
+    assert_eq!(output_text(&output), "한글 🎵");
+    assert_eq!(
+        unsafe { &*external.0.cast::<MockString>() }
+            .refs
+            .load(Ordering::Acquire),
+        1
+    );
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings + 2);
+    drop(external);
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings + 1);
+    unsafe { super::clear_output(&mut output) };
+    assert_eq!((output.kind, output.payload), (0, 0));
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings);
+    unsafe { super::clear_output(&mut output) };
+    assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), strings);
+}
+
 #[repr(C)]
 struct MockMessageVtable {
     unused: [usize; 3],
@@ -355,6 +409,7 @@ struct MockMessage {
     count: i32,
     arg: VariantOut,
     arg2: VariantOut,
+    arg3: VariantOut,
 }
 static MESSAGE_TABLE: MockMessageVtable = MockMessageVtable {
     unused: [0; 3],
@@ -372,6 +427,7 @@ unsafe extern "C" fn message_arg(p: *mut c_void, index: i32) -> *const VariantOu
     match index {
         0 => unsafe { &(*p.cast::<MockMessage>()).arg },
         1 => unsafe { &(*p.cast::<MockMessage>()).arg2 },
+        2 => unsafe { &(*p.cast::<MockMessage>()).arg3 },
         _ => ptr::null(),
     }
 }
@@ -385,12 +441,14 @@ fn message(name: &std::ffi::CStr, count: i32) -> MockMessage {
         count,
         arg: VariantOut {
             kind: 0,
-            padding: [0; 6],
             payload: 0,
         },
         arg2: VariantOut {
             kind: 0,
-            padding: [0; 6],
+            payload: 0,
+        },
+        arg3: VariantOut {
+            kind: 0,
             payload: 0,
         },
     }
@@ -431,7 +489,13 @@ fn metadata_is_borrowed_stable_and_module_associated() {
         "FenderMcpNative"
     );
     assert_eq!(METHODS[0].name, c"capabilities".as_ptr());
-    assert!(METHODS[2].name.is_null());
+    assert_eq!(METHODS[2].name, c"documentContext".as_ptr());
+    assert_eq!(ascii(METHODS[2].args), "");
+    assert!(METHODS[3].name.is_null());
+    assert_eq!(
+        ascii(METHODS[1].args),
+        "target: Object, request: string, auxiliary: Object = null"
+    );
     let module = ptr::without_provenance_mut::<c_void>(0x4000);
     MODULE_REF.store(module, Ordering::Release);
     assert_eq!(unsafe { type_module(ptr::null_mut()) }, module);
@@ -488,7 +552,6 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
         assert_eq!(unsafe { (*service).refs.load(Ordering::Acquire) }, expected);
         let mut out = VariantOut {
             kind: 1,
-            padding: [0; 6],
             payload: 7,
         };
         let mut msg = message(c"capabilities", 0);
@@ -497,6 +560,8 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
             1
         );
         assert!(output_text(&out).contains("fender-mcp-native-v1"));
+        let capability: serde_json::Value = serde_json::from_str(&output_text(&out)).unwrap();
+        assert_eq!(capability["numeric_edit_api"], "chorder_autofill_v1");
         assert_eq!(LIVE_STRINGS.load(Ordering::Acquire), 1);
         FAIL_ASSIGN.store(true, Ordering::Release);
         let old = out.payload;
@@ -528,6 +593,33 @@ fn registration_proxy_lifetime_unboxing_and_dynamic_string_ownership() {
         );
         assert!(output_text(&out).contains("invalid_request"));
         assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        msg.count = 3;
+        msg.arg3.kind = 4;
+        msg.arg3.payload = ptr::addr_of_mut!(target) as u64;
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_request"));
+        assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        let units: Vec<_> = "{\"operation\":\"inspect\"}".encode_utf16().collect();
+        assert_eq!(
+            unsafe { string_assign(input, units.as_ptr(), units.len() as i32) },
+            OK
+        );
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_arguments"));
+        assert_eq!(target.refs.load(Ordering::Acquire), 1);
+        msg.arg3.kind = 3;
+        assert_eq!(
+            unsafe { script_invoke(proxy, &mut out, ptr::addr_of_mut!(msg).cast()) },
+            1
+        );
+        assert!(output_text(&out).contains("invalid_arguments"));
+        msg.count = 2;
         unsafe { string_release(input) };
         msg.arg2.payload = 0;
         assert_eq!(
@@ -601,6 +693,8 @@ pub(super) fn install_mock_api() {
             empty: mock_empty,
             desktop: no_singleton,
             scripting: mock_scripting,
+            plugin_manager: mock_scripting,
+            file_system: mock_scripting,
         })
     });
 }
@@ -727,7 +821,6 @@ fn stop_during_registration_cleans_late_entry_without_reactivation() {
                 assert_eq!(REGISTER_CALLS.load(Ordering::Acquire), registrations);
                 let mut out = VariantOut {
                     kind: 1,
-                    padding: [0; 6],
                     payload: 777,
                 };
                 let mut msg = message(c"capabilities", 0);

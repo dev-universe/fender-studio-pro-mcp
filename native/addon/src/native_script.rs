@@ -140,6 +140,8 @@ struct Api {
     empty: Singleton,
     desktop: Singleton,
     scripting: Singleton,
+    plugin_manager: Singleton,
+    file_system: Singleton,
 }
 static API: OnceLock<Option<Api>> = OnceLock::new();
 fn api() -> Option<&'static Api> {
@@ -162,6 +164,8 @@ fn api() -> Option<&'static Api> {
             empty: sym!(c"CCLGetEmptyString", Singleton),
             desktop: sym!(c"CCLGetDesktop", Singleton),
             scripting: sym!(c"CCLGetScriptingManager", Singleton),
+            plugin_manager: sym!(c"CCLGetPlugInManager", Singleton),
+            file_system: sym!(c"CCLGetFileSystem", Singleton),
         })
     })
     .as_ref()
@@ -289,7 +293,12 @@ static BUNDLE_PIN: AtomicPtr<c_void> = AtomicPtr::new(ptr::null_mut());
 // ownership rejects duplicate startup for the same module, including reentry.
 static MODULE_OWNER: AtomicPtr<Service> = AtomicPtr::new(ptr::null_mut());
 static LIVE_RECEIPTS: AtomicU32 = AtomicU32::new(0);
-pub(super) type ReceiptLease = request::ReceiptLease;
+pub(super) type ReceiptLease = request::NativeReceiptLease;
+pub(super) type StateRegistry = request::state::Registry;
+pub(super) type PresetRegistry = request::presets::Registry;
+pub(super) type InsertChainRegistry = request::insert_chain::Registry;
+pub(super) type DocumentContextRegistry = request::document_context::Registry;
+pub(super) use request::document_context::next_service_serial as next_document_context_serial;
 fn release_receipt(service: *mut Service) {
     let s = unsafe { &*service };
     // GUI-only, and take the Rust slot before any native destructor can reenter.
@@ -300,7 +309,8 @@ fn release_receipt(service: *mut Service) {
         drop(old);
     }
 }
-fn retain_receipt(service: *mut Service, receipt: ReceiptLease) {
+fn retain_receipt(service: *mut Service, receipt: impl Into<ReceiptLease>) {
+    let receipt = receipt.into();
     let s = unsafe { &*service };
     debug_assert!(!s.receipt_pending.load(Ordering::Acquire));
     unsafe {
@@ -405,7 +415,6 @@ pub(super) fn pin_own_image(module: *mut c_void) -> bool {
 #[repr(C)]
 struct VariantOut {
     kind: i16,
-    padding: [u8; 6],
     payload: u64,
 }
 #[repr(C)]
@@ -416,7 +425,7 @@ struct MethodDefinition {
 }
 // Immutable pointers into static strings; no cross-thread native calls.
 unsafe impl Sync for MethodDefinition {}
-static METHODS: [MethodDefinition; 3] = [
+static METHODS: [MethodDefinition; 4] = [
     MethodDefinition {
         name: c"capabilities".as_ptr(),
         args: c"".as_ptr(),
@@ -424,7 +433,12 @@ static METHODS: [MethodDefinition; 3] = [
     },
     MethodDefinition {
         name: c"request".as_ptr(),
-        args: c"target: Object, request: string".as_ptr(),
+        args: c"target: Object, request: string, auxiliary: Object = null".as_ptr(),
+        result: c"string".as_ptr(),
+    },
+    MethodDefinition {
+        name: c"documentContext".as_ptr(),
+        args: c"".as_ptr(),
         result: c"string".as_ptr(),
     },
     MethodDefinition {
@@ -605,7 +619,6 @@ unsafe fn clear_output(out: *mut VariantOut) {
             out,
             VariantOut {
                 kind: 0,
-                padding: [0; 6],
                 payload: 0,
             },
         )
@@ -621,7 +634,6 @@ unsafe fn install_string(out: *mut VariantOut, string: Owned) {
     unsafe {
         *out = VariantOut {
             kind: 3 | 16,
-            padding: [0; 6],
             payload: string.0 as u64,
         };
     }
@@ -665,10 +677,11 @@ fn return_json(out: *mut VariantOut, text: &str, a: &Api) -> bool {
 }
 fn publish_reply(
     out: *mut VariantOut,
-    mut reply: request::Reply,
+    reply: impl Into<request::NativeReply>,
     a: &Api,
     service: *mut Service,
 ) -> bool {
+    let mut reply = reply.into();
     let Some(string) = prepare_json(&reply.encode(), a) else {
         return false;
     };
@@ -678,27 +691,25 @@ fn publish_reply(
         clear_output(out);
     }
     if reply.final_check(service) {
-        if let Some(receipt) = reply.take_receipt() {
-            retain_receipt(service, receipt);
+        if let Ok(receipt) = reply.take_receipt() {
+            if let Some(receipt) = receipt {
+                retain_receipt(service, receipt);
+            }
+            unsafe {
+                install_string(out, string);
+            }
+            return true;
         }
-        unsafe {
-            install_string(out, string);
-        }
-        true
-    } else {
-        // The reply is already downgraded to a non-success outcome. Release
-        // invalidated pins before preparing that error; no verified claim can
-        // survive either destructor or another output allocation callback.
-        drop(string);
-        reply.release_context();
-        let Some(error) = prepare_json(&reply.encode(), a) else {
-            return false;
-        };
-        unsafe {
-            install_string(out, error);
-        }
-        true
     }
+    drop(string);
+    reply.release_context();
+    let Some(error) = prepare_json(&reply.encode(), a) else {
+        return false;
+    };
+    unsafe {
+        install_string(out, error);
+    }
+    true
 }
 
 unsafe extern "C" fn script_invoke(
@@ -734,7 +745,7 @@ unsafe extern "C" fn script_invoke(
         return 0;
     }
     let name = ascii(unsafe { (*id).text });
-    if name != "capabilities" && name != "request" {
+    if name != "capabilities" && name != "request" && name != "documentContext" {
         return 0;
     }
     if service.busy.swap(true, Ordering::AcqRel) {
@@ -745,14 +756,21 @@ unsafe extern "C" fn script_invoke(
     let count: Count = unsafe { method(msg, 4) };
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
-        request::Reply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64"}),
+        request::NativeReply::unbound(
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","document_context_api":"native_document_context_v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","gui_edit_api":"chorder_autofill_v1","gui_model_edit_api":request::gui_model_api(),"state_api":"component_alias_storable_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_limits":request::insert_chain::limits()}),
         )
-    } else if name == "request" && count == 2 {
+    } else if name == "documentContext" && count == 0 {
+        request::document_context::dispatch(owner, a)
+    } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
             unsafe { method(msg, 5) };
         let target = unsafe { arg(msg, 0) };
         let json = unsafe { arg(msg, 1) };
+        let auxiliary = if count == 3 {
+            unsafe { arg(msg, 2) }
+        } else {
+            ptr::null()
+        };
         if target.is_null()
             || json.is_null()
             || unsafe {
@@ -761,8 +779,11 @@ unsafe extern "C" fn script_invoke(
                     || (*json).kind & 15 != 3
                     || (*json).payload == 0
             }
+            || (count == 3
+                && (auxiliary.is_null()
+                    || unsafe { (*auxiliary).kind & 15 != 4 || (*auxiliary).payload == 0 }))
         {
-            request::Reply::error(
+            request::NativeReply::error(
                 "invalid_arguments",
                 "request requires one native object and one JSON string",
                 "not_applied",
@@ -770,14 +791,19 @@ unsafe extern "C" fn script_invoke(
         } else {
             let target =
                 hold(unsafe { (*target).payload as *mut c_void }).expect("nonnull checked");
+            let auxiliary = if count == 3 {
+                hold(unsafe { (*auxiliary).payload as *mut c_void })
+            } else {
+                None
+            };
             match request::copy_string(
                 unsafe { (*json).payload as *mut c_void },
                 request::MAX_REQUEST_BYTES,
             ) {
                 Ok(json) if json.len() <= request::MAX_REQUEST_BYTES => {
-                    request::dispatch(owner, target, &json, a)
+                    request::dispatch(owner, target, &json, auxiliary, a)
                 }
-                _ => request::Reply::error(
+                _ => request::NativeReply::error(
                     "invalid_request",
                     "request is not valid bounded UTF-16/UTF-8 JSON",
                     "not_applied",
@@ -785,7 +811,7 @@ unsafe extern "C" fn script_invoke(
             }
         }
     } else {
-        request::Reply::error(
+        request::NativeReply::error(
             "invalid_arguments",
             "unsupported method argument count",
             "not_applied",
@@ -967,7 +993,11 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
         marker("service_stop_deferred_initialization");
         return OK;
     }
-    if !s.registered.load(Ordering::Acquire) && !s.module_attached.load(Ordering::Acquire) {
+    if !s.registered.load(Ordering::Acquire)
+        && !s.module_attached.load(Ordering::Acquire)
+        && !s.receipt_pending.load(Ordering::Acquire)
+        && !s.document_context_pending.load(Ordering::Acquire)
+    {
         marker("service_terminate");
         return OK;
     }
@@ -978,6 +1008,10 @@ pub(super) unsafe fn stop(service: *mut Service) -> i32 {
         return WRONG_THREAD;
     }
     release_receipt(service);
+    request::document_context::drain(service);
+    request::state::drain(service);
+    request::presets::drain(service);
+    request::insert_chain::drain(service);
     if s.registered.load(Ordering::Acquire) {
         let table = unsafe { (a.objects)() };
         if table.is_null() {
@@ -1007,18 +1041,24 @@ pub(super) fn module_exit_state() -> bool {
         && FACTORY.refs.load(Ordering::Acquire) == 0
         && TYPE.refs.load(Ordering::Acquire) == 1
         && MODULE_OWNER.load(Ordering::Acquire).is_null()
-        && LIVE_RECEIPTS.load(Ordering::Acquire) == 0;
+        && LIVE_RECEIPTS.load(Ordering::Acquire) == 0
+        && request::state::live_count() == 0
+        && request::presets::live_count() == 0
+        && request::insert_chain::live_count() == 0;
     log_detail(
         "module_exit_state",
         &format!(
-            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{}}}",
+            "{{\"clean\":{clean},\"services\":{},\"factory_refs\":{},\"metadata_owned_refs\":{},\"metadata_static_baseline\":1,\"module_owned\":{},\"image_pin_kept_until_process_exit\":{},\"own_bundle_pin_kept_until_process_exit\":{},\"receipt_leases\":{},\"state_capsules\":{},\"preset_catalogs\":{},\"insert_chain_capsules\":{}}}",
             LIVE_SERVICES.load(Ordering::Acquire),
             FACTORY.refs.load(Ordering::Acquire),
             TYPE.refs.load(Ordering::Acquire).saturating_sub(1),
             !MODULE_OWNER.load(Ordering::Acquire).is_null(),
             !SELF_PIN.load(Ordering::Acquire).is_null(),
             !BUNDLE_PIN.load(Ordering::Acquire).is_null(),
-            LIVE_RECEIPTS.load(Ordering::Acquire)
+            LIVE_RECEIPTS.load(Ordering::Acquire),
+            request::state::live_count(),
+            request::presets::live_count(),
+            request::insert_chain::live_count()
         ),
     );
     clean
@@ -1027,6 +1067,7 @@ const _: () = {
     assert!(
         size_of::<VariantOut>() == 16
             && align_of::<VariantOut>() == 8
+            && offset_of!(VariantOut, kind) == 0
             && offset_of!(VariantOut, payload) == 8
     );
     assert!(

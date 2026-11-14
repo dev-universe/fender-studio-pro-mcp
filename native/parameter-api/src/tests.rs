@@ -12,6 +12,17 @@ use std::{
     sync::OnceLock,
 };
 
+#[path = "details_tests.rs"]
+mod details_tests;
+#[path = "display_tests.rs"]
+mod display_tests;
+#[path = "formatting_tests.rs"]
+mod formatting_tests;
+#[path = "menu_tests.rs"]
+mod menu_tests;
+#[path = "numeric_edit_tests.rs"]
+mod numeric_edit_tests;
+
 #[derive(Default)]
 struct Stats {
     strings: Cell<u32>,
@@ -131,6 +142,7 @@ thread_local! {
     static MIN_ID:CStringRepr=const{CStringRepr{text:c"min".as_ptr(),owner:std::ptr::null_mut()}};
     static MAX_ID:CStringRepr=const{CStringRepr{text:c"max".as_ptr(),owner:std::ptr::null_mut()}};
     static DEFAULT_ID:CStringRepr=const{CStringRepr{text:c"default".as_ptr(),owner:std::ptr::null_mut()}};
+    static EDIT_NAME:CStringRepr=const{CStringRepr{text:c"reboundName".as_ptr(),owner:std::ptr::null_mut()}};
 }
 unsafe extern "C" fn empty() -> *mut c_void {
     EMPTY.with(Cell::get)
@@ -191,6 +203,58 @@ struct ObjectView {
     table: *const usize,
     parent: *mut FakeParameter,
 }
+#[derive(Default)]
+struct DetailsBehavior {
+    precision: Cell<i32>,
+    state: Cell<i32>,
+    list_interface: Cell<bool>,
+    list_query_error: Cell<Option<i32>>,
+    unknown_query_error: Cell<Option<i32>>,
+    null_unknown: Cell<bool>,
+    canonical: Cell<*mut c_void>,
+    original: Cell<Option<*mut c_void>>,
+    original_calls: Cell<usize>,
+    precision_calls: Cell<usize>,
+    stop_on_original: Cell<bool>,
+    stop_on_precision: Cell<bool>,
+    stop_on_query: Cell<bool>,
+    stop_on_release_at: Cell<Option<u32>>,
+    description_stop_on_drop: Cell<bool>,
+}
+#[derive(Default)]
+struct FormatBehavior {
+    enabled: Cell<bool>,
+    values: RefCell<Vec<Number>>,
+    value_after_get: RefCell<Option<FakeValue>>,
+    normalized_after_get: Cell<Option<f32>>,
+    state_after_get: Cell<Option<i32>>,
+    precision_after_get: Cell<Option<i32>>,
+    normalized_override: Cell<Option<f32>>,
+    refuse_output: Cell<bool>,
+    default_carrier: Cell<Option<DefaultCarrier>>,
+    default_after_get: Cell<Option<DefaultCarrier>>,
+}
+type EditCallback = Rc<dyn Fn(&FakeParameter)>;
+#[derive(Default)]
+struct EditBehavior {
+    controller: Cell<*mut c_void>,
+    trace: RefCell<Vec<&'static str>>,
+    updates: RefCell<Vec<u8>>,
+    on_begin: RefCell<Option<EditCallback>>,
+    on_set: RefCell<Option<EditCallback>>,
+    on_end: RefCell<Option<EditCallback>>,
+    ignore_value: Cell<bool>,
+    kind_override: Cell<Option<i32>>,
+    tag_override: Cell<Option<i32>>,
+    name_changed: Cell<bool>,
+    min_override: Cell<Option<Number>>,
+}
+#[derive(Clone, Copy)]
+enum DefaultCarrier {
+    Object(*mut c_void),
+    Unsupported { tag: i16, payload: u64 },
+    FloatBits(u64),
+}
 #[repr(C)]
 struct FakeParameter {
     table: *const usize,
@@ -226,6 +290,9 @@ struct FakeParameter {
     choice_stop_on_drop: Cell<bool>,
     choice_max_after_get: Cell<Option<Number>>,
     max_override: Cell<Option<Number>>,
+    details: DetailsBehavior,
+    format: FormatBehavior,
+    edit: EditBehavior,
 }
 unsafe fn fp<'a>(p: *mut c_void) -> &'a FakeParameter {
     unsafe { &*p.cast() }
@@ -238,6 +305,9 @@ unsafe extern "C" fn p_retain(p: *mut c_void) -> u32 {
 }
 unsafe extern "C" fn p_release(p: *mut c_void) -> u32 {
     let p = unsafe { fp(p) };
+    if p.details.stop_on_release_at.get() == Some(p.refs.get()) {
+        p.context.set(false);
+    }
     let n = p.refs.get() - 1;
     p.refs.set(n);
     if n == 0 {
@@ -249,10 +319,47 @@ unsafe extern "C" fn p_release(p: *mut c_void) -> u32 {
     n
 }
 unsafe extern "C" fn p_query(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) -> i32 {
-    if unsafe { (*iid).a } != ffi::OBJECT.a {
-        return -1;
-    }
     let p = unsafe { fp(p) };
+    let iid = unsafe { *iid };
+    if p.details.stop_on_query.get() {
+        p.context.set(false);
+    }
+    if iid == ffi::UNKNOWN {
+        if let Some(error) = p.details.unknown_query_error.get() {
+            return error;
+        }
+        if p.details.null_unknown.get() {
+            return ffi::OK;
+        }
+        let canonical = p.details.canonical.get();
+        let canonical = if canonical.is_null() {
+            (p as *const FakeParameter).cast_mut().cast()
+        } else {
+            canonical
+        };
+        unsafe {
+            p_retain(canonical);
+            *out = canonical;
+        }
+        return ffi::OK;
+    }
+    if iid == ffi::LIST_PARAMETER {
+        if let Some(error) = p.details.list_query_error.get() {
+            return error;
+        }
+        if !p.details.list_interface.get() {
+            return ffi::NO_INTERFACE;
+        }
+        let pointer = (p as *const FakeParameter).cast_mut().cast();
+        unsafe {
+            p_retain(pointer);
+            *out = pointer;
+        }
+        return ffi::OK;
+    }
+    if iid != ffi::OBJECT {
+        return ffi::NO_INTERFACE;
+    }
     unsafe {
         p_retain((p as *const FakeParameter).cast_mut().cast());
         *out = (&p.object as *const ObjectView).cast_mut().cast();
@@ -298,18 +405,41 @@ unsafe extern "C" fn property(p: *mut c_void, out: *mut Variant, id: *const c_vo
             }
             FakeValue::Empty => {}
         },
-        b"min" => write_number(out, p.min),
+        b"min" => write_number(out, p.edit.min_override.get().unwrap_or(p.min)),
         b"max" => write_number(out, p.max_override.get().unwrap_or(p.max)),
-        b"default" => write_number(out, p.default),
+        b"default" => match p.format.default_carrier.get() {
+            None => write_number(out, p.default),
+            Some(DefaultCarrier::Object(pointer)) => {
+                out.tag = 0x14;
+                out.payload = pointer as usize as u64;
+                if !pointer.is_null() {
+                    unsafe { string_retain(pointer) };
+                }
+            }
+            Some(DefaultCarrier::Unsupported { tag, payload }) => {
+                out.tag = tag;
+                out.payload = payload;
+            }
+            Some(DefaultCarrier::FloatBits(bits)) => {
+                out.tag = 2;
+                out.payload = bits;
+            }
+        },
         _ => return 0,
     }
     u8::from(!p.false_property.get())
 }
 unsafe extern "C" fn p_kind(p: *mut c_void) -> i32 {
-    unsafe { fp(p) }.kind
+    let p = unsafe { fp(p) };
+    p.edit.kind_override.get().unwrap_or(p.kind)
 }
 unsafe extern "C" fn p_name(p: *mut c_void) -> *const CStringRepr {
-    &unsafe { fp(p) }.name
+    let p = unsafe { fp(p) };
+    if p.edit.name_changed.get() {
+        EDIT_NAME.with(|name| name as *const CStringRepr)
+    } else {
+        &p.name
+    }
 }
 unsafe extern "C" fn p_enabled(p: *mut c_void) -> u8 {
     let p = unsafe { fp(p) };
@@ -319,10 +449,49 @@ unsafe extern "C" fn p_enabled(p: *mut c_void) -> u8 {
     u8::from(p.enabled.get())
 }
 unsafe extern "C" fn p_state(p: *mut c_void, mask: i32) -> u8 {
-    u8::from(mask == 0x1000 && unsafe { fp(p) }.readonly.get())
+    let p = unsafe { fp(p) };
+    u8::from((mask == 0x1000 && p.readonly.get()) || p.details.state.get() & mask != 0)
 }
-unsafe extern "C" fn p_tag(_: *mut c_void) -> i32 {
-    106
+unsafe extern "C" fn p_original(p: *mut c_void) -> *mut c_void {
+    let parameter = unsafe { fp(p) };
+    let details = &parameter.details;
+    details.original_calls.set(details.original_calls.get() + 1);
+    if details.stop_on_original.get() {
+        parameter.context.set(false);
+    }
+    details.original.get().unwrap_or(p)
+}
+unsafe extern "C" fn p_precision(p: *mut c_void) -> i32 {
+    let p = unsafe { fp(p) };
+    p.details
+        .precision_calls
+        .set(p.details.precision_calls.get() + 1);
+    if p.details.stop_on_precision.get() {
+        p.context.set(false);
+    }
+    p.details.precision.get()
+}
+unsafe extern "C" fn p_tag(p: *mut c_void) -> i32 {
+    unsafe { fp(p) }.edit.tag_override.get().unwrap_or(106)
+}
+unsafe extern "C" fn p_controller(p: *mut c_void) -> *mut c_void {
+    unsafe { fp(p) }.edit.controller.get()
+}
+unsafe extern "C" fn p_begin_edit(p: *mut c_void) {
+    let p = unsafe { fp(p) };
+    p.edit.trace.borrow_mut().push("begin");
+    let callback = p.edit.on_begin.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
+    }
+}
+unsafe extern "C" fn p_end_edit(p: *mut c_void) {
+    let p = unsafe { fp(p) };
+    p.edit.trace.borrow_mut().push("end");
+    let callback = p.edit.on_end.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
+    }
 }
 fn raw_float(p: &FakeParameter) -> f64 {
     match &*p.value.borrow() {
@@ -339,22 +508,33 @@ fn number_float(n: Number) -> f64 {
 }
 unsafe extern "C" fn p_norm(p: *mut c_void) -> f32 {
     let p = unsafe { fp(p) };
+    if let Some(value) = p.format.normalized_override.get() {
+        return value;
+    }
     if p.kind == 4 && number_float(p.max) == number_float(p.min) {
         return 0.0;
     }
     ((raw_float(p) - number_float(p.min)) / (number_float(p.max) - number_float(p.min))) as f32
 }
-unsafe extern "C" fn p_set(p: *mut c_void, v: *const Variant, _: u8) {
+unsafe extern "C" fn p_set(p: *mut c_void, v: *const Variant, update: u8) {
     let p = unsafe { fp(p) };
     let v = unsafe { &*v };
     p.writes.set(p.writes.get() + 1);
+    p.edit.trace.borrow_mut().push("value");
+    p.edit.updates.borrow_mut().push(update);
     let n = match v.tag & 15 {
         1 => Number::Integer(v.payload as i64),
         _ => Number::Float(f64::from_bits(v.payload)),
     };
-    *p.value.borrow_mut() = FakeValue::Number(n);
+    if !p.edit.ignore_value.get() {
+        *p.value.borrow_mut() = FakeValue::Number(n);
+    }
     if p.stop_on_set.get() {
         p.context.set(false);
+    }
+    let callback = p.edit.on_set.borrow().clone();
+    if let Some(callback) = callback {
+        callback(p);
     }
 }
 fn set_norm(p: &FakeParameter, n: f32) {
@@ -400,22 +580,42 @@ unsafe extern "C" fn p_display(p: *mut c_void, out: *mut StringRepr) {
     }
     out.object = string_new(&text, p.stats.clone());
     out.private = std::ptr::null_mut();
+    if p.details.description_stop_on_drop.get() {
+        let string = unsafe { fs(out.object) };
+        *string.stop_on_release.borrow_mut() = Some(p.context.clone());
+        string.final_release_only.set(true);
+    }
 }
 unsafe extern "C" fn p_choice_string(p: *mut c_void, out: *mut StringRepr, value: *const Variant) {
     let p = unsafe { fp(p) };
     let value = unsafe { &*value };
-    let index = if value.tag & 15 == 1 {
-        value.payload as i64
+    let label = if p.format.enabled.get() {
+        let value = match value.tag & 15 {
+            1 => Number::Integer(value.payload as i64),
+            2 => Number::Float(f64::from_bits(value.payload)),
+            _ => return,
+        };
+        p.format.values.borrow_mut().push(value);
+        if p.format.refuse_output.get() {
+            return;
+        }
+        match value {
+            Number::Integer(value) => format!("integer:{value}"),
+            Number::Float(value) => format!("float:{:016X}", value.to_bits()),
+        }
     } else {
-        -999
+        let index = if value.tag & 15 == 1 {
+            value.payload as i64
+        } else {
+            -999
+        };
+        p.choice_calls.borrow_mut().push(index);
+        p.choices
+            .borrow()
+            .get(index as usize)
+            .cloned()
+            .unwrap_or_else(|| format!("Choice {index}"))
     };
-    p.choice_calls.borrow_mut().push(index);
-    let label = p
-        .choices
-        .borrow()
-        .get(index as usize)
-        .cloned()
-        .unwrap_or_else(|| format!("Choice {index}"));
     let out = unsafe { &mut *out };
     if !out.object.is_null() {
         unsafe {
@@ -442,6 +642,21 @@ unsafe extern "C" fn p_choice_string(p: *mut c_void, out: *mut StringRepr, value
     }
     if let Some(max) = p.choice_max_after_get.get() {
         p.max_override.set(Some(max));
+    }
+    if let Some(value) = p.format.value_after_get.borrow().as_ref() {
+        *p.value.borrow_mut() = value.clone();
+    }
+    if let Some(normalized) = p.format.normalized_after_get.get() {
+        p.format.normalized_override.set(Some(normalized));
+    }
+    if let Some(state) = p.format.state_after_get.get() {
+        p.details.state.set(state);
+    }
+    if let Some(precision) = p.format.precision_after_get.get() {
+        p.details.precision.set(precision);
+    }
+    if let Some(default) = p.format.default_after_get.get() {
+        p.format.default_carrier.set(Some(default));
     }
 }
 fn input_text(text: *const StringRepr) -> String {
@@ -592,7 +807,12 @@ impl Fixture {
             t[6] = p_enabled as *const () as usize;
             t[8] = p_state as *const () as usize;
             t[13] = p_tag as *const () as usize;
+            t[14] = p_controller as *const () as usize;
+            t[16] = p_begin_edit as *const () as usize;
+            t[17] = p_end_edit as *const () as usize;
+            t[18] = p_original as *const () as usize;
             t[21] = p_set as *const () as usize;
+            t[30] = p_precision as *const () as usize;
             t[35] = p_norm as *const () as usize;
             t[36] = p_set_norm as *const () as usize;
             t[41] = p_formatter as *const () as usize;
@@ -644,6 +864,9 @@ impl Fixture {
             choice_stop_on_drop: Cell::new(false),
             choice_max_after_get: Cell::new(None),
             max_override: Cell::new(None),
+            details: DetailsBehavior::default(),
+            format: FormatBehavior::default(),
+            edit: EditBehavior::default(),
         });
         p.object.parent = &mut *p;
         let pointer = Box::into_raw(p).cast();

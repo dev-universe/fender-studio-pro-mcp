@@ -13,3 +13,7 @@ trap 'rm -rf "$check_tmp"' EXIT HUP INT TERM
 clang++ -std=c++20 -arch arm64 -I"$sdk_root" -Werror -Wno-return-type-c-linkage \
     -O1 -S "$checks_root/abi_calls.cpp" -o "$check_tmp/abi-calls.s"
 python3 "$checks_root/check_abi.py" "$check_tmp/abi-calls.s"
+
+clang++ -std=c++20 -arch arm64 -I"$sdk_root" -Werror -Wno-return-type-c-linkage \
+    -O1 -S "$checks_root/menu_abi.cpp" -o "$check_tmp/menu-abi.s"
+python3 "$checks_root/check_menu_abi.py" "$check_tmp/menu-abi.s"

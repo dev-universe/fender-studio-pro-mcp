@@ -1,0 +1,54 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 230.271,
+  "raw_tool_requests": 78,
+  "parent_verified_requests": 77,
+  "Main_and_Mojito9_volume_preparation_writes": 2,
+  "plugin_parameter_writes": 1,
+  "state_port_Save_transport_writes": 0,
+  "positive_isolation_checkpoint_reached": true,
+  "accepted_cases": 0,
+  "failure": "stored chord output live flags63/67/70 changed, missing from fixed-two derived set",
+  "target_guiInput_raw": [
+    0,
+    5000
+  ],
+  "stored_input60_outputs": [
+    60,
+    63,
+    67,
+    70,
+    74
+  ],
+  "new_observed_derived_changes": [
+    {
+      "name": "chorder.pitch63.outputPlayingLive",
+      "index": 450,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "name": "chorder.pitch67.outputPlayingLive",
+      "index": 478,
+      "before": 0,
+      "after": 1
+    },
+    {
+      "name": "chorder.pitch70.outputPlayingLive",
+      "index": 499,
+      "before": 0,
+      "after": 1
+    }
+  ],
+  "pitch74_output_live_not_read_after_positive": true,
+  "inverse_setter_issued": false,
+  "parameter_restoration_verified": false,
+  "changed_full908_snapshot_complete": false,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "result_sha256": "3105f17374600f0d28d1710ed30d22d82d2e0027c6e80df67099a60bd727507a",
+  "journal_sha256": "e91f37d7c3156db7cbb123ba57d6ba5a57af80ae4855d5c7259c6f0a772e3b9f"
+}

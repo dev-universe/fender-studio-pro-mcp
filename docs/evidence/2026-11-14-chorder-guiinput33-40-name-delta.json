@@ -1,0 +1,68 @@
+{
+  "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+  "tuple_key": [
+    "class_uid",
+    "source",
+    "canonical_name"
+  ],
+  "canonical_tuples": [
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch33.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch34.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch35.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch36.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch37.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch38.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch39.guiInput"
+    ],
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch40.guiInput"
+    ]
+  ],
+  "previous_accepted": 6643,
+  "new_disjoint": 8,
+  "fixed_inventory": 7112,
+  "Chorder_remaining": 92,
+  "remaining_classes": 19,
+  "original_collector_strict_increment_unchanged": 0,
+  "backlog42_unchanged": true,
+  "actual_new_calls": 0,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "whole_Chorder_complete": false,
+  "accepted_after": 6651,
+  "remaining_after": 461,
+  "candidate_freeze_sha256": "dcc6ea11f18ee24728fda023ea2535d48c0db78e31586313f2c7455bbe45da9e",
+  "source_proposal_sha256": "b020686a811ac7ee68237f7c7d9729a51caeae536a5a320b3d939bd7bd01e98e",
+  "source_proposed_union_sha256": "62117f671e1efb71a330cbbb1c7683be73c80774a6d29e7372a4406d85cb1acf",
+  "independent_review_sha256": "1a0df557fbe5117d300496a0cd70444d302253cc86e9453cd3e92211e5f3fc97"
+}

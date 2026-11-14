@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "status": "STATIC_PRESET_CANDIDATES_ONLY_NOT_RECALLED",
+  "host_resource_version": "Fender Studio Pro8.1.1",
+  "class_uid": "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+  "candidates": [
+    {
+      "title": "Diatonic Major Chord Group",
+      "archive_bytes": 1190,
+      "archive_sha256": "54cb96090c1a6c5386f6e296316365c4e8e3521998efcd56bfdb1fcbba61a42c",
+      "configuration": {
+        "transpose": 0,
+        "loKey": 48,
+        "hiKey": 72,
+        "autofill": 0,
+        "filterOutsideRange": 0
+      },
+      "explicit_input_count": 25,
+      "membership_count": 100,
+      "models_sha256": "f704e705fc21363911e33b373ea3a85999796a2a249648de26df8a601b8a3505"
+    },
+    {
+      "title": "Diatonic Minor Chord Group",
+      "archive_bytes": 1193,
+      "archive_sha256": "0fb11ac24fd7f38fc105dda5b19190df6927ae92fe2033b126f36628b3db1bbb",
+      "configuration": {
+        "transpose": 0,
+        "loKey": 48,
+        "hiKey": 72,
+        "autofill": 0,
+        "filterOutsideRange": 0
+      },
+      "explicit_input_count": 25,
+      "membership_count": 100,
+      "models_sha256": "9eab4fbcad10f08266b7a7b626f032790c938f10326bb766e0910fb38f8fe8de"
+    }
+  ],
+  "model_input_domain": 128,
+  "stored_models_differ_at_input_count": 25,
+  "configuration_equal_between_candidates": true,
+  "underlying_model_decoder_reused": true,
+  "source_coverage": "Exact two catalog-named installed archives and their two regular XML members only",
+  "REA_records_exported": 6,
+  "REA_closed_and_reset": true,
+  "actual_elapsed_seconds": 116.451,
+  "actual_DAW_requests": 0,
+  "generic_capsule_restore_verified": false,
+  "preset_application_verified": false,
+  "writable_restoration_verified": false,
+  "class_completed": false,
+  "whole_plugin_completed": false,
+  "completion_count_delta": 0,
+  "conditional_positive_candidate": "autofill stored0; only a fresh original1 and frozen exact native mapping can establish writable contrast without preparation setters",
+  "raw_vendor_resources_kept_private": true,
+  "private_fact_sha256": "cf8c0dbcbe2072a5aaaa796e2ceadb896a8b1f28dae4870796e6853b6662d737",
+  "private_REA_bundle_sha256": "26ab619eb2083e7a0ca60eb318334a1d465ee1581b30ad1a9e7bd018dd7d6ca8"
+}

@@ -1,0 +1,41 @@
+{
+  "all208_sources_match": true,
+  "manifest_sources": 148,
+  "native_approved": 146,
+  "build_support": 2,
+  "manifest_sha256": "6ac6fb001c65616e8254d0b2cdce363bb088c73194982b4c8626a77d80d316fb",
+  "native_uuid": "16C018A4-B407-3FD9-8C09-4C357C9B832B",
+  "native_sha256": "ad5523d506c8b1b590d36232e6a9260f4705cb6f5ff16b2a63923daf17322c0f",
+  "main_sha256": "5b7cb330aa8a811751318156c53129f3eb027ea17e1014a00757aaf52278720b",
+  "metadata_sha256": "abf5ba056892ee3ff8c12e6534483aaed6207beaff521e8343be0499db7a2f7e",
+  "metadata46": true,
+  "source_commit": "c733ce5",
+  "installed": true,
+  "normal_bridge_install_exit_code": 0,
+  "normal_native_install_exit_code": 0,
+  "force_used": false,
+  "installed_package_four_hashes_match": true,
+  "installed_bridge_three_hashes_match": true,
+  "bridge_sha256": {
+    "BridgeComponent.js": "19048d15aa412a0ecbc5a0d76de626fba3679875b4b90d6649d3ef56f3d5a54d",
+    "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+    "NativePluginControls.js": "3ebcee8569c506eac6ee491bf82479d295a12e34a730e345a1335aae8efa7c14"
+  },
+  "focused_JS_tests": 23,
+  "focused_native_tests": 1,
+  "main_and_addon_fmt_passed": true,
+  "main_release_build_seconds": 21.15,
+  "native_release_build_seconds": 12.58,
+  "tool_count": 46,
+  "tools_schema_canonical_sha256": "abf5ba056892ee3ff8c12e6534483aaed6207beaff521e8343be0499db7a2f7e",
+  "changed_tools": [
+    "external_port_menu",
+    "operation_run"
+  ],
+  "main_binary_sha256": "5b7cb330aa8a811751318156c53129f3eb027ea17e1014a00757aaf52278720b",
+  "native_unit": 41,
+  "actual_runtime_requests": 26,
+  "first_zero_test_attempt_excluded": true,
+  "installation_DAW_tool_calls": 0,
+  "preinstall_DAW_tool_calls": 0
+}

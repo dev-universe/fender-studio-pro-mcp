@@ -1,0 +1,44 @@
+{
+  "status": "NORMAL_RELEASE_BUILDS_AND_INSTALLATION_VERIFIED",
+  "product_source_commit": "b60cbfe",
+  "native_unit": 42,
+  "main_sha256": "0826c45050c0f4ffc5db11045cf5729252d7c412f425f20155325eb4c9835308",
+  "native_manifest_sha256": "c0c304b3397f2cdb463f0edc1a6616811be16437065e5b3cf509489a6f2b70f1",
+  "native_uuid": "82D8C1E5-080A-3AC2-BB32-4480DD45D2EF",
+  "native_files": {
+    "installdata.xml": "83ee862f1fb91b32f86deaf873cd41afaf4a1c0be44f497b75b262bbdba40fe0",
+    "metainfo.xml": "d7f694029f6b9a4c29ac35fca8a3a6d39210a5777ddf706c13d6d4dae24d908c",
+    "plugins/mac/fender_mcp_native.bundle/Contents/Info.plist": "f3cb243fe51863ce1ece21b77d782bcbb94027cf9ad39aa69be2c742fe70eabe",
+    "plugins/mac/fender_mcp_native.bundle/Contents/MacOS/fender_mcp_native": "fa45fc7c95e39681414021ed3d97b482534fefdbd7ff094a270b0a294f75d5a6"
+  },
+  "all148_native_source_pins_match": true,
+  "all4_native_package_files_match": true,
+  "normal_bridge_install_exit": 0,
+  "normal_native_install_exit": 0,
+  "force_used": false,
+  "doctor_installation_current": true,
+  "doctor_native_files_match": true,
+  "DAW_calls": 0,
+  "effects_verified": false,
+  "main_build_seconds": 19.58,
+  "native_build_seconds": 11.11,
+  "at": "2026-11-13T23:31:43.072933+00:00",
+  "schema": 1,
+  "host": "Fender Studio Pro8.1.1 Build113103 macOSarm64",
+  "tool_count": 46,
+  "tools_schema_canonical_sha256": "1ba82a737bf3b8864615777b2b6ab45548359be78b09c713b7d50b4a58e95c4e",
+  "MCP_metadata_verified": true,
+  "new_actions": [
+    "reset_meter_hold",
+    "reset_meter_loudness"
+  ],
+  "effect_verification": false,
+  "independent_final_source_review": "PASS",
+  "unit_test_counts": {
+    "native_action": 20,
+    "parameter_pulse": 10,
+    "native_service_JS": 49,
+    "Rust_schema_wire": 2
+  },
+  "native_implementation_only": true
+}

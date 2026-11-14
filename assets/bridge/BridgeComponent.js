@@ -3,6 +3,7 @@
 
 include_file("resource://com.presonus.musicdevices/sdk/controlsurfacecomponent.js");
 include_file("BridgeConfig.js");
+include_file("McpDocumentContext.js");
 include_file("BridgeCore.js");
 include_file("NativeControls.js");
 include_file("NativePluginControls.js");
@@ -443,10 +444,14 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 if (!Array.isArray(native.parameters) || native.parameters.length > 128) return { error: "invalid native parameter page" };
                 for (const record of native.parameters) {
                     if (!record || typeof record.name !== "string" || record.name.length > 512) return { error: "invalid native parameter name" };
-                    if (native.source === "controller") params.push(record);
+                    if (native.source === "controller" || native.source === "level_meter") params.push(record);
                     else if (native.source === "dsp") {
+                        if (record.native_description && typeof record.native_description === "object") {
+                            params.push(Object.assign({}, record.native_description, { name: record.name, native: record, access_metadata_complete: true }));
+                            continue;
+                        }
                         const p = record.name && typeof plug.device.findParameter === "function" ? plug.device.findParameter(record.name) : null;
-                        if (p) params.push(Object.assign(this.paramInfo(p), { name: record.name, native: record }));
+                        if (p) params.push(Object.assign(this.paramInfo(p), { name: record.name, native: record, access_metadata_complete: false }));
                         else {
                             params.push({ name: record.name, value: null, text: null, min: null, max: null, normalized: null, readable: false, native: record });
                             missing.push(record.name || "[native index " + record.index + "]");
@@ -455,7 +460,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 }
                 const pageComplete = native.page_complete === true && (!native.failed_indices || native.failed_indices.length === 0);
                 return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing, page_complete: pageComplete, complete: pageComplete && native.offset === 0 && native.next_offset === null && native.reported_count === params.length,
-                    value_read_complete: missing.length === 0, failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
+                    value_read_complete: missing.length === 0, access_metadata_complete: (native.source === "controller" || native.source === "level_meter") ? pageComplete : native.access_metadata_complete === true,
+                    failed_access_indices: native.failed_access_indices || [], failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
                     parameter_discovery: { source: native.source, completeness: "current_provider", all_indices_read: native.all_indices_read === true, note: "This page covers the current provider and selection, not every nested device, model or editor action." } };
             }
             if (args.offset || args.limit !== undefined || args.source && args.source !== "auto") return { error: "native parameter enumeration requires the matching native extension" };
@@ -465,7 +471,14 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
         if (identityError) return { error: identityError };
         for (const n of names) {
-            const p = args.source === "controller" ? null : args.source === "dsp" ? plug.device.findParameter(String(n)) : this.pluginParameter(plug, String(n));
+            if (args.source === "dsp" || args.source === "level_meter") {
+                const native = this.nativePluginRequest(plug.device, { operation: "parameter", source: args.source, param: String(n), expected_instance: args.expected_instance });
+                if (!native) return { error: "native parameter descriptions require the matching native extension" };
+                if (native.ok && native.parameter) params.push(Object.assign({}, native.parameter, { name: String(n) }));
+                else missing.push(String(n));
+                continue;
+            }
+            const p = args.source === "controller" ? null : this.pluginParameter(plug, String(n));
             if (p) params.push(this.paramInfo(p));
             else {
                 const native = args.source === "dsp" ? null : this.nativePluginRequest(plug.device, { operation: "parameter", source: "controller", param: String(n), expected_instance: args.expected_instance });
@@ -476,8 +489,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing };
     }
 
-    nativePluginRequest(device, request) {
-        return typeof NativePluginControls === "function" ? new NativePluginControls(this).request(device, request) : null;
+    nativePluginRequest(device, request, auxiliary) {
+        return typeof NativePluginControls === "function" ? new NativePluginControls(this).request(device, request, auxiliary) : null;
     }
 
     pluginChoices(args) {
@@ -497,6 +510,92 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return native && native.ok && native.instance && native.instance.object_uid === expected ? null : "the expected native plugin instance is unavailable or changed";
     }
 
+    pluginParameterDetails(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
+            || (args.source !== "dsp" && args.source !== "controller")
+            || (args.include_owner !== undefined && typeof args.include_owner !== "boolean")
+            || (args.compare_gui !== undefined && typeof args.compare_gui !== "boolean"))
+            return { error: "an expected plugin, native instance, bounded parameter and explicit source are required" };
+        if (args.compare_gui === true && (args.plugin !== "Chorder" || args.param !== "chorder.autofill" || args.source !== "dsp"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"))
+            return { error: "GUI comparison requires the exact Chorder Auto Fill dsp target and native instance" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        if (args.compare_gui === true && plug.name !== "Chorder") return { error: "the resolved GUI comparison target is not Chorder" };
+        const request = { operation: "parameter_details", source: args.source,
+            param: args.param, expected_instance: args.expected_instance };
+        if (args.include_owner !== undefined) request.include_owner = args.include_owner;
+        if (args.compare_gui === true) request.compare_gui = true;
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return { error: "parameter details require the matching native extension" };
+        if (args.compare_gui === true && !native.ok) return Object.assign({}, native, {
+            error: native.error && native.error.message || "native GUI comparison unavailable", plugin: plug.name });
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter details unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginParameterFormat(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
+            || (args.source !== "dsp" && args.source !== "controller" && args.source !== "level_meter") || !Array.isArray(args.values)
+            || args.values.length < 1 || args.values.length > 32
+            || args.values.some(value => typeof value !== "number" || !isFinite(value) || Math.abs(value) > 9007199254740991))
+            return { error: "an expected plugin, native instance, bounded parameter, explicit source and 1..32 finite numeric values are required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "format_values", source: args.source,
+            param: args.param, values: args.values, expected_instance: args.expected_instance });
+        if (!native) return { error: "parameter formatting requires the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter formatting unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginParameterDigest(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
+            || (args.source !== "dsp" && args.source !== "controller"))
+            return { error: "an expected plugin, native instance and explicit source are required" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "parameter_digest", source: args.source,
+            expected_instance: args.expected_instance });
+        if (!native) return { error: "parameter digests require the matching native extension" };
+        if (!native.ok) return { error: native.error && native.error.message || "native parameter digest unavailable" };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginModels(args) {
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "catalog", "offset", "limit"];
+        const uid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
+        const integer = (value, min, max) => typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= min && value <= max;
+        if (Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !uid.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || (args.catalog !== "categories" && args.catalog !== "effects")
+            || (args.offset !== undefined && !integer(args.offset, 0, 4096))
+            || (args.limit !== undefined && !integer(args.limit, 1, 32))
+            || (args.channel !== undefined && (typeof args.channel !== "string" || !args.channel))
+            || (args.track !== undefined && (typeof args.track !== "string" || !args.track))
+            || (args.kind !== undefined && ["effect", "instrument", "note_effect", "mix_fx", "panner"].indexOf(args.kind) < 0)
+            || (args.slot !== undefined && !integer(args.slot, 0, 15)))
+            return { error: "model lists require a finite catalog, expected plugin, canonical native instance and bounded target/page", native_outcome: "not_applied" };
+        if ((args.kind === "instrument" || args.kind === "note_effect") ?
+            !args.track || (args.kind === "instrument" && args.slot !== undefined && args.slot !== 0) :
+            !args.channel || ((args.kind === "mix_fx" || args.kind === "panner") ? args.slot !== undefined && args.slot !== 0 : args.slot === undefined))
+            return { error: "model lists require the standard explicit plugin target", native_outcome: "not_applied" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "model_catalog", catalog: args.catalog,
+            offset: args.offset === undefined ? 0 : args.offset, limit: args.limit === undefined ? 32 : args.limit,
+            expected_instance: args.expected_instance });
+        if (!native) return { error: "model lists require the matching native extension", native_outcome: "not_applied" };
+        if (!native.ok) return { error: native.error && native.error.message || "native model list unavailable", native_outcome: native.outcome === "not_applied" ? "not_applied" : "unknown",
+            atomic_snapshot: false, mutation_capability: false };
+        return Object.assign({}, native, { plugin: plug.name });
+    }
+
     focusedTrackState() {
         const model = this.hostComponent && this.hostComponent.model;
         const music = model && model.root && typeof model.root.find === "function" ? model.root.find("music") : null;
@@ -506,7 +605,21 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { label: this.readParam(channel, PreSonus.ParamID.kLabel), mute: this.readParam(channel, "mute"), recordArmed: this.readParam(channel, PreSonus.ParamID.kRecord), monitor: this.readParam(channel, "monitor") };
     }
 
+    fixtureTrackState() {
+        try {
+            const state = this.focusedTrackState();
+            if (!state || typeof state.label !== "string" || !state.label
+                || ["mute", "recordArmed", "monitor"].some(name => state[name] !== true && state[name] !== false && state[name] !== 0 && state[name] !== 1))
+                return { error: "complete focused Music fixture switches are unavailable" };
+            return { label: state.label, mute: state.mute, recordArmed: state.recordArmed, monitor: state.monitor };
+        } catch (_) { return { error: "focused Music fixture state is unavailable" }; }
+    }
+
     pluginInspect(args) {
+        if (args.node_scope === "plugin_controller" && (args.include_nodes !== true
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !args.expected_instance))
+            return { error: "plugin controller inspection requires an expected plugin, native instance and include_nodes=true" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const element = {};
@@ -537,8 +650,20 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         }
         const result = { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
         if (plug.track) result.focusedTrackState = this.focusedTrackState();
-        const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance });
-        if (args.expected_instance !== undefined && (!native || !native.ok || !native.instance || native.instance.object_uid !== args.expected_instance)) return { error: "the expected native plugin instance changed" };
+        const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance, include_nodes: args.include_nodes, node_scope: args.node_scope });
+        if (args.expected_instance !== undefined) {
+            if (native === null || native === undefined) return { error: "native plugin inspection unavailable" };
+            if (typeof native !== "object" || Array.isArray(native)) return { error: "native plugin inspection response is malformed" };
+            if (native.ok === false) {
+                const message = native.error && typeof native.error.message === "string"
+                    ? native.error.message.replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").slice(0, 512).replace(/[\uD800-\uDBFF]$/, "").trim() : "";
+                return { error: message ? "native plugin inspection failed: " + message : "native plugin inspection failed" };
+            }
+            if (native.ok !== true || !native.instance || typeof native.instance.object_uid !== "string" || !native.instance.object_uid
+                || typeof native.instance.class_uid !== "string" || !native.instance.class_uid || native.error !== undefined && native.error !== null)
+                return { error: "native plugin inspection response is malformed" };
+            if (native.instance.object_uid !== args.expected_instance) return { error: "the expected native plugin instance changed" };
+        }
         if (native) result.native = native;
         return result;
     }
@@ -554,13 +679,237 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { requested: true, plugin: plug.name, verified: false };
     }
 
+    editChorderAutofill(args) {
+        const fields = ["track", "slot", "enabled", "expected_instance"];
+        const failure = message => ({ ok: false, native_outcome: "not_applied", gui_value_verified: false,
+            persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
+            errors: [{ code: "invalid_chorder_autofill", message: message }] });
+        if (!args || typeof args !== "object" || Array.isArray(args)
+            || Object.keys(args).length !== fields.length || Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.slot !== "number" || Math.floor(args.slot) !== args.slot || args.slot < 0 || args.slot >= 16
+            || typeof args.enabled !== "boolean" || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000")
+            return failure("A bounded track, slot, Boolean state and canonical native instance are required");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure("The exact Chorder Note FX target is unavailable");
+        const native = this.nativePluginRequest(plug.device, { operation: "edit_chorder_autofill",
+            enabled: args.enabled, expected_instance: args.expected_instance });
+        if (!native) return failure("The matching native Chorder GUI edit extension is required");
+        const result = Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+        if (native.ok === false) {
+            result.errors = [native.error];
+            delete result.error;
+        }
+        return result;
+    }
+
+    chorderLearningGet(args) { return this.chorderLearning(args, false); }
+    chorderLearningSet(args) { return this.chorderLearning(args, true); }
+
+    externalPortMenu(args) {
+        const controls = new NativePluginControls(this), failure = () => controls.externalMenuFailure(false, null);
+        const fields = ["channel", "slot", "plugin", "expected_instance", "port"];
+        const supplied = args && Object.prototype.hasOwnProperty.call(args, "provenance");
+        if (supplied) fields.push("provenance");
+        const querySupplied = args && Object.prototype.hasOwnProperty.call(args, "include_check_only");
+        if (querySupplied) fields.push("include_check_only");
+        if ((querySupplied && typeof args.include_check_only !== "boolean") || (args.include_check_only === true && (args.provenance !== true || args.plugin !== "External Effect Stereo" || args.port !== "send")) || !controls.guiExact(args, fields) || (supplied && typeof args.provenance !== "boolean")
+            || (args.provenance === true && (args.plugin !== "External Effect Stereo" || args.port !== "send"))
+            || typeof args.channel !== "string" || !args.channel.trim() || controls.externalMenuTextBytes(args.channel) > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.channel)
+            || !controls.guiInteger(args.slot, 0, 15) || ["External Effect Mono", "External Effect Stereo"].indexOf(args.plugin) < 0) return failure();
+        const request = { operation: "external_port_menu", expected_instance: args.expected_instance, port: args.port };
+        if (args.provenance === true) request.provenance = true;
+        if (args.include_check_only === true) request.include_check_only = true;
+        if (!controls.externalMenuRequest(request)) return failure();
+        const plug = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
+        if (!plug || plug.error || plug.name !== args.plugin) return failure();
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return failure();
+        if (native.ok === true && native.instance.object_id !== args.plugin) return controls.externalMenuFailure(true, null);
+        if (args.provenance === true) {
+            const current = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
+            if (!current || current.error || current.name !== plug.name || current.device !== plug.device
+                || current.component !== plug.component || current.element !== plug.element) return controls.externalMenuFailure(true, null);
+        }
+        const result = Object.assign({}, native, { plugin: args.plugin, native_outcome: native.outcome });
+        if (args.provenance === true && native.ok === true) result.provenance = Object.assign({}, native.provenance,
+            { proof_scope: "bracketed_current_mapped_bank_sequential_read_only" });
+        return result;
+    }
+
+    chorderChordsGet(args) {
+        const controls = new NativePluginControls(this);
+        const fields = ["track", "slot", "expected_instance", "offset", "limit"];
+        const failure = () => controls.chorderChordsFailure(null);
+        if (!controls.guiExact(args, fields) || typeof args.track !== "string" || !args.track.trim()
+            || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track) || !controls.guiInteger(args.slot, 0, 15)) return failure();
+        const request = { operation: "chorder_chords_get", expected_instance: args.expected_instance, offset: args.offset, limit: args.limit };
+        if (!controls.chorderChordsRequest(request)) return failure();
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure();
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return failure();
+        return Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+    }
+
+    chorderLearning(args, setter) {
+        const fields = setter ? ["track", "slot", "expected_instance", "change"] : ["track", "slot", "expected_instance"];
+        const failure = message => setter ? {
+            ok: false, native_outcome: "not_applied", gui_value_verified: false, persistence_verified: false,
+            effects_verified: false, dsp_propagation_verified: false, errors: [{ code: "invalid_chorder_learning", message: message }]
+        } : { ok: false, native_outcome: "not_applied", mutation_capability: false,
+            error: { code: "invalid_chorder_learning", message: message } };
+        if (!args || typeof args !== "object" || Array.isArray(args)
+            || Object.keys(args).length !== fields.length || Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.slot !== "number" || Math.floor(args.slot) !== args.slot || args.slot < 0 || args.slot >= 16
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || (setter && !new NativePluginControls(this).guiLearningChange(args.change)))
+            return failure("A bounded track, slot, canonical native instance and fixed learning intent are required");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return failure("The exact Chorder Note FX target is unavailable");
+        const request = { operation: setter ? "edit_chorder_model" : "chorder_learning_get", expected_instance: args.expected_instance };
+        if (setter) request.change = args.change;
+        const native = this.nativePluginRequest(plug.device, request);
+        if (!native) return failure("The matching native Chorder learning extension is required");
+        const result = Object.assign({}, native, { plugin: "Chorder", native_outcome: native.outcome });
+        if (setter && native.ok === false) {
+            result.errors = [native.error];
+            delete result.error;
+            result.gui_value_verified = false;
+            result.persistence_verified = false;
+            result.effects_verified = false;
+            result.dsp_propagation_verified = false;
+        }
+        return result;
+    }
+
+    pluginAction(args) {
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
+        if (Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.plugin !== "string" || !args.plugin.trim()
+            || typeof args.expected_instance !== "string" || !args.expected_instance
+            || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness"].indexOf(args.action) < 0)
+            return { native_outcome: "not_applied", errors: [{ code: "invalid_action", message: "a fixed action, expected plugin and native instance are required" }] };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: "parameter_action",
+            action: args.action, expected_instance: args.expected_instance });
+        if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_required", message: "plugin actions require the matching native extension" }] };
+        return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+    }
+
+    insertChainState(args) {
+        const result = typeof NativePluginControls === "function" ? new NativePluginControls(this).insertChainRequest(args)
+            : { ok: false, outcome: "not_applied", error: { code: "native_required", message: "The matching native insert-chain extension is required" } };
+        if (!result.ok) return { native_outcome: result.outcome, errors: [result.error] };
+        return Object.assign({}, result, { native_outcome: result.outcome });
+    }
+
+    pluginState(args) {
+        if (args.action === "inspect_rumble_serialization") {
+            const controls = new NativePluginControls(this), failure = () => controls.rumbleSerializationFailure();
+            if (Object.keys(args).some(key => ["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(key) < 0)
+                || args.plugin !== "Rumble Native" || args.token !== undefined) return failure();
+            const request = { operation: "rumble_serialization_inspect", expected_instance: args.expected_instance };
+            if (!controls.rumbleSerializationRequest(request)) return failure();
+            const plug = this.pluginOf(args);
+            if (!plug || plug.error || plug.name !== "Rumble Native") return failure();
+            const native = this.nativePluginRequest(plug.device, request);
+            if (!native || native.ok !== true || !controls.rumbleSerializationResult(native, request)) return failure();
+            const result = Object.assign({}, native, { plugin: "Rumble Native", native_outcome: native.outcome });
+            return controls.rumbleSerializationBytes(result) <= 4096 ? result : failure();
+        }
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
+            return { error: "an expected plugin and native instance are required" };
+        const operations = { capture: "state_capture", restore: "state_restore", release: "state_release" };
+        const operation = operations[args.action];
+        if (typeof operation !== "string") return { error: "unsupported plugin state action" };
+        if (args.action === "capture" ? args.token !== undefined : typeof args.token !== "string" || !args.token)
+            return { error: "capture takes no token; restore and release require an issued token" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, { operation: operation, token: args.token, expected_instance: args.expected_instance });
+        if (!native) return { error: "plugin state operations require the matching native extension" };
+        if (!native.ok) return { plugin: plug.name, native_outcome: native.outcome, errors: [native.error] };
+        return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name });
+    }
+
+    pluginPresets(args) {
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
+            return { error: "an expected plugin and native instance are required" };
+        if (args.catalog_token !== undefined && (typeof args.catalog_token !== "string" || !/^[0-9A-F]{64}$/.test(args.catalog_token)))
+            return { error: "an issued uppercase hexadecimal catalog token is required" };
+        const operations = { list: "presets", apply: "preset_apply", release: "preset_release" };
+        const operation = operations[args.action];
+        if (typeof operation !== "string") return { error: "unsupported plugin preset action" };
+        const pageValid = (args.offset === undefined || (Number.isInteger(args.offset) && args.offset >= 0 && args.offset <= 4096))
+            && (args.limit === undefined || (Number.isInteger(args.limit) && args.limit >= 1 && args.limit <= 64));
+        const valid = args.action === "list" ? args.index === undefined && pageValid
+            : args.catalog_token !== undefined && args.offset === undefined && args.limit === undefined
+                && (args.action === "apply" ? Number.isInteger(args.index) && args.index >= 0 && args.index < 4096 : args.index === undefined);
+        if (!valid) return { error: "list takes a bounded page; apply requires a catalog token and index; release takes only the catalog token" };
+        const plug = this.pluginOf(args);
+        if (plug.error) return plug;
+        let auxiliary;
+        if (args.action === "list" && args.catalog_token === undefined) {
+            if (typeof Host === "undefined" || typeof Host.Url !== "function") return { error: "the native preset catalog requires the host URL factory" };
+            try { auxiliary = Host.Url(""); }
+            catch (_) { return { error: "the empty host URL prototype is unavailable" }; }
+            if (!auxiliary || typeof auxiliary !== "object") return { error: "the empty host URL prototype is unavailable" };
+        }
+        const request = { operation: operation, expected_instance: args.expected_instance, catalog_token: args.catalog_token };
+        if (args.action === "list") {
+            request.offset = args.offset === undefined ? 0 : args.offset;
+            request.limit = args.limit === undefined ? 32 : args.limit;
+        } else if (args.action === "apply") request.index = args.index;
+        const native = this.nativePluginRequest(plug.device, request, auxiliary);
+        if (!native) return { error: "plugin presets require the matching native extension" };
+        if (!native.ok) return { plugin: plug.name, native_outcome: native.outcome, errors: [native.error] };
+        return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name, native_outcome: native.outcome });
+    }
+
     // One of: text (display text, e.g. "4.0:1" or "-12 dB"), normalized (0..1), value (raw).
     setPluginParam(args) {
+        if (args.edit_lifecycle !== undefined
+            && (args.edit_lifecycle !== "native_user" || args.source !== "dsp"
+                || typeof args.expected_instance !== "string"
+                || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+                || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+                || typeof args.param !== "string" || !args.param || args.param.length > 512 || args.param.indexOf("\0") >= 0
+                || (args.value !== 0 && args.value !== 1)
+                || args.normalized !== undefined || args.text !== undefined || args.float_bits !== undefined))
+            return { native_outcome: "not_applied", errors: [{ code: "invalid_native_edit", message: "Native user edit requires explicit dsp, expected_instance and one raw 0 or 1 value" }] };
         if (typeof args.plugin !== "string" || !args.plugin.trim()) return { error: "an expected plugin class or instance name is required" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
-        if (identityError) return { error: identityError };
+        if (identityError) return { plugin: plug.name, native_outcome: "not_applied",
+            guard: "native_instance_preflight", errors: [{ code: "instance_guard", message: identityError }] };
+        if (args.edit_lifecycle === "native_user") {
+            const native = this.nativePluginRequest(plug.device, { operation: "edit_numeric_parameter", param: args.param,
+                value: args.value, expected_instance: args.expected_instance });
+            if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_edit_unavailable", message: "Native user edit requires the matching native extension" }] };
+            if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, param: args.param,
+                native_outcome: native.outcome, edit_phase: native.edit_phase, errors: [native.error],
+                before: native.before || null, after: native.after || null };
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, param: args.param,
+                before: native.before, after: native.after, instance: native.instance, source: native.source,
+                edit_phase: native.edit_phase, native_verified: native.verified === true };
+        }
+        if (args.float_bits !== undefined && args.source === undefined) return { error: "float_bits requires an explicit native source" };
+        if (args.source !== undefined) {
+            const mode = args.float_bits !== undefined ? "float_bits" : args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";
+            const value = mode === "float_bits" ? args.float_bits : mode === "text" ? args.text : mode === "normalized" ? args.normalized : args.value;
+            const native = this.nativePluginRequest(plug.device, { operation: "set_parameter", source: args.source, param: String(args.param), mode: mode, value: value, expected_instance: args.expected_instance });
+            if (!native) return { error: "an explicit parameter source requires the matching native extension" };
+            if (!native.ok) return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), native_outcome: native.outcome, errors: [native.error], before: native.before || null, after: native.after || null };
+            return { channel: args.channel, slot: args.slot, plugin: plug.name, param: String(args.param), before: native.before, after: native.after, instance: native.instance, source: native.source, native_verified: native.verified === true };
+        }
         const p = this.pluginParameter(plug, String(args.param));
         if (!p) {
             const mode = args.text !== undefined ? "text" : args.normalized !== undefined ? "normalized" : "raw";

@@ -1,6 +1,7 @@
 // Independently authored compiler-only calls; no SDK source is copied or linked.
 #include <cstddef>
 #include <type_traits>
+#include <utility>
 #include "ccl/public/base/iobjectnode.h"
 #include "ccl/public/base/iobject.h"
 #include "ccl/public/gui/framework/iwindow.h"
@@ -11,6 +12,8 @@ static_assert(sizeof(CCL::UIDBytes)==16 && alignof(CCL::UIDBytes)==4);
 static_assert(offsetof(CCL::UIDBytes,data1)==0 && offsetof(CCL::UIDBytes,data2)==4 && offsetof(CCL::UIDBytes,data3)==6 && offsetof(CCL::UIDBytes,data4)==8);
 static_assert(sizeof(CCL::PlainString)==16 && alignof(CCL::PlainString)==8);
 static_assert(std::is_same_v<CCL::StringRef,const CCL::String&>);
+static_assert(std::is_same_v<decltype(std::declval<const CCL::IControl&>().getParameter()), CCL::IParameter*>);
+extern "C" CCL::IParameter* abi_control_parameter(const CCL::IControl* p){return p->getParameter();}
 extern "C" CCL::tresult abi_query(CCL::IUnknown* p,const CCL::UIDBytes* iid,void** out){return p->queryInterface(*iid,out);}
 extern "C" unsigned abi_retain(CCL::IUnknown* p){return p->retain();}
 extern "C" unsigned abi_release(CCL::IUnknown* p){return p->release();}

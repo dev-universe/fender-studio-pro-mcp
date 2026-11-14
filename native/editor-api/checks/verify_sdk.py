@@ -2,6 +2,7 @@
 from pathlib import Path
 import hashlib
 import json
+import re
 import subprocess
 import sys
 
@@ -16,4 +17,10 @@ for path,expected in pin['headers'].items():
     actual=hashlib.sha256((root/path).read_bytes()).hexdigest()
     if actual!=expected:
         raise SystemExit(f"REFUSED changed public ABI header: {path}")
+control_iid = re.search(r"DEFINE_IID\s*\(\s*IControl\s*,([^)]*)\)",
+                        (root / 'ccl/public/gui/framework/iview.h').read_text())
+if control_iid is None or [int(x.strip(), 0) for x in control_iid[1].split(',')] != [
+    0x8186d4bb, 0x76b6, 0x46f6, 0x88, 0x9f, 0x9a, 0xd0, 0xef, 0x50, 0x19, 0x81,
+]:
+    raise SystemExit("REFUSED changed public IControl IID")
 print(f"Verified exact {pin['tag']} commit and {len(pin['headers'])} API header hashes")

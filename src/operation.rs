@@ -61,12 +61,38 @@ pub enum Operation {
     EditEvents(EditEvents),
     #[serde(rename = "pluginParams", alias = "plugin_parameters")]
     PluginParams(PluginParams),
+    #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
+    ExternalPortMenu(ExternalPortMenu),
     #[serde(rename = "pluginChoices", alias = "plugin_parameter_choices")]
     PluginChoices(PluginChoices),
+    #[serde(rename = "pluginParameterDetails", alias = "plugin_parameter_details")]
+    PluginParameterDetails(PluginParameterDetails),
+    #[serde(rename = "pluginParameterFormat", alias = "plugin_parameter_format")]
+    PluginParameterFormat(PluginParameterFormat),
+    #[serde(rename = "pluginParameterDigest", alias = "plugin_parameter_digest")]
+    PluginParameterDigest(PluginParameterDigest),
+    #[serde(rename = "pluginModels", alias = "plugin_models")]
+    PluginModels(PluginModels),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
     PluginEditorOpen(PluginEditor),
+    #[serde(rename = "pluginState", alias = "plugin_state")]
+    PluginState(PluginState),
+    #[serde(rename = "insertChainState", alias = "insert_chain_state")]
+    InsertChainState(InsertChainState),
+    #[serde(rename = "pluginPresets", alias = "plugin_presets")]
+    PluginPresets(PluginPresets),
+    #[serde(rename = "pluginAction", alias = "plugin_action")]
+    PluginAction(PluginAction),
+    #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
+    EditChorderAutofill(ChorderAutofillSet),
+    #[serde(rename = "chorderLearningGet", alias = "chorder_learning_get")]
+    ChorderLearningGet(ChorderLearningGet),
+    #[serde(rename = "chorderChordsGet", alias = "chorder_chords_get")]
+    ChorderChordsGet(ChorderChordsGet),
+    #[serde(rename = "chorderLearningSet", alias = "chorder_learning_set")]
+    ChorderLearningSet(ChorderLearningSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
     SetPluginParam(PluginSet),
     #[serde(rename = "setChannel", alias = "channel_set")]
@@ -378,6 +404,30 @@ pub struct PluginParams {
     pub source: Option<ParameterSource>,
     /// Bind subsequent pages to the native instance returned by the first page.
     pub expected_instance: Option<String>,
+    pub include_nodes: Option<bool>,
+    pub node_scope: Option<NodeScope>,
+    /// Add sequential Music fixture observations around the native inspection.
+    #[serde(
+        default,
+        deserialize_with = "context_option",
+        skip_serializing_if = "Option::is_none"
+    )]
+    #[schemars(with = "bool")]
+    pub include_context: Option<bool>,
+}
+
+fn context_option<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<bool>, D::Error> {
+    bool::deserialize(deserializer).map(Some)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NodeScope {
+    Target,
+    Graph,
+    PluginController,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -386,6 +436,7 @@ pub enum ParameterSource {
     Auto,
     Dsp,
     Controller,
+    LevelMeter,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -405,12 +456,311 @@ pub struct PluginChoices {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct PluginParameterDetails {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub param: String,
+    pub source: ParameterSource,
+    pub expected_instance: String,
+    pub include_owner: Option<bool>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub compare_gui: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderAutofillSet {
+    pub track: String,
+    pub slot: u32,
+    pub enabled: bool,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderLearningGet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ExternalPortMenu {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub port: ExternalPort,
+    #[serde(default, skip_serializing_if = "is_false_provenance")]
+    #[schemars(
+        description = "Defaults to false. True brackets current mapped-bank target resolution around sequential fixed Stereo Send public identity reads. It proves neither atomicity nor continuous active-mixer membership; menuData typed values and selection authority remain unavailable."
+    )]
+    pub provenance: bool,
+    #[serde(default, skip_serializing_if = "is_false_provenance")]
+    #[schemars(
+        description = "Defaults to false. True requires provenance=true and exact Stereo Send. It performs two fixed public category/checkOnly queries with flags exactly1, no selection or flags0 execution; callbacks may run and no global-filter or audio/persistence success is implied."
+    )]
+    pub include_check_only: bool,
+}
+fn is_false_provenance(value: &bool) -> bool {
+    !*value
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExternalPort {
+    Send,
+    Return,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderChordsGet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+    #[schemars(range(min = 0, max = 127))]
+    pub offset: u32,
+    #[schemars(range(min = 1, max = 16))]
+    pub limit: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderLearningSet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+    pub change: ChorderLearningChange,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ChorderLearningChange {
+    LearnMode {
+        enabled: bool,
+    },
+    InputPitch {
+        #[schemars(required)]
+        pitch: ChorderLearningPitch,
+    },
+    ChordNote {
+        expected_input_pitch: ChorderMidiPitch,
+        output_pitch: ChorderMidiPitch,
+        enabled: bool,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(transparent)]
+pub struct ChorderMidiPitch(#[schemars(range(min = 0, max = 127))] pub u8);
+
+impl<'de> Deserialize<'de> for ChorderMidiPitch {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Value::deserialize(deserializer)? {
+            Value::Number(number) => number
+                .as_u64()
+                .filter(|value| *value <= 127)
+                .map(|value| Self(value as u8))
+                .ok_or_else(|| serde::de::Error::custom("MIDI pitch must be an integer 0..127")),
+            _ => Err(serde::de::Error::custom(
+                "MIDI pitch must be an integer 0..127",
+            )),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, JsonSchema)]
+#[serde(transparent)]
+pub struct ChorderLearningPitch(#[schemars(range(min = 0, max = 127))] pub Option<u8>);
+
+impl<'de> Deserialize<'de> for ChorderLearningPitch {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Value::deserialize(deserializer)? {
+            Value::Null => Ok(Self(None)),
+            Value::Number(number) => number
+                .as_u64()
+                .filter(|value| *value <= 127)
+                .map(|value| Self(Some(value as u8)))
+                .ok_or_else(|| serde::de::Error::custom("pitch must be null or an integer 0..127")),
+            _ => Err(serde::de::Error::custom(
+                "pitch must be null or an integer 0..127",
+            )),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginParameterFormat {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub param: String,
+    pub source: ParameterSource,
+    pub expected_instance: String,
+    pub values: Vec<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginParameterDigest {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub source: ParameterDigestSource,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ParameterDigestSource {
+    Dsp,
+    Controller,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginModels {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub catalog: ModelCatalog,
+    #[schemars(range(min = 0, max = 4096))]
+    pub offset: Option<u32>,
+    #[schemars(range(min = 1, max = 32))]
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelCatalog {
+    Categories,
+    Effects,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct PluginEditor {
     pub channel: Option<String>,
     pub slot: Option<u32>,
     pub kind: Option<PluginKind>,
     pub track: Option<String>,
     pub plugin: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginState {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginStateAction,
+    pub token: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginStateAction {
+    InspectRumbleSerialization,
+    Capture,
+    Restore,
+    Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertChainState {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub action: InsertChainStateAction,
+    #[serde(default, deserialize_with = "supplied_optional_string")]
+    #[schemars(with = "String")]
+    pub token: Option<String>,
+    #[serde(default, deserialize_with = "supplied_optional_string")]
+    #[schemars(with = "String")]
+    pub expected_folder: Option<String>,
+}
+
+fn supplied_optional_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    String::deserialize(deserializer).map(Some)
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum InsertChainStateAction {
+    Capture,
+    Restore,
+    Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginAction {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginButtonAction,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginButtonAction {
+    SwapFilterFrequencies,
+    ResetMeterHold,
+    ResetMeterLoudness,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginPresets {
+    pub channel: Option<String>,
+    pub slot: Option<u32>,
+    pub kind: Option<PluginKind>,
+    pub track: Option<String>,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub action: PluginPresetAction,
+    pub catalog_token: Option<String>,
+    pub index: Option<u32>,
+    pub offset: Option<u32>,
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginPresetAction {
+    List,
+    Apply,
+    Release,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -425,7 +775,27 @@ pub struct PluginSet {
     pub value: Option<f64>,
     pub normalized: Option<f64>,
     pub text: Option<String>,
+    pub float_bits: Option<String>,
+    pub source: Option<ParameterSource>,
     pub expected_instance: Option<String>,
+    #[serde(
+        default,
+        deserialize_with = "supplied_edit_lifecycle",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub edit_lifecycle: Option<PluginEditLifecycle>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum PluginEditLifecycle {
+    NativeUser,
+}
+
+fn supplied_edit_lifecycle<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<PluginEditLifecycle>, D::Error> {
+    PluginEditLifecycle::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -789,6 +1159,10 @@ impl Operation {
         let mut args = value["args"].clone();
         remove_nulls(&mut args);
         match self {
+            Self::ChorderLearningSet(change) => {
+                args["change"] =
+                    serde_json::to_value(&change.change).expect("closed learning change");
+            }
             Self::SetTransport(transport) => {
                 if let Some(position) = &transport.position {
                     args.as_object_mut().unwrap().remove("position");
@@ -846,8 +1220,17 @@ impl Operation {
             | Self::Sends(_)
             | Self::PluginParams(_)
             | Self::PluginChoices(_)
+            | Self::PluginParameterDetails(_)
+            | Self::ChorderLearningGet(_)
+            | Self::ChorderChordsGet(_)
+            | Self::PluginParameterFormat(_)
+            | Self::PluginParameterDigest(_)
+            | Self::PluginModels(_)
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
+            Self::PluginState(p) => {
+                matches!(p.action, PluginStateAction::InspectRumbleSerialization)
+            }
             Self::Command(command) => command.check_only == Some(true),
             Self::Metronome(settings) => {
                 settings.click.is_none()
@@ -860,7 +1243,71 @@ impl Operation {
         }
     }
 
+    pub fn requires_explicit_document(&self) -> bool {
+        let level = match self {
+            Self::PluginParams(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            Self::PluginChoices(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            Self::PluginParameterFormat(p) => matches!(p.source, ParameterSource::LevelMeter),
+            Self::SetPluginParam(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            _ => false,
+        };
+        level
+            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization))
+            || matches!(
+                self,
+                Self::ChorderLearningGet(_)
+                    | Self::ChorderLearningSet(_)
+                    | Self::ChorderChordsGet(_)
+                    | Self::ExternalPortMenu(_)
+            )
+    }
+
     pub fn validate(&self) -> Result<(), OperationError> {
+        let level_target = match self {
+            Self::PluginParams(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((p.plugin.as_deref(), p.expected_instance.as_deref()))
+            }
+            Self::PluginChoices(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((p.plugin.as_deref(), p.expected_instance.as_deref()))
+            }
+            Self::PluginParameterFormat(p) if matches!(p.source, ParameterSource::LevelMeter) => {
+                Some((Some(p.plugin.as_str()), Some(p.expected_instance.as_str())))
+            }
+            Self::SetPluginParam(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((Some(p.plugin.as_str()), p.expected_instance.as_deref()))
+            }
+            Self::PluginInspect(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                return Err(invalid(
+                    "level_meter is available only for registered settings access",
+                ));
+            }
+            Self::PluginParameterDetails(p) if matches!(p.source, ParameterSource::LevelMeter) => {
+                return Err(invalid(
+                    "level_meter does not extend the read-only descriptor API",
+                ));
+            }
+            _ => None,
+        };
+        if let Some((plugin, instance)) = level_target {
+            if plugin != Some("Level Meter")
+                || instance.is_none_or(|s| s == "00000000-0000-0000-0000-000000000000")
+            {
+                return Err(invalid(
+                    "level_meter requires Level Meter and expected_instance",
+                ));
+            }
+        }
+        if let Self::SetPluginParam(p) = self {
+            if matches!(p.source, Some(ParameterSource::LevelMeter))
+                && (p.value.is_none()
+                    || p.normalized.is_some()
+                    || p.text.is_some()
+                    || p.float_bits.is_some()
+                    || p.edit_lifecycle.is_some())
+            {
+                return Err(invalid("level_meter writes require a raw Integer value"));
+            }
+        }
         let (_, args) = self.wire();
         if serde_json::to_vec(&args).is_ok_and(|v| v.len() > 900_000) {
             return Err(invalid("Operation arguments exceed the supported size"));
@@ -927,8 +1374,90 @@ impl Operation {
                     ));
                 }
             }
+            Self::EditChorderAutofill(p) => {
+                validate_splitter_name(&p.track, "track")?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.slot >= 16
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "Chorder Auto Fill requires slot 0..15 and a nonzero canonical native instance",
+                    ));
+                }
+            }
+            Self::ChorderLearningGet(p) => {
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+            }
+            Self::ExternalPortMenu(p) => {
+                validate_splitter_name(&p.channel, "channel")?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.slot > 15
+                    || (p.include_check_only
+                        && (!p.provenance
+                            || p.plugin != "External Effect Stereo"
+                            || !matches!(p.port, ExternalPort::Send)))
+                    || (p.provenance
+                        && (p.plugin != "External Effect Stereo"
+                            || !matches!(p.port, ExternalPort::Send)))
+                    || !matches!(
+                        p.plugin.as_str(),
+                        "External Effect Mono" | "External Effect Stereo"
+                    )
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance.bytes().any(|b| b.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "External menus require an exact External Effect plugin, slot 0..15 and a canonical nonzero native instance",
+                    ));
+                }
+            }
+            Self::ChorderChordsGet(p) => {
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+                if p.offset > 127 || !(1..=16).contains(&p.limit) {
+                    return Err(invalid(
+                        "Chorder chord pages require offset 0..127 and limit 1..16",
+                    ));
+                }
+            }
+            Self::ChorderLearningSet(p) => {
+                validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+                let valid_pitch = match &p.change {
+                    ChorderLearningChange::LearnMode { .. } => true,
+                    ChorderLearningChange::InputPitch { pitch } => {
+                        pitch.0.is_none_or(|value| value <= 127)
+                    }
+                    ChorderLearningChange::ChordNote {
+                        expected_input_pitch,
+                        output_pitch,
+                        ..
+                    } => expected_input_pitch.0 <= 127 && output_pitch.0 <= 127,
+                };
+                if !valid_pitch {
+                    return Err(invalid(
+                        "Chorder learning pitches must be MIDI 0..127, or null only for input_pitch",
+                    ));
+                }
+            }
             Self::SetPluginParam(p) => {
                 validate_instance_uid(p.expected_instance.as_deref())?;
+                if p.edit_lifecycle.is_some()
+                    && (!matches!(p.source, Some(ParameterSource::Dsp))
+                        || p.expected_instance.is_none()
+                        || !matches!(p.value, Some(0.0 | 1.0))
+                        || p.normalized.is_some()
+                        || p.text.is_some()
+                        || p.float_bits.is_some()
+                        || p.param.is_empty()
+                        || p.param.encode_utf16().count() > 512
+                        || p.param.contains('\0'))
+                {
+                    return Err(invalid(
+                        "Native user edit requires explicit dsp, expected_instance and one raw 0 or 1 value",
+                    ));
+                }
                 if p.plugin.trim().is_empty() {
                     return Err(invalid(
                         "An expected plugin class or instance name is required",
@@ -943,9 +1472,23 @@ impl Operation {
                 if usize::from(p.value.is_some())
                     + usize::from(p.normalized.is_some())
                     + usize::from(p.text.is_some())
+                    + usize::from(p.float_bits.is_some())
                     != 1
                 {
-                    return Err(invalid("Specify exactly one of value, normalized, or text"));
+                    return Err(invalid(
+                        "Specify exactly one of value, normalized, text, or float_bits",
+                    ));
+                }
+                if let Some(bits) = &p.float_bits {
+                    let valid = bits.len() == 16
+                        && bits.bytes().all(|byte| byte.is_ascii_hexdigit())
+                        && u64::from_str_radix(bits, 16)
+                            .is_ok_and(|raw| f64::from_bits(raw).is_finite());
+                    if !valid || p.source.is_none() {
+                        return Err(invalid(
+                            "float_bits requires 16 finite f64 hexadecimal digits and an explicit native source",
+                        ));
+                    }
                 }
                 if p.normalized
                     .is_some_and(|v| !v.is_finite() || !(0.0..=1.0).contains(&v))
@@ -968,7 +1511,184 @@ impl Operation {
                     p.track.as_deref(),
                 )?;
             }
+            Self::PluginAction(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+            }
+            Self::PluginState(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+                let valid_token = p.token.as_ref().is_some_and(|token| {
+                    !token.is_empty()
+                        && token.len() <= 128
+                        && token.bytes().all(|byte| {
+                            byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_'
+                        })
+                });
+                match p.action {
+                    PluginStateAction::InspectRumbleSerialization
+                        if p.token.is_none() && p.plugin == "Rumble Native" => {}
+                    PluginStateAction::Capture if p.token.is_none() => {}
+                    PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
+                    _ => {
+                        return Err(invalid(
+                            "Capture takes no token; restore and release require an issued state token",
+                        ));
+                    }
+                }
+            }
+            Self::InsertChainState(p) => {
+                if p.channel.trim().is_empty()
+                    || p.channel.encode_utf16().count() > 256
+                    || p.channel.chars().any(char::is_control)
+                {
+                    return Err(invalid(
+                        "Insert-chain channel must contain 1 to 256 UTF-16 units without control characters",
+                    ));
+                }
+                if p.expected_folder.as_ref().is_some_and(|uid| {
+                    uid.len() != 36
+                        || uid == "00000000-0000-0000-0000-000000000000"
+                        || uid.bytes().enumerate().any(|(index, byte)| {
+                            if [8, 13, 18, 23].contains(&index) {
+                                byte != b'-'
+                            } else {
+                                !byte.is_ascii_digit() && !(b'A'..=b'F').contains(&byte)
+                            }
+                        })
+                }) {
+                    return Err(invalid(
+                        "expected_folder must be a canonical nonzero uppercase native UUID",
+                    ));
+                }
+                let issued_token = p.token.as_ref().is_some_and(|token| {
+                    token.len() == 64
+                        && token
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+                });
+                match p.action {
+                    InsertChainStateAction::Capture if p.token.is_none() => {}
+                    InsertChainStateAction::Restore | InsertChainStateAction::Release
+                        if issued_token => {}
+                    _ => {
+                        return Err(invalid(
+                            "Capture forbids a token; restore and release require an issued uppercase 64-hex token",
+                        ));
+                    }
+                }
+            }
+            Self::PluginPresets(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+                if p.catalog_token.as_ref().is_some_and(|token| {
+                    token.len() != 64
+                        || !token
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'A'..=b'F').contains(&byte))
+                }) {
+                    return Err(invalid(
+                        "Use the issued uppercase hexadecimal catalog token",
+                    ));
+                }
+                let valid = match p.action {
+                    PluginPresetAction::List => {
+                        p.index.is_none()
+                            && p.offset.is_none_or(|offset| offset <= 4096)
+                            && p.limit.is_none_or(|limit| (1..=64).contains(&limit))
+                    }
+                    PluginPresetAction::Apply => {
+                        p.catalog_token.is_some()
+                            && p.index.is_some_and(|index| index < 4096)
+                            && p.offset.is_none()
+                            && p.limit.is_none()
+                    }
+                    PluginPresetAction::Release => {
+                        p.catalog_token.is_some()
+                            && p.index.is_none()
+                            && p.offset.is_none()
+                            && p.limit.is_none()
+                    }
+                };
+                if !valid {
+                    return Err(invalid(
+                        "List accepts a bounded page; apply requires an issued catalog token and index; release takes only the catalog token",
+                    ));
+                }
+            }
             Self::PluginParams(p) | Self::PluginInspect(p) => {
+                if p.include_context.is_some() && !matches!(self, Self::PluginInspect(_)) {
+                    return Err(invalid("Context observations apply only to plugin_inspect"));
+                }
+                if p.include_context == Some(true)
+                    && (!matches!(
+                        p.kind,
+                        Some(PluginKind::Instrument | PluginKind::NoteEffect)
+                    ) || p.track.as_ref().is_none_or(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 512
+                            || name.chars().any(char::is_control)
+                    }) || p.plugin.as_ref().is_none_or(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 512
+                            || name.chars().any(char::is_control)
+                    }) || p
+                        .expected_instance
+                        .as_deref()
+                        .is_none_or(|uid| uid == "00000000-0000-0000-0000-000000000000")
+                        || !matches!(
+                            p.source,
+                            Some(ParameterSource::Dsp | ParameterSource::Controller)
+                        )
+                        || p.include_nodes == Some(true)
+                        || p.node_scope.is_some())
+                {
+                    return Err(invalid(
+                        "Context observations require a bound Music target, explicit provider and no node inventory",
+                    ));
+                }
+                if (p.include_nodes.is_some() || p.node_scope.is_some())
+                    && !matches!(self, Self::PluginInspect(_))
+                {
+                    return Err(invalid(
+                        "Node inventory options apply only to plugin_inspect",
+                    ));
+                }
+                if p.node_scope.is_some() && p.include_nodes != Some(true) {
+                    return Err(invalid("node_scope requires include_nodes=true"));
+                }
+                if matches!(p.node_scope, Some(NodeScope::PluginController))
+                    && (p.expected_instance.is_none()
+                        || p.plugin.as_ref().is_none_or(|name| name.trim().is_empty()))
+                {
+                    return Err(invalid(
+                        "Plugin controller inspection requires an expected plugin and native instance",
+                    ));
+                }
                 validate_instance_uid(p.expected_instance.as_deref())?;
                 validate_plugin_target(
                     p.channel.as_deref(),
@@ -991,6 +1711,94 @@ impl Operation {
                 if !p.names.is_empty() && (p.offset.is_some() || p.limit.is_some()) {
                     return Err(invalid(
                         "Pagination applies only when parameter names is empty",
+                    ));
+                }
+            }
+            Self::PluginParameterDetails(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.param.trim().is_empty()
+                    || p.param.len() > 512
+                    || p.param.contains('\0')
+                    || matches!(p.source, ParameterSource::Auto)
+                {
+                    return Err(invalid(
+                        "Use an expected plugin, bounded parameter name and explicit dsp or controller source",
+                    ));
+                }
+                if p.compare_gui
+                    && (p.plugin != "Chorder"
+                        || p.param != "chorder.autofill"
+                        || !matches!(p.source, ParameterSource::Dsp)
+                        || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                        || p.expected_instance
+                            .bytes()
+                            .any(|byte| byte.is_ascii_lowercase()))
+                {
+                    return Err(invalid(
+                        "GUI comparison requires Chorder chorder.autofill with source dsp",
+                    ));
+                }
+            }
+            Self::PluginParameterFormat(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.param.trim().is_empty()
+                    || p.param.len() > 512
+                    || p.param.contains('\0')
+                    || matches!(p.source, ParameterSource::Auto)
+                    || !(1..=32).contains(&p.values.len())
+                    || p.values
+                        .iter()
+                        .any(|value| !value.is_finite() || value.abs() > 9_007_199_254_740_991.0)
+                {
+                    return Err(invalid(
+                        "Use an expected plugin, bounded parameter, explicit dsp or controller source and 1..32 finite values within the JSON numeric bound",
+                    ));
+                }
+            }
+            Self::PluginParameterDigest(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty() {
+                    return Err(invalid("An expected plugin class or instance is required"));
+                }
+            }
+            Self::PluginModels(p) => {
+                validate_plugin_target(
+                    p.channel.as_deref(),
+                    p.slot,
+                    p.kind.as_ref(),
+                    p.track.as_deref(),
+                )?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.plugin.trim().is_empty()
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                    || p.offset.is_some_and(|offset| offset > 4096)
+                    || p.limit.is_some_and(|limit| !(1..=32).contains(&limit))
+                {
+                    return Err(invalid(
+                        "Model lists require an expected plugin, canonical nonzero native instance, offset 0..4096 and limit 1..32",
                     ));
                 }
             }
@@ -1120,6 +1928,20 @@ fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError
     Ok(())
 }
 
+fn validate_chorder_target(track: &str, slot: u32, instance: &str) -> Result<(), OperationError> {
+    validate_splitter_name(track, "track")?;
+    validate_instance_uid(Some(instance))?;
+    if slot >= 16
+        || instance == "00000000-0000-0000-0000-000000000000"
+        || instance.bytes().any(|byte| byte.is_ascii_lowercase())
+    {
+        return Err(invalid(
+            "Chorder controls require slot 0..15 and a nonzero canonical native instance",
+        ));
+    }
+    Ok(())
+}
+
 fn validate_instance_uid(uid: Option<&str>) -> Result<(), OperationError> {
     if let Some(uid) = uid
         && (uid.len() != 36
@@ -1227,6 +2049,673 @@ mod tests {
     use super::*;
 
     #[test]
+    fn level_settings_source_requires_explicit_document_target_and_raw_writes() {
+        let target = json!({"channel":"Scratch","slot":0,"plugin":"Level Meter","source":"level_meter","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for (name, extra) in [
+            ("plugin_parameters", json!({"names":[]})),
+            ("plugin_parameter_choices", json!({"param":"mode"})),
+            (
+                "plugin_parameter_format",
+                json!({"param":"mode","values":[0,1]}),
+            ),
+            ("setPluginParam", json!({"param":"mode","value":1})),
+        ] {
+            let mut args = target.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let op = Operation::from_parts(name, args.clone()).unwrap();
+            op.validate().unwrap();
+            assert!(op.requires_explicit_document());
+            for key in ["plugin", "expected_instance"] {
+                let mut bad = args.clone();
+                bad.as_object_mut().unwrap().remove(key);
+                assert!(
+                    Operation::from_parts(name, bad)
+                        .and_then(|op| op.validate())
+                        .is_err()
+                );
+            }
+        }
+        let mut args = target.clone();
+        args["param"] = json!("mode");
+        args["normalized"] = json!(1);
+        assert!(
+            Operation::from_parts("setPluginParam", args)
+                .and_then(|op| op.validate())
+                .is_err()
+        );
+        let schema = serde_json::to_value(schemars::schema_for!(ParameterSource)).unwrap();
+        assert!(schema.to_string().contains("level_meter"));
+    }
+
+    #[test]
+    fn chorder_learning_has_two_closed_typed_roles_and_required_nullable_pitch() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let get = Operation::from_parts("chorder_learning_get", target.clone()).unwrap();
+        get.validate().unwrap();
+        assert!(get.is_read_only());
+        assert!(get.requires_explicit_document());
+        assert_eq!(get.wire(), ("chorderLearningGet".into(), target.clone()));
+        for change in [
+            json!({"kind":"learn_mode","enabled":false}),
+            json!({"kind":"learn_mode","enabled":true}),
+            json!({"kind":"input_pitch","pitch":null}),
+            json!({"kind":"input_pitch","pitch":0}),
+            json!({"kind":"input_pitch","pitch":127}),
+        ] {
+            let mut args = target.clone();
+            args["change"] = change.clone();
+            let set = Operation::from_parts("chorder_learning_set", args.clone()).unwrap();
+            set.validate().unwrap();
+            assert!(!set.is_read_only());
+            assert!(set.requires_explicit_document());
+            assert_eq!(set.wire(), ("chorderLearningSet".into(), args));
+            assert_eq!(set.wire().1["change"], change);
+        }
+        for change in [
+            json!({"kind":"input_pitch"}),
+            json!({"kind":"input_pitch","pitch":-1}),
+            json!({"kind":"input_pitch","pitch":128}),
+            json!({"kind":"input_pitch","pitch":0.0}),
+            json!({"kind":"input_pitch","pitch":true}),
+            json!({"kind":"input_pitch","pitch":"0"}),
+            json!({"kind":"input_pitch","pitch":null,"enabled":false}),
+            json!({"kind":"learn_mode","enabled":0}),
+            json!({"kind":"learn_mode","enabled":true,"pitch":0}),
+            json!({"kind":"other","pitch":0}),
+            json!({}),
+        ] {
+            let mut args = target.clone();
+            args["change"] = change;
+            assert!(Operation::from_parts("chorder_learning_set", args).is_err());
+        }
+    }
+
+    #[test]
+    fn chorder_chords_get_is_a_closed_bounded_read_with_explicit_document() {
+        let args = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","offset":0,"limit":16});
+        let operation = Operation::from_parts("chorder_chords_get", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(operation.wire(), ("chorderChordsGet".into(), args.clone()));
+        for (key, value) in [
+            ("offset", json!(-1)),
+            ("offset", json!(128)),
+            ("offset", json!(0.5)),
+            ("offset", json!(true)),
+            ("limit", json!(0)),
+            ("limit", json!(17)),
+            ("limit", json!(1.5)),
+            ("limit", json!(null)),
+            ("slot", json!(16)),
+            ("track", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("path", json!("/unchecked")),
+            ("xml", json!("<Attributes/>")),
+            ("source", json!("dsp")),
+        ] {
+            let mut bad = args.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("chorder_chords_get", bad)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+        for key in ["track", "slot", "expected_instance", "offset", "limit"] {
+            let mut bad = args.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("chorder_chords_get", bad).is_err());
+        }
+        for offset in [0, 127] {
+            for limit in [1, 16] {
+                let mut valid = args.clone();
+                valid["offset"] = json!(offset);
+                valid["limit"] = json!(limit);
+                Operation::from_parts("chorder_chords_get", valid)
+                    .unwrap()
+                    .validate()
+                    .unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn chorder_learning_target_refuses_unbound_or_generic_gui_policies() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for operation in ["chorder_learning_get", "chorder_learning_set"] {
+            let mut base = target.clone();
+            if operation.ends_with("set") {
+                base["change"] = json!({"kind":"input_pitch","pitch":null});
+            }
+            for (key, value) in [
+                ("track", json!(" ")),
+                ("track", json!("x\0y")),
+                ("track", json!("x".repeat(257))),
+                ("slot", json!(16)),
+                (
+                    "expected_instance",
+                    json!("00000000-0000-0000-0000-000000000000"),
+                ),
+                (
+                    "expected_instance",
+                    json!("12345678-1234-1234-1234-123456789abc"),
+                ),
+            ] {
+                let mut args = base.clone();
+                args[key] = value;
+                assert!(
+                    Operation::from_parts(operation, args)
+                        .unwrap()
+                        .validate()
+                        .is_err()
+                );
+            }
+            for key in [
+                "plugin",
+                "source",
+                "param",
+                "path",
+                "max_views",
+                "kind",
+                "channel",
+            ] {
+                let mut args = base.clone();
+                args[key] = json!("unexpected");
+                assert!(Operation::from_parts(operation, args).is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn chorder_learning_schema_distinguishes_required_null_from_missing_pitch() {
+        let schema = serde_json::to_value(schemars::schema_for!(ChorderLearningSet)).unwrap();
+        let variants = schema["$defs"]["ChorderLearningChange"]["oneOf"]
+            .as_array()
+            .unwrap();
+        let pitch = variants
+            .iter()
+            .find(|variant| variant["properties"]["kind"]["const"] == "input_pitch")
+            .unwrap();
+        assert!(
+            pitch["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("pitch"))
+        );
+        let definition = &pitch["properties"]["pitch"];
+        assert_eq!(definition["minimum"], 0);
+        assert_eq!(definition["maximum"], 127);
+        assert_eq!(definition["type"], json!(["integer", "null"]));
+    }
+
+    #[test]
+    fn fixture_context_is_an_optional_bound_music_inspection() {
+        for kind in ["instrument", "note_effect"] {
+            let args = json!({"kind":kind,"track":"FSP Verify Keys","slot":0,"plugin":"Expected",
+                "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC","include_context":true});
+            let op = Operation::from_parts("plugin_inspect", args).unwrap();
+            op.validate().unwrap();
+            assert!(op.is_read_only());
+            assert_eq!(op.wire().1["include_context"], true);
+        }
+        for extra in [json!({}), json!({"include_context":false})] {
+            let mut args = json!({"channel":"Scratch","slot":0});
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let op = Operation::from_parts("plugin_inspect", args).unwrap();
+            op.validate().unwrap();
+            assert_eq!(
+                op.wire().1.get("include_context").is_some(),
+                extra.get("include_context").is_some()
+            );
+        }
+    }
+
+    #[test]
+    fn fixture_context_refuses_other_operations_and_malformed_flags() {
+        for value in [
+            json!(true),
+            json!(false),
+            Value::Null,
+            json!("true"),
+            json!(1),
+        ] {
+            let args = json!({"channel":"Scratch","slot":0,"include_context":value});
+            assert!(
+                Operation::from_parts("plugin_parameters", args)
+                    .map_or(true, |op| op.validate().is_err())
+            );
+        }
+        for value in [Value::Null, json!("true"), json!(1), json!({})] {
+            assert!(
+                Operation::from_parts(
+                    "plugin_inspect",
+                    json!({"channel":"Scratch","slot":0,"include_context":value})
+                )
+                .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn fixture_context_requires_exact_target_provider_and_no_node_inventory() {
+        let base = json!({"kind":"instrument","track":"FSP Verify Keys","plugin":"Expected","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","include_context":true});
+        for (key, value) in [
+            ("kind", json!("effect")),
+            ("track", json!(" ")),
+            ("plugin", json!("")),
+            ("track", json!("x".repeat(513))),
+            ("plugin", json!("x\n")),
+            ("source", json!("auto")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("expected_instance", json!("stale")),
+            ("include_nodes", json!(true)),
+            ("node_scope", json!("target")),
+            ("slot", json!(1)),
+        ] {
+            let mut args = base.clone();
+            args[key] = value;
+            assert!(
+                Operation::from_parts("plugin_inspect", args)
+                    .map_or(true, |op| op.validate().is_err()),
+                "{key}"
+            );
+        }
+        for key in ["kind", "track", "plugin", "source", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(key);
+            assert!(
+                Operation::from_parts("plugin_inspect", args)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{key}"
+            );
+        }
+        let mut controller = base;
+        controller["source"] = json!("controller");
+        controller["include_nodes"] = json!(false);
+        Operation::from_parts("plugin_inspect", controller)
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn button_actions_accept_only_a_bound_finite_action() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Expander",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"swap_filter_frequencies"});
+        let operation = Operation::from_parts("plugin_action", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().0, "pluginAction");
+        for action in ["reset_meter_hold", "reset_meter_loudness"] {
+            let mut meter = args.clone();
+            meter["action"] = json!(action);
+            meter["plugin"] = json!("Level Meter");
+            let operation = Operation::from_parts("plugin_action", meter).unwrap();
+            operation.validate().unwrap();
+            assert_eq!(operation.wire().1["action"], action);
+        }
+        for field in ["source", "param", "value", "method", "path", "token"] {
+            let mut invalid = args.clone();
+            invalid[field] = json!("unchecked");
+            assert!(Operation::from_parts("plugin_action", invalid).is_err());
+        }
+        let mut invalid = args.clone();
+        invalid["action"] = json!("reset_anything");
+        assert!(Operation::from_parts("plugin_action", invalid).is_err());
+        for (field, value) in [("plugin", ""), ("expected_instance", "")] {
+            let mut invalid = args.clone();
+            invalid[field] = json!(value);
+            assert!(
+                Operation::from_parts("plugin_action", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn model_catalogs_are_read_only_finite_and_bound_to_the_standard_target() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Mustang Native",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","catalog":"effects"});
+        for catalog in ["categories", "effects"] {
+            let mut args = base.clone();
+            args["catalog"] = json!(catalog);
+            let operation = Operation::from_parts("plugin_models", args).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            assert_eq!(operation.wire().0, "pluginModels");
+            assert_eq!(operation.wire().1["catalog"], catalog);
+            assert!(operation.wire().1.get("source").is_none());
+        }
+        for field in [
+            "source",
+            "token",
+            "path",
+            "model_name",
+            "method",
+            "classID",
+            "native_address",
+            "selection",
+        ] {
+            let mut bad = base.clone();
+            bad[field] = json!("unchecked");
+            assert!(Operation::from_parts("plugin_models", bad).is_err());
+        }
+        for key in ["catalog", "plugin", "expected_instance"] {
+            let mut bad = base.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("plugin_models", bad).is_err());
+        }
+        for (key, value) in [
+            ("catalog", json!("cabinet")),
+            ("plugin", json!(" ")),
+            ("expected_instance", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+            ("offset", json!(4097)),
+            ("limit", json!(0)),
+            ("limit", json!(33)),
+            ("slot", json!(16)),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_models", bad)
+                    .map_or(true, |op| op.validate().is_err())
+            );
+        }
+        let mut bounded = base.clone();
+        bounded["offset"] = json!(4096);
+        bounded["limit"] = json!(32);
+        Operation::from_parts("plugin_models", bounded)
+            .unwrap()
+            .validate()
+            .unwrap();
+        for key in ["channel", "slot"] {
+            let mut bad = base.clone();
+            bad.as_object_mut().unwrap().remove(key);
+            assert!(
+                Operation::from_parts("plugin_models", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for target in [
+            json!({"kind":"instrument","track":"Scratch"}),
+            json!({"kind":"note_effect","track":"Scratch","slot":15}),
+            json!({"kind":"mix_fx","channel":"Scratch"}),
+            json!({"kind":"panner","channel":"Scratch","slot":0}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove("channel");
+            args.as_object_mut().unwrap().remove("slot");
+            args.as_object_mut()
+                .unwrap()
+                .extend(target.as_object().unwrap().clone());
+            Operation::from_parts("plugin_models", args)
+                .unwrap()
+                .validate()
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn native_details_require_a_bound_target_and_explicit_provider() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Expected","param":"model","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let operation = Operation::from_parts("plugin_parameter_details", args.clone()).unwrap();
+        assert!(operation.is_read_only());
+        assert_eq!(operation.wire().0, "pluginParameterDetails");
+        operation.validate().unwrap();
+        for flag in [false, true] {
+            let mut with_owner = args.clone();
+            with_owner["include_owner"] = json!(flag);
+            let operation = Operation::from_parts("plugin_parameter_details", with_owner).unwrap();
+            operation.validate().unwrap();
+            assert_eq!(operation.wire().1["include_owner"], flag);
+        }
+        let mut malformed_owner = args.clone();
+        malformed_owner["include_owner"] = json!("true");
+        assert!(Operation::from_parts("plugin_parameter_details", malformed_owner).is_err());
+        for (key, value) in [
+            ("source", json!("auto")),
+            ("param", json!("")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_details", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut invalid = args;
+        invalid["method"] = json!("invoke");
+        assert!(Operation::from_parts("plugin_parameter_details", invalid).is_err());
+    }
+
+    #[test]
+    fn gui_parameter_comparison_is_a_strict_finite_read_opt_in() {
+        let base = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
+            "param":"chorder.autofill","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let legacy = Operation::from_parts("plugin_parameter_details", base.clone()).unwrap();
+        let mut disabled = base.clone();
+        disabled["compare_gui"] = json!(false);
+        let disabled = Operation::from_parts("plugin_parameter_details", disabled).unwrap();
+        disabled.validate().unwrap();
+        assert_eq!(legacy.wire().1, disabled.wire().1);
+        assert!(legacy.wire().1.get("compare_gui").is_none());
+        let mut enabled = base.clone();
+        enabled["compare_gui"] = json!(true);
+        for include_owner in [false, true] {
+            let mut input = enabled.clone();
+            input["include_owner"] = json!(include_owner);
+            let operation = Operation::from_parts("plugin_parameter_details", input).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            assert_eq!(operation.wire().1["compare_gui"], true);
+            assert_eq!(operation.wire().1["include_owner"], include_owner);
+        }
+        for selector in [Value::Null, json!("true"), json!(1), json!({}), json!([])] {
+            let mut invalid = base.clone();
+            invalid["compare_gui"] = selector;
+            assert!(Operation::from_parts("plugin_parameter_details", invalid).is_err());
+        }
+        for (field, value) in [
+            ("plugin", json!("Other")),
+            ("param", json!("autofill")),
+            ("source", json!("controller")),
+            ("expected_instance", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+        ] {
+            let mut invalid = enabled.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_details", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let schema = serde_json::to_value(schemars::schema_for!(PluginParameterDetails)).unwrap();
+        assert_eq!(schema["properties"]["compare_gui"]["type"], "boolean");
+    }
+
+    #[test]
+    fn parameter_formatting_accepts_only_explicit_bounded_numeric_queries() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Expected","param":"model","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC","values":[0.0,1.0,0.0]});
+        for source in ["dsp", "controller"] {
+            for values in [
+                vec![0.0],
+                vec![1.0; 32],
+                vec![-9_007_199_254_740_991.0, 9_007_199_254_740_991.0],
+            ] {
+                let mut args = base.clone();
+                args["source"] = json!(source);
+                args["values"] = json!(values);
+                let operation = Operation::from_parts("plugin_parameter_format", args).unwrap();
+                operation.validate().unwrap();
+                assert!(operation.is_read_only());
+                let (name, wire) = operation.wire();
+                assert_eq!(name, "pluginParameterFormat");
+                assert_eq!(wire["values"], json!(values));
+            }
+        }
+        for (field, value) in [
+            ("source", json!("auto")),
+            ("expected_instance", json!("")),
+            ("plugin", json!(" ")),
+            ("param", json!("")),
+            ("param", json!("x".repeat(513))),
+            ("param", json!("x\0y")),
+            ("values", json!([])),
+            ("values", json!(vec![0.0; 33])),
+            ("values", json!([9_007_199_254_740_992.0])),
+            ("values", json!([-9_007_199_254_740_992.0])),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_format", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("source", json!("arbitrary")),
+            ("path", json!("plugin.file")),
+            ("method", json!("setValue")),
+            ("values", json!(["0"])),
+            ("values", json!([null])),
+            ("values", json!(0)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_parameter_format", args).is_err());
+        }
+        for value in [f64::NAN, f64::INFINITY, f64::NEG_INFINITY] {
+            let mut operation =
+                Operation::from_parts("plugin_parameter_format", base.clone()).unwrap();
+            let Operation::PluginParameterFormat(query) = &mut operation else {
+                unreachable!()
+            };
+            query.values = vec![value];
+            assert!(operation.validate().is_err());
+        }
+    }
+
+    #[test]
+    fn parameter_digests_require_a_bound_target_and_an_explicit_indexed_source() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Expected","source":"dsp",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for source in ["dsp", "controller"] {
+            let mut args = base.clone();
+            args["source"] = json!(source);
+            let operation = Operation::from_parts("plugin_parameter_digest", args).unwrap();
+            operation.validate().unwrap();
+            assert!(operation.is_read_only());
+            let (name, wire) = operation.wire();
+            assert_eq!(name, "pluginParameterDigest");
+            assert_eq!(wire["source"], source);
+        }
+        for (field, value) in [
+            ("plugin", json!(" ")),
+            ("expected_instance", json!("")),
+            ("expected_instance", json!("not-an-instance")),
+            ("channel", json!("")),
+            ("slot", json!(16)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_parameter_digest", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("source", json!("auto")),
+            ("source", json!("arbitrary")),
+            ("slot", json!(0.5)),
+            ("param", json!("gain")),
+            ("values", json!([0])),
+            ("offset", json!(0)),
+            ("limit", json!(1)),
+            ("options", json!({})),
+            ("hash", json!("client-hash")),
+            ("hash_algorithm", json!("other")),
+            ("path", json!("plugin.file")),
+            ("method", json!("invoke")),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_parameter_digest", args).is_err());
+        }
+        for field in ["plugin", "source", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(field);
+            assert!(Operation::from_parts("plugin_parameter_digest", args).is_err());
+        }
+        for (kind, target, slot, valid) in [
+            ("effect", "channel", Some(15), true),
+            ("effect", "channel", None, false),
+            ("instrument", "track", None, true),
+            ("instrument", "track", Some(1), false),
+            ("note_effect", "track", Some(15), true),
+            ("note_effect", "track", Some(16), false),
+            ("panner", "channel", None, true),
+            ("panner", "channel", Some(1), false),
+            ("mix_fx", "channel", None, true),
+            ("mix_fx", "channel", Some(1), false),
+        ] {
+            let mut args = json!({"plugin":"Expected","source":"dsp","expected_instance":base["expected_instance"],"kind":kind,"slot":slot});
+            args[target] = json!("Scratch");
+            assert_eq!(
+                Operation::from_parts("plugin_parameter_digest", args)
+                    .unwrap()
+                    .validate()
+                    .is_ok(),
+                valid
+            );
+        }
+    }
+
+    #[test]
     fn unknown_operations_and_fields_are_rejected() {
         assert!(Operation::from_parts("eval", json!({"code":"arbitrary"})).is_err());
         assert!(
@@ -1298,6 +2787,340 @@ mod tests {
         )
         .unwrap();
         assert!(op.validate().is_err());
+    }
+
+    #[test]
+    fn plugin_writes_accept_only_finite_native_source_names() {
+        for source in ["auto", "dsp", "controller"] {
+            let operation = Operation::from_parts(
+                "setPluginParam",
+                json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"highcut.hcfreq","value":5000,"source":source}),
+            )
+            .unwrap();
+            assert!(operation.validate().is_ok());
+            assert_eq!(operation.wire().1["source"], source);
+            assert!(!operation.is_read_only());
+        }
+        assert!(Operation::from_parts("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"gain","value":0,"source":"arbitrary"})).is_err());
+    }
+
+    #[test]
+    fn rumble_serialization_is_one_closed_read_only_state_action() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"inspect_rumble_serialization"});
+        let operation = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        for (key, value) in [
+            ("token", json!("issued")),
+            ("plugin", json!("Other")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_state", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn plugin_state_requires_a_bound_instance_and_finite_token_actions() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"capture"});
+        let capture = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(capture.validate().is_ok());
+        assert!(!capture.is_read_only());
+        assert_eq!(capture.wire().0, "pluginState");
+        for action in ["restore", "release"] {
+            let mut args = base.clone();
+            args["action"] = json!(action);
+            assert!(
+                Operation::from_parts("plugin_state", args.clone())
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+            args["token"] = json!("issued-token-123");
+            assert!(
+                Operation::from_parts("plugin_state", args)
+                    .unwrap()
+                    .validate()
+                    .is_ok()
+            );
+        }
+        for (field, value) in [
+            ("token", json!("imported")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(
+                Operation::from_parts("plugin_state", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for field in ["bytes", "path", "source", "method"] {
+            let mut args = base.clone();
+            args[field] = json!("untrusted");
+            assert!(Operation::from_parts("plugin_state", args).is_err());
+        }
+    }
+
+    #[test]
+    fn insert_chain_state_has_its_own_finite_folder_lifecycle_contract() {
+        let token = "ABCDEF0123456789".repeat(4);
+        let folder = "12345678-1234-1234-1234-123456789ABC";
+        for action in ["capture", "restore", "release"] {
+            let mut args = json!({"channel":"Scratch","action":action,"expected_folder":folder});
+            if action != "capture" {
+                args["token"] = json!(token);
+            }
+            let operation = Operation::from_parts("insert_chain_state", args.clone()).unwrap();
+            assert!(operation.validate().is_ok());
+            assert!(!operation.is_read_only());
+            assert_eq!(operation.wire(), ("insertChainState".into(), args));
+        }
+        for extra in [
+            json!({"channel":""}),
+            json!({"channel":"x".repeat(257)}),
+            json!({"channel":"🎸".repeat(129)}),
+            json!({"channel":"bad\nchannel"}),
+            json!({"expected_folder":"00000000-0000-0000-0000-000000000000"}),
+            json!({"expected_folder":folder.to_lowercase()}),
+            json!({"expected_folder":"foreign"}),
+            json!({"token":token}),
+            json!({"token":null}),
+            json!({"expected_folder":null}),
+            json!({"action":"restore"}),
+            json!({"action":"release","token":"a".repeat(64)}),
+            json!({"action":"release","token":"A".repeat(63)}),
+            json!({"action":"load"}),
+        ] {
+            let mut args = json!({"channel":"Scratch","action":"capture"});
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("insert_chain_state", args)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+        for field in [
+            "slot",
+            "plugin",
+            "kind",
+            "expected_instance",
+            "path",
+            "url",
+            "bytes",
+            "xml",
+            "script",
+            "bridge_session",
+            "document_epoch",
+        ] {
+            let mut args = json!({"channel":"Scratch","action":"capture"});
+            args[field] = json!("untrusted");
+            assert!(Operation::from_parts("insert_chain_state", args).is_err());
+        }
+    }
+
+    #[test]
+    fn preset_actions_accept_only_bound_catalog_pages_or_issued_indices() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"});
+        let token = "ABCDEF0123456789".repeat(4);
+        for extra in [
+            json!({}),
+            json!({"offset":4096,"limit":64}),
+            json!({"catalog_token":token,"offset":0,"limit":1}),
+            json!({"action":"apply","catalog_token":token,"index":4095}),
+            json!({"action":"release","catalog_token":token}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let operation = Operation::from_parts("plugin_presets", args).unwrap();
+            assert!(operation.validate().is_ok());
+            assert!(!operation.is_read_only());
+            assert_eq!(operation.wire().0, "pluginPresets");
+        }
+        for extra in [
+            json!({"index":0}),
+            json!({"offset":4097}),
+            json!({"limit":0}),
+            json!({"limit":65}),
+            json!({"catalog_token":"imported"}),
+            json!({"catalog_token":token.to_lowercase()}),
+            json!({"expected_instance":""}),
+            json!({"plugin":" "}),
+            json!({"action":"apply","index":0}),
+            json!({"action":"apply","catalog_token":token}),
+            json!({"action":"apply","catalog_token":token,"index":4096}),
+            json!({"action":"apply","catalog_token":token,"index":0,"offset":0}),
+            json!({"action":"release"}),
+            json!({"action":"release","catalog_token":token,"index":0}),
+            json!({"action":"release","catalog_token":token,"limit":1}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("plugin_presets", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for (field, value) in [
+            ("action", json!("invoke")),
+            ("path", json!("preset.file")),
+            ("url", json!("file:///preset")),
+            ("bytes", json!([0, 1])),
+            ("method", json!("arbitrary")),
+            ("limit", json!(-1)),
+            ("index", json!(0.5)),
+        ] {
+            let mut args = base.clone();
+            args[field] = value;
+            assert!(Operation::from_parts("plugin_presets", args).is_err());
+        }
+    }
+
+    #[test]
+    fn numeric_edit_opt_in_requires_raw_dsp_and_instance_without_changing_legacy_wire() {
+        let base = json!({"kind":"note_effect","track":"Scratch","slot":0,"plugin":"Chorder",
+            "param":"chorder.autofill","source":"dsp","value":1.0,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let legacy = Operation::from_parts("plugin_parameter_set", base.clone()).unwrap();
+        assert!(legacy.validate().is_ok());
+        assert_eq!(legacy.wire().1, base);
+        let serialized = serde_json::to_value(&legacy).unwrap();
+        assert!(serialized["args"].get("edit_lifecycle").is_none());
+        let mut edited = base.clone();
+        edited["edit_lifecycle"] = json!("native_user");
+        let operation = Operation::from_parts("plugin_parameter_set", edited.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert_eq!(operation.wire().1, edited);
+        for extra in [
+            json!({"source":"controller"}),
+            json!({"source":"auto"}),
+            json!({"source":null}),
+            json!({"expected_instance":null}),
+            json!({"value":null}),
+            json!({"value":0.5}),
+            json!({"value":2}),
+            json!({"normalized":1}),
+            json!({"text":"On"}),
+            json!({"float_bits":"3FF0000000000000"}),
+            json!({"param":""}),
+        ] {
+            let mut invalid = edited.clone();
+            invalid
+                .as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("plugin_parameter_set", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for selector in [json!(null), json!(false), json!("unknown"), json!({})] {
+            let mut invalid = edited.clone();
+            invalid["edit_lifecycle"] = selector;
+            assert!(Operation::from_parts("plugin_parameter_set", invalid).is_err());
+        }
+    }
+
+    #[test]
+    fn exact_float_writes_reject_nonfinite_bits_and_implicit_sources() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"gain","source":"dsp","float_bits":"8000000000000000"});
+        assert!(
+            Operation::from_parts("setPluginParam", base.clone())
+                .unwrap()
+                .validate()
+                .is_ok()
+        );
+        for bits in [
+            "",
+            "0000",
+            "7FF0000000000000",
+            "FFF0000000000000",
+            "7FF8000000000000",
+            "XXXXXXXXXXXXXXXX",
+        ] {
+            let mut args = base.clone();
+            args["float_bits"] = json!(bits);
+            assert!(
+                Operation::from_parts("setPluginParam", args)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut implicit = base.clone();
+        implicit.as_object_mut().unwrap().remove("source");
+        assert!(
+            Operation::from_parts("setPluginParam", implicit)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+        let mut duplicate = base;
+        duplicate["value"] = json!(0);
+        assert!(
+            Operation::from_parts("setPluginParam", duplicate)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn bounded_nodes_option_is_only_an_inspection_request() {
+        let args = json!({"channel":"Scratch","slot":0,"include_nodes":true});
+        let inspect = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        assert!(inspect.is_read_only());
+        assert!(inspect.validate().is_ok());
+        assert_eq!(inspect.wire().1["include_nodes"], true);
+        assert!(
+            Operation::from_parts("plugin_parameters", args)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+    }
+
+    #[test]
+    fn plugin_controller_inventory_requires_a_bound_inspection_target() {
+        let args = json!({"channel":"Scratch","slot":0,"plugin":"Mustang Native",
+            "include_nodes":true,"node_scope":"plugin_controller",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let operation = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        assert!(operation.is_read_only());
+        operation.validate().unwrap();
+        assert_eq!(operation.wire().1["node_scope"], "plugin_controller");
+        for field in ["plugin", "expected_instance", "include_nodes"] {
+            let mut invalid = args.clone();
+            invalid.as_object_mut().unwrap().remove(field);
+            assert!(
+                Operation::from_parts("plugin_inspect", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut invalid = args;
+        invalid["node_scope"] = json!("unchecked/path");
+        assert!(Operation::from_parts("plugin_inspect", invalid).is_err());
     }
 
     #[test]
@@ -1646,5 +3469,156 @@ mod tests {
             loop_set.wire().1,
             json!({"start":0.0,"end":4.0,"enable":false})
         );
+    }
+    #[test]
+    fn chorder_gui_edit_has_one_boolean_role_and_no_caller_matching_policy() {
+        let base = json!({"track":"Scratch","slot":0,"enabled":true,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for enabled in [false, true] {
+            let mut args = base.clone();
+            args["enabled"] = json!(enabled);
+            let op = Operation::from_parts("chorder_autofill_set", args.clone()).unwrap();
+            assert!(op.validate().is_ok());
+            assert!(!op.is_read_only());
+            assert_eq!(op.wire(), ("editChorderAutofill".into(), args));
+        }
+        for extra in [
+            json!({"enabled":null}),
+            json!({"enabled":1}),
+            json!({"enabled":"true"}),
+            json!({"track":""}),
+            json!({"track":"x\0y"}),
+            json!({"slot":16}),
+            json!({"slot":-1}),
+            json!({"expected_instance":"00000000-0000-0000-0000-000000000000"}),
+            json!({"expected_instance":"12345678-1234-1234-1234-123456789abc"}),
+            json!({"source":"dsp"}),
+            json!({"param":"autofill"}),
+            json!({"plugin":"Chorder"}),
+            json!({"kind":"note_effect"}),
+            json!({"path":"autofill"}),
+            json!({"value":1}),
+        ] {
+            let mut args = base.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            assert!(
+                Operation::from_parts("chorder_autofill_set", args)
+                    .and_then(|op| op.validate())
+                    .is_err()
+            );
+        }
+        for missing in ["track", "slot", "enabled", "expected_instance"] {
+            let mut args = base.clone();
+            args.as_object_mut().unwrap().remove(missing);
+            assert!(Operation::from_parts("chorder_autofill_set", args).is_err());
+        }
+    }
+
+    #[test]
+    fn chord_note_is_closed_bounded_and_serializes_without_selection_or_names() {
+        let target = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for expected in [0, 60, 127] {
+            for output in [0, 60, 127] {
+                for enabled in [false, true] {
+                    let mut args = target.clone();
+                    args["change"] = json!({"kind":"chord_note","expected_input_pitch":expected,"output_pitch":output,"enabled":enabled});
+                    let operation =
+                        Operation::from_parts("chorder_learning_set", args.clone()).unwrap();
+                    operation.validate().unwrap();
+                    assert!(!operation.is_read_only());
+                    assert!(operation.requires_explicit_document());
+                    assert_eq!(operation.wire(), ("chorderLearningSet".into(), args));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn chord_note_rejects_unbounded_missing_boolean_and_cross_variant_arguments() {
+        let valid = json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "change":{"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true}});
+        for key in ["expected_input_pitch", "output_pitch"] {
+            for value in [
+                Value::Null,
+                json!(false),
+                json!("0"),
+                json!(0.0),
+                json!(-1),
+                json!(128),
+                json!({}),
+                json!([]),
+            ] {
+                let mut bad = valid.clone();
+                bad["change"][key] = value;
+                assert!(
+                    Operation::from_parts("chorder_learning_set", bad).is_err(),
+                    "{key}"
+                );
+            }
+        }
+        for key in ["expected_input_pitch", "output_pitch", "enabled"] {
+            let mut bad = valid.clone();
+            bad["change"].as_object_mut().unwrap().remove(key);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for key in [
+            "pitch",
+            "param",
+            "path",
+            "source",
+            "native_json",
+            "eval",
+            "max_views",
+            "kind2",
+        ] {
+            let mut bad = valid.clone();
+            bad["change"][key] = json!(0);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for value in [Value::Null, json!(0), json!(1), json!("true")] {
+            let mut bad = valid.clone();
+            bad["change"]["enabled"] = value;
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        for kind in ["learn_mode", "input_pitch", "chord_note2"] {
+            let mut bad = valid.clone();
+            bad["change"]["kind"] = json!(kind);
+            assert!(Operation::from_parts("chorder_learning_set", bad).is_err());
+        }
+        let invalid = Operation::ChorderLearningSet(ChorderLearningSet {
+            track: "Scratch".into(),
+            slot: 0,
+            expected_instance: "12345678-1234-1234-1234-123456789ABC".into(),
+            change: ChorderLearningChange::ChordNote {
+                expected_input_pitch: ChorderMidiPitch(128),
+                output_pitch: ChorderMidiPitch(0),
+                enabled: true,
+            },
+        });
+        assert!(invalid.validate().is_err());
+    }
+
+    #[test]
+    fn chord_note_schema_has_only_required_finite_fields_and_boolean_state() {
+        let schema = serde_json::to_value(schemars::schema_for!(ChorderLearningSet)).unwrap();
+        let variants = schema["$defs"]["ChorderLearningChange"]["oneOf"]
+            .as_array()
+            .unwrap();
+        assert_eq!(variants.len(), 3);
+        let note = variants
+            .iter()
+            .find(|v| v["properties"]["kind"]["const"] == "chord_note")
+            .unwrap();
+        assert_eq!(note["additionalProperties"], false);
+        assert_eq!(note["properties"].as_object().unwrap().len(), 4);
+        for key in ["kind", "expected_input_pitch", "output_pitch", "enabled"] {
+            assert!(note["required"].as_array().unwrap().contains(&json!(key)));
+        }
+        assert_eq!(note["properties"]["enabled"]["type"], "boolean");
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["type"], "integer");
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["minimum"], 0);
+        assert_eq!(schema["$defs"]["ChorderMidiPitch"]["maximum"], 127);
     }
 }

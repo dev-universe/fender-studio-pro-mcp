@@ -1,0 +1,36 @@
+{
+  "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_ONE_NAME_DELTA",
+  "tuple_key": [
+    "class_uid",
+    "source",
+    "canonical_name"
+  ],
+  "canonical_tuples": [
+    [
+      "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+      "dsp",
+      "chorder.pitch73.guiInput"
+    ]
+  ],
+  "previous_accepted": 6723,
+  "new_disjoint": 1,
+  "fixed_inventory": 7112,
+  "Chorder_remaining": 60,
+  "InputFilter_remaining_unchanged": 87,
+  "remaining_classes": 19,
+  "original_collector_strict_increment_unchanged": 0,
+  "backlog42_unchanged": true,
+  "preset30_of46_unchanged": true,
+  "old_failed_batch07_acceptance_unchanged": 0,
+  "actual_new_calls": 0,
+  "MIDI_verified": false,
+  "model_mapping_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "whole_Chorder_complete": false,
+  "accepted_after": 6724,
+  "remaining_after": 388,
+  "proposal_freeze_sha256": "ab68e35c4a9055e50ec8efcf2d7b4e74f753b6a147d97b7edb1c7ec53f6aacff",
+  "root_review_sha256": "8b6da6767d0abbfd361bf7f9a5db4ded5cbdbdd4e94e51d8662fe38591421083",
+  "accepted_union_sha256": "8db980a72369473e165a36e46917757b0e719756dae90250fad804eb3b765808"
+}

@@ -84,6 +84,11 @@ class Bridge {
         this.replies = [];
         this.documentObject = undefined;
         this.documentEpoch = 0;
+        this.documentMode = null;
+        this.documentService = null;
+        this.nativeDocument = null;
+        this.contextError = null;
+        this.contextBusy = false;
         this.internalTaskDispatch = false;
         this.requestContext = null;
         this.lastBeat = 0;
@@ -107,7 +112,7 @@ class Bridge {
     }
 
     tick(source) {
-        if (this.requestContext) return;
+        if (this.requestContext || this.contextBusy) return;
         if (source) this.clocks[source] = (this.clocks[source] || 0) + 1;
         const now = Date.now();
         this.beat(false);
@@ -123,11 +128,16 @@ class Bridge {
         let result;
         let code = null;
         const context = this.context();
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "inserts", "sends", "meters", "listCommands"];
-        const readOnly = reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
+        const contextError = this.contextError;
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
+        const rumbleSerialization = req.op === "pluginState" && req.args && req.args.action === "inspect_rumble_serialization";
+        const readOnly = rumbleSerialization || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
-            if (req.protocol !== kProtocol) {
+            if (contextError) {
+                code = "missing_precondition";
+                result = fail("native document context is unavailable");
+            } else if (req.protocol !== kProtocol) {
                 code = "protocol_mismatch";
                 result = fail("bridge protocol 2 is required");
             } else if (req.expectedSession && req.expectedSession !== this.session) {
@@ -136,9 +146,9 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if (!readOnly && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
-                result = fail("writes require expectedSession and expectedDocument from context");
+                result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
                 result = this.handle(req.op, req.args || {});
             }
@@ -147,6 +157,44 @@ class Bridge {
         }
         this.requestContext = null;
         const afterContext = this.context();
+        if (!isFail(result) && this.contextError) {
+            code = "native_context_lost";
+            result = fail("native document context was lost before publication");
+        }
+        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization)
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            code = "native_context_lost";
+            result = fail("the native editor document lease changed before publication");
+        }
+        if (!isFail(result) && req.op === "insertChainState"
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, outcome: outcome, native_outcome: outcome,
+                error: { code: "insert_chain_context_changed", message: "The insert-chain document lease changed before publication" } };
+        }
+        if (!isFail(result) && req.op === "editChorderAutofill"
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const refused = result && result.native_outcome === "not_applied";
+            result = { ok: false, outcome: refused ? "not_applied" : "unknown", native_outcome: refused ? "not_applied" : "unknown",
+                gui_value_verified: false, persistence_verified: false, effects_verified: false, dsp_propagation_verified: false,
+                error: { code: "gui_edit_context_changed", message: "The GUI edit document lease changed before publication" } };
+        }
+        if (!isFail(result) && req.op === "pluginInspect" && req.args && req.args.include_context === true
+            && (!result.fixture_context || !result.fixture_context.after
+                || !sameFixtureContext(result.fixture_context.after.context, afterContext)))
+            result = fail("the fixture document changed before the inspection receipt");
+        if (!isFail(result) && req.op === "pluginParameterDetails" && req.args && req.args.compare_gui === true
+            && (context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session))
+            result = { ok: false, outcome: "not_applied", native_outcome: "not_applied", mutation_capability: false,
+                error: "The GUI comparison document lease changed before publication", gui_comparison: {
+                    status: "unresolved", scope: "exact_device_named_control_candidate", parameter_name: "chorder.autofill",
+                    semantic_binding: "named_candidate_only", mutation_capability: false, reason: "stale_association",
+                    coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 }
+                } };
         const reply = isFail(result)
             ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
             : { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: true, result: result };
@@ -157,19 +205,58 @@ class Bridge {
     }
 
     context() {
-        const dm = appObject("DocumentManager");
-        const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
-        if (doc !== this.documentObject) {
-            this.documentObject = doc;
-            this.documentEpoch++;
+        if (this.contextBusy) {
+            this.contextError = "native document context reentered";
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: false, title: null, fileUrl: null };
         }
-        return {
-            protocol: kProtocol, session: this.session,
-            document: this.session + ":" + this.documentEpoch,
-            open: !!doc,
-            title: doc && has(doc, "title", "string") ? String(doc.title) : null,
-            fileUrl: doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null,
-        };
+        this.contextBusy = true;
+        try {
+            if (this.documentMode === null) {
+                this.documentMode = "native";
+                this.documentService = mcpNativeDocumentService();
+                if (!this.documentService) this.documentMode = "legacy";
+            }
+            let identity, open, title, fileUrl;
+            if (this.documentMode === "native") {
+                const value = mcpReadNativeDocument(this.documentService);
+                const token = mcpDocumentToken(value.token);
+                if (this.nativeDocument) {
+                    const prior = mcpDocumentToken(this.nativeDocument.token);
+                    if (token.source !== prior.source
+                        || token.generation.length < prior.generation.length
+                        || (token.generation.length === prior.generation.length && token.generation < prior.generation)
+                        || (value.token === this.nativeDocument.token && value.open !== this.nativeDocument.open))
+                        throw new Error("native document identity regressed");
+                }
+                identity = value.token;
+                this.nativeDocument = value;
+                open = value.open;
+                title = value.title;
+                fileUrl = value.fileUrl;
+            } else {
+                const dm = appObject("DocumentManager");
+                const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
+                identity = doc;
+                open = !!doc;
+                title = doc && has(doc, "title", "string") ? String(doc.title) : null;
+                fileUrl = doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null;
+            }
+            if (identity !== this.documentObject || this.contextError) {
+                this.documentObject = identity;
+                this.documentEpoch++;
+            }
+            this.contextError = null;
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: open, title: title, fileUrl: fileUrl };
+        } catch (_) {
+            if (!this.contextError) this.documentEpoch++;
+            this.contextError = "native document context is unavailable";
+            return { protocol: kProtocol, session: this.session, document: this.session + ":" + this.documentEpoch,
+                open: false, title: null, fileUrl: null };
+        } finally {
+            this.contextBusy = false;
+        }
     }
 
     // ---- operations -------------------------------------------------------------
@@ -181,7 +268,13 @@ class Bridge {
     // not apply. So also: check that a host member exists before calling it.
 
     handle(op, args) {
+        if (args.include_context !== undefined && op !== "pluginInspect")
+            return fail("context observations apply only to pluginInspect");
         switch (op) {
+            case "externalPortMenu": return this.fromComponent(c => c.externalPortMenu(args));
+            case "chorderChordsGet": return this.fromComponent(c => c.chorderChordsGet(args));
+            case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
+            case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
             case "context": return this.context();
             case "channels": return this.fromComponent(c => c.channels());
@@ -230,8 +323,17 @@ class Bridge {
             case "pluginChoices": return this.fromComponent(c => c.pluginChoices(args));
             case "setPluginParam": return this.fromComponent(c => c.setPluginParam(args));
             case "hostProbe": return this.hostProbe(args);
-            case "pluginInspect": return this.fromComponent(c => c.pluginInspect(args));
+            case "pluginInspect": return this.pluginInspect(args);
             case "pluginEditorOpen": return this.fromComponent(c => c.pluginEditorOpen(args));
+            case "pluginState": return this.fromComponent(c => c.pluginState(args));
+            case "insertChainState": return this.fromComponent(c => c.insertChainState(args));
+            case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
+            case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
+            case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
+            case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
+            case "pluginPresets": return this.fromComponent(c => c.pluginPresets(args));
+            case "editChorderAutofill": return this.fromComponent(c => c.editChorderAutofill(args));
+            case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
             default: return fail("unknown op: " + op);
         }
     }
@@ -242,6 +344,95 @@ class Bridge {
         const r = fn(this.component);
         if (r && !Array.isArray(r) && typeof r.error === "string") return fail(r.error);
         return r;
+    }
+
+    pluginInspect(args) {
+        if (args.include_context === undefined || args.include_context === false)
+            return this.fromComponent(c => c.pluginInspect(args));
+        const named = value => typeof value === "string" && value.trim() && value.length <= 512 && !/[\x00-\x1f\x7f-\x9f]/.test(value);
+        if (args.include_context !== true || ["instrument", "note_effect"].indexOf(args.kind) < 0
+            || !named(args.track) || !named(args.plugin) || ["dsp", "controller"].indexOf(args.source) < 0
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || args.include_nodes === true || args.node_scope !== undefined
+            || (args.kind === "instrument" && args.slot !== undefined && args.slot !== 0)
+            || (args.kind === "note_effect" && args.slot !== undefined
+                && (typeof args.slot !== "number" || Math.floor(args.slot) !== args.slot || args.slot < 0 || args.slot >= 16)))
+            return fail("context observations require a bound Music target, explicit provider and no node inventory");
+        const before = this.fixtureContext(args);
+        if (isFail(before)) return before;
+        const result = this.fromComponent(c => c.pluginInspect(args));
+        if (isFail(result)) return result;
+        const native = result && result.native;
+        if (!result || (result.error !== undefined && result.error !== null)
+            || (result.native_error !== undefined && result.native_error !== null)
+            || !native || native.ok !== true || (native.error !== undefined && native.error !== null) || native.source !== args.source
+            || !native.instance || native.instance.object_uid !== args.expected_instance
+            || typeof native.instance.class_uid !== "string" || !native.instance.class_uid
+            || (native.outcome !== undefined && native.outcome !== "observed")
+            || (native.native_outcome !== undefined && native.native_outcome !== "observed"))
+            return fail("context inspection requires a known matching native observation");
+        const after = this.fixtureContext(args);
+        if (isFail(after)) return after;
+        if (JSON.stringify(before) !== JSON.stringify(after)) return fail("the Music fixture changed during native inspection");
+        result.fixture_context = { version: 1, atomic: false, scope: "music_fixture_before_after",
+            target: { kind: args.kind, track: args.track, plugin: args.plugin, slot: args.slot === undefined ? null : args.slot },
+            before: before, after: after };
+        return result;
+    }
+
+    fixtureContext(args) {
+        const tp = this.transportPanel();
+        if (!tp) return fail("fixture transport is unavailable");
+        const switches = {};
+        for (const name of ["start", "record"]) {
+            const p = tp.findParameter(name);
+            if (!p) return fail("fixture transport parameter is unavailable");
+            const value = p.value;
+            if (value !== true && value !== false && value !== 0 && value !== 1)
+                return fail("fixture transport switch is malformed");
+            switches[name] = value === true || value === 1;
+        }
+        const list = trackList();
+        const integer = value => typeof value === "number" && isFinite(value) && Math.floor(value) === value && value >= 0 && value <= 1000000;
+        if (!list || !has(list, "getSelectedTrack", "function"))
+            return fail("complete fixture track selection is unavailable");
+        const trackCount = list.numTracks, selectedCount = list.numSelectedTracks;
+        if (!integer(trackCount) || !integer(selectedCount)) return fail("complete fixture track selection is unavailable");
+        const tracks = [], selected = [];
+        for (let i = 0; i < trackCount; i++) {
+            const track = list.getTrack(i);
+            if (!track) return fail("fixture track enumeration is incomplete");
+            if (tracks.indexOf(track) < 0) tracks.push(track);
+        }
+        const matches = tracks.filter(track => track.name === args.track);
+        if (matches.length !== 1 || matches[0].mediaType !== "Music")
+            return fail("fixture requires one exact Music track");
+        const track = matches[0];
+        if (!has(track, "createIterator", "function")) return fail("fixture event enumeration is unavailable");
+        const iterator = track.createIterator();
+        if (!iterator || !has(iterator, "next", "function")) return fail("fixture event enumeration is incomplete");
+        if (iterator.next() !== null) return fail("fixture events are nonempty or their exhaustion is unknown");
+        for (let i = 0; i < selectedCount; i++) {
+            const current = list.getSelectedTrack(i);
+            if (!current || tracks.indexOf(current) < 0) return fail("fixture selected-track enumeration is incomplete");
+            if (selected.indexOf(current) < 0) selected.push(current);
+        }
+        if (list.numTracks !== trackCount || list.numSelectedTracks !== selectedCount)
+            return fail("fixture track counts changed during observation");
+        if (selected.length !== 1 || selected[0] !== track) return fail("fixture Music track is not exclusively selected");
+        const focused = this.fromComponent(c => typeof c.fixtureTrackState === "function"
+            ? c.fixtureTrackState() : { error: "strict fixture track state is unavailable" });
+        if (isFail(focused)) return focused;
+        if (!focused || focused.label !== args.track) return fail("focused fixture identity changed");
+        const context = this.context();
+        if (!sameFixtureContext(context, this.requestContext)) return fail("fixture document changed during observation");
+        return { context: { session: context.session, document: context.document, open: true, title: context.title },
+            song: { title: context.title, transport: { playing: switches.start, recording: switches.record } },
+            target_track: { exact_match_count: 1, name: args.track, mediaType: "Music", eventCount: 0, events: [], events_complete: true },
+            selection: { complete: true, tracks: [{ name: args.track, mediaType: "Music" }] },
+            focused_track: focused };
     }
 
     // An edit command sent to the song's arrangement editor itself. Edit/Copy and
@@ -342,6 +533,10 @@ class Bridge {
         const context = this.context();
         if (!this.requestContext || context.document !== this.requestContext.document || !context.open) return fail("the task document changed before dispatch");
         const lease = { id: id, kind: kind, session: this.session, document: context.document, fileUrl: context.fileUrl, title: context.title, expiresAt: Date.now() + 10000 };
+        if (this.documentMode === "native") {
+            if (this.contextError || !this.nativeDocument || !this.nativeDocument.open) return fail("native task document is unavailable");
+            lease.nativeDocument = { context_api: "native_document_context_v1", token: this.nativeDocument.token };
+        }
         if (!this.mailbox.write(filename, { id: id, ops: ops, expectedSession: lease.session, expectedDocument: lease.document })) return fail("cannot write the task request");
         if (!this.mailbox.write("task-lease.json", lease)) {
             this.mailbox.write(filename, { id: null, ops: [] });
@@ -363,13 +558,12 @@ class Bridge {
     song() {
         const transport = this.transportState();
         if (isFail(transport)) return transport;
-        const dm = appObject("DocumentManager");
-        const doc = dm && has(dm, "activeDocument", "object") ? dm.activeDocument : null;
+        const context = this.context();
+        if (this.contextError) return fail("native song document is unavailable");
         const list = trackList();
-        const path = doc && has(doc, "path", "object") && has(doc.path, "url", "string") ? doc.path.url : null;
         return {
-            title: doc ? String(doc.title) : null,
-            fileUrl: path,
+            title: context.title,
+            fileUrl: context.fileUrl,
             transport: transport,
             trackCount: list ? uniqueTracks(list).length : null,
             selectedTracks: list ? selectedTracks(list).map(t => String(t.name)) : [],
@@ -1002,6 +1196,13 @@ function memberTypes(obj) {
 
 function fail(message) { return { bridgeError: String(message) }; }
 function isFail(value) { return !!value && typeof value === "object" && typeof value.bridgeError === "string"; }
+
+function sameFixtureContext(a, b) {
+    return !!a && !!b && a.open === true && b.open === true
+        && typeof a.session === "string" && !!a.session && a.session === b.session
+        && typeof a.document === "string" && !!a.document && a.document === b.document
+        && typeof a.title === "string" && a.title === b.title;
+}
 
 function has(obj, key, type) {
     try { return obj !== null && obj !== undefined && typeof obj[key] === type; } catch (_) { return false; }

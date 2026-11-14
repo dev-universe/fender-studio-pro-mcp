@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "status": "ADMITTED_AFTER_ROOT_INDEPENDENT_REVIEW",
+  "scope": "finite46-class issued-preset recall/restore plan",
+  "plugin": "Spectrum Meter",
+  "class_uid": "0C6C94DF-CCE0-465C-886A-F1F01A142104",
+  "admission": {
+    "completed_class_increment": 1,
+    "existing_fixed_setting_cases_admitted": 2,
+    "new_actual_calls": 0,
+    "original_collector_class_increments_preserved": [
+      0,
+      0
+    ],
+    "no_third_case_or_standalone_recount": true
+  },
+  "cases": [
+    {
+      "preset_index": 1,
+      "preset_name": "FFT - Bass Peak",
+      "actual_requests": 127,
+      "elapsed_seconds": 186.042,
+      "full_provider_records": 9,
+      "full_provider_snapshots": 14,
+      "changed_names": [
+        "maxfreq",
+        "minlevel",
+        "viewmode"
+      ],
+      "all9_restored": true,
+      "fresh_capture_bytes_each": 584,
+      "distinct_tokens_and_equal_fresh_serializations": true
+    },
+    {
+      "preset_index": 2,
+      "preset_name": "FFT - CD all Curves",
+      "actual_requests": 128,
+      "elapsed_seconds": 175.458,
+      "full_provider_records": 9,
+      "full_provider_snapshots": 14,
+      "changed_names": [
+        "maxlevel",
+        "viewmode"
+      ],
+      "all9_restored": true,
+      "fresh_capture_bytes_each": 584,
+      "distinct_tokens_and_equal_fresh_serializations": true
+    }
+  ],
+  "proposed_counts": {
+    "preset_classes": {
+      "before": 29,
+      "after": 30,
+      "total": 46,
+      "remaining_before": 17,
+      "remaining_after": 16
+    },
+    "cases_in_completed_classes": {
+      "before": 58,
+      "after": 60
+    },
+    "spectrum_standalone_verified_settings": {
+      "before": 2,
+      "after": 2
+    },
+    "fixed_backlog": {
+      "closed_id": "PRESET-SPECTRUM",
+      "total_baseline": 43,
+      "remaining_before": 43,
+      "remaining_after": 42,
+      "remaining_partition": {
+        "partial": 37,
+        "unstarted": 1,
+        "hardware": 4
+      }
+    },
+    "parameter_names": {
+      "verified": 6611,
+      "total": 7112,
+      "remaining": 501,
+      "increment": 0
+    }
+  },
+  "factory_origin_verified": false,
+  "audio_verified": false,
+  "persistence_verified": false,
+  "opaque_resource_identity_verified": false,
+  "capability_meaning": "two fixed issued settings only; not every preset or full plugin behavior",
+  "same_exact_restore_and_NoSave_owner0_saved6_guards": true,
+  "candidate_freeze_sha256": "743a943c4c89d2d6676f8e566a668ad41399599d264d135ebc45b0a801d1072a",
+  "source_proposal_sha256": "6c1e7973b275b36ece69405766b6e48f0a1bb0ef0f13a33fcb512919bb0a99a2",
+  "independent_root_review_sha256": "d00bf335079696703a72b95df67bc3811567d4e0702e982a84ca3bf884ccd4ea"
+}

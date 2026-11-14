@@ -1,0 +1,11 @@
+[package]
+name = "fender-native-node-api"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT"
+description = "Bounded read-only node and reflection metadata for the validated CCL 5.1.2 host"
+repository = "https://github.com/dev-universe/fender-studio-pro-mcp"
+readme = "README.md"
+
+[dependencies]
