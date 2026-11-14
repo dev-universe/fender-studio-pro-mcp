@@ -19,15 +19,15 @@
 
 ## 현재 상태 요약
 
-- 현재 제품은 `86c5610`/Native45·MCP46개다. main/bridge 바이트는 `bd43f35`와 같다. 정상 native 설치의 소스152개·패키지4개와 doctor를 확인했다.
-- 고정 현재값 이름6,866/7,112개·잔여246개·18클래스다. Chorder와 Input Filter guiInput1~128의 각128개 현재값·정확한 이름은 모두 완료했으므로 반복하지 않는다. Chorder는 동작5개가 남고 Input Filter 이름 잔여는0이다. 일반 이벤트·MIDI·모델 대응·오디오·저장은 별도다.
-- 프리셋 설정은31/46종·완료 종61사례와 별도 부분 Room1사례, 잔여15종이다. issued 선택지가 하나인 Open AIR는 [명시적 설정 기준](PRESET_SETTING_ACCEPTANCE.md)의 singleton1/1로 별도 수용했고 원래 전체94/readonly16 복원 실패는 보존한다.
-- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중2개 완료·41개 잔여다. 부분36·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
-- Native43 R3는612.174초·MCP tool43회로 Level 초기화 두 효과를 별도 UI 관측으로 확인했다. 실제 문서 응답42회와 시작 화면의 읽기 timeout1회는 구분한다. 적분 음량과 inf 유지 피크를 초기 상태로 돌렸고 Tone10개·Level 쓰기6개·Hold Length2초 원복을 확인했다. 제품의 effects_verified:false는 유지한다.
-- 두 reset 실기와 Native40 Level23 조회는 반복하지 않는다. CONTROL-LEVEL은 원래의 controller/숨은 설정 MCP 접근이 남아 부분 완료다. 메뉴를 수동 조작한 것은 MCP 지원이 아니다.
-- Native42 R1의8개 준비 요청 실패, R2의30개 요청 뒤 reset 사전 거부는 보존한다. 공개 format 이름 생성 문제와 DSP metadata/direct controller 순서 혼동은 수정해 R3에서 실제 동작을 확인했다.
-- Root가 저장하지 않고 종료했고 앱·owner 부재, 저장본6개 해시 동일, 사후 MIDI0/0을 확인했다. 하드웨어 두 장치는 분리된 상태다.
-- Native44의IController8/25 관측에 이어 Native45는381.821초·9요청으로 전체33개의 이름·타입·태그·현재값·정확한 owner 일치를 읽었다. 여섯 설정의 Integer/list/Toggle과 원래값을 확인했지만 이 읽기API는변경권한false다. 측정값에도native writable 표시가붙어 있어미등록쓰기에는사용하지않는다. 두단위모두저장없이종료하고saved6/MIDI0을보존했다. 다음은명시적6설정source의변경/읽기/복원이며기존열거는반복하지않는다. 새 단위 전 최신 상태·설치·문서를 대조하고 fresh runtime binding을 만든다. 전체 종료 시각은 미정이며 다음 유한 단위의 ETA만 근거와 함께 갱신한다.
+- 현재 제품은 `570979c`/Native46·MCP46개다. main SHA256 `49e59d2d81ed5af8346a5ec12a401e3cc96297e84693dffa566a8add7f8ce9d9`, native UUID `C6DCCD2F-DA06-3753-9D8E-AC273813B1B7`이며 정상 설치의 소스154개·패키지4개와 doctor를 대조했다.
+- 고정 현재값 이름6,866/7,112개·잔여246개·18클래스다. Chorder와 Input Filter guiInput의 각128개 현재값·정확한 이름은 모두 완료했으므로 반복하지 않는다. 일반 이벤트·MIDI·모델 대응·오디오·저장은 별도다.
+- 프리셋 설정은32/46종·완료 종63사례·잔여14종이다. Open AIR singleton1/1과 Room의 서로 다른 두 사례를 [명시적 설정 기준](PRESET_SETTING_ACCEPTANCE.md)으로 수용했다. 원래 전체 current/readonly 복원 실패를 보존하며 전체 플러그인 완료로 확장하지 않는다.
+- [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중3개 완료·40개 잔여다. 부분35·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
+- 최신 Room index1은1435.281초·실제 DAW40회·별도 MCP 입력 거부2회였다. 쓰기16개와 전체19개 metadata, 서로 다른 fresh A/B725바이트 일치를 확인했다. readonly2/전체19 current와 프리셋 표시 이름 복원은 false다. index0과 이번 index1은 반복하지 않는다.
+- Level은 Native43 초기화 두 효과, Native44 controller8/25, Native45 전체33 typed descriptor/current/owner 읽기를 완료했다. Native46은 정확히6개 설정만 기존 파라미터 API의 `source:"level_meter"`로 제공한다. 테스트 main149/native321/JavaScript335 및 정상 빌드·설치는 통과했지만 여섯 설정의 실제 쓰기는 아직 미검증이다. 측정값·메뉴·명령에는 새 쓰기 권한이 없다.
+- 다음은 새 폐기용 Level 인스턴스에서6개 설정의 실제 choices/변경/읽기/정확한 복원을 확인하는 유한 단위다. 완료한 초기화와33개 열거를 반복하지 않는다.
+- Root가 최신 Room 문서를 저장하지 않고 종료했다. 앱·owner 부재, 저장본6개 해시 동일, 사후 MIDI0/0과 pending mutation0을 확인했다. 두 하드웨어 장치는 분리 상태다.
+- 전체 종료 시각은 미정이다. 단위 완료마다 실제 시간·체크리스트·완료/잔여와 다음 유한 단위 ETA를 보고한다. 구체적 다음 순서는 `RESUME_STATE.json`을 따른다.
 
 아래 체크포인트와 추가 기록은 누적 이력이다. 현재 실행 여부·다음 순서는 `RESUME_STATE.json`의 `current_execution`과 `next_units_in_order`를 우선한다.
 

@@ -29,3 +29,7 @@ Open AIR의 readonly tanktap 값들은 기존 정적 preset에도 들어 있다.
 기존 독립 보고서·원시 관측과24개 불변 입력 핀을 Root가 대조했다. 새 실제 호출은0회다. 현재 일반 프리셋 집계는 **31/46종·완료 종의61사례, 별도 부분 Room1사례·15종 잔여**다. 고정43개 목록은 PRESET-OPENAIR를 추가로 마쳐 **2개 완료·41개 잔여**다. 이름6,866/7,112와246개 잔여는 변하지 않는다.
 
 [별도 수용 증거](evidence/2026-11-14-preset-setting-scope-admission.json), [원래 Room 실기](evidence/2026-11-13-room-serialized-identity.json), [원래 Open AIR 실기](evidence/2026-11-13-openair-writable-serialization.json)를 함께 읽는다. 두 원래 실패의 전체 상태 복원 주장은 계속 false다.
+
+## 후속 현재 결과 — Native46
+
+이상의 결정 시점31/46종·부분 Room1사례는 역사 기록이다. 별도 새 index1 `BD - Inside`의 긍정 설정 변화·쓰기16개/전체19 metadata 정확 복원·fresh725바이트 A/B 동일·해제와 Root 정리를 확인해 Room의 서로 다른2/2 사례를 완료했다. 현재는 **32/46종·완료 종63사례·14종 잔여**, 고정43개 중 **3개 완료·40개 잔여**다. readonly outdepth/outheight/전체19 current와 프리셋 표시 이름 복원은 false다. 전체 상태·오디오·리소스·저장 검증으로 확장하지 않는다. [새 실제 증거](evidence/2026-11-14-room-index1-native46.json)를 참조한다.

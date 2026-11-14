@@ -3,9 +3,9 @@
   "as_of": "2026-11-14",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 41,
-  "completed_in_this_remaining_snapshot": 2,
-  "partial": 36,
+  "remaining_backlog_count": 40,
+  "completed_in_this_remaining_snapshot": 3,
+  "partial": 35,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -17,11 +17,11 @@
     "inventory_names": 7112,
     "remaining_names": 246,
     "remaining_name_classes": 18,
-    "preset_classes_completed": 31,
+    "preset_classes_completed": 32,
     "preset_classes_plan": 46,
-    "preset_cases": 61,
-    "remaining_preset_classes": 15,
-    "additional_partial_setting_cases": 1
+    "preset_cases": 63,
+    "remaining_preset_classes": 14,
+    "additional_partial_setting_cases": 0
   },
   "runtime_note": "현재 실행과 최근 종료 및 다음 순서는 RESUME_STATE.json을 우선한다. 이 잔여표는 실행 상태를 별도로 복제하지 않는다.",
   "bookkeeping_only_not_backlog": [
@@ -44,12 +44,13 @@
       "id": "PRESET-ROOM",
       "group": "프리셋",
       "title": "Room Reverb",
-      "status": "partial",
+      "status": "completed",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "index0 Arena의 쓰기16개/전체19 metadata/새725바이트 A/B 동일과 정리를 별도 설정 사례1개로 수용. readonly2/전체19 current 원복은 false.",
-      "completion_predicate": "수용한 index0을 반복하지 않고 index1 BD - Inside 한 사례를 PRESET_SETTING_ACCEPTANCE의 정확한 쓰기값/전체metadata/새직렬화·readonly관측·정리 기준으로 확인한다. 전체readonly복원 주장은 유지하지 않는다.",
+      "actually_verified": "기존 Arena/index0 근거 재사용; Native46 index1 BD - Inside의40DAQ로13쓰기변경/16쓰기원복/19metadata/새725byte A-B같음·해제/거부·Root정리 수용. readonly2/전체current/프리셋표시이름 원복은false.",
+      "completion_predicate": "완료: 명시적 writable preset-setting 기준으로 서로다른 issued index0/1 두사례. 전체readonly/current/hidden/resource/audio/Save 주장은별도이며원래실패는보존.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "evidence": "docs/evidence/2026-11-14-room-index1-native46.json"
     },
     {
       "id": "PRESET-OPENAIR",
