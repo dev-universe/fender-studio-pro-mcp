@@ -202,7 +202,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Capture, restore or release a bounded in-memory plugin state, or read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(
@@ -496,6 +496,53 @@ impl ServerHandler for McpServer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
+        let specs = McpServer::specs();
+        assert_eq!(specs.len(), 46);
+        let spec = specs
+            .iter()
+            .find(|s| s.tool.name == "plugin_state")
+            .unwrap();
+        assert!(spec.tool.annotations.is_none());
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(
+            schema["$defs"]["PluginStateAction"]["enum"],
+            json!([
+                "read_rumble_state",
+                "read_rumble_parameters",
+                "read_rumble_named_parameters",
+                "inspect_rumble_serialization",
+                "capture",
+                "restore",
+                "release"
+            ])
+        );
+        let fields = schema["properties"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(String::as_str)
+            .collect::<std::collections::BTreeSet<_>>();
+        assert_eq!(
+            fields,
+            [
+                "channel",
+                "slot",
+                "kind",
+                "track",
+                "plugin",
+                "expected_instance",
+                "action",
+                "token",
+                "expected_document"
+            ]
+            .into_iter()
+            .collect()
+        );
+    }
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {

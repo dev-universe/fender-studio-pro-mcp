@@ -686,6 +686,7 @@ pub struct PluginState {
 pub enum PluginStateAction {
     ReadRumbleState,
     ReadRumbleParameters,
+    ReadRumbleNamedParameters,
     InspectRumbleSerialization,
     Capture,
     Restore,
@@ -1236,6 +1237,7 @@ impl Operation {
                     PluginStateAction::InspectRumbleSerialization
                         | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
+                        | PluginStateAction::ReadRumbleNamedParameters
                 )
             }
             Self::Command(command) => command.check_only == Some(true),
@@ -1260,7 +1262,8 @@ impl Operation {
         };
         level
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
-                        | PluginStateAction::ReadRumbleParameters))
+                        | PluginStateAction::ReadRumbleParameters
+                        | PluginStateAction::ReadRumbleNamedParameters))
             || matches!(
                 self,
                 Self::ChorderLearningGet(_)
@@ -1553,10 +1556,22 @@ impl Operation {
                     PluginStateAction::InspectRumbleSerialization
                     | PluginStateAction::ReadRumbleState
                     | PluginStateAction::ReadRumbleParameters
+                    | PluginStateAction::ReadRumbleNamedParameters
                         if p.token.is_none() && p.plugin == "Rumble Native" =>
                     {
-                        if matches!(p.action, PluginStateAction::ReadRumbleParameters)
-                            && !matches!(p.kind, None | Some(PluginKind::Effect))
+                        if matches!(p.action, PluginStateAction::ReadRumbleNamedParameters)
+                            && (p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                                || p.expected_instance.bytes().any(|b| b.is_ascii_lowercase()))
+                        {
+                            return Err(invalid(
+                                "Named Rumble parameters require a nonzero canonical native instance",
+                            ));
+                        }
+                        if matches!(
+                            p.action,
+                            PluginStateAction::ReadRumbleParameters
+                                | PluginStateAction::ReadRumbleNamedParameters
+                        ) && !matches!(p.kind, None | Some(PluginKind::Effect))
                         {
                             return Err(invalid("Rumble parameters require an effect target"));
                         }
@@ -2064,6 +2079,52 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_rumble_action_is_closed_readonly_and_requires_canonical_effect_target() {
+        let base = serde_json::json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"read_rumble_named_parameters"});
+        let operation = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(operation.wire().1["action"], "read_rumble_named_parameters");
+        for (field, replacement) in [
+            ("kind", json!("instrument")),
+            ("kind", json!("note_effect")),
+            ("kind", json!("mix_fx")),
+            ("kind", json!("panner")),
+            ("plugin", json!("Other")),
+            ("slot", json!(16)),
+            ("slot", Value::Null),
+            ("channel", Value::Null),
+            ("token", json!("issued")),
+            ("token", json!("")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+            ("expected_instance", json!("12345678")),
+        ] {
+            let mut value = base.clone();
+            value[field] = replacement;
+            assert!(
+                Operation::from_parts("plugin_state", value)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{field}"
+            );
+        }
+        for key in ["source", "name", "path", "bytes", "value", "script"] {
+            let mut value = base.clone();
+            value[key] = json!("PRIVATE");
+            assert!(Operation::from_parts("plugin_state", value).is_err());
+        }
+    }
 
     #[test]
     fn level_settings_source_requires_explicit_document_target_and_raw_writes() {

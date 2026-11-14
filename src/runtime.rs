@@ -19,6 +19,7 @@ use crate::{
 mod chorder_chords;
 mod chorder_learning;
 mod external_menu;
+mod rumble_named_parameters;
 mod rumble_parameters;
 mod rumble_processor_state;
 mod rumble_serialization;
@@ -124,8 +125,24 @@ fn execute(
     let context_response = bridge.transact("context", &json!({}), None, None, midi);
     let context_response = match context_response {
         Ok(response) if response.ok => response,
-        Ok(response) => return Ok(rejected(request_id, started, host_error(&response), None)),
-        Err(failure) => return Ok(rejected(request_id, started, failure.error, None)),
+        Ok(response) => {
+            return Ok(rejected(
+                &operation,
+                request_id,
+                started,
+                host_error(&response),
+                None,
+            ));
+        }
+        Err(failure) => {
+            return Ok(rejected(
+                &operation,
+                request_id,
+                started,
+                failure.error,
+                None,
+            ));
+        }
     };
     let context: HostContext = serde_json::from_value(context_response.result.clone())
         .map_err(|error| OperationError::new("invalid_context", error.to_string()))?;
@@ -135,6 +152,7 @@ fn execute(
         .is_some_and(|expected| *expected != context.document)
     {
         return Ok(rejected(
+            &operation,
             request_id,
             started,
             OperationError::new(
@@ -166,6 +184,10 @@ fn execute(
     let mut response = match response {
         Ok(response) => response,
         Err(failure) => {
+            let mut result = Value::Null;
+            if rumble_named_parameters::requested(&operation) {
+                rumble_named_parameters::invalidate(&mut result);
+            }
             return Ok(Receipt {
                 request_id,
                 outcome: if !read_only && failure.dispatched {
@@ -175,7 +197,7 @@ fn execute(
                 },
                 session: Some(context.session),
                 document: Some(context.document),
-                result: Value::Null,
+                result,
                 error: Some(failure.error),
                 elapsed_ms: started.elapsed().as_millis(),
             });
@@ -220,7 +242,13 @@ fn execute(
                 ) {
                     Ok(found) => response = found,
                     Err(failure) => {
-                        return Ok(rejected(request_id, started, failure.error, Some(&context)));
+                        return Ok(rejected(
+                            &operation,
+                            request_id,
+                            started,
+                            failure.error,
+                            Some(&context),
+                        ));
                     }
                 }
             }
@@ -239,7 +267,8 @@ fn execute(
         || (matches!(operation, Operation::ExternalPortMenu(_))
             || rumble_serialization::requested(&operation)
             || rumble_processor_state::requested(&operation)
-            || rumble_parameters::requested(&operation))
+            || rumble_parameters::requested(&operation)
+            || rumble_named_parameters::requested(&operation))
             && response.session != context.session
     {
         invalidate_gui_evidence(&operation, &mut response.result);
@@ -308,6 +337,12 @@ fn execute(
         && (!response.ok || !rumble_parameters::valid_get(query, &response.result))
     {
         rumble_parameters::invalidate(&mut response.result);
+    }
+    if let Operation::PluginState(query) = &operation
+        && rumble_named_parameters::requested(&operation)
+        && (!response.ok || !rumble_named_parameters::valid_get(query, &response.result))
+    {
+        rumble_named_parameters::invalidate(&mut response.result);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -784,6 +819,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if rumble_named_parameters::requested(operation) {
+        rumble_named_parameters::invalidate(result);
+        return;
+    }
     if rumble_parameters::requested(operation) {
         rumble_parameters::invalidate(result);
         return;
@@ -939,17 +978,22 @@ fn equivalent(expected: &Value, actual: &Value) -> bool {
 }
 
 fn rejected(
+    operation: &Operation,
     request_id: String,
     started: Instant,
     error: OperationError,
     context: Option<&HostContext>,
 ) -> Receipt {
+    let mut result = Value::Null;
+    if rumble_named_parameters::requested(operation) {
+        rumble_named_parameters::invalidate(&mut result);
+    }
     Receipt {
         request_id,
         outcome: Outcome::NotApplied,
         session: context.map(|c| c.session.clone()),
         document: context.map(|c| c.document.clone()),
-        result: Value::Null,
+        result,
         error: Some(error),
         elapsed_ms: started.elapsed().as_millis(),
     }
@@ -973,6 +1017,63 @@ fn host_error(response: &WireResponse) -> OperationError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn named_rumble_guards_run_before_enqueue_and_rejected_context_has_closed_failure() {
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let runtime = RuntimeHandle { sender };
+        let operation=Operation::from_parts("plugin_state",json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"read_rumble_named_parameters"})).unwrap();
+        let executor = tokio::runtime::Runtime::new().unwrap();
+        for expected_document in [None, Some(String::new())] {
+            let error = executor
+                .block_on(runtime.execute(Request {
+                    operation: operation.clone(),
+                    expected_document,
+                }))
+                .unwrap_err();
+            assert_eq!(error.code, "missing_precondition");
+            assert!(receiver.try_recv().is_err());
+        }
+        let mut invalid = operation.clone();
+        if let Operation::PluginState(ref mut q) = invalid {
+            q.expected_instance = "00000000-0000-0000-0000-000000000000".into();
+        }
+        let error = executor
+            .block_on(runtime.execute(Request {
+                operation: invalid,
+                expected_document: Some("session:1".into()),
+            }))
+            .unwrap_err();
+        assert_eq!(error.code, "invalid_argument");
+        assert!(receiver.try_recv().is_err());
+        for token in ["", "issued"] {
+            let mut invalid = operation.clone();
+            if let Operation::PluginState(ref mut query) = invalid {
+                query.token = Some(token.into());
+            }
+            let error = executor
+                .block_on(runtime.execute(Request {
+                    operation: invalid,
+                    expected_document: Some("session:1".into()),
+                }))
+                .unwrap_err();
+            assert_eq!(error.code, "invalid_argument");
+            assert!(receiver.try_recv().is_err());
+        }
+        let receipt = rejected(
+            &operation,
+            "test".into(),
+            Instant::now(),
+            OperationError::new("document_changed", "PRIVATE"),
+            None,
+        );
+        assert_eq!(receipt.result.as_object().unwrap().len(), 10);
+        assert_eq!(
+            receipt.result["error"]["code"],
+            "rumble_named_parameters_unavailable"
+        );
+        assert!(!receipt.result.to_string().contains("PRIVATE"));
+    }
 
     #[test]
     fn changed_document_gui_reads_discard_all_identity_claims() {

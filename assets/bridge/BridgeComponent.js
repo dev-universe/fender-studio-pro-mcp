@@ -811,6 +811,18 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginState(args) {
+        if (args.action === "read_rumble_named_parameters") {
+            const controls=new NativePluginControls(this),failure=()=>controls.rumbleNamedParametersFailure();
+            if (Object.keys(args).some(k=>["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k)<0) || args.plugin !== "Rumble Native" || args.kind !== undefined && args.kind !== "effect"
+                || typeof args.channel !== "string" || !args.channel || !Number.isInteger(args.slot) || args.slot<0 || args.slot>=16) return failure();
+            const request={operation:"rumble_named_parameters_read",expected_instance:args.expected_instance};
+            if (!controls.rumbleNamedParametersRequest(request)) return failure();
+            const plug=this.pluginOf(args);if (!plug || plug.error || plug.name !== "Rumble Native") return failure();
+            const native=this.nativePluginRequest(plug.device,request);
+            if (!native || native.ok !== true || !controls.rumbleNamedParametersResult(native,request)) return failure();
+            const result=Object.assign({},native,{plugin:"Rumble Native",native_outcome:native.outcome});
+            return controls.rumbleSerializationBytes(result)<=262144 ? result : failure();
+        }
         if (args.action === "read_rumble_parameters") {
             const controls=new NativePluginControls(this),failure=()=>controls.rumbleParametersFailure();
             if (Object.keys(args).some(k=>["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k)<0) || args.plugin !== "Rumble Native" || args.token !== undefined || args.kind !== undefined && args.kind !== "effect") return failure();

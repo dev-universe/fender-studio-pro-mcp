@@ -130,7 +130,8 @@ class Bridge {
         const context = this.context();
         const contextError = this.contextError;
         const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
-        const rumbleSerialization = req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
+        const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
+        const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
         const readOnly = rumbleSerialization || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -195,6 +196,11 @@ class Bridge {
                     semantic_binding: "named_candidate_only", mutation_capability: false, reason: "stale_association",
                     coverage: { complete: false, candidate_count: 0, visited_views: 0, max_views: 128, max_depth: 32 }
                 } };
+        if (rumbleNamedParameters && (code || isFail(result) || !result || result.ok !== true)) {
+            result = {ok:false,outcome:"not_applied",native_outcome:"not_applied",mutation_capability:false,can_set_via_this_action:false,
+                selection_authority:false,atomic_snapshot:false,audio_verified:false,persistence_verified:false,
+                error:{code:"rumble_named_parameters_unavailable",message:"The bounded Rumble named-parameter observation was not established"}};
+        }
         const reply = isFail(result)
             ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
             : { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: true, result: result };

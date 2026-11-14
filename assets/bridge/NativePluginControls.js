@@ -288,6 +288,73 @@ class NativePluginControls {
             && value.current_values_complete===(lists&&currents) && value.serialized_name_coverage_complete===(lists&&coverage);
     }
 
+    rumbleNamedParametersRequest(request) {
+        return typeof request.expected_instance === "string" && request.expected_instance.length === 36
+            && this.rumbleParametersRequest(Object.assign({},request,{operation:request.operation === "rumble_named_parameters_read" ? "rumble_parameters_read" : ""}));
+    }
+
+    rumbleNamedParametersFailure() {
+        return {ok:false,outcome:"not_applied",native_outcome:"not_applied",mutation_capability:false,can_set_via_this_action:false,selection_authority:false,atomic_snapshot:false,audio_verified:false,persistence_verified:false,
+            error:{code:"rumble_named_parameters_unavailable",message:"The bounded Rumble named-parameter observation was not established"}};
+    }
+
+    rumbleNamedParametersDescription(value) {
+        const current=this.rumbleParametersDescription(value);
+        if(current===null)return null;
+        for(const key of ["current","min","max","default"]) {
+            const number=value[key];
+            if(number.status === "observed" && (number.kind === "integer" ? /[^0-9-]/.test(number.decimal) : number.bits_hex.length !== 16))return null;
+        }
+        if(value.normalized.status === "observed" && value.normalized.bits_hex.length !== 8)return null;
+        return current;
+    }
+
+    rumbleNamedParametersResult(value,request) {
+        const fields=["ok","outcome","operation","schema","instance","source","scope","controllers","models_sha256","before_after_model_ids_equal","before_after_name_sets_equal","name_set_complete","controller_counts_complete","named_metadata_complete","access_metadata_complete","current_values_complete","expected_name_count","matched_name_count","value_semantics","mutation_capability","can_set_via_this_action","selection_authority","atomic_snapshot","audio_verified","persistence_verified"];
+        if (!this.guiExact(value,fields) || this.rumbleSerializationBytes(Object.assign({},value,{plugin:"Rumble Native",native_outcome:"observed"}))>262144
+            || value.ok !== true || value.outcome !== "observed" || value.operation !== "rumble_named_parameters_read" || value.schema !== "rumble_named_parameters_v1"
+            || value.source !== "component_alias_fixed_controllers" || value.scope !== "fixed_immediate_serialized_sibling_names"
+            || value.before_after_model_ids_equal !== true || value.before_after_name_sets_equal !== true || value.name_set_complete !== true || value.value_semantics !== "sequential_snapshot"
+            || ["mutation_capability","can_set_via_this_action","selection_authority","atomic_snapshot","audio_verified","persistence_verified"].some(k=>value[k]!==false)
+            || !this.guiExact(value.instance,["object_uid","class_uid","native_class","object_id"]) || value.instance.object_uid !== request.expected_instance
+            || value.instance.class_uid !== "B9D7536C-A010-457D-A182-36E5531164C9" || value.instance.native_class !== "AudioEffect" || value.instance.object_id !== "Rumble Native"
+            || typeof value.models_sha256 !== "string" || value.models_sha256.length !== 64 || !/^[0-9a-f]{64}$/.test(value.models_sha256) || !Array.isArray(value.controllers) || value.controllers.length !== 26) return false;
+        let expected=0,matched=0,counts=true,metadata=true,currents=true;
+        for(let i=0;i<26;i++) {
+            const row=value.controllers[i];
+            if (!this.guiExact(row,["slot","serialized_class_uid","status","parameter_count","expected_names","parameters"])
+                || row.slot !== (i===25?"amp":"effect"+(i+1)) || typeof row.serialized_class_uid !== "string" || row.serialized_class_uid.length !== 36 || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(row.serialized_class_uid)
+                || !Array.isArray(row.expected_names) || row.expected_names.length>64) return false;
+            let previous="";
+            for(const name of row.expected_names) {
+                if(typeof name !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(name) || /[^A-Za-z0-9_]/.test(name) || name<=previous)return false;
+                previous=name;
+            }
+            expected+=row.expected_names.length;
+            if(expected>256)return false;
+            if(row.status !== "present") {
+                if(["node_absent","controller_absent","qi_failed","malformed_success","malformed_absence","identity_mismatch","negative_count","count_limit"].indexOf(row.status)<0
+                    || row.parameter_count !== null || row.parameters !== null)return false;
+                counts=false;metadata=false;continue;
+            }
+            if(!this.guiInteger(row.parameter_count,0,128) || !Array.isArray(row.parameters) || row.parameters.length !== row.expected_names.length)return false;
+            for(let j=0;j<row.parameters.length;j++) {
+                const param=row.parameters[j],name=row.expected_names[j];
+                if(!this.guiExact(param,["name","status","description"]) || param.name !== name)return false;
+                if(param.status === "observed") {
+                    const current=this.rumbleNamedParametersDescription(param.description);
+                    if(current===null || param.description.name !== name)return false;
+                    currents=currents&&current;matched++;
+                } else {
+                    if(["parameter_absent","description_unavailable","unsupported_metadata"].indexOf(param.status)<0 || param.description !== null)return false;
+                    metadata=false;
+                }
+            }
+        }
+        return value.expected_name_count===expected && value.matched_name_count===matched && value.controller_counts_complete===counts
+            && value.named_metadata_complete===metadata && value.access_metadata_complete===metadata && value.current_values_complete===(metadata&&currents);
+    }
+
     rumbleStateRequest(request) {
         return this.guiExact(request,["operation","expected_instance"]) && request.operation === "rumble_state_read"
             && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
@@ -1033,8 +1100,10 @@ class NativePluginControls {
         const rumbleSerialization = request.operation === "rumble_serialization_inspect";
         const rumbleState = request.operation === "rumble_state_read";
         const rumbleParameters = request.operation === "rumble_parameters_read";
+        const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
         try {
+            if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
             if (rumbleState && !this.rumbleStateRequest(request)) throw new Error("invalid fixed Rumble state request");
             if (rumbleSerialization && !this.rumbleSerializationRequest(request)) throw new Error("invalid fixed Rumble serialization request");
@@ -1053,14 +1122,14 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
@@ -1080,6 +1149,7 @@ class NativePluginControls {
                 if (result.ok === false) return this.externalMenuFailure(true, result);
                 if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
             }
+            if (rumbleNamedParameters && !this.rumbleNamedParametersResult(result, request)) return this.rumbleNamedParametersFailure();
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();
             if (rumbleState && !this.rumbleStateResult(result, request)) return this.rumbleStateFailure();
             if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
@@ -1126,6 +1196,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (rumbleNamedParameters) return this.rumbleNamedParametersFailure();
             if (rumbleParameters) return this.rumbleParametersFailure();
             if (rumbleState) return this.rumbleStateFailure();
             if (rumbleSerialization) return this.rumbleSerializationFailure();

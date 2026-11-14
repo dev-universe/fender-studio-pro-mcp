@@ -8,7 +8,7 @@ pub(super) fn requested(operation: &Operation) -> bool {
 pub(super) fn invalidate(value: &mut Value) {
     *value = json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","mutation_capability":false,"can_set_via_this_action":false,"selection_authority":false,"atomic_snapshot":false,"audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_controller_parameters_unavailable","message":"The bounded Rumble controller-parameter observation was not established"}});
 }
-fn integer(value: &Value, min: i64, max: i64) -> bool {
+pub(super) fn integer(value: &Value, min: i64, max: i64) -> bool {
     value.as_i64().is_some_and(|n| (min..=max).contains(&n))
 }
 fn hex(value: &Value, len: usize) -> bool {
@@ -66,7 +66,7 @@ fn normalized(value: &Value) -> Option<bool> {
         ))
     .then_some(false)
 }
-fn description(value: &Value) -> Option<bool> {
+pub(super) fn description(value: &Value) -> Option<bool> {
     if !exact_gui_object(
         value,
         &[
@@ -111,7 +111,7 @@ fn description(value: &Value) -> Option<bool> {
     }
     Some(current)
 }
-fn guid(value: &Value) -> Option<Vec<u8>> {
+pub(super) fn guid(value: &Value) -> Option<Vec<u8>> {
     let s = value.as_str()?;
     if s.len() != 36
         || s.bytes().enumerate().any(|(i, b)| {
