@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 최신 수용은 Native54 SampleOne singleton default 대표1/1이다.111요청·후속 실기/정리331.676초, 전체235 exact O/P 복원·새5222바이트 A/B 동일·실제 UI·수명·NoSave/appfalse/owner0/잠금/저장10/MIDI0과 독립 감사를 통과했다. 고정14/43완료29잔여·프리셋40/46종77사례·6종 잔여다. 앱과 owner는 종료 상태다. CONTROL-SAMPLEONE의 MIDI/모델/샘플과 전체 플러그인 완료는 별도이며 이 대표 사례와 기존 실패 R61을 재실행하지 않는다. 다음은 CONTROL-SCOPE 효과 관측 준비와 그래프 factory owner 경계 조사다. 아래 진행 중 r62 문장은 이력이다.
+
 - 현재 r62 SampleOne 준비18요청이 통과했고 앱과 owner는 후속 절차를 위해 열려 있다. 새 UID 확인 뒤 실제 UI의 입력 없음·Music mute1·record0·monitor0, 연결된 오디오 mute1·Main0·정지·빈 트랙을 확인했다. 전체235개 한 관찰이 완전하며 plugin쓰기/preset/capture/load0·catalog 미발급이다. 시작 준비부터811.644초다. 후속21번 이후의 독립 P·프리셋 변화·한 load 전체 복원·B·수명·최종 P는 별도 준비 및 검토 중이다. 고정13/43완료30잔여·프리셋39/46종76사례 유지다. 아래 R1 실패는 보존하며 재실행하지 않는다. 실제 연결이 끊겼으면 이 세션을 재사용하지 말고 최신 상태와 증거를 먼저 대조한다.
 
 - 최신 실행은 SampleOne 준비 R1의 Rust 의미 검사 거부다.330.168초·MCP요청8개 중 실제DAQ7개와 입력거부1개이며 plugin쓰기/preset/capture/UI준비0회다. 식별자 없는 최초 조회에 include_context를 함께 요청한 절차 결함을 보존한다. NoSave/appfalse/즉시CUA/owner0/hardware→ps/잠금/저장10/MIDI0으로 닫았다. Native54실제66=수용58+미수용8, MCP입력거부1은 별도다. 고정13/43완료30잔여·프리셋39/46/76·이름6866/7112 유지다. 다음 r62 R2는 최초 조회에서 문맥을 요구하지 않고 새 UID를 바인딩하며, 모든 요청을 실제 Rust 의미 검사에 먼저 통과시키는 준비 중이다. 아래 완료 Compressor/Limiter는 반복하지 않는다. 모델 sameID 사용자 복사 우회는 공개 소스와 실제 분기를 맞춰 NO로 닫았고 배치/버전 변경을 하지 않는다.

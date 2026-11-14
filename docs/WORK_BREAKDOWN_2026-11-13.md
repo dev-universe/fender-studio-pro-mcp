@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중13개를 완료했고30개가 남았다: 프리셋7 + 프리셋 외 플러그인 기능17 + 공통6.** 남은 상태는부분25개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중14개를 완료했고29개가 남았다: 프리셋6 + 프리셋 외 플러그인 기능17 + 공통6.** 남은 상태는부분24개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -9,8 +9,8 @@
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
-| 추가 프리셋 설정 종 |39/46|7종|완료 종76사례와 별도 부분0사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중13개 완료|30개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 추가 프리셋 설정 종 |40/46|6종|완료 종77사례와 별도 부분0사례. catalog59종과 다른 지표|
+| 고정한 완료물 목록 |43개 중14개 완료|29개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -37,7 +37,7 @@
 |PRESET-RUMBLE|Rumble Native|부분 완료|기존111개 issued catalog 수명과 Native48의18요청·314.470초로3653바이트 capture/release·전체39값/metadata 안정성·Root정리를 확인. preset apply/load와 내부 모델 identity는 미검증|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-VUMETER|VU Meter|완료|서로 다른 Cosy Master index1/Fast Detection index2 각39요청. sens/scale 실제 변화·각전체11값/metadata 정확 복원·새131바이트 A/B 동일·수명/Root정리 완료|완료: 대표설정2/2 범위. readonly 직렬화·프리셋 표시이름 원복·전체plugin/audio/Save는 별도 미검증. 두 사례 반복 금지.|
 |PRESET-MULTI|Multi Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-SAMPLEONE|SampleOne|완료|실제 complete singleton index0 default1/1.111요청·후속 실기/정리331.676초, Monophone 변화·전체235 exact O/P 복원·fresh5222바이트 A/B 동일·수명·RootNoSave/owner0/저장10/MIDI0|완료: issued 대표설정1/1. MIDI6 수명·sampler 모델/샘플·오디오·Save·전체 SampleOne 제어는 별도다. 같은 사례를 반복하지 않는다.|
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-CV|CV Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-MOJITO|Mojito|완료|서로 다른 Acid Dreams0/Basslead1 각57요청, 쓰기35개/전체37 metadata 정확 복원·새895바이트 A/B 일치·정리. 사전 선언한 LFO 정밀 보정 각2회. R1/R2 실패 보존|완료: 대표 설정2/2 범위. readonly lfoBeats/전체37 current와 표시이름 원복false, legacy pan/MIDI3역할은 CONTROL-MOJITO에 남음. 두 사례 반복 금지.|
@@ -122,3 +122,8 @@ VU Meter 두 번째 사례까지 수용한 현재 집계는36/46종·완료 종7
 ## Repeater 첫 사례의 현재 집계
 
 [80s Dream index0 증거](evidence/2026-11-14-repeater-preset-index0-native47.json)를 별도 부분1사례로 수용했다. 현재37/46종·완료 종72사례에 부분 Repeater1사례가 더해져 총 수용73사례다. 두 번째 서로 다른 사례가 남아 PRESET-REPEATER는 부분 완료이며 고정9/43 완료·34개 잔여는 그대로다. 고정 이름6866/7112·246개 잔여와 하드웨어 대기4개도 변하지 않는다.
+
+
+## SampleOne singleton의 추가 수용
+
+[실제 Native54 근거](evidence/2026-11-15-sampleone-singleton-native54.json)를 독립 감사와 함께 수용했다. 대표 프리셋 설정40/46종·77사례, 고정14/43완료·29잔여로 갱신했다. 부분24·미착수1·하드웨어4이며 소프트웨어는25개 남는다. 전체235개를 정확히 복원했지만 이번 변경 실험은 monophone 하나다. CONTROL-SAMPLEONE과 전체 내장 플러그인 완료는 여전히 별도다. 이전 단계의 집계와 실패는 이력으로 보존한다.

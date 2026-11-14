@@ -73,3 +73,12 @@ issued index0 80s Dream을75요청·365.674초로 수용했다. 실제15개 쓰�
 [두 번째 증거](evidence/2026-11-14-repeater-preset-index1-native47.json)가 첫 index0의 증거를 연결한다. 서로 다른 index0/1의 대표 설정2/2와 PRESET-REPEATER를 완료했다. 표시이름 원복false와 실제 MIDI 처리·오디오·저장 미검증은 유지한다. Repeater의 MIDI 역할은 별도다.
 
 현재38/46종·완료 종74사례·잔여8종이며 별도 부분 사례0이다. capsule-only29종57사례, 하이브리드6종12사례, 명시적 설정scope3종5사례다. 고정43개 중10개 완료·33잔여이며 현재값 이름6866/7112·246잔여는 그대로다. 앞선 Repeater1/2와37/46 집계는 첫 사례 당시의 이력으로 보존한다.
+
+
+## SampleOne singleton 대표 설정1/1 수용
+
+Native54에서 fresh complete issued catalog가 default 한 개였다. 최초 P를 두 번 읽은 뒤 monophone0→1로 준비 O를 만들었다. 한 default 적용 뒤 실제1→0 변화가 전체235개 독립쌍과 실제 Control Link 화면에 나타났다. 한 Aload로 전체235 current와 비값·unknown metadata가 정확히 O로 복원됐고, 별도 새 요청·token의 B도5222바이트·같은 SHA256이었다. 명시적 최초0 복원 뒤 최종 전체235 P 독립쌍도 정확했다. 읽기 전용 예외·추가 보정·두 번째 load는0이다.
+
+전체111요청이며 후속 실기 시작부터 Root 정리까지331.676초, 앞선 준비·검토 대기를 포함한 연결 전체는2201.401초였다. 해제된 catalog와 state token 거부, NoSave/appfalse/owner0/잠금/저장10/MIDI0을 확인했고 독립 감사도 통과했다. [새 실제 근거](evidence/2026-11-15-sampleone-singleton-native54.json)는 issued 대표 설정1/1만 수용한다. factory origin·실제 MIDI 효과·오디오·숨은 상태·최종 프리셋 표시 이름·Save/재시작·전체 CONTROL-SAMPLEONE은 미검증이다. 전체235개 비교에 MIDI6을 포함했지만235개를 각각 변경한 실험은 아니다.
+
+현재40/46종·완료 종77사례·6종 잔여, 별도 부분0이다. capsule-only30종59사례, 사전 선언 hybrid6종12사례, 명시적 설정 범위4종6사례다. 고정43개 중14개 완료·29잔여이며 이름6866/7112는 변하지 않는다. 원래 R61 준비 실패도 별도로 보존한다.

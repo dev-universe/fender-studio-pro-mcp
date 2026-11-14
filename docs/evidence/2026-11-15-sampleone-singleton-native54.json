@@ -1,0 +1,94 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "status": "ROOT_ACCEPTS_PRESET_SAMPLEONE_ISSUED_SETTING_SINGLETON1_OF1",
+  "app_version": "8.1.1 Build 113103",
+  "native_unit": 54,
+  "product_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+  "representative_issued_setting_cases": 1,
+  "fresh_complete_issued_catalog_entries": 1,
+  "issued_index": 0,
+  "issued_name": "default",
+  "actual_DAQ": 111,
+  "readiness_DAQ": 18,
+  "continuation_DAQ": 93,
+  "continuation_positive": 91,
+  "expected_terminal_safe_refusals": 2,
+  "MCP_predispatch_rejections": 0,
+  "unknown_outcomes": 0,
+  "whole_provider_records": 235,
+  "whole_provider_observations": 16,
+  "all235_writable_current_and_all_metadata_exact": true,
+  "MIDI_facade_rows_included": 6,
+  "positive_contrast": {
+    "parameter": "monophone",
+    "prepared": 1,
+    "after_preset": 0,
+    "changed_rows": 1,
+    "all_other_rows_preserved": true,
+    "actual_rendered_Control_Link_values": [
+      1,
+      0,
+      0
+    ]
+  },
+  "scalar_seed_and_initial_restoration_setters": 2,
+  "preset_applies": 1,
+  "state_loads": 1,
+  "additional_corrections": 0,
+  "fresh_A_B": {
+    "separate_requests_and_tokens": true,
+    "byte_count": 5222,
+    "serialization": "component_alias_IStorable",
+    "sha256": "a814ace871a60dfdfe00e9a4531450cb67d12359939a87acf6bf99defae2dda6"
+  },
+  "prepared_O_pair_exact_after_load": true,
+  "final_original_P_pair_exact": true,
+  "original_and_final_P_typed_digest": "73766b66c5f6b2e253ea8f81ab8c20986b19953d0e89871c35b47b3a740c2090",
+  "released_catalog_and_state_refusal_verified": true,
+  "timed_TTL_claim": false,
+  "current_caption_at_catalog": "default*",
+  "final_caption_restoration_claim": false,
+  "Root_NoSave_and_appfalse_immediate_CUA": true,
+  "owner_EOF_exit_code": 0,
+  "passive_hardware_completed_before_process_check": true,
+  "two_locks_reacquired_released": true,
+  "saved_archives_unchanged": 10,
+  "MIDI_before_and_after_owner0": true,
+  "active_owner_virtual_MIDI_source1_separate": true,
+  "source177_artifacts13_exact": true,
+  "elapsed_seconds": {
+    "continuation_first_DAQ_through_closure": 331.676,
+    "entire_connection_preflight_through_closure_including_preparation_review_wait": 2201.401,
+    "first_DAQ_through_closure": 1928.831,
+    "independent_acceptance_review": 212.923
+  },
+  "evidence_sha256": {
+    "original_intents": "5a4af5d2f4665c409372649d72b1c5db20240003160b9110d51ba3466036341d",
+    "original_response_journal": "00baf67bd995419151914a358d95b7af20750806ac585de70eb3b64c665763f9",
+    "original_closure": "5fe6c54c63ef5cb332d91178a33e1a2abe761b7202b610b74996dfac83f0959f",
+    "independent_report": "c280a9b4dc8f37497d2963a86af38eca088851f27dd0ae7c827cb622f9e2cd4b",
+    "independent_result": "727bcd80f48a1b01b20c473af5048860e86f8f6aa2674bbcc704d77ab9eaf07b",
+    "Root_decision": "d6e5e877b2c984595b13666bbc4ea5ea27be6a53608138f11923c9cf99892343"
+  },
+  "fixed_backlog": {
+    "completed": 14,
+    "remaining": 29,
+    "baseline": 43,
+    "hardware_blocked": 4,
+    "software_remaining": 25
+  },
+  "preset_settings": {
+    "completed_classes": 40,
+    "planned_classes": 46,
+    "completed_cases": 77,
+    "remaining_classes": 6
+  },
+  "limitations": [
+    "Only one representative issued preset setting is accepted.",
+    "All235 observed current values were restored; this experiment changed monophone only.",
+    "Factory origin, installed-file/issued-URL identity, hidden memory, actual MIDI effects, audio, final caption and Song Save/restart remain unverified.",
+    "CONTROL-SAMPLEONE and complete built-in plugin support remain incomplete.",
+    "The prior R61 semantic-gate failure remains a separate failed run."
+  ]
+}

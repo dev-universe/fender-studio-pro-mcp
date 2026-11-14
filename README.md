@@ -182,13 +182,20 @@ Four complete 908-record reads stayed original before and after the probe.
 The probe grants no mutation authority or output-pitch mapping. Stored-chord
 editing, restoration and persistence remain pending.
 
-The additional preset-setting plan has completed 39 of 46 classes with 76
+The additional preset-setting plan has completed 40 of 46 classes with 77
 accepted representative cases. These include 59 capsule-only cases across 30
-classes, 12 predeclared hybrid cases across 6 classes, and 5 explicitly scoped
-setting cases across 3 classes. Seven classes remain. The [current acceptance
+classes, 12 predeclared hybrid cases across 6 classes, and 6 explicitly scoped
+setting cases across 4 classes. Six classes remain. The [current acceptance
 record](docs/PRESET_SETTING_ACCEPTANCE.md) preserves earlier strict failures,
 readonly and label differences, and each case's limits. Selected presets do not
 establish every available preset, hidden value, saved state or audio result.
+
+SampleOne's issued singleton default passed one actual Native54 setting case.
+All 235 current values and metadata returned exactly to the prepared state and
+the original baseline. Independent fresh 5222-byte A/B saves matched after one
+load. This case changed monophone only; MIDI effects, sample/model control,
+caption restoration, audio and Song Save remain separate. See the
+[actual proof](docs/evidence/2026-11-15-sampleone-singleton-native54.json).
 
 `insert_chain_state` adds a separate, capability-gated whole-Inserts lifecycle for one exact mixer channel. Every capture, restore and release requires `expected_document`; restore and release accept only its issued token, with optional `expected_folder` from the capture response. The native owner keeps the host-authored preset file private. Callers supply no file path or imported bytes. Restore remains `applied_unverified` and requires fresh graph and per-part parameter/model observations; a load may replace Device UIDs. A simple actual-host chain passed changed-value restoration with full exposed-state confirmation. A two-Mixtool nested fixture also passed changed child/Splitter restoration and visible connection checks. Initial Pro EQ preset-display preservation failed (`default*` became `default`); dirty/UI state, hidden values and generic topology editing remain unverified. See the [live validation checklist](docs/PLUGIN_STATE_VALIDATION.md).
 
