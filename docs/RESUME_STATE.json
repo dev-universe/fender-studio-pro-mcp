@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Implement/review finite Limiter reset_minimum_reduction action in isolated feature/limiter-minimum-reduction-reset worktree. Selected explicit fourth action after two designs and independentjudge, exactclass61B18D53-26FA-4220-8614-89944A1990EC/resetmin/tag1383288146 with existingretainedpulse, noABI. Include BridgeComponent inputfrontdoor, NativePluginControls resultadmission, mainenum/schema/native registry andfocusedtests. Rootmustreview/build/install freshNative53 onlyafterverifiedsource. Parallel finite48DAQ offlineTone->Limiter recipe: actualparameterthresholdrel, freshTonelevel0dB formatting/prep/exactrestore, oneToneOnOff andonepulse; nooldcount/neutral10000 or -36dB assumptions, exact independentquietretainednonneutral->freshneutral witness andRootclosure. DAQ0, notexecutionready. ExistingNative52 installed unchanged. Privateapp22/mute36 plans unexecuted anddeferred; official8.1.1 artifact path questionpending, no userextensionstaging becauseduplicateIDpriorityunknown. Preserveallother8queueitems/fixedcounts.",
+    "Native53 installed source d508651. Limiter R1 closed failed18DAQ/298.424s atRPC20 because actualTone native max formats+24dB, notplanned0dB. NoTonelevelsetter/On/Limiter/reset/load/Save. NoSave/appfalse/EOF0/locks/saved10/MIDI0 confirmed. Preserve R1 immutable. Next separately prepare/review R2 namespace r57 with one explicit freshformatter+24dB maximum case, same Main0/newtarget0/noexternal ordered Tone->Limiter fixture and all independentretention/effect/exactrestore/lastfakeUID/closure guards. No interpolation/candidate search, no productcode/build/install needed ifsource177/artifact13 unchanged. Freshsession/doc/UID; expiredR1 session1b0202c002a2fe348771b64d5baecfc1. R2DAQ0 notexecutionready. Preserve other8queueitems and fixed11/43complete32remain4hardware. Modelprivatecopy/mute plans unexecuted; officialsameversionartifact pathquestionpending.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -623,11 +623,14 @@
   "binary_source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
   "current_execution": {
     "namespace": "r56",
-    "status": "frozen48_recipe_independent_review_pending",
-    "DAQ_count": 0,
+    "status": "closed_failed_fresh_formatter_precondition",
+    "DAQ_count": 18,
     "DAQ_budget": 48,
     "native_unit": 53,
-    "actual_effect_verified": false
+    "signal_or_reset": 0,
+    "owner_stopped": true,
+    "app_closed": true,
+    "saved10_equal": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2752,7 +2755,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T17:54:56.077061+00:00",
+  "latest_root_observation_at": "2026-11-14T18:07:41.076027+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -17932,7 +17935,7 @@
     "public_evidence": "docs/evidence/2026-11-15-private-app-startup-block-native52.json"
   },
   "limiter_minimum_reduction_next": {
-    "status": "reviewed_normally_built_and_installed_native53_live_pending",
+    "status": "R1_failed18_before_signal_R2_prospective24dB_recipe_in_progress",
     "current_Root_product_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
     "currently_installed_native_unit": 53,
     "planned_native_unit": 53,
@@ -17946,11 +17949,15 @@
     "independent_judge_base": "A",
     "grounding_elapsed_seconds": 229.364,
     "prospective_DAQ_budget": 48,
-    "actual_DAQ_count": 0,
+    "actual_DAQ_count": 18,
     "previous_unexecuted_budget": 45,
     "budget_change_reason": "Actual thresholdrel identity/domain and default Tone -24dB require fresh level formatter, one0dB prep and exact restore; changes before allDAQ.",
     "execution_ready": false,
-    "Root_product_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2"
+    "Root_product_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+    "accepted_DAQ": 0,
+    "failed_DAQ": 18,
+    "next_namespace": "r57",
+    "next_actual_DAQ": 0
   },
   "model_user_extension_loader_grounding": {
     "status": "NO_STAGING_WITH_CURRENT_PROOF",
@@ -17962,7 +17969,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Original app normal startup comparison;0DAQ89.879seconds; no plugin-control completion",
+  "last_closed_runtime_unit": "Native53 Limiter R1 precondition failure;18DAQ298.424seconds; Tone level maximum +24dB mismatchedplanned0dB; no signal or reset",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18038,5 +18045,72 @@
   },
   "previous_primary_runtime_verified_native_unit": 50,
   "previous_primary_runtime_verified_source_commit": "89d861e68707298d4e5efb80690a8f5e1ab82829",
-  "primary_runtime_bookkeeping_correction": "Historical Native50 primary fields lagged behind accepted Native51/52 detailed records. Updated to latest accepted Native52 scoped read, without promoting installed Native53 or whole control."
+  "primary_runtime_bookkeeping_correction": "Historical Native50 primary fields lagged behind accepted Native51/52 detailed records. Updated to latest accepted Native52 scoped read, without promoting installed Native53 or whole control.",
+  "native53_limiter_reset_r1_actual": {
+    "schema": 1,
+    "status": "FAILED_FRESH_FORMATTER_PRECONDITION_BEFORE_SIGNAL_OR_RESET",
+    "product_source": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+    "native_unit": 53,
+    "elapsed_seconds": 298.424,
+    "planned_DAQ": 48,
+    "actual_DAQ": 18,
+    "accepted_completed_unit_DAQ": 0,
+    "failed_or_nonadmitted_DAQ": 18,
+    "last_RPC": 20,
+    "first_unexecuted_RPC": 21,
+    "fresh_formatter_observation": {
+      "parameter": "level",
+      "plugin": "Tone Generator",
+      "native_kind": "Float",
+      "native_max_bits": "40C3880000000000",
+      "requested_value": 10000,
+      "actual_text": "24.00",
+      "current_unchanged": true,
+      "failed_expected_text": "0dB",
+      "implementation_error_proved": false
+    },
+    "mutations": {
+      "Main_volume0": 1,
+      "new_fixture_volume0": 1,
+      "new_unsaved_Audio_track": 1,
+      "Tone_added_Off": 1,
+      "Tone_level_setters": 0,
+      "ToneOn": 0,
+      "Limiter_added": 0,
+      "reset_pulses": 0,
+      "preset_or_state_load_or_Save": 0
+    },
+    "closure": {
+      "owned_Scratch_NoSave": true,
+      "CUA_app_open": false,
+      "owner_EOF_exit_code": 0,
+      "sequential_hardware_then_process": true,
+      "no_relevant_processes": true,
+      "locks_reacquired_released": 2,
+      "saved_files_unchanged": 10,
+      "MIDI_sources_and_destinations_before_after": 0
+    },
+    "evidence_pins": {
+      "closure": "c85616d003428978d9a936365005f2075a6c55575f10bff2e479f0eaddc26f61",
+      "original_formatter_RPC20": "904028ee8497c2105696bd4d76d198efd947f6a9180a3381cbc2576a95fa9886",
+      "literal_intents": "61ef7e5f8ffa2433151ead32e4570441ec9c0ba7f371b8eaa06ecc060a3ccebe",
+      "original_stdout": "b59c1c8b30feef426300d28ea0673ab7049acb6e214a44b28efe2bcd84288396",
+      "saved10_after": "910be246841c287fe54d3b0045e5ea3074cb6e108a93d19caa95bbe99c32d8c8"
+    },
+    "next": "Fresh separately reviewed R2 with one explicitly admitted +24dB current native maximum formatter case, same dual-zero/noexternal fixture and unchanged independent effect/restoration guards. No interpolation or in-place R1 change.",
+    "accounting": {
+      "fixed_total": 43,
+      "fixed_complete": 11,
+      "remaining": 32,
+      "hardware_blocked": 4,
+      "fixed_parameter_names": 6866,
+      "fixed_parameter_names_total": 7112,
+      "preset_classes_complete": 39,
+      "preset_classes_total": 46,
+      "preset_cases": 76
+    }
+  },
+  "native53_raw_requests": 18,
+  "native53_accepted_completed_unit_requests": 0,
+  "native53_failed_or_nonadmitted_requests": 18
 }
