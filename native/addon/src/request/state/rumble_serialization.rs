@@ -323,7 +323,46 @@ fn decoded(text: &str) -> Result<std::borrow::Cow<'_, str>, Reason> {
     }
     Ok(value)
 }
+fn attribute_grammar(mut raw: &[u8]) -> Result<(), Reason> {
+    fn space(byte: u8) -> bool {
+        matches!(byte, b' ' | b'\n' | b'\r' | b'\t')
+    }
+    fn trim_space(raw: &[u8]) -> &[u8] {
+        &raw[raw.iter().take_while(|b| space(**b)).count()..]
+    }
+    while !raw.is_empty() {
+        if !space(raw[0]) {
+            return Err(Reason::Syntax);
+        }
+        raw = trim_space(raw);
+        if raw.is_empty() {
+            break;
+        }
+        let key_end = raw
+            .iter()
+            .position(|b| space(*b) || *b == b'=')
+            .ok_or(Reason::Syntax)?;
+        if key_end == 0 {
+            return Err(Reason::Syntax);
+        }
+        raw = trim_space(&raw[key_end..]);
+        raw = raw.strip_prefix(b"=").ok_or(Reason::Syntax)?;
+        raw = trim_space(raw);
+        let quote = *raw.first().ok_or(Reason::Syntax)?;
+        if !matches!(quote, b'\'' | b'"') {
+            return Err(Reason::Syntax);
+        }
+        raw = &raw[1..];
+        let end = raw.iter().position(|b| *b == quote).ok_or(Reason::Syntax)?;
+        if end > STRING {
+            return Err(Reason::Limit);
+        }
+        raw = &raw[end + 1..];
+    }
+    Ok(())
+}
 fn element(element: &BytesStart<'_>, budget: &mut Budget) -> Result<&'static str, Reason> {
+    attribute_grammar(element.attributes_raw())?;
     let binding = element.name();
     let tag = name(binding.as_ref(), false)?;
     let root = if let Some(i) = TAGS.iter().position(|v| *v == tag) {
@@ -397,7 +436,9 @@ fn xml(text: &str) -> Result<(&'static str, Counts), Reason> {
                     return Err(Reason::Limit);
                 }
                 let attrs = BytesStart::from_content(raw, 3);
+                attribute_grammar(attrs.attributes_raw())?;
                 let mut seen = BTreeSet::new();
+                let mut previous = 0;
                 for attr in attrs.attributes() {
                     let attr = attr.map_err(|_| Reason::Syntax)?;
                     let key = std::str::from_utf8(attr.key.as_ref()).map_err(|_| Reason::Syntax)?;
@@ -412,6 +453,16 @@ fn xml(text: &str) -> Result<(&'static str, Counts), Reason> {
                     {
                         return Err(Reason::UnsupportedXml);
                     }
+                    let position = match key {
+                        "version" => 1,
+                        "encoding" => 2,
+                        "standalone" => 3,
+                        _ => return Err(Reason::UnsupportedXml),
+                    };
+                    if position <= previous || previous == 0 && position != 1 {
+                        return Err(Reason::Syntax);
+                    }
+                    previous = position;
                 }
             }
             Event::Start(ref el) | Event::Empty(ref el) => {
@@ -764,12 +815,41 @@ mod tests {
         assert_eq!(value["counts"]["classids_invalid"], 1);
     }
     #[test]
+    fn xml_requires_attribute_separators_and_ordered_declarations() {
+        for text in [
+            "<a a='x'b='y'/>",
+            "<a a='x' b=unquoted/>",
+            "<a a='unterminated/>",
+            "<?xml version='1.0'encoding='UTF-8'?><a/>",
+            "<?xml version='1.0' standalone='yes' encoding='UTF-8'?><a/>",
+        ] {
+            let value = fields(text.as_bytes());
+            assert_eq!(value["format"], "utf8_xml");
+            assert_eq!(value["parse_complete"], false, "{text}: {value}");
+            assert_eq!(value["reason"], "syntax");
+            assert!(value["counts"].is_null());
+            assert!(value["root_kind"].is_null());
+        }
+        for text in [
+            "<a a='x' b='y'/>",
+            "<a\ta = 'x'\nb=\"y\"\r/>",
+            "<?xml version='1.0' encoding='UTF-8' standalone='yes'?><a/>",
+            "<?xml\tversion = \"1.0\"\nencoding='utf-8'\rstandalone = 'no' ?><a/>",
+            "<?xml version='1.0' standalone='yes'?><a/>",
+        ] {
+            let value = fields(text.as_bytes());
+            assert_eq!(value["parse_complete"], true, "{text}: {value}");
+            assert_eq!(value["counts"]["other_tags"], 1);
+        }
+    }
+    #[test]
     fn exact_limits_bom_guid_partitions_and_text_grammar_are_verified() {
         for text in [
             format!("\"{}\"", "x".repeat(4096)),
             format!("[{}]", vec!["0"; 8191].join(",")),
             format!("{}0{}", "[".repeat(31), "]".repeat(31)),
             format!("<a>{}</a>", "x".repeat(4096)),
+            format!("<a value='{}'/>", "x".repeat(4096)),
             format!(
                 "<a {} />",
                 (0..64)
@@ -826,6 +906,7 @@ mod tests {
                     .join(" ")
             ),
             format!("<a>{}</a>", "x".repeat(4097)),
+            format!("<a value='{}'/>", "x".repeat(4097)),
             format!("{}{}", "<a>".repeat(33), "</a>".repeat(33)),
         ] {
             let value = fields(text.as_bytes());
