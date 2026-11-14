@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중6개를 완료했고37개가 남았다: 프리셋12 + 프리셋 외 플러그인 기능19 + 공통6.** 남은 상태는부분32개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중7개를 완료했고36개가 남았다: 프리셋11 + 프리셋 외 플러그인 기능19 + 공통6.** 남은 상태는부분31개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -9,8 +9,8 @@
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
-| 추가 프리셋 설정 종 |34/46|12종|완료 종67사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중6개 완료|37개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 추가 프리셋 설정 종 |35/46|11종|완료 종68사례. catalog59종과 다른 지표|
+| 고정한 완료물 목록 |43개 중7개 완료|36개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -30,7 +30,7 @@
 |PRESET-OPENAIR|Open AIR|완료|issued singleton index0 default의 쓰기43개·전체94 비값 metadata·새2033바이트 A/B 동일과 수명/Root 정리를 별도 명시적 설정 범위로 수용. readonly16/전체94 current 원래 복원은 false로 보존.|완료: min(2, complete nonempty issued count1) 기준의 고정 preset-setting1/1. 전체readonly/IR리소스/audio/Save/전체플러그인 지원은 별도이며 원래 strict 실패0을 보존.|
 |PRESET-SPECTRUM|Spectrum Meter|완료|서로 다른 issued index1/2의 두 고정설정·각전체9복원·새584byte A/B·해제/만료·NoSave/owner0/저장6개 보존을 수용|두 실기를 반복하지 않는다. 모든32항목·factory origin·audio·지속저장·전체플러그인 지원의 완료는 아니다.|
 |PRESET-LEVEL|Level Meter|완료|서로 다른 index1 Movie Score Classic/index2 Pop Rock: 각51요청, mode1/2 변화·DSP7+등록6의 전체13값/metadata 정확복원·새406바이트 A/B 동일·수명/Root정리/저장6/MIDI0 확인|완료: 대표설정2/2 범위. 표시이름 원복false, 전체6항목·audio·Save·전체plugin지원은 별도. 두 사례를 반복하지 않는다.|
-|PRESET-SCOPE|Scope|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-SCOPE|Scope|완료|실제 complete singleton index0 default1/1, 329.338초·46요청. 준비O 대비 변화·전체31 exact O 복원·fresh758바이트 A/B 동일·초기P 전체복원·수명/Root정리 확인|완료: singleton 설정1/1 범위. 별도 CONTROL-SCOPE의 두 트리거 효과·waveform/audio·Save는 미검증이며 이 사례를 반복하지 않는다.|
 |PRESET-TONEGEN|Tone Generator|완료|서로다른 Pink index3/White index5 각40요청,6값 변화·전체10 exact 복원·fresh371byte A/B 동일·수명/Root정리 확인. Main/대상0·mute1·입력없음·stopped 유지|완료: 대표설정2/2 범위. 표시이름복원false, 전체6프리셋·audio·물리무음·Save·전체plugin은 별도. 두 사례를 반복하지 않는다.|
 |PRESET-AMPIRE|Ampire|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-PEDALBOARD|Pedalboard|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
@@ -112,3 +112,5 @@ Chorder input60의 출력128 모델 역할·selector 경계·고정 Song 저장3
 현재 Level Meter의 서로 다른2사례도 수용해33/46종·65사례·13종 잔여다. 별도 부분 사례는0이며 index1/2를 반복하지 않는다.
 
 Tone의 서로다른 두 사례도 수용해 현재34/46종·67사례·12종 잔여이며 별도 부분 사례0이다. 위33/46 Level 체크포인트는 이력이다.
+
+Scope singleton을 새로 수용한 현재 집계는35/46종·68사례·11종 잔여, 고정43개 중7개 완료·36개 잔여(부분31·미착수1·하드웨어4)다. 앞선 Tone34/46 체크포인트는 이력이다.

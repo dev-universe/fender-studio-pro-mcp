@@ -12,9 +12,9 @@ and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
 Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
-current-value names, 246 remaining; 34/46 preset-setting classes, 67 cases in completed classes,
-12 remaining. The fixed remaining-work snapshot has six of43 items complete
-and37 remaining. These are different denominators, not whole-product coverage.
+current-value names, 246 remaining; 35/46 preset-setting classes, 68 cases in completed classes,
+11 remaining. The fixed remaining-work snapshot has seven of43 items complete
+and36 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
 Native45 read all33 typed controller descriptions/current values/owners. Native47 changed/read/restored all six registered Level settings with independent
@@ -29,7 +29,7 @@ Room2/2 and Level2/2 while preserving full-current/readonly failures and Room's 
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset settings | Two accepted cases each for33classes plus Open AIR issued singleton1/1;67completed-class cases |12classes; full-current/readonly failures remain preserved |
+| Additional preset settings | Two accepted cases each for33classes plus Open AIR and Scope issued singletons1/1;68completed-class cases |11classes; full-current/readonly failures remain preserved |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -924,3 +924,5 @@ Room Reverb has one separately accepted writable/serialized restore pilot from a
 ### Chorder 고정 곡의 실제 저장과 재시작
 
 입력60·출력0의 고정 진단 곡에서339개 실제 요청, 모델 변경2회와 저장2회, 재시작2회를 별도 독립 원장 대조로 확인했다. 저장 모델581→612→581바이트와 재시작 뒤 전체 모델 읽기가 일치했다. 마지막 UI 종료 확인 전달 지연으로 원래 자동 결과는 실패·승인0건으로 보존한다. 별도 실제 동작 검증1건은 [공개 근거](evidence/2026-11-13-chorder-song-persistence.json)에 기록했다. 모든 음정 조합이나 오디오 검증을 뜻하지 않는다.
+
+Scope singleton index0 default now passes its setting scope: distinct initial P and prepared O, one ordinary preparation, positive default change, one Aload restoring all31 exactly, fresh758byte A/B equality, releases/refusal, one predeclared final original scalar restoration and full31 P pair, Root NoSave/owner0/saved6/MIDI0. Native47:46DAQ/329.338s. Scope trigger effects/audio/waveform/persistence remain unverified. See [public proof](evidence/2026-11-14-scope-singleton-native47.json).

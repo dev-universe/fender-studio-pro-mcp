@@ -39,3 +39,9 @@ Open AIR의 readonly tanktap 값들은 기존 정적 preset에도 들어 있다.
 Level Meter는 기존 DSP7와 등록6설정의 union13을 사용해 issued index1 Movie Score Classic과 index2 Pop Rock을 각각 실제 적용·독립 관측·원복했다. 각51요청, capsule load1회/추가보정0회로 쓰기12개와 전체13 current/metadata가 정확히 돌아왔고 독립 fresh406바이트 A/B도 같았다. 수명과 Root 정리를 함께 확인해 대표2/2로 수용했다. 이 두 사례에서 readonly correlation 원래값도 같았다는 관측은 기록하되 직렬화 참여나 모든 상태의 증명으로 확장하지 않는다. 프리셋 표시 이름의 원래 복원은 false다.
 
 현재는 **33/46종·완료 종65사례·13종 잔여**, 고정43개 중 **5개 완료·38개 잔여**다. [index1](evidence/2026-11-14-level-preset-index1-native47.json)과 [index2](evidence/2026-11-14-level-preset-index2-native47.json)는 서로 다른 새 문맥의 증거다. 과거 결정 시점31/46, 후속 Room32/46 및 첫 Level 부분1/2는 이력을 보존하며 재실행 지시가 아니다.
+
+## Scope singleton의 실제 별도 적용
+
+fresh complete issued catalog가 하나인 Scope는 최소 대표 사례 수가1개다. 최초 P에서 일반 `showSecondary`0→1을 한 번 준비한 O를 별도 기준으로 캡처했다. default 적용의 실제1→0 변화와 전체31개 O 정확 복원, 새758바이트 A/B 동일, 수명·정리를 확인했다. 이어 사전에 선언한 최초0 복원과 전체31개 P 독립쌍까지 통과했다. 쓰기31개·읽기 전용0이며 비값/unknown metadata를 모두 정확 비교했다. 표시 이름도 최초/최종 `default*`가 같았다.
+
+[새 실제 증거](evidence/2026-11-14-scope-singleton-native47.json)는329.338초·46요청이고, 대표 설정1/1만 수용한다. Scope 두 트리거의 실제 효과·waveform/audio·저장/재시작은 별도다. 현재35/46종·완료 종68사례·11종 잔여, 고정43개 중7개 완료·36개 잔여다. 앞선 Room/Level/Tone 결정 시점의 집계는 이력으로 보존한다.
