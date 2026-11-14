@@ -73,6 +73,9 @@ unsafe extern "C" fn count(p: *mut c_void) -> i32 {
 unsafe extern "C" fn parameter_at(p: *mut c_void, _: i32) -> *mut c_void {
     unsafe { object(p) }.parameter.get()
 }
+unsafe extern "C" fn parameter_named(p: *mut c_void, _: *const PlainCString) -> *mut c_void {
+    unsafe { object(p) }.parameter.get()
+}
 unsafe extern "C" fn children(p: *mut c_void) -> i32 {
     if unsafe { object(p) }.child.get().is_null() {
         0
@@ -100,6 +103,7 @@ impl Fixture {
         table[2] = drop_ref as *const c_void;
         table[3] = count as *const c_void;
         table[4] = parameter_at as *const c_void;
+        table[5] = parameter_named as *const c_void;
         table[6] = parent as *const c_void;
         table[8] = children as *const c_void;
         table[9] = child0 as *const c_void;
@@ -346,3 +350,178 @@ fn retained_pair_rechecks_canonical_identity_and_context() {
 
 #[path = "level_descriptor_tests.rs"]
 mod descriptor_tests;
+
+#[test]
+fn registered_settings_accept_the_observed_mode_count_transition_and_return() {
+    use super::settings::{ModeProfile, check_counts};
+    for (before, after) in [(25, 23), (23, 25)] {
+        let f = Fixture::new();
+        let mut observation = f.pair();
+        let pair = observation.pair.as_mut().unwrap();
+        for (i, count) in [8, before].into_iter().enumerate() {
+            f.objects[i].count.set(count);
+            pair.capabilities[i] =
+                capability(f.pointer(i), f.pointer(i), &mut || f.guard()).unwrap();
+        }
+        f.objects[1].count.set(after);
+        check_counts(
+            pair,
+            ModeProfile {
+                mode: if after == 23 { 4 } else { 0 },
+                child_count: after,
+            },
+            &mut || f.guard(),
+        )
+        .unwrap();
+    }
+}
+
+fn settings_observation(f: &Fixture, child_count: i32) -> Observation {
+    let mut observation = f.pair();
+    let pair = observation.pair.as_mut().unwrap();
+    for (i, count) in [8, child_count].into_iter().enumerate() {
+        f.objects[i].count.set(count);
+        pair.capabilities[i] = capability(f.pointer(i), f.pointer(i), &mut || f.guard()).unwrap();
+    }
+    observation
+}
+
+#[test]
+fn mode_profile_changes_only_after_one_dispatch_and_round_trips() {
+    use super::settings::{ModeProfile, check_counts, dispatch_mode_change};
+    let f = Fixture::new();
+    let observation = settings_observation(&f, 25);
+    let profile = Cell::new(Some(ModeProfile {
+        mode: 0,
+        child_count: 25,
+    }));
+    let writes = Cell::new(0);
+    for target in [
+        ModeProfile {
+            mode: 4,
+            child_count: 23,
+        },
+        ModeProfile {
+            mode: 0,
+            child_count: 25,
+        },
+    ] {
+        let previous = profile.get();
+        dispatch_mode_change(
+            &profile,
+            target,
+            &mut || {
+                observation.check(&mut || f.guard())?;
+                check_counts(
+                    observation.pair.as_ref().unwrap(),
+                    profile.get().unwrap(),
+                    &mut || f.guard(),
+                )
+            },
+            || {
+                assert_eq!(profile.get(), previous);
+                writes.set(writes.get() + 1);
+                f.objects[1].count.set(target.child_count);
+            },
+        )
+        .unwrap();
+        assert_eq!(profile.get(), Some(target));
+    }
+    assert_eq!(writes.get(), 2);
+}
+
+#[test]
+fn ordinary_operations_reject_every_unexpected_count_and_final_guard_drift() {
+    use super::settings::{ModeProfile, check_counts};
+    for (mode, child_count) in [(0, 25), (4, 23)] {
+        for node in 0..2 {
+            for count in [-1, 0, 7, 8, 9, 22, 23, 24, 25, 26, 128] {
+                if count == [8, child_count][node] {
+                    continue;
+                }
+                let f = Fixture::new();
+                let observation = settings_observation(&f, child_count);
+                f.objects[node].count.set(count);
+                assert!(
+                    check_counts(
+                        observation.pair.as_ref().unwrap(),
+                        ModeProfile { mode, child_count },
+                        &mut || f.guard()
+                    )
+                    .is_err()
+                );
+            }
+        }
+        for node in 0..2 {
+            let f = Fixture::new();
+            let observation = settings_observation(&f, child_count);
+            let calls = Cell::new(0);
+            assert!(
+                check_counts(
+                    observation.pair.as_ref().unwrap(),
+                    ModeProfile { mode, child_count },
+                    &mut || {
+                        calls.set(calls.get() + 1);
+                        if calls.get() == 2 {
+                            f.objects[node].count.set(24);
+                        }
+                        f.guard()
+                    }
+                )
+                .is_err()
+            );
+        }
+    }
+}
+
+#[test]
+fn mode_dispatch_rejects_pre_set_drift_and_never_retries_after_call_drift() {
+    use super::settings::{ModeProfile, check_counts, dispatch_mode_change};
+    for after_call in [false, true] {
+        for change in 0..7 {
+            let f = Fixture::new();
+            let observation = settings_observation(&f, 25);
+            let profile = Cell::new(Some(ModeProfile {
+                mode: 0,
+                child_count: 25,
+            }));
+            let target = ModeProfile {
+                mode: 4,
+                child_count: 23,
+            };
+            let writes = Cell::new(0);
+            let drift = || match change {
+                0 => f.objects[0].count.set(9),
+                1 => f.objects[1].count.set(24),
+                2 => f.objects[0].canonical.set(f.pointer(2)),
+                3 => f.objects[1].canonical.set(f.pointer(2)),
+                4 => f.objects[0].child.set(f.pointer(2)),
+                5 => f.objects[1].parent.set(f.pointer(2)),
+                _ => f.objects[0].lost.set(true),
+            };
+            if !after_call {
+                drift();
+            }
+            let result = dispatch_mode_change(
+                &profile,
+                target,
+                &mut || {
+                    observation.check(&mut || f.guard())?;
+                    check_counts(
+                        observation.pair.as_ref().unwrap(),
+                        profile.get().unwrap(),
+                        &mut || f.guard(),
+                    )
+                },
+                || {
+                    writes.set(writes.get() + 1);
+                    f.objects[1].count.set(23);
+                    drift();
+                },
+            );
+            assert!(result.is_err(), "after_call={after_call}, change={change}");
+            assert_eq!(writes.get(), usize::from(after_call));
+            assert_eq!(profile.get().unwrap().mode, if after_call { 4 } else { 0 });
+        }
+    }
+}

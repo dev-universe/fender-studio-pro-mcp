@@ -1,4 +1,5 @@
 use super::*;
+use std::cell::Cell;
 
 const COVERAGE: &str = "six_registered_level_meter_settings";
 #[derive(Clone, Copy)]
@@ -86,9 +87,93 @@ struct Entry {
     owner: parameters::ControllerOwner,
     owner_view: *mut c_void,
 }
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) struct ModeProfile {
+    pub(super) mode: i64,
+    pub(super) child_count: i32,
+}
+impl ModeProfile {
+    fn for_mode(mode: i64) -> Result<Self, String> {
+        let child_count = match mode {
+            0..=3 => 25,
+            4 => 23,
+            _ => return Err("Level mode has no observed controller count profile".into()),
+        };
+        Ok(Self { mode, child_count })
+    }
+    fn check_mode(self, description: &parameters::Description) -> Result<(), String> {
+        SETTINGS[0].validate(description)?;
+        if integer(description.raw.as_ref()) != Some(self.mode) {
+            return Err("Level mode changed outside its setter".into());
+        }
+        Ok(())
+    }
+}
+fn terminal_counts(pair: &Pair, profile: ModeProfile) -> Result<(), String> {
+    for (controller, expected) in pair.capabilities.iter().zip([8, profile.child_count]) {
+        let controller = controller
+            .interface
+            .as_ref()
+            .ok_or("Level controller unavailable")?;
+        let count: Count = unsafe { method(controller.0, 3) };
+        if unsafe { count(controller.0) } != expected {
+            return Err("Level controller count changed".into());
+        }
+    }
+    Ok(())
+}
+pub(super) fn check_counts<G: FnMut() -> Result<(), String>>(
+    pair: &Pair,
+    profile: ModeProfile,
+    guard: &mut G,
+) -> Result<(), String> {
+    if pair.capabilities[0].value["count"] != 8
+        || !matches!(pair.capabilities[1].value["count"].as_i64(), Some(23 | 25))
+    {
+        return Err("Level controller counts differ from the proven profile".into());
+    }
+    guard()?;
+    terminal_counts(pair, profile)?;
+    guard()?;
+    terminal_counts(pair, profile)
+}
+pub(super) fn dispatch_mode_change<G, S>(
+    profile: &Cell<Option<ModeProfile>>,
+    target: ModeProfile,
+    guard: &mut G,
+    setter: S,
+) -> Result<(), String>
+where
+    G: FnMut() -> Result<(), String>,
+    S: FnOnce(),
+{
+    guard()?;
+    setter();
+    profile.set(Some(target));
+    guard()
+}
+pub(super) fn check_named(
+    controller: *mut c_void,
+    parameter: *mut c_void,
+    owner_view: *mut c_void,
+    name: &str,
+) -> Result<(), String> {
+    let name = CString::new(name).map_err(|_| "invalid Level setting name")?;
+    let name = PlainCString {
+        text: name.as_ptr(),
+        owner: ptr::null_mut(),
+    };
+    let find: unsafe extern "C" fn(*mut c_void, *const PlainCString) -> *mut c_void =
+        unsafe { method(controller, 5) };
+    if unsafe { find(controller, &name) } != parameter || borrowed(parameter, 14) != owner_view {
+        return Err("Level named parameter or owner attachment changed".into());
+    }
+    Ok(())
+}
 pub(in crate::native_script::request) struct Settings {
     entries: Vec<Entry>,
     inventory: Inventory,
+    profile: Cell<Option<ModeProfile>>,
 }
 impl Settings {
     pub(in crate::native_script::request) fn registered(name: &str) -> Result<(), String> {
@@ -142,6 +227,7 @@ impl Settings {
         let mut result = Self {
             entries: Vec::new(),
             inventory,
+            profile: Cell::new(None),
         };
         result.check(&mut || ctx.check())?;
         for setting in SETTINGS {
@@ -180,6 +266,20 @@ impl Settings {
             release(controller, &mut || result.check(&mut || ctx.check()))?;
             result.check(&mut || ctx.check())?;
         }
+        let mode = result
+            .entry("mode")?
+            .binding
+            .parameter()
+            .describe()
+            .map_err(|e| e.to_string())?;
+        let profile = ModeProfile::for_mode(
+            integer(mode.raw.as_ref()).ok_or("Level mode Integer unavailable")?,
+        )?;
+        if result.pair()?.capabilities[1].value["count"] != profile.child_count {
+            return Err("Level captured mode/count profile changed".into());
+        }
+        result.profile.set(Some(profile));
+        result.check(&mut || ctx.check())?;
         Ok(result)
     }
     pub(in crate::native_script::request) fn check<G: FnMut() -> Result<(), String>>(
@@ -188,30 +288,13 @@ impl Settings {
     ) -> Result<(), String> {
         self.inventory.check(guard)?;
         let pair = self.pair()?;
-        if pair
-            .capabilities
-            .iter()
-            .zip([8, 25])
-            .any(|(c, n)| c.value["count"] != n)
-        {
-            return Err("Level controller counts differ from the proven profile".into());
-        }
-        for expected in [8, 25] {
-            let controller = if expected == 8 {
-                &pair.capabilities[0]
-            } else {
-                &pair.capabilities[1]
-            }
-            .interface
-            .as_ref()
-            .ok_or("Level controller unavailable")?;
-            guard()?;
-            let count: Count = unsafe { method(controller.0, 3) };
-            if unsafe { count(controller.0) } != expected {
-                return Err("Level controller count changed".into());
-            }
-            guard()?;
-        }
+        let profile = self.profile.get().unwrap_or(ModeProfile {
+            mode: -1,
+            child_count: pair.capabilities[1].value["count"]
+                .as_i64()
+                .ok_or("Level child count unavailable")? as i32,
+        });
+        check_counts(pair, profile, guard)?;
         for entry in &self.entries {
             entry.binding.check(guard).map_err(|e| e.to_string())?;
             entry.owner.check(guard).map_err(|e| e.to_string())?;
@@ -223,12 +306,25 @@ impl Settings {
                 .map_err(|e| e.to_string())?;
             guard()?;
             entry.setting.validate(&d)?;
+            if entry.setting.name == "mode" && self.profile.get().is_some() {
+                profile.check_mode(&d)?;
+            }
             self.named(entry)?;
             guard()?;
         }
         self.inventory.check(guard)?;
         for _ in 0..2 {
             guard()?;
+            if let Some(profile) = self.profile.get() {
+                let mode = self
+                    .entry("mode")?
+                    .binding
+                    .parameter()
+                    .describe()
+                    .map_err(|e| e.to_string())?;
+                profile.check_mode(&mode)?;
+            }
+            terminal_counts(pair, profile)?;
             for entry in &self.entries {
                 self.named(entry)?;
             }
@@ -250,23 +346,74 @@ impl Settings {
         }
         Ok(())
     }
-    fn named(&self, entry: &Entry) -> Result<(), String> {
-        let name = CString::new(entry.setting.name).expect("fixed name");
-        let name = PlainCString {
-            text: name.as_ptr(),
-            owner: ptr::null_mut(),
+    fn set_mode<G: FnMut() -> Result<(), String>>(&self, value: i64, guard: &mut G) -> Value {
+        let mut before = None;
+        let mut after = None;
+        let mut dispatched = false;
+        let result: Result<bool, String> = (|| {
+            let entry = self.entry("mode")?;
+            let target = ModeProfile::for_mode(value)?;
+            self.check(guard)?;
+            let d = entry
+                .binding
+                .parameter()
+                .describe()
+                .map_err(|e| e.to_string())?;
+            entry.setting.validate(&d)?;
+            if !d.enabled || d.read_only || !d.support.raw_number {
+                return Err("Level mode is not natively writable".into());
+            }
+            before = Some(d);
+            let pointer = entry.binding.parameter().as_borrowed_raw().as_ptr();
+            let enabled: unsafe extern "C" fn(*mut c_void) -> u8 = unsafe { method(pointer, 6) };
+            let state: unsafe extern "C" fn(*mut c_void, i32) -> u8 = unsafe { method(pointer, 8) };
+            if unsafe { enabled(pointer) } == 0 || unsafe { state(pointer, 0x1000) } != 0 {
+                return Err("Level mode is not natively writable".into());
+            }
+            let input = VariantOut {
+                kind: 1,
+                payload: value as u64,
+            };
+            let set: unsafe extern "C" fn(*mut c_void, *const VariantOut, u8) =
+                unsafe { method(pointer, 21) };
+            dispatch_mode_change(&self.profile, target, &mut || self.check(guard), || {
+                dispatched = true;
+                unsafe { set(pointer, &input, 1) };
+            })?;
+            let d = entry
+                .binding
+                .parameter()
+                .describe()
+                .map_err(|e| e.to_string())?;
+            entry.setting.validate(&d)?;
+            let verified = integer(d.raw.as_ref()) == Some(value);
+            after = Some(d);
+            self.check(guard)?;
+            Ok(verified)
+        })();
+        let mut response = match result {
+            Ok(verified) => json!({"ok":true,"verified":verified,"outcome":"observed"}),
+            Err(reason) => error(
+                "native_parameter_error",
+                &reason,
+                if dispatched { "unknown" } else { "not_applied" },
+            ),
         };
-        let controller = self.controller()?;
-        let find: unsafe extern "C" fn(*mut c_void, *const PlainCString) -> *mut c_void =
-            unsafe { method(controller, 5) };
-        if unsafe { find(controller, &name) }
-            != entry.binding.parameter().as_borrowed_raw().as_ptr()
-            || borrowed(entry.binding.parameter().as_borrowed_raw().as_ptr(), 14)
-                != entry.owner_view
-        {
-            return Err("Level named parameter or owner attachment changed".into());
+        if let Some(before) = before {
+            response["before"] = description(&before);
         }
-        Ok(())
+        if let Some(after) = after {
+            response["after"] = description(&after);
+        }
+        response
+    }
+    fn named(&self, entry: &Entry) -> Result<(), String> {
+        check_named(
+            self.controller()?,
+            entry.binding.parameter().as_borrowed_raw().as_ptr(),
+            entry.owner_view,
+            entry.setting.name,
+        )
     }
     fn entry(&self, name: &str) -> Result<&Entry, String> {
         self.entries
@@ -323,6 +470,9 @@ impl Settings {
                 Ok(v) => v,
                 Err(e) => return error("invalid_level_setting", &e, "not_applied"),
             };
+            if entry.setting.name == "mode" {
+                return self.set_mode(value, &mut || ctx.check());
+            }
             return match entry
                 .binding
                 .parameter()

@@ -467,7 +467,7 @@ operations resolves the exact Level Meter AudioEffect and its declared
 proven native Integer carrier, canonical name, tag, kind and bounds. Lists use
 the existing finite native choices API; formatting reads native labels.
 Writes accept raw Integer values only. Native enabled/read-only/support metadata
-is retained and the existing guarded setter decides native access.
+is retained and checked before dispatch.
 
 The MCP request requires `plugin: "Level Meter"`, a fresh `expected_document`
 and `expected_instance`. Bridge session, active document/model, declared alias
@@ -475,6 +475,12 @@ provider, root/child identities, counts, attachment, named parameter and owner
 bindings remain checked through publication. There is no receiver fallback,
 caller path, menu access, retry or automatic inverse write. The response retains
 native before/after and verified/unknown semantics. The parameter page's complete
-coverage means six registered settings, not all 25 OutLevels parameters. The
+coverage means six registered settings. The captured mode/count profile requires
+root count 8 and OutLevels count 25 for modes 0..3, or count 23 for mode 4.
+Ordinary operations retain that exact mode and count. A mode write changes the
+expected profile only after its single native setter call, then rechecks all six
+retained named parameters and owners. A failed check after the call remains
+unknown and never triggers a retry or inverse write. The
 33-parameter read-only descriptor report retains `can_set_via_this_api: false`.
+Its fixed descriptor completeness rule remains unchanged for the 23-entry mode.
 Source tests and builds do not establish a live write or persistence result.

@@ -88,6 +88,29 @@ fn every_setting_rejects_name_tag_kind_carrier_and_bounds_drift() {
     }
 }
 #[test]
+fn only_observed_mode_compositions_are_admitted() {
+    for (mode, child_count) in [(0, 25), (1, 25), (2, 25), (3, 25), (4, 23)] {
+        assert_eq!(
+            ModeProfile::for_mode(mode).unwrap(),
+            ModeProfile { mode, child_count }
+        );
+    }
+    for mode in [-1, 5, i64::MAX] {
+        assert!(ModeProfile::for_mode(mode).is_err());
+    }
+}
+#[test]
+fn non_mode_operations_reject_mode_drift_even_when_counts_match() {
+    for mode in 0..=4 {
+        let profile = ModeProfile::for_mode(mode).unwrap();
+        for current in 0..=4 {
+            let mut d = description(SETTINGS[0]);
+            d.raw = value(current);
+            assert_eq!(profile.check_mode(&d).is_ok(), current == mode);
+        }
+    }
+}
+#[test]
 fn source_requires_a_bound_instance_and_rejects_undeclared_operations() {
     let parse = |v| {
         let r: Request = serde_json::from_value(v).unwrap();

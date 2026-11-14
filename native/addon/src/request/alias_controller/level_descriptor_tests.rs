@@ -23,7 +23,13 @@ unsafe extern "C" fn p_owner(p: *mut c_void) -> *mut c_void {
 }
 unsafe extern "C" fn unavailable(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) -> i32 {
     let object = unsafe { &*p.cast::<Param>() }.object.get();
-    if unsafe { *iid } == OBJECT && !object.is_null() {
+    if unsafe { *iid } == UNKNOWN {
+        unsafe {
+            *out = p;
+            p_retain(p);
+        }
+        OK
+    } else if unsafe { *iid } == OBJECT && !object.is_null() {
         unsafe {
             *out = object;
             object_retain(object);
@@ -33,6 +39,9 @@ unsafe extern "C" fn unavailable(p: *mut c_void, iid: *const Uid, out: *mut *mut
         unsafe { *out = ptr::null_mut() };
         NO_INTERFACE
     }
+}
+unsafe extern "C" fn original(p: *mut c_void) -> *mut c_void {
+    p
 }
 unsafe extern "C" fn kind(_: *mut c_void) -> i32 {
     11
@@ -89,6 +98,7 @@ impl ParameterFixture {
         table[8] = zero as *const c_void;
         table[13] = zero as *const c_void;
         table[14] = p_owner as *const c_void;
+        table[18] = original as *const c_void;
         Self {
             p: Box::new(Param {
                 table: table.as_ptr(),
@@ -184,6 +194,82 @@ fn parameter_association_count_owner_and_context_changes_fail_closed() {
         assert!(parameter.check(pair, &mut || f.guard()).is_err());
         drop(parameter);
         drop(observation);
+    }
+}
+
+#[test]
+fn mode_setting_retains_named_parameter_and_owner_before_after_and_at_publication() {
+    use super::super::settings::{ModeProfile, check_counts, check_named, dispatch_mode_change};
+    for phase in 0..3 {
+        for owner_changed in [false, true] {
+            let f = Fixture::new();
+            let p = ParameterFixture::new(f.pointer(1));
+            let observation = settings_observation(&f, 25);
+            f.objects[1].parameter.set(p.pointer());
+            let held = pin(p.pointer(), &mut || f.guard()).unwrap();
+            let raw = unsafe { RawParameter::from_owned(NonNull::new(held.0).unwrap(), text()) };
+            std::mem::forget(held);
+            let binding = raw.pin_binding_read(&mut || f.guard()).unwrap();
+            let owner = binding
+                .parameter()
+                .controller_owner(&mut || f.guard())
+                .unwrap()
+                .unwrap();
+            let profile = Cell::new(Some(ModeProfile {
+                mode: 0,
+                child_count: 25,
+            }));
+            let writes = Cell::new(0);
+            let drift = || {
+                if owner_changed {
+                    p.p.owner.set(f.pointer(0));
+                } else {
+                    f.objects[1].parameter.set(ptr::null_mut());
+                }
+            };
+            let mut check = || {
+                observation.check(&mut || f.guard())?;
+                check_counts(
+                    observation.pair.as_ref().unwrap(),
+                    profile.get().unwrap(),
+                    &mut || f.guard(),
+                )?;
+                binding
+                    .check(&mut || f.guard())
+                    .map_err(|e| e.to_string())?;
+                owner.check(&mut || f.guard()).map_err(|e| e.to_string())?;
+                check_named(f.pointer(1), p.pointer(), f.pointer(1), "mode")
+            };
+            if phase == 0 {
+                drift();
+            }
+            let result = dispatch_mode_change(
+                &profile,
+                ModeProfile {
+                    mode: 4,
+                    child_count: 23,
+                },
+                &mut check,
+                || {
+                    writes.set(writes.get() + 1);
+                    f.objects[1].count.set(23);
+                    if phase == 1 {
+                        drift();
+                    }
+                },
+            );
+            if phase == 2 {
+                result.unwrap();
+                drift();
+                assert!(check().is_err());
+            } else {
+                assert!(result.is_err());
+            }
+            assert_eq!(writes.get(), usize::from(phase != 0));
+            drop(owner);
+            drop(binding);
+            drop(observation);
+        }
     }
 }
 
