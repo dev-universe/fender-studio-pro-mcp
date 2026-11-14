@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Do not repeat accepted Native54 Compressor/Native53 Limiter effects or completed scalar/swap/preset/scheduled-note work. Fixed13/43complete30remain, software26/hardware4; names6866/7112 andpresets39/46/76unchanged. Current readonlytracks: Main ExtensionManager next3methods with stock persistentcheckpoint profile in progress (prior6functionephemeralrecord cannotwarmquerynewmethods), and Multi/SampleOne preset admission review to choose next executable softwarecase. Eventnotification11d10 selector5/6 branch isviewrefresh; canonicalguiInput-role0 andmusicalheld/releaseack unresolved, no eventwriteradmitted. MusicEffects actual5,688,274byteProgram checkpoint saved underprivate notification-boundary-r1/program-checkpoints, use stock profile/sameREAconfig nexttime and verifyactualrestoredstatus. SameIDuserextensionpriority unproved; do notstage; officialsameversionartifactpath gate remains, no permission/signature/license/originalapp changes. Preserveother8queueitems.",
+    "Do not repeat accepted Native54 Compressor/Native53 Limiter effects, completed scalar/swap/preset/scheduled-note units, or the nowclosed sameIDuseroverlay investigation. Fixed13/43complete30remain/software26/hardware4, names6866/7112 andpresets39/46/76 unchanged. Model normal sameIDuseroverlay isNO: matchedofficialCCL5.1.2 andactual8.1.1 protectProgram1existingentry againstUser0/Shared2regardlesshighercandidateversion; no staging/version/ID/ShortID changes. Main stock149945640byteProgram actuallyrestoredwithoutautoanalysis; preserveprivatecheckpoint for unrelatedfuturequeries. Officialsameversionnormalartifactpath question stillpending; privateappmiccallbackblockunchanged. Next admittedwork isSampleOne18DAQ readiness prefix (next r61; underpreparation/review, actual0) tobind actualFSPVerifyInstSampleOne, Music/input/mute/disarm/monitor/audioassociation viaRootUIcheckpoint andfourpages235current; plugin/state/presetwrites0. Continue samefreshowner onlywithseparatelyreviewedfull singleton235settingcase aftermapping; candidatefilee100f431...hasmonophone0/emptyLayer1/noexternalrefs butissuedURLbinding/factoryorigin unproved, makeonlyissuedcaseclaim. Capture/restore remainsruntimetoprove. Keepother8queueitems.",
     "고정43개 중13개 완료/30개 잔여(부분25·미착수1·하드웨어4)다. 소프트웨어 잔여는26개이며 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -18630,8 +18630,93 @@
     "evidence": "docs/evidence/2026-11-15-model-and-event-prerequisites.json"
   },
   "active_readonly_tracks": {
-    "model_extension_priority_checkpoint": "Dedicated stock/checkpoint-capable Main import in progress; first startup once/max600seconds, taskmax12minutes; no stage or app changes. Actual Program not yet claimed saved.",
-    "remaining_preset_admission": "Read-only exact support/skip reason review for Multi then SampleOne to choose an admitted next software unit; no DAQ or implementation.",
-    "shared_event": "Notification branch proved view-only. Writer remains unready untilcanonical-role and musicalreceiver/releaseack; stock MusicEffects packedProgram actuallysaved, notyetrestore-tested."
+    "model_same_ID_overlay": "CLOSED_NO: exactpublicsource andactual8.1.1 matched Program1first andonlyexistingUser0/Shared2eligibleforhigherVersionreplacement. Do notstage/bumpversion/repeatthisoverlayinvestigation. MainProgramactualwarmrestoreverified. Officialsameversionartifactpath gate andprivateappstartupcallbackblock remain.",
+    "sampleone_singleton_recipe": "18DAQ readiness prefix preparation inprogress, nextnamespace r61. Target actual historical FSP Verify Inst SampleOne; instrumentOf requiresselectionandcanautoarm/monitor. RootUIcheckpointafterfreshhost/selection/nativebinding beforeanypluginwrite mustverifyinputNone/Musicmute1/disarm/monitor0 andactualassociatedaudiooutput. Prefixcapture/preset/pluginwrites0; fullcasecontinuationpendingactualmapping.",
+    "shared_event": "Deferred untilcanonicalguiInput-role0 andmusicalreceiver/releaseack. Viewnotificationpath closedview-only. MusicEffectsProgramcheckpointactuallysaved; do not replaycompletedscalar/schedulednoteunits."
+  },
+  "model_policy_and_sampleone_readiness": {
+    "schema": 1,
+    "status": "READ_ONLY_MODEL_ROUTE_CLOSED_NO_OVERLAY_SAMPLEONE_PREPARATION_PENDING",
+    "DAQ": 0,
+    "product_unchanged": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+    "native_unit_unchanged": 54,
+    "Main_Program": {
+      "bytes": 149945640,
+      "SHA256": "4b7dd0dbfbffa4021ede5200c0c8c6ba338b588a48380f3a1044fba4107143bb",
+      "stock_initial_query_seconds": 534.263,
+      "initial_engine_cleanup_seconds": 724.396,
+      "initial_report_freeze_seconds": 833.462,
+      "actual_later_process_restored": true,
+      "auto_analysis_rerun_after_restore": false,
+      "warm_lookup_unit_seconds": 232.367,
+      "root_policy_report_seconds": 234.791,
+      "normal_close_reset_REA_exit0": true
+    },
+    "official_source_match": {
+      "elapsed_seconds": 148.853,
+      "repository": "https://github.com/cclsoftware/ccl-framework",
+      "commit": "ad5876b1a7b64aa247f4378c86a7862e7c284ba3",
+      "matched_actual_8_1_1_bodies_only": true,
+      "program_type": 1,
+      "user_type": 0,
+      "shared_type": 2,
+      "program_scanned_before_user_and_shared": true,
+      "only_existing_user_or_shared_can_be_replaced_by_higher_version": true,
+      "existing_program_entry_replaced_by_same_ID_user_candidate": false,
+      "increasing_candidate_version_helps_normal_overlay": false,
+      "same_ID_user_overlay_experiment_ready": false,
+      "decision": "NO_STAGING_NO_VERSION_CHANGE_NO_REPEAT_OF_THIS_OVERLAY_INVESTIGATION",
+      "new_ID_or_ShortID_change_supported": false,
+      "original_app_and_profile_changed": false,
+      "missing_model_signature_issue_remains": true
+    },
+    "SampleOne": {
+      "historical_provider_count": 235,
+      "all235_writable_metadata_complete": true,
+      "ordinary_scalar229_not_whole235": true,
+      "six_MIDI_facades_in_final_comparison_required": true,
+      "issued_catalog": "complete singleton index0 default/local_read_only; fresh binding still required",
+      "capture_restore_source_names_not_excluded": true,
+      "actual_class_capture_restore_verified": false,
+      "admission_elapsed_precisely_measured": false,
+      "selected_payload_inspection_seconds": 239.819,
+      "selected_payload_bytes": 2108,
+      "selected_payload_SHA256": "e100f4317b1ea4217cf99043f6bf716e88f127df827f78599efbdf0ac668af6a",
+      "selected_payload_component_class_and_name_match": true,
+      "selected_payload_monophone": 0,
+      "selected_payload_empty_Layer1": true,
+      "selected_payload_external_sample_or_resource_references": 0,
+      "issued_IUrl_to_selected_file_identity_verified": false,
+      "factory_origin_verified": false,
+      "MIDI_no_side_effect_claimed": false,
+      "next": "Prepare18DAQ readiness prefix with actual Music selection/input/mute/arm/monitor and associated audio output RootUIcheckpoint; no plugin/preset/capsule writes. Reviewed continuation after actual mapping."
+    },
+    "report_pins": {
+      "priority_checkpoint": "741e12b307f2ea537314b5a52804a5cb9f4c8ec5db374f6492c25486806ba02d",
+      "warm_lookup": "6ca87c7906a08bcae86c2f3cfbe3e1e5f040fadbf663df1233cf1ff6768362fb",
+      "root_policy": "d0883556bb463aebb7f5cf48206c279523e5656179b7cf3edd0bba20efdfdd11",
+      "official_source_match": "a0fdccef0753e01cbed257694eaaa7c36c80c4e8fd32d4390833e133b549ee5c",
+      "sampleone_admission": "1380a2599ca1683d9c476ac632a75ac10bec98fc945e432d69f38d679958184d",
+      "sampleone_payload": "c388aad5358fd23a2c491820de3cdd4716c8e65e6ea6390f92ee51690d94e16e"
+    },
+    "claims_not_made": [
+      "complete_model_control",
+      "model_module_load_fixed",
+      "new_musical_event_writer",
+      "SampleOne_preset_case_accepted",
+      "factory_preset_origin"
+    ],
+    "accounting": {
+      "fixed_complete": 13,
+      "fixed_total": 43,
+      "remaining": 30,
+      "software_remaining": 26,
+      "hardware_blocked": 4,
+      "preset_classes": 39,
+      "preset_classes_total": 46,
+      "preset_cases": 76,
+      "new_completions_from_these_readonly_units": 0
+    },
+    "evidence": "docs/evidence/2026-11-15-model-policy-and-sampleone-readiness.json"
   }
 }
