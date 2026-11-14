@@ -1,11 +1,11 @@
 {
   "schema": 1,
-  "as_of": "2026-11-14",
+  "as_of": "2026-11-15",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 31,
-  "completed_in_this_remaining_snapshot": 12,
-  "partial": 26,
+  "remaining_backlog_count": 30,
+  "completed_in_this_remaining_snapshot": 13,
+  "partial": 25,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -23,7 +23,7 @@
     "remaining_preset_classes": 7,
     "additional_partial_setting_cases": 0
   },
-  "runtime_note": "Native48 ChorderMinor index1:153DAQ510.260s, exactMinor model128positive plusautofill1to0; oneAload all908current/metadata and128models original exact; independent581byteA/B,allreleases/finalrefusalLAST/NoSave/appfalse/owner0/locks/saved10/MIDI0. DistinctMajor/Minor complete PRESET-CHORDER2of2 scopedsettings;labelrestorationfalse/audio/Save excluded.",
+  "runtime_note": "Native54 Compressor reset:59DAQ314.509s freshowner-to-closure, stable-34.54dBpair->onepulse->initial0.00dBpair, fullpaged154metadata/20writable/3staticreadonly/Tone10 exact; actualGUI/NoSave/owner0/locks/saved10/MIDI0. Qualifiedpositive58, lastouterunknown1nonadmitted; whole59claimedpassfalse. Existing CONTROL-COMPRESSOR complete only.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -279,12 +279,14 @@
       "id": "CONTROL-COMPRESSOR",
       "group": "프리셋 외 플러그인 기능",
       "title": "Compressor",
-      "status": "partial",
+      "status": "completed",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "일반 설정/프리셋·swapfreqs action 완료",
+      "actually_verified": "Native54 one reset pulse changes stable minimum-34.54dB pair to exactinitial0.00dBpair; full154metadata/20writable/3staticreadonly/Tone10 exact, actualGUI and RootNoSave/appfalse/owner0/locks/saved10/MIDI0. Positive58 of59; lastouterunknown1nonadmitted. Existing scalar/swapfreqs/presets reused.",
       "completion_predicate": "남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 2
+      "inventory_remaining_names": 2,
+      "remaining_after_verified_actions": "Existing fixed control effect and lifecycle predicate complete; do not repeat accepted reset effect or earlier scalar/swap/presets. General modes/audio/Save/hardware/wholeplugin separate.",
+      "evidence": "docs/evidence/2026-11-15-compressor-minimum-reset-qualified-native54.json"
     },
     {
       "id": "CONTROL-EXTERNAL-MONO",

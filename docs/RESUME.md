@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 최신 실제 완료는 Native54 Compressor의 최소 게인 감소 초기화 효과·수명 검증이다. 새 owner 준비부터 종료까지314.509초·59요청 중 긍정58개를 수용했다. -34.54dB 유지값의 독립쌍이 한 초기화 뒤 최초0.00dB 독립쌍으로 복귀했고, 전체154 metadata·쓰기20·정적표시3·Tone10과 실제 최종154값도 정확히 원복됐다. GUI·NoSave/appfalse/owner0/잠금/저장10/MIDI0을 확인했다. 마지막 outerunknown1은 미수용·whole59passfalse로 유지하며 앞선 metadata-only실패0DAQ도 보존한다. 현재 고정13/43완료30잔여(소프트웨어26·하드웨어4)다. 다음은 제한된 모델 ExtensionManager Ghidra 조사와 공유 입력 수명 근거이며, 아래 Native54 설치·59요청 준비 문장은 이력이다. 완료 Compressor/Limiter 및 과거 sweep은 반복하지 않는다.
+
 - 최신 설치는 a991fd3/Native54·UUID24EFBBEF-A611-3684-BFCD-8945F5E44FB2다. 기존 초기화 명령에 Compressor의 정확한 클래스·studiocomp.resetmin·태그88만 확장했다. Rust176/Node377/native395와 독립 검토·기존32결과 바이트 대조, 정상 빌드·강제 옵션 없는 설치·177소스/13설치파일·doctor를 확인했다. 실제 효과는 아직 미검증이며 r60의 전체 페이지59요청 절차 준비 중·실제0이다. 최신 실기 완료는 아래 Limiter의 제한된 효과 수용이고 고정12/43완료31잔여·하드웨어4를 유지한다.
 
 - 최신은 Native53 Limiter 효과·완료·환경 보존의 별도 수용이다. R4 48요청·465.609초 중 긍정47개를 수용했고 마지막 outerunknown1은 미수용·원래48프로토콜 실패로 유지한다. 단일초기화 -35.55→0.00dB·독립쌍·Tone10/Limiter13 정확원복·GUI·NoSave/owner0/저장10/MIDI0을 확인했다. 고정12/43완료31잔여·하드웨어4, 이름/프리셋집계 그대로다. 다음은 Compressor 태그88 resetmin의 같은 명령 확장과 전체페이지 효과 검증이며 완료Limiter는 반복하지 않는다. 아래 실패·준비 문장은 이력이며 최신 JSON순서를 따른다.

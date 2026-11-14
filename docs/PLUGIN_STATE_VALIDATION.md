@@ -991,3 +991,12 @@ Native53의 `reset_minimum_reduction`은 정확한 Limiter 클래스와 `resetmi
 [별도 실제 효과 수용 근거](evidence/2026-11-15-limiter-minimum-reset-qualified-native53.json)는 R4의48요청·465.609초 중 긍정47개를 다룬다. 한 번의 Tone 켜기와 끄기 뒤 유지된 최소값 -35.55dB를 독립적으로 두 번 읽었다. 초기화 한 번 뒤 두 관측이 최초0.00dB와 정확히 같았다. 현재 미터는 자신의 새 무입력 참조로 돌아왔고 Tone10개와 Limiter13개의 전체 값·메타데이터가 정확히 복원됐다. 실제 편집기 표시, 소유 Scratch의 저장 없는 종료, 앱·owner 종료, 두 잠금 해제, 저장본10개와 MIDI0 보존을 확인했다.
 
 마지막 가짜 UID 요청의 외부 결과는 `outcome_unknown`이며 미수용이다. 내부 `not_applied` 본문만으로 외부 결과를 성공이나 확정 거부로 바꾸지 않았다. 원래48요청 전체 절차의 실패와 앞선 세 실패도 보존한다. 기존 `CONTROL-LIMITER` 효과·완료·환경 보존 조건만 완료로 반영해 고정12/43개 완료·31개 잔여다. 프리셋 표시 이름, 오디오·저장·하드웨어와 전체 플러그인 지원은 이 근거의 범위에 포함하지 않는다.
+
+
+### Compressor minimum reduction reset
+
+Native54는 기존 `reset_minimum_reduction`에 정확한 Compressor 클래스와 `studiocomp.resetmin`·Toggle 태그88만 허용한다. [실제 효과 수용 근거](evidence/2026-11-15-compressor-minimum-reset-qualified-native54.json)는59요청 중 긍정58개를 다룬다. 한 번의 Tone 켜기·끄기 뒤 유지된 -34.54dB 독립쌍이 초기화 한 번 뒤 최초0.00dB 독립쌍으로 돌아왔다. 현재 미터도 자신의 최초 참조와 같았다. 명령 응답의 검증 표시는 false를 유지한다.
+
+전체154개를 세 페이지씩 읽은 최초·최종 독립쌍에서 메타데이터·unknown 필드, 쓰기20개와 정적 표시3개가 정확히 복원됐다. 이번 최종 두 묶음에서는 동적 표시131개까지 모두 최초값과 같았다. Tone10개와 실제 GUI·소유 Scratch의 저장 없는 종료·앱/owner/잠금·저장10개/MIDI0도 확인했다. 마지막 외부 outcome_unknown1은 미수용이고 whole59pass는 false다. 이전 메타데이터 전용 준비 실패0DAQ도 보존한다.
+
+기존 CONTROL-COMPRESSOR 효과·수명 조건을 완료해 고정13/43개 완료·30개 잔여다. 완료한 일반 설정·프리셋·swapfreqs 증거를 재사용하며 반복하지 않는다. preset 표시 이름 원복은 false이고 다른 detector 모드·오디오·저장·하드웨어·전체 플러그인 지원은 별도다.

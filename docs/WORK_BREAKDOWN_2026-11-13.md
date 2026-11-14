@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중12개를 완료했고31개가 남았다: 프리셋7 + 프리셋 외 플러그인 기능18 + 공통6.** 남은 상태는부분26개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중13개를 완료했고30개가 남았다: 프리셋7 + 프리셋 외 플러그인 기능17 + 공통6.** 남은 상태는부분25개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -10,7 +10,7 @@
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 설정 종 |39/46|7종|완료 종76사례와 별도 부분0사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중12개 완료|31개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 고정한 완료물 목록 |43개 중13개 완료|30개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -51,7 +51,7 @@
 |CONTROL-AMPIRE|Ampire|부분 완료|일반39개·catalog/owner 읽기|alias·micmix/linked·bypass/tuner·stomp 순서의 남은19역할을 올바른 대상에 변경·읽기·복원하고 연동 peer/구조를 보존한다.|
 |CONTROL-CV|CV Instrument|하드웨어 대기|provider/선택 범위와 역할97개 분류|config86·generator4·MIDI3의 유한 변경/복원, 포트 격리와 calibration2/monitor2의 실제 효과·중지·복원을 구분해 입증한다.|
 |CONTROL-CHORDER|Chorder|부분 완료|input60 출력128 모델·selector·고정Song저장 완료; guiInput1~128의128개 현재값/정확128이름 모두 수용. scalar128 한사례277.847초·131요청·변경2회·전체908/저장모델128 각6묶음/48페이지·자기playingLive/outputPlayingLive만1·다른905/unknown/공통 원본 보존. model_input/expected_outputs None·128모델입력 미연결·전체모델열거·capture/전체 정확복원·Root NoSave정리·저장6해시동일·MIDI0/0 완료. 남은이름action5개. 이벤트·다른입력모델접근·clipboard·미리듣기와 일반MIDI/모델대응·noteoff·audio·지속저장은별도|guiInput128개와 clear/clearAll/copy/paste/playLearnChord5개 역할을 수명에 맞게 처리한다. 고정 현재값 복원과 실제 note 수명을 구분하고, 다른 입력 모델 접근·clipboard/미리듣기 결과를 독립 확인한다.|
-|CONTROL-COMPRESSOR|Compressor|부분 완료|일반 설정/프리셋·swapfreqs action 완료|남은 resetmin의 실제 최소값 초기화 효과와 정상 lifecycle을 확인한다. 완료 swapfreqs는 재실행하지 않는다.|
+|CONTROL-COMPRESSOR|Compressor|완료|Native54의 -34.54dB 유지값 두 관측→단일 초기화→최초0.00dB 두 관측, 전체154 metadata·쓰기20·정적표시3·Tone10 정확원복·GUI·Root 정리. 기존 scalar/프리셋/swapfreqs 재사용.|완료: 기존 효과·수명 조건의 긍정58요청 수용, 마지막 outerunknown1미수용·whole59passfalse. preset 표시이름/audio/Save/전체plugin은 별도이며 완료 실기를 반복하지 않는다.|
 |CONTROL-EXTERNAL-MONO|External Effect Mono|하드웨어 대기|현재값·mode·opaque 메뉴 읽기 완료|Send/Return 선택의 공개 global filter·포트 매핑·None 원복, 파생 latency/단위표시를 구분하고 Volt loopback에서 ping/왕복지연/오디오를 검증한다.|
 |CONTROL-EXTERNAL-STEREO|External Effect Stereo|하드웨어 대기|현재값·mode·메뉴·held-target provenance·checkOnly26 완료|두 포트의 실제 선택·None 원복과 global filter 경계를 검증하고, 파생 latency/단위표시·물리 stereo loopback/ping을 확인한다. checkOnly를 선택 성공으로 세지 않는다.|
 |CONTROL-INPUTFILTER|Input Filter|부분 완료|일반 필터 설정·provider/catalog; keyboard.pitch1~128.guiInput128개 현재값/128이름 모두 수용·전체388복원과Root정리 완료. 122~128의7사례406.206초·579요청·변경14회·42전체/294페이지·사전Mojito7관계확인·다른385/비값/unknown/공통 원본 보존. 전체 복원·Root NoSave정리·저장6해시동일·MIDI0/0 완료. 앞선114~121 R1은요청0·변경0·수용0 실패로보존. 남은이름0개이나 일반MIDI/음정대응·이벤트수명·noteoff·audio·지속저장은별도|keyboard.pitch1..128.guiInput을 현재값·pitch 대응·press/release 결과로 분리해 확인하고 원본 상태와 종료를 복원한다.|
