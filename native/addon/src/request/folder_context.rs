@@ -395,6 +395,7 @@ pub(super) mod tests {
         Parent(*mut Mock),
         Child(*mut Mock),
         Terminate(*mut Service),
+        Attach(*mut Mock, *mut c_void),
     }
     #[repr(C)]
     struct Mock {
@@ -427,6 +428,7 @@ pub(super) mod tests {
                         Hook::Parent(p) => (*p).parent.set(ptr::null_mut()),
                         Hook::Child(p) => (*p).child.set(ptr::null_mut()),
                         Hook::Terminate(p) => (*p).terminated.store(true, Ordering::Release),
+                        Hook::Attach(p, slot) => (*p).child.set(slot),
                     }
                 }
             }
@@ -504,6 +506,9 @@ pub(super) mod tests {
     unsafe extern "C" fn child(p: *mut c_void, key: *const PlainString) -> *mut c_void {
         let m = unsafe { mock(p) };
         event(m, "child");
+        if m.label == "graph-junction" {
+            SLOT_READS.with(|reads| reads.set(reads.get() + 1));
+        }
         let key = if key.is_null() {
             ptr::null_mut()
         } else {
@@ -557,11 +562,35 @@ pub(super) mod tests {
         assert!(!names.is_null());
         let names = unsafe { &*names };
         match unsafe { std::ffi::CStr::from_ptr(key) }.to_bytes() {
-            b"Inserts" => &names.inserts,
+            b"Inserts" | b"Slot" => &names.inserts,
             b"ActiveDocument" => &names.active,
             b"Environment" => &names.environment,
             _ => ptr::null(),
         }
+    }
+    thread_local! {
+        static SLOT_READS: Cell<u32> = const { Cell::new(0) };
+        static PROVIDER_CLEANUP: Cell<Option<(*mut c_void, u32)>> = const { Cell::new(None) };
+    }
+    pub(in super::super) fn provider_cleanup_hook() {
+        PROVIDER_CLEANUP.with(|hook| {
+            if let Some((owner, threshold)) = hook.get() {
+                if SLOT_READS.with(Cell::get) >= threshold {
+                    hook.set(None);
+                    drop(query(owner, &UNKNOWN).unwrap());
+                }
+            }
+        });
+    }
+    unsafe extern "C" fn graph_text(key: *const c_char) -> *const c_void {
+        unsafe { text(key) }.cast()
+    }
+    unsafe extern "C" fn one(_: *mut c_void) -> i32 {
+        1
+    }
+    unsafe extern "C" fn graph_child(p: *mut c_void, index: i32) -> *mut c_void {
+        assert_eq!(index, 0);
+        unsafe { mock(p) }.child.get()
     }
     pub(in super::super) struct Fixture {
         _service: guard_tests::Fixture,
@@ -770,6 +799,69 @@ pub(super) mod tests {
         pub(in super::super) fn api(&self) -> &'static Api {
             api().unwrap()
         }
+        pub(in super::super) fn graph_context(&self) -> Box<Context<'static>> {
+            let target = unsafe { mock(self.old_device) };
+            Box::new(Context {
+                service: self.service,
+                target: hold(self.old_device).unwrap(),
+                node: hold(self.old_device).unwrap(),
+                instance: Instance {
+                    object_uid: uid(target.object_uid.as_ptr()),
+                    class_uid: uid(target.class_uid.as_ptr()),
+                    native_class: "AudioEffect".into(),
+                    object_id: "Device".into(),
+                },
+                document: self.document(),
+                started: Instant::now(),
+                api: self.api(),
+            })
+        }
+        pub(in super::super) fn focused_graph(
+            &mut self,
+        ) -> (fender_native_node_api::Inspection, *mut c_void) {
+            let root = self.node("graph", "Graph", "AudioFXGraph");
+            let junction = self.node("graph-junction", "splitter", "AudioFXGraph::SplitterNode");
+            unsafe { mock(root) }.child.set(junction);
+            let table = self
+                .objects
+                .iter()
+                .position(|m| ptr::eq(&**m as *const Mock as *const c_void, root))
+                .unwrap();
+            self.tables[table][8] = one as *const c_void;
+            self.tables[table][9] = graph_child as *const c_void;
+            let owner = hold(root).unwrap();
+            let pointer = NonNull::new(owner.0).unwrap();
+            std::mem::forget(owner);
+            let inspector = unsafe {
+                fender_native_node_api::NodeInspector::from_owned(
+                    pointer,
+                    fender_native_node_api::TextApi {
+                        get_constant_string: graph_text,
+                    },
+                )
+            };
+            let focused = inspector
+                .inspect_children_with_slots(&mut || Ok(()))
+                .unwrap();
+            drop(inspector);
+            (focused, junction)
+        }
+        pub(in super::super) fn reset_slot_reads(&self) {
+            SLOT_READS.with(|reads| reads.set(0));
+        }
+        pub(in super::super) fn slot_reads(&self) -> u32 {
+            SLOT_READS.with(Cell::get)
+        }
+        pub(in super::super) fn cleanup_adds_slot_after(&self, junction: *mut c_void, reads: u32) {
+            unsafe { mock(self.other) }.hook.set(Some((
+                "release",
+                Hook::Attach(junction.cast(), self.old_device),
+            )));
+            PROVIDER_CLEANUP.with(|hook| hook.set(Some((self.other, reads))));
+        }
+        pub(in super::super) fn slot_absent(&self, junction: *mut c_void) -> bool {
+            unsafe { mock(junction) }.child.get().is_null()
+        }
         pub(in super::super) fn switch_document(&self) {
             unsafe { mock(self.manager) }.active.set(ptr::null_mut())
         }
@@ -788,6 +880,7 @@ pub(super) mod tests {
     impl Drop for Fixture {
         fn drop(&mut self) {
             LOOKUP.store(ptr::null_mut(), Ordering::Release);
+            PROVIDER_CLEANUP.with(|hook| hook.set(None));
             self.balanced();
         }
     }

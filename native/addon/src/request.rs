@@ -1095,6 +1095,8 @@ impl Provider {
         }
     }
     fn check(&self) -> Result<(), String> {
+        #[cfg(test)]
+        folder_context::tests::provider_cleanup_hook();
         match self {
             Self::Dsp(provider) => provider.direct.as_ref().map_or(Ok(()), |c| c.check()),
             Self::DspValue(controller) | Self::Controller(controller) => controller.check(),
@@ -1740,10 +1742,13 @@ impl Reply {
                 })
                 .and_then(|_| {
                     self.nodes.as_ref().map_or(Ok(()), |nodes| {
-                        nodes.check(&mut || {
-                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
-                            ctx.check()
-                        })
+                        nodes.check(
+                            &mut || {
+                                self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                                ctx.check()
+                            },
+                            &mut || ctx.check(),
+                        )
                     })
                 }),
             None => {

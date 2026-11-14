@@ -595,10 +595,11 @@ impl Inventory {
     pub(super) fn requires_report_invalidation(&self) -> bool {
         matches!(self, Self::Graph { .. } | Self::PluginController(_))
     }
-    pub(super) fn check<G: FnMut() -> Result<(), String>>(
-        &self,
-        guard: &mut G,
-    ) -> Result<(), String> {
+    pub(super) fn check<G, B>(&self, guard: &mut G, borrowed_guard: &mut B) -> Result<(), String>
+    where
+        G: FnMut() -> Result<(), String>,
+        B: FnMut() -> Result<(), String>,
+    {
         match self {
             Self::PluginController(inventory) => inventory.check(guard),
             Self::Target(inspection) => {
@@ -618,8 +619,10 @@ impl Inventory {
                 inspection
                     .check(&mut checked)
                     .map_err(|error| error.to_string())?;
-                ownership.check(&mut checked)?;
-                checked()
+                ownership.check(&mut checked, &mut || {
+                    route.check()?;
+                    borrowed_guard()
+                })
             }
         }
     }
@@ -691,7 +694,7 @@ pub(super) fn capture(ctx: &Context<'static>, scope: Scope) -> Result<Inventory,
         }
         None => Inventory::Target(inspection),
     };
-    inventory.check(&mut || ctx.check())?;
+    inventory.check(&mut || ctx.check(), &mut || ctx.check())?;
     Ok(inventory)
 }
 

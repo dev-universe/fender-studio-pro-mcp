@@ -206,16 +206,23 @@ impl GraphOwnership {
             folder,
             value,
         };
-        ownership.check(&mut || {
-            route.check()?;
-            ctx.check()
-        })?;
+        ownership.check(
+            &mut || {
+                route.check()?;
+                ctx.check()
+            },
+            &mut || {
+                route.check()?;
+                ctx.check()
+            },
+        )?;
         Ok(ownership)
     }
-    pub(super) fn check<G: FnMut() -> Result<(), String>>(
-        &self,
-        guard: &mut G,
-    ) -> Result<(), String> {
+    pub(super) fn check<G, B>(&self, guard: &mut G, borrowed_guard: &mut B) -> Result<(), String>
+    where
+        G: FnMut() -> Result<(), String>,
+        B: FnMut() -> Result<(), String>,
+    {
         self.folder.check()?;
         self.focused
             .check(&mut || {
@@ -227,11 +234,11 @@ impl GraphOwnership {
         self.focused
             .check_borrowed_attachments(&mut || {
                 self.folder.check_borrowed_attachments()?;
-                guard()
+                borrowed_guard()
             })
             .map_err(|error| error.to_string())?;
         self.folder.check_borrowed_attachments()?;
-        guard()
+        borrowed_guard()
     }
     pub(super) fn value(&self) -> Value {
         self.value.value()
@@ -428,7 +435,7 @@ mod tests {
         };
         ownership.folder.check().unwrap();
         folder_fixture.switch_document();
-        assert!(ownership.check(&mut || Ok(())).is_err());
+        assert!(ownership.check(&mut || Ok(()), &mut || Ok(())).is_err());
         let inventory = Inventory::Graph {
             inspection: node_fixture.ancestors(),
             route,
@@ -443,5 +450,87 @@ mod tests {
         assert!(reply.value.get("node_report").is_none());
         drop(reply);
         node_fixture.released();
+    }
+    #[test]
+    fn reply_graph_final_witness_has_no_late_provider_owner_cleanup() {
+        let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut fixture = folder_context::tests::Fixture::new();
+        let folder = fixture.capture().unwrap();
+        let (focused, junction) = fixture.focused_graph();
+        let value = GraphOwnershipValue::read(focused.report(), folder.identity().clone()).unwrap();
+        let mut route_fixture = super::super::tests::Fixture::new();
+        let inventory = Inventory::Graph {
+            inspection: route_fixture.ancestors(),
+            route: route_fixture.route(&mut || Ok(())).unwrap(),
+            ownership: GraphOwnership {
+                focused,
+                folder,
+                value,
+            },
+        };
+        let context = fixture.graph_context();
+        let mut reply =
+            Reply::unbound(json!({"ok":true,"outcome":"observed","node_report":inventory.value()}));
+        reply.provider = Some(Provider::Controller(Controller {
+            handle: hold(context.target.0).unwrap(),
+            lease: None,
+        }));
+        reply.context = Some(context);
+        reply.nodes = Some(inventory);
+        fixture.reset_slot_reads();
+        assert!(reply.final_check(fixture.service()));
+        let final_slot_read = fixture.slot_reads();
+        assert!(final_slot_read > 0);
+        fixture.reset_slot_reads();
+        fixture.cleanup_adds_slot_after(junction, final_slot_read);
+        assert!(reply.final_check(fixture.service()));
+        assert!(
+            fixture.slot_absent(junction),
+            "provider cleanup mutated Slot after its final witness"
+        );
+        assert_eq!(
+            reply.value["node_report"]["ownership_manifest"]["complete"],
+            true
+        );
+        reply.context.as_ref().unwrap().check().unwrap();
+        drop(reply);
+        route_fixture.released();
+    }
+    #[test]
+    fn reply_graph_rejects_provider_cleanup_slot_change_before_final_witness() {
+        let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut fixture = folder_context::tests::Fixture::new();
+        let folder = fixture.capture().unwrap();
+        let (focused, junction) = fixture.focused_graph();
+        let value = GraphOwnershipValue::read(focused.report(), folder.identity().clone()).unwrap();
+        let mut route_fixture = super::super::tests::Fixture::new();
+        let inventory = Inventory::Graph {
+            inspection: route_fixture.ancestors(),
+            route: route_fixture.route(&mut || Ok(())).unwrap(),
+            ownership: GraphOwnership {
+                focused,
+                folder,
+                value,
+            },
+        };
+        let context = fixture.graph_context();
+        let mut reply =
+            Reply::unbound(json!({"ok":true,"outcome":"observed","node_report":inventory.value()}));
+        reply.provider = Some(Provider::Controller(Controller {
+            handle: hold(context.target.0).unwrap(),
+            lease: None,
+        }));
+        reply.context = Some(context);
+        reply.nodes = Some(inventory);
+        fixture.reset_slot_reads();
+        fixture.cleanup_adds_slot_after(junction, 1);
+        assert!(!reply.final_check(fixture.service()));
+        assert!(!fixture.slot_absent(junction));
+        assert_eq!(reply.value["ok"], false);
+        assert_eq!(reply.value["outcome"], "not_applied");
+        assert!(reply.value.get("node_report").is_none());
+        reply.context.as_ref().unwrap().check().unwrap();
+        drop(reply);
+        route_fixture.released();
     }
 }
