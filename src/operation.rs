@@ -685,6 +685,7 @@ pub struct PluginState {
 #[serde(rename_all = "snake_case")]
 pub enum PluginStateAction {
     ReadRumbleState,
+    ReadRumbleParameters,
     InspectRumbleSerialization,
     Capture,
     Restore,
@@ -1234,6 +1235,7 @@ impl Operation {
                     p.action,
                     PluginStateAction::InspectRumbleSerialization
                         | PluginStateAction::ReadRumbleState
+                        | PluginStateAction::ReadRumbleParameters
                 )
             }
             Self::Command(command) => command.check_only == Some(true),
@@ -1257,7 +1259,8 @@ impl Operation {
             _ => false,
         };
         level
-            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState))
+            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
+                        | PluginStateAction::ReadRumbleParameters))
             || matches!(
                 self,
                 Self::ChorderLearningGet(_)
@@ -1549,7 +1552,15 @@ impl Operation {
                 match p.action {
                     PluginStateAction::InspectRumbleSerialization
                     | PluginStateAction::ReadRumbleState
-                        if p.token.is_none() && p.plugin == "Rumble Native" => {}
+                    | PluginStateAction::ReadRumbleParameters
+                        if p.token.is_none() && p.plugin == "Rumble Native" =>
+                    {
+                        if matches!(p.action, PluginStateAction::ReadRumbleParameters)
+                            && !matches!(p.kind, None | Some(PluginKind::Effect))
+                        {
+                            return Err(invalid("Rumble parameters require an effect target"));
+                        }
+                    }
                     PluginStateAction::Capture if p.token.is_none() => {}
                     PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
                     _ => {
