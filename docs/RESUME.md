@@ -19,6 +19,9 @@
 
 ## 현재 상태 요약
 
+- 최신 완료는 Native52 child-relative 이름 조회다.202.062초·23요청으로 현재22개 이름 모두 parameter_absent였고 전후26모델·22숫자·DSP39·문맥·마지막 거부·NoSave/appfalse/owner0/잠금/저장10개/MIDI0을 확인했다. 모델 wire와 실제 보관 모델의 직접 비교 누락은 독립 재현 후 수정했다. 현재 제품4a6e115·Native52·46도구/7동작이다. 다음은 같은 설치를 재사용하는33요청의 별도 mute1→0→1 availability 실험이다. 재생·scalar·모델·preset·Save는 하지 않는다. 고정11/43완료32잔여이며 아래Native51문장은 이력이다.
+
+
 - 최신 완료는 Native51의 실제26개 IController 목록 관측이다.217.506초·23요청으로 모두 present/count0을 두 번 확인했으며 숨겨진22개 설정의 이름 대응은0/22다. 전후26모델·22숫자·전체DSP39·최종 문맥·가짜UID거부·NoSave/appfalse/owner0/잠금/저장10개/MIDI0을 확인했다. 소스9eef6f0·Native51·46도구가 설치돼 있다. 쓰기나 전체 제어 완료가 아니므로11/43완료·32잔여다. 다음은 declared findParameter의 별도 이름 조회 경로를 제한 조사하며, 그 뒤 필요하면 별도 처리 활성화 가설을 검토한다. 아래 Native50 이전 문장은 이력이다.
 
 
