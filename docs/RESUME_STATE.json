@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native47 Level preset index2 Pop Rock accepted:51DAQ/361.431s, positive mode2, whole13 exact restore via one capsule load/no correction, fresh406-byte A/B equal, releases/refusal and Root NoSave/owner0/saved6/MIDI0. Distinct index1+2 complete PRESET-LEVEL.",
+  "last_completed_unit": "Native47 Tone index5 White Noise:40DAQ/457.773s, six positive changes, all10 exact restore via one Aload/no correction, fresh371byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Distinct indices3/5 complete PRESET-TONEGEN.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -62,20 +62,19 @@
       "Spectrum Meter",
       "Open AIR",
       "Room Reverb",
-      "Level Meter"
+      "Level Meter",
+      "Tone Generator"
     ],
-    "new_preset_recall_restore_cases": 66,
-    "remaining_preset_classes": 13,
+    "new_preset_recall_restore_cases": 67,
+    "remaining_preset_classes": 12,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
     "new_hybrid_preset_recall_restore_cases": 10,
-    "partial_preset_classes": {
-      "Tone Generator": 1
-    },
-    "new_preset_cases_in_completed_classes": 65,
-    "new_capsule_only_preset_classes_completed": 25,
-    "new_capsule_only_preset_recall_restore_cases": 50,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 67,
+    "new_capsule_only_preset_classes_completed": 26,
+    "new_capsule_only_preset_recall_restore_cases": 52,
     "new_hybrid_preset_classes_completed": 5,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
@@ -598,10 +597,9 @@
     "level_meter_reset_effects_independently_verified": 2
   },
   "next_units_in_order": [
-    "Tone Generator index3 Pink Noise 한사례를40요청·364.359초·6값변화/전체10정확복원/새371byte A-B/수명·Root정리로수용했다. 필요한서로다른2사례중1개이며다음은이미준비한issued index5 White Noise -24 dB를새문맥에서확인한다. 내부On활성가능성을선언했고Main/target fader0·mute1·inputNone/record-monitor0·stopped를유지한다. 한Aload/보정0/전체10원복/새A-B/NoSave를요구한다. 완료index3는반복하지않는다.",
-    "현재설치Native47/95eeb72·main/bridge570979c·MCP46을유지한다. Level등록6설정과두reset,Level프리셋index1/2모두완료했다. 반복하지않는다. 다음은기존Scope/Tone Generator catalog/provider와정확한후보payload를작게대조해남은측정도구프리셋한사례의유한계약을준비한다. Tone활성가능성은사전명시하고Main0/outputnull·mute1·inputNone·record/monitor0·stopped와전체원복을요구한다.",
-    "고정43개중5개완료/38개잔여(부분33·미착수1·하드웨어4)다. 모든미완료ID와각완료조건은WORK_BREAKDOWN_2026-11-13.md/json에보존한다. 프로그램역사전체분모나시간비율로쓰지않는다. 목표분모를조용히늘리지않는다.",
-    "현재프리셋설정33/46종·완료종65사례·13종잔여다. OpenAIR singleton1/1,Room2/2,Level2/2의명시적설정범위는PRESET_SETTING_ACCEPTANCE로수용했다. Room/OpenAIR의원래readonly/fullcurrent실패와Room/Level의preset표시이름복원false를보존한다. 전체plugin/audio/Save로확장하지않는다. 완료된Spectrum/Tuner/Room/Level/OpenAIR사례를반복하지않는다.",
+    "현재설치Native47/95eeb72·main/bridge570979c·MCP46을유지한다. Level등록6설정/프리셋2와Tone프리셋3/5는완료했다. 반복하지않는다. 다음Scope issued default singleton1/1은검증된일반showSecondary index13/tag1399355186의초기0→준비1→default0대비로한사례를검증한다. 초기P31/준비O31을구분하고준비O에서A캡처→한default적용→한Aload로O전체복원→새B=A/해제·거부뒤명시적초기0setter/전체31P복원쌍/NoSave를요구한다. 트리거두동작은건드리지않고최대46요청이다.",
+    "고정43개중6개완료/37개잔여(부분32·미착수1·하드웨어4)다. 모든미완료ID와각완료조건은WORK_BREAKDOWN_2026-11-13.md/json에보존한다. 프로그램역사전체분모나시간비율로쓰지않는다. 목표분모를조용히늘리지않는다.",
+    "현재프리셋설정34/46종·완료종67사례·12종잔여다. OpenAIR singleton1/1,Room2/2,Level2/2의명시적설정범위는PRESET_SETTING_ACCEPTANCE로수용했다. Room/OpenAIR의원래readonly/fullcurrent실패와Room/Level의preset표시이름복원false를보존한다. 전체plugin/audio/Save로확장하지않는다. 완료된Spectrum/Tuner/Room/Level/Tone/OpenAIR사례를반복하지않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
     "공유press/release/neutral·문맥소실·unknown보유계약과독립witness를준비한다. ChorderGUI directsetValue근거를begin/end나임의notify호출허가로바꾸지않는다. scheduled-note-to-Level은내부신호관측만입증하며GUI/물리키완료로세지않는다. 기존분석을넓게반복하지않는다.",
     "Ampire/Pedalboard alias/linkedmix/hostbypass와구조복원,Mustang/Rumble실제modeldomain,Chorder5동작·다른입력모델,instrumentMIDI/macros/다른padfocus와남은프리셋을각유한계약/실제관측으로진행한다. 새장애는기존완료물의하위수정으로구분한다.",
@@ -613,10 +611,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-14.md",
-  "last_measurement": "6866/7112 names,246 remaining;33/46 preset-setting classes,65 cases,13 remaining;fixed43 completed5/remaining38;Native47 accepted159DAQ (sixsettings57+twoPresets51each).",
+  "last_measurement": "6866/7112 names,246 remaining;34/46 preset-setting classes,67 cases,12 remaining;fixed43 completed6/remaining37;Native47 accepted239DAQ.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Native47 Tone index3 firstcase closed/admitted",
+    "unit": "Native47 Tone preset2of2 closed and admitted",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": false,
@@ -625,27 +623,27 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native47 Tone index3 Pink Noise:40DAQ/364.359s, six values changed, all10 exact restore via one capsule load/no corrections, fresh371-byte A/B equal and full Root closure. Partial1/2.",
+    "latest_closed_DAW_unit": "Native47 Tone index5 White Noise:40DAQ/457.773s, six positive changes, all10 exact restore via one Aload/no correction, fresh371byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Distinct indices3/5 complete PRESET-TONEGEN.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "397016a9-98a5-4293-8b25-79532ec9bc86",
+    "latest_closed_job_id": "73a91ff3-a10b-4f10-8e4e-30a81489c13a",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "397016a9-98a5-4293-8b25-79532ec9bc86",
+    "job_id": "73a91ff3-a10b-4f10-8e4e-30a81489c13a",
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 40,
-    "current_phase": "TONE_INDEX3_ACCEPTED_NEXT_DISTINCT_INDEX5",
+    "current_phase": "TONE_PRESET_COMPLETE_NEXT_SCOPE_SINGLETON",
     "maximum_tool_requests": 40,
-    "current_job_id": "397016a9-98a5-4293-8b25-79532ec9bc86",
+    "current_job_id": "73a91ff3-a10b-4f10-8e4e-30a81489c13a",
     "completed_subunits": [
-      "Level_preset_index1",
-      "Level_preset_index2"
+      "Tone_index3",
+      "Tone_index5"
     ],
     "subunits_total": 2,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 364.359
+    "current_elapsed_seconds": 457.773
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -706,8 +704,8 @@
   "last_runtime_verified_native_unit": 47,
   "last_runtime_verified_source_commit": "95eeb72",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native47 Level preset index2 Pop Rock accepted:51DAQ/361.431s, positive mode2, whole13 exact restore via one capsule load/no correction, fresh406-byte A/B equal, releases/refusal and Root NoSave/owner0/saved6/MIDI0. Distinct index1+2 complete PRESET-LEVEL.",
-  "last_completed_live_elapsed_seconds": 361.431,
+  "last_completed_live_unit": "Native47 Tone index5 White Noise:40DAQ/457.773s, six positive changes, all10 exact restore via one Aload/no correction, fresh371byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Distinct indices3/5 complete PRESET-TONEGEN.",
+  "last_completed_live_elapsed_seconds": 457.773,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -871,7 +869,6 @@
   },
   "remaining_preset_class_names": [
     "Scope",
-    "Tone Generator",
     "Ampire",
     "Pedalboard",
     "Rumble Native",
@@ -3620,14 +3617,14 @@
   "remaining_work_breakdown": {
     "document": "docs/WORK_BREAKDOWN_2026-11-13.md",
     "data": "docs/WORK_BREAKDOWN_2026-11-13.json",
-    "remaining_deliverables": 38,
-    "partial": 33,
+    "remaining_deliverables": 37,
+    "partial": 32,
     "unstarted": 1,
     "hardware_blocked": 4,
     "historical_total_unknown": true,
     "counts_are_not_equal_effort": true,
     "fixed_backlog_baseline": 43,
-    "completed_since_baseline": 5
+    "completed_since_baseline": 6
   },
   "chorder_current_value_r8_failed": {
     "status": "failed_cleaned_up",
@@ -15133,8 +15130,8 @@
     "post_owner_MIDI_destinations": 0
   },
   "native46_failed_unit_requests": 21,
-  "last_closed_live_unit": "Native47 Tone index3 Pink Noise:40DAQ/364.359s, six values changed, all10 exact restore via one capsule load/no corrections, fresh371-byte A/B equal and full Root closure. Partial1/2.",
-  "last_closed_live_elapsed_seconds": 364.359,
+  "last_closed_live_unit": "Native47 Tone index5 White Noise:40DAQ/457.773s, six positive changes, all10 exact restore via one Aload/no correction, fresh371byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Distinct indices3/5 complete PRESET-TONEGEN.",
+  "last_closed_live_elapsed_seconds": 457.773,
   "native46_mode_profiles_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_BOUNDED_GUI_MODE_PROFILE_OBSERVATION_ONLY",
@@ -15278,8 +15275,8 @@
     "response_journal_sha256": "1f21a22fbbafb99dd65265993a3a8c975ada865136d13b8617b17a637cb92722",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "native47_runtime_actual_total_requests": 199,
-  "native47_accepted_completed_unit_requests": 199,
+  "native47_runtime_actual_total_requests": 239,
+  "native47_accepted_completed_unit_requests": 239,
   "native_source_commit": "95eeb72",
   "previous_product_source_map_sha256": "0a9ed52ac536b1e6ac205c89036b5b9bca7272c3eb23f35a990b05c2698d2c6e",
   "next_collector_requires_fresh_full_source_and_runtime_binding": true,
@@ -15351,9 +15348,7 @@
   },
   "level_preset_current_distinct_setting_cases": 2,
   "level_preset_required_distinct_setting_cases": 2,
-  "current_partial_preset_setting_cases": {
-    "Tone Generator": 1
-  },
+  "current_partial_preset_setting_cases": {},
   "native47_level_preset_index2_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_LEVEL_INDEX2_AND_TWO_DISTINCT_SCOPED_SETTING_CASES_AFTER_CLOSURE",
@@ -15496,5 +15491,81 @@
     "request_journal_sha256": "0bbc4352725ae7fa4ca6c3270f2e6034106bb9f4f3c83e8f64f134e1463d6468",
     "response_journal_sha256": "52f0c9a693eb9a3811d7c4895a676c8e877cb672d2ea295b0f78c9f6665fbe87",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
+  },
+  "native47_tone_preset_index5_actual": {
+    "schema": 1,
+    "status": "ROOT_ACCEPTED_TONE_INDEX5_AND_TWO_DISTINCT_PRESET_SETTINGS_AFTER_CLOSURE",
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "job_id": "73a91ff3-a10b-4f10-8e4e-30a81489c13a",
+    "native_unit": 47,
+    "product_source_commit": "95eeb728289f712fd932817132427543c36e3530",
+    "actual_elapsed_seconds": 457.773,
+    "raw_DAW_requests": 40,
+    "metadata_requests": 2,
+    "paired_unique_DAW_receipts": 40,
+    "preset_index": 5,
+    "preset_name": "White Noise -24 dB",
+    "fresh_issued_catalog_count": 6,
+    "preset_apply_calls": 1,
+    "provider_records": 10,
+    "writable_records": 10,
+    "readonly_records": 0,
+    "positive_changed_names": [
+      "outmode",
+      "wave",
+      "freq",
+      "modtype",
+      "modlen",
+      "modtargetfreq"
+    ],
+    "postapply_outmode": 2,
+    "postapply_wave": 3,
+    "original_outmode_restored": 0,
+    "original_wave_restored": 0,
+    "complete_provider_reads": 14,
+    "stable_provider_pairs": 7,
+    "all10_typed_current_and_metadata_unknown_fields_restored_exact": true,
+    "fresh_captures": 2,
+    "distinct_A_B_tokens": true,
+    "fresh_A_B_byte_count": 371,
+    "fresh_A_B_sha256_equal": true,
+    "fresh_A_B_sha256": "76d1134d71132e9e4fe1b43f17872681f2d53a8e6973227f62447e933e9f494e",
+    "state_restore_calls": 1,
+    "correction_setters": 0,
+    "state_releases": 2,
+    "catalog_releases": 1,
+    "released_catalog_refused_not_applied": true,
+    "timed_expiry_tested": false,
+    "Main_target_fader_preparation_setters": 2,
+    "Main_target_faders_zero_and_mute1_preserved": true,
+    "inputNone_record_monitor0_transport_stopped": true,
+    "internal_signal_activation_declared_before_apply": true,
+    "preset_display_label_original_restored": false,
+    "preset_label_after_restore": "White Noise -24 dB*",
+    "GUI_changed_and_Off_original_restoration_observed": true,
+    "accepted_new_setting_cases": 1,
+    "class_required_distinct_cases": 2,
+    "class_complete": true,
+    "whole_plugin_complete": false,
+    "strict_fixed_name_increment": 0,
+    "transport_Save_direct_parameter_setters": 0,
+    "NoSave_observed": true,
+    "app_closed_observed": true,
+    "owner_exit_code": 0,
+    "owner_process_absent": true,
+    "saved6_unchanged": true,
+    "post_owner_MIDI_sources": 0,
+    "post_owner_MIDI_destinations": 0,
+    "actual_audio_physical_silence_hardware_persistence_verified": false,
+    "closed_at": "2026-11-14T03:21:16.208001+00:00",
+    "request_journal_sha256": "26f7d8faec1ddbebd248bf459750bfb8ab24e6a2b71215cd4dfa14977915dac5",
+    "response_journal_sha256": "b9b9d39ed9a801ac2fb37c229d0a82dfc1de95e9e9fb1a82381943a37007ea0d",
+    "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
+    "class_distinct_indices_accepted": [
+      3,
+      5
+    ],
+    "prior_index3_replayed": false,
+    "prior_index3_evidence_sha256": "78cbf8abae1e6922c51f8a807b51cb0823bbb7b0823fbe1141df8c7859e46d29"
   }
 }
