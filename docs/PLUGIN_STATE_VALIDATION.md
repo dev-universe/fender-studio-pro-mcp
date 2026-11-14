@@ -939,3 +939,6 @@ Repeater issued index1 Analog Machine passed a second distinct representative se
 
 
 Native48 actual graph-ownership R3 passed32DAQ/348.714s. Three independent complete direct-ownership manifests matched all6 ordered children and both freshly bound Mixtools. Their six whole72 provider pairs across baseline/after/final matched all current values and unknown metadata exactly. Legacy DFS completeness remainsfalse. Actual Routing upper/lower before/after, fabricated-instance refusal LAST, RootNoSave/owner0/bothlocksreleased/saved10/MIDI0 passed. Main0 isolation1 only; target/topology setters,preset,load0. [Public proof](evidence/2026-11-14-graph-ownership-native48-r3.json). This adds direct FXInserts ownership reading, not audio-edge enumeration, generic topology mutation, MultiInstrument graph or whole-plugin completion. FailedR1/R2 remain failed21requests; Native48raw53=accepted32+nonadmitted21. Fixed10/43complete33remaining, preset38/46classes74cases and names6866/7112 remain unchanged.
+
+
+Chorder Major R1은 한 preset apply와 한 Aload로 전체908개 current/metadata 및128개 저장 모델의 정확한 복원과 새581바이트 A/B 일치를 관측했다. 마지막 수명 호출의 도구 이름 준비 오류로 최종 검사를 마치지 못했으므로 설정 사례 수용은0이다. [실패 기록](evidence/2026-11-14-chorder-preset-index0-native48-r1-failed.json)을 보존한다. 일반 capsule restore 수락과 독립 원복 증거는 구분하며, 프리셋 표시 이름 원복은 false다.
