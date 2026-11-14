@@ -1,0 +1,181 @@
+{
+  "schema": 1,
+  "status": "ROOT_FAILED_STRICT_WRITABLE_POSTLOAD_COMPARISON_CLEANLY_CLOSED",
+  "job_id": "6e007347-7861-452c-80c8-de16a5aeb585",
+  "product_source_commit": "95eeb728289f712fd932817132427543c36e3530",
+  "native_unit": 47,
+  "metadata_requests": 2,
+  "known_receipts": 30,
+  "first_unsent_id": 33,
+  "current_value_case_accepted": false,
+  "class_complete": false,
+  "accepted_cases": 0,
+  "full_provider_records": 37,
+  "writable": 35,
+  "readonly": 2,
+  "stable_postload_pair": true,
+  "writable_original_exact_count": 33,
+  "readonly_original_exact_count": 1,
+  "changed_writable_names": [
+    "volume",
+    "portaMode",
+    "glideTime",
+    "tune",
+    "pulseWidthOsc1",
+    "lfoSawSq",
+    "lfoPulse",
+    "lfoSync",
+    "lfoBeatsNu",
+    "lfoSpeed",
+    "fltCutoff",
+    "fltResonance",
+    "lfo2Speed",
+    "lfoFilter",
+    "ampEnvAttack",
+    "ampEnvDecay",
+    "ampEnvSustain",
+    "ampEnvRelease",
+    "drive",
+    "modColor"
+  ],
+  "capture_A": {
+    "byte_count": 895,
+    "sha256": "d25cd5012614a62f55e197def9473a6fd8233c562c5eb3846fb49042955650ed",
+    "source": "component_alias_storable",
+    "serialization": "component_alias_IStorable"
+  },
+  "fresh_capture_B": false,
+  "capsule_equality_verified": false,
+  "Music_note_channel_mute1_independently_verified": true,
+  "audio_output_mute1_independently_verified": true,
+  "plugin_parameter_setters": 0,
+  "preset_apply": 1,
+  "capsule_load": 1,
+  "releases": 0,
+  "dispatch_after_failed_comparison": 0,
+  "retry_or_inverse": 0,
+  "Main_fader_zero": true,
+  "audio_output_fader_unchanged": true,
+  "MIDI_input_None_Root_actual_UI": true,
+  "Root_NoSave": true,
+  "app_closed_observed": true,
+  "owner_EOF_exit_code": 0,
+  "owner_PID_absent": true,
+  "saved6_unchanged": true,
+  "post_owner_MIDI_sources": 0,
+  "post_owner_MIDI_destinations": 0,
+  "physical_audio_or_hardware_proven": false,
+  "saved_persistence_proven": false,
+  "recipe_limits_posthoc_relaxed": false,
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "actual_elapsed_seconds": 706.132,
+  "closed_at": "2026-11-14T04:52:50.918292+00:00",
+  "raw_DAW_requests": 30,
+  "paired_unique_DAW_receipts": 30,
+  "MCP_predispatch_errors": 0,
+  "unknown_DAW_outcomes": 0,
+  "failure_boundary": "After sole A load and stable independent full37 pair: two writable LFO speed values differ exactly; no call33 or later dispatched.",
+  "complete_provider_reads_before_stop": 8,
+  "all37_nonvalue_unknown_metadata_exact": true,
+  "all35_writable_original_restored": false,
+  "all37_current_original_restored": false,
+  "strict_fixed_name_increment": 0,
+  "whole_plugin_complete": false,
+  "legacy_stored_pan_current_provider_unknown": true,
+  "pending_mutations": 0,
+  "postload_differences": [
+    {
+      "name": "lfoBeats",
+      "writable": false,
+      "before_raw": {
+        "data": {
+          "bits_hex": "4008000000000000",
+          "kind": "float",
+          "value": 3
+        },
+        "variant_tag": 2
+      },
+      "after_raw": {
+        "data": {
+          "bits_hex": "401C000000000000",
+          "kind": "float",
+          "value": 7
+        },
+        "variant_tag": 2
+      },
+      "before_normalized": {
+        "bits_hex": "3E0BA2E9",
+        "kind": "float32"
+      },
+      "after_normalized": {
+        "bits_hex": "3EA2E8BA",
+        "kind": "float32"
+      },
+      "before_text": "1/2",
+      "after_text": "1/32"
+    },
+    {
+      "name": "lfoSpeed",
+      "writable": true,
+      "before_raw": {
+        "data": {
+          "bits_hex": "4048F34301F00000",
+          "kind": "float",
+          "value": 49.90048240870237
+        },
+        "variant_tag": 2
+      },
+      "after_raw": {
+        "data": {
+          "bits_hex": "4048F342DAE00000",
+          "kind": "float",
+          "value": 49.9004777520895
+        },
+        "variant_tag": 2
+      },
+      "before_normalized": {
+        "bits_hex": "3BA3838F",
+        "kind": "float32"
+      },
+      "after_normalized": {
+        "bits_hex": "3BA3838E",
+        "kind": "float32"
+      },
+      "before_text": "5.00 Hz",
+      "after_text": "5.00 Hz"
+    },
+    {
+      "name": "lfo2Speed",
+      "writable": true,
+      "before_raw": {
+        "data": {
+          "bits_hex": "4048F34301F00000",
+          "kind": "float",
+          "value": 49.90048240870237
+        },
+        "variant_tag": 2
+      },
+      "after_raw": {
+        "data": {
+          "bits_hex": "4048F342DAE00000",
+          "kind": "float",
+          "value": 49.9004777520895
+        },
+        "variant_tag": 2
+      },
+      "before_normalized": {
+        "bits_hex": "3BA3838F",
+        "kind": "float32"
+      },
+      "after_normalized": {
+        "bits_hex": "3BA3838E",
+        "kind": "float32"
+      },
+      "before_text": "5.00 Hz",
+      "after_text": "5.00 Hz"
+    }
+  ],
+  "request_journal_sha256": "b961ec3400b744b16152f730cd0641e97e9d2b7305676985da6070ce92e9a5a2",
+  "response_journal_sha256": "8d2b40f3501be392773e7a4263f3978987e8696ab7dc6e46f2e335b5ade7d391",
+  "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
+}

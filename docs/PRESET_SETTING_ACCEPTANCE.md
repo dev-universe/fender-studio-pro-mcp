@@ -49,3 +49,7 @@ fresh complete issued catalog가 하나인 Scope는 최소 대표 사례 수가1
 ## VU Meter 대표2/2의 실제 적용
 
 서로 다른 issued index1 Cosy Master와 index2 Fast Detection을 각39요청으로 수용했다. 한 load로 쓰기3개와 실제 관측한 readonly8개를 포함한 전체11 current/metadata/unknown을 정확 복원했고 새131바이트 A/B 동일·수명/Root정리를 확인했다. readonly 예외는 쓰지 않았지만 직렬화 참여/제외는 여전히 미검증이다. 표시이름의 원래 복원은 false다. [두 번째 증거](evidence/2026-11-14-vu-preset-index2-native47.json)가 첫 불변 증거를 연결한다. 현재36/46종·완료 종70사례·10종 잔여, 고정8/43 완료·35개 잔여다. 기존 첫 사례1/2 기록은 이력이며 반복하지 않는다.
+
+## Mojito의 정확 비교 실패는 수용하지 않음
+
+Native47 R2는 실제 격리와 프리셋 변화20개를 확인했지만 한 Aload 뒤 쓰기 LFO speed2개가 normalized bits3BA3838F에서3BA3838E로 달랐다. 표시5.00 Hz 일치는 정확 복원 기준을 대신하지 않는다. readonly lfoBeats 차이도 별도 보존한다.30요청·706.132초 뒤 추가 보정/B캡처/해제 없이 저장하지 않고 정리했다. [실패 증거](evidence/2026-11-14-mojito-preset-index0-native47-r2-failed.json)의 수용0을 유지한다. 기존 하이브리드 경로를 검토하더라도 새 실행 전 선언해야 하며 R2를 사후 합격 처리하지 않는다. 현재36/46종·70사례와 고정8/43 완료는 그대로다.

@@ -599,7 +599,7 @@
     "level_meter_reset_effects_independently_verified": 2
   },
   "next_units_in_order": [
-    "Keep Native47/95eeb72 and46tools. Completed Level/Tone/Scope/VU cases are not replayed. Mojito R1 is failed before preset apply:20DAQ, Music note-channel mute0 while independently bound audio output mute1. No preset/load/parameter writes; RootNoSave/owner0/saved6/MIDI0 closed. Preserve failure. Prepare a different R2 contract adding one explicitly declared Root UI mute0to1 on the exact selected arrangement Music track, independently verify note mute1 via bound fixture_context and audio output mute1 via associated unique channel. Other declared UI MIDI inputNone/disarm and counted selectTrack/optional outputmute preparation remain. Maximum45DAQ, no extra free call. TrackState has only hide/duplicate/showAll; never invent a mute action. Stop if the correct arrangement row or result cannot be proved. Fresh owner/document/session/UID and originals required before any new case.",
+    "Keep Native47/95eeb72/MCP46. Preserve completed Level/Tone/Scope/VU and Mojito R1/R2 failures without replay. R2 now passed Music/output mute guards but sole Aload left writable lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E and readonly lfoBeats3to7;30 knownDAQ/706.132s, no call33/correction/release/B, RootNoSave/owner0/saved6/MIDI0. Accepted0. First investigate immutable R2 evidence and existing exact raw setter/hybrid precedents offline. Freeze a different bounded contract before any new live dispatch; do not relax tolerance, redefine original, seed or retry R2. Root only binds fresh owner/document/session/UID/originals after review. Stored pan remains existing CONTROL-MOJITO unknown.",
     "고정43개 중8개 완료/35개 잔여(부분30·미착수1·하드웨어4)다. 모든 미완료ID와 각 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 프로그램 역사 전체 분모나 시간 비율로 쓰지 않고 목표 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정36/46종·완료 종70사례·10종 잔여이며 별도 부분 사례0이다. Scope singleton1/1과 VU의 서로 다른 index1/2 전체값 복원/새상태캡처/정리를 수용했다. VU readonly8도 실제 원래와 일치했지만 직렬화 참여를 뜻하지 않고 표시이름 복원은false다. OpenAIR/Room의 원래 readonly/fullcurrent 실패와 Room/Level/Tone 표시이름 복원false를 보존한다. 전체plugin/audio/Save로 확장하지 않으며 완료 사례를 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -613,10 +613,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-14.md",
-  "last_measurement": "6866/7112 names,246 remaining;34/46 preset-setting classes,67 cases,12 remaining;fixed43 completed6/remaining37;Native47 accepted239DAQ.",
+  "last_measurement": "6866/7112 names,246 remaining;36/46 preset-setting classes,70 cases,10 remaining;fixed43 completed8/remaining35;Native47 raw413=accepted363+nonadmitted50.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Native47 Mojito R1 preapply guard failed and cleanly closed",
+    "unit": "Mojito exact writable restoration gap offline investigation",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -625,24 +625,24 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native47 Mojito index0 R1 stopped before apply:20DAQ/788.023s, Music note-channel mute0 versus required1 while separate actual audio output mute1. No preset/parameter/load/transport/Save calls; captureA895 and full37 originals only. RootNoSave/owner0/saved6/MIDI0. Accepted0.",
+    "latest_closed_DAW_unit": "Native47 Mojito index0 R2:30DAQ/706.132s, Music mute1 and separately associated audio mute1 guards passed; Acid Dreams applied once,20 writable changes stable; sole Aload restored33/35 writable exactly, lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E remained mismatched and readonly lfoBeats3to7 remained. No call33, correction, B capture, release or further dispatch. RootNoSave/appfalse/ownerEOF0/absence/saved6/MIDI0. Accepted0.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "d02d76f6-8b10-4f9a-8a48-a66972258af0",
+    "latest_closed_job_id": "6e007347-7861-452c-80c8-de16a5aeb585",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "d02d76f6-8b10-4f9a-8a48-a66972258af0",
+    "job_id": "6e007347-7861-452c-80c8-de16a5aeb585",
     "terminal_tool_inputs": 0,
-    "raw_tool_requests": 20,
-    "current_phase": "MOJITO_R1_FAILED_PREAPPLY_EXPLICIT_MUSIC_MUTE_UI_R2_PREPARATION",
+    "raw_tool_requests": 30,
+    "current_phase": "R2_CLOSED_FAILED_STRICT_WRITABLE_COMPARISON_OFFLINE_NEXT_CONTRACT",
     "maximum_tool_requests": 45,
-    "current_job_id": "d02d76f6-8b10-4f9a-8a48-a66972258af0",
+    "current_job_id": "6e007347-7861-452c-80c8-de16a5aeb585",
     "completed_subunits": [],
     "subunits_total": 1,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 788.023
+    "current_elapsed_seconds": 706.132
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -703,8 +703,8 @@
   "last_runtime_verified_native_unit": 47,
   "last_runtime_verified_source_commit": "95eeb72",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native47 Mojito index0 R1 stopped before apply:20DAQ/788.023s, Music note-channel mute0 versus required1 while separate actual audio output mute1. No preset/parameter/load/transport/Save calls; captureA895 and full37 originals only. RootNoSave/owner0/saved6/MIDI0. Accepted0.",
-  "last_completed_live_elapsed_seconds": 788.023,
+  "last_completed_live_unit": "Native47 VU index2 Fast Detection:39DAQ/297.548s; sens1.00to3.00 and scale6to12 positive; all11 current/metadata exact restore via one Aload/no correction, fresh131byte A/B equal, lifecycle, Root NoSave/owner0/saved6/MIDI0. Distinct indices[1,2] complete PRESET-VUMETER; label restorationfalse.",
+  "last_completed_live_elapsed_seconds": 297.548,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2751,7 +2751,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-13T23:03:30.356829+00:00",
+  "latest_root_observation_at": "2026-11-14T04:52:50.918292+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -15127,8 +15127,8 @@
     "post_owner_MIDI_destinations": 0
   },
   "native46_failed_unit_requests": 21,
-  "last_closed_live_unit": "Native47 Tone index5 White Noise:40DAQ/457.773s, six positive changes, all10 exact restore via one Aload/no correction, fresh371byte A/B equal, lifecycle and Root NoSave/owner0/saved6/MIDI0. Distinct indices3/5 complete PRESET-TONEGEN.",
-  "last_closed_live_elapsed_seconds": 457.773,
+  "last_closed_live_unit": "Native47 Mojito index0 R2:30DAQ/706.132s, Music mute1 and separately associated audio mute1 guards passed; Acid Dreams applied once,20 writable changes stable; sole Aload restored33/35 writable exactly, lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E remained mismatched and readonly lfoBeats3to7 remained. No call33, correction, B capture, release or further dispatch. RootNoSave/appfalse/ownerEOF0/absence/saved6/MIDI0. Accepted0.",
+  "last_closed_live_elapsed_seconds": 706.132,
   "native46_mode_profiles_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_BOUNDED_GUI_MODE_PROFILE_OBSERVATION_ONLY",
@@ -15272,7 +15272,7 @@
     "response_journal_sha256": "1f21a22fbbafb99dd65265993a3a8c975ada865136d13b8617b17a637cb92722",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "native47_runtime_actual_total_requests": 383,
+  "native47_runtime_actual_total_requests": 413,
   "native47_accepted_completed_unit_requests": 363,
   "native_source_commit": "95eeb72",
   "previous_product_source_map_sha256": "0a9ed52ac536b1e6ac205c89036b5b9bca7272c3eb23f35a990b05c2698d2c6e",
@@ -15641,7 +15641,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T03:38:59.611630+00:00",
+  "last_progress_update_utc": "2026-11-14T04:52:50.918292+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
@@ -15812,7 +15812,7 @@
     "prior_index1_replayed": false,
     "prior_index1_evidence_sha256": "c31b15c3e22f9cb532d1ea1d66b8c9176a7f470fba8de0b60047937cca421d49"
   },
-  "native47_nonadmitted_unit_requests": 20,
+  "native47_nonadmitted_unit_requests": 50,
   "native47_mojito_preset_index0_r1_failed": {
     "schema": 1,
     "status": "ROOT_FAILED_PREAPPLY_MUSIC_TRACK_MUTE_GUARD_CLEANLY_CLOSED",
@@ -15871,7 +15871,7 @@
     "response_journal_sha256": "b2c0954068278388dc51bae9a802ec9007c7c726b95c821ccf224d3c450e3306",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "last_closed_DAW_unit": "Native47 Mojito index0 R1 stopped before apply:20DAQ/788.023s, Music note-channel mute0 versus required1 while separate actual audio output mute1. No preset/parameter/load/transport/Save calls; captureA895 and full37 originals only. RootNoSave/owner0/saved6/MIDI0. Accepted0.",
+  "last_closed_DAW_unit": "Native47 Mojito index0 R2:30DAQ/706.132s, Music mute1 and separately associated audio mute1 guards passed; Acid Dreams applied once,20 writable changes stable; sole Aload restored33/35 writable exactly, lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E remained mismatched and readonly lfoBeats3to7 remained. No call33, correction, B capture, release or further dispatch. RootNoSave/appfalse/ownerEOF0/absence/saved6/MIDI0. Accepted0.",
   "last_accepted_DAW_unit": "VU Meter distinct indices1/2 representative preset setting complete; no replay.",
   "mojito_legacy_pan_gap": {
     "status": "UNRESOLVED_LEGACY_STORED_ATTRIBUTE_CURRENT_PROVIDER",
@@ -15881,5 +15881,186 @@
     "mixer_pan_alias_assumed": false,
     "new_backlog_ID_added": false,
     "preset_scope": "DSP37 exposed settings only; fullplugin false"
+  },
+  "native47_mojito_preset_index0_r2_failed": {
+    "schema": 1,
+    "status": "ROOT_FAILED_STRICT_WRITABLE_POSTLOAD_COMPARISON_CLEANLY_CLOSED",
+    "job_id": "6e007347-7861-452c-80c8-de16a5aeb585",
+    "product_source_commit": "95eeb728289f712fd932817132427543c36e3530",
+    "native_unit": 47,
+    "metadata_requests": 2,
+    "known_receipts": 30,
+    "first_unsent_id": 33,
+    "current_value_case_accepted": false,
+    "class_complete": false,
+    "accepted_cases": 0,
+    "full_provider_records": 37,
+    "writable": 35,
+    "readonly": 2,
+    "stable_postload_pair": true,
+    "writable_original_exact_count": 33,
+    "readonly_original_exact_count": 1,
+    "changed_writable_names": [
+      "volume",
+      "portaMode",
+      "glideTime",
+      "tune",
+      "pulseWidthOsc1",
+      "lfoSawSq",
+      "lfoPulse",
+      "lfoSync",
+      "lfoBeatsNu",
+      "lfoSpeed",
+      "fltCutoff",
+      "fltResonance",
+      "lfo2Speed",
+      "lfoFilter",
+      "ampEnvAttack",
+      "ampEnvDecay",
+      "ampEnvSustain",
+      "ampEnvRelease",
+      "drive",
+      "modColor"
+    ],
+    "capture_A": {
+      "byte_count": 895,
+      "sha256": "d25cd5012614a62f55e197def9473a6fd8233c562c5eb3846fb49042955650ed",
+      "source": "component_alias_storable",
+      "serialization": "component_alias_IStorable"
+    },
+    "fresh_capture_B": false,
+    "capsule_equality_verified": false,
+    "Music_note_channel_mute1_independently_verified": true,
+    "audio_output_mute1_independently_verified": true,
+    "plugin_parameter_setters": 0,
+    "preset_apply": 1,
+    "capsule_load": 1,
+    "releases": 0,
+    "dispatch_after_failed_comparison": 0,
+    "retry_or_inverse": 0,
+    "Main_fader_zero": true,
+    "audio_output_fader_unchanged": true,
+    "MIDI_input_None_Root_actual_UI": true,
+    "Root_NoSave": true,
+    "app_closed_observed": true,
+    "owner_EOF_exit_code": 0,
+    "owner_PID_absent": true,
+    "saved6_unchanged": true,
+    "post_owner_MIDI_sources": 0,
+    "post_owner_MIDI_destinations": 0,
+    "physical_audio_or_hardware_proven": false,
+    "saved_persistence_proven": false,
+    "recipe_limits_posthoc_relaxed": false,
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "actual_elapsed_seconds": 706.132,
+    "closed_at": "2026-11-14T04:52:50.918292+00:00",
+    "raw_DAW_requests": 30,
+    "paired_unique_DAW_receipts": 30,
+    "MCP_predispatch_errors": 0,
+    "unknown_DAW_outcomes": 0,
+    "failure_boundary": "After sole A load and stable independent full37 pair: two writable LFO speed values differ exactly; no call33 or later dispatched.",
+    "complete_provider_reads_before_stop": 8,
+    "all37_nonvalue_unknown_metadata_exact": true,
+    "all35_writable_original_restored": false,
+    "all37_current_original_restored": false,
+    "strict_fixed_name_increment": 0,
+    "whole_plugin_complete": false,
+    "legacy_stored_pan_current_provider_unknown": true,
+    "pending_mutations": 0,
+    "postload_differences": [
+      {
+        "name": "lfoBeats",
+        "writable": false,
+        "before_raw": {
+          "data": {
+            "bits_hex": "4008000000000000",
+            "kind": "float",
+            "value": 3
+          },
+          "variant_tag": 2
+        },
+        "after_raw": {
+          "data": {
+            "bits_hex": "401C000000000000",
+            "kind": "float",
+            "value": 7
+          },
+          "variant_tag": 2
+        },
+        "before_normalized": {
+          "bits_hex": "3E0BA2E9",
+          "kind": "float32"
+        },
+        "after_normalized": {
+          "bits_hex": "3EA2E8BA",
+          "kind": "float32"
+        },
+        "before_text": "1/2",
+        "after_text": "1/32"
+      },
+      {
+        "name": "lfoSpeed",
+        "writable": true,
+        "before_raw": {
+          "data": {
+            "bits_hex": "4048F34301F00000",
+            "kind": "float",
+            "value": 49.90048240870237
+          },
+          "variant_tag": 2
+        },
+        "after_raw": {
+          "data": {
+            "bits_hex": "4048F342DAE00000",
+            "kind": "float",
+            "value": 49.9004777520895
+          },
+          "variant_tag": 2
+        },
+        "before_normalized": {
+          "bits_hex": "3BA3838F",
+          "kind": "float32"
+        },
+        "after_normalized": {
+          "bits_hex": "3BA3838E",
+          "kind": "float32"
+        },
+        "before_text": "5.00 Hz",
+        "after_text": "5.00 Hz"
+      },
+      {
+        "name": "lfo2Speed",
+        "writable": true,
+        "before_raw": {
+          "data": {
+            "bits_hex": "4048F34301F00000",
+            "kind": "float",
+            "value": 49.90048240870237
+          },
+          "variant_tag": 2
+        },
+        "after_raw": {
+          "data": {
+            "bits_hex": "4048F342DAE00000",
+            "kind": "float",
+            "value": 49.9004777520895
+          },
+          "variant_tag": 2
+        },
+        "before_normalized": {
+          "bits_hex": "3BA3838F",
+          "kind": "float32"
+        },
+        "after_normalized": {
+          "bits_hex": "3BA3838E",
+          "kind": "float32"
+        },
+        "before_text": "5.00 Hz",
+        "after_text": "5.00 Hz"
+      }
+    ],
+    "request_journal_sha256": "b961ec3400b744b16152f730cd0641e97e9d2b7305676985da6070ce92e9a5a2",
+    "response_journal_sha256": "8d2b40f3501be392773e7a4263f3978987e8696ab7dc6e46f2e335b5ade7d391",
+    "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   }
 }

@@ -40,7 +40,7 @@
 |PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-CV|CV Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-MOJITO|Mojito|부분 완료|R1은20요청·788.023초 뒤 Music note-channel mute0 가드에서 적용 전 차단. 전체37 원래값·catalog50·A895 관측, 수용0, RootNoSave/저장6/MIDI0|배열 Music 트랙 mute1을 별도 UI 준비한 R2 계약 검토 후 첫 index0 사례. audio-output mute1과 구분하고 R1을 그대로 반복하지 않는다.|
+|PRESET-MOJITO|Mojito|부분 완료|R1 적용 전 격리 실패 보존. R2 격리 통과·프리셋 실제 변화20개 관측, 한 load 뒤 LFO speed2개 정확 원복 실패.30요청·706.132초·수용0·저장 없이 정리|쓰기35개 정확 복원과 새 A/B 동일·수명 정리를 충족할 다른 유한 계약을 검토한다. R1/R2 반복·허용오차 완화 금지. legacy pan은 별도 CONTROL-MOJITO 기존 범위.|
 |PRESET-CHORDER|Chorder|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-REPEATER|Repeater|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 
@@ -58,7 +58,7 @@
 |CONTROL-LEVEL|Level Meter|완료|Native43 두 reset 효과, Native45 전체33 getter, Native46 다섯 GUI 모드 count와 Native47 등록6설정의 실제변경·독립읽기·전체typed/metadata정확복원·GUI·Root정리 확인. R2는438.119초·57요청·14setter다.|완료: 기존 일반 DSP/두 reset/등록6숨은설정의 고정 제어 범위. PRESET-LEVEL·오디오·Save/재시작은 별도이고 EBU fixed33 descriptor 완전성은 false. 완료 실기는 반복하지 않는다.|
 |CONTROL-LIMITER|Limiter|부분 완료|일반 설정과 두 프리셋 사례 완료|resetmin 명령의 별도 효과·완료·원래 환경 보존을 확인한다.|
 |CONTROL-MAITAI|Mai Tai|부분 완료|일반 선택 설정·preset 계열 완료|MIDI6 facade의 현재값/실제 전달과 character1.editchar의 GUI·조건부 모델 binding/복원을 검증한다.|
-|CONTROL-MOJITO|Mojito|부분 완료|일반 선택 설정 완료|afterTouch/modWheel/pitchBend3역할의 현재값·수신·neutral 복원/종료를 검증한다.| Legacy stored pan의 current provider/제어 또는 무효 legacy 의미도 기존 범위 안에 남긴다. 고정7112 이름 분모는 유지한다.
+|CONTROL-MOJITO|Mojito|부분 완료|일반 선택 설정 완료|afterTouch/modWheel/pitchBend3역할의 현재값·수신·neutral 복원/종료를 검증한다. Legacy stored pan의 current provider/제어 또는 무효 legacy 의미도 기존 범위 안에 남긴다. 고정7112 이름 분모는 유지한다.|
 |CONTROL-MUSTANG|Mustang Native|부분 완료|provider·RemoteRoot/workspace·selector 조회 및 빈 모델 목록 관측; 기존 preset recall 완료|현재 비어 있는 amp/effect 실제 domain과 선택·stomp/amp 위치·routing·tuner/bypass29역할의 변경/복원을 검증한다. 빈 목록을 전체지원으로 세지 않는다.|
 |CONTROL-PEDALBOARD|Pedalboard|부분 완료|일반2개·provider/catalog 완료|alias11·host bypass의 대상/연동·실제 변경과 정확한 원복, 중첩 rack 제어를 검증한다.|
 |CONTROL-PRESENCE|Presence|부분 완료|일반 선택 설정 완료|MIDI6와 script/program macro16개를 올바른 program/target에 연결하고 현재값·실제 효과·원복을 검증한다.|

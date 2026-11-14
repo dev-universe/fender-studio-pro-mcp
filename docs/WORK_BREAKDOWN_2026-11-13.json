@@ -23,7 +23,7 @@
     "remaining_preset_classes": 10,
     "additional_partial_setting_cases": 0
   },
-  "runtime_note": "Native47 Mojito index0 R1 stopped before apply:20DAQ/788.023s, Music note-channel mute0 versus required1 while separate actual audio output mute1. No preset/parameter/load/transport/Save calls; captureA895 and full37 originals only. RootNoSave/owner0/saved6/MIDI0. Accepted0.",
+  "runtime_note": "Native47 Mojito index0 R2:30DAQ/706.132s, Music mute1 and separately associated audio mute1 guards passed; Acid Dreams applied once,20 writable changes stable; sole Aload restored33/35 writable exactly, lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E remained mismatched and readonly lfoBeats3to7 remained. No call33, correction, B capture, release or further dispatch. RootNoSave/appfalse/ownerEOF0/absence/saved6/MIDI0. Accepted0.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -210,12 +210,12 @@
       "title": "Mojito",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "R1 read original full37 pairs and issued catalog50/captureA895, but preapply Music note-channel mute0 guard stopped it after20DAQ/788.023s. No preset apply/parameter/load; accepted0, RootNoSave/saved6/MIDI0.",
+      "actually_verified": "R1 preapply isolation failure preserved. R2 passed distinct Music/output mute guards, applied Acid Dreams once and observed20 stable writable changes, but sole Aload left lfoSpeed/lfo2Speed one normalized ULP off and readonly lfoBeats3to7.30DAQ/706.132s, accepted0, NoSave/owner0/saved6/MIDI0.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0,
-      "remaining_after_verified_actions": "New R2 predeclares exact selected arrangement Music-track mute1 separately from audio-output mute1, then one distinct issued index0 case only. No unchanged R1 replay; legacy pan provider unknown and fullplugin false.",
-      "evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r1-failed.json"
+      "remaining_after_verified_actions": "Investigate exact writable restoration gap and predeclare a different bounded correction contract if supported. R2 is immutable and not replayed. No tolerance, hidden correction or class/name credit. Legacy pan current provider unknown.",
+      "evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r2-failed.json"
     },
     {
       "id": "PRESET-CHORDER",
