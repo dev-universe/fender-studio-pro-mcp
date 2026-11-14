@@ -1,6 +1,6 @@
 # 중첩 그래프 소유 관계 조회 구현 계획
 
-상태는 소스 구현·독립 검토·정상 설치 완료이며 실제 graph 요청 검증은 미완료다. 일반 그래프 편집 완료를 뜻하지 않는다. 현재 설치 제품은 Native48 /2db35b2 /MCP46개다. 준비 오류로 종료한 R1/R2는 대상·graph 변경0이며 graph 조회도0이다. 실패를 보존하고 수정한 절차의 R3를 새 문맥으로 진행한다.
+상태는 소스 구현·독립 검토·정상 설치와 실제8.1.1의 제한된 직접 소유 관계 R3 검증 완료다. 일반 그래프 편집 완료를 뜻하지 않는다. 현재 설치 제품은 Native48 /2db35b2 /MCP46개다. 준비 오류 R1/R2를 실패로 보존하며 그 두 단위의 graph 조회는0이다. 새 문맥의 R3는32요청·348.714초로 통과했다.
 
 ## 이번 변경의 결과
 
@@ -35,3 +35,9 @@ Graph·직접 자식의 class UID는 없을 수 있으나 object UID는 필요�
 ## 소스 검토에서 보완한 수명 검증
 
 마지막 그래프 연결 확인 뒤 외부 편집기 provider 검사가 새 객체를 만들고 해제할 수 있던 경로를 분리했다. 전체 provider 검사는 마지막 폴더 메타데이터 정리 뒤에 마치며, 이후에는 유지한 객체의 borrowed 연결과 문서·대상만 확인한다. 실제 Release 콜백으로 Slot 생성과 provider 연결 소실을 모사한 검사를 추가했고, 옛 검증 순서에서 잘못된 성공도 재현했다. 전체 graph 보고 제거와2초 기한을 유지한다. 이는 오프라인 수명 증거이며 실제 External Effect 편집기나 호스트 지연 검증을 대신하지 않는다.
+
+## 실제8.1.1 R3 결과
+
+직접자식6개는 Splitter2개·Slot2개·Merger2개이며, 두 Mixtool의 새 인스턴스가 정확히 한 번씩 대응됐다. 독립 manifest2회와 마지막1회의 전체 필드가 일치했다. 기존 DFS complete=false는 그대로다. 두 장치 각각72개 중71개 writable과readonly stereo1개를 읽었고, 초기·조회뒤·마지막의 독립6쌍 전체 값과 알려지지 않은 metadata까지 정확히 일치했다. 실제 Routing 위·아래 화면도 전후 대조했다. 마지막의 가짜 expected_instance는 예상한 not_applied로 거부됐고 이후 RPC 없이 NoSave로 닫았다.
+
+Main0 격리1회 외 대상 setter·topology 변경·preset·load0이다. 앱 종료·owner0·두 잠금의 해제·저장10개·MIDI0/0을 확인했다. [실기 증거](evidence/2026-11-14-graph-ownership-native48-r3.json)는6개 자식의 이 경로에 한정한다. 오디오 포트/연결, 일반 create/connect/reorder/delete와 Multi Instrument의 다른 graph 계열은 남아 있다. 고정10/43개 완료·33잔여와 프리셋38/46종은 그대로다.

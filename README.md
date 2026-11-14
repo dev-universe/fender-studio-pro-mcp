@@ -1,7 +1,7 @@
 # Fender Studio Pro MCP
 
 The user resumed the run on 2026-11-13. See the
-[current progress](docs/PROGRESS_2026-11-13.md), [resume guide](docs/RESUME.md)
+[current progress](docs/PROGRESS_2026-11-14.md), [resume guide](docs/RESUME.md)
 and [latest detailed handoff](docs/LOOP_HANDOFF_2026-11-12.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
@@ -180,18 +180,25 @@ Four complete 908-record reads stayed original before and after the probe.
 The probe grants no mutation authority or output-pitch mapping. Stored-chord
 editing, restoration and persistence remain pending.
 
-The finite additional-preset plan has completed 18 of 46 classes in the actual
-8.1.1 host. Sixteen classes passed two capsule-only recall/restore cases each.
-Expander and Gate each passed two separate hybrid cases, each using one capsule
-load and one preplanned original attack setter. These are 36 positive cases.
-Multiband Dynamics, Surround Delay and Room Reverb stopped at exact restoration
-checks and contribute no accepted cases. Twenty-eight classes remain.
-The [preset evidence](docs/evidence/2026-11-12-preset-recalls.json) separates
-completed classes, partial cases and failed units. The selected issued indices
-do not establish that every available preset, hidden value, saved state or
-audio result has been verified.
+The additional preset-setting plan has completed 38 of 46 classes with 74
+accepted representative cases. These include 57 capsule-only cases across 29
+classes, 12 predeclared hybrid cases across 6 classes, and 5 explicitly scoped
+setting cases across 3 classes. Eight classes remain. The [current acceptance
+record](docs/PRESET_SETTING_ACCEPTANCE.md) preserves earlier strict failures,
+readonly and label differences, and each case's limits. Selected presets do not
+establish every available preset, hidden value, saved state or audio result.
 
 `insert_chain_state` adds a separate, capability-gated whole-Inserts lifecycle for one exact mixer channel. Every capture, restore and release requires `expected_document`; restore and release accept only its issued token, with optional `expected_folder` from the capture response. The native owner keeps the host-authored preset file private. Callers supply no file path or imported bytes. Restore remains `applied_unverified` and requires fresh graph and per-part parameter/model observations; a load may replace Device UIDs. A simple actual-host chain passed changed-value restoration with full exposed-state confirmation. A two-Mixtool nested fixture also passed changed child/Splitter restoration and visible connection checks. Initial Pro EQ preset-display preservation failed (`default*` became `default`); dirty/UI state, hidden values and generic topology editing remain unverified. See the [live validation checklist](docs/PLUGIN_STATE_VALIDATION.md).
+
+`plugin_inspect` with `include_nodes:true` and `node_scope:"graph"` now adds
+`native.node_report.ownership_manifest` for the current primary FX Inserts route.
+It reads all direct Graph children and fixed Slot-to-Device mappings, with a
+limit of 32 children and 97 retained nodes. Its completeness is separate from the
+legacy DFS report. Native48 passed three matching actual 8.1.1 observations of a
+nested fixture with six children and exact full 72-parameter checks for each Mixtool.
+The manifest describes CCL enumeration order and first native class metadata.
+It grants no graph mutation authority or audio-edge coverage. See the
+[graph ownership proof](docs/evidence/2026-11-14-graph-ownership-native48-r3.json).
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
 

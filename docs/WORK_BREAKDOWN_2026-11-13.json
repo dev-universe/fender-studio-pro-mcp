@@ -470,11 +470,12 @@
       "group": "공통",
       "title": "일반 중첩 그래프 API",
       "status": "partial",
-      "implemented": "고정 그래프 읽기와 whole-folder 상태 경로 있음",
-      "actually_verified": "Splitter42·두 Mixtool Inserts 왕복 완료",
+      "implemented": "고정 그래프·전체 직접 소유 관계 manifest 읽기와 whole-folder 상태 경로 있음",
+      "actually_verified": "Splitter42·두 Mixtool Inserts 왕복과 Native48R3의 직접자식6개/두 Device manifest3회·전체72개 전후 대조 완료",
       "completion_predicate": "닫힌 create/connect/reorder/delete API를 구현하고 소유권·stale handle·sibling 보존·전체 topology/state의 정확한 복원을 실제 작은 fixture에서 확인한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "ownership_read_evidence": "docs/evidence/2026-11-14-graph-ownership-native48-r3.json"
     },
     {
       "id": "SHARED-EVENT",

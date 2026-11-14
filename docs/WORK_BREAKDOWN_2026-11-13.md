@@ -73,7 +73,7 @@
 
 | ID | 완료물 | 상태 | 기존 구현/실제 근거 | 남은 완료 조건 |
 |---|---|---|---|---|
-|SHARED-GRAPH|일반 중첩 그래프 API|부분 완료|Splitter42·두 Mixtool Inserts 왕복 완료|닫힌 create/connect/reorder/delete API를 구현하고 소유권·stale handle·sibling 보존·전체 topology/state의 정확한 복원을 실제 작은 fixture에서 확인한다.|
+|SHARED-GRAPH|일반 중첩 그래프 API|부분 완료|Splitter42·두 Mixtool Inserts 왕복과 Native48R3 직접자식6개 소유 관계·전체72개 전후 대조 완료|닫힌 create/connect/reorder/delete API를 구현하고 소유권·stale handle·sibling 보존·전체 topology/state의 정확한 복원을 실제 작은 fixture에서 확인한다.|
 |SHARED-EVENT|MIDI/키 입력 수명 계약|미착수|passive MIDI 조회·빈 관측창·일부 현재값만 확인|고정 press/release·neutral·중복 입력·문맥 소실·unknown 보유의 안전한 계약과 독립 event/held 증거를 구현·검증한다. 클래스별 적용은 CONTROL 항목에서 수용한다.|
 |SHARED-PERSISTENCE|저장·재시작 보장 범위|부분 완료|Chorder input60/output0의339요청·2Save·2restart property 완료|기존 property를 재사용하고 새 모델/그래프/설정에 주장할 Save/reopen 범위를 유한 사례로 검증해 지원표와 일치시킨다. 원래 곡을 덮어쓰지 않는다.|
 |SHARED-MACOS-PACKAGE|macOS 배포/설치·업데이트·복구|부분 완료|현재 Native47/95eeb72/46도구 정상 설치·Level 등록6설정 실기와 Room2/2 완료; main/bridge570979c 재사용|최종 승인 소스의 설치/업데이트/제거·복구와 설정 보존, CI/배포 artifact·사용법을 일치시킨다. 이미 검증한 Native41 설치를 반복 작업으로 재계상하지 않는다.|
