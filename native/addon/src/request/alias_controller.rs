@@ -9,6 +9,8 @@ use fender_native_node_api::{Inspection, Limits, NodeInspector, TextApi};
 pub(super) mod catalog;
 #[path = "alias_controller/level.rs"]
 mod level;
+#[path = "alias_controller/rumble_parameters.rs"]
+pub(super) mod rumble_parameters;
 pub(super) use level::settings::Settings as LevelSettings;
 
 const CONTROLLER_PROVIDER: Uid = Uid {
@@ -17,6 +19,11 @@ const CONTROLLER_PROVIDER: Uid = Uid {
     c: 0x42e1,
     d: [0x9d, 0xa5, 0x72, 0xde, 0x99, 0x2b, 0xf5, 0x16],
 };
+
+#[cfg(test)]
+pub(super) fn controller_provider_test_uid() -> Uid {
+    CONTROLLER_PROVIDER
+}
 
 fn supported(class: &str) -> bool {
     matches!(

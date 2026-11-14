@@ -13,12 +13,7 @@ mod rumble_processor_state;
 #[path = "state/rumble_serialization.rs"]
 mod rumble_serialization;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub(super) enum ObservationKind {
-    Ordinary,
-    RumbleStructure,
-    RumbleProcessorState,
-}
+pub(super) use super::ObservationKind;
 
 pub(crate) const MAX_CAPSULE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TOTAL_BYTES: usize = 64 * 1024 * 1024;
@@ -80,6 +75,9 @@ impl AliasLease {
         } else {
             Ok(())
         }
+    }
+    pub(super) fn component_identity_matches(&self, canonical: *mut c_void) -> bool {
+        self.canonical.0 == canonical
     }
     fn guard(&self, ctx: &Context<'_>) -> Result<(), String> {
         self.check()?;
@@ -305,6 +303,63 @@ pub(super) fn inspect_rumble_serialization(
     }
     Ok((value, lease))
 }
+pub(super) struct ModelSnapshot {
+    pub(super) classes: Vec<String>,
+    pub(super) names: Vec<std::collections::BTreeSet<String>>,
+    pub(super) sha256: String,
+}
+pub(super) fn rumble_model_digest(classes: &[String]) -> Option<String> {
+    if classes.len() != 26 {
+        return None;
+    }
+    let mut hash = rumble_model_manifest::model_hasher();
+    for (i, class) in classes.iter().enumerate() {
+        let (canonical, uid) = rumble_model_manifest::guid(class)?;
+        if canonical != *class {
+            return None;
+        }
+        rumble_model_manifest::hash_record(&mut hash, &rumble_model_manifest::slot(i), &uid);
+    }
+    Some(format!("{:x}", hash.finalize()))
+}
+pub(super) fn capture_rumble_models(
+    ctx: &Context<'_>,
+) -> Result<(ModelSnapshot, AliasLease), String> {
+    if ctx.instance.class_uid != rumble_model_manifest::CLASS
+        || ctx.instance.native_class != "AudioEffect"
+        || ctx.instance.object_id != "Rumble Native"
+    {
+        return Err("The exact Rumble Native component is required".into());
+    }
+    let lease = AliasLease::capture(ctx)?;
+    let snapshot = rumble_models(ctx, &lease)?;
+    Ok((snapshot, lease))
+}
+pub(super) fn rumble_models(
+    ctx: &Context<'_>,
+    lease: &AliasLease,
+) -> Result<ModelSnapshot, String> {
+    lease.guard(ctx)?;
+    let bytes = save(ctx, lease, MAX_CAPSULE_BYTES)?;
+    let document = rumble_model_manifest::Document::decode(&bytes)?;
+    let snapshot = ModelSnapshot {
+        classes: document.models.iter().map(|m| m.class.clone()).collect(),
+        names: (0..26)
+            .map(|i| {
+                document
+                    .processor(i)
+                    .keys()
+                    .filter(|k| k.as_str() != "__classid")
+                    .cloned()
+                    .collect()
+            })
+            .collect(),
+        sha256: document.models_sha256(),
+    };
+    lease.guard(ctx)?;
+    ctx.check_document()?;
+    Ok(snapshot)
+}
 pub(super) fn read_rumble_state(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
     ctx.check()?;
     if ctx.instance.class_uid != "B9D7536C-A010-457D-A182-36E5531164C9"
@@ -349,6 +404,7 @@ pub(super) fn valid_observation(kind: ObservationKind, instance: &Instance, valu
         ObservationKind::RumbleProcessorState => {
             rumble_processor_state::valid_receipt(&json!(instance), value)
         }
+        ObservationKind::RumbleParameters => false,
     }
 }
 pub(super) fn valid_rumble_receipt(instance: &Instance, value: &Value) -> bool {
@@ -439,4 +495,4 @@ pub(super) fn release(ctx: &Context<'_>, token: &str) -> Result<Value, String> {
 
 #[cfg(test)]
 #[path = "state_tests.rs"]
-mod tests;
+pub(super) mod tests;

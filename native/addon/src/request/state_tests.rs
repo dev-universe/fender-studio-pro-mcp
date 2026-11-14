@@ -37,6 +37,9 @@ unsafe extern "C" fn query_mock(p: *mut c_void, iid: *const Uid, out: *mut *mut 
     if unsafe { *iid } == UNKNOWN
         || unsafe { *iid } == ALIAS && !mock.alias.is_null()
         || unsafe { *iid } == STORABLE && mock.storable
+        || unsafe { *iid } == alias_controller::controller_provider_test_uid()
+            && mock.storable
+            && !mock.alias.is_null()
     {
         unsafe {
             retain(p);
@@ -113,7 +116,7 @@ unsafe extern "C" fn thread() -> i64 {
 unsafe extern "C" fn text(_: *const c_char) -> *const PlainCString {
     ptr::null()
 }
-struct Fixture {
+pub(in crate::native_script::request) struct Fixture {
     _table: Box<[*const c_void; 10]>,
     _plugin_table: Box<[*const c_void; 10]>,
     manager: Box<Mock>,
@@ -222,7 +225,7 @@ impl Fixture {
             api,
         }
     }
-    fn context(&mut self) -> Context<'static> {
+    pub(in crate::native_script::request) fn context(&mut self) -> Context<'static> {
         Context {
             service: ptr::addr_of_mut!(*self.service),
             target: hold(ptr::addr_of_mut!(*self.device).cast()).unwrap(),
@@ -786,4 +789,27 @@ fn rumble_processor_state_native_request_rejects_unchecked_fields() {
         bad[key] = json!("private");
         assert!(serde_json::from_value::<Request>(bad).is_err());
     }
+}
+
+pub(in crate::native_script::request) fn rumble_parameter_host(root: *mut c_void) -> Fixture {
+    let mut host = rumble_fixture();
+    host.plugin.alias = root;
+    host.parameter_state(super::rumble_processor_state::fixture());
+    host
+}
+impl Fixture {
+    pub(in crate::native_script::request) fn parameter_state(&mut self, value: Value) {
+        *self.plugin.bytes.lock().unwrap() = serde_json::to_vec(&value).unwrap();
+    }
+    pub(in crate::native_script::request) fn parameter_detach_document(&mut self) {
+        self.manager.active = ptr::null_mut();
+    }
+    pub(in crate::native_script::request) fn parameter_no_writes(&self) {
+        assert_eq!(self.plugin.loads.load(Ordering::Acquire), 0);
+        assert_eq!(live_count(), 0);
+    }
+}
+
+pub(in crate::native_script::request) fn rumble_parameter_fixture() -> Value {
+    super::rumble_processor_state::fixture()
 }
