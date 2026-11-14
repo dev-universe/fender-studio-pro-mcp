@@ -404,7 +404,7 @@ pub(super) fn valid_observation(kind: ObservationKind, instance: &Instance, valu
         ObservationKind::RumbleProcessorState => {
             rumble_processor_state::valid_receipt(&json!(instance), value)
         }
-        ObservationKind::RumbleParameters => false,
+        ObservationKind::RumbleParameters | ObservationKind::RumbleNamedParameters => false,
     }
 }
 pub(super) fn valid_rumble_receipt(instance: &Instance, value: &Value) -> bool {

@@ -5,6 +5,38 @@ const MAX_COUNT: i32 = 128;
 const MAX_TOTAL: usize = 256;
 const MAX_BYTES: usize = 262144;
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(in crate::native_script::request) enum Retrieval {
+    Indexed,
+    Named,
+}
+impl Retrieval {
+    pub(in crate::native_script::request) fn failure(self) -> Value {
+        match self {
+            Self::Indexed => failure(),
+            Self::Named => named::failure(),
+        }
+    }
+    pub(in crate::native_script::request) fn valid(self, instance: &Value, value: &Value) -> bool {
+        match self {
+            Self::Indexed => valid_receipt(instance, value),
+            Self::Named => named::valid_receipt(instance, value),
+        }
+    }
+}
+enum Association {
+    Indexed(i32),
+    Named(CString),
+}
+impl Association {
+    fn lookup(&self, controller: *mut c_void) -> *mut c_void {
+        match self {
+            Self::Indexed(index) => at(controller, *index),
+            Self::Named(name) => named::lookup(controller, name),
+        }
+    }
+}
+
 struct Capability {
     controller: Option<Owned>,
     status: &'static str,
@@ -24,11 +56,15 @@ struct Parameter {
     owner: Option<parameters::ControllerOwner>,
     owner_view: *mut c_void,
     child: usize,
-    index: i32,
+    association: Association,
+    canonical: Option<Owned>,
 }
 pub(in crate::native_script::request) struct Observation {
     parameters: Vec<Parameter>,
     holes: Vec<(usize, i32)>,
+    named_holes: Vec<(usize, CString)>,
+    names: Option<Vec<BTreeSet<String>>>,
+    retrieval: Retrieval,
     children: Vec<Child>,
     root_identity: Owned,
     root_node: Owned,
@@ -179,6 +215,53 @@ fn capability<G: FnMut() -> Result<(), String>>(
     })
 }
 impl Parameter {
+    fn capture<G: FnMut() -> Result<(), String>>(
+        pointer: *mut c_void,
+        association: Association,
+        child: usize,
+        observation: &Observation,
+        api: &Api,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        let owned = pin(pointer, guard)?;
+        let pointer = NonNull::new(owned.0).expect("retained parameter");
+        std::mem::forget(owned);
+        let parameter = unsafe { RawParameter::from_owned(pointer, raw_text(api)) };
+        let canonical = if matches!(association, Association::Named(_)) {
+            Some(interface(pointer.as_ptr(), &UNKNOWN, guard)?)
+        } else {
+            None
+        };
+        let owner = parameter
+            .controller_owner(guard)
+            .map_err(|e| e.to_string())?;
+        let owner_view = owner
+            .as_ref()
+            .map(|o| {
+                unsafe { o.as_borrowed_unknown() }
+                    .map(|p| p.as_ptr())
+                    .map_err(|e| e.to_string())
+            })
+            .transpose()?
+            .unwrap_or(ptr::null_mut());
+        if !owner_view.is_null() {
+            let identity = interface(owner_view, &UNKNOWN, guard)?;
+            let matches = identity.0 == observation.children[child].identity.0;
+            release(identity, guard)?;
+            if !matches {
+                return Err("Rumble parameter owner mismatch".into());
+            }
+        }
+        Ok(Self {
+            parameter,
+            owner,
+            owner_view,
+            child,
+            association,
+            canonical,
+        })
+    }
+
     fn check<G: FnMut() -> Result<(), String>>(
         &self,
         observation: &Observation,
@@ -195,12 +278,47 @@ impl Parameter {
             return Err("Rumble parameter count changed".into());
         }
         guard()?;
-        if at(controller.0, self.index) != self.parameter.as_borrowed_raw().as_ptr() {
-            return Err("Rumble parameter association changed".into());
+        match &self.association {
+            Association::Indexed(index) => {
+                if at(controller.0, *index) != self.parameter.as_borrowed_raw().as_ptr() {
+                    return Err("Rumble parameter association changed".into());
+                }
+                guard()?;
+            }
+            Association::Named(name) => {
+                let fresh = named::lookup(controller.0, name);
+                let witness = if fresh.is_null() {
+                    None
+                } else {
+                    Some(pin(fresh, guard)?)
+                };
+                let matches = fresh == self.parameter.as_borrowed_raw().as_ptr();
+                release(witness, guard)?;
+                if !matches {
+                    return Err("Rumble parameter association changed".into());
+                }
+                guard()?;
+            }
         }
-        guard()?;
+        if let Some(expected) = &self.canonical {
+            let fresh = interface(self.parameter.as_borrowed_raw().as_ptr(), &UNKNOWN, guard)?;
+            let matches = fresh.0 == expected.0;
+            release(fresh, guard)?;
+            if !matches {
+                return Err("Rumble parameter canonical identity changed".into());
+            }
+        }
         if let Some(owner) = &self.owner {
             owner.check(guard).map_err(|e| e.to_string())?;
+            if self.canonical.is_some() {
+                let view = unsafe { owner.as_borrowed_unknown() }.map_err(|e| e.to_string())?;
+                let fresh = interface(view.as_ptr(), &UNKNOWN, guard)?;
+                let matches = fresh.0 == child.identity.0;
+                release(fresh, guard)?;
+                if !matches {
+                    return Err("Rumble parameter owner identity changed".into());
+                }
+            }
         } else {
             let owner = self
                 .parameter
@@ -216,6 +334,33 @@ impl Parameter {
     }
 }
 impl Observation {
+    pub(in crate::native_script::request) fn retrieval(&self) -> Retrieval {
+        self.retrieval
+    }
+
+    pub(in crate::native_script::request) fn valid_receipt(
+        &self,
+        instance: &Value,
+        value: &Value,
+    ) -> bool {
+        if !self.retrieval.valid(instance, value) {
+            return false;
+        }
+        match (&self.retrieval, &self.names) {
+            (Retrieval::Indexed, None) => true,
+            (Retrieval::Named, Some(names)) => {
+                value["controllers"].as_array().is_some_and(|rows| {
+                    rows.len() == names.len()
+                        && rows
+                            .iter()
+                            .zip(names)
+                            .all(|(row, names)| row["expected_names"] == json!(names))
+                })
+            }
+            _ => false,
+        }
+    }
+
     pub(in crate::native_script::request) fn check_ownership<G: FnMut() -> Result<(), String>>(
         &self,
         guard: &mut G,
@@ -247,6 +392,24 @@ impl Observation {
         }
         for parameter in &self.parameters {
             parameter.check(self, guard)?;
+        }
+        for (child, name) in &self.named_holes {
+            let controller = self.children[*child]
+                .capability
+                .controller
+                .as_ref()
+                .ok_or("Rumble controller lost")?;
+            guard()?;
+            let fresh = named::lookup(controller.0, name);
+            let witness = if fresh.is_null() {
+                None
+            } else {
+                Some(pin(fresh, guard)?)
+            };
+            release(witness, guard)?;
+            if !fresh.is_null() {
+                return Err("Rumble named parameter appeared".into());
+            }
         }
         self.state_alias.check()?;
         guard()
@@ -283,16 +446,35 @@ impl Observation {
                 return Err("Rumble missing parameter changed".into());
             }
         }
+        for (child, name) in &self.named_holes {
+            let controller = self.children[*child]
+                .capability
+                .controller
+                .as_ref()
+                .ok_or("Rumble controller lost")?;
+            if !named::lookup(controller.0, name).is_null() {
+                return Err("Rumble missing named parameter changed".into());
+            }
+        }
         for p in &self.parameters {
             let controller = self.children[p.child]
                 .capability
                 .controller
                 .as_ref()
                 .ok_or("Rumble controller lost")?;
-            if at(controller.0, p.index) != p.parameter.as_borrowed_raw().as_ptr()
+            if p.association.lookup(controller.0) != p.parameter.as_borrowed_raw().as_ptr()
                 || borrowed(p.parameter.as_borrowed_raw().as_ptr(), 14) != p.owner_view
             {
                 return Err("Rumble parameter attachment changed".into());
+            }
+        }
+        if self.retrieval == Retrieval::Named {
+            for child in &self.children {
+                if let Some(controller) = &child.capability.controller {
+                    if Some(count(controller.0)) != child.capability.count {
+                        return Err("Rumble parameter count changed".into());
+                    }
+                }
             }
         }
         Ok(())
@@ -300,7 +482,12 @@ impl Observation {
     pub(in crate::native_script::request) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
         self.check_ownership(&mut || ctx.check())?;
         let models = state::rumble_models(ctx, &self.state_alias)?;
-        if models.classes != self.models {
+        if models.classes != self.models
+            || self
+                .names
+                .as_ref()
+                .is_some_and(|names| *names != models.names)
+        {
             return Err("Rumble selected models changed".into());
         }
         ctx.check_document()?;
@@ -371,9 +558,10 @@ fn project(d: &parameters::Description) -> Option<Value> {
 pub(in crate::native_script::request) fn failure() -> Value {
     json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","mutation_capability":false,"can_set_via_this_action":false,"selection_authority":false,"atomic_snapshot":false,"audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_controller_parameters_unavailable","message":"The bounded Rumble controller-parameter observation was not established"}})
 }
-pub(in crate::native_script::request) fn observe(
+fn capture(
     ctx: &Context<'_>,
-) -> Result<(Value, Observation), String> {
+    retrieval: Retrieval,
+) -> Result<(state::ModelSnapshot, Observation), String> {
     let (before, state_alias) = state::capture_rumble_models(ctx)?;
     let mut guard = || ctx.check();
     let alias = AliasBinding::capture(ctx.target.0, ctx.node.0, &mut guard)?;
@@ -395,6 +583,9 @@ pub(in crate::native_script::request) fn observe(
     let mut observation = Observation {
         parameters: Vec::new(),
         holes: Vec::new(),
+        named_holes: Vec::new(),
+        names: None,
+        retrieval,
         children: Vec::new(),
         root_identity,
         root_node,
@@ -433,6 +624,13 @@ pub(in crate::native_script::request) fn observe(
         });
     }
     observation.check_ownership(&mut guard)?;
+    Ok((before, observation))
+}
+pub(in crate::native_script::request) fn observe(
+    ctx: &Context<'_>,
+) -> Result<(Value, Observation), String> {
+    let (before, mut observation) = capture(ctx, Retrieval::Indexed)?;
+    let mut guard = || ctx.check();
     let reported: usize = observation
         .children
         .iter()
@@ -488,38 +686,14 @@ pub(in crate::native_script::request) fn observe(
                 current_complete = false;
                 continue;
             }
-            let owned = pin(pointer, &mut guard)?;
-            let pointer = NonNull::new(owned.0).expect("retained parameter");
-            std::mem::forget(owned);
-            let parameter = unsafe { RawParameter::from_owned(pointer, raw_text(ctx.api)) };
-            let owner = parameter
-                .controller_owner(&mut guard)
-                .map_err(|e| e.to_string())?;
-            let owner_view = owner
-                .as_ref()
-                .map(|o| {
-                    unsafe { o.as_borrowed_unknown() }
-                        .map(|p| p.as_ptr())
-                        .map_err(|e| e.to_string())
-                })
-                .transpose()?
-                .unwrap_or(ptr::null_mut());
-            if let Some(owner) = &owner {
-                let view = unsafe { owner.as_borrowed_unknown() }.map_err(|e| e.to_string())?;
-                let identity = interface(view.as_ptr(), &UNKNOWN, &mut guard)?;
-                let matches = identity.0 == observation.children[child_index].identity.0;
-                release(identity, &mut guard)?;
-                if !matches {
-                    return Err("Rumble parameter owner mismatch".into());
-                }
-            }
-            let parameter = Parameter {
-                parameter,
-                owner,
-                owner_view,
-                child: child_index,
-                index,
-            };
+            let parameter = Parameter::capture(
+                pointer,
+                Association::Indexed(index),
+                child_index,
+                &observation,
+                ctx.api,
+                &mut guard,
+            )?;
             parameter.check(&observation, &mut guard)?;
             let description = parameter.parameter.describe();
             guard()?;
@@ -872,3 +1046,6 @@ pub(in crate::native_script::request) fn valid_receipt(instance: &Value, value: 
 #[cfg(test)]
 #[path = "rumble_parameter_tests.rs"]
 mod tests;
+
+#[path = "rumble_named_parameters.rs"]
+pub(in crate::native_script::request) mod named;

@@ -197,6 +197,9 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    RumbleNamedParametersRead {
+        expected_instance: String,
+    },
     RumbleParametersRead {
         expected_instance: String,
     },
@@ -265,6 +268,14 @@ enum Request {
     },
 }
 impl Request {
+    fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
+        use alias_controller::rumble_parameters::Retrieval;
+        match self {
+            Self::RumbleParametersRead { .. } => Some(Retrieval::Indexed),
+            Self::RumbleNamedParametersRead { .. } => Some(Retrieval::Named),
+            _ => None,
+        }
+    }
     fn source(&self) -> Source {
         match self {
             Self::ExternalPortMenu { .. } => Source::Controller,
@@ -285,6 +296,7 @@ impl Request {
             Self::StateCapture { .. }
             | Self::ChorderChordsGet { .. }
             | Self::RumbleParametersRead { .. }
+            | Self::RumbleNamedParametersRead { .. }
             | Self::RumbleStateRead { .. }
             | Self::RumbleSerializationInspect { .. }
             | Self::StateRestore { .. }
@@ -327,6 +339,7 @@ impl Request {
                 expected_instance, ..
             }
             | Self::RumbleParametersRead { expected_instance }
+            | Self::RumbleNamedParametersRead { expected_instance }
             | Self::RumbleStateRead { expected_instance }
             | Self::RumbleSerializationInspect { expected_instance }
             | Self::ModelCatalog {
@@ -1093,6 +1106,7 @@ pub(super) enum ObservationKind {
     RumbleStructure,
     RumbleProcessorState,
     RumbleParameters,
+    RumbleNamedParameters,
 }
 
 enum Provider {
@@ -1100,7 +1114,10 @@ enum Provider {
     DspValue(Controller),
     Controller(Controller),
     State(state::AliasLease),
-    RumbleParameters(Option<Box<alias_controller::rumble_parameters::Observation>>),
+    RumbleParameters {
+        retrieval: alias_controller::rumble_parameters::Retrieval,
+        observation: Option<Box<alias_controller::rumble_parameters::Observation>>,
+    },
     LevelMeter(Box<alias_controller::LevelSettings>),
 }
 impl Provider {
@@ -1109,14 +1126,16 @@ impl Provider {
             Self::Dsp(_) | Self::DspValue(_) => "dsp",
             Self::Controller(_) => "controller",
             Self::State(_) => "component_alias_storable",
-            Self::RumbleParameters(_) => "component_alias_fixed_controllers",
+            Self::RumbleParameters { .. } => "component_alias_fixed_controllers",
             Self::LevelMeter(_) => "level_meter",
         }
     }
     fn scalar(&self) -> Option<&Controller> {
         match self {
             Self::DspValue(controller) | Self::Controller(controller) => Some(controller),
-            Self::Dsp(_) | Self::State(_) | Self::LevelMeter(_) | Self::RumbleParameters(_) => None,
+            Self::Dsp(_) | Self::State(_) | Self::LevelMeter(_) | Self::RumbleParameters { .. } => {
+                None
+            }
         }
     }
     fn check(&self) -> Result<(), String> {
@@ -1127,9 +1146,15 @@ impl Provider {
             Self::DspValue(controller) | Self::Controller(controller) => controller.check(),
             Self::State(alias) => alias.check(),
             Self::LevelMeter(_) => Ok(()),
-            Self::RumbleParameters(observation) => observation
-                .as_ref()
-                .map_or(Ok(()), |o| o.check_ownership(&mut || Ok(()))),
+            Self::RumbleParameters {
+                retrieval,
+                observation,
+            } => observation.as_ref().map_or(Ok(()), |o| {
+                if o.retrieval() != *retrieval {
+                    return Err("Rumble retrieval mode mismatch".into());
+                }
+                o.check_ownership(&mut || Ok(()))
+            }),
         }
     }
 }
@@ -1276,7 +1301,7 @@ fn page(ctx: &Context<'_>, p: &Provider, offset: u32, limit: u32) -> Result<Valu
         Provider::DspValue(_) => {
             Err("DSP scalar provider cannot enumerate controller indices".into())
         }
-        Provider::State(_) | Provider::RumbleParameters(_) => {
+        Provider::State(_) | Provider::RumbleParameters { .. } => {
             Err("state provider cannot enumerate parameters".into())
         }
         Provider::LevelMeter(settings) => settings.page(ctx, offset, limit),
@@ -1425,7 +1450,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 Provider::Dsp(p) => p.metadata.count().map(|count| json!({"reported_count":count,"coverage":"direct_device_dsp_provider","native_setter":p.direct.is_ok(),"native_setter_scope":"direct_device_named_parameter"})).map_err(|e| e.to_string())?,
                 Provider::Controller(c) => c.count().map(|count| json!({"reported_count":count,"coverage":c.coverage(),"native_setter":true}))?,
                 Provider::DspValue(_) => return Err("inspect requires an indexed provider".into()),
-                Provider::State(_) | Provider::RumbleParameters(_) => return Err("inspect requires an indexed provider".into()),
+                Provider::State(_) | Provider::RumbleParameters { .. } => return Err("inspect requires an indexed provider".into()),
                 Provider::LevelMeter(_) => unreachable!("handled exact provider"),
             };
             value["capabilities"] = capabilities::inspect(ctx)?;
@@ -1486,6 +1511,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ChorderLearningGet { .. }
         | Request::ChorderChordsGet { .. }
         | Request::RumbleParametersRead { .. }
+        | Request::RumbleNamedParametersRead { .. }
         | Request::RumbleStateRead { .. }
         | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
@@ -1664,20 +1690,33 @@ impl Reply {
     fn rumble_kind(&self) -> state::ObservationKind {
         match &self.provider {
             Some(Provider::State(alias)) => alias.observation,
-            Some(Provider::RumbleParameters(_)) => ObservationKind::RumbleParameters,
+            Some(Provider::RumbleParameters { retrieval, .. }) => match retrieval {
+                alias_controller::rumble_parameters::Retrieval::Indexed => {
+                    ObservationKind::RumbleParameters
+                }
+                alias_controller::rumble_parameters::Retrieval::Named => {
+                    ObservationKind::RumbleNamedParameters
+                }
+            },
             _ => state::ObservationKind::Ordinary,
         }
     }
     fn rumble_failure(&self) -> Value {
-        if self.rumble_kind() == ObservationKind::RumbleParameters {
-            alias_controller::rumble_parameters::failure()
+        if let Some(Provider::RumbleParameters { retrieval, .. }) = &self.provider {
+            retrieval.failure()
         } else {
             state::observation_failure(self.rumble_kind())
         }
     }
     fn valid_rumble_observation(&self, instance: &Instance) -> bool {
-        if self.rumble_kind() == ObservationKind::RumbleParameters {
-            alias_controller::rumble_parameters::valid_receipt(&json!(instance), &self.value)
+        if let Some(Provider::RumbleParameters {
+            retrieval,
+            observation,
+        }) = &self.provider
+        {
+            observation.as_ref().is_some_and(|o| {
+                o.retrieval() == *retrieval && o.valid_receipt(&json!(instance), &self.value)
+            })
         } else {
             state::valid_observation(self.rumble_kind(), instance, &self.value)
         }
@@ -1819,7 +1858,7 @@ impl Reply {
                     })
                 })
                 .and_then(|_| match &self.provider {
-                    Some(Provider::RumbleParameters(observation)) => {
+                    Some(Provider::RumbleParameters { observation, .. }) => {
                         observation.as_ref().map_or(Ok(()), |o| o.check(ctx))
                     }
                     _ => Ok(()),
@@ -1937,13 +1976,19 @@ pub(super) fn dispatch(
         }
     };
     if let Err(e) = request.validate() {
-        return if matches!(request, Request::RumbleParametersRead { .. }) {
-            NativeReply::unbound(alias_controller::rumble_parameters::failure())
+        return if let Some(retrieval) = request.rumble_retrieval() {
+            NativeReply::unbound(retrieval.failure())
         } else {
             NativeReply::error("invalid_request", &e, "not_applied")
         };
     }
     if request.needs_auxiliary() != auxiliary.is_some() {
+        if request.rumble_retrieval() == Some(alias_controller::rumble_parameters::Retrieval::Named)
+        {
+            return NativeReply::unbound(
+                alias_controller::rumble_parameters::Retrieval::Named.failure(),
+            );
+        }
         return NativeReply::error(
             "invalid_arguments",
             "initial presets and fixed auxiliary observations require exactly one auxiliary native object",
@@ -1972,8 +2017,8 @@ fn dispatch_device(
     let ctx = match Context::capture(service, target, request.expected(), a) {
         Ok(ctx) => Box::new(ctx),
         Err(e) => {
-            return if matches!(request, Request::RumbleParametersRead { .. }) {
-                Reply::unbound(alias_controller::rumble_parameters::failure())
+            return if let Some(retrieval) = request.rumble_retrieval() {
+                Reply::unbound(retrieval.failure())
             } else {
                 Reply::error("context_guard_failed", &e, "not_applied")
             };
@@ -1997,8 +2042,8 @@ fn dispatch_device(
         .and_then(|_| insert_chain::expire(&ctx))
     {
         return Reply {
-            value: if matches!(request, Request::RumbleParametersRead { .. }) {
-                alias_controller::rumble_parameters::failure()
+            value: if let Some(retrieval) = request.rumble_retrieval() {
+                retrieval.failure()
             } else {
                 error("context_guard_failed", &reason, "not_applied")
             },
@@ -2012,8 +2057,12 @@ fn dispatch_device(
             owner: None,
             gui: None,
             nodes: None,
-            provider: matches!(request, Request::RumbleParametersRead { .. })
-                .then_some(Provider::RumbleParameters(None)),
+            provider: request
+                .rumble_retrieval()
+                .map(|retrieval| Provider::RumbleParameters {
+                    retrieval,
+                    observation: None,
+                }),
             context: Some(ctx),
             mutation,
         };
@@ -2142,15 +2191,29 @@ fn dispatch_device(
             mutation: false,
         };
     }
-    if let Request::RumbleParametersRead { .. } = request {
-        let (value, provider) = match alias_controller::rumble_parameters::observe(&ctx) {
+    if let Some(retrieval) = request.rumble_retrieval() {
+        let result = match retrieval {
+            alias_controller::rumble_parameters::Retrieval::Indexed => {
+                alias_controller::rumble_parameters::observe(&ctx)
+            }
+            alias_controller::rumble_parameters::Retrieval::Named => {
+                alias_controller::rumble_parameters::named::observe(&ctx)
+            }
+        };
+        let (value, provider) = match result {
             Ok((value, observation)) => (
                 value,
-                Some(Provider::RumbleParameters(Some(Box::new(observation)))),
+                Some(Provider::RumbleParameters {
+                    retrieval,
+                    observation: Some(Box::new(observation)),
+                }),
             ),
             Err(_) => (
-                alias_controller::rumble_parameters::failure(),
-                Some(Provider::RumbleParameters(None)),
+                retrieval.failure(),
+                Some(Provider::RumbleParameters {
+                    retrieval,
+                    observation: None,
+                }),
             ),
         };
         return Reply {

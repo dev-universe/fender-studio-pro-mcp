@@ -18,6 +18,9 @@ struct Fake {
     owner: Cell<*mut c_void>,
     object: Cell<*mut c_void>,
     kind: Cell<i32>,
+    indexed_calls: Cell<usize>,
+    find_calls: Cell<usize>,
+    materialize: Cell<bool>,
 }
 unsafe fn fake<'a>(p: *mut c_void) -> &'a Fake {
     unsafe { &*p.cast::<Fake>() }
@@ -87,7 +90,22 @@ unsafe extern "C" fn parameter_count(p: *mut c_void) -> i32 {
     unsafe { fake(p) }.count.get()
 }
 unsafe extern "C" fn parameter_at(p: *mut c_void, _: i32) -> *mut c_void {
-    unsafe { fake(p) }.parameter.get()
+    let f = unsafe { fake(p) };
+    f.indexed_calls.set(f.indexed_calls.get() + 1);
+    f.parameter.get()
+}
+unsafe extern "C" fn parameter_find(p: *mut c_void, name: *const PlainCString) -> *mut c_void {
+    let f = unsafe { fake(p) };
+    f.find_calls.set(f.find_calls.get() + 1);
+    if f.materialize.get() {
+        f.count.set(1);
+    }
+    let name = unsafe { std::ffi::CStr::from_ptr((*name).text) }.to_bytes();
+    if name == b"gain" {
+        f.parameter.get()
+    } else {
+        ptr::null_mut()
+    }
 }
 unsafe extern "C" fn parameter_owner(p: *mut c_void) -> *mut c_void {
     unsafe { fake(p) }.owner.get()
@@ -151,6 +169,7 @@ impl Graph {
         let mut controller = node.clone();
         controller[3] = parameter_count as *const c_void;
         controller[4] = parameter_at as *const c_void;
+        controller[5] = parameter_find as *const c_void;
         let mut string = node.clone();
         string[4] = length as *const c_void;
         string[8] = copy as *const c_void;
@@ -212,6 +231,9 @@ impl Graph {
             owner: Cell::new(ptr::null_mut()),
             object: Cell::new(ptr::null_mut()),
             kind: Cell::new(11),
+            indexed_calls: Cell::new(0),
+            find_calls: Cell::new(0),
+            materialize: Cell::new(false),
         });
         let pointer = ptr::addr_of_mut!(*value).cast();
         value.canonical.set(pointer);
@@ -244,7 +266,10 @@ fn context(host: &mut state::tests::Fixture) -> Context<'static> {
 fn reply(ctx: Context<'static>, value: Value, observation: Observation) -> Reply {
     let mut r = Reply::unbound(value);
     r.context = Some(Box::new(ctx));
-    r.provider = Some(Provider::RumbleParameters(Some(Box::new(observation))));
+    r.provider = Some(Provider::RumbleParameters {
+        retrieval: observation.retrieval,
+        observation: Some(Box::new(observation)),
+    });
     r
 }
 
@@ -690,7 +715,10 @@ fn trusted_failure_policy_erases_forged_partial_data_without_an_observation_leas
         let mut reply = Reply::unbound(
             json!({"ok":true,"operation":"forged","schema":"forged","controllers":[{"private":"SYNTHETIC_PRIVATE"}],"census_complete":true}),
         );
-        reply.provider = Some(Provider::RumbleParameters(None));
+        reply.provider = Some(Provider::RumbleParameters {
+            retrieval: Retrieval::Indexed,
+            observation: None,
+        });
         if via_encode {
             assert_eq!(
                 serde_json::from_str::<Value>(&reply.encode()).unwrap(),
@@ -838,4 +866,522 @@ fn absent_parameter_owner_is_rechecked_and_does_not_become_implicit_authority() 
     host.parameter_no_writes();
     drop(observation);
     drop(ctx);
+}
+
+fn named_context(host: &mut state::tests::Fixture, graph: &mut Graph) -> Context<'static> {
+    let object = graph.make(4, "");
+    let parameter = unsafe { fake(graph.controllers[0]).parameter.get() };
+    if !parameter.is_null() {
+        unsafe {
+            fake(parameter).kind.set(2);
+            fake(parameter).object.set(object);
+        }
+    }
+    let string = graph.make(2, "SYNTHETIC_PRIVATE_DISPLAY");
+    EMPTY_STRING.with(|s| s.set(string));
+    static API: Api = Api {
+        gui: empty_string,
+        objects: empty_string,
+        main_thread: empty_string,
+        thread_self: thread_zero,
+        cstring: constant_cstring,
+        empty: empty_string,
+        desktop: empty_string,
+        scripting: empty_string,
+        plugin_manager: empty_string,
+        file_system: empty_string,
+    };
+    let mut ctx = context(host);
+    ctx.api = &API;
+    ctx
+}
+fn assert_no_indexed_lookup(graph: &Graph) {
+    assert!(
+        graph
+            .controllers
+            .iter()
+            .all(|p| unsafe { fake(*p).indexed_calls.get() } == 0)
+    );
+}
+#[test]
+fn named_count_zero_positive_uses_actual_description_and_never_indexed_lookup() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut graph = Graph::new();
+    graph.parameter(0);
+    unsafe {
+        fake(graph.controllers[0]).count.set(0);
+    }
+    let mut host = state::tests::rumble_parameter_host(graph.root);
+    let ctx = named_context(&mut host, &mut graph);
+    let (value, observation) = named::observe(&ctx).unwrap();
+    assert!(named::valid_receipt(&json!(ctx.instance), &value));
+    assert_eq!(value.as_object().unwrap().len(), 25);
+    assert_eq!(value["controllers"][0]["parameter_count"], 0);
+    assert_eq!(value["expected_name_count"], 1);
+    assert_eq!(value["matched_name_count"], 1);
+    assert_eq!(value["named_metadata_complete"], true);
+    assert_eq!(value["current_values_complete"], true);
+    assert_eq!(
+        value["controllers"][0]["parameters"][0]["description"]["current"]["bits_hex"],
+        "3fe0000000000000"
+    );
+    assert!(!value.to_string().contains("PRIVATE"));
+    observation.check(&ctx).unwrap();
+    assert_no_indexed_lookup(&graph);
+    host.parameter_no_writes();
+    drop(observation);
+    drop(ctx);
+    EMPTY_STRING.with(|s| s.set(ptr::null_mut()));
+}
+#[test]
+fn named_null_and_unavailable_controllers_keep_separate_completeness() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for unavailable in [false, true] {
+        let mut graph = Graph::new();
+        if unavailable {
+            unsafe {
+                fake(graph.nodes[25]).controller.set(ptr::null_mut());
+                fake(graph.nodes[25]).status.set(NO_INTERFACE);
+            }
+        }
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        let ctx = context(&mut host);
+        let (value, observation) = named::observe(&ctx).unwrap();
+        assert_eq!(
+            value["controllers"][0]["parameters"][0]["status"],
+            "parameter_absent"
+        );
+        assert_eq!(value["controller_counts_complete"], !unavailable);
+        assert_eq!(value["named_metadata_complete"], false);
+        assert_eq!(value["access_metadata_complete"], false);
+        assert_eq!(value["current_values_complete"], false);
+        let p = graph.make(3, "");
+        unsafe {
+            fake(graph.controllers[0]).parameter.set(p);
+        }
+        assert!(observation.check(&ctx).is_err());
+        assert_no_indexed_lookup(&graph);
+        drop(observation);
+        drop(ctx);
+    }
+}
+#[test]
+fn named_aggregate_index_count_above_budget_does_not_disable_bounded_names() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut graph = Graph::new();
+    graph.parameter(0);
+    for p in graph.controllers.iter().take(3) {
+        unsafe {
+            fake(*p).count.set(128);
+        }
+    }
+    let mut host = state::tests::rumble_parameter_host(graph.root);
+    let ctx = named_context(&mut host, &mut graph);
+    let (value, observation) = named::observe(&ctx).unwrap();
+    assert_eq!(value["named_metadata_complete"], true);
+    assert_eq!(value["matched_name_count"], 1);
+    assert_no_indexed_lookup(&graph);
+    drop(observation);
+    drop(ctx);
+    EMPTY_STRING.with(|s| s.set(ptr::null_mut()));
+}
+#[test]
+fn named_retained_presence_canonical_owner_count_and_attachment_drift_fail_closed() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for change in 0..8 {
+        let mut graph = Graph::new();
+        let p = graph.parameter(0);
+        unsafe {
+            fake(graph.controllers[0]).count.set(0);
+        }
+        if change == 7 {
+            unsafe {
+                fake(p).owner.set(ptr::null_mut());
+            }
+        }
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        let ctx = named_context(&mut host, &mut graph);
+        let (value, observation) = named::observe(&ctx).unwrap();
+        let service = ctx.service;
+        let mut receipt = reply(ctx, value, observation);
+        match change {
+            0 => unsafe {
+                fake(graph.controllers[0]).parameter.set(ptr::null_mut());
+            },
+            1 => unsafe {
+                fake(p).canonical.set(graph.root);
+            },
+            2 => unsafe {
+                fake(p).owner.set(graph.controllers[1]);
+            },
+            3 => unsafe {
+                fake(graph.controllers[0]).count.set(1);
+            },
+            4 => unsafe {
+                fake(graph.root).children.borrow_mut().swap(0, 1);
+            },
+            5 => unsafe {
+                fake(graph.nodes[0]).parent.set(graph.nodes[1]);
+            },
+            6 => unsafe {
+                fake(graph.controllers[0]).canonical.set(graph.root);
+            },
+            _ => unsafe {
+                fake(p).owner.set(graph.controllers[0]);
+            },
+        }
+        assert!(!receipt.final_check(service));
+        assert_eq!(receipt.value, named::failure());
+        assert_no_indexed_lookup(&graph);
+        drop(receipt);
+        EMPTY_STRING.with(|s| s.set(ptr::null_mut()));
+    }
+}
+#[test]
+fn named_model_names_document_and_forged_output_drift_erase_every_positive_field() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for change in 0..6 {
+        let graph = Graph::new();
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        let ctx = context(&mut host);
+        let (value, observation) = named::observe(&ctx).unwrap();
+        let service = ctx.service;
+        let mut receipt = reply(ctx, value, observation);
+        let mut state = state::tests::rumble_parameter_fixture();
+        match change {
+            0 => {
+                state["parameters"]["amp"]["__classid"] =
+                    json!("11111111-1111-4111-8111-111111111111");
+                host.parameter_state(state);
+            }
+            1 => {
+                state["parameters"]["amp"]["newName"] = json!("PRIVATE");
+                host.parameter_state(state);
+            }
+            2 => host.parameter_detach_document(),
+            3 => receipt.value["operation"] = json!("rumble_parameters_read"),
+            4 => receipt.value["schema"] = json!("rumble_controller_parameters_v1"),
+            _ => {
+                receipt.value["controllers"][0]["expected_names"][0] = json!("forgedName");
+                receipt.value["controllers"][0]["parameters"][0]["name"] = json!("forgedName");
+                assert!(named::valid_receipt(
+                    &json!(receipt.context.as_ref().unwrap().instance),
+                    &receipt.value
+                ));
+            }
+        }
+        assert!(!receipt.final_check(service));
+        assert_eq!(receipt.value, named::failure());
+        drop(receipt);
+    }
+}
+#[test]
+fn named_lazy_count_materialization_and_wrong_description_name_are_fatal() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for lazy in [false, true] {
+        let mut graph = Graph::new();
+        graph.parameter(0);
+        unsafe {
+            fake(graph.controllers[0]).count.set(0);
+            fake(graph.controllers[0]).materialize.set(lazy);
+        }
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        if !lazy {
+            let mut state = state::tests::rumble_parameter_fixture();
+            state["parameters"]["effect1"]
+                .as_object_mut()
+                .unwrap()
+                .remove("gain");
+            state["parameters"]["effect1"]["GAIN"] = json!(0);
+            host.parameter_state(state);
+            unsafe extern "C" fn any(p: *mut c_void, _: *const PlainCString) -> *mut c_void {
+                unsafe { fake(p).parameter.get() }
+            }
+            graph.tables[1][5] = any as *const c_void;
+        }
+        let ctx = named_context(&mut host, &mut graph);
+        assert!(named::observe(&ctx).is_err());
+        assert_no_indexed_lookup(&graph);
+        drop(ctx);
+        EMPTY_STRING.with(|s| s.set(ptr::null_mut()));
+    }
+}
+#[test]
+fn named_key_only_domain_accepts_future_nonnumeric_values_and_rejects_whole_bad_domains() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for case in 0..9 {
+        let graph = Graph::new();
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        let mut state = state::tests::rumble_parameter_fixture();
+        match case {
+            0 => {
+                state["parameters"]["amp"]["futureText"] =
+                    json!({"private":"SYNTHETIC_PRIVATE_STORED_VALUE"})
+            }
+            1 => state["parameters"]["amp"]["bad.path"] = json!(0),
+            2 => state["parameters"]["amp"]["1bad"] = json!(0),
+            3 => state["parameters"]["amp"]["한글"] = json!(0),
+            4 => state["parameters"]["amp"]["x".repeat(65)] = json!(0),
+            5 => {
+                for n in 0..65 {
+                    state["parameters"]["amp"][format!("n{n:02}")] = json!(0);
+                }
+            }
+            6 => {
+                for i in 0..5 {
+                    for n in 0..64 {
+                        state["parameters"][slot(i)][format!("n{n:02}")] = json!(0);
+                    }
+                }
+            }
+            7 => state["parameters"]["amp"]["x".repeat(64)] = json!(null),
+            _ => {
+                state["parameters"]["effect1"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("gain");
+                for i in 0..4 {
+                    for n in 0..64 {
+                        state["parameters"][slot(i)][format!("n{n:02}")] = json!(false);
+                    }
+                }
+            }
+        }
+        host.parameter_state(state);
+        let ctx = context(&mut host);
+        let result = named::observe(&ctx);
+        if matches!(case, 0 | 7 | 8) {
+            let (value, observation) = result.unwrap();
+            assert!(!value.to_string().contains("PRIVATE"));
+            assert_eq!(value["name_set_complete"], true);
+            if case == 8 {
+                assert_eq!(value["expected_name_count"], 256);
+            }
+            drop(observation);
+        } else {
+            assert!(result.is_err(), "case {case}");
+        }
+        assert_no_indexed_lookup(&graph);
+        drop(ctx);
+    }
+}
+#[test]
+fn named_trusted_none_policy_and_mode_mismatch_never_follow_output_discriminators() {
+    for retrieval in [Retrieval::Indexed, Retrieval::Named] {
+        for encode in [false, true] {
+            let mut reply = Reply::unbound(
+                json!({"ok":true,"operation":"forged","schema":"forged","controllers":[{"private":"PRIVATE"}]}),
+            );
+            reply.provider = Some(Provider::RumbleParameters {
+                retrieval,
+                observation: None,
+            });
+            if encode {
+                assert_eq!(
+                    serde_json::from_str::<Value>(&reply.encode()).unwrap(),
+                    retrieval.failure()
+                );
+            } else {
+                reply.invalidate("PRIVATE".into());
+                assert_eq!(reply.value, retrieval.failure());
+            }
+        }
+    }
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let graph = Graph::new();
+    let mut host = state::tests::rumble_parameter_host(graph.root);
+    let ctx = context(&mut host);
+    let (value, observation) = named::observe(&ctx).unwrap();
+    let service = ctx.service;
+    let mut reply = reply(ctx, value, observation);
+    if let Some(Provider::RumbleParameters { retrieval, .. }) = &mut reply.provider {
+        *retrieval = Retrieval::Indexed;
+    }
+    assert!(!reply.final_check(service));
+    assert_eq!(reply.value, failure());
+    drop(reply);
+}
+#[test]
+fn named_wire_validator_rejects_wrong_shapes_totals_names_precision_and_size() {
+    let (instance, indexed) = wire();
+    let mut rows = indexed["controllers"].as_array().unwrap().clone();
+    for (i, row) in rows.iter_mut().enumerate() {
+        let parameters = if i == 0 {
+            json!([{"name":"gain","status":"observed","description":project(&description()).unwrap()}])
+        } else {
+            json!([])
+        };
+        *row = json!({"slot":slot(i),"serialized_class_uid":row["serialized_class_uid"],"status":"present","parameter_count":0,"expected_names":if i==0 { json!(["gain"]) } else { json!([]) },"parameters":parameters});
+    }
+    let value = json!({"ok":true,"outcome":"observed","operation":"rumble_named_parameters_read","schema":"rumble_named_parameters_v1","instance":instance,"source":"component_alias_fixed_controllers","scope":"fixed_immediate_serialized_sibling_names","controllers":rows,"models_sha256":indexed["models_sha256"],"before_after_model_ids_equal":true,"before_after_name_sets_equal":true,"name_set_complete":true,"controller_counts_complete":true,"named_metadata_complete":true,"access_metadata_complete":true,"current_values_complete":true,"expected_name_count":1,"matched_name_count":1,"value_semantics":"sequential_snapshot","mutation_capability":false,"can_set_via_this_action":false,"selection_authority":false,"atomic_snapshot":false,"audio_verified":false,"persistence_verified":false});
+    assert!(named::valid_receipt(&instance, &value));
+    let mut at_limit = value.clone();
+    let size = at_limit.to_string().len();
+    at_limit["instance"]["object_id"] = json!("x".repeat(MAX_BYTES - size - 4));
+    let own_instance = at_limit["instance"].clone();
+    assert!(at_limit.to_string().len() <= MAX_BYTES);
+    let mut adapted = at_limit.clone();
+    adapted["plugin"] = json!("Rumble Native");
+    adapted["native_outcome"] = json!("observed");
+    assert!(adapted.to_string().len() > MAX_BYTES);
+    assert!(!named::valid_receipt(&own_instance, &at_limit));
+    let mut over_limit = at_limit.clone();
+    over_limit["instance"]["object_id"] = json!("é".repeat(MAX_BYTES));
+    let own_instance = over_limit["instance"].clone();
+    assert!(over_limit.to_string().len() > MAX_BYTES);
+    assert!(!named::valid_receipt(&own_instance, &over_limit));
+    for case in 0..10 {
+        let mut bad = value.clone();
+        match case {
+            0 => bad["extra"] = json!(true),
+            1 => bad["expected_name_count"] = json!(2),
+            2 => bad["matched_name_count"] = json!(0),
+            3 => bad["controllers"][0]["parameters"][0]["description"]["name"] = json!("wrong"),
+            4 => bad["controllers"][0]["expected_names"] = json!(["gain", "gain"]),
+            5 => {
+                bad["controllers"][0]["parameters"][0]["description"]["current"]["decimal"] =
+                    json!("9223372036854775808")
+            }
+            6 => {
+                bad["controllers"][0]["parameters"][0]["description"]["normalized"]["bits_hex"] =
+                    json!("7f800000")
+            }
+            7 => bad["named_metadata_complete"] = json!(false),
+            8 => {
+                bad["controllers"][0]["parameters"][0]["description"]["display"] = json!("PRIVATE")
+            }
+            _ => bad["instance"]["object_id"] = json!("x".repeat(MAX_BYTES)),
+        }
+        assert!(!named::valid_receipt(&instance, &bad), "case {case}");
+    }
+    let base = json!({"operation":"rumble_named_parameters_read","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+    assert!(
+        serde_json::from_value::<Request>(base.clone())
+            .unwrap()
+            .validate()
+            .is_ok()
+    );
+    for field in ["value", "source", "token", "name", "path", "script"] {
+        let mut bad = base.clone();
+        bad[field] = json!("PRIVATE");
+        assert!(serde_json::from_value::<Request>(bad).is_err());
+    }
+}
+
+#[test]
+fn named_empty_source_is_vacuous_only_with_all_present_controllers() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for absent in [false, true] {
+        let graph = Graph::new();
+        if absent {
+            unsafe {
+                fake(graph.root).children.borrow_mut().pop();
+            }
+        }
+        let mut host = state::tests::rumble_parameter_host(graph.root);
+        let mut state = state::tests::rumble_parameter_fixture();
+        state["parameters"]["effect1"]
+            .as_object_mut()
+            .unwrap()
+            .remove("gain");
+        host.parameter_state(state);
+        let ctx = context(&mut host);
+        let (value, observation) = named::observe(&ctx).unwrap();
+        assert_eq!(value["expected_name_count"], 0);
+        assert_eq!(value["matched_name_count"], 0);
+        assert_eq!(value["named_metadata_complete"], !absent);
+        assert_eq!(value["access_metadata_complete"], !absent);
+        assert_eq!(value["current_values_complete"], !absent);
+        assert!(
+            graph
+                .controllers
+                .iter()
+                .all(|p| unsafe { fake(*p).find_calls.get() } == 0)
+        );
+        assert_no_indexed_lookup(&graph);
+        drop(observation);
+        drop(ctx);
+    }
+}
+#[test]
+fn named_failed_description_retains_its_named_association_and_owner() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut graph = Graph::new();
+    graph.parameter(0);
+    unsafe {
+        fake(graph.controllers[0]).count.set(0);
+    }
+    let mut host = state::tests::rumble_parameter_host(graph.root);
+    let ctx = context(&mut host);
+    let (value, observation) = named::observe(&ctx).unwrap();
+    assert_eq!(
+        value["controllers"][0]["parameters"][0]["status"],
+        "description_unavailable"
+    );
+    assert_eq!(
+        value["controllers"][0]["parameters"][0]["description"],
+        Value::Null
+    );
+    assert_eq!(value["named_metadata_complete"], false);
+    observation.check(&ctx).unwrap();
+    unsafe {
+        fake(graph.controllers[0]).parameter.set(ptr::null_mut());
+    }
+    assert!(observation.check(&ctx).is_err());
+    assert_no_indexed_lookup(&graph);
+    drop(observation);
+    drop(ctx);
+}
+#[test]
+fn named_preflight_and_empty_capture_or_cleanup_leases_keep_trusted_failure_policy() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let graph = Graph::new();
+    let mut host = state::tests::rumble_parameter_host(graph.root);
+    let ctx = context(&mut host);
+    let mut result = dispatch(
+        ctx.service,
+        hold(ctx.target.0).unwrap(),
+        &json!({"operation":"rumble_named_parameters_read","expected_instance":"invalid"})
+            .to_string(),
+        None,
+        ctx.api,
+    );
+    assert_eq!(
+        serde_json::from_str::<Value>(&result.encode()).unwrap(),
+        named::failure()
+    );
+    let mut result=dispatch(ctx.service,hold(ctx.target.0).unwrap(),&json!({"operation":"rumble_named_parameters_read","expected_instance":ctx.instance.object_uid}).to_string(),Some(hold(graph.root).unwrap()),ctx.api);
+    assert_eq!(
+        serde_json::from_str::<Value>(&result.encode()).unwrap(),
+        named::failure()
+    );
+    drop(ctx);
+    for change in 0..3 {
+        let ctx = context(&mut host);
+        let service = ctx.service;
+        let (valid, observation) = named::observe(&ctx).unwrap();
+        drop(observation);
+        let mut receipt = Reply::unbound(valid);
+        receipt.provider = Some(Provider::RumbleParameters {
+            retrieval: Retrieval::Named,
+            observation: None,
+        });
+        receipt.context = Some(Box::new(ctx));
+        match change {
+            0 => {
+                assert!(!receipt.final_check(service));
+            }
+            1 => {
+                assert_eq!(
+                    serde_json::from_str::<Value>(&receipt.encode()).unwrap(),
+                    named::failure()
+                );
+            }
+            _ => {
+                receipt.invalidate("PRIVATE_CLEANUP".into());
+            }
+        }
+        assert_eq!(receipt.value, named::failure());
+        drop(receipt);
+    }
 }
