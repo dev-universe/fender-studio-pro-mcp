@@ -966,3 +966,10 @@ Native50 adds plugin_state action read_rumble_state for one complete direct26-mo
 
 
 The separate [Native50 R2 current-state witness](evidence/2026-11-14-rumble-current-state-native50-r2.json) completed19 requests in375.245 seconds. Two complete current26-ID/22-numeric projections matched every encoded bit and both independently recomputed hashes. Initial/finalDSP39, final context/isolation, fabricated-instance refusal and NoSave/owner/locks/ten-archive/MIDI closure passed. The saved3 numeric differences remain diagnostics and R1 remains failed. Initial editor content and final AX title were observed; final screenshot content was black, so no final header/graph equality is claimed. This verifies scoped current reads, not native parameter access, writes, model selection, whole-plugin state, audio or persistence. Next use the declared fixed child IController route and actual typed metadata before any setter.
+
+
+### Rumble native controller list observation
+
+Native51 adds the guarded read_rumble_parameters action without adding tools. The [actual23-request observation](evidence/2026-11-15-rumble-controller-empty-census-native51.json) completed in217.506 seconds. All26 fixed immediate controllers were present and returned count0, with equal independent empty lists. All22 serialized numeric settings remained present and stable but matched no native names. Completeness flags apply to these empty native lists. They do not establish plugin-wide parameter coverage or writable access.
+
+The before/after26-model and22-number observations, fullDSP39 pairs, final context, last fabricated-instance refusal and NoSave/owner/locks/ten-archive/MIDI closure passed. Final AX title was exact, while final screenshot content remained unavailable. No scalar, model, preset, load, transport, audio or Save claim is added. Named lookup through the separately declared findParameter interface remains a source investigation, and processing initialization is a separate unexecuted hypothesis.
