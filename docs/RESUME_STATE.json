@@ -607,7 +607,7 @@
     "new_preset_recall_restore_cases_scope": "77cases in40completedclasses,partial0; SampleOne issuedsingleton1of1/full235 exactOandP/fresh5222byteA/B/oneAload; MIDI/model/audio/Save separate"
   },
   "next_units_in_order": [
-    "SampleOne r62 singletonissuedsetting1of1 ROOTaccepted111DAQ; full235 exactO/P, fresh5222byteA/B, oneAload/monophone0to1seed/default1to0/seedrestore0, expectedreleasedcapabilityrefusals, RootUI/NoSave/appfalse/ownerEOF0/locks/saved10/MIDI0 complete. DoNOTrepeat. Fixed14of43complete29remain/software25/hardware4,presets40of46classes77cases6remain. Native54raw177=accepted169+oldnonadmitted8; historicalMCPpredispatch1 separate. OriginalR61failureimmutable. NextCONTROL-SCOPE effectobservable/correcttypedpulse readiness andSHARED-GRAPH exactfactoryowner typing; no apps/owners currentlyactive.",
+    "r63 Scope primary drawing readiness13 CLOSED and ROOTqualifiedaccepted: full31 exact, nativeJPEGcodecR2 prospectively admitted with no replay, twooriginalimages, inactiveC GUI/DSP mismatch preserved, RootNoSave/appfalse/immediateCUA/EOF0/hardwarebeforeps/locks/saved10/MIDI0. DoNOTrepeat. Native54raw190=accepted182+oldnonadmitted8; historicalMCPreject1 separate. Next Scope Retrigger source5f179c4 finalreview, Root cleanintegration/normalbuild/install asNative55, freshschema46/action5/state7 and separately frozenprimaryA waveform hold/onepulse refresh experiment. No silent-arming, wholeGUI or acquisition-memory restoration claim. Fixed14of43complete29remain,presets40of46/77.",
     "고정43개 중14개 완료·29개 잔여(부분24·미착수1·하드웨어4)다. 소프트웨어25개이며 기존 ID와 완료조건을 유지한다. 단위별 노력과 요청 수가 달라 전체 시간 비율로 쓰지 않는다.",
     "프리셋 설정40/46종·완료 종77사례·6종 잔여·부분0이다. SampleOne singletondefault1/1은 Native54 전체235 exactO/P·새5222바이트A/B·한load·수명·Root정리로 수용했다. 완료 Level/Tone/Scope/VU/Mojito/Repeater/Chorder/SampleOne 프리셋과 scalar sweep은 반복하지 않는다. 전체 Control/MIDI/모델/audio/Save는 별도다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -624,19 +624,19 @@
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases/partial0,6classesremaining;fixed43completed14remaining29;Native54raw177=accepted169+nonadmitted8,plus1historicalMCPpredispatch.",
   "binary_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
   "current_execution": {
-    "namespace": "r62",
-    "status": "closed_ROOT_accepted_SampleOne_issued_setting_singleton1of1",
-    "actual_DAQ": 111,
-    "readiness_DAQ": 18,
-    "continuation_DAQ": 93,
-    "expected_terminal_safe_refusals": 2,
+    "namespace": "r63",
+    "status": "closed_ROOT_accepted_PRIMARY_SCOPE_DRAWING_READINESS_ONLY",
+    "actual_DAQ": 13,
     "MCP_predispatch_rejections": 0,
     "unknown_outcomes": 0,
     "owner_stopped": true,
     "app_closed": true,
     "saved10_equal": true,
-    "preset_setting_case_accepted": true,
-    "whole_CONTROL_SAMPLEONE_accepted": false
+    "all31_native_exact": true,
+    "whole_GUI_match": false,
+    "inactive_C_mismatch_preserved": true,
+    "acquisition_or_effect_accepted": false,
+    "fixed_count_increment": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -668,10 +668,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "CONTROL-SCOPE effect-observable and typed pulse prerequisite, plus bounded graph owner-type analysis",
+      "next_finite_unit": "Integrate and normally install the reviewed Scope Retrigger action, then freeze separate primary effect plan",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        4,
-        6
+        5,
+        10
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -680,10 +680,10 @@
       ],
       "bookkeeping_overrun_reason": "underestimated reconciliation/report time while integrating and installing Level40; not new plugin scope"
     },
-    "next_finite_unit": "CONTROL-SCOPE effect-observable and typed pulse prerequisite, plus bounded graph owner-type analysis",
+    "next_finite_unit": "Integrate and normally install the reviewed Scope Retrigger action, then freeze separate primary effect plan",
     "next_finite_unit_preparation_and_runtime_minutes": [
-      4,
-      6
+      5,
+      10
     ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-10.md",
@@ -697,8 +697,8 @@
   "last_runtime_verified_native_unit": 54,
   "last_runtime_verified_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native54 SampleOne issued singleton default setting1of1",
-  "last_completed_live_elapsed_seconds": 331.676,
+  "last_completed_live_unit": "Native54 Scope primary drawing readiness13, qualified UI only",
+  "last_completed_live_elapsed_seconds": 1385.549,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2761,7 +2761,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T21:33:19.375188+00:00",
+  "latest_root_observation_at": "2026-11-14T22:32:04.715283+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -15089,7 +15089,7 @@
   "native46_runtime_actual_total_requests": 83,
   "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
-  "last_runtime_verified_scope": "SampleOne issued setting1of1, full235 O/P exact and new5222byte A/B afteroneAload, RootUI/lifecycle/NoSave/saved10. MIDIeffects/models/audio/Save/wholepluginremainunverified.",
+  "last_runtime_verified_scope": "Scope primary UI readiness13, full31 exact, two originalJPEGs, explicit inactive-C mismatch and RootNoSave/saved10. No Scope effect/acquisition or new action runtime proof.",
   "native46_level_settings_r1_failed": {
     "schema": 1,
     "status": "CLOSED_FAILED_POST_MODE_COUNT_GUARD_NO_RETRY_NO_INVERSE",
@@ -15651,7 +15651,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T21:33:19.375188+00:00",
+  "last_progress_update_utc": "2026-11-14T22:32:04.715283+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
@@ -17977,7 +17977,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native54 r62 SampleOne singleton111DAQ closed and accepted; priorR61 failed preserved",
+  "last_closed_runtime_unit": "Native54 r63 Scope readiness13 closed and qualified accepted; no effect or count increment",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18545,8 +18545,8 @@
     },
     "evidence": "docs/evidence/2026-11-15-compressor-minimum-reset-qualified-native54.json"
   },
-  "native54_raw_requests": 177,
-  "native54_accepted_completed_unit_requests": 169,
+  "native54_raw_requests": 190,
+  "native54_accepted_completed_unit_requests": 182,
   "native54_failed_or_nonadmitted_requests": 8,
   "native54_outcome_unknown_subset": 1,
   "compressor_minimum_reduction_next": {
@@ -18634,9 +18634,9 @@
   },
   "active_readonly_tracks": {
     "model_same_ID_overlay": "CLOSED_NO: exactpublicsource andactual8.1.1 matched Program1first andonlyexistingUser0/Shared2eligibleforhigherVersionreplacement. Do notstage/bumpversion/repeatthisoverlayinvestigation. MainProgramactualwarmrestoreverified. Officialsameversionartifactpath gate andprivateappstartupcallbackblock remain.",
-    "sampleone_singleton_recipe": "CLOSED_ROOT_ACCEPTED singleton1of1; no replay. Currentworker moves toCONTROL-SCOPE effectobservable/typedpulse readiness, no DAQ.",
+    "sampleone_singleton_recipe": "Source-only Scope Retrigger candidate5f179c4 completed with176/396/380 checks and old32-byte comparator unchanged. Root review/integration/install pending; no live request.",
     "shared_event": "Deferred untilcanonicalguiInput-role0 andmusicalreceiver/releaseack. Viewnotificationpath closedview-only. MusicEffectsProgramcheckpointactuallysaved; do not replaycompletedscalar/schedulednoteunits.",
-    "graph_factory_owner": "Actual unqueried owner helpers and officialActionContext/ActionJournal source matched; genericfactory+4a8 andgraphboundowner remainunresolved. Latestboundedowner-type unit2bodies/2incompletestaticreads closed; reuse evidence, no duplicatequeries."
+    "graph_factory_owner": "Bounded graph units closed with exactsource IActionContext/getActionJournal/IActionExecuter and RootComponent-like constructor attribution; graph-boundfactory/owner/endpoints unresolved. No extra engine active. Completed7-action name audit admits0 names; do not replaycompleted actions justtoforce transient button current."
   },
   "model_policy_and_sampleone_readiness": {
     "schema": 1,
@@ -18962,5 +18962,182 @@
     "Scope_retrigger_not_registered_in_Native54": true,
     "Scope_editor_readiness_plan13_preparation": true,
     "Multi_root150_not_entire_nested_restore": true
+  },
+  "native54_active_scope_readiness_requests": 0,
+  "native54_scope_primary_editor_qualified": {
+    "schema": 1,
+    "date": "2026-11-15",
+    "status": "ROOT_ACCEPTS_PRIMARY_SCOPE_DRAWING_READINESS_ONLY",
+    "app_version": "8.1.1 Build 113103",
+    "native_unit": 54,
+    "product_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+    "actual_DAQ": 13,
+    "MCP_predispatch_rejections": 0,
+    "unknown_outcomes": 0,
+    "metadata_prewrite_records": 3,
+    "Main_volume0_preparations": 1,
+    "editor_open_requests": 1,
+    "Scope_parameter_writes": 0,
+    "Tone_or_trigger_requests": 0,
+    "preset_state_transport_Save_requests": 0,
+    "whole31_observations": 3,
+    "all31_current_metadata_and_unknown_fields_exact": true,
+    "fresh_document_session_instance_bracketing": true,
+    "original_images": {
+      "count": 2,
+      "format": "jpeg",
+      "width": 1510,
+      "height": 1442,
+      "canvas_rect": [
+        17,
+        214,
+        982,
+        1138
+      ],
+      "byte_count_each": 325567,
+      "sha256_each": "65d42cbc17ff47043e8690fba8103bde370373b954cad63e64a0c694215cd2da",
+      "byte_equal_static_appearance_only": true,
+      "capture_order": "editor12 receipt, image1, provider13 receipt, image2, session14 send"
+    },
+    "R1_PNG_assumption_and_erroneous_dimensions_preserved": true,
+    "R2_original_PNG_JPEG_support_admitted_before13": true,
+    "request_plan_unchanged_and_no_replay": true,
+    "primary_control_match_scope": [
+      "showPrimary",
+      "primarySrc",
+      "levelScale",
+      "levelOff",
+      "timeScale",
+      "timeOff",
+      "trigChannel",
+      "trigLevel",
+      "trigHold",
+      "trigFlank",
+      "trigTransients",
+      "trigOneshot",
+      "trigRetrig"
+    ],
+    "all_visible_GUI_provider_texts_match": false,
+    "inactive_C": {
+      "GUI_label": "Main Right",
+      "DSP_name": "thirdSrc",
+      "DSP_raw": 2,
+      "DSP_text": "Side Left",
+      "showThird": 0,
+      "skin_selector_name": "srcchan3",
+      "controller_to_DSP_mapping_and_cause_verified": false
+    },
+    "acquisition_or_trigger_effect_verified": false,
+    "direct_armed_or_completion_flag_verified": false,
+    "whole_CONTROL_SCOPE_completed": false,
+    "Root_NoSave_and_appfalse_immediate_CUA": true,
+    "Scope_editor_closed_before_NoSave": true,
+    "owner_EOF_exit_code": 0,
+    "hardware_completed_before_process_check": true,
+    "two_locks_reacquired_released": true,
+    "saved_archives_unchanged": 10,
+    "MIDI_before_after0": true,
+    "source177_artifacts13_exact": true,
+    "elapsed_seconds": {
+      "preflight_start_to_closure": 1385.549,
+      "first_DAQ_through_closure": 1108.472,
+      "independent_acceptance_review": 147.54,
+      "R2_codec_preparation": 218.733,
+      "R2_codec_review": 104.499,
+      "primary_UI_qualification": 85.754
+    },
+    "evidence_sha256": {
+      "intents": "54e11049ad3b6e9fa49cb25d5a21cf281b2aaeede62698defadebd4874369918",
+      "original_response_journal": "0534e4d146026f3bc5774e7a35456ef664e48721de5f62e7fa274f50349c902f",
+      "original_closure": "c94a517fab58e2f4b6e04e84de06e5b4ff0df1f0a4a539f9cacb7627fb5dcb85",
+      "bound_UI": "fdfca70e99e83e57f51ca16ad85d1ae069e67906d36028a53eb474d6f9d6513f",
+      "independent_acceptance_report": "0b044d0dd225e015797b0dda200af6b9755dcbd2a588eddd0520c49e3506b4ca",
+      "Root_decision": "06147b6c5afa48204a46c2d68864970e1a4dd1a53311013b8e3a0b77a6ff30e9",
+      "primary_qualification_report": "e596c81e7277770170916277390b49d746985d7e95cb04293739863500cb110f",
+      "skin_binding_report": "b3485c2c1d1b3dae22b62fa4794898d461bdcf67f7a122acafcd1d70a85c4ae8"
+    },
+    "fixed_counts": {
+      "completed": 14,
+      "remaining": 29,
+      "baseline": 43,
+      "hardware_blocked": 4
+    },
+    "limitations": [
+      "Primary drawing readiness only; no waveform acquisition, hold or Retrigger effect is accepted.",
+      "All31 native settings compare exactly; GUI/provider text equivalence is explicitly false.",
+      "The inactive C selector name is known, but its relationship to thirdSrc and dynamic list remains unresolved.",
+      "No product or runtime version changed in this actual unit."
+    ]
+  },
+  "completed_action_name_reuse": {
+    "schema": 1,
+    "date": "2026-11-15",
+    "scope": "READ_ONLY_REUSE_AUDIT_NO_NEW_ADMISSIONS",
+    "candidate_count": 7,
+    "eligible_current_value_name_additions": 0,
+    "existing_accepted_names": 6866,
+    "inventory_names": 7112,
+    "remaining_names": 246,
+    "candidate_tuples": [
+      [
+        "831A0046-BD71-45BF-A419-6FC90D6E9F2F",
+        "dsp",
+        "swapfreqs"
+      ],
+      [
+        "132C0E1F-06FD-4C96-BD65-678C04FE1C92",
+        "dsp",
+        "swapfreqs"
+      ],
+      [
+        "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
+        "dsp",
+        "studiocomp.swapfreqs"
+      ],
+      [
+        "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
+        "dsp",
+        "studiocomp.resetmin"
+      ],
+      [
+        "61B18D53-26FA-4220-8614-89944A1990EC",
+        "dsp",
+        "resetmin"
+      ],
+      [
+        "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+        "dsp",
+        "resethold"
+      ],
+      [
+        "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+        "dsp",
+        "resetloudness"
+      ]
+    ],
+    "candidate_intersection_accepted6866": 0,
+    "candidate_intersection_remaining246": 7,
+    "independent_own_button_values_did_not_change": true,
+    "internal_pulses_or_other_meter_filter_effects_not_scalar_current_value_pairs": true,
+    "prior_action_effect_acceptance_not_reversed": true,
+    "completed_same_sweeps_not_replayed": true,
+    "new_DAQ": 0,
+    "fixed_count_increment": 0,
+    "report_sha256": "00c44e08fa98ce2e15bd8c68f7b2f8a6c200f850d6c49a3c6dd9244c50732ef5",
+    "matrix_sha256": "66bea2c6214c43ef89035fd89001d6640d09de55c14581c3101f9344aa62cacb"
+  },
+  "scope_retrigger_candidate": {
+    "source_commit": "5f179c424fcff89f69892154f9828d6cb243bf4c",
+    "status": "source_commit_final_review_then_Root_integration_normal_build_install",
+    "new_action": "retrigger_scope",
+    "candidate_actions": 5,
+    "candidate_tools": 46,
+    "candidate_state_actions": 7,
+    "main_tests": 176,
+    "native_tests": 396,
+    "Node_tests": 380,
+    "shared_pulse_tests": 10,
+    "old_four_action32_result_bytes_and_hash_unchanged": true,
+    "installed_or_actual_effect_verified": false
   }
 }

@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 최신 실제 단위는 Native54 Scope의 기본 A 파형 표시 준비13요청이다. 전체31개 전후 정확 일치·두 원본 JPEG·정상 NoSave/owner0/저장10/MIDI0을 독립 수용했다.1385.549초이며 codec·GUI 차이 검토를 포함한다. 비활성 C의 GUI/DSP 표시 차이는 유지하고 전체 GUI 일치·acquisition/effect는 false다. 앱과 owner는 종료됐다. 고정14/43완료29잔여·프리셋40/46종77사례 유지다. 다음은 Retrigger 코드5f179c4의 최종 소스 검토·통합·정상 Native55 설치와 별도 기본 A 효과 실험이며, 아래 r63진행 중 문장은 이력이다.
+
 - 최신 수용은 Native54 SampleOne singleton default 대표1/1이다.111요청·후속 실기/정리331.676초, 전체235 exact O/P 복원·새5222바이트 A/B 동일·실제 UI·수명·NoSave/appfalse/owner0/잠금/저장10/MIDI0과 독립 감사를 통과했다. 고정14/43완료29잔여·프리셋40/46종77사례·6종 잔여다. 앱과 owner는 종료 상태다. CONTROL-SAMPLEONE의 MIDI/모델/샘플과 전체 플러그인 완료는 별도이며 이 대표 사례와 기존 실패 R61을 재실행하지 않는다. 다음은 CONTROL-SCOPE 효과 관측 준비와 그래프 factory owner 경계 조사다. 아래 진행 중 r62 문장은 이력이다.
 
 - 현재 r62 SampleOne 준비18요청이 통과했고 앱과 owner는 후속 절차를 위해 열려 있다. 새 UID 확인 뒤 실제 UI의 입력 없음·Music mute1·record0·monitor0, 연결된 오디오 mute1·Main0·정지·빈 트랙을 확인했다. 전체235개 한 관찰이 완전하며 plugin쓰기/preset/capture/load0·catalog 미발급이다. 시작 준비부터811.644초다. 후속21번 이후의 독립 P·프리셋 변화·한 load 전체 복원·B·수명·최종 P는 별도 준비 및 검토 중이다. 고정13/43완료30잔여·프리셋39/46종76사례 유지다. 아래 R1 실패는 보존하며 재실행하지 않는다. 실제 연결이 끊겼으면 이 세션을 재사용하지 말고 최신 상태와 증거를 먼저 대조한다.
