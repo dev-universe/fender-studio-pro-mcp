@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "status": "FAILED_VERIFIER_SCHEMA_ASSUMPTION_AFTER_TONE_LEVEL_BEFORE_SIGNAL",
+  "source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+  "native_unit": 53,
+  "elapsed_seconds": 234.937,
+  "planned_DAQ": 48,
+  "actual_DAQ": 19,
+  "accepted_completed_unit_DAQ": 0,
+  "failed_or_nonadmitted_DAQ": 19,
+  "last_RPC": 21,
+  "first_unexecuted_RPC": 22,
+  "actual_setter_contract": {
+    "outer_outcome": "applied_verified",
+    "native_verified": true,
+    "result_keys": [
+      "after",
+      "before",
+      "channel",
+      "instance",
+      "native_verified",
+      "param",
+      "plugin",
+      "slot",
+      "source"
+    ],
+    "before_bits": "40BBE6DB78E00000",
+    "after_bits": "40C3880000000000",
+    "incorrect_verifier_field": "result.verified",
+    "source_location": "assets/bridge/BridgeComponent.js:945",
+    "implementation_error_proved": false
+  },
+  "mutations": {
+    "new_unsaved_Audio_track": 1,
+    "Tone_added": 1,
+    "Tone_level_setters": 1,
+    "ToneOn_requests": 0,
+    "ToneOff_requests": 0,
+    "Limiter_added": 0,
+    "reset_pulses": 0,
+    "preset_or_state_load_or_Save": 0
+  },
+  "closure": {
+    "owned_Scratch_NoSave": true,
+    "CUA_app_open": false,
+    "owner_EOF_exit_code": 0,
+    "hardware_then_process_checks_sequential": true,
+    "no_relevant_processes": true,
+    "two_locks_reacquired_released": true,
+    "saved_files_unchanged": 10,
+    "MIDI_sources_destinations_before_after": 0
+  },
+  "evidence_pins": {
+    "original_setter_RPC21": "8d1eadd96be646773b21bee70edd9f0eafb4695997c0e47fdb98271e4c417e91",
+    "original_intents": "a45080377bdc605a013d0a99df21ecd8acbf5b2c076969dbc30e5f8b0b31f076",
+    "original_stdout": "3932f79ce87fc1325e5b3280bd4037c93ea61529dc44116a5bc9f3cb4417a47d",
+    "closure": "a0e6debf29677c2e296f096569b2396d74511aa53ec35a30e9972f100b332654",
+    "saved10_after": "910be246841c287fe54d3b0045e5ea3074cb6e108a93d19caa95bbe99c32d8c8"
+  },
+  "next": "Separate R3 verifier requires actual native_verified true and outer applied_verified with exact bridge result keys/identity/metadata. Audit all remaining reply types against current source and historical actual receipts before live execution. R1/R2 preserved.",
+  "accounting": {
+    "Native53_raw_requests": 37,
+    "Native53_accepted_completed_unit_requests": 0,
+    "Native53_failed_or_nonadmitted_requests": 37,
+    "fixed_total": 43,
+    "fixed_complete": 11,
+    "remaining": 32,
+    "hardware_blocked": 4
+  }
+}
