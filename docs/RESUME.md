@@ -25,7 +25,7 @@
 - [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중3개 완료·40개 잔여다. 부분35·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.
 - 최신 Room index1은1435.281초·실제 DAW40회·별도 MCP 입력 거부2회였다. 쓰기16개와 전체19개 metadata, 서로 다른 fresh A/B725바이트 일치를 확인했다. readonly2/전체19 current와 프리셋 표시 이름 복원은 false다. index0과 이번 index1은 반복하지 않는다.
 - Level은 Native43 초기화 두 효과, Native44 controller8/25, Native45 전체33 typed descriptor/current/owner 읽기를 완료했다. Native46은 정확히6개 설정만 기존 파라미터 API의 `source:"level_meter"`로 제공한다. 테스트 main149/native321/JavaScript335 및 정상 빌드·설치는 통과했지만 여섯 설정의 실제 쓰기는 아직 미검증이다. 측정값·메뉴·명령에는 새 쓰기 권한이 없다.
-- 다음은 새 폐기용 Level 인스턴스에서6개 설정의 실제 choices/변경/읽기/정확한 복원을 확인하는 유한 단위다. 완료한 초기화와33개 열거를 반복하지 않는다.
+- 최신 Level R1은296.194초·21요청 뒤 첫 mode 변경의 count25→23에서 unknown으로 중단했다. UI EBU R128/readonly23은 관측했고 재시도·역변경 없이 NoSave/owner EOF/저장6을 보존했다. 쓰기·복원 수용0이다. 다음은 모드별 count 전환 가드의 제한 수정과 새 문맥R2 검증이다. 완료한 초기화와33개 열거를 반복하지 않는다.
 - Root가 최신 Room 문서를 저장하지 않고 종료했다. 앱·owner 부재, 저장본6개 해시 동일, 사후 MIDI0/0과 pending mutation0을 확인했다. 두 하드웨어 장치는 분리 상태다.
 - 전체 종료 시각은 미정이다. 단위 완료마다 실제 시간·체크리스트·완료/잔여와 다음 유한 단위 ETA를 보고한다. 구체적 다음 순서는 `RESUME_STATE.json`을 따른다.
 
