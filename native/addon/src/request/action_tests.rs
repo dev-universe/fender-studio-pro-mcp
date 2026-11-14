@@ -428,13 +428,34 @@ fn meter_resets_are_bounded_pulses_from_either_binary_value_without_effect_verif
 }
 
 #[test]
-fn meter_reset_rejects_wrong_index_tag_and_native_name_before_writes() {
+fn meter_reset_uses_named_binding_when_direct_controller_order_differs_from_dsp_metadata() {
     for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
-        for changed in 0..3 {
+        let fixture = Fixture::meter(action);
+        fixture.lookup.index.set(3);
+        let provider = fixture.provider();
+        let (value, lease) = fixture.run_action(&provider, action);
+        assert_eq!(value["outcome"], "applied_unverified");
+        assert_eq!(value["verified"], false);
+        assert_eq!(value["effects_verified"], false);
+        assert_eq!(value["effect_parameters"], json!([]));
+        assert_eq!(value["upper_dispatched"], true);
+        assert_eq!(value["reset_dispatched"], true);
+        assert_eq!(
+            &*fixture.parameter.writes.borrow(),
+            &[(1, true), (0, false)]
+        );
+        drop(lease);
+        drop(provider);
+    }
+}
+
+#[test]
+fn meter_reset_rejects_wrong_tag_and_native_name_before_writes() {
+    for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
+        for changed in 0..2 {
             let fixture = Fixture::meter(action);
             match changed {
-                0 => fixture.lookup.index.set(3),
-                1 => fixture.parameter.tag.set(17),
+                0 => fixture.parameter.tag.set(17),
                 _ => fixture.parameter.name.set(&NAME),
             }
             let provider = fixture.provider();
@@ -886,43 +907,62 @@ fn common_context_reentry_cannot_publish_a_stale_action_owner() {
 }
 
 #[test]
-fn meter_reset_name_drift_during_guards_stops_further_writes() {
+fn meter_reset_binding_drift_during_guards_stops_further_writes() {
     for action in [Action::ResetMeterHold, Action::ResetMeterLoudness] {
-        for after_upper in [false, true] {
-            let fixture = Fixture::meter(action);
-            let provider = fixture.provider();
-            let (value, lease) = run(
-                provider.scalar().unwrap(),
-                &api_mock(),
-                action,
-                registered("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", action).unwrap(),
-                &mut || {
-                    if if after_upper {
-                        !fixture.parameter.writes.borrow().is_empty()
+        for changed in 0..5 {
+            for after_upper in [false, true] {
+                let fixture = Fixture::meter(action);
+                let owner = Fixture::new();
+                fixture.parameter.owner.set(owner.pointer());
+                let provider = fixture.provider();
+                let (value, lease) = run(
+                    provider.scalar().unwrap(),
+                    &api_mock(),
+                    action,
+                    registered("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", action).unwrap(),
+                    &mut || {
+                        if if after_upper {
+                            !fixture.parameter.writes.borrow().is_empty()
+                        } else {
+                            fixture.parameter.value_reads.get() >= 2
+                        } {
+                            match changed {
+                                0 => fixture.parameter.name.set(&NAME),
+                                1 => fixture.parameter.tag.set(17),
+                                2 => fixture.lookup.parameter.set(ptr::null_mut()),
+                                3 => fixture.parameter.owner.set(ptr::null_mut()),
+                                _ => fixture.parameter.context.set(false),
+                            }
+                        }
+                        fixture
+                            .parameter
+                            .context
+                            .get()
+                            .then_some(())
+                            .ok_or_else(|| "synthetic context changed".into())
+                    },
+                );
+                assert_eq!(
+                    value["outcome"],
+                    if after_upper {
+                        "unknown"
                     } else {
-                        fixture.parameter.value_reads.get() >= 2
-                    } {
-                        fixture.parameter.name.set(&NAME);
+                        "not_applied"
                     }
-                    Ok(())
-                },
-            );
-            assert_eq!(
-                value["outcome"],
-                if after_upper {
-                    "unknown"
-                } else {
-                    "not_applied"
-                }
-            );
-            assert_eq!(value["upper_dispatched"], after_upper);
-            assert_eq!(
-                fixture.parameter.writes.borrow().len(),
-                usize::from(after_upper)
-            );
-            assert!(lease.is_some());
-            drop(lease);
-            drop(provider);
+                );
+                assert_eq!(value["upper_dispatched"], after_upper);
+                assert_eq!(value["reset_dispatched"], false);
+                assert_eq!(value["effects_verified"], false);
+                assert_eq!(value["verified"], false);
+                assert_eq!(
+                    fixture.parameter.writes.borrow().len(),
+                    usize::from(after_upper)
+                );
+                assert!(owner.parameter.refs.get() > 1);
+                assert!(lease.is_some());
+                drop(lease);
+                drop(provider);
+            }
         }
     }
 }

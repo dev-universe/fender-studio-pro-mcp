@@ -21,7 +21,7 @@ impl Action {
 struct Spec {
     parameter: &'static CStr,
     effects: &'static [&'static str],
-    binding: Option<(u32, i32)>,
+    expected_tag: Option<i32>,
 }
 fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
     match (class_uid, action) {
@@ -31,7 +31,7 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
         ) => Ok(Spec {
             parameter: c"swapfreqs",
             effects: &["filterlow", "filterhigh"],
-            binding: None,
+            expected_tag: None,
         }),
         ("36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B", Action::SwapFilterFrequencies) => Ok(Spec {
             parameter: c"studiocomp.swapfreqs",
@@ -39,17 +39,17 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
                 "studiocomp.sidechainfreqlow",
                 "studiocomp.sidechainfreqhigh",
             ],
-            binding: None,
+            expected_tag: None,
         }),
         ("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", Action::ResetMeterHold) => Ok(Spec {
             parameter: c"resethold",
             effects: &[],
-            binding: Some((2, 1383298120)),
+            expected_tag: Some(1383298120),
         }),
         ("DF958D90-0196-434F-ADC3-1FC2BB7F4AF6", Action::ResetMeterLoudness) => Ok(Spec {
             parameter: c"resetloudness",
             effects: &[],
-            binding: Some((4, 1383298124)),
+            expected_tag: Some(1383298124),
         }),
         _ => Err("button action is not registered for this exact native class".into()),
     }
@@ -59,7 +59,7 @@ pub(super) struct ActionLease {
     parameter: RawParameter,
     owner: Option<parameters::ControllerOwner>,
     name: &'static CStr,
-    binding: Option<(u32, i32)>,
+    expected_tag: Option<i32>,
 }
 impl ActionLease {
     fn capture<G: FnMut() -> Result<(), String>>(
@@ -72,7 +72,7 @@ impl ActionLease {
                 parameter,
                 owner,
                 name: spec.parameter,
-                binding: spec.binding,
+                expected_tag: spec.expected_tag,
             }),
             Err(error) => {
                 let before = guard();
@@ -118,14 +118,11 @@ impl ActionLease {
         if current != self.parameter.as_borrowed_raw().as_ptr() || current_owner != expected_owner {
             return Err("registered button parameter binding changed".into());
         }
-        if let Some((index, expected_tag)) = self.binding {
-            let at: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
-                unsafe { method(controller.handle.0, 4) };
+        if let Some(expected_tag) = self.expected_tag {
             let get_tag: unsafe extern "C" fn(*mut c_void) -> i32 = unsafe { method(current, 13) };
-            let indexed = unsafe { at(controller.handle.0, index as i32) };
             let tag = unsafe { get_tag(current) };
-            if indexed != current || tag != expected_tag {
-                return Err("registered meter reset index or tag changed".into());
+            if tag != expected_tag {
+                return Err("registered meter reset tag changed".into());
             }
             let get_name: unsafe extern "C" fn(*mut c_void) -> *const PlainCString =
                 unsafe { method(current, 4) };
@@ -167,7 +164,7 @@ pub(super) fn execute(
         Ok(spec) => spec,
         Err(reason) => return (refused(action, "unregistered_action", &reason), None),
     };
-    if spec.binding.is_some() && ctx.instance.native_class != "AudioEffect" {
+    if spec.expected_tag.is_some() && ctx.instance.native_class != "AudioEffect" {
         return (
             refused(
                 action,

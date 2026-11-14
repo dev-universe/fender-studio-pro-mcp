@@ -201,8 +201,12 @@ the pulse or completes a reset after an earlier failure.
 
 The Level Meter actions require exact class
 `DF958D90-0196-434F-ADC3-1FC2BB7F4AF6`, native class `AudioEffect` and direct DSP
-access. `reset_meter_hold` binds `resethold` at index 2, tag 1383298120.
-`reset_meter_loudness` binds `resetloudness` at index 4, tag 1383298124. Both require
+access. `reset_meter_hold` binds the canonical name `resethold` and tag 1383298120.
+`reset_meter_loudness` binds `resetloudness` and tag 1383298124. DSP metadata reports
+indices 2 and 4, respectively. These indices describe DSP metadata order and do
+not identify positions in the separate direct controller. Each action resolves
+its canonical name through that controller and retains the exact parameter and
+controller association. The native name and tag must still match. Both require
 a writable Toggle with range 0..1 and current value 0 or 1. Both send the bounded
 maximum/update=true, then minimum/update=false pulse. Their `effect_parameters` array is empty
 because the exposed provider has no hold or integrated-loudness accumulator
