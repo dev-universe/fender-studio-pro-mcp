@@ -34,7 +34,7 @@
 |PRESET-TONEGEN|Tone Generator|완료|서로다른 Pink index3/White index5 각40요청,6값 변화·전체10 exact 복원·fresh371byte A/B 동일·수명/Root정리 확인. Main/대상0·mute1·입력없음·stopped 유지|완료: 대표설정2/2 범위. 표시이름복원false, 전체6프리셋·audio·물리무음·Save·전체plugin은 별도. 두 사례를 반복하지 않는다.|
 |PRESET-AMPIRE|Ampire|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-PEDALBOARD|Pedalboard|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-RUMBLE|Rumble Native|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-RUMBLE|Rumble Native|부분 완료|기존111개 issued catalog 수명과 Native48의18요청·314.470초로3653바이트 capture/release·전체39값/metadata 안정성·Root정리를 확인. preset apply/load와 내부 모델 identity는 미검증|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-VUMETER|VU Meter|완료|서로 다른 Cosy Master index1/Fast Detection index2 각39요청. sens/scale 실제 변화·각전체11값/metadata 정확 복원·새131바이트 A/B 동일·수명/Root정리 완료|완료: 대표설정2/2 범위. readonly 직렬화·프리셋 표시이름 원복·전체plugin/audio/Save는 별도 미검증. 두 사례 반복 금지.|
 |PRESET-MULTI|Multi Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|

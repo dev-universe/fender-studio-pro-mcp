@@ -142,10 +142,11 @@
       "title": "Rumble Native",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음",
+      "actually_verified": "기존 issued111catalog 수명과 Native48새18DAQ/314.470s의3653byte aliascapture/release·전체39current/metadata 안정성·Root정리 확인. 실제presetapply/load/modelidentity는미검증.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "capture_readiness_evidence": "docs/evidence/2026-11-14-rumble-capture-readiness-native48.json"
     },
     {
       "id": "PRESET-VUMETER",

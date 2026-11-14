@@ -948,3 +948,6 @@ Chorder Major R2의 [새 수용 증거](evidence/2026-11-14-chorder-preset-index
 
 
 Chorder Minor index1도 [두 번째 실제 증거](evidence/2026-11-14-chorder-preset-index1-native48.json)의153요청·510.260초로 수용했다. Major와 다른 전체 모델 해시, 다섯908쌍과128모델, 한 load의 원복·새581바이트 A/B·수명·최종 거부·정리를 통과했다. PRESET-CHORDER2/2 완료로 현재39/46종·76사례·7종 잔여, 고정11/43개 완료·32잔여다. 표시 이름 원복false와 audio/새 Save 미검증은 유지한다.
+
+
+Rumble의 [capture-only 확인](evidence/2026-11-14-rumble-capture-readiness-native48.json)은18요청·314.470초다.3653바이트 alias IStorable capture/release와 전체39개 typed current/metadata 전후 안정성을 실제8.1.1에서 확인했다. 프리셋·모델·scalar·load0회이며 byteformat/internal26processoridentity/load/audio/persistence는 미검증이다. 이 가용성 확인으로 프리셋이나 고정 완료 수를 늘리지 않는다. 다음은 raw 데이터 없는 exact-class 구조 관찰이다.
