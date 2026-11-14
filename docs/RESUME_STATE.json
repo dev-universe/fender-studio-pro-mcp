@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Reuse immutable completed Native52 negative observations and existing product4a6e115/Native52. Next fresh22DAQ private-app read readiness using the frozen plan22, current independent schemas, fresh FSP_APP before catalog, normal profile and actual exact Studio Pro executable path. Verify original4086files21links unchanged, private signatures/code/data/UUID and source176/artifact13 pins, then ordinary launch. Read current DSP page pair/named13-14/indexed15-16/optionalstate17/finalpages18-19/context20-23/fakeUID24LAST. No old39/22/modelGUID baseline gate. Main0 only safety scalar. No targetmute/scalar/model/preset/load/transport/Save. Preserve unexpected outcomes and stop DAQ; Root NoSave/appfalse/ownerEOF0/sequential hardwarethenps/twolocks/saved10/MIDI0. Earlier mute-wake36 plan remains unexecuted and deferred after actual same-run missing-signature loader evidence. No original-app or security/account/license changes. Model/control/audio/runtime success still unknown.",
+    "Private-copy readiness r54 closed STARTUP_BLOCKED before Song/DAQ0. Exact microphone authorization completion pending loop grounded; existing Studio Pro mic toggle on, no permission/security change. Original same8.1.1 normal start and GUIquit r55 comparison closedDAQ0. Preserve both outcomes and fixedcounts. Private22 and mute36 remain unexecuted. Need official same-version artifact/modelmodule comparison or operator-resolved normal private readiness, never TCC reset/security bypass/manualcallback/loop patch. Meanwhile continue original-app remaining software controls, next bounded Limiter resetmin source/effect grounding. Root actual DAW serial, source176/artifact13 revalidate and fresh runtime/ownedScratch/Main0/context before any new live unit; reuse immutable completed evidence.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -2777,7 +2777,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T17:21:36.055576+00:00",
+  "latest_root_observation_at": "2026-11-14T17:31:28.278087+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -17926,7 +17926,7 @@
     "latest_status": "deferred_unexecuted36_after_same_run_loader_signature_failure"
   },
   "private_model_loader_readiness": {
-    "status": "static_private_copy_review_passed_fresh_runtime_pending",
+    "status": "private_startup_blocked_before_DAQ_original_normal_start_confirmed",
     "same_run_native52_log_missing_signature_confirmed": true,
     "original_app_modified": false,
     "original_file_count": 4086,
@@ -17946,6 +17946,14 @@
     "public_progress": "docs/PROGRESS_2026-11-15.md",
     "private_plan": "private-fender-readiness-prep-r1/plan22.json",
     "plan_sha256": "998d2a9fd0d03c3c1fd74bd62f6b023112bde625dc3304d9362c506216054cb1",
-    "process_filter_correction": "Actual executable basename Studio Pro; historical Studio Pro 8 suffix did not cover main process. Historical CUA appfalse remains separate evidence."
+    "process_filter_correction": "Actual executable basename Studio Pro; historical Studio Pro 8 suffix did not cover main process. Historical CUA appfalse remains separate evidence.",
+    "private_run_elapsed_seconds": 292.748,
+    "original_comparison_elapsed_seconds": 89.879,
+    "existing_mic_toggle_on": true,
+    "permission_settings_changed": false,
+    "missing_permission_callback_cause": "unknown",
+    "original_app_4086_after_equal": true,
+    "private_22_unexecuted": true,
+    "public_evidence": "docs/evidence/2026-11-15-private-app-startup-block-native52.json"
   }
 }
