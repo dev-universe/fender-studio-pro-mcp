@@ -26,6 +26,10 @@ const RESET_MIN: PlainCString = PlainCString {
     text: c"resetmin".as_ptr(),
     owner: ptr::null_mut(),
 };
+const COMPRESSOR_RESET_MIN: PlainCString = PlainCString {
+    text: c"studiocomp.resetmin".as_ptr(),
+    owner: ptr::null_mut(),
+};
 const VALUE: PlainCString = PlainCString {
     text: c"value".as_ptr(),
     owner: ptr::null_mut(),
@@ -185,7 +189,7 @@ unsafe extern "C" fn find(p: *mut c_void, name: *const PlainCString) -> *mut c_v
     let f = unsafe { &*p.cast::<Lookup>() };
     f.find_calls.set(f.find_calls.get() + 1);
     assert!(
-        matches!(unsafe{CStr::from_ptr((*name).text)},n if n==c"swapfreqs" || n==c"studiocomp.swapfreqs" || n==c"resethold" || n==c"resetloudness" || n==c"resetmin")
+        matches!(unsafe{CStr::from_ptr((*name).text)},n if n==c"swapfreqs" || n==c"studiocomp.swapfreqs" || n==c"resethold" || n==c"resetloudness" || n==c"resetmin" || n==c"studiocomp.resetmin")
     );
     let result = f.parameter.get();
     if let Some(owner) = f.owner_on_find.take() {
@@ -235,6 +239,7 @@ struct Fixture {
     _parameter_table: Box<[*const c_void; 22]>,
     _object_table: Box<[*const c_void; 5]>,
     _lookup_table: Box<[*const c_void; 6]>,
+    compressor: Cell<bool>,
 }
 impl Fixture {
     fn new() -> Self {
@@ -299,6 +304,7 @@ impl Fixture {
             _parameter_table: pt,
             _object_table: ot,
             _lookup_table: lt,
+            compressor: Cell::new(false),
         }
     }
     fn pointer(&self) -> *mut c_void {
@@ -321,6 +327,8 @@ impl Fixture {
             registered(
                 if action == Action::SwapFilterFrequencies {
                     "831A0046-BD71-45BF-A419-6FC90D6E9F2F"
+                } else if self.compressor.get() {
+                    "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B"
                 } else if action == Action::ResetMinimumReduction {
                     "61B18D53-26FA-4220-8614-89944A1990EC"
                 } else {
@@ -337,6 +345,16 @@ impl Fixture {
                     .ok_or_else(|| "synthetic context changed".into())
             },
         )
+    }
+    fn meter_case(action: Action, compressor: bool) -> Self {
+        let fixture = Self::meter(action);
+        fixture.compressor.set(compressor);
+        if compressor {
+            fixture.parameter.name.set(&COMPRESSOR_RESET_MIN);
+            fixture.parameter.tag.set(88);
+            fixture.lookup.index.set(87);
+        }
+        fixture
     }
     fn meter(action: Action) -> Self {
         let fixture = Self::new();
@@ -406,14 +424,15 @@ fn request_accepts_only_the_registered_action_shape_and_required_instance() {
 
 #[test]
 fn meter_resets_are_bounded_pulses_from_either_binary_value_without_effect_verification() {
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
         for initial in [0, 1] {
             for auto_reset in [false, true] {
-                let fixture = Fixture::meter(action);
+                let fixture = Fixture::meter_case(action, compressor);
                 fixture.parameter.current.set(initial);
                 fixture.parameter.auto_reset.set(auto_reset);
                 let provider = fixture.provider();
@@ -450,12 +469,13 @@ fn meter_resets_are_bounded_pulses_from_either_binary_value_without_effect_verif
 
 #[test]
 fn meter_reset_uses_named_binding_when_direct_controller_order_differs_from_dsp_metadata() {
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
-        let fixture = Fixture::meter(action);
+        let fixture = Fixture::meter_case(action, compressor);
         fixture.lookup.index.set(3);
         let provider = fixture.provider();
         let (value, lease) = fixture.run_action(&provider, action);
@@ -476,13 +496,14 @@ fn meter_reset_uses_named_binding_when_direct_controller_order_differs_from_dsp_
 
 #[test]
 fn meter_reset_rejects_wrong_tag_and_native_name_before_writes() {
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
         for changed in 0..2 {
-            let fixture = Fixture::meter(action);
+            let fixture = Fixture::meter_case(action, compressor);
             match changed {
                 0 => fixture.parameter.tag.set(17),
                 _ => fixture.parameter.name.set(&NAME),
@@ -504,14 +525,17 @@ fn meter_reset_requires_audio_effect_and_direct_dsp_before_lookup() {
     let mut host = guard_tests::Fixture::new();
     let mut context = host.context();
     context.instance.class_uid = "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6".into();
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
-        let fixture = Fixture::meter(action);
+        let fixture = Fixture::meter_case(action, compressor);
         let provider = fixture.provider();
-        context.instance.class_uid = if action == Action::ResetMinimumReduction {
+        context.instance.class_uid = if compressor {
+            "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B"
+        } else if action == Action::ResetMinimumReduction {
             "61B18D53-26FA-4220-8614-89944A1990EC"
         } else {
             "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
@@ -537,13 +561,14 @@ fn meter_reset_requires_audio_effect_and_direct_dsp_before_lookup() {
 
 #[test]
 fn meter_reset_unknown_upper_and_lower_outcomes_never_repeat_dispatch() {
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
         for change in 1..=4 {
-            let fixture = Fixture::meter(action);
+            let fixture = Fixture::meter_case(action, compressor);
             let owner = Fixture::new();
             fixture.parameter.owner.set(owner.pointer());
             fixture.parameter.next_owner.set(ptr::null_mut());
@@ -568,16 +593,25 @@ fn meter_reset_unknown_upper_and_lower_outcomes_never_repeat_dispatch() {
     }
 }
 #[test]
-fn minimum_reset_is_registered_only_for_the_exact_limiter_pair() {
+fn minimum_reset_is_registered_only_for_the_exact_native_pairs() {
     let class = "61B18D53-26FA-4220-8614-89944A1990EC";
     let spec = registered(class, Action::ResetMinimumReduction).unwrap();
     assert_eq!(spec.parameter, c"resetmin");
     assert_eq!(spec.expected_tag, Some(1383288146));
     assert!(spec.effects.is_empty());
+    let compressor = registered(
+        "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
+        Action::ResetMinimumReduction,
+    )
+    .unwrap();
+    assert_eq!(compressor.parameter, c"studiocomp.resetmin");
+    assert_eq!(compressor.expected_tag, Some(88));
+    assert!(compressor.effects.is_empty());
     for other in [
+        "36f3f4d1-cbb4-4bf7-a7e3-ebcced53718b",
+        "Compressor",
         "831A0046-BD71-45BF-A419-6FC90D6E9F2F",
         "132C0E1F-06FD-4C96-BD65-678C04FE1C92",
-        "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
         "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
         "61b18d53-26fa-4220-8614-89944a1990ec",
         "Limiter",
@@ -597,90 +631,102 @@ fn minimum_reset_is_registered_only_for_the_exact_limiter_pair() {
 
 #[test]
 fn minimum_reset_rejects_invalid_access_and_range_before_upper_dispatch() {
-    for change in 0..6 {
-        let fixture = Fixture::meter(Action::ResetMinimumReduction);
-        match change {
-            0 => fixture.parameter.kind.set(1),
-            1 => fixture.parameter.enabled.set(false),
-            2 => fixture.parameter.readonly.set(true),
-            3 => fixture.parameter.minimum.set(-1),
-            4 => fixture.parameter.maximum.set(2),
-            _ => fixture.parameter.current.set(2),
+    for compressor in [false, true] {
+        for change in 0..6 {
+            let fixture = Fixture::meter_case(Action::ResetMinimumReduction, compressor);
+            match change {
+                0 => fixture.parameter.kind.set(1),
+                1 => fixture.parameter.enabled.set(false),
+                2 => fixture.parameter.readonly.set(true),
+                3 => fixture.parameter.minimum.set(-1),
+                4 => fixture.parameter.maximum.set(2),
+                _ => fixture.parameter.current.set(2),
+            }
+            let provider = fixture.provider();
+            let (value, lease) = fixture.run_action(&provider, Action::ResetMinimumReduction);
+            assert_eq!(value["outcome"], "not_applied", "change {change}");
+            assert_eq!(value["upper_dispatched"], false);
+            assert!(fixture.parameter.writes.borrow().is_empty());
+            drop(lease);
+            drop(provider);
         }
-        let provider = fixture.provider();
-        let (value, lease) = fixture.run_action(&provider, Action::ResetMinimumReduction);
-        assert_eq!(value["outcome"], "not_applied", "change {change}");
-        assert_eq!(value["upper_dispatched"], false);
-        assert!(fixture.parameter.writes.borrow().is_empty());
-        drop(lease);
-        drop(provider);
     }
 }
 
 #[test]
 fn minimum_reset_reentrant_owner_change_never_authorizes_a_second_pulse() {
-    let probe = Fixture::meter(Action::ResetMinimumReduction);
-    let provider = probe.provider();
-    let mut guard_count = 0;
-    let (value, lease) = run(
-        provider.scalar().unwrap(),
-        &api_mock(),
-        Action::ResetMinimumReduction,
-        registered(
-            "61B18D53-26FA-4220-8614-89944A1990EC",
-            Action::ResetMinimumReduction,
-        )
-        .unwrap(),
-        &mut || {
-            guard_count += 1;
-            Ok(())
-        },
-    );
-    assert_eq!(value["outcome"], "applied_unverified");
-    drop(lease);
-    drop(provider);
-    let mut refused_before_dispatch = 0;
-    let mut unknown_after_dispatch = 0;
-    for changed_at in 1..=guard_count {
-        let fixture = Fixture::meter(Action::ResetMinimumReduction);
-        let owner = Fixture::new();
-        let provider = fixture.provider();
-        let mut guards = 0;
+    for compressor in [false, true] {
+        let probe = Fixture::meter_case(Action::ResetMinimumReduction, compressor);
+        let provider = probe.provider();
+        let mut guard_count = 0;
         let (value, lease) = run(
             provider.scalar().unwrap(),
             &api_mock(),
             Action::ResetMinimumReduction,
             registered(
-                "61B18D53-26FA-4220-8614-89944A1990EC",
+                if compressor {
+                    "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B"
+                } else {
+                    "61B18D53-26FA-4220-8614-89944A1990EC"
+                },
                 Action::ResetMinimumReduction,
             )
             .unwrap(),
             &mut || {
-                guards += 1;
-                if guards == changed_at {
-                    fixture.parameter.owner.set(owner.pointer());
-                }
+                guard_count += 1;
                 Ok(())
             },
         );
-        let writes = fixture.parameter.writes.borrow();
-        assert!(writes.len() <= 2);
-        assert!(writes.iter().filter(|(v, _)| *v == 1).count() <= 1);
-        if value["outcome"] == "not_applied" {
-            refused_before_dispatch += 1;
-            assert!(writes.is_empty());
-        }
-        if !writes.is_empty() && value["ok"] == false {
-            unknown_after_dispatch += 1;
-            assert_eq!(value["outcome"], "unknown");
-        }
-        assert_eq!(value["effects_verified"], false);
-        drop(writes);
+        assert_eq!(value["outcome"], "applied_unverified");
         drop(lease);
         drop(provider);
+        let mut refused_before_dispatch = 0;
+        let mut unknown_after_dispatch = 0;
+        for changed_at in 1..=guard_count {
+            let fixture = Fixture::meter_case(Action::ResetMinimumReduction, compressor);
+            let owner = Fixture::new();
+            let provider = fixture.provider();
+            let mut guards = 0;
+            let (value, lease) = run(
+                provider.scalar().unwrap(),
+                &api_mock(),
+                Action::ResetMinimumReduction,
+                registered(
+                    if compressor {
+                        "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B"
+                    } else {
+                        "61B18D53-26FA-4220-8614-89944A1990EC"
+                    },
+                    Action::ResetMinimumReduction,
+                )
+                .unwrap(),
+                &mut || {
+                    guards += 1;
+                    if guards == changed_at {
+                        fixture.parameter.owner.set(owner.pointer());
+                    }
+                    Ok(())
+                },
+            );
+            let writes = fixture.parameter.writes.borrow();
+            assert!(writes.len() <= 2);
+            assert!(writes.iter().filter(|(v, _)| *v == 1).count() <= 1);
+            if value["outcome"] == "not_applied" {
+                refused_before_dispatch += 1;
+                assert!(writes.is_empty());
+            }
+            if !writes.is_empty() && value["ok"] == false {
+                unknown_after_dispatch += 1;
+                assert_eq!(value["outcome"], "unknown");
+            }
+            assert_eq!(value["effects_verified"], false);
+            drop(writes);
+            drop(lease);
+            drop(provider);
+        }
+        assert!(refused_before_dispatch > 0);
+        assert!(unknown_after_dispatch > 0);
     }
-    assert!(refused_before_dispatch > 0);
-    assert!(unknown_after_dispatch > 0);
 }
 
 #[test]
@@ -1067,14 +1113,15 @@ fn common_context_reentry_cannot_publish_a_stale_action_owner() {
 
 #[test]
 fn meter_reset_binding_drift_during_guards_stops_further_writes() {
-    for action in [
-        Action::ResetMeterHold,
-        Action::ResetMeterLoudness,
-        Action::ResetMinimumReduction,
+    for (action, compressor) in [
+        (Action::ResetMeterHold, false),
+        (Action::ResetMeterLoudness, false),
+        (Action::ResetMinimumReduction, false),
+        (Action::ResetMinimumReduction, true),
     ] {
         for changed in 0..5 {
             for after_upper in [false, true] {
-                let fixture = Fixture::meter(action);
+                let fixture = Fixture::meter_case(action, compressor);
                 let owner = Fixture::new();
                 fixture.parameter.owner.set(owner.pointer());
                 let provider = fixture.provider();
@@ -1083,7 +1130,9 @@ fn meter_reset_binding_drift_during_guards_stops_further_writes() {
                     &api_mock(),
                     action,
                     registered(
-                        if action == Action::ResetMinimumReduction {
+                        if compressor {
+                            "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B"
+                        } else if action == Action::ResetMinimumReduction {
                             "61B18D53-26FA-4220-8614-89944A1990EC"
                         } else {
                             "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
@@ -1135,5 +1184,24 @@ fn meter_reset_binding_drift_during_guards_stops_further_writes() {
                 drop(provider);
             }
         }
+    }
+}
+
+#[test]
+fn compressor_minimum_reset_refuses_unprefixed_name_and_limiter_tag() {
+    for changed in 0..3 {
+        let fixture = Fixture::meter_case(Action::ResetMinimumReduction, true);
+        match changed {
+            0 => fixture.parameter.name.set(&RESET_MIN),
+            1 => fixture.parameter.name.set(&HOLD),
+            _ => fixture.parameter.tag.set(1383288146),
+        }
+        let provider = fixture.provider();
+        let (value, lease) = fixture.run_action(&provider, Action::ResetMinimumReduction);
+        assert_eq!(value["outcome"], "not_applied");
+        assert_eq!(value["upper_dispatched"], false);
+        assert!(fixture.parameter.writes.borrow().is_empty());
+        drop(lease);
+        drop(provider);
     }
 }

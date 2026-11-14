@@ -58,6 +58,11 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             effects: &[],
             expected_tag: Some(1383288146),
         }),
+        ("36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B", Action::ResetMinimumReduction) => Ok(Spec {
+            parameter: c"studiocomp.resetmin",
+            effects: &[],
+            expected_tag: Some(88),
+        }),
         _ => Err("button action is not registered for this exact native class".into()),
     }
 }

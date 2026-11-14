@@ -1185,8 +1185,9 @@ class NativePluginControls {
                 && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
                     || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction"].indexOf(request.action) < 0
                     || (request.action === "reset_minimum_reduction"
-                        ? result.instance.class_uid !== "61B18D53-26FA-4220-8614-89944A1990EC"
-                            || result.instance.native_class !== "AudioEffect" || result.param !== "resetmin"
+                        ? result.instance.native_class !== "AudioEffect"
+                            || !((result.instance.class_uid === "61B18D53-26FA-4220-8614-89944A1990EC" && result.param === "resetmin")
+                                || (result.instance.class_uid === "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B" && result.param === "studiocomp.resetmin"))
                         : request.action !== "swap_filter_frequencies"
                             && (result.instance.class_uid !== "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
                                 || result.param !== (request.action === "reset_meter_hold" ? "resethold" : "resetloudness")))

@@ -242,22 +242,27 @@ test('meter reset receipts accept initial Toggle one without claiming verified e
   }
 });
 
-test('Limiter minimum reset is a fixed single native pulse with no effect promotion', () => {
+test('Limiter and Compressor minimum resets use a single fixed native pulse with no effect promotion', () => {
   const action = 'reset_minimum_reduction';
-  const calls = [];
-  const value = { ...actionResult(), action, param: 'resetmin', effect_parameters: [],
-    instance: { ...instance, class_uid: '61B18D53-26FA-4220-8614-89944A1990EC', native_class: 'AudioEffect' } };
-  const h = harness({ getObjectByName() { return native((target, body) => {
-    assert.equal(target, h.device); calls.push(JSON.parse(body)); return JSON.stringify(value);
-  }); } });
-  h.device.findParameter = () => { throw new Error('no script reset fallback'); };
-  const result = h.component.pluginAction({ plugin: 'Limiter', expected_instance: instance.object_uid, action });
-  assert.deepEqual(calls, [{ operation: 'parameter_action', action, expected_instance: instance.object_uid }]);
-  assert.equal(result.native_outcome, 'applied_unverified');
-  assert.equal(result.param, 'resetmin');
-  assert.equal(result.verified, false);
-  assert.equal(result.effects_verified, false);
-  assert.deepEqual(Array.from(result.effect_parameters), []);
+  for (const [plugin, classUid, param] of [
+    ['Limiter', '61B18D53-26FA-4220-8614-89944A1990EC', 'resetmin'],
+    ['Compressor', '36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B', 'studiocomp.resetmin']
+  ]) {
+    const calls = [];
+    const value = { ...actionResult(), action, param, effect_parameters: [],
+      instance: { ...instance, class_uid: classUid, native_class: 'AudioEffect' } };
+    const h = harness({ getObjectByName() { return native((target, body) => {
+      assert.equal(target, h.device); calls.push(JSON.parse(body)); return JSON.stringify(value);
+    }); } });
+    h.device.findParameter = () => { throw new Error('no script reset fallback'); };
+    const result = h.component.pluginAction({ plugin, expected_instance: instance.object_uid, action });
+    assert.deepEqual(calls, [{ operation: 'parameter_action', action, expected_instance: instance.object_uid }]);
+    assert.equal(result.native_outcome, 'applied_unverified');
+    assert.equal(result.param, param);
+    assert.equal(result.verified, false);
+    assert.equal(result.effects_verified, false);
+    assert.deepEqual(Array.from(result.effect_parameters), []);
+  }
 });
 
 test('Limiter minimum reset rejects unchecked inputs before resolving a Device', () => {
@@ -292,6 +297,29 @@ test('minimum reset malformed receipts remain unknown after one dispatch', () =>
   for (const oldAction of ['reset_meter_hold', 'reset_meter_loudness']) {
     const h = harness({ getObjectByName() { return native(() => JSON.stringify({ ...valid, action: oldAction })); } });
     assert.equal(h.component.pluginAction({ plugin: 'Limiter', expected_instance: instance.object_uid, action: oldAction }).native_outcome, 'unknown');
+  }
+});
+
+test('Compressor minimum reset malformed receipts remain unknown after one dispatch', () => {
+  const action = 'reset_minimum_reduction';
+  const valid = { ...actionResult(), action, param: 'studiocomp.resetmin', effect_parameters: [],
+    instance: { ...instance, class_uid: '36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B', native_class: 'AudioEffect' } };
+  for (const extra of [{ action: 'reset_meter_hold' }, { param: 'resethold' }, { source: 'controller' },
+    { instance: { ...instance, class_uid: 'DF958D90-0196-434F-ADC3-1FC2BB7F4AF6' } },
+    { instance: { ...valid.instance, native_class: 'Controller' } },
+    { verified: true }, { effects_verified: true }, { upper_dispatched: false },
+    { reset_dispatched: false }, { reset_verified: false }, { effect_parameters: ['minreduction'] }]) {
+    let calls = 0;
+    const h = harness({ getObjectByName() { return native(() => { calls++; return JSON.stringify({ ...valid, ...extra }); }); } });
+    const result = h.component.pluginAction({ plugin: 'Compressor', expected_instance: instance.object_uid, action });
+    assert.equal(result.native_outcome, 'unknown');
+    assert.equal(result.verified, false);
+    assert.equal(result.effects_verified, false);
+    assert.equal(calls, 1);
+  }
+  for (const oldAction of ['reset_meter_hold', 'reset_meter_loudness']) {
+    const h = harness({ getObjectByName() { return native(() => JSON.stringify({ ...valid, action: oldAction })); } });
+    assert.equal(h.component.pluginAction({ plugin: 'Compressor', expected_instance: instance.object_uid, action: oldAction }).native_outcome, 'unknown');
   }
 });
 
@@ -914,4 +942,25 @@ test('Level unknown writes stay unknown and dispatch once', () => {
   assert.equal(result.native_outcome, 'unknown');
   assert.equal(result.after.value, 1);
   assert.equal(writes, 1);
+});
+
+test('minimum reset rejects cross-class names and unknown exact class identities', () => {
+  const action = 'reset_minimum_reduction';
+  for (const [classUid, param] of [
+    ['61B18D53-26FA-4220-8614-89944A1990EC', 'studiocomp.resetmin'],
+    ['36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B', 'resetmin'],
+    ['36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B', 'studiocomp.resethold'],
+    ['36f3f4d1-cbb4-4bf7-a7e3-ebcced53718b', 'studiocomp.resetmin'],
+    ['00000000-0000-0000-0000-000000000000', 'studiocomp.resetmin']
+  ]) {
+    let calls = 0;
+    const value = { ...actionResult(), action, param, effect_parameters: [],
+      instance: { ...instance, class_uid: classUid, native_class: 'AudioEffect' } };
+    const h = harness({ getObjectByName() { return native(() => { calls++; return JSON.stringify(value); }); } });
+    const result = h.component.pluginAction({ plugin: 'Expected', expected_instance: instance.object_uid, action });
+    assert.equal(result.native_outcome, 'unknown');
+    assert.equal(result.verified, false);
+    assert.equal(result.effects_verified, false);
+    assert.equal(calls, 1);
+  }
 });
