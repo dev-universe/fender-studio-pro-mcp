@@ -346,6 +346,14 @@ impl Observation {
         if !self.retrieval.valid(instance, value) {
             return false;
         }
+        if !value["controllers"].as_array().is_some_and(|rows| {
+            rows.len() == self.models.len()
+                && rows.iter().zip(&self.models).all(|(row, model)| {
+                    row["serialized_class_uid"].as_str() == Some(model.as_str())
+                })
+        }) {
+            return false;
+        }
         match (&self.retrieval, &self.names) {
             (Retrieval::Indexed, None) => true,
             (Retrieval::Named, Some(names)) => {

@@ -1385,3 +1385,69 @@ fn named_preflight_and_empty_capture_or_cleanup_leases_keep_trusted_failure_poli
         drop(receipt);
     }
 }
+
+#[test]
+fn owned_model_guids_bind_named_and_indexed_receipts_at_final_check_and_encode() {
+    let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+    for retrieval in [Retrieval::Named, Retrieval::Indexed] {
+        for via_encode in [false, true] {
+            for slot in 0..26 {
+                let mut graph = Graph::new();
+                graph.parameter(0);
+                if retrieval == Retrieval::Named {
+                    unsafe { fake(graph.controllers[0]).count.set(0) };
+                }
+                let mut host = state::tests::rumble_parameter_host(graph.root);
+                let ctx = named_context(&mut host, &mut graph);
+                let (value, observation) = match retrieval {
+                    Retrieval::Named => named::observe(&ctx).unwrap(),
+                    Retrieval::Indexed => observe(&ctx).unwrap(),
+                };
+                let expected = value.clone();
+                let service = ctx.service;
+                let mut receipt = reply(ctx, value, observation);
+                assert!(receipt.final_check(service));
+                assert_eq!(receipt.encode(), expected.to_string());
+
+                receipt.value["controllers"][slot]["serialized_class_uid"] =
+                    json!("11111111-1111-4111-8111-111111111111");
+                let classes = receipt.value["controllers"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|row| row["serialized_class_uid"].as_str().unwrap().to_owned())
+                    .collect::<Vec<_>>();
+                receipt.value["models_sha256"] =
+                    json!(state::rumble_model_digest(&classes).unwrap());
+                let ctx = receipt.context.as_ref().unwrap();
+                assert!(retrieval.valid(&json!(ctx.instance), &receipt.value));
+                if let Some(Provider::RumbleParameters {
+                    observation: Some(observation),
+                    ..
+                }) = receipt.provider.as_ref()
+                {
+                    observation.check(ctx).unwrap();
+                } else {
+                    panic!("owned observation missing");
+                }
+                if !via_encode {
+                    assert!(
+                        !receipt.final_check(service),
+                        "coherent GUID forgery accepted for {retrieval:?} slot {slot}"
+                    );
+                    assert_eq!(receipt.value, retrieval.failure());
+                }
+                assert_eq!(
+                    serde_json::from_str::<Value>(&receipt.encode()).unwrap(),
+                    retrieval.failure()
+                );
+                if retrieval == Retrieval::Named {
+                    assert_no_indexed_lookup(&graph);
+                }
+                host.parameter_no_writes();
+                drop(receipt);
+                EMPTY_STRING.with(|s| s.set(ptr::null_mut()));
+            }
+        }
+    }
+}
