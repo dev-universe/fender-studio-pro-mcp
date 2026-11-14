@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "status": "READ_ONLY_PREREQUISITES_NOT_NEW_CONTROL_ACCEPTANCE",
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "product_source_unchanged": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+  "native_unit_unchanged": 54,
+  "DAQ": 0,
+  "model_same_ID_collision": {
+    "elapsed_seconds": 363.307,
+    "original_and_arm64slice_identity_exact": true,
+    "direct_reference_seeds_only": true,
+    "same_ID_user_priority_known": false,
+    "staging_ready": false,
+    "report_SHA256": "d79fc643cb893b80b642d93b5250db3ae712c1cdaad37a264e208bc04ed2ccf7"
+  },
+  "model_native_lookup": {
+    "elapsed_seconds": 571.25,
+    "REA_version": "6.9.0",
+    "Ghidra_version": "12.1.4",
+    "first_query_seconds": 199.84039,
+    "native_function_bodies": 6,
+    "native_memory_reads": 2,
+    "evidence_records": 8,
+    "Package_ID_reference_was_constant_initializer": true,
+    "same_ID_user_priority_known": false,
+    "staging_ready": false,
+    "editable_Program_preserved": false,
+    "reason": "Disabled analyzer profile was incompatible with stock Program checkpoints. Closed original session is not warm-reusable.",
+    "normal_close_reset_REA_exit0": true,
+    "report_SHA256": "39677f772bdd35cdafb04397198f41545771c79ebb2dff4dec8372fd3be05d2e"
+  },
+  "event_source_grounding": {
+    "elapsed_seconds": 369.561,
+    "first_candidate": "Chorder guiInput",
+    "direct_setter_update_flag": 1,
+    "Toggle_pulse_release_update_flag": 0,
+    "Toggle_pulse_reuse_admitted": false,
+    "begin_end_edit_is_musical_contract": false,
+    "new_writer_ready": false,
+    "report_SHA256": "47bebbb72dd6992720726b7225452f8b00ad2379df8367c4d941fca3598c140e"
+  },
+  "event_notification_boundary": {
+    "elapsed_seconds": 373.489,
+    "new_function_bodies": 4,
+    "existing_completed_scalar_and_scheduled_note_work_replayed": false,
+    "selector5_6_branch": "view rectangle refresh",
+    "pendingKeyRelease_musical_acknowledgement_proved": false,
+    "canonical_guiInput_role0_identity_proved": false,
+    "musical_Note_receiver_and_release_acknowledgement_proved": false,
+    "new_writer_ready": false,
+    "REA_version": "6.9.0",
+    "Ghidra_version": "12.1.4",
+    "stock_initial_query_seconds": 33.61086,
+    "actual_Program_checkpoint_created": true,
+    "Program_checkpoint_bytes": 5688274,
+    "Program_checkpoint_SHA256": "4e5ba802517619c141600549270b863086ee883d964de4405c46e3933a31161c",
+    "restored_second_opening_tested": false,
+    "normal_close_reset_REA_exit0": true,
+    "report_SHA256": "26b7def24dda78f261712302f8594770234da09e6d6ac173e6e122adb2a47cac"
+  },
+  "claims_not_made": [
+    "same_ID_override_supported",
+    "model_staged_or_loaded",
+    "musical_event_dispatch_verified",
+    "held_note_or_noteoff_verified",
+    "whole_plugin_control"
+  ],
+  "accounting": {
+    "fixed_complete": 13,
+    "fixed_total": 43,
+    "remaining": 30,
+    "software_remaining": 26,
+    "hardware_blocked": 4,
+    "new_fixed_completions_from_these_investigations": 0
+  }
+}
