@@ -6,8 +6,17 @@ use std::sync::Arc;
 mod stream;
 use stream::MemoryStream;
 
+#[path = "state/rumble_processor_state.rs"]
+mod rumble_processor_state;
 #[path = "state/rumble_serialization.rs"]
 mod rumble_serialization;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum ObservationKind {
+    Ordinary,
+    RumbleStructure,
+    RumbleProcessorState,
+}
 
 pub(crate) const MAX_CAPSULE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TOTAL_BYTES: usize = 64 * 1024 * 1024;
@@ -27,7 +36,7 @@ unsafe extern "C" {
 /// The normal Device component alias, not an editor-selected or title-matched
 /// provider. This lease lives through native output publication.
 pub(super) struct AliasLease {
-    pub(super) rumble_inspection: bool,
+    pub(super) observation: ObservationKind,
     storable: Owned,
     canonical: Owned,
     plugin: Owned,
@@ -47,7 +56,7 @@ impl AliasLease {
         let parent_at: Borrowed = unsafe { method(node.0, 6) };
         let parent = hold(unsafe { parent_at(node.0) }).ok_or("Device parent unavailable")?;
         let lease = Self {
-            rumble_inspection: false,
+            observation: ObservationKind::Ordinary,
             storable,
             canonical,
             plugin,
@@ -271,7 +280,7 @@ pub(super) fn inspect_rumble_serialization(
         return Err("The exact Rumble Native component is required".into());
     }
     let mut lease = AliasLease::capture(ctx)?;
-    lease.rumble_inspection = true;
+    lease.observation = ObservationKind::RumbleStructure;
     let bytes = save(ctx, &lease, MAX_CAPSULE_BYTES)?;
     let mut value = rumble_serialization::summarize(&bytes).fields();
     let fields = json!({"ok":true,"outcome":"observed","operation":"rumble_serialization_inspect",
@@ -294,6 +303,52 @@ pub(super) fn inspect_rumble_serialization(
     }
     Ok((value, lease))
 }
+pub(super) fn read_rumble_state(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
+    ctx.check()?;
+    if ctx.instance.class_uid != "B9D7536C-A010-457D-A182-36E5531164C9"
+        || ctx.instance.native_class != "AudioEffect"
+        || ctx.instance.object_id != "Rumble Native"
+    {
+        return Err("The exact Rumble Native component is required".into());
+    }
+    let mut lease = AliasLease::capture(ctx)?;
+    lease.observation = ObservationKind::RumbleProcessorState;
+    let bytes = save(ctx, &lease, MAX_CAPSULE_BYTES)?;
+    let mut value = rumble_processor_state::read(&bytes)?;
+    let fields = json!({"ok":true,"outcome":"observed","operation":"rumble_model_state_read","schema":"rumble_processor_state_v1","serialization":"component_alias_IStorable","instance":ctx.instance,"source":"component_alias","capture_sha256":sha256(&bytes),"capture_byte_count":bytes.len(),"value_semantics":"sequential_snapshot","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false});
+    value
+        .as_object_mut()
+        .expect("projection")
+        .extend(fields.as_object().expect("fields").clone());
+    lease.guard(ctx)?;
+    ctx.check_document()?;
+    let mut adapted = value.clone();
+    adapted["plugin"] = json!("Rumble Native");
+    adapted["native_outcome"] = json!("observed");
+    if adapted.to_string().len() > rumble_processor_state::MAX_RESULT_BYTES
+        || !rumble_processor_state::valid_receipt(&json!(ctx.instance), &value)
+    {
+        return Err("Rumble processor receipt unavailable".into());
+    }
+    Ok((value, lease))
+}
+pub(super) fn observation_failure(kind: ObservationKind) -> Value {
+    match kind {
+        ObservationKind::RumbleProcessorState => {
+            json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_processor_state_unavailable","message":"The bounded Rumble processor-state observation was not established"}})
+        }
+        _ => rumble_failure(),
+    }
+}
+pub(super) fn valid_observation(kind: ObservationKind, instance: &Instance, value: &Value) -> bool {
+    match kind {
+        ObservationKind::Ordinary => true,
+        ObservationKind::RumbleStructure => valid_rumble_receipt(instance, value),
+        ObservationKind::RumbleProcessorState => {
+            rumble_processor_state::valid_receipt(&json!(instance), value)
+        }
+    }
+}
 pub(super) fn valid_rumble_receipt(instance: &Instance, value: &Value) -> bool {
     rumble_serialization::valid_receipt(&json!(instance), value)
 }
@@ -303,7 +358,9 @@ pub(super) fn rumble_failure() -> Value {
         "message":"The bounded Rumble serialization observation was not established"}})
 }
 pub(super) fn invalidate_rumble_serialization(value: &mut Value) {
-    if value["operation"] == "rumble_serialization_inspect" {
+    if value["operation"] == "rumble_model_state_read" {
+        *value = observation_failure(ObservationKind::RumbleProcessorState);
+    } else if value["operation"] == "rumble_serialization_inspect" {
         *value = rumble_failure();
     }
 }

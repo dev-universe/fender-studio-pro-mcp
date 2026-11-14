@@ -197,6 +197,9 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    RumbleStateRead {
+        expected_instance: String,
+    },
     RumbleSerializationInspect {
         expected_instance: String,
     },
@@ -278,6 +281,7 @@ impl Request {
             | Self::SetParameter { source, .. } => *source,
             Self::StateCapture { .. }
             | Self::ChorderChordsGet { .. }
+            | Self::RumbleStateRead { .. }
             | Self::RumbleSerializationInspect { .. }
             | Self::StateRestore { .. }
             | Self::StateRelease { .. }
@@ -318,6 +322,7 @@ impl Request {
             | Self::ChorderChordsGet {
                 expected_instance, ..
             }
+            | Self::RumbleStateRead { expected_instance }
             | Self::RumbleSerializationInspect { expected_instance }
             | Self::ModelCatalog {
                 expected_instance, ..
@@ -1460,6 +1465,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::EditChorderModel { .. }
         | Request::ChorderLearningGet { .. }
         | Request::ChorderChordsGet { .. }
+        | Request::RumbleStateRead { .. }
         | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
@@ -1634,9 +1640,16 @@ impl Reply {
     pub(super) fn error(code: &str, message: &str, outcome: &str) -> Self {
         Self::unbound(error(code, message, outcome))
     }
-    fn rumble_inspection(&self) -> bool {
-        matches!(&self.provider, Some(Provider::State(alias)) if alias.rumble_inspection)
+    fn rumble_kind(&self) -> state::ObservationKind {
+        match &self.provider {
+            Some(Provider::State(alias)) => alias.observation,
+            _ => state::ObservationKind::Ordinary,
+        }
     }
+    fn rumble_inspection(&self) -> bool {
+        self.rumble_kind() != state::ObservationKind::Ordinary
+    }
+
     fn invalidate(&mut self, message: String) {
         let outcome = if self.edit.as_ref().is_some_and(ParameterEditLease::began)
             || self.mutation && self.value["outcome"] != "not_applied"
@@ -1659,7 +1672,7 @@ impl Reply {
         digest::invalidate(&mut self.value);
         chorder_chords::invalidate(&mut self.value);
         if self.rumble_inspection() {
-            self.value = state::rumble_failure();
+            self.value = state::observation_failure(self.rumble_kind());
         } else {
             state::invalidate_rumble_serialization(&mut self.value);
         }
@@ -1751,7 +1764,11 @@ impl Reply {
                     if self.value["operation"] == "chorder_chords_get" || self.rumble_inspection() {
                         self.provider.as_ref().map_or(Ok(()), Provider::check)?;
                         if self.rumble_inspection()
-                            && !state::valid_rumble_receipt(&ctx.instance, &self.value)
+                            && !state::valid_observation(
+                                self.rumble_kind(),
+                                &ctx.instance,
+                                &self.value,
+                            )
                         {
                             return Err("Rumble structural receipt failed validation".into());
                         }
@@ -1824,12 +1841,11 @@ impl Reply {
     pub(super) fn encode(&mut self) -> String {
         let encoded = self.value.to_string();
         if self.rumble_inspection()
-            && self
-                .context
-                .as_ref()
-                .is_none_or(|ctx| !state::valid_rumble_receipt(&ctx.instance, &self.value))
+            && self.context.as_ref().is_none_or(|ctx| {
+                !state::valid_observation(self.rumble_kind(), &ctx.instance, &self.value)
+            })
         {
-            self.value = state::rumble_failure();
+            self.value = state::observation_failure(self.rumble_kind());
             return self.value.to_string();
         }
         if encoded.len() <= MAX_RESPONSE_BYTES {
@@ -2067,6 +2083,31 @@ fn dispatch_device(
             folder_preflight: None,
             owner: None,
             gui,
+            nodes: None,
+            provider,
+            context: Some(ctx),
+            mutation: false,
+        };
+    }
+    if let Request::RumbleStateRead { .. } = request {
+        let (value, provider) = match state::read_rumble_state(&ctx) {
+            Ok((value, alias)) => (value, Some(Provider::State(alias))),
+            Err(_) => (
+                state::observation_failure(state::ObservationKind::RumbleProcessorState),
+                None,
+            ),
+        };
+        return Reply {
+            value,
+            menu: None,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
             nodes: None,
             provider,
             context: Some(ctx),

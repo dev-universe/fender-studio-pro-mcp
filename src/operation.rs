@@ -684,6 +684,7 @@ pub struct PluginState {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PluginStateAction {
+    ReadRumbleState,
     InspectRumbleSerialization,
     Capture,
     Restore,
@@ -1229,7 +1230,11 @@ impl Operation {
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
             Self::PluginState(p) => {
-                matches!(p.action, PluginStateAction::InspectRumbleSerialization)
+                matches!(
+                    p.action,
+                    PluginStateAction::InspectRumbleSerialization
+                        | PluginStateAction::ReadRumbleState
+                )
             }
             Self::Command(command) => command.check_only == Some(true),
             Self::Metronome(settings) => {
@@ -1252,7 +1257,7 @@ impl Operation {
             _ => false,
         };
         level
-            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization))
+            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState))
             || matches!(
                 self,
                 Self::ChorderLearningGet(_)
@@ -1543,6 +1548,7 @@ impl Operation {
                 });
                 match p.action {
                     PluginStateAction::InspectRumbleSerialization
+                    | PluginStateAction::ReadRumbleState
                         if p.token.is_none() && p.plugin == "Rumble Native" => {}
                     PluginStateAction::Capture if p.token.is_none() => {}
                     PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
@@ -2824,6 +2830,34 @@ mod tests {
                     .validate()
                     .is_err()
             );
+        }
+    }
+
+    #[test]
+    fn rumble_processor_state_is_a_closed_explicit_context_read() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"read_rumble_state"});
+        let op = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(op.validate().is_ok());
+        assert!(op.is_read_only());
+        assert!(op.requires_explicit_document());
+        for (key, value) in [
+            ("token", json!("private")),
+            ("plugin", json!("Other")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_state", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        for key in ["source", "path", "bytes", "rumble_slot"] {
+            let mut bad = base.clone();
+            bad[key] = json!("private");
+            assert!(Operation::from_parts("plugin_state", bad).is_err());
         }
     }
 

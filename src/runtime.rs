@@ -19,6 +19,7 @@ use crate::{
 mod chorder_chords;
 mod chorder_learning;
 mod external_menu;
+mod rumble_processor_state;
 mod rumble_serialization;
 
 #[derive(Clone)]
@@ -235,7 +236,8 @@ fn execute(
     }
     if response.document != context.document
         || (matches!(operation, Operation::ExternalPortMenu(_))
-            || rumble_serialization::requested(&operation))
+            || rumble_serialization::requested(&operation)
+            || rumble_processor_state::requested(&operation))
             && response.session != context.session
     {
         invalidate_gui_evidence(&operation, &mut response.result);
@@ -292,6 +294,12 @@ fn execute(
         && (!response.ok || !rumble_serialization::valid_get(query, &response.result))
     {
         rumble_serialization::invalidate(&mut response.result);
+    }
+    if let Operation::PluginState(query) = &operation
+        && rumble_processor_state::requested(&operation)
+        && (!response.ok || !rumble_processor_state::valid_get(query, &response.result))
+    {
+        rumble_processor_state::invalidate(&mut response.result);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -768,6 +776,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if rumble_processor_state::requested(operation) {
+        rumble_processor_state::invalidate(result);
+        return;
+    }
     if rumble_serialization::requested(operation) {
         rumble_serialization::invalidate(result);
         return;

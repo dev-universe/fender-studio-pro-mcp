@@ -202,7 +202,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Capture, restore or release a bounded in-memory plugin state, or inspect_rumble_serialization for a read-only bounded Rumble structure summary without a token. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Capture, restore or release a bounded in-memory plugin state, or read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. Both reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(

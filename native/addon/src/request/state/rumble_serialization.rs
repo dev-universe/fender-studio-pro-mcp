@@ -596,6 +596,18 @@ pub(super) fn summarize(bytes: &[u8]) -> Summary {
     }
 }
 
+pub(super) fn validated_json(bytes: &[u8]) -> Result<Value, String> {
+    let fields = summarize(bytes).fields();
+    if fields["format"] != "utf8_json"
+        || fields["parse_complete"] != true
+        || fields["root_kind"] != "json_object"
+    {
+        return Err("Bounded Rumble JSON unavailable".into());
+    }
+    serde_json::from_slice(bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(bytes))
+        .map_err(|_| "Bounded Rumble JSON unavailable".into())
+}
+
 pub(super) fn valid_receipt(instance: &Value, value: &Value) -> bool {
     fn exact_gui_object(value: &Value, keys: &[&str]) -> bool {
         value.as_object().is_some_and(|object| {

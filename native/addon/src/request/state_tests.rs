@@ -718,3 +718,72 @@ fn rumble_serialization_final_alias_reentry_and_full_capsules_keep_the_observer_
     assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 9);
     assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
 }
+
+#[test]
+fn rumble_processor_state_transient_lease_and_late_erasure() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    *fixture.plugin.bytes.lock().unwrap() =
+        serde_json::to_vec(&rumble_processor_state::fixture()).unwrap();
+    let mut ctx = fixture.context();
+    assert!(read_rumble_state(&ctx).is_err());
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 0);
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    let (value, lease) = read_rumble_state(&ctx).unwrap();
+    assert_eq!(live_count(), 0);
+    assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
+    let mut reply = chord_reply(Box::new(ctx), value, lease);
+    reply.value["operation"] = json!("forged");
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    assert!(reply.value.get("processors").is_none());
+    assert!(reply.value.get("instance").is_none());
+    assert_eq!(reply.value["native_access_metadata_verified"], false);
+}
+#[test]
+fn rumble_processor_state_document_drift_and_output_cap_fail_closed() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    let mut stored = rumble_processor_state::fixture();
+    *fixture.plugin.bytes.lock().unwrap() = serde_json::to_vec(&stored).unwrap();
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    let (value, lease) = read_rumble_state(&ctx).unwrap();
+    let mut reply = chord_reply(Box::new(ctx), value, lease);
+    fixture.manager.active = ptr::null_mut();
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    assert!(reply.value.get("processors").is_none());
+    drop(reply);
+    for i in 0..4 {
+        for j in 0..64 {
+            stored["parameters"][format!("effect{}", i + 2)][format!("a{j:062}")] = json!(0.5);
+        }
+    }
+    stored["parameters"]["effect1"]
+        .as_object_mut()
+        .unwrap()
+        .remove("gain");
+    *fixture.plugin.bytes.lock().unwrap() = serde_json::to_vec(&stored).unwrap();
+    fixture.manager.active = ptr::addr_of_mut!(*fixture.document).cast();
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    assert!(read_rumble_state(&ctx).is_err());
+    assert_eq!(live_count(), 0);
+}
+#[test]
+fn rumble_processor_state_native_request_rejects_unchecked_fields() {
+    let base = json!({"operation":"rumble_state_read","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+    assert!(
+        serde_json::from_value::<Request>(base.clone())
+            .unwrap()
+            .validate()
+            .is_ok()
+    );
+    for key in ["source", "bytes", "path", "token"] {
+        let mut bad = base.clone();
+        bad[key] = json!("private");
+        assert!(serde_json::from_value::<Request>(bad).is_err());
+    }
+}

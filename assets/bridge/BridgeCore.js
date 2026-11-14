@@ -130,7 +130,7 @@ class Bridge {
         const context = this.context();
         const contextError = this.contextError;
         const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
-        const rumbleSerialization = req.op === "pluginState" && req.args && req.args.action === "inspect_rumble_serialization";
+        const rumbleSerialization = req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state");
         const readOnly = rumbleSerialization || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {

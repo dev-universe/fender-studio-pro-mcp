@@ -811,6 +811,17 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginState(args) {
+        if (args.action === "read_rumble_state") {
+            const controls=new NativePluginControls(this),failure=()=>controls.rumbleStateFailure();
+            if (Object.keys(args).some(k=>["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k)<0) || args.plugin !== "Rumble Native" || args.token !== undefined) return failure();
+            const request={operation:"rumble_state_read",expected_instance:args.expected_instance};
+            if (!controls.rumbleStateRequest(request)) return failure();
+            const plug=this.pluginOf(args);if (!plug || plug.error || plug.name !== "Rumble Native") return failure();
+            const native=this.nativePluginRequest(plug.device,request);
+            if (!native || native.ok !== true || !controls.rumbleStateResult(native,request)) return failure();
+            const result=Object.assign({},native,{plugin:"Rumble Native",native_outcome:native.outcome});
+            return controls.rumbleSerializationBytes(result)<=32768 ? result : failure();
+        }
         if (args.action === "inspect_rumble_serialization") {
             const controls = new NativePluginControls(this), failure = () => controls.rumbleSerializationFailure();
             if (Object.keys(args).some(key => ["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(key) < 0)
