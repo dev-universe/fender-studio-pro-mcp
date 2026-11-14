@@ -4,20 +4,20 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "product_source_commit": "c7747f6",
+  "product_source_commit": "86c5610",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 44,
-  "installed_native_uuid": "3C0F65AA-B963-35D9-9233-CC84D6C466B6",
+  "installed_native_unit": 45,
+  "installed_native_uuid": "DD9C0DEE-2084-30A1-8CA9-E4DEAC8BF6EF",
   "app_closed_observed": true,
   "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native44 exact Level declared root IController8 and OutLevels IController25/canonical identity verified; no scalar or hidden write; Root NoSave/owner0/saved6/MIDI0.",
+  "last_completed_unit": "Native45 full33 declared-controller names/kinds/tags/current/owner read; six candidate settings found; zero route writes; Root NoSave/owner0/saved6/MIDI0.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -601,6 +601,7 @@
     }
   },
   "next_units_in_order": [
+    "Native45/86c5610에서 Level root8+OutLevels25의전체33이름/kind/tag/current와owner일치를381.821초·9요청으로완료했다. 읽기API는setter권한false이며6설정값의정확한Integer/list태그를확인했다. 이미완료한열거/Native44 QI/두reset은반복하지않는다. 기존파라미터API에exactLevel6설정전용source를추가하는별도소스를검토하고,병행준비한Room index1한건을현재설치Native45에서먼저진행한다.",
     "현재 Native44/c7747f6에서 Level의 IController canonical identity와개수8/25를235.563초·9요청으로확인하고저장없이정리했다. 두receiver의정확한이름/kind/tag/access/current읽기를추가하는별도소스를검토한뒤정상설치와새문맥한번조회로진행한다. 쓰기는아직추가하지않는다. 이어서별도Room index1설정한건의최대40요청레시피를새artifact/runtime바인딩후진행한다. PRESET_SETTING_ACCEPTANCE를따르고원래전체readonly복원실패는보존한다.",
     "Tuner R2 index0/415Hz와R3 index1/430Hz 두사례가모두실제127개씩·전체13복원·새242바이트A/B동등성·Root직접대조/정리로완료됐다. 완료29/46종·58사례·17종잔여다. 같은실기는재실행하지않고원래R1실패5개·변경0은보존한다. Tuner의 후속 Chorder R9 현재값 복원 완료 종료가 현재 최신 Scratch 문맥이다.",
     "완료한 Multi150개·3752요청·300setter·8개감사와 이름150개 delta는 반복하지 않는다. 현재6866/7112·잔여246개다. Native40 Level23·Native41 External checkOnly26은 조회 완료이며 선택/실행 근거가 아니다.",
@@ -620,39 +621,40 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-14.md",
-  "last_measurement": "6866/7112 names,246 remaining;31/46 preset-setting classes,61 cases in completed classes plus1partial Room case,15 classes remaining;fixed43 list2 complete/41 remaining. Native44 QI/count8+25 completed,9requests.",
+  "last_measurement": "6866/7112 names,246 remaining;31/46 preset-setting classes,61 completed-class cases+1partialRoom case,15 remaining;fixed43 completed2/remaining41;Native45 33 descriptors/current/owners verified,9requests.",
   "binary_source_commit": "bd43f35",
   "current_execution": {
-    "unit": "Native44 closed; exact Level8+25 descriptors source work and preset-setting scope admission",
+    "unit": "Native45 closed; six Level settings source implementation and Room index1 ready",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
-    "current_product_source_commit": "c7747f6",
-    "native_unit": 44,
+    "current_product_source_commit": "86c5610",
+    "native_unit": 45,
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Level exact declared root/OutLevels IController identity and counts8/25",
+    "latest_closed_DAW_unit": "Level exact8+25 full typed descriptors/current/owners",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "bc86ec70-658b-4307-836d-b4f65b111510",
+    "latest_closed_job_id": "abd61d5f-8148-48a9-9861-c291614afb9d",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "bc86ec70-658b-4307-836d-b4f65b111510",
+    "job_id": "abd61d5f-8148-48a9-9861-c291614afb9d",
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 9,
-    "current_phase": "ISOLATED_READONLY_LEVEL_DESCRIPTOR_SOURCE_IMPLEMENTATION",
+    "current_phase": "CLOSED_SIX_SETTING_SOURCE_AND_ROOM_INDEX1_NEXT",
     "maximum_tool_requests": 12,
-    "current_job_id": "bc86ec70-658b-4307-836d-b4f65b111510",
+    "current_job_id": "abd61d5f-8148-48a9-9861-c291614afb9d",
     "completed_subunits": [
-      "declared_root_controller_count8",
-      "OutLevels_controller_count25"
+      "root8_descriptors",
+      "OutLevels25_descriptors",
+      "six_setting_native_identity"
     ],
     "subunits_total": 2,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
-    "owner_pid": 82759,
-    "current_elapsed_seconds": 235.563
+    "owner_pid": 85118,
+    "current_elapsed_seconds": 381.821
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -14650,7 +14652,8 @@
     "main_rebuild_needed": false,
     "main_source_unchanged_since": "bd43f35",
     "actual_DAW_calls": 0,
-    "at": "2026-11-14T00:33:42.746926+00:00"
+    "at": "2026-11-14T00:33:42.746926+00:00",
+    "superseded_by_native_unit": 45
   },
   "native44_controller_actual": {
     "schema": 1,
@@ -14767,15 +14770,19 @@
     "all_builtin_plugins_complete": false
   },
   "level_descriptor_next_unit": {
-    "status": "ISOLATED_SOURCE_IMPLEMENTATION_IN_PROGRESS",
+    "status": "NATIVE45_ALL33_DESCRIPTORS_CURRENT_AND_OWNER_READ_ACCEPTED",
     "source_branch": "feat/level-controller-parameters",
-    "actual_calls": 0,
+    "actual_calls": 9,
     "known_controller_counts": [
       8,
       25
     ],
     "setting_write_authority": false,
-    "reset_replay_required": false
+    "reset_replay_required": false,
+    "integrated_source_commit": "86c5610",
+    "complete": true,
+    "native_candidate_settings_read": 6,
+    "replay_required": false
   },
   "room_index1_next_recipe": {
     "status": "FINITE_ROOT_ONLY_RECIPE_READY_NOT_EXECUTED",
@@ -14787,5 +14794,199 @@
     "current_case0_replay_required": false,
     "runtime_bindings_pending": true,
     "actual_calls": 0
+  },
+  "native45_installation": {
+    "status": "ROOT_REVIEW_NORMAL_NATIVE_BUILD_INSTALL_ALL_PINS_MATCH",
+    "native_unit": 45,
+    "product_source_commit": "86c5610e18f55ae851eed8293403ad7a0ae70796",
+    "native_uuid": "DD9C0DEE-2084-30A1-8CA9-E4DEAC8BF6EF",
+    "native_manifest_sha256": "c512f000a9dacb6273da13bfddfeb51673c91c593657ac6b29b99b6f554b394c",
+    "main_sha256": "a99f6b3adc266474af1ba6177c2258c55c3a84cad28ebc582e7b75a23f701915",
+    "source_pin_count": 152,
+    "package_file_count": 4,
+    "doctor_current": true,
+    "native_files_match": true,
+    "force_used": false,
+    "main_rebuild_needed": false,
+    "main_source_unchanged_since": "bd43f35",
+    "actual_DAW_calls": 0,
+    "at": "2026-11-14T00:50:45.001398+00:00"
+  },
+  "native45_descriptor_actual": {
+    "schema": 1,
+    "status": "ROOT_ACCEPTED_COMPLETE_FIXED33_NATIVE_DESCRIPTIONS_CURRENT_VALUES_AND_OWNERS_READONLY_ROUTE",
+    "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+    "job_id": "abd61d5f-8148-48a9-9861-c291614afb9d",
+    "product_source_commit": "86c5610e18f55ae851eed8293403ad7a0ae70796",
+    "native_unit": 45,
+    "actual_elapsed_seconds": 381.821,
+    "raw_DAW_requests": 9,
+    "metadata_MCP_requests": 2,
+    "paired_unique_receipts": 9,
+    "mixer_preparation_writes": 1,
+    "plugin_parameter_writes": 0,
+    "state_or_preset_actions": 0,
+    "reset_actions": 0,
+    "Song_Save_or_transport_actions": 0,
+    "new_descriptor_observations": 1,
+    "root_parameter_records": 8,
+    "OutLevels_parameter_records": 25,
+    "all33_current_values_available": true,
+    "all33_native_descriptions_preserved": true,
+    "all33_declared_owners_canonical_match": true,
+    "all33_route_can_set_false": true,
+    "native_writable_metadata_count": 32,
+    "native_readOnly_metadata_count": 0,
+    "registered_candidate_settings": [
+      {
+        "index": 0,
+        "name": "mode",
+        "kind": "List",
+        "tag": 1299145829,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 0,
+        "text": "Peak/RMS",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 0
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 4
+      },
+      {
+        "index": 2,
+        "name": "rmsLength",
+        "kind": "List",
+        "tag": 1382904652,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 0,
+        "text": "0.6 s",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 0
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 2
+      },
+      {
+        "index": 3,
+        "name": "holdLength",
+        "kind": "List",
+        "tag": 1215261772,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 0,
+        "text": "2 s",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 0
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 2
+      },
+      {
+        "index": 4,
+        "name": "vuHold",
+        "kind": "Toggle",
+        "tag": 1450526828,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 1,
+        "text": "1",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 1
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 17,
+        "name": "loudnessInLUFS",
+        "kind": "Toggle",
+        "tag": 1280658799,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 0,
+        "text": "0",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 0
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 18,
+        "name": "loudnessEBU18",
+        "kind": "Toggle",
+        "tag": 1280651576,
+        "readOnly": false,
+        "native_writable": true,
+        "value": 0,
+        "text": "0",
+        "native_value": {
+          "data": {
+            "kind": "integer",
+            "value": 0
+          },
+          "variant_tag": 1
+        },
+        "min": 0,
+        "max": 1
+      }
+    ],
+    "new_hidden_setting_write_authority": false,
+    "whole_Level_complete": false,
+    "strict_name_increment": 0,
+    "preset_cases_increment": 0,
+    "NoSave_observed": true,
+    "app_closed_observed": true,
+    "owner_process_absent": true,
+    "owner_exit_code": 0,
+    "saved6_hashes_unchanged": true,
+    "post_owner_MIDI_sources": 0,
+    "post_owner_MIDI_destinations": 0,
+    "request_journal_sha256": "497ea4186c6e3457cb9e1e255db7b2ab265ba10a4b0708bc51a12a6f1f60c726",
+    "response_journal_sha256": "7004b1b73b22e623d80b19e4e8a6c3c2ed8d0919747df9500042cd511fc9c039",
+    "installation_proof_sha256": "bc8b90e52d27395299da52cd07932881ab90035b6d4ba441803cdf797806c665",
+    "finished_at": "2026-11-14T00:57:06.822588+00:00"
+  },
+  "native45_runtime_actual_total_requests": 9,
+  "native45_accepted_completed_unit_requests": 9,
+  "level_six_settings_next_unit": {
+    "status": "ISOLATED_SOURCE_IMPLEMENTATION_IN_PROGRESS",
+    "source_branch": "feat/level-meter-settings",
+    "base_product_source": "86c5610",
+    "intended_parameter_source": "level_meter",
+    "MCP_tool_count_expected": 46,
+    "registered_names": [
+      "mode",
+      "rmsLength",
+      "holdLength",
+      "vuHold",
+      "loudnessInLUFS",
+      "loudnessEBU18"
+    ],
+    "new_actual_calls": 0,
+    "reset_replay_required": false,
+    "measurement_and_unregistered_writes_denied": true
   }
 }

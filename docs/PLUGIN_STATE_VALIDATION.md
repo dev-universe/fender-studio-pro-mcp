@@ -11,13 +11,14 @@ Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
 and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
-Current checkpoint: Native44 / `c7747f6`, 46 MCP tools; 6,866/7,112 fixed
+Current checkpoint: Native45 / `86c5610`, 46 MCP tools; 6,866/7,112 fixed
 current-value names, 246 remaining; 31/46 preset-setting classes, 61 cases in completed classes and one partial Room case,
 15 remaining. The fixed remaining-work snapshot has two of43 items complete
 and41 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects now have independent live GUI
-witnesses; Native44 additionally observed declared-controller counts8/25.
+witnesses; Native44 observed declared-controller counts8/25 and Native45 read
+all33 typed descriptions/current values/owners. This descriptor route cannot set values.
 Hidden-setting MCP access remains partial. [Explicit setting acceptance](PRESET_SETTING_ACCEPTANCE.md)
 records the Open AIR singleton admission and preserves full-current/readonly failures.
 
