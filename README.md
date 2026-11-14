@@ -181,7 +181,7 @@ The probe grants no mutation authority or output-pitch mapping. Stored-chord
 editing, restoration and persistence remain pending.
 
 The additional preset-setting plan has completed 38 of 46 classes with 74
-accepted representative cases. These include 57 capsule-only cases across 29
+accepted representative cases, plus one partial Chorder setting/model case for75 total. The completed classes include 57 capsule-only cases across 29
 classes, 12 predeclared hybrid cases across 6 classes, and 5 explicitly scoped
 setting cases across 3 classes. Eight classes remain. The [current acceptance
 record](docs/PRESET_SETTING_ACCEPTANCE.md) preserves earlier strict failures,

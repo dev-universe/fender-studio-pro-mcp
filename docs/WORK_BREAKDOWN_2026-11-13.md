@@ -9,7 +9,7 @@
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
-| 추가 프리셋 설정 종 |38/46|8종|완료 종74사례와 별도 부분0사례. catalog59종과 다른 지표|
+| 추가 프리셋 설정 종 |38/46|8종|완료 종74사례와 별도 부분Chorder1사례로 총75사례. catalog59종과 다른 지표|
 | 고정한 완료물 목록 |43개 중10개 완료|33개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
@@ -41,7 +41,7 @@
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-CV|CV Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-MOJITO|Mojito|완료|서로 다른 Acid Dreams0/Basslead1 각57요청, 쓰기35개/전체37 metadata 정확 복원·새895바이트 A/B 일치·정리. 사전 선언한 LFO 정밀 보정 각2회. R1/R2 실패 보존|완료: 대표 설정2/2 범위. readonly lfoBeats/전체37 current와 표시이름 원복false, legacy pan/MIDI3역할은 CONTROL-MOJITO에 남음. 두 사례 반복 금지.|
-|PRESET-CHORDER|Chorder|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
+|PRESET-CHORDER|Chorder|부분 완료|Major index0 R2의153요청·585.521초로 전체908 current/metadata·128모델 원복·새581바이트 A/B·수명·정리1/2 완료. Minor1건이 남음. 실패R1 보존·표시이름 원복false|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-REPEATER|Repeater|완료|서로 다른 index0/1을 각75요청·365.674초/299.143초로 수용. 실제15개/34개 변화, 전체141개 writable current/metadata의 한 Aload 정확 복원·보정0회·새2989바이트 A/B 일치·수명·Root NoSave/owner0/저장6/MIDI0 확인|대표 설정2/2 완료. 표시이름 원복false와 Repeater의 MIDI 역할·실제 처리·오디오·저장은 별도. 두 사례와141개 scalar sweep은 반복하지 않는다.|
 
 ### 프리셋 외 플러그인 기능

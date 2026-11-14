@@ -11,9 +11,9 @@ Read the [current progress](PROGRESS_2026-11-13.md), [resume guide](RESUME.md)
 and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
-Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
+Current checkpoint: Native48 / `2db35b2`, 46 MCP tools; 6,866/7,112 fixed
 current-value names, 246 remaining; 38/46 preset-setting classes, 74 cases in completed classes,
-8 remaining and no separate partial setting cases. The fixed remaining-work snapshot has ten of43 items complete
+8 remaining and one separate partial Chorder case, for75 total accepted setting cases. The fixed remaining-work snapshot has ten of43 items complete
 and33 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
@@ -942,3 +942,6 @@ Native48 actual graph-ownership R3 passed32DAQ/348.714s. Three independent compl
 
 
 Chorder Major R1은 한 preset apply와 한 Aload로 전체908개 current/metadata 및128개 저장 모델의 정확한 복원과 새581바이트 A/B 일치를 관측했다. 마지막 수명 호출의 도구 이름 준비 오류로 최종 검사를 마치지 못했으므로 설정 사례 수용은0이다. [실패 기록](evidence/2026-11-14-chorder-preset-index0-native48-r1-failed.json)을 보존한다. 일반 capsule restore 수락과 독립 원복 증거는 구분하며, 프리셋 표시 이름 원복은 false다.
+
+
+Chorder Major R2의 [새 수용 증거](evidence/2026-11-14-chorder-preset-index0-native48-r2.json)는153요청·585.521초다. 다섯908개 독립 쌍과 다섯128모델 관측, 실제 autofill 변화·Major 모델 일치, 한 Aload의 전체908 current/metadata와128모델 원복, 새581바이트 A/B 일치, 수명·최종 거부·Root 정리를 확인했다. 첫 대표1/2이며 현재38/46종·74완료종 사례와 별도 부분1로 총75사례다. 표시 이름 원복false·audio/Save 미검증을 보존한다. R1 실패를 덮지 않는다.
