@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 최신 설치는 검토된 소스4f9d7f2의 Native55다. 정상 서버28.612초·native32.471초 빌드, 강제 옵션 없는 설치·소스177개/설치13개·저장본10개·passive doctor를 확인했다. 새 r64 owner에서46도구/5버튼/7상태 동작을 확인했으며 DAQ는0이다. 앱은 닫혔고 metadata-only owner는 열려 있다. 현재 owner를 재초기화하지 않고 고정81요청/원본12장 효과 절차의 Rust 의미 검사와 독립 검토 후 이어간다. 설치·스키마는 실제 펄스나 효과 검증이 아니다. 마지막 네이티브 실기 수용은 Native54이며 고정14/43완료29잔여를 유지한다. 아래 Native54 다음 설치 문장과 owner종료 문장은 이력이다.
+
 - 최신 실제 단위는 Native54 Scope의 기본 A 파형 표시 준비13요청이다. 전체31개 전후 정확 일치·두 원본 JPEG·정상 NoSave/owner0/저장10/MIDI0을 독립 수용했다.1385.549초이며 codec·GUI 차이 검토를 포함한다. 비활성 C의 GUI/DSP 표시 차이는 유지하고 전체 GUI 일치·acquisition/effect는 false다. 앱과 owner는 종료됐다. 고정14/43완료29잔여·프리셋40/46종77사례 유지다. 다음은 Retrigger 코드5f179c4의 최종 소스 검토·통합·정상 Native55 설치와 별도 기본 A 효과 실험이며, 아래 r63진행 중 문장은 이력이다.
 
 - 최신 수용은 Native54 SampleOne singleton default 대표1/1이다.111요청·후속 실기/정리331.676초, 전체235 exact O/P 복원·새5222바이트 A/B 동일·실제 UI·수명·NoSave/appfalse/owner0/잠금/저장10/MIDI0과 독립 감사를 통과했다. 고정14/43완료29잔여·프리셋40/46종77사례·6종 잔여다. 앱과 owner는 종료 상태다. CONTROL-SAMPLEONE의 MIDI/모델/샘플과 전체 플러그인 완료는 별도이며 이 대표 사례와 기존 실패 R61을 재실행하지 않는다. 다음은 CONTROL-SCOPE 효과 관측 준비와 그래프 factory owner 경계 조사다. 아래 진행 중 r62 문장은 이력이다.

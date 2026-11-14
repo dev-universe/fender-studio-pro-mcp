@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "scope": "NATIVE55_NORMAL_INSTALL_AND_FRESH_METADATA_ONLY",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "reviewed_worker_commit": "5f179c424fcff89f69892154f9828d6cb243bf4c",
+  "changed_product_files": 7,
+  "all7_equal_reviewed_worker": true,
+  "fixed_action": "retrigger_scope",
+  "target_class": "36322412-AD90-4EE0-B63C-37929566B081",
+  "canonical_parameter": "trigRetrig",
+  "tag": 1398043218,
+  "native_uuid": "52EFF0D5-FC83-3CF7-AE23-FD669D821098",
+  "main_binary_sha256": "d6e6d2eb1fa56f701d0b508fa6303cc836da3cff930bc8d9fd3f000d65546278",
+  "native_binary_sha256": "952ad216fcdadae7ddb5b2fdf20bb9fd8cea4a103f7480c78268101a7124a982",
+  "source_files": 177,
+  "artifact_files": 13,
+  "installed_source_pairs": 12,
+  "source_map_sha256": "72a3af6bb53ee9008afef8ff6fc3389db6d55b5953026db9ba84f07d1fa9fe84",
+  "artifact_map_sha256": "9e8ebb46d8f0a04184e20f23a6cb2c1d5f5905d5a8a99a4a4c9b1819f76035d0",
+  "main_build_seconds": 28.612,
+  "native_build_seconds": 32.471,
+  "normal_install_force_flags": false,
+  "passive_doctor_current": true,
+  "saved10_equal": true,
+  "main_tests": 176,
+  "Node_tests": 380,
+  "native_tests": 396,
+  "shared_pulse_tests": 10,
+  "independent_fresh_native_action_tests": 26,
+  "independent_fresh_Node_tests": 59,
+  "old_four_action_results": 32,
+  "old_four_action_result_bytes": 25679,
+  "old_four_action_result_sha256": "0dbf6c4f8804a8a4d3726b0dae5caae1c1c07d7cad391b020f7bfc815f87dacb",
+  "source_review_report_sha256": "cbb76988d7fe0e9364a1f2c2c8cf835c1267d22c086b6e753895785cbb0d2371",
+  "comment_review_report_sha256": "cb235b4dbe096d94e4566d31eb32f7305d62cdea089e332d136f8ac540589b78",
+  "fresh_metadata": {
+    "namespace": "r64",
+    "tools": 46,
+    "actions": 5,
+    "state_actions": 7,
+    "canonical_tools_sha256": "0d239d82c614d432da8374af02e09814c14aeb2afe2428376dbb6f71150b56f3",
+    "intents_persisted_before_writes": 3,
+    "unique_responses": 2,
+    "DAQ": 0
+  },
+  "verification_flags": {
+    "pulse_receipt_verified": false,
+    "effects_verified": false,
+    "Scope_actual_pulse_or_effect_verified": false,
+    "Oneshot_is_separate_mode_parameter": true
+  },
+  "last_actual_native_host_verified_unit": 54,
+  "Native55_actual_host_verification_pending": true,
+  "read_only_postinstall_verifier_path_mapping_error_preserved": true,
+  "reinstallation_repeated": false,
+  "fixed_backlog": {
+    "total": 43,
+    "completed": 14,
+    "remaining": 29,
+    "software_remaining": 25,
+    "hardware_remaining": 4
+  },
+  "name_coverage": {
+    "verified": 6866,
+    "total": 7112,
+    "remaining": 246
+  },
+  "preset_coverage": {
+    "classes": 40,
+    "total_classes": 46,
+    "cases": 77,
+    "remaining_classes": 6
+  },
+  "next_case": "One finite primary-A waveform hold and single retrigger refresh experiment; twelve original images; independently reviewed exact wire plan required before any DAQ.",
+  "limitations": [
+    "Metadata-only observations do not prove DAW-side Native55 execution.",
+    "No silent arming, acquisition-memory restoration, physical audio or whole-Scope completion claim.",
+    "Inactive source-C GUI/DSP label mismatch remains unresolved."
+  ]
+}
