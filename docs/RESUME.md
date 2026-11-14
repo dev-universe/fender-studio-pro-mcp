@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 현재 r62 SampleOne 준비18요청이 통과했고 앱과 owner는 후속 절차를 위해 열려 있다. 새 UID 확인 뒤 실제 UI의 입력 없음·Music mute1·record0·monitor0, 연결된 오디오 mute1·Main0·정지·빈 트랙을 확인했다. 전체235개 한 관찰이 완전하며 plugin쓰기/preset/capture/load0·catalog 미발급이다. 시작 준비부터811.644초다. 후속21번 이후의 독립 P·프리셋 변화·한 load 전체 복원·B·수명·최종 P는 별도 준비 및 검토 중이다. 고정13/43완료30잔여·프리셋39/46종76사례 유지다. 아래 R1 실패는 보존하며 재실행하지 않는다. 실제 연결이 끊겼으면 이 세션을 재사용하지 말고 최신 상태와 증거를 먼저 대조한다.
+
 - 최신 실행은 SampleOne 준비 R1의 Rust 의미 검사 거부다.330.168초·MCP요청8개 중 실제DAQ7개와 입력거부1개이며 plugin쓰기/preset/capture/UI준비0회다. 식별자 없는 최초 조회에 include_context를 함께 요청한 절차 결함을 보존한다. NoSave/appfalse/즉시CUA/owner0/hardware→ps/잠금/저장10/MIDI0으로 닫았다. Native54실제66=수용58+미수용8, MCP입력거부1은 별도다. 고정13/43완료30잔여·프리셋39/46/76·이름6866/7112 유지다. 다음 r62 R2는 최초 조회에서 문맥을 요구하지 않고 새 UID를 바인딩하며, 모든 요청을 실제 Rust 의미 검사에 먼저 통과시키는 준비 중이다. 아래 완료 Compressor/Limiter는 반복하지 않는다. 모델 sameID 사용자 복사 우회는 공개 소스와 실제 분기를 맞춰 NO로 닫았고 배치/버전 변경을 하지 않는다.
 
 - 최신 실제 완료는 Native54 Compressor의 최소 게인 감소 초기화 효과·수명 검증이다. 새 owner 준비부터 종료까지314.509초·59요청 중 긍정58개를 수용했다. -34.54dB 유지값의 독립쌍이 한 초기화 뒤 최초0.00dB 독립쌍으로 복귀했고, 전체154 metadata·쓰기20·정적표시3·Tone10과 실제 최종154값도 정확히 원복됐다. GUI·NoSave/appfalse/owner0/잠금/저장10/MIDI0을 확인했다. 마지막 outerunknown1은 미수용·whole59passfalse로 유지하며 앞선 metadata-only실패0DAQ도 보존한다. 현재 고정13/43완료30잔여(소프트웨어26·하드웨어4)다. 다음은 제한된 모델 ExtensionManager Ghidra 조사와 공유 입력 수명 근거이며, 아래 Native54 설치·59요청 준비 문장은 이력이다. 완료 Compressor/Limiter 및 과거 sweep은 반복하지 않는다.
