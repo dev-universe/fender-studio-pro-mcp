@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Reuse accepted Native52 actual23DAQ child-relative22 named absence (all26present/count0, model26/current22/DSP39 exact, known closure) and installedsource4a6e115/UUIDDB71D03A-5FB2-3524-B897-FA040E9C7255. Do not replay ordinarycensus/child-namedbaseline unit. Next separately prepared finite33DAQ mute-wake experiment on SAME installed52: strictMain0/inputNone/record0/monitor0/stopped/emptyAudio, targetmute1->0->1, namedpairs initial15/16 active19/20 restored25/26, statepairs13/14 active21/22 final27/28 all26GUID22numbers exactbaseline, finalDSP39pair29/30 exact11/12, finalcontext31..34, fakeUIDnamedrefusal35LAST. Acrossphases allowandreportavailabilitydeltas; withinpairs existingstrictoracles, noactualprocessing/audio/writer/wholepluginclaim. StopallDAQonunexpectedresult, noautomaticcleanupsetter; RootNoSave/owner0/sequentialhardwarethenps/locks/saved10/MIDI0. Helpernamespace r53 denotes experiment, NOT Native53install. Prep in progress thenindependentreview/artifacts/schema/freshcontext/UIgates beforeDAQ. No rebuild if unchangedSource/artifacts. Parallel source-onlyMustangreader-reusegrounding uses exact3557byte saved26models20numbers29keys, notruntime/writability. Remaining32 andhardware4 queuepreserved; rootqualifiedname/newtransporthypotheses needseparatefinitecontracts iflaterjustified.",
+    "Reuse immutable completed Native52 negative observations and existing product4a6e115/Native52. Next fresh22DAQ private-app read readiness using the frozen plan22, current independent schemas, fresh FSP_APP before catalog, normal profile and actual exact Studio Pro executable path. Verify original4086files21links unchanged, private signatures/code/data/UUID and source176/artifact13 pins, then ordinary launch. Read current DSP page pair/named13-14/indexed15-16/optionalstate17/finalpages18-19/context20-23/fakeUID24LAST. No old39/22/modelGUID baseline gate. Main0 only safety scalar. No targetmute/scalar/model/preset/load/transport/Save. Preserve unexpected outcomes and stop DAQ; Root NoSave/appfalse/ownerEOF0/sequential hardwarethenps/twolocks/saved10/MIDI0. Earlier mute-wake36 plan remains unexecuted and deferred after actual same-run missing-signature loader evidence. No original-app or security/account/license changes. Model/control/audio/runtime success still unknown.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -2777,7 +2777,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T05:14:34.844453+00:00",
+  "latest_root_observation_at": "2026-11-14T17:21:36.055576+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -17922,6 +17922,30 @@
     "transport_actions": 0,
     "plugin_scalar_setters": 0,
     "fixed43_increment": 0,
-    "all_artifact_schema_UI_and_review_gates_pending": true
+    "all_artifact_schema_UI_and_review_gates_pending": true,
+    "latest_status": "deferred_unexecuted36_after_same_run_loader_signature_failure"
+  },
+  "private_model_loader_readiness": {
+    "status": "static_private_copy_review_passed_fresh_runtime_pending",
+    "same_run_native52_log_missing_signature_confirmed": true,
+    "original_app_modified": false,
+    "original_file_count": 4086,
+    "original_symlink_count": 21,
+    "private_changed_files": 3,
+    "main_sections_preserved": 29,
+    "model_sections_preserved": 25,
+    "source_product": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
+    "native_unit": 52,
+    "readiness_namespace": "r54",
+    "DAQ_budget": 22,
+    "DAQ_dispatched": 0,
+    "old_empty_baseline_required": false,
+    "hardware_disconnected": true,
+    "runtime_verified": false,
+    "whole_control_verified": false,
+    "public_progress": "docs/PROGRESS_2026-11-15.md",
+    "private_plan": "private-fender-readiness-prep-r1/plan22.json",
+    "plan_sha256": "998d2a9fd0d03c3c1fd74bd62f6b023112bde625dc3304d9362c506216054cb1",
+    "process_filter_correction": "Actual executable basename Studio Pro; historical Studio Pro 8 suffix did not cover main process. Historical CUA appfalse remains separate evidence."
   }
 }
