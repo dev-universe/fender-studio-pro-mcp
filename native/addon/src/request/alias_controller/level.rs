@@ -1,4 +1,4 @@
-//! Exact Level capability observations. No parameter object is requested.
+//! Exact Level declared-controller observations, without write authority.
 use super::*;
 use fender_native_node_api::{Relation, Report};
 
@@ -124,6 +124,7 @@ struct Pair {
 
 pub(in crate::native_script::request) struct Observation {
     pair: Option<Pair>,
+    descriptions: Option<descriptors::Descriptions>,
 }
 
 fn count_children(node: *mut c_void) -> i32 {
@@ -142,7 +143,10 @@ impl Observation {
         guard: &mut G,
     ) -> Result<Self, String> {
         if !exact_shape(report) {
-            return Ok(Self { pair: None });
+            return Ok(Self {
+                pair: None,
+                descriptions: None,
+            });
         }
         let result = (|| {
             let root = interface(binding.controller.0, &NODE, guard)?;
@@ -160,6 +164,7 @@ impl Observation {
             release(child, guard)?;
             let child_identity = interface(child_node.0, &UNKNOWN, guard)?;
             let mut observation = Self {
+                descriptions: None,
                 pair: Some(Pair {
                     root,
                     root_identity,
@@ -192,7 +197,7 @@ impl Observation {
         let Some(pair) = &self.pair else {
             return guard();
         };
-        let result = (|| {
+        let result: Result<(), String> = (|| {
             for (node, canonical, capability) in [
                 (&pair.root, &pair.root_identity, &pair.capabilities[0]),
                 (&pair.child, &pair.child_identity, &pair.capabilities[1]),
@@ -219,10 +224,15 @@ impl Observation {
             if !matches {
                 return Err("Level child parent changed".into());
             }
-            self.attachments()
+            self.attachments()?;
+            if let Some(descriptions) = &self.descriptions {
+                descriptions.check(pair, guard)?;
+            }
+            Ok(())
         })();
         guard()?;
-        result
+        result?;
+        self.attachments()
     }
 
     pub(super) fn attachments(&self) -> Result<(), String> {
@@ -233,11 +243,13 @@ impl Observation {
             && count_children(pair.child.0) == 0
             && child(pair.root.0) == pair.child.0
             && borrowed(pair.child.0, 6) == pair.root.0;
-        if matches {
-            Ok(())
-        } else {
-            Err("Level fixed root/child attachment changed".into())
+        if !matches {
+            return Err("Level fixed root/child attachment changed".into());
         }
+        if let Some(descriptions) = &self.descriptions {
+            descriptions.attachments(pair)?;
+        }
+        Ok(())
     }
 
     pub(super) fn value(&self) -> Value {
@@ -255,3 +267,6 @@ impl Observation {
 #[cfg(test)]
 #[path = "level_tests.rs"]
 mod tests;
+
+#[path = "level_descriptors.rs"]
+mod descriptors;

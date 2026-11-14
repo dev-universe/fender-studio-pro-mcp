@@ -280,6 +280,9 @@ impl Inventory {
         } = self
         {
             value["level_controller_capability"] = level.value();
+            if let Some(descriptions) = level.descriptions_value() {
+                value["level_controller_parameters"] = descriptions;
+            }
         }
         value["coverage"] = json!("bounded_alias_declared_controller_metadata");
         value["scope"] = json!("alias_declared_controller_observation");
@@ -376,14 +379,32 @@ pub(super) fn capture(
     text: TextApi,
     limits: Limits,
 ) -> Result<Inventory, String> {
-    capture_bound(
+    let mut inventory = capture_bound(
         &ctx.instance,
         ctx.target.0,
         ctx.node.0,
         text,
         limits,
         &mut || ctx.check(),
-    )
+    )?;
+    let result = (|| {
+        if let Inventory::Present {
+            level: Some(level),
+            binding,
+            ..
+        } = &mut inventory
+        {
+            level.describe(raw_text(ctx.api), &mut || {
+                binding.check(&mut || ctx.check())
+            })?;
+        }
+        inventory.check(&mut || ctx.check())
+    })();
+    if let Err(reason) = result {
+        release(inventory, &mut || ctx.check())?;
+        return Err(reason);
+    }
+    Ok(inventory)
 }
 
 #[cfg(test)]

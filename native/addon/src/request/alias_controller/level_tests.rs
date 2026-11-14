@@ -10,6 +10,7 @@ struct Fake {
     output: Cell<bool>,
     count: Cell<i32>,
     count_reads: Cell<usize>,
+    parameter: Cell<*mut c_void>,
     parent: Cell<*mut c_void>,
     child: Cell<*mut c_void>,
     lost: Cell<bool>,
@@ -69,6 +70,9 @@ unsafe extern "C" fn count(p: *mut c_void) -> i32 {
     }
     f.count.get()
 }
+unsafe extern "C" fn parameter_at(p: *mut c_void, _: i32) -> *mut c_void {
+    unsafe { object(p) }.parameter.get()
+}
 unsafe extern "C" fn children(p: *mut c_void) -> i32 {
     if unsafe { object(p) }.child.get().is_null() {
         0
@@ -95,6 +99,7 @@ impl Fixture {
         table[1] = retain as *const c_void;
         table[2] = drop_ref as *const c_void;
         table[3] = count as *const c_void;
+        table[4] = parameter_at as *const c_void;
         table[6] = parent as *const c_void;
         table[8] = children as *const c_void;
         table[9] = child0 as *const c_void;
@@ -107,6 +112,7 @@ impl Fixture {
                 output: Cell::new(true),
                 count: Cell::new(0),
                 count_reads: Cell::new(0),
+                parameter: Cell::new(ptr::null_mut()),
                 parent: Cell::new(ptr::null_mut()),
                 child: Cell::new(ptr::null_mut()),
                 lost: Cell::new(false),
@@ -136,6 +142,7 @@ impl Fixture {
     fn pair(&self) -> Observation {
         let mut guard = || self.guard();
         Observation {
+            descriptions: None,
             pair: Some(Pair {
                 root: pin(self.pointer(0), &mut guard).unwrap(),
                 root_identity: pin(self.pointer(0), &mut guard).unwrap(),
@@ -315,7 +322,11 @@ fn fixed_metadata_shape_and_finite_output_are_required() {
         }
         assert!(!exact_shape(&report));
     }
-    let unresolved = Observation { pair: None }.value();
+    let unresolved = Observation {
+        pair: None,
+        descriptions: None,
+    }
+    .value();
     assert_eq!(unresolved["api"], API);
     assert_eq!(unresolved["status"], "unsupported_shape");
     assert!(unresolved["nodes"].is_null());
@@ -332,3 +343,6 @@ fn retained_pair_rechecks_canonical_identity_and_context() {
     f.objects[1].lose_query.set(true);
     assert!(observation.check(&mut || f.guard()).is_err());
 }
+
+#[path = "level_descriptor_tests.rs"]
+mod descriptor_tests;

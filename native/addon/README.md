@@ -158,13 +158,39 @@ Statuses are `absent`, `qi_failed`, `malformed_success`, `malformed_absence`,
 Only `present` has an integer `count`, in0..128. Canonical identity is true
 for valid count observations, false for an identity mismatch, and null when
 unobserved. Guard or canonical-interface failures fail the request.
-This observation stops after QI and count, without fallback. An absent
+The capability-v1 field stops after QI and count, without fallback. An absent
 IController ends only this exact interface route. A zero indexed count remains
 a valid present-interface observation and does not prove named controls absent.
-Neither result proves hidden state globally absent. No parameter, scalar, descriptor, setter, reflected call,
-or caller-selected path is accessed. A positive count establishes no hidden
+Neither result proves hidden state globally absent. The capability field accesses no parameter objects. A positive count establishes no hidden
 setting binding or permission. Retained identities and exact attachments are
 rechecked through publication using the existing non-atomic inspection guards.
+
+The exact Level report also has optional `level_controller_parameters` with
+`api:exact-level-controller-parameters-v1`. Its `status` is `observed`,
+`incomplete`, or `unsupported_shape`. `complete` states descriptor/current-value
+coverage, `max_total_parameters` is33, and `nodes` contains only the retained
+root0 and fixed child0. Counts must equal the observed schema8 and25 before
+indexed reads. Drift, absence, or invalid capability produces
+`unresolved_count_or_interface` with `parameters:null`, the expected count and
+observed count. Zero remains present and does not prove named absence.
+
+Each parameter record contains `index`, `status`, `description`,
+`controller_owner_present`, and nullable
+`controller_owner_canonical_matches_receiver`. The existing typed description
+reports native name, kind, tag, enabled/readOnly flags and current typed carrier
+with its native Variant tag. Unavailable, empty, opaque, unsupported or nonfinite
+current data returns `current_unavailable` and incomplete coverage. A malformed
+parameter or failed typed description fails the request explicitly. Parameters
+and any declared owners remain retained and count/index/owner associations are
+rechecked through publication. An absent owner is rechecked too. Owner mismatch
+is an observation and grants no authority. No semantic mapping to serialized
+settings or UI ordinals is inferred. The description preserves the existing
+native access metadata, including `readOnly`, `writable` and support flags.
+Those fields do not grant setter authority through this observation route.
+Each parameter record has `can_set_via_this_api:false` and
+`mutation_capability:false`. The report also has `mutation_capability:false`
+and `atomic_snapshot:false`.
+No setters, reset, state, preset, command or reflected calls are added.
 
 This report has `scope:alias_declared_controller_observation`,
 `mutation_capability:false` and `atomic_snapshot:false`. Fixed QueryInterface
