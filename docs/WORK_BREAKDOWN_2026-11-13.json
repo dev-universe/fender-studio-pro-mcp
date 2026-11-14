@@ -21,9 +21,9 @@
     "preset_classes_plan": 46,
     "preset_cases": 70,
     "remaining_preset_classes": 10,
-    "additional_partial_setting_cases": 0
+    "additional_partial_setting_cases": 1
   },
-  "runtime_note": "Native47 Mojito index0 R2:30DAQ/706.132s, Music mute1 and separately associated audio mute1 guards passed; Acid Dreams applied once,20 writable changes stable; sole Aload restored33/35 writable exactly, lfoSpeed/lfo2Speed normalized3BA3838Fto3BA3838E remained mismatched and readonly lfoBeats3to7 remained. No call33, correction, B capture, release or further dispatch. RootNoSave/appfalse/ownerEOF0/absence/saved6/MIDI0. Accepted0.",
+  "runtime_note": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -210,12 +210,12 @@
       "title": "Mojito",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "R1 preapply isolation failure preserved. R2 passed distinct Music/output mute guards, applied Acid Dreams once and observed20 stable writable changes, but sole Aload left lfoSpeed/lfo2Speed one normalized ULP off and readonly lfoBeats3to7.30DAQ/706.132s, accepted0, NoSave/owner0/saved6/MIDI0.",
+      "actually_verified": "Acid Dreams index0 scoped hybrid case1/2 accepted:57DAQ/409.184s, all35 writable exact after one Aload and declared two LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/Root closure. Readonly lfoBeats current and preset-label restorationfalse; R1/R2 failures preserved.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0,
-      "remaining_after_verified_actions": "Investigate exact writable restoration gap and predeclare a different bounded correction contract if supported. R2 is immutable and not replayed. No tolerance, hidden correction or class/name credit. Legacy pan current provider unknown.",
-      "evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r2-failed.json"
+      "remaining_after_verified_actions": "Distinct Basslead index1 second scoped setting case, with fresh bindings and independently frozen finite contract. No replay of accepted index0. Legacy pan remains CONTROL-MOJITO unknown.",
+      "evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r3.json"
     },
     {
       "id": "PRESET-CHORDER",

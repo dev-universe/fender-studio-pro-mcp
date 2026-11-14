@@ -40,7 +40,7 @@
 |PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-CV|CV Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-MOJITO|Mojito|부분 완료|R1 적용 전 격리 실패 보존. R2 격리 통과·프리셋 실제 변화20개 관측, 한 load 뒤 LFO speed2개 정확 원복 실패.30요청·706.132초·수용0·저장 없이 정리|쓰기35개 정확 복원과 새 A/B 동일·수명 정리를 충족할 다른 유한 계약을 검토한다. R1/R2 반복·허용오차 완화 금지. legacy pan은 별도 CONTROL-MOJITO 기존 범위.|
+|PRESET-MOJITO|Mojito|부분 완료|Acid Dreams index0의 쓰기35개·전체37 metadata 정확 복원과 새895바이트 A/B 일치·정리를57요청·409.184초로 수용. 사전 선언한 LFO 정밀 보정2회. R1/R2 실패 보존|서로 다른 Basslead index1의 두 번째 설정 사례가 남음. readonly lfoBeats/전체37 current와 표시이름 원복false, legacy pan은 CONTROL-MOJITO 기존 범위.|
 |PRESET-CHORDER|Chorder|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-REPEATER|Repeater|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 
