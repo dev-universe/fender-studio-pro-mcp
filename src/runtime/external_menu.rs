@@ -205,8 +205,7 @@ fn valid_provenance(value: &Value, rows: &[Value]) -> bool {
     let Some(leaves) = value["leaves"].as_array().filter(|a| a.len() == 2) else {
         return false;
     };
-    for i in 2..4 {
-        let r = &rows[i];
+    for (i, r) in rows.iter().enumerate().take(4).skip(2) {
         if r["path"] != json!([i])
             || r["name"] != if i == 2 { "" } else { "Setup" }
             || r["title"] != if i == 2 { "-" } else { "오디오 I/O 설정" }
@@ -222,7 +221,7 @@ fn valid_provenance(value: &Value, rows: &[Value]) -> bool {
     for (i, p) in leaves.iter().enumerate() {
         let r = &rows[i];
         if r["path"] != json!([i])
-            || r["name"] != i.to_string()
+            || r["name"] != ["0", "1"][i]
             || r["title"] != if i == 0 { "없음" } else { "메인 - 1 + 2" }
             || r["category"] != "Param"
             || r["checked"] != (i == 0)

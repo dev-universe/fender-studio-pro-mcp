@@ -65,9 +65,9 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
                 && s.bytes()
                     .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
         })
-        || !value["capture_byte_count"]
+        || value["capture_byte_count"]
             .as_u64()
-            .is_some_and(|n| n <= 16 * 1024 * 1024)
+            .is_none_or(|n| n > 16 * 1024 * 1024)
     {
         return false;
     }
@@ -152,7 +152,7 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
         "classids_zero_guid",
         "classids_invalid",
     ] {
-        if !counts[key].as_u64().is_some_and(|n| n <= 8192) {
+        if counts[key].as_u64().is_none_or(|n| n > 8192) {
             return false;
         }
     }
