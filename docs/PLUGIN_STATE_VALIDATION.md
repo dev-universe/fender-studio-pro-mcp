@@ -12,23 +12,24 @@ and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
 Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
-current-value names, 246 remaining; 32/46 preset-setting classes, 63 cases in completed classes,
-14 remaining. The fixed remaining-work snapshot has four of43 items complete
-and39 remaining. These are different denominators, not whole-product coverage.
+current-value names, 246 remaining; 33/46 preset-setting classes, 65 cases in completed classes,
+13 remaining. The fixed remaining-work snapshot has five of43 items complete
+and38 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
 Native45 read all33 typed controller descriptions/current values/owners. Native47 changed/read/restored all six registered Level settings with independent
 whole-six typed/metadata checks and GUI witnesses. CONTROL-LEVEL is complete within
-that fixed scope; Level presets, audio and persistence remain separate.
+that fixed scope. Level representative preset settings also passed two distinct
+cases across the13-record union; audio and persistence remain separate.
 [Explicit setting acceptance](PRESET_SETTING_ACCEPTANCE.md) records Open AIR1/1 and
-Room2/2 while preserving full-current/readonly failures and Room's display-label difference.
+Room2/2 and Level2/2 while preserving full-current/readonly failures and Room's display-label difference.
 
 | Area | Actual host evidence | Remaining scope |
 |---|---|---|
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset settings | Two accepted cases each for31classes plus Open AIR issued singleton1/1;63completed-class cases |14classes; full-current/readonly failures remain preserved |
+| Additional preset settings | Two accepted cases each for32classes plus Open AIR issued singleton1/1;65completed-class cases |13classes; full-current/readonly failures remain preserved |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |

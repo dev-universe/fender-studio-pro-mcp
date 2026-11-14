@@ -3,9 +3,9 @@
   "as_of": "2026-11-14",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 39,
-  "completed_in_this_remaining_snapshot": 4,
-  "partial": 34,
+  "remaining_backlog_count": 38,
+  "completed_in_this_remaining_snapshot": 5,
+  "partial": 33,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -17,11 +17,11 @@
     "inventory_names": 7112,
     "remaining_names": 246,
     "remaining_name_classes": 18,
-    "preset_classes_completed": 32,
+    "preset_classes_completed": 33,
     "preset_classes_plan": 46,
-    "preset_cases": 63,
-    "remaining_preset_classes": 14,
-    "additional_partial_setting_cases": 1
+    "preset_cases": 65,
+    "remaining_preset_classes": 13,
+    "additional_partial_setting_cases": 0
   },
   "runtime_note": "Native47/95eeb72 installed; six registered Level settings R2 accepted after57DAQ/14setters and Root closure. Fixed CONTROL-LEVEL complete; Level presets/audio/Save remain separate. Native46 failed R1 and profile observations preserved.",
   "bookkeeping_only_not_backlog": [
@@ -79,13 +79,14 @@
       "id": "PRESET-LEVEL",
       "group": "프리셋",
       "title": "Level Meter",
-      "status": "partial",
+      "status": "completed",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "Native47 index1 Movie Score Classic:mode1 positive; whole13 typed/current/metadata exact restore with single Aload, correction0; fresh406byte A/B equal, lifecycle and Root closure. Partial1/2 distinct setting cases.",
+      "actually_verified": "Distinct issued index1 Movie Score Classic and index2 Pop Rock:51DAQ each; positive mode1/2, DSP7+level6 union13/12writable typed/metadata exactly restored by single Aload with correction0; fresh406-byte A/B equal, lifecycle/Root closure/saved6/MIDI0.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
       "inventory_remaining_names": 0,
-      "remaining_after_verified_actions": "One distinct issued index2 Pop Rock case with same13 union and exact restored settings/fresh serialization/lifecycle/NoSave; do not replay completed index1."
+      "remaining_after_verified_actions": "Fixed representative preset-setting2/2 complete. Display label restoration false; all6 catalog entries/audio/persistence/wholeplugin remain separate. No replay.",
+      "evidence": "docs/evidence/2026-11-14-level-preset-index2-native47.json"
     },
     {
       "id": "PRESET-SCOPE",

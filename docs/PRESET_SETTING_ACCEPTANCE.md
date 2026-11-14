@@ -33,3 +33,9 @@ Open AIR의 readonly tanktap 값들은 기존 정적 preset에도 들어 있다.
 ## 후속 현재 결과 — Native46
 
 이상의 결정 시점31/46종·부분 Room1사례는 역사 기록이다. 별도 새 index1 `BD - Inside`의 긍정 설정 변화·쓰기16개/전체19 metadata 정확 복원·fresh725바이트 A/B 동일·해제와 Root 정리를 확인해 Room의 서로 다른2/2 사례를 완료했다. 현재는 **32/46종·완료 종63사례·14종 잔여**, 고정43개 중 **3개 완료·40개 잔여**다. readonly outdepth/outheight/전체19 current와 프리셋 표시 이름 복원은 false다. 전체 상태·오디오·리소스·저장 검증으로 확장하지 않는다. [새 실제 증거](evidence/2026-11-14-room-index1-native46.json)를 참조한다.
+
+## 후속 현재 결과 — Native47 Level
+
+Level Meter는 기존 DSP7와 등록6설정의 union13을 사용해 issued index1 Movie Score Classic과 index2 Pop Rock을 각각 실제 적용·독립 관측·원복했다. 각51요청, capsule load1회/추가보정0회로 쓰기12개와 전체13 current/metadata가 정확히 돌아왔고 독립 fresh406바이트 A/B도 같았다. 수명과 Root 정리를 함께 확인해 대표2/2로 수용했다. 이 두 사례에서 readonly correlation 원래값도 같았다는 관측은 기록하되 직렬화 참여나 모든 상태의 증명으로 확장하지 않는다. 프리셋 표시 이름의 원래 복원은 false다.
+
+현재는 **33/46종·완료 종65사례·13종 잔여**, 고정43개 중 **5개 완료·38개 잔여**다. [index1](evidence/2026-11-14-level-preset-index1-native47.json)과 [index2](evidence/2026-11-14-level-preset-index2-native47.json)는 서로 다른 새 문맥의 증거다. 과거 결정 시점31/46, 후속 Room32/46 및 첫 Level 부분1/2는 이력을 보존하며 재실행 지시가 아니다.
