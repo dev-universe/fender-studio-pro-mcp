@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Native49 observer R1 stopped12DAQ on capture SHA mismatch; preserve failed run and do not repeat as success. Actual both3653byte utf8_json/json_object parsecomplete and exact structurecounts26classids24zero, each individually validated; hash cause unknown. No final39/context/fakeUIDrefusal after stop. Native49normal Rust1.88 tests153/native346/Node342/Python560 and source156/package4/normalinstalldoctorverified. Reuse architecture/XML77+6review and mechanicalclippyfix. Next bounded offline ownedarchive JSON/model-ancestry grounding; rawlivecaptures no longer available, do not infer reason from hash. Then select minimal fixed-output semantic/slot witness only after actual structure proof, no rawexport/arbitraryfields/callerbytes. New finite live unit needs fresh bindings and independently declared acceptance; never relax existing failed pair. Keep full remainingqueue/hardware4 and no completed resweeps.",
+    "Saved Rumble wrapper/direct26GUIDpaths and22hiddennumeric fields grounded (saved3652bytes/live3653 distinct); see rumble_saved_schema_grounding. Two bounded designs in rumble-live-state-architecture/candidate-a andb: fixed readonly directmodel+numericwitness, sourcealiasIStorable, strictwrapper/wholeinputbounds, separate semanticprojection digest from nondeterministicrawhash, no writability/mutationclaim. Select minimal+review/implement next Native50 without changing old21fieldstructobserver; fresh runtime compare all39 and directmodel/settings, finalguards/fakeUIDrefusal/NoSaveclosure. Then actualRemoteRoot effect/amp nativecontrollerparammetadata mustgroundhidden22writeaccess. No repeatedoldmodelcatalog/aliasinventory orfailedR1sameprotocol. Otherdocumentedqueue/hardware4unchanged.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -622,7 +622,7 @@
   "last_measurement": "6866/7112names,246remaining;39/46presetclasses76cases/partial0,7classesremaining;fixed43completed11remaining32;Native48raw500=accepted356+nonadmitted144,plus1MCPpredispatch.",
   "binary_source_commit": "bf37a8039b9b6a076e2931d844b46ff6f909190c",
   "current_execution": {
-    "unit": "Rumble JSON variability and model ancestry offline grounding",
+    "unit": "Rumble direct model and stored setting witness design",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -640,7 +640,7 @@
     "job_id": null,
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 12,
-    "current_phase": "RUMBLE_JSON_VARIABILITY_GROUNDING",
+    "current_phase": "RUMBLE_DIRECT_STATE_WITNESS_DESIGN",
     "maximum_tool_requests": 19,
     "current_job_id": null,
     "completed_subunits": [],
@@ -15666,7 +15666,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T12:40:16.587497+00:00",
+  "last_progress_update_utc": "2026-11-14T12:49:53.630399+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
@@ -17345,5 +17345,17 @@
   },
   "native49_raw_requests": 12,
   "native49_accepted_unit_requests": 0,
-  "native49_failed_or_nonadmitted_requests": 12
+  "native49_failed_or_nonadmitted_requests": 12,
+  "rumble_saved_schema_grounding": {
+    "evidence": "docs/evidence/2026-11-14-rumble-saved-schema-grounding.json",
+    "saved_member_bytes": 3652,
+    "direct_processor_paths": 26,
+    "numeric_fields_effect1": 7,
+    "numeric_fields_amp": 15,
+    "hidden_from_DSP39": 22,
+    "saved_only": true,
+    "native_writability_verified": false,
+    "DAQ_requests": 0,
+    "archive_unchanged": true
+  }
 }

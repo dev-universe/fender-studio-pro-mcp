@@ -1,0 +1,148 @@
+{
+  "status": "SAVED_ARCHIVE_SCHEMA_OBSERVED_NOT_A_LIVE_SLOT_WITNESS",
+  "archive_sha256": "ed0b86bc4551321bccbb2662ab5ed3601023d2696a710e019c5f44b4f2f1c443",
+  "archive_unchanged": true,
+  "archive_bytes": 137540,
+  "saved_member_bytes": 3652,
+  "saved_member_sha256": "f2e7ea0c60a59115d37fec47201bbe60c5f4bd1b450e5d45f6ffb0bdbd17bab8",
+  "root_keys": [
+    "cid",
+    "classname",
+    "parameters",
+    "component"
+  ],
+  "root_kinds": {
+    "cid": "string",
+    "classname": "string",
+    "parameters": "object",
+    "component": "object"
+  },
+  "root_cid": "B9D7536C-A010-457D-A182-36E5531164C9",
+  "root_classname": "Rumble Native",
+  "parameters_keys": [
+    "effect1",
+    "effect2",
+    "effect3",
+    "effect4",
+    "effect5",
+    "effect6",
+    "effect7",
+    "effect8",
+    "effect9",
+    "effect10",
+    "effect11",
+    "effect12",
+    "effect13",
+    "effect14",
+    "effect15",
+    "effect16",
+    "effect17",
+    "effect18",
+    "effect19",
+    "effect20",
+    "effect21",
+    "effect22",
+    "effect23",
+    "effect24",
+    "effect25",
+    "amp",
+    "input",
+    "output",
+    "global"
+  ],
+  "component_keys": [
+    "workspaceroot",
+    "taptempo",
+    "tuner"
+  ],
+  "node_count": 105,
+  "saved_census": {
+    "classids_total": 26,
+    "classids_valid_guid": 26,
+    "classids_zero_guid": 24
+  },
+  "live_capture_bytes": [
+    3653,
+    3653
+  ],
+  "live_capture_sha256": [
+    "dc59b6ae822c1fd56cdcc926a1c2fd8ab7d5d214a99a3a658656f7807e431bd9",
+    "ea8c0f942aba82ff87be22d1c2099d024382ada132d29cd281f1a73306a4ea1a"
+  ],
+  "live_results_only_differ_by": [
+    "capture_sha256"
+  ],
+  "live_raw_bytes_available": false,
+  "raw_hash_variability_cause": "UNRESOLVED_WITHOUT_TWO_LIVE_RAW_STREAMS_OR_FIXED_SEMANTIC_DIAGNOSTIC",
+  "saved_member_is_not_live_byte_identity": true,
+  "live_exact_slot_ancestry_verified": false,
+  "zero_guid_means_empty_verified": false,
+  "mutation_audio_persistence_verified": false,
+  "DAQ_requests": 0,
+  "nested_saved_scalar_parameters": [
+    {
+      "slot": "effect1",
+      "class_uid": "7C15CAA7-3DE6-4862-8449-94576D48F211",
+      "names": [
+        "bypass",
+        "level",
+        "decay",
+        "dwell",
+        "diffuse",
+        "tone",
+        "bypassType"
+      ],
+      "kinds": [
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float"
+      ]
+    },
+    {
+      "slot": "amp",
+      "class_uid": "32037336-6B56-4A55-92ED-3858BB3D63AC",
+      "names": [
+        "gain",
+        "volume",
+        "treb",
+        "mid",
+        "midFreq",
+        "bass",
+        "blend",
+        "mvol",
+        "deep",
+        "bright",
+        "cabsimType",
+        "compressorPreset",
+        "gatePreset",
+        "gateDetectorPosition",
+        "sag"
+      ],
+      "kinds": [
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float",
+        "float"
+      ]
+    }
+  ],
+  "native_writability_verified": false,
+  "hidden22_omitted_from_fixed_DSP39": true,
+  "fixed43_increment": 0,
+  "source_report_sha256": "6485d32d4647906f33bce65f7ec5bd4cd2a8ea26dc5594e5b4558476bcbb4e12"
+}

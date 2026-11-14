@@ -951,3 +951,12 @@ Chorder Minor index1도 [두 번째 실제 증거](evidence/2026-11-14-chorder-p
 
 
 Rumble의 [capture-only 확인](evidence/2026-11-14-rumble-capture-readiness-native48.json)은18요청·314.470초다.3653바이트 alias IStorable capture/release와 전체39개 typed current/metadata 전후 안정성을 실제8.1.1에서 확인했다. 프리셋·모델·scalar·load0회이며 byteformat/internal26processoridentity/load/audio/persistence는 미검증이다. 이 가용성 확인으로 프리셋이나 고정 완료 수를 늘리지 않는다. 다음은 raw 데이터 없는 exact-class 구조 관찰이다.
+
+
+### Rumble structural observer and saved processor paths
+
+Native49 adds the fixed read-only plugin_state action inspect_rumble_serialization. It uses the exact Rumble class and retained alias IStorable ownership, rejects stale document/session/instance bindings, and emits bounded structural facts without raw payloads. Rust1.88 main153, native346, bridge342 and Python560 checks passed before normal installation. The independent parser review passed77 added cases and6 actual-source parser tests. This establishes source and parser behavior, separately from live acceptance.
+
+The [first live run](evidence/2026-11-14-rumble-serialization-native49-r1-failed.json) stopped after12 requests because two individually valid3653-byte complete JSON observations had different capture hashes. All other result fields, including26 lexical class-ID occurrences with24 zero GUIDs, were equal. Its predeclared exact-pair gate failed. Final39-value comparisons, final context guards and fabricated-instance refusal were not executed. NoSave, app/owner closure, both locks, ten unchanged archives and MIDI0 were verified. The hash cause is unknown, and this run grants no model identity or mutation claim.
+
+A separate direct read of the owned saved archive establishes a candidate wrapper with exact cid/classname and direct parameters.effect1 through effect25 plus amp.__classid paths. Saved effect1 has7 numeric settings and amp has15; these22 paths are absent from the DSP39 provider list. Serialized numbers do not establish native writability. The saved3652-byte payload is distinct from the live3653-byte observations. The next witness must validate actual direct ancestry and compare selected model/settings data independently of the whole byte hash. Whole plugin, nested setting writes, model/preset changes, audio and persistence remain incomplete.
