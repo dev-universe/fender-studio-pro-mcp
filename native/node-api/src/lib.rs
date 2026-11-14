@@ -195,6 +195,7 @@ pub enum MetadataIssue {
     TypeLimit,
     MethodLimit,
     PropertyLimit,
+    MembersUnobserved,
 }
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypeInventory {
@@ -255,6 +256,9 @@ pub struct Inspection {
     pins: RefCell<Option<Vec<Pin>>>,
     text: TextApi,
     thread: ThreadId,
+    traversal: Traversal,
+    absent: Vec<(usize, Relation)>,
+    witnesses: Vec<(usize, Relation, usize)>,
 }
 impl std::fmt::Debug for Inspection {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -303,6 +307,42 @@ impl Inspection {
         Ok(false)
     }
 
+    /// Recheck fixed focused attachments after metadata cleanup. No temporary
+    /// foreign owner is acquired or released. The caller supplies a guard whose
+    /// final checks likewise use only retained, borrowed native interfaces.
+    pub fn check_borrowed_attachments<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<(), Error> {
+        if thread::current().id() != self.thread {
+            return Err(Error::WrongThread);
+        }
+        if !matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            return Err(Error::InvalidData("focused graph inspection required"));
+        }
+        let pins = self.pins.try_borrow_mut().map_err(|_| Error::Reentrant)?;
+        let pins = pins.as_ref().ok_or(Error::Reentrant)?;
+        guard().map_err(Error::Guard)?;
+        for (index, pin) in pins.iter().enumerate() {
+            let node = pin.node.as_ref().ok_or(Error::MissingIdentity)?;
+            let count: unsafe extern "C" fn(*mut c_void) -> i32 =
+                unsafe { ffi::method(node.raw(), 8) };
+            let count = unsafe { count(node.raw()) };
+            guard().map_err(Error::Guard)?;
+            if count < 0 || Some(count as u32) != self.report.nodes[index].child_count {
+                return Err(Error::AttachmentChanged);
+            }
+        }
+        for &(from, relation, expected) in &self.witnesses {
+            let node = pins[from].node.as_ref().ok_or(Error::MissingIdentity)?;
+            let actual = related_pointer(node.raw(), relation, self.text, guard)?;
+            if actual as usize != expected {
+                return Err(Error::AttachmentChanged);
+            }
+        }
+        guard().map_err(Error::Guard)
+    }
+
     /// Revalidate the retained witnesses immediately before publication.
     pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
         if thread::current().id() != self.thread {
@@ -323,6 +363,9 @@ impl Inspection {
             expanded: HashSet::new(),
             budget: Budget::default(),
             report: self.report.clone(),
+            traversal: self.traversal,
+            absent: self.absent.clone(),
+            witnesses: self.witnesses.clone(),
         };
         let result = session.validate();
         let pins = std::mem::take(&mut session.pins);
@@ -354,6 +397,7 @@ pub struct NodeInspector {
 enum Traversal {
     Hierarchy,
     AncestorsOnly,
+    ChildrenWithSlots,
 }
 impl NodeInspector {
     /// Takes one owned IUnknown-compatible reference.
@@ -400,6 +444,26 @@ impl NodeInspector {
         )
     }
 
+    /// Read every direct child and only its fixed Slot/Device delegates.
+    /// At most 32 children and 97 retained nodes are admitted. Reflection contains
+    /// only each first type header; inherited types and members are unobserved.
+    /// Completeness covers these non-atomic ownership relations, not audio edges.
+    pub fn inspect_children_with_slots<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<Inspection, Error> {
+        self.inspect_with(
+            Limits {
+                nodes: 97,
+                depth: 0,
+                ancestors: 0,
+                children_per_node: 32,
+            },
+            Traversal::ChildrenWithSlots,
+            guard,
+        )
+    }
+
     fn inspect_with<G: FnMut() -> Result<(), String>>(
         &self,
         limits: Limits,
@@ -421,6 +485,9 @@ impl NodeInspector {
             seen: HashMap::new(),
             expanded: HashSet::new(),
             budget: Budget::default(),
+            traversal,
+            absent: Vec::new(),
+            witnesses: Vec::new(),
             report: Report {
                 nodes: vec![],
                 edges: vec![],
@@ -428,14 +495,15 @@ impl NodeInspector {
                 complete: false,
             },
         };
-        let result = session
-            .run(self.root.raw(), traversal)
-            .map(|report| Inspection {
-                report,
-                pins: RefCell::new(Some(std::mem::take(&mut session.pins))),
-                text: self.text,
-                thread: self.thread,
-            });
+        let result = session.run(self.root.raw()).map(|report| Inspection {
+            report,
+            pins: RefCell::new(Some(std::mem::take(&mut session.pins))),
+            text: self.text,
+            thread: self.thread,
+            traversal,
+            absent: std::mem::take(&mut session.absent),
+            witnesses: std::mem::take(&mut session.witnesses),
+        });
         // Temporary reflection/String releases finish before the final guard.
         // Discovered node owners remain in the returned receipt lease.
         drop(session);
@@ -469,6 +537,40 @@ struct Session<'a, G> {
     expanded: HashSet<usize>,
     budget: Budget,
     report: Report,
+    traversal: Traversal,
+    absent: Vec<(usize, Relation)>,
+    witnesses: Vec<(usize, Relation, usize)>,
+}
+fn related_pointer<G: FnMut() -> Result<(), String>>(
+    raw: *mut c_void,
+    relation: Relation,
+    text: TextApi,
+    guard: &mut G,
+) -> Result<*mut c_void, Error> {
+    guard().map_err(Error::Guard)?;
+    let result = match relation {
+        Relation::Parent => {
+            let get: unsafe extern "C" fn(*mut c_void) -> *mut c_void =
+                unsafe { ffi::method(raw, 6) };
+            unsafe { get(raw) }
+        }
+        Relation::Child(index) => {
+            let get: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
+                unsafe { ffi::method(raw, 9) };
+            unsafe { get(raw, index as i32) }
+        }
+        Relation::Delegate(delegate) => {
+            let name = unsafe { (text.get_constant_string)(delegate.c_name().as_ptr()) };
+            guard().map_err(Error::Guard)?;
+            if name.is_null() {
+                return Err(Error::InvalidData("native String constant unavailable"));
+            }
+            let find: unsafe extern "C" fn(*mut c_void, *const c_void) -> *mut c_void =
+                unsafe { ffi::method(raw, 10) };
+            unsafe { find(raw, name) }
+        }
+    };
+    Ok(result)
 }
 impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
     fn check(&mut self) -> Result<(), Error> {
@@ -656,6 +758,17 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
                 issues: vec![],
             };
             let result = (|| {
+                if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+                    if self.budget.types >= 97 {
+                        return Err(Error::InvalidData("focused class budget exceeded"));
+                    }
+                    self.budget.types += 1;
+                    inventory
+                        .types
+                        .push(self.type_record(current.raw(), &mut inventory.issues)?);
+                    inventory.issues.push(MetadataIssue::MembersUnobserved);
+                    return Ok(inventory);
+                }
                 loop {
                     if !seen.insert(current.raw() as usize) {
                         inventory.issues.push(MetadataIssue::TypeCycle);
@@ -719,6 +832,16 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         let pointer = unsafe { namespace(raw) };
         let namespace = self.cstring(pointer)?;
         let class_uid = self.uid_at(raw, 7)?;
+        if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            return Ok(TypeInfo {
+                name,
+                namespace,
+                class_uid,
+                flags,
+                methods: vec![],
+                properties: vec![],
+            });
+        }
         self.check()?;
         let methods: unsafe extern "C" fn(*mut c_void) -> *const ffi::MethodDefinition =
             unsafe { ffi::method(raw, 8) };
@@ -815,7 +938,11 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             .map(|raw| self.child_count(raw))
             .transpose()?;
         let reflection = self.reflection(object.raw())?;
-        let declared_interfaces = Some(self.declared_interfaces(object.raw())?);
+        let declared_interfaces = if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            None
+        } else {
+            Some(self.declared_interfaces(object.raw())?)
+        };
         let index = self.pins.len();
         self.seen.insert(canonical.raw() as usize, index);
         self.pins.push(Pin {
@@ -837,29 +964,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             return Ok(None);
         };
         let raw = node.raw();
-        self.check()?;
-        let result = match relation {
-            Relation::Parent => {
-                let get: unsafe extern "C" fn(*mut c_void) -> *mut c_void =
-                    unsafe { ffi::method(raw, 6) };
-                unsafe { get(raw) }
-            }
-            Relation::Child(index) => {
-                let get: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
-                    unsafe { ffi::method(raw, 9) };
-                unsafe { get(raw, index as i32) }
-            }
-            Relation::Delegate(delegate) => {
-                let name = unsafe { (self.text.get_constant_string)(delegate.c_name().as_ptr()) };
-                self.check()?;
-                if name.is_null() {
-                    return Err(Error::InvalidData("native String constant unavailable"));
-                }
-                let find: unsafe extern "C" fn(*mut c_void, *const c_void) -> *mut c_void =
-                    unsafe { ffi::method(raw, 10) };
-                unsafe { find(raw, name) }
-            }
-        };
+        let result = related_pointer(raw, relation, self.text, self.guard)?;
         self.hold(result)
     }
     fn connect(&mut self, from: usize, relation: Relation) -> Result<Option<usize>, Error> {
@@ -867,8 +972,15 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
             if matches!(relation, Relation::Child(_)) {
                 return Err(Error::InvalidData("reported child is unavailable"));
             }
+            if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+                self.absent.push((from, relation));
+                self.witnesses.push((from, relation, 0));
+            }
             return Ok(None);
         };
+        if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            self.witnesses.push((from, relation, object.raw() as usize));
+        }
         let Some(to) = self.intern(object)? else {
             return Ok(None);
         };
@@ -926,6 +1038,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         Ok(())
     }
     fn validate(&mut self) -> Result<(), Error> {
+        self.budget.types = 0;
         for index in 0..self.pins.len() {
             if let Some(node) = self.pins[index].node.as_ref() {
                 let raw = node.raw();
@@ -934,6 +1047,24 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
                 {
                     return Err(Error::AttachmentChanged);
                 }
+            }
+        }
+        if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            for index in 0..self.pins.len() {
+                if self.reflection(self.pins[index]._object.raw())?
+                    != self.report.nodes[index].reflection
+                {
+                    return Err(Error::AttachmentChanged);
+                }
+            }
+        }
+        for (from, relation) in self.absent.clone() {
+            let owner = self.related(from, relation)?;
+            let present = owner.is_some();
+            drop(owner);
+            self.check()?;
+            if present {
+                return Err(Error::AttachmentChanged);
             }
         }
         for edge in self.report.edges.clone() {
@@ -953,9 +1084,54 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         }
         self.check()
     }
-    fn run(&mut self, root: *mut c_void, traversal: Traversal) -> Result<Report, Error> {
+    fn children_with_slots(&mut self, root: usize) -> Result<(), Error> {
+        let count = self.report.nodes[root]
+            .child_count
+            .ok_or(Error::MissingIdentity)?;
+        if count > 32 {
+            return Err(Error::InvalidData("graph child limit exceeded"));
+        }
+        let mut children = Vec::new();
+        let mut distinct = HashSet::from([root]);
+        for index in 0..count {
+            let child = self
+                .connect(root, Relation::Child(index))?
+                .ok_or(Error::MissingIdentity)?;
+            if !distinct.insert(child) {
+                return Err(Error::InvalidData("duplicate direct graph child"));
+            }
+            children.push(child);
+        }
+        for child in children {
+            if let Some(slot) = self.connect(child, Relation::Delegate(Delegate::Slot))? {
+                let device = self
+                    .connect(slot, Relation::Delegate(Delegate::Device))?
+                    .ok_or(Error::InvalidData("Slot Device unavailable"))?;
+                if !distinct.insert(slot) || !distinct.insert(device) {
+                    return Err(Error::InvalidData("duplicate graph Slot or Device"));
+                }
+            }
+        }
+        Ok(())
+    }
+    fn run(&mut self, root: *mut c_void) -> Result<Report, Error> {
         let owner = self.hold(root)?.ok_or(Error::MissingIdentity)?;
         let root = self.intern(owner)?.ok_or(Error::InvalidLimits)?;
+        if matches!(self.traversal, Traversal::ChildrenWithSlots) {
+            self.children_with_slots(root)?;
+            self.validate()?;
+            self.report.complete = self.report.diagnostics.is_empty()
+                && self.report.nodes.iter().all(|node| {
+                    node.identity.is_some()
+                        && node.reflection.available
+                        && node.reflection.types.len() == 1
+                        && node.reflection.issues == [MetadataIssue::MembersUnobserved]
+                });
+            if !self.report.complete {
+                return Err(Error::InvalidData("incomplete focused graph observation"));
+            }
+            return Ok(self.report.clone());
+        }
         let mut ancestors = vec![root];
         let mut from = root;
         for _ in 0..self.limits.ancestors {
@@ -980,7 +1156,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
                 self.report.diagnostics.push(Diagnostic::AncestorLimit);
             }
         }
-        if matches!(traversal, Traversal::Hierarchy) {
+        if matches!(self.traversal, Traversal::Hierarchy) {
             for index in ancestors {
                 self.walk(index, self.limits.depth, &mut vec![])?;
             }

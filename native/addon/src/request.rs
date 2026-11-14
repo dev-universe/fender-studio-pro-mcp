@@ -1661,7 +1661,7 @@ impl Reply {
         if self
             .nodes
             .as_ref()
-            .is_some_and(node_inspect::Inventory::is_plugin_controller)
+            .is_some_and(node_inspect::Inventory::requires_report_invalidation)
         {
             self.value
                 .as_object_mut()
@@ -1690,14 +1690,6 @@ impl Reply {
                 })
                 .and_then(|_| self.provider.as_ref().map_or(Ok(()), Provider::check))
                 .and_then(|_| ctx.check())
-                .and_then(|_| {
-                    self.nodes.as_ref().map_or(Ok(()), |nodes| {
-                        nodes.check(&mut || {
-                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
-                            ctx.check()
-                        })
-                    })
-                })
                 .and_then(|_| {
                     self.action.as_ref().map_or(Ok(()), |action| {
                         let provider = self
@@ -1745,6 +1737,14 @@ impl Reply {
                         ctx.check_document()?;
                     }
                     Ok(())
+                })
+                .and_then(|_| {
+                    self.nodes.as_ref().map_or(Ok(()), |nodes| {
+                        nodes.check(&mut || {
+                            self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                            ctx.check()
+                        })
+                    })
                 }),
             None => {
                 let service = unsafe { &*service };
@@ -2701,7 +2701,10 @@ mod tests {
             );
         }
         for token in ["a".repeat(64), "F".repeat(63), "G".repeat(64)] {
-            assert!(parse(json!({"operation":"presets","catalog_token":token,"expected_instance":expected})).is_err());
+            assert!(parse(
+                json!({"operation":"presets","catalog_token":token,"expected_instance":expected})
+            )
+            .is_err());
         }
         assert!(
             !parse(json!({"operation":"inspect"}))
@@ -2859,8 +2862,14 @@ mod tests {
         assert!(parse(json!({"operation":"parameter","param":"a".repeat(512)})).is_ok());
         assert!(parse(json!({"operation":"parameter","param":"한".repeat(171)})).is_err());
         assert!(parse(json!({"operation":"parameter","param":"bad\u{0}name"})).is_err());
-        assert!(parse(json!({"operation":"set_parameter","param":"x","mode":"text","value":"🎵".repeat(2048)})).is_ok());
-        assert!(parse(json!({"operation":"set_parameter","param":"x","mode":"text","value":"🎵".repeat(2049)})).is_err());
+        assert!(parse(
+            json!({"operation":"set_parameter","param":"x","mode":"text","value":"🎵".repeat(2048)})
+        )
+        .is_ok());
+        assert!(parse(
+            json!({"operation":"set_parameter","param":"x","mode":"text","value":"🎵".repeat(2049)})
+        )
+        .is_err());
         let r = parse(json!({"operation":"parameters","limit":128,"offset":199,"source":"dsp"}))
             .unwrap();
         assert_eq!(r.source(), Source::Dsp);
@@ -2967,7 +2976,10 @@ mod tests {
                     .is_err()
             );
         }
-        assert!(parse(json!({"operation":"set_parameter","param":"x","mode":"raw","value":MAX_SAFE_INTEGER})).is_ok());
+        assert!(parse(
+            json!({"operation":"set_parameter","param":"x","mode":"raw","value":MAX_SAFE_INTEGER})
+        )
+        .is_ok());
         let exact = parameters::NativeValue {
             variant_tag: 1,
             value: parameters::Value::Integer(9_007_199_254_740_993),

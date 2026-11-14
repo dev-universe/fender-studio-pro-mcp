@@ -360,8 +360,10 @@ impl<'a> FolderContext<'a> {
         }
         self.environment
             .check_family(&mut || self.check_document())?;
-        // All metadata/String/QI owners have been released. These final reads
-        // compare borrowed results only with already retained typed interfaces.
+        self.check_borrowed_attachments()
+    }
+    pub(super) fn check_borrowed_attachments(&self) -> Result<(), String> {
+        self.check_document()?;
         self.environment.check()?;
         for (index, pin) in self.chain.iter().enumerate() {
             let get: Borrowed = unsafe { method(pin.node.0, 6) };

@@ -40,6 +40,7 @@ struct Mock {
     replacement: Cell<*mut Mock>,
     replace_at: Cell<usize>,
     fail_on_release: Cell<bool>,
+    add_slot_on_canonical_release: Cell<Option<(*mut Mock, *mut Mock)>>,
     lost: Rc<Cell<bool>>,
 }
 const ZERO: Uid = Uid {
@@ -76,6 +77,14 @@ unsafe extern "C" fn release(p: *mut c_void) -> u32 {
             if m.lose_on_declared_release.get() == Some(index) {
                 m.lost.set(true);
             }
+        }
+    }
+    if p == (&m.interfaces[0] as *const Interface).cast_mut().cast() {
+        if let Some((child, slot)) = m.add_slot_on_canonical_release.take() {
+            unsafe { &*child }
+                .delegates
+                .borrow_mut()
+                .insert("Slot".into(), slot);
         }
     }
     if m.fail_on_release.get() {
@@ -335,6 +344,7 @@ impl Tables {
             replacement: Cell::new(std::ptr::null_mut()),
             replace_at: Cell::new(0),
             fail_on_release: Cell::new(false),
+            add_slot_on_canonical_release: Cell::new(None),
             lost: Rc::new(Cell::new(false)),
         });
         let owner = &mut *m as *mut Mock;
@@ -1163,5 +1173,272 @@ fn inspection_refuses_reentry_from_its_context_guard() {
     lease.check(&mut || Ok(())).unwrap();
     drop(lease);
     assert_eq!(root.refs.get(), 1);
+    drop(api);
+}
+
+fn mapped_children(tables: &Tables, count: usize) -> (Box<Mock>, Vec<Box<Mock>>) {
+    let mut root = tables.object("Graph");
+    root.class_name = CString::new("AudioFXGraph").unwrap();
+    let mut nodes: Vec<_> = (0..count * 3)
+        .map(|index| tables.object(&format!("Node{index}")))
+        .collect();
+    for index in 0..count {
+        let child = &mut *nodes[index * 3] as *mut Mock;
+        let slot = &mut *nodes[index * 3 + 1] as *mut Mock;
+        let device = &mut *nodes[index * 3 + 2] as *mut Mock;
+        unsafe {
+            (*child).class_name = CString::new("ProcessGraph::SlotNode").unwrap();
+            (*slot).class_name = CString::new("AudioInsertSlot").unwrap();
+            (*slot).uid = ZERO;
+            (*device).class_name = CString::new("AudioEffect").unwrap();
+            (*device).class_uid = ID;
+            (*child).delegates.borrow_mut().insert("Slot".into(), slot);
+            (*slot)
+                .delegates
+                .borrow_mut()
+                .insert("Device".into(), device);
+        }
+        root.children.borrow_mut().push(child);
+    }
+    (root, nodes)
+}
+
+#[test]
+fn focused_graph_keeps_32_complete_slot_device_mappings_without_full_reflection() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 32);
+    let root_pointer = &mut *root as *mut Mock;
+    root.type_parent.set(root_pointer);
+    let api = inspector(&mut root);
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    assert!(result.complete);
+    assert_eq!(result.nodes.len(), 97);
+    assert_eq!(result.edges.len(), 96);
+    assert!(
+        result
+            .nodes
+            .iter()
+            .all(|row| row.reflection.types.len() == 1
+                && row.reflection.types[0].methods.is_empty()
+                && row.reflection.types[0].properties.is_empty()
+                && row.reflection.issues == [MetadataIssue::MembersUnobserved]
+                && row.declared_interfaces.is_none())
+    );
+    assert!(
+        nodes
+            .iter()
+            .all(|node| node.declared_queries.get() == [0; 3])
+    );
+    result.check(&mut || Ok(())).unwrap();
+    result.check_borrowed_attachments(&mut || Ok(())).unwrap();
+    drop(result);
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn focused_graph_refuses_33_children_before_reading_any_child() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 33);
+    let api = inspector(&mut root);
+    assert!(api.inspect_children_with_slots(&mut || Ok(())).is_err());
+    assert_eq!(root.child_reads.get(), 0);
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn focused_empty_graph_is_complete_without_probing_ancestors_or_delegates() {
+    let tables = Tables::new();
+    let mut root = tables.object("Graph");
+    let root_pointer = &mut *root as *mut Mock;
+    root.parent.set(root_pointer);
+    let api = inspector(&mut root);
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    assert!(result.complete);
+    assert_eq!(result.nodes.len(), 1);
+    assert!(result.edges.is_empty());
+    assert_eq!(root.delegate_reads.get(), 0);
+    drop(result);
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn focused_absent_slot_becoming_present_invalidates_retained_observation() {
+    let tables = Tables::new();
+    let mut root = tables.object("Graph");
+    let mut child = tables.object("Splitter");
+    let mut slot = tables.object("Slot");
+    root.children.borrow_mut().push(&mut *child);
+    let api = inspector(&mut root);
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    child
+        .delegates
+        .borrow_mut()
+        .insert("Slot".into(), &mut *slot);
+    assert_eq!(result.check(&mut || Ok(())), Err(Error::AttachmentChanged));
+    drop(result);
+    assert_eq!(slot.refs.get(), 1);
+    assert_eq!(child.refs.get(), 1);
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn focused_same_count_reorder_and_device_replacement_are_rejected() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 2);
+    let mut replacement = tables.object("Replacement");
+    let api = inspector(&mut root);
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    root.children.borrow_mut().swap(0, 1);
+    assert_eq!(result.check(&mut || Ok(())), Err(Error::AttachmentChanged));
+    root.children.borrow_mut().swap(0, 1);
+    nodes[1]
+        .delegates
+        .borrow_mut()
+        .insert("Device".into(), &mut *replacement);
+    assert_eq!(result.check(&mut || Ok(())), Err(Error::AttachmentChanged));
+    drop(result);
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    assert_eq!(replacement.refs.get(), 1);
+    drop(api);
+}
+
+#[test]
+fn focused_duplicate_children_and_missing_device_fail_with_balanced_owners() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 1);
+    let child = root.children.borrow()[0];
+    root.children.borrow_mut().push(child);
+    let api = inspector(&mut root);
+    assert!(api.inspect_children_with_slots(&mut || Ok(())).is_err());
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    root.children.borrow_mut().pop();
+    nodes[1].delegates.borrow_mut().clear();
+    assert!(api.inspect_children_with_slots(&mut || Ok(())).is_err());
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+}
+
+#[test]
+fn focused_inspection_rejects_metadata_context_loss_reentry_and_wrong_thread() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 1);
+    let api = inspector(&mut root);
+    let mut result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    let mut reentry_seen = false;
+    result
+        .check(&mut || {
+            reentry_seen |= result.check(&mut || Ok(())) == Err(Error::Reentrant);
+            Ok(())
+        })
+        .unwrap();
+    assert!(reentry_seen);
+    result.thread = std::thread::spawn(|| thread::current().id())
+        .join()
+        .unwrap();
+    assert_eq!(result.check(&mut || Ok(())), Err(Error::WrongThread));
+    drop(result);
+    let lost = nodes[2].lost.clone();
+    nodes[2].fail_on_release.set(true);
+    assert!(
+        api.inspect_children_with_slots(&mut || if lost.get() {
+            Err("context lost".into())
+        } else {
+            Ok(())
+        })
+        .is_err()
+    );
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+}
+
+#[test]
+fn focused_child_replacement_during_capture_and_late_class_change_are_rejected() {
+    let tables = Tables::new();
+    let (mut root, mut nodes) = mapped_children(&tables, 1);
+    let mut replacement = tables.object("Replacement");
+    root.replacement.set(&mut *replacement);
+    root.replace_at.set(1);
+    let api = inspector(&mut root);
+    assert_eq!(
+        api.inspect_children_with_slots(&mut || Ok(())).unwrap_err(),
+        Error::AttachmentChanged
+    );
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    assert_eq!(replacement.refs.get(), 1);
+    root.children.borrow_mut()[0] = &mut *nodes[0];
+    root.replacement.set(std::ptr::null_mut());
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    nodes[2].class_name = CString::new("ChangedClass").unwrap();
+    assert_eq!(result.check(&mut || Ok(())), Err(Error::AttachmentChanged));
+    drop(result);
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
+    drop(api);
+}
+
+#[test]
+fn focused_final_borrowed_pass_rejects_absence_change_after_metadata_cleanup() {
+    let tables = Tables::new();
+    let mut root = tables.object("Graph");
+    let mut child = tables.object("Splitter");
+    let mut slot = tables.object("Slot");
+    root.children.borrow_mut().push(&mut *child);
+    let api = inspector(&mut root);
+    let result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    result.check(&mut || Ok(())).unwrap();
+    result.check_borrowed_attachments(&mut || Ok(())).unwrap();
+    // A separate retained context's metadata cleanup can change an absent edge
+    // after the focused reflection pass. The final pass creates no owners.
+    child
+        .delegates
+        .borrow_mut()
+        .insert("Slot".into(), &mut *slot);
+    let refs = [root.refs.get(), child.refs.get(), slot.refs.get()];
+    assert_eq!(
+        result.check_borrowed_attachments(&mut || Ok(())),
+        Err(Error::AttachmentChanged)
+    );
+    assert_eq!([root.refs.get(), child.refs.get(), slot.refs.get()], refs);
+    drop(result);
+    assert_eq!(child.refs.get(), 1);
+    assert_eq!(slot.refs.get(), 1);
+    drop(api);
+    assert_eq!(root.refs.get(), 0);
+}
+
+#[test]
+fn focused_final_borrowed_pass_rejects_reorder_reentry_and_wrong_thread() {
+    let tables = Tables::new();
+    let (mut root, nodes) = mapped_children(&tables, 2);
+    let api = inspector(&mut root);
+    let mut result = api.inspect_children_with_slots(&mut || Ok(())).unwrap();
+    let mut reentry_seen = false;
+    result
+        .check_borrowed_attachments(&mut || {
+            reentry_seen |=
+                result.check_borrowed_attachments(&mut || Ok(())) == Err(Error::Reentrant);
+            Ok(())
+        })
+        .unwrap();
+    assert!(reentry_seen);
+    root.children.borrow_mut().swap(0, 1);
+    assert_eq!(
+        result.check_borrowed_attachments(&mut || Ok(())),
+        Err(Error::AttachmentChanged)
+    );
+    result.thread = std::thread::spawn(|| thread::current().id())
+        .join()
+        .unwrap();
+    assert_eq!(
+        result.check_borrowed_attachments(&mut || Ok(())),
+        Err(Error::WrongThread)
+    );
+    drop(result);
+    assert!(nodes.iter().all(|node| node.refs.get() == 1));
     drop(api);
 }

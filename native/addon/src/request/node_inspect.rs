@@ -3,6 +3,10 @@ use fender_native_node_api::{
     Diagnostic, Inspection, Limits, MetadataIssue, NodeInspector, Relation, Report, TextApi,
 };
 
+#[path = "node_inspect/ownership.rs"]
+mod ownership;
+use ownership::GraphOwnership;
+
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub(super) enum Scope {
@@ -166,6 +170,7 @@ pub(super) enum Inventory {
     Graph {
         inspection: Inspection,
         route: GraphRoute,
+        ownership: GraphOwnership,
     },
     PluginController(alias_controller::Inventory),
 }
@@ -575,12 +580,20 @@ impl Inventory {
     pub(super) fn value(&self) -> Value {
         match self {
             Self::Target(inspection) => report(inspection.report(), Scope::Target),
-            Self::Graph { inspection, .. } => report(inspection.report(), Scope::Graph),
+            Self::Graph {
+                inspection,
+                ownership,
+                ..
+            } => {
+                let mut value = report(inspection.report(), Scope::Graph);
+                value["ownership_manifest"] = ownership.value();
+                value
+            }
             Self::PluginController(inventory) => inventory.value(),
         }
     }
-    pub(super) fn is_plugin_controller(&self) -> bool {
-        matches!(self, Self::PluginController(_))
+    pub(super) fn requires_report_invalidation(&self) -> bool {
+        matches!(self, Self::Graph { .. } | Self::PluginController(_))
     }
     pub(super) fn check<G: FnMut() -> Result<(), String>>(
         &self,
@@ -592,7 +605,11 @@ impl Inventory {
                 inspection.check(guard).map_err(|error| error.to_string())?;
                 guard()
             }
-            Self::Graph { inspection, route } => {
+            Self::Graph {
+                inspection,
+                route,
+                ownership,
+            } => {
                 let mut checked = || {
                     route.check()?;
                     guard()
@@ -601,6 +618,7 @@ impl Inventory {
                 inspection
                     .check(&mut checked)
                     .map_err(|error| error.to_string())?;
+                ownership.check(&mut checked)?;
                 checked()
             }
         }
@@ -620,7 +638,7 @@ impl Inventory {
     }
 }
 
-pub(super) fn capture(ctx: &Context<'_>, scope: Scope) -> Result<Inventory, String> {
+pub(super) fn capture(ctx: &Context<'static>, scope: Scope) -> Result<Inventory, String> {
     ctx.check()?;
     let get_string = constant_string().ok_or("native string constants unavailable")?;
     let text = TextApi {
@@ -663,7 +681,14 @@ pub(super) fn capture(ctx: &Context<'_>, scope: Scope) -> Result<Inventory, Stri
     }
     let inspection = result.map_err(|error| error.to_string())?;
     let inventory = match route {
-        Some(route) => Inventory::Graph { inspection, route },
+        Some(route) => {
+            let ownership = GraphOwnership::capture(ctx, &route, text)?;
+            Inventory::Graph {
+                inspection,
+                route,
+                ownership,
+            }
+        }
         None => Inventory::Target(inspection),
     };
     inventory.check(&mut || ctx.check())?;
@@ -678,6 +703,7 @@ fn issue(issue: &MetadataIssue) -> &'static str {
         MetadataIssue::TypeLimit => "type_limit",
         MetadataIssue::MethodLimit => "method_limit",
         MetadataIssue::PropertyLimit => "property_limit",
+        MetadataIssue::MembersUnobserved => "members_unobserved",
     }
 }
 
@@ -858,7 +884,7 @@ mod tests {
             ptr::null_mut()
         }
     }
-    struct Fixture {
+    pub(super) struct Fixture {
         _table: Box<[*const c_void; 11]>,
         nodes: Box<[Mock; 5]>,
         names: [Box<PlainString>; 2],
@@ -867,7 +893,7 @@ mod tests {
         _identity: Box<PlainString>,
     }
     impl Fixture {
-        fn new() -> Self {
+        pub(super) fn new() -> Self {
             let mut table = Box::new([ptr::null(); 11]);
             table[0] = query_mock as *const c_void;
             table[1] = retain as *const c_void;
@@ -932,7 +958,7 @@ mod tests {
         fn pointer(&mut self, index: usize) -> *mut c_void {
             ptr::addr_of_mut!(self.nodes[index]).cast()
         }
-        fn route<G: FnMut() -> Result<(), String>>(
+        pub(super) fn route<G: FnMut() -> Result<(), String>>(
             &mut self,
             guard: &mut G,
         ) -> Result<GraphRoute, String> {
@@ -948,7 +974,7 @@ mod tests {
                 guard,
             )
         }
-        fn released(&self) {
+        pub(super) fn released(&self) {
             assert!(
                 self.nodes
                     .iter()
@@ -968,7 +994,7 @@ mod tests {
                 guard,
             )
         }
-        fn ancestors(&mut self) -> Inspection {
+        pub(super) fn ancestors(&mut self) -> Inspection {
             let owner = hold(self.pointer(0)).unwrap();
             let pointer = NonNull::new(owner.0).unwrap();
             std::mem::forget(owner);
