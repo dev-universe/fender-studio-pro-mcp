@@ -6,6 +6,8 @@ use std::sync::Arc;
 mod stream;
 use stream::MemoryStream;
 
+#[path = "state/rumble_model_manifest.rs"]
+mod rumble_model_manifest;
 #[path = "state/rumble_processor_state.rs"]
 mod rumble_processor_state;
 #[path = "state/rumble_serialization.rs"]

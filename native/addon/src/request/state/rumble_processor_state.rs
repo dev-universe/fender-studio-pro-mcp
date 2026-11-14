@@ -1,9 +1,11 @@
+#[cfg(test)]
+use super::rumble_model_manifest::CLASS;
+use super::rumble_model_manifest::{self, Document, guid, slot};
 use super::*;
 use std::collections::BTreeMap;
 
 pub(super) const ENCODING: &str = "json_parsed_u64_i64_f64_bits_v1";
 pub(super) const MAX_RESULT_BYTES: usize = 32768;
-const CLASS: &str = "B9D7536C-A010-457D-A182-36E5531164C9";
 const ZERO: &str = "00000000-0000-0000-0000-000000000000";
 
 #[derive(Clone)]
@@ -81,84 +83,20 @@ struct Processor {
 struct Projection {
     processors: Vec<Processor>,
 }
-fn slot(index: usize) -> String {
-    if index == 25 {
-        "amp".into()
-    } else {
-        format!("effect{}", index + 1)
-    }
-}
 fn identifier(name: &str) -> bool {
     !name.is_empty()
         && name.len() <= 64
         && name.as_bytes()[0].is_ascii_alphabetic()
         && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
-fn guid(text: &str) -> Option<(String, [u8; 16])> {
-    let text = if text.starts_with('{') && text.ends_with('}') {
-        &text[1..text.len() - 1]
-    } else {
-        text
-    };
-    if text.len() != 36
-        || text.bytes().enumerate().any(|(i, b)| {
-            if [8, 13, 18, 23].contains(&i) {
-                b != b'-'
-            } else {
-                !b.is_ascii_hexdigit()
-            }
-        })
-    {
-        return None;
-    }
-    let canonical = text.to_ascii_uppercase();
-    let compact = canonical.replace('-', "");
-    let mut bytes = [0; 16];
-    for (i, b) in bytes.iter_mut().enumerate() {
-        *b = u8::from_str_radix(&compact[i * 2..i * 2 + 2], 16).ok()?;
-    }
-    Some((canonical, bytes))
-}
 impl Projection {
     fn decode(bytes: &[u8]) -> Result<Self, String> {
-        let root = super::rumble_serialization::validated_json(bytes)?;
+        let document = Document::decode(bytes)?;
         let reject = || "Rumble processor schema unavailable".to_owned();
-        let object = root.as_object().ok_or_else(reject)?;
-        if object.len() != 4
-            || !["cid", "classname", "parameters", "component"]
-                .iter()
-                .all(|k| object.contains_key(*k))
-            || root["classname"] != "Rumble Native"
-            || !root["component"].is_object()
-            || guid(root["cid"].as_str().ok_or_else(reject)?)
-                .map(|g| g.0)
-                .as_deref()
-                != Some(CLASS)
-        {
-            return Err(reject());
-        }
-        let parameters = root["parameters"].as_object().ok_or_else(reject)?;
-        if parameters.len() != 29
-            || !["input", "output", "global"]
-                .iter()
-                .all(|k| parameters.get(*k).is_some_and(Value::is_object))
-        {
-            return Err(reject());
-        }
         let mut processors = Vec::with_capacity(26);
         let mut total = 0;
-        for i in 0..26 {
-            let slot = slot(i);
-            let obj = parameters
-                .get(&slot)
-                .and_then(Value::as_object)
-                .ok_or_else(reject)?;
-            let (class, uid) = guid(
-                obj.get("__classid")
-                    .and_then(Value::as_str)
-                    .ok_or_else(reject)?,
-            )
-            .ok_or_else(reject)?;
+        for (i, model) in document.models.iter().enumerate() {
+            let obj = document.processor(i);
             if obj.len() > 65 {
                 return Err(reject());
             }
@@ -177,24 +115,23 @@ impl Projection {
                 }
             }
             processors.push(Processor {
-                slot,
-                class,
-                uid,
+                slot: model.slot.clone(),
+                class: model.class.clone(),
+                uid: model.uid,
                 settings,
             });
         }
-        Ok(Self { processors })
+        let projection = Self { processors };
+        debug_assert_eq!(projection.digests().0, document.models_sha256());
+        Ok(projection)
     }
     fn digests(&self) -> (String, String) {
-        let mut models = Sha256::new();
-        models.update(b"fsp.rumble.models.v1\0");
+        let mut models = rumble_model_manifest::model_hasher();
         let mut settings = Sha256::new();
         settings.update(b"fsp.rumble.processor-settings.v1\0");
         for p in &self.processors {
             for h in [&mut models, &mut settings] {
-                h.update([p.slot.len() as u8]);
-                h.update(p.slot.as_bytes());
-                h.update(p.uid);
+                rumble_model_manifest::hash_record(h, &p.slot, &p.uid);
             }
             settings.update((p.settings.len() as u16).to_be_bytes());
             for (name, value) in &p.settings {
