@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Do not repeat accepted Native54 Compressor/Native53 Limiter effects, completed scalar/swap/preset/scheduled-note units, or the nowclosed sameIDuseroverlay investigation. Fixed13/43complete30remain/software26/hardware4, names6866/7112 andpresets39/46/76 unchanged. Model normal sameIDuseroverlay isNO: matchedofficialCCL5.1.2 andactual8.1.1 protectProgram1existingentry againstUser0/Shared2regardlesshighercandidateversion; no staging/version/ID/ShortID changes. Main stock149945640byteProgram actuallyrestoredwithoutautoanalysis; preserveprivatecheckpoint for unrelatedfuturequeries. Officialsameversionnormalartifactpath question stillpending; privateappmiccallbackblockunchanged. Next admittedwork isSampleOne18DAQ readiness prefix (next r61; underpreparation/review, actual0) tobind actualFSPVerifyInstSampleOne, Music/input/mute/disarm/monitor/audioassociation viaRootUIcheckpoint andfourpages235current; plugin/state/presetwrites0. Continue samefreshowner onlywithseparatelyreviewedfull singleton235settingcase aftermapping; candidatefilee100f431...hasmonophone0/emptyLayer1/noexternalrefs butissuedURLbinding/factoryorigin unproved, makeonlyissuedcaseclaim. Capture/restore remainsruntimetoprove. Keepother8queueitems.",
+    "SampleOne R1readiness failed atRPC10 beforefirstplugininspect becauseinclude_contexttrue requiresalreadyboundexpected_instance. Original8MCPtoolrequests=7actualDAQ+1predispatchinvalid_argument; no plugin/preset/capture/UIchanges. RootNoSave/appfalse/immediateCUA/ownerEOF0/hardwareBEFOREps/locks/saved10/MIDI0/source177artifact13exact, elapsed330.168s. Preservefailure/doNOTresend orreclassifyit. Native54raw66=admitted58+nonadmitted8; MCPpredispatchreject1separate. Next R2readiness (r62) isbeingprepared asminimal firstlookupnocontext thennonzeroUID/UI/boundcontext; allresolvedwiresmustfirstpassACTUALRustOperation.validate viaexactMcpServertranslation, schemaaloneinsufficient. Productguardmuststayunchanged. Fixed13/43complete30remain/software26/hardware4/presets39/46/76/names6866/7112 unchanged. SameIDmodeluseroverlay routeclosedNOwithofficialsource+actual8.1.1; no staging/version/ID/ShortID experiments/repeatedGhidraforit. CompletedComp/Limiter/scalar/swap/preset/schedulednoteunitsnotreplayed. Preserveother8queueitems.",
     "고정43개 중13개 완료/30개 잔여(부분25·미착수1·하드웨어4)다. 소프트웨어 잔여는26개이며 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -622,17 +622,16 @@
   "last_measurement": "6866/7112names,246remaining;39/46presetclasses76cases/partial0,7classesremaining;fixed43completed11remaining32;Native48raw500=accepted356+nonadmitted144,plus1MCPpredispatch.",
   "binary_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
   "current_execution": {
-    "namespace": "r60",
-    "run_revision": "fresh_owner_r1b",
-    "status": "closed_qualified_control_scope_accepted",
-    "DAQ": 59,
-    "admitted_positive_scope": 58,
-    "last_nonadmitted_outer_unknown": 1,
-    "whole59_protocol_claimed_pass": false,
+    "namespace": "r61",
+    "status": "closed_failed_readiness_semantic_validation",
+    "actual_DAQ": 7,
+    "MCP_tool_calls_sent": 8,
+    "MCP_predispatch_rejections": 1,
+    "accepted_completed_prefix_DAQ": 0,
     "owner_stopped": true,
     "app_closed": true,
     "saved10_equal": true,
-    "metadata_only_preparation_DAQ0_failure_preserved": true
+    "plugin_preset_capture_writes": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -17974,7 +17973,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native54 Compressor qualifiedpositive58 pluslastunknown1, closed59DAQ314.509seconds freshowner-to-closure",
+  "last_closed_runtime_unit": "Native54 SampleOne R1 readiness failed semanticvalidation:7actualDAQ plus1MCPpredispatch reject, closed330.168s",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18542,9 +18541,9 @@
     },
     "evidence": "docs/evidence/2026-11-15-compressor-minimum-reset-qualified-native54.json"
   },
-  "native54_raw_requests": 59,
+  "native54_raw_requests": 66,
   "native54_accepted_completed_unit_requests": 58,
-  "native54_failed_or_nonadmitted_requests": 1,
+  "native54_failed_or_nonadmitted_requests": 8,
   "native54_outcome_unknown_subset": 1,
   "compressor_minimum_reduction_next": {
     "status": "complete_qualified_existing_CONTROL_predicate_do_not_repeat",
@@ -18631,7 +18630,7 @@
   },
   "active_readonly_tracks": {
     "model_same_ID_overlay": "CLOSED_NO: exactpublicsource andactual8.1.1 matched Program1first andonlyexistingUser0/Shared2eligibleforhigherVersionreplacement. Do notstage/bumpversion/repeatthisoverlayinvestigation. MainProgramactualwarmrestoreverified. Officialsameversionartifactpath gate andprivateappstartupcallbackblock remain.",
-    "sampleone_singleton_recipe": "18DAQ readiness prefix preparation inprogress, nextnamespace r61. Target actual historical FSP Verify Inst SampleOne; instrumentOf requiresselectionandcanautoarm/monitor. RootUIcheckpointafterfreshhost/selection/nativebinding beforeanypluginwrite mustverifyinputNone/Musicmute1/disarm/monitor0 andactualassociatedaudiooutput. Prefixcapture/preset/pluginwrites0; fullcasecontinuationpendingactualmapping.",
+    "sampleone_singleton_recipe": "R1readiness closedfailedbeforefirstplugininspect. Initialinclude_contexttrue lackedexpectedUID, rejectedbeforeDAQ. NewR2readiness preparation plusactualRustsemanticvalidation inownedQAworktree inprogress; no rootproduct/native changes. Nextnamespacer62, actual0.",
     "shared_event": "Deferred untilcanonicalguiInput-role0 andmusicalreceiver/releaseack. Viewnotificationpath closedview-only. MusicEffectsProgramcheckpointactuallysaved; do not replaycompletedscalar/schedulednoteunits."
   },
   "model_policy_and_sampleone_readiness": {
@@ -18718,5 +18717,73 @@
       "new_completions_from_these_readonly_units": 0
     },
     "evidence": "docs/evidence/2026-11-15-model-policy-and-sampleone-readiness.json"
-  }
+  },
+  "native54_sampleone_readiness_r1_failed": {
+    "schema": 1,
+    "status": "FAILED_READINESS_SEMANTIC_VALIDATION_BEFORE_FIRST_PLUGIN_INSPECT",
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "native_unit": 54,
+    "source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+    "elapsed_seconds": 330.168,
+    "elapsed_first_request_to_closure_seconds": 98.196,
+    "MCP_tool_calls_sent": 8,
+    "actual_DAW_requests": 7,
+    "MCP_predispatch_rejections": 1,
+    "rejected_RPC": 10,
+    "accepted_completed_prefix_DAQ": 0,
+    "failed_or_nonadmitted_DAQ": 7,
+    "failure": {
+      "outcome": "not_applied",
+      "code": "invalid_argument",
+      "message": "Context observations require a bound Music target, explicit provider and no node inventory",
+      "source_rule": "src/operation.rs1682-1704 requires nonnil expected_instance for include_context=true",
+      "planning_defect": "Initial instance lookup requested context before obtaining expected_instance. JSON Schema validation did not execute actual domain validation.",
+      "product_guard_retained": true,
+      "UI_checkpoint_reached": false
+    },
+    "mutations": {
+      "Main_volume_preparation": 1,
+      "track_selection": 1,
+      "plugin_parameter_writes": 0,
+      "preset_calls": 0,
+      "state_capture_or_load": 0,
+      "UI_isolation_changes": 0
+    },
+    "closure": {
+      "owned_Scratch_NoSave": true,
+      "app_running_after": false,
+      "immediate_CUA_completion_after_appfalse": true,
+      "owner_EOF_exit_code": 0,
+      "hardware_completed_before_process_check": true,
+      "two_locks_reacquired_released": true,
+      "saved10_equal": true,
+      "MIDI_before_after0": true,
+      "source177_artifact13_equal": true,
+      "no_retry_or_cleanup_mutation": true
+    },
+    "pins": {
+      "original_closure": "e0e8985984147fa6fad9b9c9475dbd6e273687f77a90e3ec683dc5b78442bea2",
+      "original_predispatch_rejection10": "a44fc843c091416d15f36ca5e13229c2bf800f233957c148c4dd5f42bb27b1ec",
+      "operation_source": "08c7d43420d7c7b993c0b80247536c54bd8c253e32ff85442c6d7349f0774efa",
+      "frozen_prefix_manifest": "ec85e8479b465582429b3a553ee8cc774f0467594e594c206479abd96711a063",
+      "source_review_report": "dc574ba4c9dafaca3a51cebbf89c6db5ac62399a7670600b17c863820f33357a"
+    },
+    "next": "SeparateR2 initial lookup without context, bind nonzeroUID, then actualUI and boundcontext. Run all prospective requests through actual Rust semantic validation before any new DAQ. No product guard change.",
+    "accounting": {
+      "Native54_raw_DAW": 66,
+      "Native54_admitted_DAW": 58,
+      "Native54_nonadmitted_DAW": 8,
+      "Native54_outer_unknown_subset": 1,
+      "Native54_MCP_predispatch_rejections_separate": 1,
+      "fixed_complete": 13,
+      "fixed_total": 43,
+      "remaining": 30,
+      "hardware_blocked": 4,
+      "preset_classes": 39,
+      "preset_classes_total": 46,
+      "preset_cases": 76
+    },
+    "evidence": "docs/evidence/2026-11-15-sampleone-readiness-r1-failed-native54.json"
+  },
+  "native54_MCP_predispatch_rejections": 1
 }
