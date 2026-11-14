@@ -456,3 +456,25 @@ service termination during native output assignment; neither publishes a false
 verified outcome.
 Actual-host evidence is recorded separately by the project's validation notes;
 passing source checks alone does not establish a live parameter or UI outcome.
+
+## Registered Level Meter settings
+
+`source: "level_meter"` on the existing parameter read, choices, format and set
+operations resolves the exact Level Meter AudioEffect and its declared
+`AudioEffect` / `OutLevels` controller pair. It exposes only `mode` (0..4),
+`rmsLength` (0..2), `holdLength` (0..2), `vuHold` (0..1),
+`loudnessInLUFS` (0..1) and `loudnessEBU18` (0..1). All six require the
+proven native Integer carrier, canonical name, tag, kind and bounds. Lists use
+the existing finite native choices API; formatting reads native labels.
+Writes accept raw Integer values only. Native enabled/read-only/support metadata
+is retained and the existing guarded setter decides native access.
+
+The MCP request requires `plugin: "Level Meter"`, a fresh `expected_document`
+and `expected_instance`. Bridge session, active document/model, declared alias
+provider, root/child identities, counts, attachment, named parameter and owner
+bindings remain checked through publication. There is no receiver fallback,
+caller path, menu access, retry or automatic inverse write. The response retains
+native before/after and verified/unknown semantics. The parameter page's complete
+coverage means six registered settings, not all 25 OutLevels parameters. The
+33-parameter read-only descriptor report retains `can_set_via_this_api: false`.
+Source tests and builds do not establish a live write or persistence result.

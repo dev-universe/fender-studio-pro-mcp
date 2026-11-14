@@ -74,6 +74,7 @@ enum Source {
     Auto,
     Dsp,
     Controller,
+    LevelMeter,
 }
 #[derive(Clone, Copy, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -364,6 +365,32 @@ impl Request {
         }
     }
     fn validate(&self) -> Result<(), String> {
+        if self.source() == Source::LevelMeter {
+            if self.expected().is_none()
+                || !matches!(
+                    self,
+                    Self::Parameters { .. }
+                        | Self::Parameter { .. }
+                        | Self::Choices { .. }
+                        | Self::FormatValues { .. }
+                        | Self::SetParameter { .. }
+                )
+            {
+                return Err(
+                    "level_meter requires a bound instance and registered settings operation"
+                        .into(),
+                );
+            }
+            match self {
+                Self::Parameter { param, .. }
+                | Self::Choices { param, .. }
+                | Self::FormatValues { param, .. }
+                | Self::SetParameter { param, .. } => {
+                    alias_controller::LevelSettings::registered(param)?;
+                }
+                _ => {}
+            }
+        }
         if let Some(uid) = self.expected() {
             if !valid_uid(uid) {
                 return Err("expected_instance must be a nonzero canonical object UID".into());
@@ -1050,6 +1077,7 @@ enum Provider {
     DspValue(Controller),
     Controller(Controller),
     State(state::AliasLease),
+    LevelMeter(Box<alias_controller::LevelSettings>),
 }
 impl Provider {
     fn source(&self) -> &'static str {
@@ -1057,12 +1085,13 @@ impl Provider {
             Self::Dsp(_) | Self::DspValue(_) => "dsp",
             Self::Controller(_) => "controller",
             Self::State(_) => "component_alias_storable",
+            Self::LevelMeter(_) => "level_meter",
         }
     }
     fn scalar(&self) -> Option<&Controller> {
         match self {
             Self::DspValue(controller) | Self::Controller(controller) => Some(controller),
-            Self::Dsp(_) | Self::State(_) => None,
+            Self::Dsp(_) | Self::State(_) | Self::LevelMeter(_) => None,
         }
     }
     fn check(&self) -> Result<(), String> {
@@ -1070,10 +1099,15 @@ impl Provider {
             Self::Dsp(provider) => provider.direct.as_ref().map_or(Ok(()), |c| c.check()),
             Self::DspValue(controller) | Self::Controller(controller) => controller.check(),
             Self::State(alias) => alias.check(),
+            Self::LevelMeter(_) => Ok(()),
         }
     }
 }
 fn provider(ctx: &Context<'_>, source: Source, scalar: bool) -> Result<Provider, String> {
+    if source == Source::LevelMeter {
+        return alias_controller::LevelSettings::capture(ctx)
+            .map(|s| Provider::LevelMeter(Box::new(s)));
+    }
     if scalar {
         return if source == Source::Dsp {
             direct_controller(ctx).map(Provider::DspValue)
@@ -1082,6 +1116,7 @@ fn provider(ctx: &Context<'_>, source: Source, scalar: bool) -> Result<Provider,
         };
     }
     match source {
+        Source::LevelMeter => unreachable!("handled exact provider"),
         Source::Dsp => dsp(ctx).and_then(|p| dsp_provider(ctx, p)),
         Source::Controller => controller(ctx).map(Provider::Controller),
         Source::Auto => {
@@ -1212,6 +1247,7 @@ fn page(ctx: &Context<'_>, p: &Provider, offset: u32, limit: u32) -> Result<Valu
             Err("DSP scalar provider cannot enumerate controller indices".into())
         }
         Provider::State(_) => Err("state provider cannot enumerate parameters".into()),
+        Provider::LevelMeter(settings) => settings.page(ctx, offset, limit),
         Provider::Controller(c) => {
             c.check()?;
             let count = c.count()?;
@@ -1348,6 +1384,9 @@ fn choices(
     )
 }
 fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
+    if let Provider::LevelMeter(settings) = provider {
+        return settings.execute(ctx, request);
+    }
     let result: Result<Value, String> = match request {
         Request::Inspect { .. } => (|| {
             let mut value = match provider {
@@ -1355,6 +1394,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 Provider::Controller(c) => c.count().map(|count| json!({"reported_count":count,"coverage":c.coverage(),"native_setter":true}))?,
                 Provider::DspValue(_) => return Err("inspect requires an indexed provider".into()),
                 Provider::State(_) => return Err("inspect requires an indexed provider".into()),
+                Provider::LevelMeter(_) => unreachable!("handled exact provider"),
             };
             value["capabilities"] = capabilities::inspect(ctx)?;
             Ok(value)
@@ -1697,6 +1737,9 @@ impl Reply {
                     })
                 })
                 .and_then(|_| {
+                    if let Some(Provider::LevelMeter(settings)) = &self.provider {
+                        settings.check(&mut || ctx.check())?;
+                    }
                     if self.value["operation"] == "chorder_chords_get" {
                         self.provider.as_ref().map_or(Ok(()), Provider::check)?;
                         ctx.check_document()?;
@@ -2329,6 +2372,7 @@ fn dispatch_device(
             value["source"] = match source {
                 Source::Dsp => json!("dsp"),
                 Source::Controller => json!("controller"),
+                Source::LevelMeter => json!("level_meter"),
                 Source::Auto => Value::Null,
             };
             (value, None, None, None)

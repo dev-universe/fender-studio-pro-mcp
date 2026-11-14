@@ -58,7 +58,11 @@ fn snapshot(description: &parameters::Description) -> Value {
     value
 }
 
-fn report(param: &str, formatted: &parameters::FormattedValues, coverage: &str) -> Value {
+pub(super) fn report(
+    param: &str,
+    formatted: &parameters::FormattedValues,
+    coverage: &str,
+) -> Value {
     let values: Vec<_> = formatted
         .values
         .iter()

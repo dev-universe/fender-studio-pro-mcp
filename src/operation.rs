@@ -436,6 +436,7 @@ pub enum ParameterSource {
     Auto,
     Dsp,
     Controller,
+    LevelMeter,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1239,16 +1240,69 @@ impl Operation {
     }
 
     pub fn requires_explicit_document(&self) -> bool {
-        matches!(
-            self,
-            Self::ChorderLearningGet(_)
-                | Self::ChorderLearningSet(_)
-                | Self::ChorderChordsGet(_)
-                | Self::ExternalPortMenu(_)
-        )
+        let level = match self {
+            Self::PluginParams(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            Self::PluginChoices(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            Self::PluginParameterFormat(p) => matches!(p.source, ParameterSource::LevelMeter),
+            Self::SetPluginParam(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
+            _ => false,
+        };
+        level
+            || matches!(
+                self,
+                Self::ChorderLearningGet(_)
+                    | Self::ChorderLearningSet(_)
+                    | Self::ChorderChordsGet(_)
+                    | Self::ExternalPortMenu(_)
+            )
     }
 
     pub fn validate(&self) -> Result<(), OperationError> {
+        let level_target = match self {
+            Self::PluginParams(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((p.plugin.as_deref(), p.expected_instance.as_deref()))
+            }
+            Self::PluginChoices(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((p.plugin.as_deref(), p.expected_instance.as_deref()))
+            }
+            Self::PluginParameterFormat(p) if matches!(p.source, ParameterSource::LevelMeter) => {
+                Some((Some(p.plugin.as_str()), Some(p.expected_instance.as_str())))
+            }
+            Self::SetPluginParam(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                Some((Some(p.plugin.as_str()), p.expected_instance.as_deref()))
+            }
+            Self::PluginInspect(p) if matches!(p.source, Some(ParameterSource::LevelMeter)) => {
+                return Err(invalid(
+                    "level_meter is available only for registered settings access",
+                ));
+            }
+            Self::PluginParameterDetails(p) if matches!(p.source, ParameterSource::LevelMeter) => {
+                return Err(invalid(
+                    "level_meter does not extend the read-only descriptor API",
+                ));
+            }
+            _ => None,
+        };
+        if let Some((plugin, instance)) = level_target {
+            if plugin != Some("Level Meter")
+                || instance.is_none_or(|s| s == "00000000-0000-0000-0000-000000000000")
+            {
+                return Err(invalid(
+                    "level_meter requires Level Meter and expected_instance",
+                ));
+            }
+        }
+        if let Self::SetPluginParam(p) = self {
+            if matches!(p.source, Some(ParameterSource::LevelMeter))
+                && (p.value.is_none()
+                    || p.normalized.is_some()
+                    || p.text.is_some()
+                    || p.float_bits.is_some()
+                    || p.edit_lifecycle.is_some())
+            {
+                return Err(invalid("level_meter writes require a raw Integer value"));
+            }
+        }
         let (_, args) = self.wire();
         if serde_json::to_vec(&args).is_ok_and(|v| v.len() > 900_000) {
             return Err(invalid("Operation arguments exceed the supported size"));
@@ -1986,6 +2040,47 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn level_settings_source_requires_explicit_document_target_and_raw_writes() {
+        let target = json!({"channel":"Scratch","slot":0,"plugin":"Level Meter","source":"level_meter","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        for (name, extra) in [
+            ("plugin_parameters", json!({"names":[]})),
+            ("plugin_parameter_choices", json!({"param":"mode"})),
+            (
+                "plugin_parameter_format",
+                json!({"param":"mode","values":[0,1]}),
+            ),
+            ("setPluginParam", json!({"param":"mode","value":1})),
+        ] {
+            let mut args = target.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            let op = Operation::from_parts(name, args.clone()).unwrap();
+            op.validate().unwrap();
+            assert!(op.requires_explicit_document());
+            for key in ["plugin", "expected_instance"] {
+                let mut bad = args.clone();
+                bad.as_object_mut().unwrap().remove(key);
+                assert!(
+                    Operation::from_parts(name, bad)
+                        .and_then(|op| op.validate())
+                        .is_err()
+                );
+            }
+        }
+        let mut args = target.clone();
+        args["param"] = json!("mode");
+        args["normalized"] = json!(1);
+        assert!(
+            Operation::from_parts("setPluginParam", args)
+                .and_then(|op| op.validate())
+                .is_err()
+        );
+        let schema = serde_json::to_value(schemars::schema_for!(ParameterSource)).unwrap();
+        assert!(schema.to_string().contains("level_meter"));
+    }
 
     #[test]
     fn chorder_learning_has_two_closed_typed_roles_and_required_nullable_pitch() {

@@ -270,3 +270,6 @@ mod tests;
 
 #[path = "level_descriptors.rs"]
 mod descriptors;
+
+#[path = "level_settings.rs"]
+pub(super) mod settings;

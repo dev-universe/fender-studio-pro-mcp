@@ -828,3 +828,37 @@ test('preset listing requires the current bridge document before resolving the p
   assert.equal(calls.length, 1);
   assert.equal(calls[0].action, 'list');
 });
+
+test('Level settings use the exact native source for pages, named reads, choices and formatting without script fallback', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((_, body) => {
+    const request = JSON.parse(body); calls.push(request);
+    assert.equal(request.source, 'level_meter');
+    if (request.operation === 'parameters') return success({ source: 'level_meter', parameters: [{ name: 'mode', value: 0 }], reported_count: 6, offset: 0, next_offset: 1, page_complete: true, access_metadata_complete: true });
+    if (request.operation === 'parameter') return success({ source: 'level_meter', parameter: { name: 'mode', value: 0 } });
+    if (request.operation === 'choices') return success({ source: 'level_meter', choices: [{ index: 0, text: 'Native label' }] });
+    return success({ source: 'level_meter', values: [{ requested_value: 0, text: 'Native label' }], current_unchanged: true });
+  }); } });
+  h.device.findParameter = () => { throw new Error('no script fallback'); };
+  h.component.nativeInstanceError = () => null;
+  const args = { source: 'level_meter', plugin: 'Level Meter', expected_instance: instance.object_uid };
+  assert.equal(h.component.pluginParams(args).params[0].name, 'mode');
+  assert.equal(h.component.pluginParams({ ...args, names: ['mode'] }).params[0].value, 0);
+  assert.equal(h.component.pluginChoices({ ...args, param: 'mode' }).choices[0].text, 'Native label');
+  assert.equal(h.component.pluginParameterFormat({ ...args, param: 'mode', values: [0] }).current_unchanged, true);
+  assert.deepEqual(calls.map(r => r.operation), ['parameters', 'parameter', 'choices', 'format_values']);
+});
+
+test('Level unknown writes stay unknown and dispatch once', () => {
+  let writes = 0;
+  const h = harness({ getObjectByName() { return native(() => {
+    writes++;
+    return JSON.stringify({ ok: false, outcome: 'unknown', before: { value: 0 }, after: { value: 1 }, error: { code: 'context_changed', message: 'changed after write' } });
+  }); } });
+  h.device.findParameter = () => { throw new Error('no script fallback'); };
+  h.component.nativeInstanceError = () => null;
+  const result = h.component.setPluginParam({ plugin: 'Level Meter', param: 'mode', source: 'level_meter', value: 1, expected_instance: instance.object_uid });
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.after.value, 1);
+  assert.equal(writes, 1);
+});

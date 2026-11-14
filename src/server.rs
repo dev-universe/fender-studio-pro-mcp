@@ -154,7 +154,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_parameters",
                 "pluginParams",
-                "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. Native enumeration requires the matching optional extension; metadata fallback is partial.",
+                "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. source level_meter enumerates only six registered Level Meter GUI settings and requires Level Meter, expected_document and expected_instance. Native enumeration requires the matching optional extension; metadata fallback is partial.",
                 false,
             ),
             named::<PluginParams>(
@@ -166,7 +166,7 @@ impl McpServer {
             named::<PluginChoices>(
                 "plugin_parameter_choices",
                 "pluginChoices",
-                "Read a native list parameter's index/label choices without changing its selection. Requires the matching native extension and a controller parameter; open the External Effect editor first. Follow next_offset with expected_document and expected_instance. Empty hardware port lists remain explicit.",
+                "Read a native list parameter's index/label choices without changing its selection. Requires the matching native extension and a controller parameter; open the External Effect editor first. Follow next_offset with expected_document and expected_instance. source level_meter addresses only the registered Level Meter List settings. Empty hardware port lists remain explicit.",
                 false,
             ),
             named::<PluginParameterDetails>(
@@ -178,7 +178,7 @@ impl McpServer {
             named::<PluginParameterFormat>(
                 "plugin_parameter_format",
                 "pluginParameterFormat",
-                "Read the native display text for 1..32 explicitly supplied finite raw values without selecting or changing them. Requires an expected plugin, expected_instance and an explicit dsp or controller source. The native parameter range and numeric type further constrain values. Returned labels do not establish a complete model choice list or count.",
+                "Read the native display text for 1..32 explicitly supplied finite raw values without selecting or changing them. Requires an expected plugin, expected_instance and an explicit dsp, controller or level_meter source. level_meter admits only raw Integer values for its six registered settings and requires expected_document. The native parameter range and numeric type further constrain values. Returned labels do not establish a complete model choice list or count.",
                 false,
             ),
             named::<PluginParameterDigest>(

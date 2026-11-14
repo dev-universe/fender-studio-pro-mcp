@@ -9,6 +9,7 @@ use fender_native_node_api::{Inspection, Limits, NodeInspector, TextApi};
 pub(super) mod catalog;
 #[path = "alias_controller/level.rs"]
 mod level;
+pub(super) use level::settings::Settings as LevelSettings;
 
 const CONTROLLER_PROVIDER: Uid = Uid {
     a: 0x16ad4d2a,

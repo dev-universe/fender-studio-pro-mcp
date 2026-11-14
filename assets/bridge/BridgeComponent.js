@@ -444,7 +444,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 if (!Array.isArray(native.parameters) || native.parameters.length > 128) return { error: "invalid native parameter page" };
                 for (const record of native.parameters) {
                     if (!record || typeof record.name !== "string" || record.name.length > 512) return { error: "invalid native parameter name" };
-                    if (native.source === "controller") params.push(record);
+                    if (native.source === "controller" || native.source === "level_meter") params.push(record);
                     else if (native.source === "dsp") {
                         if (record.native_description && typeof record.native_description === "object") {
                             params.push(Object.assign({}, record.native_description, { name: record.name, native: record, access_metadata_complete: true }));
@@ -460,7 +460,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 }
                 const pageComplete = native.page_complete === true && (!native.failed_indices || native.failed_indices.length === 0);
                 return { channel: args.channel, slot: args.slot, plugin: plug.name, params: params, missing: missing, page_complete: pageComplete, complete: pageComplete && native.offset === 0 && native.next_offset === null && native.reported_count === params.length,
-                    value_read_complete: missing.length === 0, access_metadata_complete: native.source === "controller" ? pageComplete : native.access_metadata_complete === true,
+                    value_read_complete: missing.length === 0, access_metadata_complete: (native.source === "controller" || native.source === "level_meter") ? pageComplete : native.access_metadata_complete === true,
                     failed_access_indices: native.failed_access_indices || [], failed_indices: native.failed_indices || [], reported_count: native.reported_count, offset: native.offset, next_offset: native.next_offset, instance: native.instance,
                     parameter_discovery: { source: native.source, completeness: "current_provider", all_indices_read: native.all_indices_read === true, note: "This page covers the current provider and selection, not every nested device, model or editor action." } };
             }
@@ -471,9 +471,9 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const identityError = this.nativeInstanceError(plug.device, args.expected_instance);
         if (identityError) return { error: identityError };
         for (const n of names) {
-            if (args.source === "dsp") {
-                const native = this.nativePluginRequest(plug.device, { operation: "parameter", source: "dsp", param: String(n), expected_instance: args.expected_instance });
-                if (!native) return { error: "native DSP parameter descriptions require the matching native extension" };
+            if (args.source === "dsp" || args.source === "level_meter") {
+                const native = this.nativePluginRequest(plug.device, { operation: "parameter", source: args.source, param: String(n), expected_instance: args.expected_instance });
+                if (!native) return { error: "native parameter descriptions require the matching native extension" };
                 if (native.ok && native.parameter) params.push(Object.assign({}, native.parameter, { name: String(n) }));
                 else missing.push(String(n));
                 continue;
@@ -539,7 +539,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     pluginParameterFormat(args) {
         if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance
             || typeof args.param !== "string" || !args.param.trim() || args.param.length > 512 || args.param.indexOf("\0") >= 0
-            || (args.source !== "dsp" && args.source !== "controller") || !Array.isArray(args.values)
+            || (args.source !== "dsp" && args.source !== "controller" && args.source !== "level_meter") || !Array.isArray(args.values)
             || args.values.length < 1 || args.values.length > 32
             || args.values.some(value => typeof value !== "number" || !isFinite(value) || Math.abs(value) > 9007199254740991))
             return { error: "an expected plugin, native instance, bounded parameter, explicit source and 1..32 finite numeric values are required" };
