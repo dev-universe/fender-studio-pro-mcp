@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Native53 source d508651 installed unchanged. Limiter R2 closed19DAQ/234.937s atRPC21: actualsetter applied_verified/native_verifiedtrue but verifierrequired nonexistent verified. Levelsetter1, noToneOn/Limiter/reset/load/Save; NoSave/appfalse/EOF0/hardwarethenps/locks/saved10/MIDI0 passed. Native53 raw37=failedR1 18+R2 19, accepted0. Preserve both originals. Next separate R3 r58 fixes exact9-field bridge setter contract/native_verified +outeroutcome and audits ALL remainingresponse types againstactualsource/historicalreceipts. Keep48wires,+24freshmaxformatter,singleepisode/pulse,capturedOff->quiet5sec,retention1sec,independentquietmin effect/exactP restore/final5fieldUIDrefusal andRootclosure; noAPI/code/build/install changes ifsource177/artifact13 exact. Forbid expiredsessions0b38066d4c5c86dc275e43cd4a238877,1b0202c002a2fe348771b64d5baecfc1,76f0db0b8d37dc52a02e1a1e29cac5aa. R3DAQ0 notexecutionready. Keepother8queueitems andfixed11/43complete32remain4hardware; officialartifactpath questionpending.",
+    "Native53 source d508651 installed unchanged. Limiter R3closed35DAQ/468.561s: currentreductioninitialdefault/min0 andpostsignal0, max10000; verifierwronglycomparedtomax. Heldmin changedinitial10000/0.00dB to7530.965209007263/-35.55dB andGUImatched; Tone10exactP afteroneOnOff; noreset/secondretentionread/thresholdexplicitrestore. NoSave/appfalse/EOF0/hardwarethenps/locks/saved10/MIDI0 passed. Native53raw72=failed18+19+35,accepted0. Next separateR4 r59 usesexactfresh2page no-inputcurrentreference withreadonlyFloat/tag1198412388 checks, heldminimumseparate default/max+nonneutralretention+onepulse->freshinitial. Preserve48wires,+24freshmax,exact9native_verifiedgenericsetter,pulseverifiedfalse,5sec/1secintervals,exactP restore/final5UIDrefusal/Rootclosure. Source177/artifact13 unchanged, no rebuild/install. Forbid expired0b38066d4c5c86dc275e43cd4a238877,1b0202c002a2fe348771b64d5baecfc1,76f0db0b8d37dc52a02e1a1e29cac5aa,4be8bdeea7d4507a5298ccc5ec5e8d5a. R4DAQ0 notexecutionready; keepother8queueitems/fixed11of43complete32remaining4hardware.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -622,13 +622,14 @@
   "last_measurement": "6866/7112names,246remaining;39/46presetclasses76cases/partial0,7classesremaining;fixed43completed11remaining32;Native48raw500=accepted356+nonadmitted144,plus1MCPpredispatch.",
   "binary_source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
   "current_execution": {
-    "namespace": "r57",
-    "status": "closed_failed_verifier_schema_assumption",
-    "DAQ_count": 19,
+    "namespace": "r58",
+    "status": "closed_failed_current_meter_maximum_assumption",
+    "DAQ_count": 35,
     "DAQ_budget": 48,
     "native_unit": 53,
-    "Tone_level_setters": 1,
-    "ToneOn_requests": 0,
+    "ToneOnOff_pairs": 1,
+    "Tone_whole10_exact": true,
+    "minimum_changed": true,
     "reset_pulses": 0,
     "owner_stopped": true,
     "app_closed": true,
@@ -2757,7 +2758,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T18:26:44.905672+00:00",
+  "latest_root_observation_at": "2026-11-14T18:48:09.616340+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -17937,7 +17938,7 @@
     "public_evidence": "docs/evidence/2026-11-15-private-app-startup-block-native52.json"
   },
   "limiter_minimum_reduction_next": {
-    "status": "R2_closed19_verifier_native_verified_contract_R3_in_progress",
+    "status": "R3_closed35_current_meter_reference_R4_in_progress",
     "current_Root_product_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
     "currently_installed_native_unit": 53,
     "planned_native_unit": 53,
@@ -17951,14 +17952,14 @@
     "independent_judge_base": "A",
     "grounding_elapsed_seconds": 229.364,
     "prospective_DAQ_budget": 48,
-    "actual_DAQ_count": 37,
+    "actual_DAQ_count": 72,
     "previous_unexecuted_budget": 45,
     "budget_change_reason": "Actual thresholdrel identity/domain and default Tone -24dB require fresh level formatter, one0dB prep and exact restore; changes before allDAQ.",
     "execution_ready": false,
     "Root_product_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
     "accepted_DAQ": 0,
-    "failed_DAQ": 37,
-    "next_namespace": "r58",
+    "failed_DAQ": 72,
+    "next_namespace": "r59",
     "next_actual_DAQ": 0
   },
   "model_user_extension_loader_grounding": {
@@ -17971,7 +17972,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native53 Limiter R2 verifier schema failure;19DAQ234.937seconds; actual native_verified true but verifier incorrectly required verified; no ToneOn/reset",
+  "last_closed_runtime_unit": "Native53 Limiter R3 meter reference verifier failure;35DAQ468.561seconds; currentmeter exactlyinitial0 butnotmax10000, heldminobserved-35.55dB, noreset",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18112,9 +18113,9 @@
       "preset_cases": 76
     }
   },
-  "native53_raw_requests": 37,
+  "native53_raw_requests": 72,
   "native53_accepted_completed_unit_requests": 0,
-  "native53_failed_or_nonadmitted_requests": 37,
+  "native53_failed_or_nonadmitted_requests": 72,
   "native53_limiter_reset_r2_actual": {
     "schema": 1,
     "status": "FAILED_VERIFIER_SCHEMA_ASSUMPTION_AFTER_TONE_LEVEL_BEFORE_SIGNAL",
@@ -18181,6 +18182,111 @@
       "Native53_failed_or_nonadmitted_requests": 37,
       "fixed_total": 43,
       "fixed_complete": 11,
+      "remaining": 32,
+      "hardware_blocked": 4
+    }
+  },
+  "native53_limiter_reset_r3_actual": {
+    "schema": 1,
+    "status": "FAILED_VERIFIER_CURRENT_METER_MAXIMUM_ASSUMPTION",
+    "source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+    "native_unit": 53,
+    "elapsed_seconds": 468.561,
+    "planned_DAQ": 48,
+    "actual_DAQ": 35,
+    "accepted_completed_unit_DAQ": 0,
+    "failed_or_nonadmitted_DAQ": 35,
+    "last_RPC": 37,
+    "first_unexecuted_RPC": 38,
+    "observed_meter_reference": {
+      "fresh_minimum": {
+        "data": {
+          "bits_hex": "40C3880000000000",
+          "kind": "float",
+          "value": 10000
+        },
+        "variant_tag": 2
+      },
+      "post_signal_minimum": {
+        "data": {
+          "bits_hex": "40BD6AF717F00000",
+          "kind": "float",
+          "value": 7530.965209007263
+        },
+        "variant_tag": 2
+      },
+      "post_signal_minimum_text": "-35.55",
+      "fresh_current_meter": {
+        "data": {
+          "bits_hex": "0000000000000000",
+          "kind": "float",
+          "value": 0
+        },
+        "variant_tag": 2
+      },
+      "post_signal_current_meter": {
+        "data": {
+          "bits_hex": "0000000000000000",
+          "kind": "float",
+          "value": 0
+        },
+        "variant_tag": 2
+      },
+      "current_meter_maximum": {
+        "data": {
+          "bits_hex": "40C3880000000000",
+          "kind": "float",
+          "value": 10000
+        },
+        "variant_tag": 2
+      },
+      "current_equals_initial_not_maximum": true
+    },
+    "mutations": {
+      "Tone_level_prepare_and_restore": 2,
+      "ToneOn_requests": 1,
+      "ToneOff_requests": 1,
+      "Tone_whole10_exact_original_restore_verified": true,
+      "Limiter_threshold_preparation": 1,
+      "Limiter_threshold_restored_before_close": false,
+      "reset_pulses": 0,
+      "preset_or_state_load_or_Save": 0
+    },
+    "GUI_observation": {
+      "initial_reduction_text": "0.00 dB",
+      "post_signal_held_minimum_text": "-35.55 dB",
+      "initial_threshold_text": "-3.00 dB",
+      "prepared_threshold_text": "-12.00 dB",
+      "actual_rendered_screenshots_observed": true,
+      "reset_effect_verified": false,
+      "two_native_retention_observations_completed": false
+    },
+    "closure": {
+      "owned_Scratch_NoSave": true,
+      "CUA_app_open": false,
+      "owner_EOF_exit_code": 0,
+      "hardware_then_process_check_sequential": true,
+      "no_relevant_processes": true,
+      "two_locks_reacquired_released": true,
+      "saved_files_unchanged": 10,
+      "MIDI_sources_destinations_before_after": 0
+    },
+    "evidence_pins": {
+      "original_baseline25": "b04c7f4543627841afc6e6d6622c53a019fe1babdd1f98bbe2732488ba950372",
+      "original_baseline26": "e06936c9a873691a62f75564208d14885b64a42e5d92be86bdb523a614f879d2",
+      "Tone_exact_original36": "fa4f9210241c2f91719d00d439532b604b2d69995d46a2bbc824dcc56a583f6b",
+      "actual_first_quiet37": "d96f261f482f978cc9201bc5719392bd31f308dc21ac59e5459517a8377bf401",
+      "original_intents": "56241699d5141f55d8ce5ec27376961d4d6324246a7634aa59c4895a1d431315",
+      "closure": "75ec7d5e390dadfcdb2a13c13d4593e2996a3db0594ced8fdd0cf640fb0f8b32",
+      "meter_reference_projection": "7740652e55f8f0f7bf17985c3d33b5ca45ff4fd8074a75212bbd03c0f863db8e"
+    },
+    "next": "R4 current-meter reference is the exact two-page initial no-input state, not its maximum. The distinct held minimum must still be stable nonneutral and return to its own initial value after one pulse. Preserve old failures and all effect/metadata/closure guards.",
+    "accounting": {
+      "Native53_raw_requests": 72,
+      "Native53_accepted_completed_unit_requests": 0,
+      "Native53_failed_or_nonadmitted_requests": 72,
+      "fixed_total": 43,
+      "complete": 11,
       "remaining": 32,
       "hardware_blocked": 4
     }

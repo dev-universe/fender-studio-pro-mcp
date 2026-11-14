@@ -19,6 +19,8 @@
 
 ## 현재 상태 요약
 
+- 최신은 Native53 Limiter R3의 미터 참조 검사 실패35요청·468.561초다. Tone10개 원복과 실제 held minimum변화0.00→-35.55dB·GUI를 관측했지만 current meter의 최초0을 max10000과 같다고 가정해 초기화 전에 중단했다. NoSave/appfalse/EOF0/잠금/저장10개/MIDI0으로 종료했다. Native53미수용누계72·수용0을 보존한다. 다음 R4는 정확한 새 최초 no-input 참조와 held minimum을 분리하며 설치d508651/Native53은 그대로다. 아래 R3다음 문장은 이력이며 현재 JSON을 따른다.
+
 - 최신은 Native53 Limiter R2의 검사기 계약 실패19요청·234.937초다. 실제 setter는 applied_verified/native_verified=true였지만 검사기가 없는 verified를 요구했다. 레벨쓰기1·ToneOn/Limiter/초기화0이며 NoSave/appfalse/EOF0/저장10개/MIDI0으로 종료했다. R1/R2 미수용37개를 보존한다. 다음 R3는 모든 남은 응답 형태의 소스·실제 자료 대조와 검사기 수정이며 제품 소스 d508651/Native53은 그대로다. 아래 R2 다음 문장은 이력이며 현재 JSON 순서를 따른다.
 
 - 최신은 Native53 Limiter R1 실패18요청·298.424초다. 현재 Tone 최댓값이+24dB여서 계획0dB조건에서 중단했고 신호·레벨쓰기·Limiter·초기화는0개다. NoSave/appfalse/EOF0/잠금/저장10개/MIDI0으로 종료했다. 다음은 별도 R2의 명시적+24dB 내부 실험점 검토이며 동일 안전·독립 효과·정확 원복 조건을 유지한다. R2실제0·설치d508651/Native53 그대로다. 아래48요청 다음 문장은 R1준비 이력이며 현재 순서는 JSON을 따른다.
