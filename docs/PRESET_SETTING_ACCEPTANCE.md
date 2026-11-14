@@ -45,3 +45,7 @@ Level Meter는 기존 DSP7와 등록6설정의 union13을 사용해 issued index
 fresh complete issued catalog가 하나인 Scope는 최소 대표 사례 수가1개다. 최초 P에서 일반 `showSecondary`0→1을 한 번 준비한 O를 별도 기준으로 캡처했다. default 적용의 실제1→0 변화와 전체31개 O 정확 복원, 새758바이트 A/B 동일, 수명·정리를 확인했다. 이어 사전에 선언한 최초0 복원과 전체31개 P 독립쌍까지 통과했다. 쓰기31개·읽기 전용0이며 비값/unknown metadata를 모두 정확 비교했다. 표시 이름도 최초/최종 `default*`가 같았다.
 
 [새 실제 증거](evidence/2026-11-14-scope-singleton-native47.json)는329.338초·46요청이고, 대표 설정1/1만 수용한다. Scope 두 트리거의 실제 효과·waveform/audio·저장/재시작은 별도다. 현재35/46종·완료 종68사례·11종 잔여, 고정43개 중7개 완료·36개 잔여다. 앞선 Room/Level/Tone 결정 시점의 집계는 이력으로 보존한다.
+
+## VU Meter 대표2/2의 실제 적용
+
+서로 다른 issued index1 Cosy Master와 index2 Fast Detection을 각39요청으로 수용했다. 한 load로 쓰기3개와 실제 관측한 readonly8개를 포함한 전체11 current/metadata/unknown을 정확 복원했고 새131바이트 A/B 동일·수명/Root정리를 확인했다. readonly 예외는 쓰지 않았지만 직렬화 참여/제외는 여전히 미검증이다. 표시이름의 원래 복원은 false다. [두 번째 증거](evidence/2026-11-14-vu-preset-index2-native47.json)가 첫 불변 증거를 연결한다. 현재36/46종·완료 종70사례·10종 잔여, 고정8/43 완료·35개 잔여다. 기존 첫 사례1/2 기록은 이력이며 반복하지 않는다.
