@@ -12,9 +12,9 @@ and [November12 historical handoff](LOOP_HANDOFF_2026-11-12.md) for current
 state and the complete remaining queue. Completed units are not replayed.
 
 Current checkpoint: Native47 / `95eeb72`, 46 MCP tools; 6,866/7,112 fixed
-current-value names, 246 remaining; 36/46 preset-setting classes, 70 cases in completed classes,
-10 remaining. The fixed remaining-work snapshot has eight of43 items complete
-and35 remaining. These are different denominators, not whole-product coverage.
+current-value names, 246 remaining; 37/46 preset-setting classes, 72 cases in completed classes,
+9 remaining. The fixed remaining-work snapshot has nine of43 items complete
+and34 remaining. These are different denominators, not whole-product coverage.
 Read [November14 progress](PROGRESS_2026-11-14.md) before the historical case
 narratives below. Both Level reset effects have independent live GUI witnesses;
 Native45 read all33 typed controller descriptions/current values/owners. Native47 changed/read/restored all six registered Level settings with independent
@@ -29,7 +29,7 @@ Room2/2 and Level2/2 while preserving full-current/readonly failures and Room's 
 | Enumeration | 8,668 current-provider records / 60 class fixtures | Conditional and unexposed state |
 | Finite selectors | 23 selectors / 298 changed choice cases | Empty Mustang/Rumble model catalogs and combinations |
 | Preset catalogs | 59 discovery/release/refusal lifecycles | Broader observable preset recalls |
-| Additional preset settings | Two accepted cases each for34classes plus Open AIR and Scope issued singletons1/1;70completed-class cases |10classes; full-current/readonly failures remain preserved |
+| Additional preset settings | Two accepted cases each for35classes plus Open AIR and Scope issued singletons1/1;72completed-class cases |9classes; full-current/readonly failures remain preserved |
 | Expander and Gate hybrid cases | Both issued indices 1 and 2 restored by one original capsule load plus one preplanned original attack setter, with all 14 or 19 records exact | Capsule-only restoration, persistence and audio |
 | Surround Panner | All 47 current writable fields | Other output layouts and audible behavior |
 | Note FX | 257 selected fields; all 248 Arpeggiator/Repeater writable fields | Chorder model learning, commands and event roles |
@@ -930,3 +930,5 @@ Scope singleton index0 default now passes its setting scope: distinct initial P 
 VU Meter indices1/2 each passed39DAQ with actual sensitivity/scale changes, one Aload restoring all11 observed current records and metadata exactly, fresh131byte A/B signatures, lifecycle and Root closure. No readonly exception was used. Preset display label restoration is false; readonly serialization participation, audio and persistence remain unverified. [Index2 evidence](evidence/2026-11-14-vu-preset-index2-native47.json) links the immutable first case.
 
 Mojito Native47 R2 passed independent Music/audio mute isolation and observed20 stable writable changes after one Acid Dreams apply. Its sole Aload left two writable LFO speeds one normalized Float32 step away from the original and readonly lfoBeats3to7. It stopped at30DAQ/706.132s before call33, without correction, B capture or release, and closed via Root NoSave/owner0/saved6/MIDI0. Accepted cases0; strict original restoration and capsule equality remain unproved. [Failure evidence](evidence/2026-11-14-mojito-preset-index0-native47-r2-failed.json). Existing36/46 classes and70 cases remain unchanged.
+
+Mojito's distinct Acid Dreams0 and Basslead1 scoped hybrid cases now complete representative settings2/2. Each used57DAQ, one Aload and two predeclared exact LFO corrections, all35 writable/all37 metadata exact comparisons, fresh895byte A/B equality and lifecycle/Root closure. Readonly lfoBeats/full37 current, preset-label restoration, legacy pan, whole-plugin, audio and persistence remain unverified. The [second proof](evidence/2026-11-14-mojito-preset-index1-native47.json) links the immutable first success. Both earlier failures remain failed. Current37/46classes,72cases,9remaining and fixed9/43complete,34remaining supersede the historical counts above.

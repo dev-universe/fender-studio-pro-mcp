@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중8개를 완료했고35개가 남았다: 프리셋10 + 프리셋 외 플러그인 기능19 + 공통6.** 남은 상태는부분30개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중9개를 완료했고34개가 남았다: 프리셋9 + 프리셋 외 플러그인 기능19 + 공통6.** 남은 상태는부분29개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -9,8 +9,8 @@
 | 기존 지표 | 완료/전체 | 남음 | 의미 |
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
-| 추가 프리셋 설정 종 |36/46|10종|완료 종70사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중8개 완료|35개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 추가 프리셋 설정 종 |37/46|9종|완료 종72사례. catalog59종과 다른 지표|
+| 고정한 완료물 목록 |43개 중9개 완료|34개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -40,7 +40,7 @@
 |PRESET-SAMPLEONE|SampleOne|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-IMPACT|Impact|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-CV|CV Instrument|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
-|PRESET-MOJITO|Mojito|부분 완료|Acid Dreams index0의 쓰기35개·전체37 metadata 정확 복원과 새895바이트 A/B 일치·정리를57요청·409.184초로 수용. 사전 선언한 LFO 정밀 보정2회. R1/R2 실패 보존|서로 다른 Basslead index1의 두 번째 설정 사례가 남음. readonly lfoBeats/전체37 current와 표시이름 원복false, legacy pan은 CONTROL-MOJITO 기존 범위.|
+|PRESET-MOJITO|Mojito|완료|서로 다른 Acid Dreams0/Basslead1 각57요청, 쓰기35개/전체37 metadata 정확 복원·새895바이트 A/B 일치·정리. 사전 선언한 LFO 정밀 보정 각2회. R1/R2 실패 보존|완료: 대표 설정2/2 범위. readonly lfoBeats/전체37 current와 표시이름 원복false, legacy pan/MIDI3역할은 CONTROL-MOJITO에 남음. 두 사례 반복 금지.|
 |PRESET-CHORDER|Chorder|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 |PRESET-REPEATER|Repeater|부분 완료|issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음|고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.|
 

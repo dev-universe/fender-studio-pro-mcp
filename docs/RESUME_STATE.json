@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
+  "last_completed_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -65,21 +65,20 @@
       "Level Meter",
       "Tone Generator",
       "Scope",
-      "VU Meter"
+      "VU Meter",
+      "Mojito"
     ],
-    "new_preset_recall_restore_cases": 71,
-    "remaining_preset_classes": 10,
+    "new_preset_recall_restore_cases": 72,
+    "remaining_preset_classes": 9,
     "chorder_gui_input_pitch_current_value_cases": 1,
     "chorder_gui_mode_current_value_cases": 1,
     "chorder_no_save_restart_reset_cases": 1,
-    "new_hybrid_preset_recall_restore_cases": 10,
-    "partial_preset_classes": {
-      "Mojito": 1
-    },
-    "new_preset_cases_in_completed_classes": 70,
+    "new_hybrid_preset_recall_restore_cases": 12,
+    "partial_preset_classes": {},
+    "new_preset_cases_in_completed_classes": 72,
     "new_capsule_only_preset_classes_completed": 28,
     "new_capsule_only_preset_recall_restore_cases": 55,
-    "new_hybrid_preset_classes_completed": 5,
+    "new_hybrid_preset_classes_completed": 6,
     "stopped_preset_classes": {
       "Multiband Dynamics": {
         "accepted_cases": 0,
@@ -601,9 +600,9 @@
     "level_meter_reset_effects_independently_verified": 2
   },
   "next_units_in_order": [
-    "Keep Native47/95eeb72/MCP46. Mojito index0 R3 first scoped hybrid case1/2 accepted from57DAQ/409.184s:all35 writable exact after one Aload plus predeclared two exact LFO corrections, fresh895byte A/B equal, lifecycle and RootNoSave/owner0/saved6/MIDI0. Readonly lfoBeats final API7 versus original3, whole37 current and preset label restorationfalse. Preserve failed R1/R2 and do not replay index0. Prepare the distinct issued index1 Basslead using existing immutable payload facts and same bounded correction route with new owner/document/session/instance/originals. Fresh catalog50 and lfoSync1to0 contrast, exact correction preconditions, A/B identity and Root closure remain mandatory. Current partialMojito1 is separate from completed classes36/46 and70cases. No legacy pan/provider or whole-plugin claim.",
-    "고정43개 중8개 완료/35개 잔여(부분30·미착수1·하드웨어4)다. 모든 미완료ID와 각 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 프로그램 역사 전체 분모나 시간 비율로 쓰지 않고 목표 분모를 조용히 늘리지 않는다.",
-    "현재 프리셋 설정36/46종·완료 종70사례·10종 잔여이며 별도 부분 Mojito1사례이다. Scope singleton1/1과 VU의 서로 다른 index1/2 전체값 복원/새상태캡처/정리를 수용했다. VU readonly8도 실제 원래와 일치했지만 직렬화 참여를 뜻하지 않고 표시이름 복원은false다. OpenAIR/Room의 원래 readonly/fullcurrent 실패와 Room/Level/Tone 표시이름 복원false를 보존한다. 전체plugin/audio/Save로 확장하지 않으며 완료 사례를 반복하지 않는다.",
+    "Keep Native47/95eeb72/MCP46. PRESET-MOJITO now completes distinct indices0/1 via predeclared hybrid settings:each57DAQ, all35 writable/all37 metadata exact, fresh895byte A/B equal, lifecycle/RootNoSave/owner0/saved6/MIDI0. Reuse both accepted cases and preserve R1/R2 failures. Next do a bounded offline comparison of existing Repeater and remaining preset evidence to select one smallest unrun case; freeze exact provider/schema/model/resource/isolation/restore contract and callback budget before fresh Root runtime. Do not run a broad sweep, rebuild unchanged product, or infer generic graph/event/hardware support. Stored pan and MIDI3 roles remain existing CONTROL-MOJITO; readonly/full37 current and preset label restorationfalse remain preserved.",
+    "고정43개 중9개 완료/34개 잔여(부분29·미착수1·하드웨어4)다. 모든 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않고 분모를 조용히 늘리지 않는다.",
+    "현재 프리셋 설정37/46종·완료 종72사례·9종 잔여이며 별도 부분 사례0이다. Mojito의 서로 다른index0/1 두 사례를 사전 선언한 정밀 보정2회씩의 hybrid로 수용했다. readonly lfoBeats/full37 current·표시이름 원복false와 legacy pan 미확정을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito 및 이전 실기를 반복하지 않는다. 전체plugin/audio/Save로 확장하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
     "공유press/release/neutral·문맥소실·unknown보유계약과독립witness를준비한다. ChorderGUI directsetValue근거를begin/end나임의notify호출허가로바꾸지않는다. scheduled-note-to-Level은내부신호관측만입증하며GUI/물리키완료로세지않는다. 기존분석을넓게반복하지않는다.",
     "Ampire/Pedalboard alias/linkedmix/hostbypass와구조복원,Mustang/Rumble실제modeldomain,Chorder5동작·다른입력모델,instrumentMIDI/macros/다른padfocus와남은프리셋을각유한계약/실제관측으로진행한다. 새장애는기존완료물의하위수정으로구분한다.",
@@ -615,38 +614,38 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-14.md",
-  "last_measurement": "6866/7112 names,246 remaining;36/46 preset-setting classes,70 completed-class cases plus partialMojito1,10 classes remaining;fixed43 completed8/remaining35;Native47 raw470=accepted420+nonadmitted50.",
+  "last_measurement": "6866/7112 names,246 remaining;37/46 preset-setting classes,72 completed-class cases,9 classes remaining;fixed43 completed9/remaining34;Native47 raw527=accepted477+nonadmitted50.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Mojito index0 R3 accepted first scoped hybrid case; next distinct Basslead preparation",
+    "unit": "Mojito preset-setting2/2 accepted; next bounded remaining-class preparation",
     "DAW_live_unit_running": false,
     "REA_running": false,
-    "offline_preparation_running": true,
+    "offline_preparation_running": false,
     "current_product_source_commit": "95eeb72",
     "native_unit": 47,
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
+    "latest_closed_DAW_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "f282bbf9-09c1-482b-a78e-8f807125dc92",
+    "latest_closed_job_id": "a8a1610c-4cc1-4e0e-89bc-bf17443f2f01",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "f282bbf9-09c1-482b-a78e-8f807125dc92",
+    "job_id": "a8a1610c-4cc1-4e0e-89bc-bf17443f2f01",
     "terminal_tool_inputs": 0,
     "raw_tool_requests": 57,
-    "current_phase": "R3_FIRST_CASE_ACCEPTED_SECOND_DISTINCT_CASE_PREPARATION",
+    "current_phase": "MOJITO_DISTINCT_TWO_CASES_ACCEPTED_NEXT_REMAINING_QUEUE",
     "maximum_tool_requests": 57,
-    "current_job_id": "f282bbf9-09c1-482b-a78e-8f807125dc92",
+    "current_job_id": "a8a1610c-4cc1-4e0e-89bc-bf17443f2f01",
     "completed_subunits": [
-      "Mojito Acid Dreams index0 scoped hybrid case"
+      "Mojito distinct Basslead index1 scoped hybrid case"
     ],
     "subunits_total": 1,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 409.184
+    "current_elapsed_seconds": 381.17
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -707,8 +706,8 @@
   "last_runtime_verified_native_unit": 47,
   "last_runtime_verified_source_commit": "95eeb72",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
-  "last_completed_live_elapsed_seconds": 409.184,
+  "last_completed_live_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
+  "last_completed_live_elapsed_seconds": 381.17,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -878,7 +877,6 @@
     "SampleOne",
     "Impact",
     "CV Instrument",
-    "Mojito",
     "Chorder",
     "Repeater"
   ],
@@ -2755,7 +2753,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T05:05:36.450960+00:00",
+  "latest_root_observation_at": "2026-11-14T05:14:34.844453+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -3618,14 +3616,14 @@
   "remaining_work_breakdown": {
     "document": "docs/WORK_BREAKDOWN_2026-11-13.md",
     "data": "docs/WORK_BREAKDOWN_2026-11-13.json",
-    "remaining_deliverables": 35,
-    "partial": 30,
+    "remaining_deliverables": 34,
+    "partial": 29,
     "unstarted": 1,
     "hardware_blocked": 4,
     "historical_total_unknown": true,
     "counts_are_not_equal_effort": true,
     "fixed_backlog_baseline": 43,
-    "completed_since_baseline": 8
+    "completed_since_baseline": 9
   },
   "chorder_current_value_r8_failed": {
     "status": "failed_cleaned_up",
@@ -15131,8 +15129,8 @@
     "post_owner_MIDI_destinations": 0
   },
   "native46_failed_unit_requests": 21,
-  "last_closed_live_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
-  "last_closed_live_elapsed_seconds": 409.184,
+  "last_closed_live_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
+  "last_closed_live_elapsed_seconds": 381.17,
   "native46_mode_profiles_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_BOUNDED_GUI_MODE_PROFILE_OBSERVATION_ONLY",
@@ -15276,8 +15274,8 @@
     "response_journal_sha256": "1f21a22fbbafb99dd65265993a3a8c975ada865136d13b8617b17a637cb92722",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "native47_runtime_actual_total_requests": 470,
-  "native47_accepted_completed_unit_requests": 420,
+  "native47_runtime_actual_total_requests": 527,
+  "native47_accepted_completed_unit_requests": 477,
   "native_source_commit": "95eeb72",
   "previous_product_source_map_sha256": "0a9ed52ac536b1e6ac205c89036b5b9bca7272c3eb23f35a990b05c2698d2c6e",
   "next_collector_requires_fresh_full_source_and_runtime_binding": true,
@@ -15349,9 +15347,7 @@
   },
   "level_preset_current_distinct_setting_cases": 2,
   "level_preset_required_distinct_setting_cases": 2,
-  "current_partial_preset_setting_cases": {
-    "Mojito": 1
-  },
+  "current_partial_preset_setting_cases": {},
   "native47_level_preset_index2_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_LEVEL_INDEX2_AND_TWO_DISTINCT_SCOPED_SETTING_CASES_AFTER_CLOSURE",
@@ -15647,7 +15643,7 @@
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
     "recipe_sha256": "60da1054a9d8331afa8d2cc84a63ccfeb6e01bce30823ce4df0432c0147d4e6c"
   },
-  "last_progress_update_utc": "2026-11-14T05:05:36.450960+00:00",
+  "last_progress_update_utc": "2026-11-14T05:14:34.844453+00:00",
   "native47_vu_preset_index1_actual": {
     "schema": 1,
     "status": "ROOT_ACCEPTED_VU_INDEX1_FIRST_DISTINCT_PRESET_SETTING_AFTER_CLOSURE",
@@ -15877,8 +15873,8 @@
     "response_journal_sha256": "b2c0954068278388dc51bae9a802ec9007c7c726b95c821ccf224d3c450e3306",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "last_closed_DAW_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
-  "last_accepted_DAW_unit": "Native47 Mojito index0 R3:57DAQ/409.184s;20 positive changes, one Aload plus two predeclared exact LFO corrections restored all35 writable and all37 metadata; fresh895byte A/B equal, lifecycle and RootNoSave/ownerEOF0/saved6/MIDI0. Readonly lfoBeats stayed7 versus original3 in final API pair; whole37/current and label restorationfalse. First scoped hybrid case1/2 accepted; class incomplete.",
+  "last_closed_DAW_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
+  "last_accepted_DAW_unit": "Native47 Mojito Basslead index1:57DAQ/381.17s,22 positive changes;all35 writable exact after one Aload plus two declared LFO corrections, all37 metadata and fresh895byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-MOJITO scoped setting2/2; readonly lfoBeats/full37 current and preset label restorationfalse.",
   "mojito_legacy_pan_gap": {
     "status": "UNRESOLVED_LEGACY_STORED_ATTRIBUTE_CURRENT_PROVIDER",
     "fixed_backlog_owner": "CONTROL-MOJITO",
@@ -16201,6 +16197,159 @@
     "response_journal_sha256": "eb326e429d27221cd0f135987459dbfbd0f3b59b41f55c69c6d8e3a50c3f5049",
     "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c"
   },
-  "mojito_preset_current_distinct_setting_cases": 1,
-  "mojito_preset_required_distinct_setting_cases": 2
+  "mojito_preset_current_distinct_setting_cases": 2,
+  "mojito_preset_required_distinct_setting_cases": 2,
+  "native47_mojito_preset_index1_actual": {
+    "schema": 1,
+    "status": "ROOT_ACCEPTED_SECOND_DISTINCT_SCOPED_HYBRID_PRESET_SETTING_CASE",
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "native_unit": 47,
+    "product_source_commit": "95eeb728289f712fd932817132427543c36e3530",
+    "job_id": "a8a1610c-4cc1-4e0e-89bc-bf17443f2f01",
+    "closed_at": "2026-11-14T05:14:34.844453+00:00",
+    "actual_elapsed_seconds": 381.17,
+    "raw_DAW_requests": 57,
+    "metadata_requests": 2,
+    "paired_unique_DAW_receipts": 57,
+    "unknown_DAW_outcomes": 0,
+    "MCP_predispatch_errors": 0,
+    "counts": {
+      "host_status": 1,
+      "session_get": 6,
+      "channels_list": 7,
+      "channel_set": 2,
+      "tracks_list": 6,
+      "operation_run": 1,
+      "plugin_inspect": 6,
+      "plugin_editor_open": 1,
+      "plugin_parameters": 16,
+      "plugin_state.capture": 2,
+      "plugin_presets.list": 2,
+      "plugin_presets.apply": 1,
+      "plugin_state.restore": 1,
+      "plugin_parameter_set": 2,
+      "plugin_state.release": 2,
+      "plugin_presets.release": 1
+    },
+    "issued_index": 1,
+    "issued_name": "Basslead",
+    "issued_catalog_count": 50,
+    "metadata_title": "Basslead",
+    "literal_metadata_title_equals_issued_name": true,
+    "full_provider_records": 37,
+    "writable": 35,
+    "readonly": 2,
+    "complete_provider_reads": 16,
+    "independent_provider_pairs": 8,
+    "positive_changed_writable_names": [
+      "pitchBend",
+      "portaMode",
+      "glideTime",
+      "sawSquareOsc1",
+      "pulseWidthOsc1",
+      "lfoPitch",
+      "lfoSawSq",
+      "lfoPulse",
+      "lfoSync",
+      "lfoBeatsNu",
+      "lfoSpeed",
+      "fltCutoff",
+      "fltResonance",
+      "fltEnvelope",
+      "lfo2Speed",
+      "lfoFilter",
+      "ampEnvAttack",
+      "ampEnvDecay",
+      "ampEnvSustain",
+      "ampEnvRelease",
+      "drive",
+      "modColor"
+    ],
+    "all35_writable_original_exact_after_declared_corrections": true,
+    "all37_nonvalue_unknown_metadata_exact": true,
+    "capsule_only_writable_original_restoration": false,
+    "predeclared_correction_fields": [
+      "lfoSpeed",
+      "lfo2Speed"
+    ],
+    "correction_setters_per_field": 1,
+    "original_correction_raw_bits": "4048F34301F00000",
+    "postload_drift_raw_bits": "4048F342DAE00000",
+    "original_correction_normalized_bits": "3BA3838F",
+    "postload_drift_normalized_bits": "3BA3838E",
+    "scalar_seed_setters": 0,
+    "adaptive_correction_or_tolerance": false,
+    "readonly_observation_exception_used": true,
+    "readonly_difference_names": [
+      "lfoBeats"
+    ],
+    "readonly_lfoBeats_original_value": 3,
+    "readonly_lfoBeats_final_API_value": 7,
+    "readonly_lfoBeats_original_text": "1/2",
+    "readonly_lfoBeats_final_API_text": "1/32",
+    "readonly_not_classified_as_meter_or_excluded_serialization": true,
+    "all37_current_original_restoration": false,
+    "fresh_independent_A_B_equal": true,
+    "distinct_capture_requests_and_tokens": true,
+    "serialized_byte_count": 895,
+    "serialized_sha256": "d25cd5012614a62f55e197def9473a6fd8233c562c5eb3846fb49042955650ed",
+    "serialization": "component_alias_IStorable",
+    "serialization_source": "component_alias_storable",
+    "release_B_A_catalog_verified": true,
+    "released_catalog_refused_not_applied": true,
+    "timed_expiry_verified": false,
+    "Music_track_mute1_separately_verified": true,
+    "associated_audio_output_mute1_verified": true,
+    "Main_volume0_verified": true,
+    "target_audio_fader_unchanged": true,
+    "MIDI_input_None_actual_UI_verified": true,
+    "record_monitor0_and_stopped_verified": true,
+    "Root_actual_GUI_initial_changed_restored_observed": true,
+    "GUI_LFO_tempo_labels_after_final_API_reads": [
+      "1/2",
+      "1/2"
+    ],
+    "GUI_labels_do_not_override_prior_native_readonly_difference": true,
+    "original_preset_display": "default*",
+    "final_preset_display": "Basslead*",
+    "preset_display_original_restored": false,
+    "legacy_pan_current_provider_unknown": true,
+    "new_case_accepted": 1,
+    "current_distinct_cases_for_class": 2,
+    "required_distinct_cases_for_class": 2,
+    "class_complete": true,
+    "whole_plugin_complete": false,
+    "strict_fixed_name_increment": 0,
+    "hardware_audio_MIDI_processing_or_Song_Save_proven": false,
+    "elapsed_seconds": 381.17,
+    "Root_NoSave": true,
+    "app_closed_observed": true,
+    "owner_EOF_exit_code": 0,
+    "owner_process_absent": true,
+    "saved6_unchanged": true,
+    "MIDI_sources": 0,
+    "MIDI_destinations": 0,
+    "request_journal_sha256": "6d276a8276c2d24a20a57339903f652583e94dd59e59a525cd889611286a5a78",
+    "response_journal_sha256": "f5a6fcca8f5bfe7b3ca794334d2a63b1735daa7ecacd1fcc5da83637ef518a7f",
+    "installation_proof_sha256": "9013a2040400a7a70474d6c72b88611025df9b25e6f9c3fb2774d3fd0d33766c",
+    "distinct_accepted_indices": [
+      0,
+      1
+    ],
+    "prior_case_evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r3.json",
+    "prior_case_evidence_sha256": "6e67a3ed83ef4cdf52a8df4706607ffdb323a869263d43b7714f5036a47cf45a"
+  },
+  "mojito_preset_class_admission": {
+    "distinct_indices": [
+      0,
+      1
+    ],
+    "completed": true,
+    "scope": "DSP37 writable35/all37 metadata, predeclared hybrid corrections and fresh serialized identity; readonly/full37 current,label,legacy pan,whole plugin/audio/Save excluded",
+    "evidence": [
+      "docs/evidence/2026-11-14-mojito-preset-index0-native47-r3.json",
+      "docs/evidence/2026-11-14-mojito-preset-index1-native47.json"
+    ],
+    "previous_failures_preserved": true
+  }
 }
