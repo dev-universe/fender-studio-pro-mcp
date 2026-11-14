@@ -685,11 +685,11 @@
     "BridgeCore.js": "d290cee40654fbae1d61c0b3783232cbb08a881f3d9e00f2d8717a57455f3ba9",
     "NativePluginControls.js": "cc9bb0c5423c99aa9632066c42f57755b91ef86eb814c84103c79d7ab5be9d14"
   },
-  "last_runtime_verified_native_unit": 50,
-  "last_runtime_verified_source_commit": "89d861e68707298d4e5efb80690a8f5e1ab82829",
+  "last_runtime_verified_native_unit": 52,
+  "last_runtime_verified_source_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native50 Rumble current-state R2 readonly witness",
-  "last_completed_live_elapsed_seconds": 375.245,
+  "last_completed_live_unit": "Native52 Rumble named-parameter absence; scoped read-only observation",
+  "last_completed_live_elapsed_seconds": 202.062,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -15080,7 +15080,7 @@
   "native46_runtime_actual_total_requests": 83,
   "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
-  "last_runtime_verified_scope": "Rumble current direct26GUID/22numeric serialized projection exact pair, fullDSP39 beforeafter, context/finalfakeUIDrefusal/NoSaveclosure only; saved3numericdeltas false, nativewritability/modelselection/audio/persistence unverified",
+  "last_runtime_verified_scope": "Native52 scoped Rumble named-parameter absence,23DAQ202.062seconds, no model or hidden writer authority",
   "native46_level_settings_r1_failed": {
     "schema": 1,
     "status": "CLOSED_FAILED_POST_MODE_COUNT_GUARD_NO_RETRY_NO_INVERSE",
@@ -18035,5 +18035,8 @@
       "preset_classes_total": 46,
       "preset_cases": 76
     }
-  }
+  },
+  "previous_primary_runtime_verified_native_unit": 50,
+  "previous_primary_runtime_verified_source_commit": "89d861e68707298d4e5efb80690a8f5e1ab82829",
+  "primary_runtime_bookkeeping_correction": "Historical Native50 primary fields lagged behind accepted Native51/52 detailed records. Updated to latest accepted Native52 scoped read, without promoting installed Native53 or whole control."
 }
