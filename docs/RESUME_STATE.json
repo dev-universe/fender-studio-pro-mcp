@@ -610,7 +610,7 @@
   "last_measurement": "6866/7112 names,246 remaining;32/46 preset-setting classes,63 cases,14 remaining;fixed43 completed3/remaining40;Native46 Room40DAQ+2MCP validation errors.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Native46 Level six settings R1 closed after mode count guard failure",
+    "unit": "Native46 bounded GUI mode profiles closed",
     "DAW_live_unit_running": false,
     "REA_running": false,
     "offline_preparation_running": true,
@@ -619,29 +619,29 @@
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native46 Level six-settings R1 stopped after one mode setter: UI EBU R128, OutLevels25->23, outcome_unknown; no retry/inverse, NoSave discard and owner EOF/saved6 preserved.",
+    "latest_closed_DAW_unit": "Native46 bounded GUI mode profile observation: modes0..3 OutLevels25, mode4 count23, return0 count25; same node identities, whole6 restored exact; NoSave/ownerEOF/saved6/MIDI0/0. MCP parameter setters0.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
-    "latest_closed_job_id": "85d1ada2-a9e4-4799-8b1f-9dbf0b4cc4ff",
+    "latest_closed_job_id": "41cdabd6-c18f-4eef-9d7b-3337385c3423",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "85d1ada2-a9e4-4799-8b1f-9dbf0b4cc4ff",
+    "job_id": "41cdabd6-c18f-4eef-9d7b-3337385c3423",
     "terminal_tool_inputs": 0,
-    "raw_tool_requests": 21,
-    "current_phase": "LEVEL_R1_CLOSED_FAILED_MODE_PROFILE_FIX_IN_ISOLATED_WORKTREE",
-    "maximum_tool_requests": 90,
-    "current_job_id": "85d1ada2-a9e4-4799-8b1f-9dbf0b4cc4ff",
+    "raw_tool_requests": 22,
+    "current_phase": "GUI_MODE_PROFILES_CLOSED_SOURCE_FIX_TESTED_PENDING_ROOT_REVIEW",
+    "maximum_tool_requests": 30,
+    "current_job_id": "41cdabd6-c18f-4eef-9d7b-3337385c3423",
     "completed_subunits": [
-      "baseline6_read",
-      "three_list_choices",
-      "three_toggle_formatters",
-      "unknown_NoSave_cleanup"
+      "five_GUI_mode_profiles",
+      "return_mode0",
+      "whole6_typed_metadata_restored",
+      "NoSave_owner_saved6_MIDI0"
     ],
-    "subunits_total": 6,
+    "subunits_total": 4,
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 296.194
+    "current_elapsed_seconds": 255.619
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -15079,8 +15079,8 @@
     "scope_decision_sha256": "c54af9b985eb30dd04155d85c3dda88a1b90eea0061fdfe364f49c65416c81e1",
     "finished_at": "2026-11-14T01:42:34.904455+00:00"
   },
-  "native46_runtime_actual_total_requests": 61,
-  "native46_accepted_completed_unit_requests": 40,
+  "native46_runtime_actual_total_requests": 83,
+  "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
   "last_runtime_verified_scope": "Room index1 scoped preset setting; six new Level setting writes still pending.",
   "native46_level_settings_r1_failed": {
@@ -15130,6 +15130,62 @@
     "post_owner_MIDI_destinations": 0
   },
   "native46_failed_unit_requests": 21,
-  "last_closed_live_unit": "Native46 Level six-settings R1 stopped after one mode setter: UI EBU R128, OutLevels25->23, outcome_unknown; no retry/inverse, NoSave discard and owner EOF/saved6 preserved.",
-  "last_closed_live_elapsed_seconds": 296.194
+  "last_closed_live_unit": "Native46 bounded GUI mode profile observation: modes0..3 OutLevels25, mode4 count23, return0 count25; same node identities, whole6 restored exact; NoSave/ownerEOF/saved6/MIDI0/0. MCP parameter setters0.",
+  "last_closed_live_elapsed_seconds": 255.619,
+  "native46_mode_profiles_actual": {
+    "schema": 1,
+    "status": "ROOT_ACCEPTED_BOUNDED_GUI_MODE_PROFILE_OBSERVATION_ONLY",
+    "job_id": "41cdabd6-c18f-4eef-9d7b-3337385c3423",
+    "native_unit": 46,
+    "source": "570979c",
+    "elapsed_seconds": 255.619,
+    "closed_at": "2026-11-14T02:19:55.680350+00:00",
+    "raw_DAW_requests": 22,
+    "metadata_requests": 2,
+    "MCP_parameter_setters": 0,
+    "GUI_mode_changes": 5,
+    "GUI_mode_sequence": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      0
+    ],
+    "observed_root_counts": [
+      8,
+      8,
+      8,
+      8,
+      8,
+      8
+    ],
+    "observed_OutLevels_counts": [
+      25,
+      25,
+      25,
+      25,
+      23,
+      25
+    ],
+    "same_device_and_root_child_node_identities": true,
+    "restored_full_six_values_metadata_unknown_fields_exact_pair": true,
+    "EBU_descriptor_route_complete": false,
+    "parameter_write_acceptance_increment": 0,
+    "strict_name_increment": 0,
+    "preset_class_increment": 0,
+    "Main_target_setters": 2,
+    "new_tracks": 1,
+    "new_plugins": 1,
+    "Save_or_transport_actions": 0,
+    "NoSave_observed": true,
+    "app_closed_observed": true,
+    "owner_exit_code": 0,
+    "owner_process_absent": true,
+    "saved6_unchanged": true,
+    "post_owner_MIDI_sources": 0,
+    "post_owner_MIDI_destinations": 0,
+    "request_journal_sha256": "22e020cc719c9170b8472544b5cd60781932623d95a3b3addaedda53dc758a46",
+    "response_journal_sha256": "3ef223e9aaed71b716eace387c15f2c5cc11f3f98ea5451b10c6015116483ceb"
+  }
 }
