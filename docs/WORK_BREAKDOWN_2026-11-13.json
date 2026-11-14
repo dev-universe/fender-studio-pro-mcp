@@ -23,7 +23,7 @@
     "remaining_preset_classes": 10,
     "additional_partial_setting_cases": 0
   },
-  "runtime_note": "Native47 VU index2 Fast Detection:39DAQ/297.548s; sens1.00to3.00 and scale6to12 positive; all11 current/metadata exact restore via one Aload/no correction, fresh131byte A/B equal, lifecycle, Root NoSave/owner0/saved6/MIDI0. Distinct indices[1,2] complete PRESET-VUMETER; label restorationfalse.",
+  "runtime_note": "Native47 Mojito index0 R1 stopped before apply:20DAQ/788.023s, Music note-channel mute0 versus required1 while separate actual audio output mute1. No preset/parameter/load/transport/Save calls; captureA895 and full37 originals only. RootNoSave/owner0/saved6/MIDI0. Accepted0.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -210,10 +210,12 @@
       "title": "Mojito",
       "status": "partial",
       "implemented": "기존 plugin_presets/plugin_state·공통 실행기 있음; target별 고정 계획/비교가 일부 미완료",
-      "actually_verified": "issued catalog 발견·해제·만료 거부. 이46종 계획의 완료 사례는 아직 없음",
+      "actually_verified": "R1 read original full37 pairs and issued catalog50/captureA895, but preapply Music note-channel mute0 guard stopped it after20DAQ/788.023s. No preset apply/parameter/load; accepted0, RootNoSave/saved6/MIDI0.",
       "completion_predicate": "고정 issued index의 실제 설정 변화·독립 안정쌍·전체 원래값/스키마 복원·token 해제/만료·NoSave 정리를 충족하는 사례를 기존 두 사례 기준으로 수용한다. 이미 완료한 사례는 재사용한다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "remaining_after_verified_actions": "New R2 predeclares exact selected arrangement Music-track mute1 separately from audio-output mute1, then one distinct issued index0 case only. No unchanged R1 replay; legacy pan provider unknown and fullplugin false.",
+      "evidence": "docs/evidence/2026-11-14-mojito-preset-index0-native47-r1-failed.json"
     },
     {
       "id": "PRESET-CHORDER",
@@ -356,9 +358,12 @@
       "status": "partial",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
       "actually_verified": "일반 선택 설정 완료",
-      "completion_predicate": "afterTouch/modWheel/pitchBend3역할의 현재값·수신·neutral 복원/종료를 검증한다.",
+      "completion_predicate": "afterTouch/modWheel/pitchBend3역할의 현재값·수신·neutral 복원/종료를 검증한다. 기존 Mojito 범위 안에서 legacy stored pan의 실제 제어 경로 또는 무효 legacy 필드 근거도 구분한다. 고정7112 이름 분모는 바꾸지 않는다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 3
+      "inventory_remaining_names": 3,
+      "extra_discovered_not_in_fixed_name_inventory": [
+        "Legacy stored pan current-provider/control or ignored-legacy semantics unresolved; do not alias to mixer pan."
+      ]
     },
     {
       "id": "CONTROL-MUSTANG",
