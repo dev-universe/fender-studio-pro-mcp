@@ -19,7 +19,7 @@
 
 ## 현재 상태 요약
 
-- 현재 제품은 `95eeb72`/Native47·MCP46개다. main SHA256 `49e59d2d81ed5af8346a5ec12a401e3cc96297e84693dffa566a8add7f8ce9d9`, native UUID `0F6E8E5B-5FC3-3F18-B68B-68EB9D652A30`이며 정상 설치의 소스154개·패키지4개와 doctor를 대조했다.
+- 현재 설치 제품은 `2db35b2`/Native48·MCP46개다. main SHA256 `49e59d2d81ed5af8346a5ec12a401e3cc96297e84693dffa566a8add7f8ce9d9`, native UUID `11FD1CF4-FD18-31DB-B258-AB0CF7840749`이며 정상19.71초 빌드·설치의 소스155개·패키지4개와 doctor를 대조했다. 그래프 보고의 소스 검토와335개 addon·40개 node/4개 compile-fail 검사는 통과했으나 실제 graph 요청은 아직0이다. 준비 오류로 종료한 R1/R2의21요청을 성공으로 세지 않는다. 다음 R3와 최신 실행 상태는 상태 JSON을 따른다.
 - 고정 현재값 이름6,866/7,112개·잔여246개·18클래스다. Chorder와 Input Filter guiInput의 각128개 현재값·정확한 이름은 모두 완료했으므로 반복하지 않는다. 일반 이벤트·MIDI·모델 대응·오디오·저장은 별도다.
 - 프리셋 설정은38/46종·완료 종74사례·잔여8종이며 별도 부분 사례는0이다. Open AIR singleton1/1과 Room의 서로 다른 두 사례를 [명시적 설정 기준](PRESET_SETTING_ACCEPTANCE.md)으로 수용했다. 원래 전체 current/readonly 복원 실패를 보존하며 전체 플러그인 완료로 확장하지 않는다.
 - [고정한43개 목록](WORK_BREAKDOWN_2026-11-13.md) 중10개 완료·33개 잔여다. 부분28·미착수1·하드웨어 대기4이며 역사 전체 분모나 시간 비율은 아니다.

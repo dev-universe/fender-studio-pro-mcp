@@ -621,27 +621,27 @@
   "last_measurement": "6866/7112 names,246 remaining;38/46 preset-setting classes,74 completed-class cases,8 classes remaining,partial0;fixed43 completed10/remaining33;Native47 raw677=accepted627+nonadmitted50.",
   "binary_source_commit": "570979c",
   "current_execution": {
-    "unit": "Graph ownership manifest implementation and finite live preparation",
+    "unit": "Native48 graph ownership read-onlyR2 corrected Inserts inventory",
     "DAW_live_unit_running": false,
     "REA_running": false,
-    "offline_preparation_running": true,
-    "current_product_source_commit": "95eeb72",
-    "native_unit": 47,
+    "offline_preparation_running": false,
+    "current_product_source_commit": "2db35b29b750c0157ac746922b9a00652bff5ce9",
+    "native_unit": 48,
     "main_tools": 46,
     "current_app_closed": true,
     "current_owner_stopped": true,
-    "latest_closed_DAW_unit": "Native47 Repeater Analog Machine index1:75DAQ/299.143s,34 positive changes; all141 writable current/all141 metadata exact after one Aload without scalar corrections, fresh2989byte A/B equal; lifecycle/RootNoSave/owner0/saved6/MIDI0. Distinct indices0/1 complete PRESET-REPEATER scoped setting2/2; preset label restorationfalse and MIDI processing/audio/Save remain unverified.",
+    "latest_closed_DAW_unit": "Native48 graphR2 stopped15DAQ at response factory-name versus instance-name assumption. Fresh2instances/Routing/full72part0pair verified, target/graph changes0, unknown0. RootNoSave/owner0/saved9/MIDI0; no ownership completion.",
     "latest_closed_DAW_document": "MCP Validation Scratch",
     "latest_closed_job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
     "pending_mutations": 0,
     "completed_native41_accepted_unit_requests": 25748,
     "native41_raw_requests_including_failed_unit": 26204,
-    "job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
+    "job_id": null,
     "terminal_tool_inputs": 0,
-    "raw_tool_requests": 75,
-    "current_phase": "GRAPH_OWNERSHIP_IMPLEMENTATION_PENDING_TEST_REVIEW_INSTALL_LIVE",
-    "maximum_tool_requests": 75,
-    "current_job_id": "19fa81ff-7012-4ea0-a912-1c92815afc76",
+    "raw_tool_requests": 15,
+    "current_phase": "R2_COMPARATOR_PREPARATION_ERROR_CLOSED_OFFLINE_REPLAY_BEFORE_R3",
+    "maximum_tool_requests": 32,
+    "current_job_id": null,
     "completed_subunits": [
       "Repeater distinct Analog Machine index1 capsule-only setting case"
     ],
@@ -649,7 +649,8 @@
     "subunits_final_admission_pending": false,
     "launcher_pid": null,
     "owner_pid": null,
-    "current_elapsed_seconds": 299.143
+    "current_elapsed_seconds": 273.968,
+    "metadata_requests": 2
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -16624,5 +16625,24 @@
       "docs/evidence/2026-11-14-repeater-preset-index1-native47.json"
     ],
     "previous_first_case_history_preserved": true
-  }
+  },
+  "chorder_preset_static_candidates": {
+    "status": "STATIC_PRESET_CANDIDATES_ONLY_NOT_RECALLED",
+    "public_evidence": "docs/evidence/2026-11-14-chorder-preset-static-candidates.json",
+    "private_facts": ".local/next-state/chorder-preset-payload-root-r1/payload-facts.json",
+    "candidates": [
+      "Diatonic Major Chord Group",
+      "Diatonic Minor Chord Group"
+    ],
+    "models_distinct": true,
+    "stored_configuration_equal": true,
+    "conditional_positive": "autofill1->0 only if fresh native original1; no seed",
+    "actual_elapsed_seconds": 116.451,
+    "DAW_calls": 0,
+    "counts_delta": 0,
+    "next": "After graph live closure, prepare first bounded full908 provider/full128 model/capsule preset unit from exact two payloads. Generic load remains unproven. Reuse immutable completed Chorder sweeps. If original autofill0, assess model-preset claim explicitly before dispatch; do not invent writable contrast."
+  },
+  "native48_raw_requests": 21,
+  "native48_accepted_unit_requests": 0,
+  "native48_failed_or_nonadmitted_requests": 21
 }
