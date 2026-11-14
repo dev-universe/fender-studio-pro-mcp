@@ -741,6 +741,7 @@ pub enum PluginButtonAction {
     ResetMeterHold,
     ResetMeterLoudness,
     ResetMinimumReduction,
+    RetriggerScope,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2444,6 +2445,7 @@ mod tests {
             ("reset_meter_hold", "Level Meter"),
             ("reset_meter_loudness", "Level Meter"),
             ("reset_minimum_reduction", "Limiter"),
+            ("retrigger_scope", "Scope"),
         ] {
             let mut meter = args.clone();
             meter["action"] = json!(action);

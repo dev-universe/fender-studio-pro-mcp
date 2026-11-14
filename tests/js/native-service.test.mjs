@@ -964,3 +964,55 @@ test('minimum reset rejects cross-class names and unknown exact class identities
     assert.equal(calls, 1);
   }
 });
+
+
+test('Scope Retrigger forwards one closed pulse and never promotes acquisition verification', () => {
+  const action = 'retrigger_scope';
+  const calls = [];
+  const value = { ...actionResult(), action, param: 'trigRetrig', effect_parameters: [],
+    instance: { ...instance, class_uid: '36322412-AD90-4EE0-B63C-37929566B081', native_class: 'AudioEffect' } };
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device); calls.push(JSON.parse(body)); return JSON.stringify(value);
+  }); } });
+  h.device.findParameter = () => { throw new Error('no script trigger fallback'); };
+  const result = h.component.pluginAction({ plugin: 'Scope', expected_instance: instance.object_uid, action });
+  assert.deepEqual(calls, [{ operation: 'parameter_action', action, expected_instance: instance.object_uid }]);
+  assert.equal(result.native_outcome, 'applied_unverified');
+  assert.equal(result.param, 'trigRetrig');
+  assert.equal(result.verified, false);
+  assert.equal(result.effects_verified, false);
+  assert.deepEqual(Array.from(result.effect_parameters), []);
+});
+
+test('Scope Retrigger rejects unchecked selectors before device resolution', () => {
+  let resolutions = 0;
+  const h = harness();
+  h.component.pluginOf = () => { resolutions++; throw new Error('no resolution'); };
+  const base = { plugin: 'Scope', expected_instance: instance.object_uid, action: 'retrigger_scope' };
+  for (const extra of [{ action: 'trigOneshot' }, { action: 'trigRetrig' }, { param: 'trigRetrig' },
+    { class_uid: '36322412-AD90-4EE0-B63C-37929566B081' }, { value: 1 }, { source: 'dsp' },
+    { method: 'invoke' }, { plugin: '' }, { expected_instance: '' }])
+    assert.equal(h.component.pluginAction({ ...base, ...extra }).native_outcome, 'not_applied');
+  assert.equal(resolutions, 0);
+});
+
+test('Scope Retrigger malformed or ambiguous receipts never trigger a retry', () => {
+  const action = 'retrigger_scope';
+  const valid = { ...actionResult(), action, param: 'trigRetrig', effect_parameters: [],
+    instance: { ...instance, class_uid: '36322412-AD90-4EE0-B63C-37929566B081', native_class: 'AudioEffect' } };
+  for (const extra of [{ action: 'reset_meter_hold' }, { param: 'trigOneshot' }, { source: 'controller' },
+    { instance: { ...instance, class_uid: 'DF958D90-0196-434F-ADC3-1FC2BB7F4AF6' } },
+    { instance: { ...valid.instance, native_class: 'Controller' } },
+    { instance: { ...valid.instance, object_uid: '11111111-1111-4111-8111-111111111111' } },
+    { verified: true }, { effects_verified: true }, { upper_dispatched: false },
+    { reset_dispatched: false }, { reset_verified: false }, { effect_parameters: ['waveform'] },
+    { outcome: 'unknown' }]) {
+    let calls = 0;
+    const h = harness({ getObjectByName() { return native(() => { calls++; return JSON.stringify({ ...valid, ...extra }); }); } });
+    const result = h.component.pluginAction({ plugin: 'Scope', expected_instance: instance.object_uid, action });
+    assert.equal(result.native_outcome, 'unknown');
+    assert.equal(result.verified, false);
+    assert.equal(result.effects_verified, false);
+    assert.equal(calls, 1);
+  }
+});

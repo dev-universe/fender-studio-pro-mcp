@@ -196,7 +196,7 @@ impl McpServer {
             named::<PluginAction>(
                 "plugin_action",
                 "pluginAction",
-                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
+                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
                 true,
             ),
             named::<PluginState>(
@@ -766,7 +766,7 @@ mod tests {
     }
 
     #[test]
-    fn button_action_schema_is_the_closed_four_action_set() {
+    fn button_action_schema_is_the_closed_five_action_set() {
         let specs = McpServer::specs();
         let tool = &specs
             .iter()
@@ -779,7 +779,8 @@ mod tests {
                 "swap_filter_frequencies",
                 "reset_meter_hold",
                 "reset_meter_loudness",
-                "reset_minimum_reduction"
+                "reset_minimum_reduction",
+                "retrigger_scope"
             ])
         );
         assert_eq!(tool.input_schema["additionalProperties"], false);

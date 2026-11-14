@@ -8,6 +8,7 @@ pub(super) enum Action {
     ResetMeterHold,
     ResetMeterLoudness,
     ResetMinimumReduction,
+    RetriggerScope,
 }
 impl Action {
     fn name(self) -> &'static str {
@@ -16,6 +17,7 @@ impl Action {
             Self::ResetMeterHold => "reset_meter_hold",
             Self::ResetMeterLoudness => "reset_meter_loudness",
             Self::ResetMinimumReduction => "reset_minimum_reduction",
+            Self::RetriggerScope => "retrigger_scope",
         }
     }
 }
@@ -62,6 +64,11 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             parameter: c"studiocomp.resetmin",
             effects: &[],
             expected_tag: Some(88),
+        }),
+        ("36322412-AD90-4EE0-B63C-37929566B081", Action::RetriggerScope) => Ok(Spec {
+            parameter: c"trigRetrig",
+            effects: &[],
+            expected_tag: Some(1398043218),
         }),
         _ => Err("button action is not registered for this exact native class".into()),
     }

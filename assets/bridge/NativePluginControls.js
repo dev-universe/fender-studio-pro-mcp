@@ -1183,8 +1183,11 @@ class NativePluginControls {
             if (result.ok && request.operation === "set_parameter" && (typeof result.verified !== "boolean" || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object")) throw new Error("native mutation readback unavailable");
             if (result.ok && request.operation === "parameter_action"
                 && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
-                    || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction"].indexOf(request.action) < 0
-                    || (request.action === "reset_minimum_reduction"
+                    || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].indexOf(request.action) < 0
+                    || (request.action === "retrigger_scope"
+                        ? result.instance.native_class !== "AudioEffect"
+                            || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081" || result.param !== "trigRetrig"
+                        : request.action === "reset_minimum_reduction"
                         ? result.instance.native_class !== "AudioEffect"
                             || !((result.instance.class_uid === "61B18D53-26FA-4220-8614-89944A1990EC" && result.param === "resetmin")
                                 || (result.instance.class_uid === "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B" && result.param === "studiocomp.resetmin"))
