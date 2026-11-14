@@ -740,6 +740,7 @@ pub enum PluginButtonAction {
     SwapFilterFrequencies,
     ResetMeterHold,
     ResetMeterLoudness,
+    ResetMinimumReduction,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2439,10 +2440,14 @@ mod tests {
         operation.validate().unwrap();
         assert!(!operation.is_read_only());
         assert_eq!(operation.wire().0, "pluginAction");
-        for action in ["reset_meter_hold", "reset_meter_loudness"] {
+        for (action, plugin) in [
+            ("reset_meter_hold", "Level Meter"),
+            ("reset_meter_loudness", "Level Meter"),
+            ("reset_minimum_reduction", "Limiter"),
+        ] {
             let mut meter = args.clone();
             meter["action"] = json!(action);
-            meter["plugin"] = json!("Level Meter");
+            meter["plugin"] = json!(plugin);
             let operation = Operation::from_parts("plugin_action", meter).unwrap();
             operation.validate().unwrap();
             assert_eq!(operation.wire().1["action"], action);
@@ -2463,6 +2468,40 @@ mod tests {
                     .unwrap()
                     .validate()
                     .is_err()
+            );
+        }
+    }
+
+    #[test]
+    fn minimum_reduction_action_has_no_unchecked_parameter_or_binding_escape() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Limiter",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"reset_minimum_reduction"});
+        let operation = Operation::from_parts("plugin_action", base.clone()).unwrap();
+        operation.validate().unwrap();
+        assert_eq!(operation.wire().1, base);
+        for key in [
+            "param",
+            "class_uid",
+            "value",
+            "source",
+            "method",
+            "path",
+            "token",
+        ] {
+            let mut invalid = base.clone();
+            invalid[key] = json!("unchecked");
+            assert!(
+                Operation::from_parts("plugin_action", invalid).is_err(),
+                "{key}"
+            );
+        }
+        for key in ["plugin", "expected_instance", "action"] {
+            let mut invalid = base.clone();
+            invalid.as_object_mut().unwrap().remove(key);
+            assert!(
+                Operation::from_parts("plugin_action", invalid).is_err(),
+                "{key}"
             );
         }
     }

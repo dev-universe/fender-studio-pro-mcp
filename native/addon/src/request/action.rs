@@ -7,6 +7,7 @@ pub(super) enum Action {
     SwapFilterFrequencies,
     ResetMeterHold,
     ResetMeterLoudness,
+    ResetMinimumReduction,
 }
 impl Action {
     fn name(self) -> &'static str {
@@ -14,6 +15,7 @@ impl Action {
             Self::SwapFilterFrequencies => "swap_filter_frequencies",
             Self::ResetMeterHold => "reset_meter_hold",
             Self::ResetMeterLoudness => "reset_meter_loudness",
+            Self::ResetMinimumReduction => "reset_minimum_reduction",
         }
     }
 }
@@ -50,6 +52,11 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             parameter: c"resetloudness",
             effects: &[],
             expected_tag: Some(1383298124),
+        }),
+        ("61B18D53-26FA-4220-8614-89944A1990EC", Action::ResetMinimumReduction) => Ok(Spec {
+            parameter: c"resetmin",
+            effects: &[],
+            expected_tag: Some(1383288146),
         }),
         _ => Err("button action is not registered for this exact native class".into()),
     }
