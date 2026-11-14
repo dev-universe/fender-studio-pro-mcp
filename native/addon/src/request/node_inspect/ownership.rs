@@ -231,6 +231,7 @@ impl GraphOwnership {
             })
             .map_err(|error| error.to_string())?;
         self.folder.check()?;
+        guard()?;
         self.focused
             .check_borrowed_attachments(&mut || {
                 self.folder.check_borrowed_attachments()?;
@@ -532,5 +533,49 @@ mod tests {
         reply.context.as_ref().unwrap().check().unwrap();
         drop(reply);
         route_fixture.released();
+    }
+    #[test]
+    fn graph_ownership_rejects_provider_detached_by_final_folder_cleanup() {
+        let _serial = super::super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let provider_valid = std::cell::Cell::new(true);
+        let mut fixture = folder_context::tests::Fixture::new();
+        let folder = fixture.capture().unwrap();
+        let (focused, _) = fixture.focused_graph();
+        let value = GraphOwnershipValue::read(focused.report(), folder.identity().clone()).unwrap();
+        let ownership = GraphOwnership {
+            focused,
+            folder,
+            value,
+        };
+        let mut focused_guards = 0;
+        ownership
+            .focused
+            .check(&mut || {
+                focused_guards += 1;
+                Ok(())
+            })
+            .unwrap();
+        let context = fixture.graph_context();
+        let mut guards = 0;
+        let result = ownership.check(
+            &mut || {
+                guards += 1;
+                if guards == focused_guards {
+                    fixture.channel_cleanup_detaches_provider(&provider_valid);
+                }
+                if provider_valid.get() {
+                    Ok(())
+                } else {
+                    Err("provider attachment changed".into())
+                }
+            },
+            &mut || context.check(),
+        );
+        assert!(
+            !provider_valid.get(),
+            "native folder cleanup did not detach provider"
+        );
+        assert_eq!(result, Err("provider attachment changed".into()));
+        context.check().unwrap();
     }
 }

@@ -396,6 +396,7 @@ pub(super) mod tests {
         Child(*mut Mock),
         Terminate(*mut Service),
         Attach(*mut Mock, *mut c_void),
+        DetachProvider(*const Cell<bool>),
     }
     #[repr(C)]
     struct Mock {
@@ -429,6 +430,7 @@ pub(super) mod tests {
                         Hook::Child(p) => (*p).child.set(ptr::null_mut()),
                         Hook::Terminate(p) => (*p).terminated.store(true, Ordering::Release),
                         Hook::Attach(p, slot) => (*p).child.set(slot),
+                        Hook::DetachProvider(valid) => (*valid).set(false),
                     }
                 }
             }
@@ -861,6 +863,19 @@ pub(super) mod tests {
         }
         pub(in super::super) fn slot_absent(&self, junction: *mut c_void) -> bool {
             unsafe { mock(junction) }.child.get().is_null()
+        }
+        pub(in super::super) fn channel_cleanup_detaches_provider(&self, valid: &Cell<bool>) {
+            let channel = unsafe { mock(self.channel) };
+            let object = channel
+                .interfaces
+                .borrow()
+                .iter()
+                .find(|(iid, _)| *iid == OBJECT)
+                .unwrap()
+                .1;
+            unsafe { mock(object) }
+                .hook
+                .set(Some(("release", Hook::DetachProvider(valid))));
         }
         pub(in super::super) fn switch_document(&self) {
             unsafe { mock(self.manager) }.active.set(ptr::null_mut())
