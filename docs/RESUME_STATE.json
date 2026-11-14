@@ -17,7 +17,7 @@
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
-  "last_completed_unit": "Native52 child-relative current22 named absence:23DAQ202.062s all26controllerspresent/count0, all22findParameter null twice; exact26models/22numbers/DSP39/context/refusal/NoSave/appfalse/owner0/locks/saved10/MIDI0. Fixed owned wire-GUID binding verified104combinations. No writable/model/preset/audio/persistence/fixed43/name increment.",
+  "last_completed_unit": "CONTROL-LIMITER existing effect and environment predicate",
   "last_completed_unit_learning_setters": 0,
   "last_completed_unit_transport_actions": 0,
   "accepted": {
@@ -605,7 +605,7 @@
     "new_preset_recall_restore_cases_scope": "76cases in39completedclasses, partial0; Chorder indices0and1 eachfull908current/metadata and128storedmodels exact"
   },
   "next_units_in_order": [
-    "Native53 source d508651 installed unchanged. Limiter R3closed35DAQ/468.561s: currentreductioninitialdefault/min0 andpostsignal0, max10000; verifierwronglycomparedtomax. Heldmin changedinitial10000/0.00dB to7530.965209007263/-35.55dB andGUImatched; Tone10exactP afteroneOnOff; noreset/secondretentionread/thresholdexplicitrestore. NoSave/appfalse/EOF0/hardwarethenps/locks/saved10/MIDI0 passed. Native53raw72=failed18+19+35,accepted0. Next separateR4 r59 usesexactfresh2page no-inputcurrentreference withreadonlyFloat/tag1198412388 checks, heldminimumseparate default/max+nonneutralretention+onepulse->freshinitial. Preserve48wires,+24freshmax,exact9native_verifiedgenericsetter,pulseverifiedfalse,5sec/1secintervals,exactP restore/final5UIDrefusal/Rootclosure. Source177/artifact13 unchanged, no rebuild/install. Forbid expired0b38066d4c5c86dc275e43cd4a238877,1b0202c002a2fe348771b64d5baecfc1,76f0db0b8d37dc52a02e1a1e29cac5aa,4be8bdeea7d4507a5298ccc5ec5e8d5a. R4DAQ0 notexecutionready; keepother8queueitems/fixed11of43complete32remaining4hardware.",
+    "Do not repeat accepted Native53 Limiter reset effect. CONTROL-LIMITER qualified predicate complete: R4positive47 of48, heldminimum-35.55dB->onepulse->initial0.00dBpair, Tone10/Limiter13 exact and Rootclosure. Wholefrozen48protocol remainsfailed; lastfakeUID outeroutcome_unknown/nativebody_not_applied retained/nonadmitted under current conservativeRuntime347-369 policy. Native53raw120=admitted47+failed/nonadmitted73 (unknown1subset). Fixed12/43complete31remain=26partial1unstarted4hardware. Next existingCONTROL-COMPRESSOR resetmin grounding complete: exactclass36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B / studiocomp.resetmin /tag88, min87/current86; canonicalfullprefixconfirmed. Reuse existing4actionenum/Spec with exactclosedclass map, no newABI; must design bounded fresh paged fullprovider coverage (historical154, neverforcecount) and meter ownfreshreferences. KeepcompletedCompressor swapfreqs/scalar/presets, acceptedLimiter, oldmodelnegative reads immutable. Mainsoftwaremodelblock andofficialsameversionartifactpath questionremain; no userextension staging or permission changes. Preserveother8queueitems.",
     "고정43개 중11개 완료/32개 잔여(부분27·미착수1·하드웨어4)다. 미완료ID와 완료조건은 WORK_BREAKDOWN_2026-11-13.md/json에 보존한다. 역사 전체 분모나 시간 비율로 쓰지 않으며 분모를 조용히 늘리지 않는다.",
     "현재 프리셋 설정39/46종·완료종76사례·7종 잔여·별도부분0이다. Chorder Major/Minor는 각153요청·전체908current/metadata와128모델·한load·보정0회·새581바이트 A/B·수명·정리로2/2 완료했다. 표시이름원복false와 MIDI/audio/새Save 미검증을 보존한다. 완료한 Level/Tone/Scope/VU/Mojito/Repeater/Chorder사례와 기존scalar/member sweep은 반복하지 않는다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -622,15 +622,12 @@
   "last_measurement": "6866/7112names,246remaining;39/46presetclasses76cases/partial0,7classesremaining;fixed43completed11remaining32;Native48raw500=accepted356+nonadmitted144,plus1MCPpredispatch.",
   "binary_source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
   "current_execution": {
-    "namespace": "r58",
-    "status": "closed_failed_current_meter_maximum_assumption",
-    "DAQ_count": 35,
-    "DAQ_budget": 48,
-    "native_unit": 53,
-    "ToneOnOff_pairs": 1,
-    "Tone_whole10_exact": true,
-    "minimum_changed": true,
-    "reset_pulses": 0,
+    "namespace": "r59",
+    "status": "closed_qualified_control_scope_accepted",
+    "DAQ": 48,
+    "admitted_positive_scope": 47,
+    "last_nonadmitted_outer_unknown": 1,
+    "whole_frozen_protocol_pass": false,
     "owner_stopped": true,
     "app_closed": true,
     "saved10_equal": true
@@ -691,11 +688,11 @@
     "BridgeCore.js": "d290cee40654fbae1d61c0b3783232cbb08a881f3d9e00f2d8717a57455f3ba9",
     "NativePluginControls.js": "cc9bb0c5423c99aa9632066c42f57755b91ef86eb814c84103c79d7ab5be9d14"
   },
-  "last_runtime_verified_native_unit": 52,
-  "last_runtime_verified_source_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
+  "last_runtime_verified_native_unit": 53,
+  "last_runtime_verified_source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native52 Rumble named-parameter absence; scoped read-only observation",
-  "last_completed_live_elapsed_seconds": 202.062,
+  "last_completed_live_unit": "Native53 Limiter minimum reset qualified control scope",
+  "last_completed_live_elapsed_seconds": 465.609,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2758,7 +2755,7 @@
     "Multi_controls_096_127_actual": 787,
     "Multi_controls_128_129_actual": 67
   },
-  "latest_root_observation_at": "2026-11-14T18:48:09.616340+00:00",
+  "latest_root_observation_at": "2026-11-14T19:15:23.876810+00:00",
   "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
@@ -3621,14 +3618,14 @@
   "remaining_work_breakdown": {
     "document": "docs/WORK_BREAKDOWN_2026-11-13.md",
     "data": "docs/WORK_BREAKDOWN_2026-11-13.json",
-    "remaining_deliverables": 32,
-    "partial": 27,
+    "remaining_deliverables": 31,
+    "partial": 26,
     "unstarted": 1,
     "hardware_blocked": 4,
     "historical_total_unknown": true,
     "counts_are_not_equal_effort": true,
     "fixed_backlog_baseline": 43,
-    "completed_since_baseline": 11
+    "completed_since_baseline": 12
   },
   "chorder_current_value_r8_failed": {
     "status": "failed_cleaned_up",
@@ -15086,7 +15083,7 @@
   "native46_runtime_actual_total_requests": 83,
   "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
-  "last_runtime_verified_scope": "Native52 scoped Rumble named-parameter absence,23DAQ202.062seconds, no model or hidden writer authority",
+  "last_runtime_verified_scope": "Qualified CONTROL-LIMITER effect/completion/environment only; positive47 admitted, lastouterunknown1nonadmitted; wholefrozen48protocolfailed",
   "native46_level_settings_r1_failed": {
     "schema": 1,
     "status": "CLOSED_FAILED_POST_MODE_COUNT_GUARD_NO_RETRY_NO_INVERSE",
@@ -17938,7 +17935,7 @@
     "public_evidence": "docs/evidence/2026-11-15-private-app-startup-block-native52.json"
   },
   "limiter_minimum_reduction_next": {
-    "status": "R3_closed35_current_meter_reference_R4_in_progress",
+    "status": "CONTROL_LIMITER_QUALIFIED_SCOPE_COMPLETE_DO_NOT_REPEAT",
     "current_Root_product_commit": "4a6e1156cd8c89237da186b7c6ec2a03c3d6fcd3",
     "currently_installed_native_unit": 53,
     "planned_native_unit": 53,
@@ -17952,15 +17949,17 @@
     "independent_judge_base": "A",
     "grounding_elapsed_seconds": 229.364,
     "prospective_DAQ_budget": 48,
-    "actual_DAQ_count": 72,
+    "actual_DAQ_count": 120,
     "previous_unexecuted_budget": 45,
     "budget_change_reason": "Actual thresholdrel identity/domain and default Tone -24dB require fresh level formatter, one0dB prep and exact restore; changes before allDAQ.",
     "execution_ready": false,
     "Root_product_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
-    "accepted_DAQ": 0,
+    "accepted_DAQ": 47,
     "failed_DAQ": 72,
-    "next_namespace": "r59",
-    "next_actual_DAQ": 0
+    "next_namespace": null,
+    "next_actual_DAQ": 0,
+    "failed_or_nonadmitted_DAQ": 73,
+    "unknown_subset": 1
   },
   "model_user_extension_loader_grounding": {
     "status": "NO_STAGING_WITH_CURRENT_PROOF",
@@ -17972,7 +17971,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native53 Limiter R3 meter reference verifier failure;35DAQ468.561seconds; currentmeter exactlyinitial0 butnotmax10000, heldminobserved-35.55dB, noreset",
+  "last_closed_runtime_unit": "Native53 R4 qualifiedeffect47 pluslastunknown1, closed48DAQ465.609seconds",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18113,9 +18112,9 @@
       "preset_cases": 76
     }
   },
-  "native53_raw_requests": 72,
-  "native53_accepted_completed_unit_requests": 0,
-  "native53_failed_or_nonadmitted_requests": 72,
+  "native53_raw_requests": 120,
+  "native53_accepted_completed_unit_requests": 47,
+  "native53_failed_or_nonadmitted_requests": 73,
   "native53_limiter_reset_r2_actual": {
     "schema": 1,
     "status": "FAILED_VERIFIER_SCHEMA_ASSUMPTION_AFTER_TONE_LEVEL_BEFORE_SIGNAL",
@@ -18290,5 +18289,90 @@
       "remaining": 32,
       "hardware_blocked": 4
     }
-  }
+  },
+  "native53_limiter_reset_r4_qualified": {
+    "schema": 1,
+    "status": "ACCEPTED_CONTROL_LIMITER_EFFECT_AND_ENVIRONMENT_ONLY",
+    "root_decision": "Accept the existing CONTROL-LIMITER predicate using independently rechecked positive effect/completion/environment evidence. Preserve failed whole48 protocol and nonadmitted outerunknown last request.",
+    "source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+    "native_unit": 53,
+    "native_uuid": "F13F3982-62E9-3307-B911-FF54FDB898FE",
+    "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+    "elapsed_seconds": 465.609,
+    "actual_DAQ": 48,
+    "admitted_positive_scope_DAQ": 47,
+    "nonadmitted_DAQ": 1,
+    "nonadmitted_RPC": 50,
+    "nonadmitted_outer_outcome": "outcome_unknown",
+    "nonadmitted_native_outcome": "not_applied",
+    "whole_frozen_protocol_pass": false,
+    "native_pulse_outcome": "applied_unverified",
+    "native_pulse_verified": false,
+    "native_pulse_effects_verified": false,
+    "independent_effect": {
+      "initial_minimum_bits": "40C3880000000000",
+      "initial_minimum_text": "0.00",
+      "retained_minimum_bits": "40BD6AF717F00000",
+      "retained_minimum_text": "-35.55",
+      "retained_two_observations_exact": true,
+      "single_pulse": true,
+      "post_two_observations_equal_initial": true,
+      "current_meter_exact_fresh_no_input_reference": true,
+      "actual_GUI_initial_retained_final_observed": true
+    },
+    "restoration": {
+      "Tone_all10_values_and_metadata_exact": true,
+      "Limiter_all13_including_readonly_current_and_metadata_exact": true,
+      "thresholdrel_original_bits": "40BD4C0000000000",
+      "preset_display_label_asterisk_restored": false,
+      "owned_Scratch_NoSave": true,
+      "app_open_after": false,
+      "owner_EOF_exit_code": 0,
+      "sequential_hardware_then_process": true,
+      "two_locks_reacquired_released": true,
+      "saved_files_unchanged": 10,
+      "MIDI_sources_destinations_before_after": 0
+    },
+    "unknown_classifier": "src/runtime.rs347-369: host error on mutating operation becomes Unknown before mutation_outcome871-875. Current conservative policy retained. Native preflight mismatch occurs before action dispatch; the outer unknown is not upgraded.",
+    "claims_not_made": [
+      "whole48protocol_pass",
+      "preset_display_name_restore",
+      "audio_or_physical_silence",
+      "Save_or_persistence",
+      "hardware",
+      "whole_plugin_control"
+    ],
+    "evidence_pins": {
+      "scope_review_report": "e41e6e71937a29804ff9f4c2b5ccb360af6fa666798c7cc3c394986d5c4ea889",
+      "scope_review_result": "c510045fe7eaeb114e6f2801ef02f70902c9b926c053c30bcf8202eeb999df94",
+      "scope_review_input_pins": "ff77db838f375f8416afd23fc962edb378c593c1854c34e95052f976381257e6",
+      "original_R4_closure_unchanged": "a8ada595486f4b192f9021536a73fb02661c3dcb254584ea8f664722b4942d26",
+      "qualified_actual_audit": "15af91ff82eb95b2ccee215ca86990077f09382de829cee9f8e75c3412072e7f",
+      "original_pulse41": "b67dadfe77e7e7a0d7e368121451ee00c84aabc6c8ac878d872aa25494b14b19",
+      "first_noninitial37": "1f5e86637d511125d8a91a5aedd006da79d1fc631ee3498d3daca9279d473f8f",
+      "second_noninitial38": "45e336a56ee4714aace7c0d2c95b1a9a5b2483d2b5ae6d4c135792ce9f4f5e8c",
+      "first_initial_after_reset42": "227188cecb3cf3b95da80f09d16139ab4ba0cbacfeb5c7d3c3cdfec049f5f25e",
+      "second_initial_after_reset43": "c02c96630f844fbe850763f9cc825e4438c4aaaca1d449e7de89dfeeac2d05dc",
+      "final_full13_46": "117a928c7ef1cfd07b5cda9b321c9830cab089f77a131403dd5c67b2b8b40181",
+      "outer_unknown50": "9c1808bf949de8f92e0de4719974ca47d35e8bf7433ce73faf75675593219647"
+    },
+    "accounting": {
+      "Native53_raw": 120,
+      "Native53_admitted": 47,
+      "Native53_failed_or_nonadmitted": 73,
+      "Native53_unknown_subset_of_nonadmitted": 1,
+      "fixed_total": 43,
+      "fixed_complete": 12,
+      "remaining": 31,
+      "partial": 26,
+      "unstarted": 1,
+      "hardware_blocked": 4,
+      "fixed_names": 6866,
+      "fixed_names_total": 7112,
+      "preset_classes": 39,
+      "preset_classes_total": 46,
+      "preset_cases": 76
+    }
+  },
+  "native53_outcome_unknown_subset": 1
 }
