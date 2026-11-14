@@ -811,6 +811,19 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginState(args) {
+        if (args.action === "inspect_rumble_serialization") {
+            const controls = new NativePluginControls(this), failure = () => controls.rumbleSerializationFailure();
+            if (Object.keys(args).some(key => ["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(key) < 0)
+                || args.plugin !== "Rumble Native" || args.token !== undefined) return failure();
+            const request = { operation: "rumble_serialization_inspect", expected_instance: args.expected_instance };
+            if (!controls.rumbleSerializationRequest(request)) return failure();
+            const plug = this.pluginOf(args);
+            if (!plug || plug.error || plug.name !== "Rumble Native") return failure();
+            const native = this.nativePluginRequest(plug.device, request);
+            if (!native || native.ok !== true || !controls.rumbleSerializationResult(native, request)) return failure();
+            const result = Object.assign({}, native, { plugin: "Rumble Native", native_outcome: native.outcome });
+            return controls.rumbleSerializationBytes(result) <= 4096 ? result : failure();
+        }
         if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
             return { error: "an expected plugin and native instance are required" };
         const operations = { capture: "state_capture", restore: "state_restore", release: "state_release" };

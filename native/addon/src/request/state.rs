@@ -6,6 +6,9 @@ use std::sync::Arc;
 mod stream;
 use stream::MemoryStream;
 
+#[path = "state/rumble_serialization.rs"]
+mod rumble_serialization;
+
 pub(crate) const MAX_CAPSULE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const MAX_CAPSULES: usize = 8;
@@ -24,6 +27,7 @@ unsafe extern "C" {
 /// The normal Device component alias, not an editor-selected or title-matched
 /// provider. This lease lives through native output publication.
 pub(super) struct AliasLease {
+    pub(super) rumble_inspection: bool,
     storable: Owned,
     canonical: Owned,
     plugin: Owned,
@@ -43,6 +47,7 @@ impl AliasLease {
         let parent_at: Borrowed = unsafe { method(node.0, 6) };
         let parent = hold(unsafe { parent_at(node.0) }).ok_or("Device parent unavailable")?;
         let lease = Self {
+            rumble_inspection: false,
             storable,
             canonical,
             plugin,
@@ -254,6 +259,53 @@ pub(super) fn read_chorder(ctx: &Context<'_>) -> Result<(Arc<[u8]>, AliasLease),
     let bytes = save(ctx, &lease, super::chorder_chords::MAX_CAPTURE_BYTES)?;
     lease.guard(ctx)?;
     Ok((bytes, lease))
+}
+pub(super) fn inspect_rumble_serialization(
+    ctx: &Context<'_>,
+) -> Result<(Value, AliasLease), String> {
+    ctx.check()?;
+    if ctx.instance.class_uid != "B9D7536C-A010-457D-A182-36E5531164C9"
+        || ctx.instance.native_class != "AudioEffect"
+        || ctx.instance.object_id != "Rumble Native"
+    {
+        return Err("The exact Rumble Native component is required".into());
+    }
+    let mut lease = AliasLease::capture(ctx)?;
+    lease.rumble_inspection = true;
+    let bytes = save(ctx, &lease, MAX_CAPSULE_BYTES)?;
+    let mut value = rumble_serialization::summarize(&bytes).fields();
+    let fields = json!({"ok":true,"outcome":"observed","operation":"rumble_serialization_inspect",
+        "schema":"rumble_alias_serialization_summary_v1","serialization":"component_alias_IStorable",
+        "instance":ctx.instance,"source":"component_alias","capture_sha256":sha256(&bytes),
+        "capture_byte_count":bytes.len(),"value_semantics":"sequential_snapshot","mutation_capability":false,
+        "model_identity_verified":false,"audio_verified":false,"persistence_verified":false});
+    value
+        .as_object_mut()
+        .expect("summary")
+        .extend(fields.as_object().expect("receipt").clone());
+    lease.guard(ctx)?;
+    ctx.check_document()?;
+    // Reserve the exact adapter fields before native publication.
+    let mut adapted = value.clone();
+    adapted["plugin"] = json!("Rumble Native");
+    adapted["native_outcome"] = json!("observed");
+    if adapted.to_string().len() > 4096 {
+        return Err("Rumble structural receipt exceeds the fixed output limit".into());
+    }
+    Ok((value, lease))
+}
+pub(super) fn valid_rumble_receipt(instance: &Instance, value: &Value) -> bool {
+    rumble_serialization::valid_receipt(&json!(instance), value)
+}
+pub(super) fn rumble_failure() -> Value {
+    json!({"ok":false,"outcome":"not_applied","mutation_capability":false,"model_identity_verified":false,
+        "audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_serialization_unavailable",
+        "message":"The bounded Rumble serialization observation was not established"}})
+}
+pub(super) fn invalidate_rumble_serialization(value: &mut Value) {
+    if value["operation"] == "rumble_serialization_inspect" {
+        *value = rumble_failure();
+    }
 }
 pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLease>) {
     let lease = match AliasLease::capture(ctx) {

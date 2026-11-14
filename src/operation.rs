@@ -684,6 +684,7 @@ pub struct PluginState {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PluginStateAction {
+    InspectRumbleSerialization,
     Capture,
     Restore,
     Release,
@@ -1227,6 +1228,9 @@ impl Operation {
             | Self::PluginModels(_)
             | Self::PluginInspect(_)
             | Self::ListCommands(_) => true,
+            Self::PluginState(p) => {
+                matches!(p.action, PluginStateAction::InspectRumbleSerialization)
+            }
             Self::Command(command) => command.check_only == Some(true),
             Self::Metronome(settings) => {
                 settings.click.is_none()
@@ -1248,6 +1252,7 @@ impl Operation {
             _ => false,
         };
         level
+            || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization))
             || matches!(
                 self,
                 Self::ChorderLearningGet(_)
@@ -1537,6 +1542,8 @@ impl Operation {
                         })
                 });
                 match p.action {
+                    PluginStateAction::InspectRumbleSerialization
+                        if p.token.is_none() && p.plugin == "Rumble Native" => {}
                     PluginStateAction::Capture if p.token.is_none() => {}
                     PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
                     _ => {
@@ -2795,6 +2802,29 @@ mod tests {
             assert!(!operation.is_read_only());
         }
         assert!(Operation::from_parts("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Pro EQ","param":"gain","value":0,"source":"arbitrary"})).is_err());
+    }
+
+    #[test]
+    fn rumble_serialization_is_one_closed_read_only_state_action() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"inspect_rumble_serialization"});
+        let operation = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        for (key, value) in [
+            ("token", json!("issued")),
+            ("plugin", json!("Other")),
+            ("expected_instance", json!("")),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_state", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
     }
 
     #[test]

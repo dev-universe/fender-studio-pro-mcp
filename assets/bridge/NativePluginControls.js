@@ -189,6 +189,54 @@ class NativePluginControls {
         return true;
     }
 
+    rumbleSerializationRequest(request) {
+        return this.guiExact(request, ["operation", "expected_instance"]) && request.operation === "rumble_serialization_inspect"
+            && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
+    }
+
+    rumbleSerializationBytes(value) {
+        const text = JSON.stringify(value); let bytes = 0;
+        for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); bytes += c < 128 ? 1 : c < 2048 ? 2 : c >= 55296 && c <= 56319 ? (++i, 4) : 3; }
+        return bytes;
+    }
+
+    rumbleSerializationFailure() {
+        return { ok: false, outcome: "not_applied", native_outcome: "not_applied", mutation_capability: false, model_identity_verified: false,
+            audio_verified: false, persistence_verified: false, error: { code: "rumble_serialization_unavailable", message: "The bounded Rumble serialization observation was not established" } };
+    }
+
+    rumbleSerializationResult(value, request) {
+        const fields = ["ok","outcome","operation","schema","serialization","instance","source","capture_sha256","capture_byte_count","format","parse_complete","reason","root_kind","counts","value_semantics","mutation_capability","model_identity_verified","audio_verified","persistence_verified"];
+        if (!this.guiExact(value, fields) || this.rumbleSerializationBytes(Object.assign({}, value, {plugin:"Rumble Native",native_outcome:"observed"})) > 4096
+            || value.ok !== true || value.outcome !== "observed" || value.operation !== "rumble_serialization_inspect"
+            || value.schema !== "rumble_alias_serialization_summary_v1" || value.serialization !== "component_alias_IStorable" || value.source !== "component_alias"
+            || value.value_semantics !== "sequential_snapshot" || ["mutation_capability","model_identity_verified","audio_verified","persistence_verified"].some(key => value[key] !== false)
+            || !this.guiExact(value.instance,["object_uid","class_uid","native_class","object_id"]) || value.instance.object_uid !== request.expected_instance
+            || value.instance.class_uid !== "B9D7536C-A010-457D-A182-36E5531164C9" || value.instance.native_class !== "AudioEffect" || value.instance.object_id !== "Rumble Native"
+            || typeof value.capture_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(value.capture_sha256) || !this.guiInteger(value.capture_byte_count,0,16777216)) return false;
+        if (value.parse_complete === false) {
+            const reasons = { utf8_json: ["syntax","duplicate_key","trailing_document","limit","invalid_utf8"], utf8_xml: ["syntax","duplicate_attribute","unsupported_xml","trailing_document","limit","invalid_utf8"],
+                zip_signature_only: ["unsupported_container"], opaque: ["opaque","invalid_utf8","invalid_bom","limit"] };
+            return value.root_kind === null && value.counts === null && Object.prototype.hasOwnProperty.call(reasons,value.format) && reasons[value.format].indexOf(value.reason) >= 0;
+        }
+        const roots = {utf8_json:["json_object","json_array","json_primitive"],utf8_xml:["audio_effect_preset","music_effect_preset","attributes","attribute","other_xml"]};
+        if (value.parse_complete !== true || value.reason !== null || !Object.prototype.hasOwnProperty.call(roots,value.format) || roots[value.format].indexOf(value.root_kind) < 0) return false;
+        const c = value.counts;
+        if (!this.guiExact(c,["known_tags","other_tags","known_ids","classids_total","classids_valid_guid","classids_zero_guid","classids_invalid"])) return false;
+        let units = 0;
+        for (const pair of [["known_tags",4],["known_ids",30]]) {
+            const items = c[pair[0]]; if (!Array.isArray(items) || items.length !== pair[1] || items.some(n => !this.guiInteger(n,0,8192))) return false;
+            units += items.reduce((sum,n) => sum+n,0);
+        }
+        if (["other_tags","classids_total","classids_valid_guid","classids_zero_guid","classids_invalid"].some(key => !this.guiInteger(c[key],0,8192))) return false;
+        const rootTag = ["audio_effect_preset","music_effect_preset","attributes","attribute"].indexOf(value.root_kind);
+        if ((rootTag >= 0 && c.known_tags[rootTag] === 0) || (value.root_kind === "other_xml" && c.other_tags === 0)
+            || (value.root_kind === "json_primitive" && units+c.other_tags+c.classids_total !== 0)) return false;
+        return units+c.other_tags+c.classids_total <= 8192 && c.classids_total === c.classids_valid_guid+c.classids_invalid && c.classids_zero_guid <= c.classids_valid_guid
+            && (value.format !== "utf8_json" || (c.other_tags === 0 && c.known_tags.every(n => n === 0)));
+    }
+
     chorderChordsRequest(request) {
         return this.guiExact(request, ["operation", "expected_instance", "offset", "limit"])
             && request.operation === "chorder_chords_get" && typeof request.expected_instance === "string"
@@ -836,8 +884,10 @@ class NativePluginControls {
         const guiLearning = request.operation === "chorder_learning_get" || request.operation === "edit_chorder_model";
         const guiLearningSet = request.operation === "edit_chorder_model";
         const chorderChords = request.operation === "chorder_chords_get";
+        const rumbleSerialization = request.operation === "rumble_serialization_inspect";
         const externalMenu = request.operation === "external_port_menu";
         try {
+            if (rumbleSerialization && !this.rumbleSerializationRequest(request)) throw new Error("invalid fixed Rumble serialization request");
             if (externalMenu && !this.externalMenuRequest(request)) throw new Error("invalid fixed External menu request");
             if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
@@ -880,6 +930,7 @@ class NativePluginControls {
                 if (result.ok === false) return this.externalMenuFailure(true, result);
                 if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
             }
+            if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
             if (chorderChords) {
                 if (result.ok === false) return this.chorderChordsFailure(result.error);
                 if (!this.chorderChordsResult(result, request)) throw new Error("invalid stored Chorder chord-page result");
@@ -923,6 +974,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (rumbleSerialization) return this.rumbleSerializationFailure();
             if (externalMenu) return this.externalMenuFailure(dispatched, null);
             if (chorderChords) return this.chorderChordsFailure(null);
             if (guiLearning) return this.guiLearningFailure(error, guiLearningSet, dispatched, parsed);

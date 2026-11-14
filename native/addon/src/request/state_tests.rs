@@ -607,3 +607,114 @@ fn total_capsule_bytes_are_bounded_even_before_count_limit() {
     );
     drop(ctx);
 }
+
+fn rumble_fixture() -> Fixture {
+    let mut fixture = Fixture::new();
+    fixture.device.class = Uid {
+        a: 0xb9d7536c,
+        b: 0xa010,
+        c: 0x457d,
+        d: [0xa1, 0x82, 0x36, 0xe5, 0x53, 0x11, 0x64, 0xc9],
+    };
+    *fixture.plugin.bytes.lock().unwrap() =
+        br#"{"amp":{"__classid":"00000000-0000-0000-0000-000000000000"}}"#.to_vec();
+    fixture
+}
+#[test]
+fn rumble_serialization_has_no_capsule_and_refuses_wrong_class_before_save() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    let mut ctx = fixture.context();
+    assert!(inspect_rumble_serialization(&ctx).is_err());
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 0);
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    let (value, lease) = inspect_rumble_serialization(&ctx).unwrap();
+    assert_eq!(value["parse_complete"], true);
+    assert_eq!(live_count(), 0);
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 1);
+    assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
+    drop(lease);
+    ctx.instance.class_uid = "00000000-0000-0000-0000-000000000000".into();
+    assert!(inspect_rumble_serialization(&ctx).is_err());
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 1);
+}
+#[test]
+fn rumble_serialization_final_publication_drift_erases_the_entire_summary() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    let (value, lease) = inspect_rumble_serialization(&ctx).unwrap();
+    let mut reply = chord_reply(Box::new(ctx), value, lease);
+    fixture.manager.active = ptr::null_mut();
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    for key in [
+        "format",
+        "counts",
+        "root_kind",
+        "instance",
+        "schema",
+        "capture_sha256",
+        "capture_byte_count",
+    ] {
+        assert!(reply.value.get(key).is_none(), "{key}");
+    }
+    assert_eq!(reply.value["ok"], false);
+    assert_eq!(live_count(), 0);
+}
+#[test]
+fn rumble_serialization_native_request_is_closed() {
+    let base = json!({"operation":"rumble_serialization_inspect","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+    assert!(
+        serde_json::from_value::<Request>(base.clone())
+            .unwrap()
+            .validate()
+            .is_ok()
+    );
+    for key in ["token", "path", "bytes", "source"] {
+        let mut bad = base.clone();
+        bad[key] = json!("unchecked");
+        assert!(serde_json::from_value::<Request>(bad).is_err());
+    }
+}
+
+#[test]
+fn rumble_serialization_forged_native_receipt_is_erased_before_publication() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    let (mut value, lease) = inspect_rumble_serialization(&ctx).unwrap();
+    value["model_identity_verified"] = json!(true);
+    value["operation"] = json!("forged_operation");
+    let mut reply = chord_reply(Box::new(ctx), value, lease);
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    assert!(reply.value.get("instance").is_none());
+    assert!(reply.value.get("counts").is_none());
+    assert_eq!(reply.value["model_identity_verified"], false);
+}
+
+#[test]
+fn rumble_serialization_final_alias_reentry_and_full_capsules_keep_the_observer_transient() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = rumble_fixture();
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Rumble Native".into();
+    for _ in 0..8 {
+        let (_, lease) = capture(&ctx).unwrap();
+        drop(lease);
+    }
+    assert_eq!(live_count(), 8);
+    let (value, lease) = inspect_rumble_serialization(&ctx).unwrap();
+    assert_eq!(live_count(), 8);
+    let mut reply = chord_reply(Box::new(ctx), value, lease);
+    fixture.device.uid_effect = Some(detach_alias_on_uid);
+    assert!(!reply.final_check(ptr::addr_of_mut!(*fixture.service)));
+    assert!(reply.value.get("counts").is_none());
+    assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 9);
+    assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
+}

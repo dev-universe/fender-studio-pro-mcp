@@ -197,6 +197,9 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    RumbleSerializationInspect {
+        expected_instance: String,
+    },
     StateCapture {
         expected_instance: Option<String>,
     },
@@ -275,6 +278,7 @@ impl Request {
             | Self::SetParameter { source, .. } => *source,
             Self::StateCapture { .. }
             | Self::ChorderChordsGet { .. }
+            | Self::RumbleSerializationInspect { .. }
             | Self::StateRestore { .. }
             | Self::StateRelease { .. }
             | Self::Presets { .. }
@@ -314,6 +318,7 @@ impl Request {
             | Self::ChorderChordsGet {
                 expected_instance, ..
             }
+            | Self::RumbleSerializationInspect { expected_instance }
             | Self::ModelCatalog {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
@@ -1455,6 +1460,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::EditChorderModel { .. }
         | Request::ChorderLearningGet { .. }
         | Request::ChorderChordsGet { .. }
+        | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
@@ -1628,6 +1634,9 @@ impl Reply {
     pub(super) fn error(code: &str, message: &str, outcome: &str) -> Self {
         Self::unbound(error(code, message, outcome))
     }
+    fn rumble_inspection(&self) -> bool {
+        matches!(&self.provider, Some(Provider::State(alias)) if alias.rumble_inspection)
+    }
     fn invalidate(&mut self, message: String) {
         let outcome = if self.edit.as_ref().is_some_and(ParameterEditLease::began)
             || self.mutation && self.value["outcome"] != "not_applied"
@@ -1649,6 +1658,11 @@ impl Reply {
         external_menu::invalidate(&mut self.value);
         digest::invalidate(&mut self.value);
         chorder_chords::invalidate(&mut self.value);
+        if self.rumble_inspection() {
+            self.value = state::rumble_failure();
+        } else {
+            state::invalidate_rumble_serialization(&mut self.value);
+        }
         owner_inspect::invalidate(&mut self.value);
         gui_parameter::invalidate(&mut self.value);
         catalog::invalidate(&mut self.value);
@@ -1734,8 +1748,13 @@ impl Reply {
                     if let Some(Provider::LevelMeter(settings)) = &self.provider {
                         settings.check(&mut || ctx.check())?;
                     }
-                    if self.value["operation"] == "chorder_chords_get" {
+                    if self.value["operation"] == "chorder_chords_get" || self.rumble_inspection() {
                         self.provider.as_ref().map_or(Ok(()), Provider::check)?;
+                        if self.rumble_inspection()
+                            && !state::valid_rumble_receipt(&ctx.instance, &self.value)
+                        {
+                            return Err("Rumble structural receipt failed validation".into());
+                        }
                         ctx.check_document()?;
                     }
                     Ok(())
@@ -1804,6 +1823,15 @@ impl Reply {
     }
     pub(super) fn encode(&mut self) -> String {
         let encoded = self.value.to_string();
+        if self.rumble_inspection()
+            && self
+                .context
+                .as_ref()
+                .is_none_or(|ctx| !state::valid_rumble_receipt(&ctx.instance, &self.value))
+        {
+            self.value = state::rumble_failure();
+            return self.value.to_string();
+        }
         if encoded.len() <= MAX_RESPONSE_BYTES {
             return encoded;
         }
@@ -2039,6 +2067,28 @@ fn dispatch_device(
             folder_preflight: None,
             owner: None,
             gui,
+            nodes: None,
+            provider,
+            context: Some(ctx),
+            mutation: false,
+        };
+    }
+    if let Request::RumbleSerializationInspect { .. } = request {
+        let (value, provider) = match state::inspect_rumble_serialization(&ctx) {
+            Ok((value, alias)) => (value, Some(Provider::State(alias))),
+            Err(_) => (state::rumble_failure(), None),
+        };
+        return Reply {
+            value,
+            menu: None,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
             nodes: None,
             provider,
             context: Some(ctx),

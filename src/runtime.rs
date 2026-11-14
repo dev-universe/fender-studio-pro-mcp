@@ -19,6 +19,7 @@ use crate::{
 mod chorder_chords;
 mod chorder_learning;
 mod external_menu;
+mod rumble_serialization;
 
 #[derive(Clone)]
 pub struct RuntimeHandle {
@@ -233,7 +234,8 @@ fn execute(
         }
     }
     if response.document != context.document
-        || matches!(operation, Operation::ExternalPortMenu(_))
+        || (matches!(operation, Operation::ExternalPortMenu(_))
+            || rumble_serialization::requested(&operation))
             && response.session != context.session
     {
         invalidate_gui_evidence(&operation, &mut response.result);
@@ -284,6 +286,12 @@ fn execute(
         && !chorder_learning::valid_set(change, &response.result)
     {
         chorder_learning::invalidate_set(&mut response.result, false);
+    }
+    if let Operation::PluginState(query) = &operation
+        && rumble_serialization::requested(&operation)
+        && (!response.ok || !rumble_serialization::valid_get(query, &response.result))
+    {
+        rumble_serialization::invalidate(&mut response.result);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -760,6 +768,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if rumble_serialization::requested(operation) {
+        rumble_serialization::invalidate(result);
+        return;
+    }
     if matches!(operation, Operation::ExternalPortMenu(_)) {
         external_menu::invalidate(result, false);
         return;
