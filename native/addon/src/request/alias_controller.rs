@@ -7,6 +7,8 @@ use fender_native_node_api::Report;
 use fender_native_node_api::{Inspection, Limits, NodeInspector, TextApi};
 #[path = "alias_controller/catalog.rs"]
 pub(super) mod catalog;
+#[path = "alias_controller/level.rs"]
+mod level;
 
 const CONTROLLER_PROVIDER: Uid = Uid {
     a: 0x16ad4d2a,
@@ -58,6 +60,7 @@ pub(super) enum Inventory {
     Present {
         inspection: Inspection,
         binding: ControllerBinding,
+        level: Option<level::Observation>,
     },
 }
 
@@ -234,11 +237,19 @@ impl Inventory {
             Self::Present {
                 inspection,
                 binding,
+                level,
             } => {
                 inspection
                     .check(&mut || binding.check(guard))
                     .map_err(|error| error.to_string())?;
-                binding.check(guard)
+                if let Some(level) = level {
+                    level.check(guard)?;
+                }
+                binding.check(guard)?;
+                if let Some(level) = level {
+                    level.attachments()?;
+                }
+                Ok(())
             }
         }
     }
@@ -264,6 +275,12 @@ impl Inventory {
                 node_inspect::report(inspection.report(), node_inspect::Scope::PluginController)
             }
         };
+        if let Self::Present {
+            level: Some(level), ..
+        } = self
+        {
+            value["level_controller_capability"] = level.value();
+        }
         value["coverage"] = json!("bounded_alias_declared_controller_metadata");
         value["scope"] = json!("alias_declared_controller_observation");
         value["mutation_capability"] = json!(false);
@@ -303,6 +320,7 @@ fn observe<G: FnMut() -> Result<(), String>>(
     let inventory = Inventory::Present {
         inspection,
         binding,
+        level: None,
     };
     if let Err(reason) = inventory.check(guard) {
         release(inventory, guard)?;
@@ -326,8 +344,26 @@ fn capture_bound<G: FnMut() -> Result<(), String>>(
                 .into(),
         );
     }
-    let result = AliasBinding::capture(target, node, guard)
-        .and_then(|binding| observe(binding, text, limits, guard));
+    let result = (|| {
+        let mut inventory = AliasBinding::capture(target, node, guard)
+            .and_then(|binding| observe(binding, text, limits, guard))?;
+        if instance.class_uid == "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6" {
+            if let Inventory::Present {
+                inspection,
+                binding,
+                level,
+            } = &mut inventory
+            {
+                *level = Some(level::Observation::capture(
+                    binding,
+                    inspection.report(),
+                    guard,
+                )?);
+            }
+            inventory.check(guard)?;
+        }
+        Ok(inventory)
+    })();
     if let Err(reason) = guard() {
         release(result, guard)?;
         return Err(reason);

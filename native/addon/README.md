@@ -142,6 +142,30 @@ zero ancestors and32 children per node. A stable null controller returns
 `controller:null`, `complete:false` and a `controller_absent` diagnostic.
 Missing Node or reflection interfaces remain explicit observations.
 
+For the exact Level Meter AudioEffect, this report can also contain
+`level_controller_capability`. Consumers must match its `api` to
+`exact-level-controller-capability-v1` before reading it. This optional field
+has `status` equal to `observed` or `unsupported_shape`, `max_count:128`,
+`mutation_capability:false`, and `atomic_snapshot:false`. An unsupported shape
+has `nodes:null`. An observed shape has exactly two records with `node_index`,
+`id`, and `controller`, for root0 AudioEffect/IsLevelMeterComponent and its
+fixed child0 OutLevels/LevelMeterComponent. Root child count must be1, child
+count0, and the child's parent must be the retained root.
+
+Each `controller` has `status`, `count`, and `canonical_identity_matches`.
+Statuses are `absent`, `qi_failed`, `malformed_success`, `malformed_absence`,
+`identity_mismatch`, `negative_count`, `over_limit_count`, or `present`.
+Only `present` has an integer `count`, in0..128. Canonical identity is true
+for valid count observations, false for an identity mismatch, and null when
+unobserved. Guard or canonical-interface failures fail the request.
+This observation stops after QI and count, without fallback. An absent
+IController ends only this exact interface route. A zero indexed count remains
+a valid present-interface observation and does not prove named controls absent.
+Neither result proves hidden state globally absent. No parameter, scalar, descriptor, setter, reflected call,
+or caller-selected path is accessed. A positive count establishes no hidden
+setting binding or permission. Retained identities and exact attachments are
+rechecked through publication using the existing non-atomic inspection guards.
+
 This report has `scope:alias_declared_controller_observation`,
 `mutation_capability:false` and `atomic_snapshot:false`. Fixed QueryInterface
 views and canonical identities are checked at guarded observations before final
