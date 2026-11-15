@@ -13,7 +13,7 @@
   "installed_native_unit": 55,
   "installed_native_uuid": "52EFF0D5-FC83-3CF7-AE23-FD669D821098",
   "app_closed_observed": true,
-  "mcp_owner_stopped": false,
+  "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
   "saved_owned_songs_unchanged": true,
   "automatic_resume_scheduled": false,
@@ -607,7 +607,7 @@
     "new_preset_recall_restore_cases_scope": "77cases in40completedclasses,partial0; SampleOne issuedsingleton1of1/full235 exactOandP/fresh5222byteA/B/oneAload; MIDI/model/audio/Save separate"
   },
   "next_units_in_order": [
-    "Current r66 fresh normal Native55 metadata-only owner ACTIVE; appclosed/DAQ0. DoNOTresendinitialize/toolslist. R5 prospective reference-aware rule isfrozen andindependentreviewpending; noactualplan/Toneadmissionyet. Rootmustreadreview, verifycurrent177/13/saved10, openfreshownedScratch andbindnewnativeidentities/banned10oldsessions, capturefirstoriginalemitfalse thenclock1000ms thensecondoriginal theninspect. LearnfixedreferenceonlyfromfreshflatpairbeforeOn, preserve81literalwires/12originals/oneOn/onepulse/Offbeforerestore. AnyunexpectedresultSTOPDAQ/RootNoSaveonly. Closedr64 46DAQ/21863ms imagefailure remainsunaccepted/noretriggerever. R65CV routeNone prep isseparate andneedsnewRootadmission; properexistingselectTrack replacesEditfocus-onlyhypothesis. Userexplicitlyskippedofficialinstallercomparison: nofile/loginaskorwait. Fixed14of43complete29remain, presets40of46/77, hardware4disconnected.",
+    "Scope r68 81/12 bounded functional effect accepted; strict CONTROL-SCOPE remains partial. Vocal r69 closed after aggregate-bypass assumption failure at22 (20DAQ,19guards); no retry/inverse. Next prospective VocalR4 aggregate qualification and independent review, or approved CVR5 fresh r65 route readiness. All app/owners closed, fresh bindings required. No new live after11:10; publishhandoff11:25.",
     "고정43개 중14개 완료·29개 잔여(부분24·미착수1·하드웨어4)다. 소프트웨어25개이며 기존 ID와 완료조건을 유지한다. 단위별 노력과 요청 수가 달라 전체 시간 비율로 쓰지 않는다.",
     "프리셋 설정40/46종·완료 종77사례·6종 잔여·부분0이다. SampleOne singletondefault1/1은 Native54 전체235 exactO/P·새5222바이트A/B·한load·수명·Root정리로 수용했다. 완료 Level/Tone/Scope/VU/Mojito/Repeater/Chorder/SampleOne 프리셋과 scalar sweep은 반복하지 않는다. 전체 Control/MIDI/모델/audio/Save는 별도다.",
     "고정이름6866/7112·잔여246은그대로다. Chorder/InputFilter각128현재값·이름,Chorder128모델역할·selector240·R7저장339·Multi150/3752요청·Vocal·Native40Level23·Native41External26을반복하지않는다. MIDI/수명/모델대응/audio/저장과Chorder5동작은별도다.",
@@ -624,17 +624,10 @@
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases/partial0,6classesremaining;fixed43completed14remaining29;Native54raw177=accepted169+nonadmitted8,plus1historicalMCPpredispatch.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "namespace": "r66",
-    "status": "METADATA_ONLY_FRESH_OWNER_R5_RULE_REVIEW_PENDING",
-    "actual_DAQ": 0,
-    "metadata_intents": 3,
-    "metadata_unique_responses": 2,
-    "owner_stopped": false,
+    "status": "NO_LIVE_OWNER_SCOPE_R68_FUNCTIONAL_ACCEPTED_VOCAL_R69_CLOSED_FAILURE",
     "app_closed": true,
-    "tools": 46,
-    "actions": 5,
-    "state_actions": 7,
-    "Tone_activation_admitted": false
+    "owner_stopped": true,
+    "actual_DAQ": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -2760,7 +2753,7 @@
     "Multi_controls_128_129_actual": 67
   },
   "latest_root_observation_at": "2026-11-14T22:32:04.715283+00:00",
-  "current_live_unit": "r66 metadata-only owner, app closed; prospective R5 rule review pending",
+  "current_live_unit": "r68 reviewed R8 algorithm, editor opened after28guards",
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
     "plugin": "Multi Instrument",
@@ -19142,8 +19135,8 @@
     "actual_effect_verified": false,
     "actual_pulses": 0
   },
-  "native55_raw_requests": 46,
-  "native55_accepted_completed_unit_requests": 0,
+  "native55_raw_requests": 198,
+  "native55_accepted_completed_unit_requests": 81,
   "native55_normal_install_and_metadata": {
     "schema": 1,
     "date": "2026-11-15",
@@ -19226,7 +19219,7 @@
     ],
     "later_actual_native_read_scalar_only_confirmed": true
   },
-  "native55_failed_or_nonadmitted_requests": 46,
+  "native55_failed_or_nonadmitted_requests": 117,
   "native55_scope_primary_effect_r1_failed": {
     "schema": 1,
     "date": "2026-11-15",
@@ -19360,5 +19353,166 @@
     "next_actual_namespace": "r66",
     "existing_fresh_r66_metadata_must_not_be_resent": true,
     "actual_DAQ": 0
+  },
+  "native55_active_scope_effect_prefix_requests": 0,
+  "native55_r66_metadata_only_closed": {
+    "DAQ": 0,
+    "metadata_responses": 2,
+    "owned_app_launches": 2,
+    "document_opened": false,
+    "startup_SIGTERM_only": 2,
+    "permissions_or_device_settings_changed": false,
+    "source177_artifact13_saved10_equal": true,
+    "MIDI0_after": true,
+    "elapsed_connection_seconds": 1531.254
+  },
+  "app_first_startup_control": {
+    "status": "WORKING_OPEN_PANEL_OBSERVED",
+    "elapsed_seconds": 326.042,
+    "timebox_seconds": 180,
+    "overrun_seconds": 146.042,
+    "MCP_absent_at_app_launch": true,
+    "MIDI_reconnect_declined": true,
+    "causal_root_fix_proven": false
+  },
+  "scheduled_cutoff": {
+    "date": "2026-11-15",
+    "timezone": "Asia/Seoul",
+    "no_new_live_after": "11:10",
+    "app_and_owner_closed_by": "11:20",
+    "handoff_and_GitHub_by": "11:25",
+    "user_departure": "11:30"
+  },
+  "native55_scope_primary_functional_effect": {
+    "status": "ROOT_ACCEPTS_PRIMARY_SCOPE_FUNCTIONAL_EFFECT_ONLY",
+    "namespace": "r68",
+    "native_unit": 55,
+    "closed_epoch_ms": 1794705593944,
+    "actual_DAQ": 81,
+    "first_id": 3,
+    "last_id": 83,
+    "all81_request_guards_passed": true,
+    "unknown_outcomes": 0,
+    "MCP_predispatch_rejections": 0,
+    "metadata_prewrite_records": 3,
+    "original_images": 12,
+    "Tone_On_episodes": 1,
+    "SDK_retrigger_pulses": 1,
+    "Off_pair_before_restoration": true,
+    "all41_final_exact_P": true,
+    "whole_final_mixer_exact": true,
+    "Root_NoSave": true,
+    "app_closed_CUA_observed": true,
+    "immediate_CUA_completion": true,
+    "owner_EOF_exit_code": 0,
+    "passive_hardware_finished_before_ps": true,
+    "process_absent": true,
+    "both_locks_reacquired_released": true,
+    "saved10_equal": true,
+    "MIDI_sources_after": 0,
+    "MIDI_destinations_after": 0,
+    "source177_artifact13_exact": true,
+    "elapsed_first_DAQ_to_closure_seconds": 646.137,
+    "elapsed_connection_seconds": 814.47,
+    "effect_accepted": false,
+    "completed_unit_acceptance": false,
+    "fixed_count_increment": 0,
+    "limitations": [
+      "Functional waveform acquisition/hold/refresh witness only; no direct silent-armed or completion timestamp witness.",
+      "Full41 settings restored; hidden waveform memory restoration is not claimed.",
+      "Inactive C GUI/native label mismatch persists.",
+      "No physical audio loopback or output claim."
+    ],
+    "hardware_command_typo_before_correct_passive_retry": true,
+    "functional_acquisition_hold_retrigger": true,
+    "whole41_settings_restored": true,
+    "whole_CONTROL_SCOPE_completed": false,
+    "strict_direct_armed_completion_and_hidden_memory_not_proven": true,
+    "inactive_C_GUI_DSP_mismatch_preserved": true,
+    "independent_report_sha256": "9a0f368b62db9ba371a55bc69b0748ac39eb6d69ff35b9762b60b9d9129eb4ff",
+    "independent_manifest_sha256": "2422f73a160d08f6ba78264f7135d961628d3ab6094c1c0e257ea2263354d041",
+    "closure_sha256": "3db0703987e5a04531f4c2044ec7a37f2773c5f0932f65ec3e3739184a29d71f",
+    "no_live_replay_needed_for_BMP_padding_fix": true,
+    "schema": 1,
+    "date": "2026-11-15",
+    "app_version": "8.1.1 Build 113103",
+    "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+    "fixed_counts": {
+      "completed": 14,
+      "baseline": 43,
+      "remaining": 29,
+      "software_remaining": 25,
+      "hardware_remaining": 4
+    },
+    "periods_pixels": {
+      "free_f2": [
+        67.087449,
+        67.087302
+      ],
+      "free_f1": [
+        134.148359,
+        134.165251
+      ],
+      "oneshot_f1": [
+        134.155702,
+        134.155702
+      ],
+      "held_f1": [
+        134.155702,
+        134.155702
+      ],
+      "retrigger_f2": [
+        67.084131,
+        67.084131
+      ]
+    },
+    "image_measurement_limits": {
+      "two_separate_measurements_share_same_pixels": true,
+      "method_agreement_pixels": 1,
+      "confidence_interval_claim": false,
+      "ROI_rule_frozen_before_On": true,
+      "full_BMP_padding_hash_reproducibility_defect_preserved": true,
+      "same_JPEG_repeated_conversion_pixel_difference": 0,
+      "independent_copy_full_audit_passed": true
+    },
+    "intents_sha256": "8cc61262b6a501d3655fde97dbf5123dc50ff62b32227daf190f6d4aa88a5860",
+    "original_stdout_sha256": "e51ace4b4637a096d8733d3fd4fa86583d1e2efab087d7e8034e416dc8a3137a",
+    "original_measurements_sha256": "fe6c5d7c1de9019a79725583fd99ab49319e2d91a7b756258e5e7e3abdb01ee3",
+    "root_decision_sha256": "069208786c580b8580891ceab9da11fd33914ea18b002bb02a0c5e15ba9e2324"
+  },
+  "native55_vocal_host_bypass_r69_failed": {
+    "status": "CLOSED_NOT_ACCEPTED_HOST_AGGREGATE_BYPASS_ASSUMPTION_FAILURE",
+    "namespace": "r69",
+    "native_unit": 55,
+    "closed_epoch_ms": 1794705936813,
+    "actual_DAQ": 20,
+    "last_id": 22,
+    "guards_passed": 19,
+    "unknown_outcomes": 0,
+    "MCP_predispatch_rejections": 0,
+    "failure": {
+      "id": 22,
+      "field": "bypassAll",
+      "expected": false,
+      "actual": true
+    },
+    "host_bypass_true_request": 1,
+    "planned_false_not_sent": true,
+    "unplanned_inverse_or_retry": 0,
+    "original_baseline_images": 2,
+    "excluded_failure_diagnostic_images": 1,
+    "Root_UI_power_gray_and_controls_dim_observed": true,
+    "Root_NoSave_appfalse_immediate_CUA": true,
+    "owner_EOF_exit_code": 0,
+    "passive_hardware_finished_before_ps": true,
+    "process_absent": true,
+    "both_locks_reacquired_released": true,
+    "saved10_equal": true,
+    "source177_artifact13_exact": true,
+    "MIDI0_after": true,
+    "elapsed_first_DAQ_to_closure_seconds": 141.097,
+    "elapsed_connection_seconds": 201.216,
+    "whole_unit_accepted": false,
+    "fixed_count_increment": 0
   }
 }

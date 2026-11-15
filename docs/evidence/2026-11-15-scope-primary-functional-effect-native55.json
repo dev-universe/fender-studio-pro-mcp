@@ -1,0 +1,97 @@
+{
+  "status": "ROOT_ACCEPTS_PRIMARY_SCOPE_FUNCTIONAL_EFFECT_ONLY",
+  "namespace": "r68",
+  "native_unit": 55,
+  "closed_epoch_ms": 1794705593944,
+  "actual_DAQ": 81,
+  "first_id": 3,
+  "last_id": 83,
+  "all81_request_guards_passed": true,
+  "unknown_outcomes": 0,
+  "MCP_predispatch_rejections": 0,
+  "metadata_prewrite_records": 3,
+  "original_images": 12,
+  "Tone_On_episodes": 1,
+  "SDK_retrigger_pulses": 1,
+  "Off_pair_before_restoration": true,
+  "all41_final_exact_P": true,
+  "whole_final_mixer_exact": true,
+  "Root_NoSave": true,
+  "app_closed_CUA_observed": true,
+  "immediate_CUA_completion": true,
+  "owner_EOF_exit_code": 0,
+  "passive_hardware_finished_before_ps": true,
+  "process_absent": true,
+  "both_locks_reacquired_released": true,
+  "saved10_equal": true,
+  "MIDI_sources_after": 0,
+  "MIDI_destinations_after": 0,
+  "source177_artifact13_exact": true,
+  "elapsed_first_DAQ_to_closure_seconds": 646.137,
+  "elapsed_connection_seconds": 814.47,
+  "effect_accepted": false,
+  "completed_unit_acceptance": false,
+  "fixed_count_increment": 0,
+  "limitations": [
+    "Functional waveform acquisition/hold/refresh witness only; no direct silent-armed or completion timestamp witness.",
+    "Full41 settings restored; hidden waveform memory restoration is not claimed.",
+    "Inactive C GUI/native label mismatch persists.",
+    "No physical audio loopback or output claim."
+  ],
+  "hardware_command_typo_before_correct_passive_retry": true,
+  "functional_acquisition_hold_retrigger": true,
+  "whole41_settings_restored": true,
+  "whole_CONTROL_SCOPE_completed": false,
+  "strict_direct_armed_completion_and_hidden_memory_not_proven": true,
+  "inactive_C_GUI_DSP_mismatch_preserved": true,
+  "independent_report_sha256": "9a0f368b62db9ba371a55bc69b0748ac39eb6d69ff35b9762b60b9d9129eb4ff",
+  "independent_manifest_sha256": "2422f73a160d08f6ba78264f7135d961628d3ab6094c1c0e257ea2263354d041",
+  "closure_sha256": "3db0703987e5a04531f4c2044ec7a37f2773c5f0932f65ec3e3739184a29d71f",
+  "no_live_replay_needed_for_BMP_padding_fix": true,
+  "schema": 1,
+  "date": "2026-11-15",
+  "app_version": "8.1.1 Build 113103",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "fixed_counts": {
+    "completed": 14,
+    "baseline": 43,
+    "remaining": 29,
+    "software_remaining": 25,
+    "hardware_remaining": 4
+  },
+  "periods_pixels": {
+    "free_f2": [
+      67.087449,
+      67.087302
+    ],
+    "free_f1": [
+      134.148359,
+      134.165251
+    ],
+    "oneshot_f1": [
+      134.155702,
+      134.155702
+    ],
+    "held_f1": [
+      134.155702,
+      134.155702
+    ],
+    "retrigger_f2": [
+      67.084131,
+      67.084131
+    ]
+  },
+  "image_measurement_limits": {
+    "two_separate_measurements_share_same_pixels": true,
+    "method_agreement_pixels": 1,
+    "confidence_interval_claim": false,
+    "ROI_rule_frozen_before_On": true,
+    "full_BMP_padding_hash_reproducibility_defect_preserved": true,
+    "same_JPEG_repeated_conversion_pixel_difference": 0,
+    "independent_copy_full_audit_passed": true
+  },
+  "intents_sha256": "8cc61262b6a501d3655fde97dbf5123dc50ff62b32227daf190f6d4aa88a5860",
+  "original_stdout_sha256": "e51ace4b4637a096d8733d3fd4fa86583d1e2efab087d7e8034e416dc8a3137a",
+  "original_measurements_sha256": "fe6c5d7c1de9019a79725583fd99ab49319e2d91a7b756258e5e7e3abdb01ee3",
+  "root_decision_sha256": "069208786c580b8580891ceab9da11fd33914ea18b002bb02a0c5e15ba9e2324"
+}
