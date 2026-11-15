@@ -1,6 +1,6 @@
 # 내장 플러그인 잔여 작업표 — 2026-11-13
 
-**고정한43개 목록 중14개를 완료했고29개가 남았다: 프리셋6 + 프리셋 외 플러그인 기능17 + 공통6.** 남은 상태는부분24개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
+**고정한43개 목록 중15개를 완료했고28개가 남았다. 프리셋6 + 프리셋 외 플러그인 기능16 + 공통6이다.** 남은 상태는부분23개·미착수1개·하드웨어대기4개다. PRESET-SPECTRUM의 두 사례와 PRESET-OPENAIR의 issued singleton1/1 및 PRESET-ROOM의 서로 다른2/2 설정 사례를 별도 수용하고 CONTROL-LEVEL의 등록6설정도 실제 복원해 완료로 기록한다. [설정 수용 기준](PRESET_SETTING_ACCEPTANCE.md)과 원래 strict 실패를 함께 보존한다. 이43개는 목록을 만들기 전에 완료한 과거 작업을 제외한 기준이다.
 
 과거 작업은 서로 다른 크기의 setter·실기·리뷰·기능으로 기록돼 같은 단위로 역사 전체 작업 수와 완료 수를 재집계하지 않았다. 따라서 **전체 작업 총수·전체 완료율·전체 종료 시각은 미확정**이다.43은 고정한 목록의 기준 개수이지 남은 실기 횟수나 반복 횟수가 아니다. 한 완료물에 필요한 하위 실험 수는 아직 모두 확정되지 않았다.
 
@@ -10,7 +10,7 @@
 |---|---:|---:|---|
 | 고정 현재값 이름 |6866/7112|246개·18클래스|모델·이벤트·오디오·저장·전체지원률이 아님|
 | 추가 프리셋 설정 종 |40/46|6종|완료 종77사례와 별도 부분0사례. catalog59종과 다른 지표|
-| 고정한 완료물 목록 |43개 중14개 완료|29개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
+| 고정한 완료물 목록 |43개 중15개 완료|28개|아래 ID 기준. 하위 요청 수/노력은 서로 다름|
 
 ## 상태와 완료 기준
 
@@ -67,7 +67,7 @@
 |CONTROL-SCOPE|Scope|부분 완료|일반 설정·singleton catalog 완료|trigOneshot의 armed/capture와 trigRetrig의 retrigger 효과·완료·원래 상태를 별도 검증한다.|
 |CONTROL-MULTI|Multi Instrument|부분 완료|현재값150개·8실기/3752요청·이름150 수용 및 controller34/36 제한 읽기 완료|macro20 target map·controller130 facade assignment/전달·child identity·일반 중첩 그래프 제어를 검증한다. 현재값150은 반복하지 않는다.|
 |CONTROL-IMPACT|Impact|부분 완료|현재 노출4262개와 pad0 Focus33·MIDI현재값2 완료|다른 pad 선택의 Focus alias/peer 관계와 MIDI event lifecycle·저장/불러오기 상태를 검증한다. pad0 근거를 모든 pad로 확장하지 않는다.|
-|CONTROL-VOCAL|Vocal Tune|부분 완료|root/mask13·직접 DSP bypass 현재값·프리셋 완료|직접 DSP bypass와 별도 host bypass/owning callback의 실제 반영·복원 보장 범위를 확인한다. 현재값 완료나 callback 주소 부재를 일반 금지로 바꾸지 않는다.|
+|CONTROL-VOCAL|Vocal Tune의 직접 DSP와 host/owning UI 제어|완료|기존 직접DSP0/1/0과 Native55 r71의36요청/원본6장 hostfalse/true/false·실제UI반영·동적접근projection·최종전체26Pexact·수명/NoSave/저장10/MIDI0을 독립 수용.|완료한 보장 범위를 재실행하지 않는다. callback주소·DSP신호/audio·두bypass동등성·Save·전체플러그인지원은 별도 미검증이다.|
 
 ### 공통
 
@@ -127,3 +127,7 @@ VU Meter 두 번째 사례까지 수용한 현재 집계는36/46종·완료 종7
 ## SampleOne singleton의 추가 수용
 
 [실제 Native54 근거](evidence/2026-11-15-sampleone-singleton-native54.json)를 독립 감사와 함께 수용했다. 대표 프리셋 설정40/46종·77사례, 고정14/43완료·29잔여로 갱신했다. 부분24·미착수1·하드웨어4이며 소프트웨어는25개 남는다. 전체235개를 정확히 복원했지만 이번 변경 실험은 monophone 하나다. CONTROL-SAMPLEONE과 전체 내장 플러그인 완료는 여전히 별도다. 이전 단계의 집계와 실패는 이력으로 보존한다.
+
+## Vocal 제어 보장 범위의 추가 수용
+
+[Native55 r71 실제 증거](evidence/2026-11-15-vocal-host-bypass-qualified-native55.json)로 CONTROL-VOCAL을 완료했다. 현재15/43완료28잔여·부분23·미착수1·하드웨어4이며 소프트웨어24개가 남는다. 프리셋40/46종77사례·이름6866/7112는 그대로다. 앞선14/43집계와 R69/R70실패는 이력으로 유지한다.

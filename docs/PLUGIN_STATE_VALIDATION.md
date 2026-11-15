@@ -1000,3 +1000,15 @@ Native54는 기존 `reset_minimum_reduction`에 정확한 Compressor 클래스�
 전체154개를 세 페이지씩 읽은 최초·최종 독립쌍에서 메타데이터·unknown 필드, 쓰기20개와 정적 표시3개가 정확히 복원됐다. 이번 최종 두 묶음에서는 동적 표시131개까지 모두 최초값과 같았다. Tone10개와 실제 GUI·소유 Scratch의 저장 없는 종료·앱/owner/잠금·저장10개/MIDI0도 확인했다. 마지막 외부 outcome_unknown1은 미수용이고 whole59pass는 false다. 이전 메타데이터 전용 준비 실패0DAQ도 보존한다.
 
 기존 CONTROL-COMPRESSOR 효과·수명 조건을 완료해 고정13/43개 완료·30개 잔여다. 완료한 일반 설정·프리셋·swapfreqs 증거를 재사용하며 반복하지 않는다. preset 표시 이름 원복은 false이고 다른 detector 모드·오디오·저장·하드웨어·전체 플러그인 지원은 별도다.
+
+
+## 2026-11-15 Scope 기본 A 기능효과와 후속 실패
+
+Native55의[81요청/원본12장](evidence/2026-11-15-scope-primary-functional-effect-native55.json)으로기본A의단발캡처유지·한retrigger갱신·전체41설정P복원과Root정리를수용했다. 직접armed상태/완료시각·숨은waveformmemory·비활성C GUI/native표시차이는미검증이라CONTROL-SCOPE전체완료수는올리지않았다. 원본JPEG와측정픽셀은같지만파생BMP행패딩해시가재현되지않은감사실패도보존한다. 이문제때문에실기전체를반복하지않는다.
+
+Vocalhostbypass는[r69집계전제실패](evidence/2026-11-15-vocal-host-aggregate-failure-native55.json)와[r70동적접근전제실패](evidence/2026-11-15-vocal-bypass-dynamic-access-failure-native55.json)를분리한다. CV는[선택시record/monitor연동](evidence/2026-11-15-cv-selection-coupling-failure-native55.json)뒤중단했다. 모두후속요청이나계획밖역변경없이NoSave로닫았고전체왕복으로세지않는다. 고정14/43완료29잔여,프리셋40/46종77사례,이름6866/7112를유지한다. 현재큐와최종중단상태는[최신인수인계](LOOP_HANDOFF_2026-11-15.md)와상태JSON이우선한다.
+
+
+## 2026-11-15 CONTROL-VOCAL 제한된 보장 범위 완료
+
+이후새r71의[36요청/원본6장](evidence/2026-11-15-vocal-host-bypass-qualified-native55.json)으로host/단일insert/aggregate false→true→false, 소유편집기전원·본문비활성반영·복귀, 동적접근projection·최종26Pexact와Root정리를독립수용했다. 이전직접DSP0/1/0근거를재사용해기존CONTROL-VOCAL을완료처리했다. 현재고정15/43완료28잔여·소프트웨어24/하드웨어4이며프리셋40/46종77사례·이름6866/7112는그대로다. callback주소·DSP신호/audio·두bypass동등성·Save와전체내장플러그인완료는주장하지않는다. 앞단락의14/43은이수용전이력이다.

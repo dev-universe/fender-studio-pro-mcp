@@ -3,9 +3,9 @@
   "as_of": "2026-11-15",
   "kind": "bounded_remaining_backlog_not_historical_total",
   "unit_definition": "플러그인 또는 공통 하위시스템 × 독립적으로 수용 가능한 기능 완료물; 하위파라미터/요청/프리셋사례 수가 아님",
-  "remaining_backlog_count": 29,
-  "completed_in_this_remaining_snapshot": 14,
-  "partial": 24,
+  "remaining_backlog_count": 28,
+  "completed_in_this_remaining_snapshot": 15,
+  "partial": 23,
   "unstarted": 1,
   "hardware_blocked": 4,
   "historical_total_tasks": null,
@@ -23,7 +23,7 @@
     "remaining_preset_classes": 6,
     "additional_partial_setting_cases": 0
   },
-  "runtime_note": "Native54 Compressor reset:59DAQ314.509s freshowner-to-closure, stable-34.54dBpair->onepulse->initial0.00dBpair, fullpaged154metadata/20writable/3staticreadonly/Tone10 exact; actualGUI/NoSave/owner0/locks/saved10/MIDI0. Qualifiedpositive58, lastouterunknown1nonadmitted; whole59claimedpassfalse. Existing CONTROL-COMPRESSOR complete only.",
+  "runtime_note": "Native55 R71 CONTROL-VOCAL qualified host/UI roundtrip36DAQ/254.280s firstDAQthroughclosure; independent110.910s. Existing directDSP proof reused, final26exactP, siximages and cleanNoSave closure. Fixed15/43complete28remaining, hardware4separate.",
   "bookkeeping_only_not_backlog": [
     "Gate.swapfreqs",
     "Expander.swapfreqs",
@@ -465,12 +465,13 @@
       "id": "CONTROL-VOCAL",
       "group": "프리셋 외 플러그인 기능",
       "title": "Vocal Tune",
-      "status": "partial",
+      "status": "completed",
       "implemented": "generic getter/setter·제한 전용 API/metadata 일부 있음; 아래 남은 기능의 구현·실기는 불완전",
-      "actually_verified": "root/mask13·직접 DSP bypass 현재값·프리셋 완료",
+      "actually_verified": "기존 직접DSP0/1/0·전체26복원 근거와 Native55 R71의36DAQ/원본6장 hostfalse/true/false·owningheader/UI반영·동적접근지원·최종전체26Pexact·NoSave/owner0/저장10/MIDI0을 독립 수용. DSP신호/audio/callback주소/두bypass동등성/Save는미검증.",
       "completion_predicate": "직접 DSP bypass와 별도 host bypass/owning callback의 실제 반영·복원 보장 범위를 확인한다. 현재값 완료나 callback 주소 부재를 일반 금지로 바꾸지 않는다.",
       "hardware_dependent": false,
-      "inventory_remaining_names": 0
+      "inventory_remaining_names": 0,
+      "evidence": "docs/evidence/2026-11-15-vocal-host-bypass-qualified-native55.json"
     },
     {
       "id": "SHARED-GRAPH",
