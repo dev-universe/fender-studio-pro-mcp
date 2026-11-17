@@ -1,6 +1,86 @@
 use super::*;
 
 #[test]
+fn structured_presence_is_fixed_and_generic_details_never_query_it() {
+    let env = TextEnv::new();
+    let (f, p) = float_fixture(&env);
+    for present in [false, true] {
+        f.p().details.structured_interface.set(present);
+        assert_eq!(p.has_structured_interface(&mut f.guard()), Ok(present));
+        assert_eq!(f.p().refs.get(), 2);
+    }
+    f.p()
+        .details
+        .structured_reply
+        .set(Some((-7, ptr::dangling_mut())));
+    assert!(p.details(&mut f.guard()).is_ok());
+    assert_eq!(f.p().details.structured_query_calls.get(), 2);
+    assert_eq!(f.p().writes.get(), 0);
+    assert!(f.p().choice_calls.borrow().is_empty());
+    assert_eq!(f.p().details.original_calls.get(), 0);
+}
+
+#[test]
+fn structured_presence_rejects_indeterminate_qi_without_adopting_poison() {
+    let env = TextEnv::new();
+    for (status, pointer) in [
+        (ffi::OK, ptr::null_mut()),
+        (ffi::NO_INTERFACE, ptr::dangling_mut()),
+        (-7, ptr::dangling_mut()),
+        (-7, ptr::null_mut()),
+        (1, ptr::dangling_mut()),
+        (1, ptr::null_mut()),
+    ] {
+        let (f, p) = float_fixture(&env);
+        f.p().details.structured_reply.set(Some((status, pointer)));
+        assert!(p.has_structured_interface(&mut f.guard()).is_err());
+        assert_eq!(f.p().details.structured_query_calls.get(), 1);
+        assert_eq!(f.p().refs.get(), 2);
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+
+#[test]
+fn structured_presence_guards_query_and_owned_release_in_order() {
+    let env = TextEnv::new();
+    let (f, p) = float_fixture(&env);
+    f.p().details.structured_interface.set(true);
+    let mut refs = Vec::new();
+    assert_eq!(
+        p.has_structured_interface(&mut || {
+            refs.push(f.p().refs.get());
+            Ok(())
+        }),
+        Ok(true)
+    );
+    assert_eq!(refs, [2, 3, 3, 2]);
+}
+
+#[test]
+fn structured_presence_stops_on_stale_query_and_release_reentry_without_leaks() {
+    let env = TextEnv::new();
+    for scenario in 0..3 {
+        let (f, p) = float_fixture(&env);
+        f.p().details.structured_interface.set(true);
+        match scenario {
+            0 => f.p().context.set(false),
+            1 => f.p().details.stop_on_query.set(true),
+            _ => f.p().details.stop_on_release_at.set(Some(3)),
+        }
+        assert!(matches!(
+            p.has_structured_interface(&mut f.guard()),
+            Err(Error::Guard(_))
+        ));
+        assert_eq!(
+            f.p().details.structured_query_calls.get(),
+            u32::from(scenario != 0)
+        );
+        assert_eq!(f.p().refs.get(), 2);
+        assert_eq!(f.p().writes.get(), 0);
+    }
+}
+
+#[test]
 fn details_preserve_native_precision_and_each_fixed_state_flag() {
     let env = TextEnv::new();
     let (f, p) = float_fixture(&env);

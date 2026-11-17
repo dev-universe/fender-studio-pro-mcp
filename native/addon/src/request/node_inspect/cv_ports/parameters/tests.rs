@@ -130,11 +130,18 @@ struct Parameter {
     refs: Cell<u32>,
     object: ObjectView,
     list: ObjectView,
+    structured: ObjectView,
     precision: Cell<i32>,
     normalized: Cell<f32>,
     state: Cell<i32>,
     list_interface: Cell<bool>,
     list_reply: Cell<Option<(i32, *mut c_void)>>,
+    structured_interface: Cell<bool>,
+    structured_reply: Cell<Option<(i32, *mut c_void)>>,
+    structured_query_calls: Cell<u32>,
+    structured_release_calls: Cell<u32>,
+    structured_query_action: RefCell<Option<Box<dyn FnOnce()>>>,
+    structured_release_action: RefCell<Option<Box<dyn FnOnce()>>>,
     precision_calls: Cell<u32>,
     flags_after_precision: Cell<u32>,
     list_query_calls: Cell<u32>,
@@ -173,6 +180,32 @@ unsafe extern "C" fn pq(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) 
     let f = unsafe { par(p) };
     unsafe { *out = ptr::null_mut() };
     let q = unsafe { *iid };
+    let structured_iid = Uid {
+        a: 0xc8b4992d,
+        b: 0xf767,
+        c: 0x457d,
+        d: [0xb5, 0x2f, 0xca, 0x2c, 0x3a, 0xbe, 0xb4, 0x0c],
+    };
+    if q == structured_iid {
+        f.structured_query_calls
+            .set(f.structured_query_calls.get() + 1);
+        if let Some((status, pointer)) = f.structured_reply.get() {
+            unsafe { *out = pointer };
+            return status;
+        }
+        if !f.structured_interface.get() {
+            return NO_INTERFACE;
+        }
+        unsafe {
+            pr(p);
+            *out = ptr::from_ref(&f.structured).cast_mut().cast();
+        }
+        let action = f.structured_query_action.borrow_mut().take();
+        if let Some(action) = action {
+            action();
+        }
+        return OK;
+    }
     let list_iid = Uid {
         a: 0x143641b5,
         b: 0x92a0,
@@ -267,7 +300,8 @@ unsafe extern "C" fn pe(_: *mut c_void) -> u8 {
 unsafe extern "C" fn ps(pointer: *mut c_void, mask: i32) -> u8 {
     let p = unsafe { par(pointer) };
     if p.precision_calls.get() > 0 {
-        p.flags_after_precision.set(p.flags_after_precision.get() + 1);
+        p.flags_after_precision
+            .set(p.flags_after_precision.get() + 1);
     }
     (p.state.get() & mask != 0) as u8
 }
@@ -284,6 +318,16 @@ unsafe extern "C" fn list_release(pointer: *mut c_void) -> u32 {
     let p = unsafe { &*(*pointer.cast::<ObjectView>()).owner };
     p.list_release_calls.set(p.list_release_calls.get() + 1);
     let action = p.list_release_action.borrow_mut().take();
+    if let Some(action) = action {
+        action();
+    }
+    unsafe { pd(ptr::from_ref(p).cast_mut().cast()) }
+}
+unsafe extern "C" fn structured_release(pointer: *mut c_void) -> u32 {
+    let p = unsafe { &*(*pointer.cast::<ObjectView>()).owner };
+    p.structured_release_calls
+        .set(p.structured_release_calls.get() + 1);
+    let action = p.structured_release_action.borrow_mut().take();
     if let Some(action) = action {
         action();
     }
@@ -323,6 +367,7 @@ struct Parameters {
     _parameter_table: Box<[*const c_void; 46]>,
     _object_table: Box<[*const c_void; 5]>,
     _list_table: Box<[*const c_void; 3]>,
+    _structured_table: Box<[*const c_void; 3]>,
     _text_table: Box<[*const c_void; 22]>,
 }
 impl Parameters {
@@ -377,6 +422,10 @@ impl Parameters {
         list_table[0] = oq as *const c_void;
         list_table[1] = or as *const c_void;
         list_table[2] = list_release as *const c_void;
+        let mut structured_table = Box::new([ptr::null(); 3]);
+        structured_table[0] = oq as *const c_void;
+        structured_table[1] = or as *const c_void;
+        structured_table[2] = structured_release as *const c_void;
         let mut st = Box::new([ptr::null(); 22]);
         st[1] = tr as *const c_void;
         st[2] = td as *const c_void;
@@ -422,11 +471,21 @@ impl Parameters {
                     table: list_table.as_ptr(),
                     owner: ptr::null_mut(),
                 },
+                structured: ObjectView {
+                    table: structured_table.as_ptr(),
+                    owner: ptr::null_mut(),
+                },
                 precision: Cell::new(1),
                 normalized: Cell::new(0.25),
                 state: Cell::new(0),
                 list_interface: Cell::new(false),
                 list_reply: Cell::new(None),
+                structured_interface: Cell::new(false),
+                structured_reply: Cell::new(None),
+                structured_query_calls: Cell::new(0),
+                structured_release_calls: Cell::new(0),
+                structured_query_action: RefCell::new(None),
+                structured_release_action: RefCell::new(None),
                 precision_calls: Cell::new(0),
                 flags_after_precision: Cell::new(0),
                 list_query_calls: Cell::new(0),
@@ -450,6 +509,7 @@ impl Parameters {
             });
             p.object.owner = ptr::from_mut(&mut *p);
             p.list.owner = ptr::from_mut(&mut *p);
+            p.structured.owner = ptr::from_mut(&mut *p);
             parameters.push(p);
         }
         let result = Self {
@@ -462,6 +522,7 @@ impl Parameters {
             _parameter_table: t,
             _object_table: o,
             _list_table: list_table,
+            _structured_table: structured_table,
             _text_table: st,
         };
         result.controllers[0]
@@ -571,6 +632,11 @@ fn count_limits_read_zero_parameters_and_keep_exact_boundary() {
             assert!(f.controllers.iter().all(|c| c.at_calls.get() == 0));
             assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
             assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
+            assert!(
+                f.parameters
+                    .iter()
+                    .all(|p| p.structured_query_calls.get() == 0)
+            );
         }
     }
 }
@@ -639,6 +705,11 @@ fn retained_text_limit_discards_all_rows_without_truncation() {
     assert_eq!(value["retained_parameter_text_bytes"], 0);
     assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
     assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
+    assert!(
+        f.parameters
+            .iter()
+            .all(|p| p.structured_query_calls.get() == 0)
+    );
 }
 #[test]
 fn description_cleanup_replacement_and_count_change_discard_read() {
@@ -910,6 +981,7 @@ fn all_seven_rows_keep_distinct_fixed_details_and_negative_zero() {
         f.parameters[i].precision.set(i as i32 - 3);
         f.parameters[i].state.set(state);
         f.parameters[i].list_interface.set(i % 2 == 0);
+        f.parameters[i].structured_interface.set(i % 3 == 0);
     }
     f.parameters[6].kind.set(2);
     f.parameters[6].normalized.set(-0.0);
@@ -924,12 +996,20 @@ fn all_seven_rows_keep_distinct_fixed_details_and_negative_zero() {
             json!({"precision":i as i32-3,"storable":state&0x80!=0,
                 "store_list_value":state&0x100!=0,"mutable":state&0x800!=0,
                 "read_only":state&0x1000!=0,"can_undo":state&0x10000!=0,
-                "list_interface":i%2==0})
+                "list_interface":i%2==0,"structured_interface":i%3==0})
         );
         assert_eq!(f.parameters[i].precision_calls.get(), 1);
         assert_eq!(f.parameters[i].flags_after_precision.get(), 5);
         assert_eq!(f.parameters[i].list_query_calls.get(), 1);
-        assert_eq!(f.parameters[i].list_release_calls.get(), u32::from(i % 2 == 0));
+        assert_eq!(
+            f.parameters[i].list_release_calls.get(),
+            u32::from(i % 2 == 0)
+        );
+        assert_eq!(f.parameters[i].structured_query_calls.get(), 1);
+        assert_eq!(
+            f.parameters[i].structured_release_calls.get(),
+            u32::from(i % 3 == 0)
+        );
     }
     let last = &value["nodes"][7]["controller"]["parameters"][0];
     assert_eq!(last["normalized"]["bits_hex"], "80000000");
@@ -999,7 +1079,111 @@ fn late_text_overflow_skips_details_for_earlier_acceptable_rows_too() {
     *f.parameters[1].display.borrow_mut() = "가".repeat(4096);
     let inventory = f.capture().unwrap();
     assert_eq!(inventory.value()["status"], "text_limit");
-    assert_eq!(inventory.value()["nodes"][0]["controller"]["parameters"], json!([]));
+    assert_eq!(
+        inventory.value()["nodes"][0]["controller"]["parameters"],
+        json!([])
+    );
     assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
     assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
+    assert!(
+        f.parameters
+            .iter()
+            .all(|p| p.structured_query_calls.get() == 0)
+    );
+}
+
+#[test]
+fn structured_qi_and_release_replacement_stop_later_details_and_clear_late_reply() {
+    let _serial = crate::native_script::tests::TEST_LOCK.lock().unwrap();
+    for on_release in [false, true] {
+        let mut context_fixture = crate::native_script::request::guard_tests::Fixture::new();
+        let context = context_fixture.context();
+        let service = context.service;
+        let f = Parameters::new();
+        f.controllers[0].parameters.borrow_mut().push(f.p(1));
+        f.parameters[0].structured_interface.set(true);
+        let inv = node_inspect::Inventory::CvPortParameters(f.capture().unwrap());
+        let later = &f.parameters[1];
+        let before = (
+            later.precision_calls.get(),
+            later.list_query_calls.get(),
+            later.structured_query_calls.get(),
+        );
+        let c = ptr::from_ref(&*f.controllers[0]);
+        let replacement = f.p(2);
+        let action: Box<dyn FnOnce()> = Box::new(move || unsafe {
+            (*c).parameters.borrow_mut()[0] = replacement;
+        });
+        if on_release {
+            *f.parameters[0].structured_release_action.borrow_mut() = Some(action);
+        } else {
+            *f.parameters[0].structured_query_action.borrow_mut() = Some(action);
+        }
+        assert!(f.capture().is_err());
+        assert_eq!(
+            (
+                later.precision_calls.get(),
+                later.list_query_calls.get(),
+                later.structured_query_calls.get()
+            ),
+            before
+        );
+        assert_eq!(f.parameters[0].structured_query_calls.get(), 2);
+        assert_eq!(f.parameters[0].structured_release_calls.get(), 2);
+        let mut reply = Reply::unbound(json!({"ok":true,"node_report":inv.value()}));
+        reply.nodes = Some(inv);
+        reply.context = Some(context);
+        assert!(!reply.final_check(service));
+        assert!(reply.value.get("node_report").is_none());
+        drop(reply);
+        assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+    }
+}
+
+#[test]
+fn structured_qi_replacement_is_rejected_even_when_release_restores_the_index() {
+    let f = Parameters::new();
+    f.controllers[0].parameters.borrow_mut().push(f.p(1));
+    f.parameters[0].structured_interface.set(true);
+    let c = ptr::from_ref(&*f.controllers[0]);
+    let replacement = f.p(2);
+    let original = f.p(0);
+    *f.parameters[0].structured_query_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*c).parameters.borrow_mut()[0] = replacement;
+    }));
+    *f.parameters[0].structured_release_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*c).parameters.borrow_mut()[0] = original;
+    }));
+    assert!(f.capture().is_err());
+    assert_eq!(f.parameters[0].structured_query_calls.get(), 1);
+    assert_eq!(f.parameters[0].structured_release_calls.get(), 1);
+    assert_eq!(f.parameters[1].precision_calls.get(), 0);
+    assert_eq!(f.parameters[1].list_query_calls.get(), 0);
+    assert_eq!(f.parameters[1].structured_query_calls.get(), 0);
+    assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+}
+
+#[test]
+fn indeterminate_structured_qi_stops_before_later_parameters_without_poison_adoption() {
+    for (status, pointer) in [
+        (OK, ptr::null_mut()),
+        (NO_INTERFACE, ptr::dangling_mut()),
+        (-7, ptr::dangling_mut()),
+        (-7, ptr::null_mut()),
+        (1, ptr::dangling_mut()),
+        (1, ptr::null_mut()),
+    ] {
+        let f = Parameters::new();
+        f.controllers[0].parameters.borrow_mut().push(f.p(1));
+        f.parameters[0]
+            .structured_reply
+            .set(Some((status, pointer)));
+        assert!(f.capture().is_err());
+        assert_eq!(f.parameters[0].structured_query_calls.get(), 1);
+        assert_eq!(f.parameters[0].structured_release_calls.get(), 0);
+        assert_eq!(f.parameters[1].precision_calls.get(), 0);
+        assert_eq!(f.parameters[1].list_query_calls.get(), 0);
+        assert_eq!(f.parameters[1].structured_query_calls.get(), 0);
+        assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+    }
 }

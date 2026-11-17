@@ -7,7 +7,7 @@ use crate::{
 use std::{
     cell::{Cell, RefCell},
     cmp::Ordering,
-    ptr::NonNull,
+    ptr::{self, NonNull},
     rc::Rc,
     sync::OnceLock,
 };
@@ -209,6 +209,9 @@ struct DetailsBehavior {
     state: Cell<i32>,
     list_interface: Cell<bool>,
     list_query_error: Cell<Option<i32>>,
+    structured_interface: Cell<bool>,
+    structured_reply: Cell<Option<(i32, *mut c_void)>>,
+    structured_query_calls: Cell<u32>,
     unknown_query_error: Cell<Option<i32>>,
     null_unknown: Cell<bool>,
     canonical: Cell<*mut c_void>,
@@ -323,6 +326,24 @@ unsafe extern "C" fn p_query(p: *mut c_void, iid: *const Uid, out: *mut *mut c_v
     let iid = unsafe { *iid };
     if p.details.stop_on_query.get() {
         p.context.set(false);
+    }
+    if iid == ffi::STRUCTURED_PARAMETER {
+        p.details
+            .structured_query_calls
+            .set(p.details.structured_query_calls.get() + 1);
+        if let Some((status, pointer)) = p.details.structured_reply.get() {
+            unsafe { *out = pointer };
+            return status;
+        }
+        if !p.details.structured_interface.get() {
+            return ffi::NO_INTERFACE;
+        }
+        let pointer = ptr::from_ref(p).cast_mut().cast();
+        unsafe {
+            p_retain(pointer);
+            *out = pointer;
+        }
+        return ffi::OK;
     }
     if iid == ffi::UNKNOWN {
         if let Some(error) = p.details.unknown_query_error.get() {

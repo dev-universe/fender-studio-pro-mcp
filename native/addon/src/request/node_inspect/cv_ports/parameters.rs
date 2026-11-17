@@ -316,11 +316,20 @@ impl CvPortParametersInventory {
                             .map_err(|error| error.to_string())?,
                         DirectController::Absent => unreachable!(),
                     };
+                    let structured_interface = match &inventory.nodes[node_index].controller {
+                        DirectController::Present(controller) => controller.parameters[index]
+                            .parameter
+                            .has_structured_interface(&mut || {
+                                inventory.check(guard, &mut || Ok(()))
+                            })
+                            .map_err(|error| error.to_string())?,
+                        DirectController::Absent => unreachable!(),
+                    };
                     if let DirectController::Present(controller) =
                         &mut inventory.nodes[node_index].controller
                     {
                         controller.parameters[index].observation["details"] =
-                            observed_details(&details);
+                            observed_details(&details, structured_interface);
                     }
                 }
             }
@@ -395,10 +404,11 @@ fn text_bytes(value: &Value) -> usize {
         _ => 0,
     }
 }
-fn observed_details(d: &parameter_api::ParameterDetails) -> Value {
+fn observed_details(d: &parameter_api::ParameterDetails, structured_interface: bool) -> Value {
     json!({"precision":d.precision,"storable":d.storable,"mutable":d.mutable,
         "store_list_value":d.store_list_value,"read_only":d.read_only,
-        "can_undo":d.can_undo,"list_interface":d.list_interface})
+        "can_undo":d.can_undo,"list_interface":d.list_interface,
+        "structured_interface":structured_interface})
 }
 fn observed_parameter(index: u32, d: &parameter_api::Description) -> Value {
     json!({"index":index,"name":d.name,"tag":d.tag,"kind":format!("{:?}",d.kind),"enabled":d.enabled,"read_only":d.read_only,

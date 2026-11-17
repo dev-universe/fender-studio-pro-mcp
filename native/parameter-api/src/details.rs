@@ -1,6 +1,26 @@
 use super::*;
 
 impl RawParameter {
+    pub fn has_structured_interface<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<bool, Error> {
+        self.check_thread()?;
+        guard().map_err(Error::Guard)?;
+        let structured = self
+            .parameter
+            .query_optional(&ffi::STRUCTURED_PARAMETER, "IStructuredParameter");
+        let after_query = guard().map_err(Error::Guard);
+        let present = structured
+            .as_ref()
+            .map(|value| value.is_some())
+            .map_err(Clone::clone);
+        let released = release(structured, guard);
+        after_query?;
+        released?;
+        present
+    }
+
     /// Reads precision, fixed state flags and IListParameter QI capability.
     /// Precision is the host's increment/decrement value, not a choice count.
     /// The guard must validate the retained document and target context.
