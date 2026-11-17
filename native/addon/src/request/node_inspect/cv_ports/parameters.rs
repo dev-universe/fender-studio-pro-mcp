@@ -258,11 +258,20 @@ impl CvPortParametersInventory {
                         DirectController::Present(controller) => controller.interface.0,
                         DirectController::Absent => unreachable!(),
                     };
-                    let mut parameter = ParameterWitness::capture(interface, index, text)?;
-                    guard()?;
+                    let parameter = ParameterWitness::capture(interface, index, text)?;
+                    if let DirectController::Present(controller) =
+                        &mut inventory.nodes[node_index].controller
+                    {
+                        controller.parameters.push(parameter);
+                    }
                     inventory.check(guard, &mut || Ok(()))?;
-                    let result = parameter.parameter.describe();
-                    guard()?;
+                    let result = match &inventory.nodes[node_index].controller {
+                        DirectController::Present(controller) => {
+                            controller.parameters[index as usize].parameter.describe()
+                        }
+                        DirectController::Absent => unreachable!(),
+                    };
+                    inventory.check(guard, &mut || Ok(()))?;
                     let description = result.map_err(|error| error.to_string())?;
                     let observation = observed_parameter(index, &description);
                     drop(description);
@@ -280,19 +289,39 @@ impl CvPortParametersInventory {
                                 }
                             }
                         }
-                    } else {
-                        parameter.observation = observation;
-                    }
-                    if let DirectController::Present(controller) =
+                    } else if let DirectController::Present(controller) =
                         &mut inventory.nodes[node_index].controller
                     {
-                        controller.parameters.push(parameter);
+                        controller.parameters[index as usize].observation = observation;
                     }
                     inventory.check(guard, &mut || Ok(()))?;
                     if text_limited {
                         break 'nodes;
                     }
                     inventory.retained_text_bytes += bytes;
+                }
+            }
+        }
+        if inventory.rows == Rows::Complete {
+            for node_index in 0..inventory.nodes.len() {
+                let count = match &inventory.nodes[node_index].controller {
+                    DirectController::Absent => continue,
+                    DirectController::Present(controller) => controller.parameters.len(),
+                };
+                for index in 0..count {
+                    let details = match &inventory.nodes[node_index].controller {
+                        DirectController::Present(controller) => controller.parameters[index]
+                            .parameter
+                            .details(&mut || inventory.check(guard, &mut || Ok(())))
+                            .map_err(|error| error.to_string())?,
+                        DirectController::Absent => unreachable!(),
+                    };
+                    if let DirectController::Present(controller) =
+                        &mut inventory.nodes[node_index].controller
+                    {
+                        controller.parameters[index].observation["details"] =
+                            observed_details(&details);
+                    }
                 }
             }
         }
@@ -365,6 +394,11 @@ fn text_bytes(value: &Value) -> usize {
         Value::Object(values) => values.values().map(text_bytes).sum(),
         _ => 0,
     }
+}
+fn observed_details(d: &parameter_api::ParameterDetails) -> Value {
+    json!({"precision":d.precision,"storable":d.storable,"mutable":d.mutable,
+        "store_list_value":d.store_list_value,"read_only":d.read_only,
+        "can_undo":d.can_undo,"list_interface":d.list_interface})
 }
 fn observed_parameter(index: u32, d: &parameter_api::Description) -> Value {
     json!({"index":index,"name":d.name,"tag":d.tag,"kind":format!("{:?}",d.kind),"enabled":d.enabled,"read_only":d.read_only,

@@ -129,6 +129,18 @@ struct Parameter {
     table: *const *const c_void,
     refs: Cell<u32>,
     object: ObjectView,
+    list: ObjectView,
+    precision: Cell<i32>,
+    normalized: Cell<f32>,
+    state: Cell<i32>,
+    list_interface: Cell<bool>,
+    list_reply: Cell<Option<(i32, *mut c_void)>>,
+    precision_calls: Cell<u32>,
+    flags_after_precision: Cell<u32>,
+    list_query_calls: Cell<u32>,
+    list_release_calls: Cell<u32>,
+    precision_action: RefCell<Option<Box<dyn FnOnce()>>>,
+    list_release_action: RefCell<Option<Box<dyn FnOnce()>>>,
     name: PlainCString,
     _name: std::ffi::CString,
     kind: Cell<i32>,
@@ -161,6 +173,27 @@ unsafe extern "C" fn pq(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) 
     let f = unsafe { par(p) };
     unsafe { *out = ptr::null_mut() };
     let q = unsafe { *iid };
+    let list_iid = Uid {
+        a: 0x143641b5,
+        b: 0x92a0,
+        c: 0x4a2e,
+        d: [0xb7, 0x0c, 0x84, 0xc5, 0x7e, 0x8f, 0xbd, 0xb3],
+    };
+    if q == list_iid {
+        f.list_query_calls.set(f.list_query_calls.get() + 1);
+        if let Some((status, pointer)) = f.list_reply.get() {
+            unsafe { *out = pointer };
+            return status;
+        }
+        if !f.list_interface.get() {
+            return NO_INTERFACE;
+        }
+        unsafe {
+            pr(p);
+            *out = ptr::from_ref(&f.list).cast_mut().cast();
+        }
+        return OK;
+    }
     if q == UNKNOWN {
         if let Some((status, pointer)) = f.canonical_reply.get() {
             unsafe { *out = pointer };
@@ -231,14 +264,36 @@ unsafe extern "C" fn pn(p: *mut c_void) -> *const PlainCString {
 unsafe extern "C" fn pe(_: *mut c_void) -> u8 {
     1
 }
-unsafe extern "C" fn ps(_: *mut c_void, _: i32) -> u8 {
-    0
+unsafe extern "C" fn ps(pointer: *mut c_void, mask: i32) -> u8 {
+    let p = unsafe { par(pointer) };
+    if p.precision_calls.get() > 0 {
+        p.flags_after_precision.set(p.flags_after_precision.get() + 1);
+    }
+    (p.state.get() & mask != 0) as u8
+}
+unsafe extern "C" fn precision(pointer: *mut c_void) -> i32 {
+    let p = unsafe { par(pointer) };
+    p.precision_calls.set(p.precision_calls.get() + 1);
+    let action = p.precision_action.borrow_mut().take();
+    if let Some(action) = action {
+        action();
+    }
+    p.precision.get()
+}
+unsafe extern "C" fn list_release(pointer: *mut c_void) -> u32 {
+    let p = unsafe { &*(*pointer.cast::<ObjectView>()).owner };
+    p.list_release_calls.set(p.list_release_calls.get() + 1);
+    let action = p.list_release_action.borrow_mut().take();
+    if let Some(action) = action {
+        action();
+    }
+    unsafe { pd(ptr::from_ref(p).cast_mut().cast()) }
 }
 unsafe extern "C" fn pt(_: *mut c_void) -> i32 {
     17
 }
-unsafe extern "C" fn norm(_: *mut c_void) -> f32 {
-    0.25
+unsafe extern "C" fn norm(pointer: *mut c_void) -> f32 {
+    unsafe { par(pointer) }.normalized.get()
 }
 unsafe extern "C" fn formatter(_: *mut c_void) -> *mut c_void {
     ptr::null_mut()
@@ -267,6 +322,7 @@ struct Parameters {
     _controller_table: Box<[*const c_void; 6]>,
     _parameter_table: Box<[*const c_void; 46]>,
     _object_table: Box<[*const c_void; 5]>,
+    _list_table: Box<[*const c_void; 3]>,
     _text_table: Box<[*const c_void; 22]>,
 }
 impl Parameters {
@@ -305,6 +361,7 @@ impl Parameters {
         t[14] = forbidden as *const c_void;
         t[18] = forbidden as *const c_void;
         t[21] = forbidden as *const c_void;
+        t[30] = precision as *const c_void;
         t[35] = norm as *const c_void;
         t[36] = forbidden as *const c_void;
         t[41] = formatter as *const c_void;
@@ -316,6 +373,10 @@ impl Parameters {
         o[1] = or as *const c_void;
         o[2] = od as *const c_void;
         o[4] = property as *const c_void;
+        let mut list_table = Box::new([ptr::null(); 3]);
+        list_table[0] = oq as *const c_void;
+        list_table[1] = or as *const c_void;
+        list_table[2] = list_release as *const c_void;
         let mut st = Box::new([ptr::null(); 22]);
         st[1] = tr as *const c_void;
         st[2] = td as *const c_void;
@@ -357,6 +418,21 @@ impl Parameters {
                     table: o.as_ptr(),
                     owner: ptr::null_mut(),
                 },
+                list: ObjectView {
+                    table: list_table.as_ptr(),
+                    owner: ptr::null_mut(),
+                },
+                precision: Cell::new(1),
+                normalized: Cell::new(0.25),
+                state: Cell::new(0),
+                list_interface: Cell::new(false),
+                list_reply: Cell::new(None),
+                precision_calls: Cell::new(0),
+                flags_after_precision: Cell::new(0),
+                list_query_calls: Cell::new(0),
+                list_release_calls: Cell::new(0),
+                precision_action: RefCell::new(None),
+                list_release_action: RefCell::new(None),
                 name: PlainCString {
                     text: name.as_ptr(),
                     owner: ptr::null_mut(),
@@ -373,6 +449,7 @@ impl Parameters {
                 release_observer: RefCell::new(None),
             });
             p.object.owner = ptr::from_mut(&mut *p);
+            p.list.owner = ptr::from_mut(&mut *p);
             parameters.push(p);
         }
         let result = Self {
@@ -384,6 +461,7 @@ impl Parameters {
             _controller_table: ct,
             _parameter_table: t,
             _object_table: o,
+            _list_table: list_table,
             _text_table: st,
         };
         result.controllers[0]
@@ -491,6 +569,8 @@ fn count_limits_read_zero_parameters_and_keep_exact_boundary() {
         assert_eq!(inv.value()["status"], status);
         if status == "index_limit" {
             assert!(f.controllers.iter().all(|c| c.at_calls.get() == 0));
+            assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
+            assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
         }
     }
 }
@@ -557,6 +637,8 @@ fn retained_text_limit_discards_all_rows_without_truncation() {
     assert_eq!(value["status"], "text_limit");
     assert_eq!(value["nodes"][0]["controller"]["parameters"], json!([]));
     assert_eq!(value["retained_parameter_text_bytes"], 0);
+    assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
+    assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
 }
 #[test]
 fn description_cleanup_replacement_and_count_change_discard_read() {
@@ -816,4 +898,108 @@ fn actual_parameter_interfaces_drop_before_their_retained_controller_view() {
     }));
     drop(inv);
     assert_eq!(f.controllers[0].refs.get(), 1);
+}
+
+#[test]
+fn all_seven_rows_keep_distinct_fixed_details_and_negative_zero() {
+    let f = Parameters::new();
+    f.controllers[0].parameters.borrow_mut().clear();
+    let states = [0, 0x80, 0x100, 0x800, 0x1000, 0x10000, 0x11980];
+    for (i, state) in states.into_iter().enumerate() {
+        f.controllers[i + 1].parameters.borrow_mut().push(f.p(i));
+        f.parameters[i].precision.set(i as i32 - 3);
+        f.parameters[i].state.set(state);
+        f.parameters[i].list_interface.set(i % 2 == 0);
+    }
+    f.parameters[6].kind.set(2);
+    f.parameters[6].normalized.set(-0.0);
+    f.parameters[6].values[0].set((2, (-0.0_f64).to_bits()));
+    let inventory = f.capture().unwrap();
+    let value = inventory.value();
+    for (i, state) in states.into_iter().enumerate() {
+        let row = &value["nodes"][i + 1]["controller"]["parameters"][0];
+        assert_eq!(row["name"], format!("observed{i}"));
+        assert_eq!(
+            row["details"],
+            json!({"precision":i as i32-3,"storable":state&0x80!=0,
+                "store_list_value":state&0x100!=0,"mutable":state&0x800!=0,
+                "read_only":state&0x1000!=0,"can_undo":state&0x10000!=0,
+                "list_interface":i%2==0})
+        );
+        assert_eq!(f.parameters[i].precision_calls.get(), 1);
+        assert_eq!(f.parameters[i].flags_after_precision.get(), 5);
+        assert_eq!(f.parameters[i].list_query_calls.get(), 1);
+        assert_eq!(f.parameters[i].list_release_calls.get(), u32::from(i % 2 == 0));
+    }
+    let last = &value["nodes"][7]["controller"]["parameters"][0];
+    assert_eq!(last["normalized"]["bits_hex"], "80000000");
+    assert_eq!(last["value"]["data"]["bits_hex"], "8000000000000000");
+    drop(inventory);
+    assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+}
+
+#[test]
+fn current_precision_replacement_stops_before_flags() {
+    let f = Parameters::new();
+    let c = ptr::from_ref(&*f.controllers[0]);
+    let replacement = f.p(1);
+    *f.parameters[0].precision_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*c).parameters.borrow_mut()[0] = replacement;
+    }));
+    assert!(f.capture().is_err());
+    assert_eq!(f.parameters[0].precision_calls.get(), 1);
+    assert_eq!(f.parameters[0].flags_after_precision.get(), 0);
+    assert_eq!(f.parameters[0].list_query_calls.get(), 0);
+    assert_eq!(f.parameters[0].refs.get(), 1);
+}
+
+#[test]
+fn successful_list_qi_release_replacement_rejects_and_balances_references() {
+    let f = Parameters::new();
+    let c = ptr::from_ref(&*f.controllers[0]);
+    let replacement = f.p(1);
+    f.parameters[0].list_interface.set(true);
+    *f.parameters[0].list_release_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*c).parameters.borrow_mut()[0] = replacement;
+    }));
+    assert!(f.capture().is_err());
+    assert_eq!(f.parameters[0].precision_calls.get(), 1);
+    assert_eq!(f.parameters[0].flags_after_precision.get(), 5);
+    assert_eq!(f.parameters[0].list_query_calls.get(), 1);
+    assert_eq!(f.parameters[0].list_release_calls.get(), 1);
+    assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+}
+
+#[test]
+fn indeterminate_list_qi_rejects_without_adopting_poison_outputs() {
+    for (status, pointer) in [
+        (OK, ptr::null_mut()),
+        (NO_INTERFACE, ptr::dangling_mut()),
+        (-7, ptr::dangling_mut()),
+        (-7, ptr::null_mut()),
+    ] {
+        let f = Parameters::new();
+        f.parameters[0].list_reply.set(Some((status, pointer)));
+        assert!(f.capture().is_err());
+        assert_eq!(f.parameters[0].list_query_calls.get(), 1);
+        assert_eq!(f.parameters[0].list_release_calls.get(), 0);
+        assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
+    }
+}
+
+#[test]
+fn late_text_overflow_skips_details_for_earlier_acceptable_rows_too() {
+    let f = Parameters::new();
+    f.controllers[0].parameters.borrow_mut().push(f.p(1));
+    *f.value_text.text.borrow_mut() = "가".repeat(4096).encode_utf16().collect();
+    let pointer = ptr::from_ref(&*f.value_text) as usize as u64;
+    for value in &f.parameters[1].values {
+        value.set((3, pointer));
+    }
+    *f.parameters[1].display.borrow_mut() = "가".repeat(4096);
+    let inventory = f.capture().unwrap();
+    assert_eq!(inventory.value()["status"], "text_limit");
+    assert_eq!(inventory.value()["nodes"][0]["controller"]["parameters"], json!([]));
+    assert!(f.parameters.iter().all(|p| p.precision_calls.get() == 0));
+    assert!(f.parameters.iter().all(|p| p.list_query_calls.get() == 0));
 }
