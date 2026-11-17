@@ -1,5 +1,8 @@
 use super::*;
 
+#[path = "cv_ports/parameters.rs"]
+pub(super) mod parameters;
+
 const CV_CLASS: &str = "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85";
 const MAX_SLOT_CHILDREN: u32 = 32;
 const MAX_ROOT_CHILDREN: u32 = 8;
@@ -342,7 +345,7 @@ impl Route {
         }
         Ok(())
     }
-    fn borrowed(&self) -> Result<(), String> {
+    fn borrowed_ids(&self) -> Result<(), String> {
         for (pin, snapshot) in [
             (&self.device, &self.device_snapshot),
             (&self.slot, &self.slot_snapshot),
@@ -356,6 +359,9 @@ impl Route {
                 return Err("CV PortSetup attachment changed after metadata cleanup".into());
             }
         }
+        Ok(())
+    }
+    fn borrowed_headers(&self) -> Result<(), String> {
         self.device_header
             .check_borrowed(&self.device_snapshot.first_type)?;
         self.slot_header
@@ -363,6 +369,9 @@ impl Route {
         if let Some(root) = &self.root {
             root.header.check_borrowed(&root.snapshot.first_type)?;
         }
+        Ok(())
+    }
+    fn borrowed_attachments(&self) -> Result<(), String> {
         for (pin, snapshot) in [
             (&self.device, &self.device_snapshot),
             (&self.slot, &self.slot_snapshot),
@@ -413,6 +422,11 @@ impl Route {
             }
         }
         Ok(())
+    }
+    fn borrowed(&self) -> Result<(), String> {
+        self.borrowed_ids()?;
+        self.borrowed_headers()?;
+        self.borrowed_attachments()
     }
 }
 

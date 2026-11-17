@@ -533,7 +533,8 @@ impl Request {
                 node_scope:
                     node_inspect::Scope::Graph
                     | node_inspect::Scope::PluginController
-                    | node_inspect::Scope::CvPorts,
+                    | node_inspect::Scope::CvPorts
+                    | node_inspect::Scope::CvPortParameters,
                 ..
             } => Err("this node_scope requires include_nodes=true".into()),
             Self::Inspect {
@@ -542,7 +543,7 @@ impl Request {
                 ..
             } => Err("plugin_controller node_scope requires expected_instance".into()),
             Self::Inspect {
-                node_scope: node_inspect::Scope::CvPorts,
+                node_scope: node_inspect::Scope::CvPorts | node_inspect::Scope::CvPortParameters,
                 source,
                 expected_instance,
                 ..
@@ -2085,7 +2086,7 @@ fn dispatch_device(
     if matches!(
         request,
         Request::Inspect {
-            node_scope: node_inspect::Scope::CvPorts,
+            node_scope: node_inspect::Scope::CvPorts | node_inspect::Scope::CvPortParameters,
             ..
         }
     ) {
@@ -3112,6 +3113,37 @@ mod tests {
             ("expected_instance", json!(ZERO_UID)),
             ("node_scope", json!("PortSetup")),
             ("path", json!("PortSetup")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = value;
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
+    #[test]
+    fn cv_port_parameters_decode_requires_explicit_dsp_nodes_and_instance() {
+        let args = json!({"operation":"inspect","include_nodes":true,"node_scope":"cv_port_parameters",
+            "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        assert!(matches!(
+            parse(args.clone()).unwrap(),
+            Request::Inspect {
+                node_scope: node_inspect::Scope::CvPortParameters,
+                ..
+            }
+        ));
+        for field in ["include_nodes", "source", "expected_instance"] {
+            let mut invalid = args.clone();
+            invalid.as_object_mut().unwrap().remove(field);
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+        for (field, value) in [
+            ("source", json!("controller")),
+            ("expected_instance", json!(ZERO_UID)),
+            ("node_scope", json!("PortSetup")),
+            ("path", json!("PortSetup")),
+            ("names", json!(["unknown"])),
+            ("offset", json!(0)),
+            ("limit", json!(1)),
         ] {
             let mut invalid = args.clone();
             invalid[field] = value;

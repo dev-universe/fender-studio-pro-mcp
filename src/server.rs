@@ -160,7 +160,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, or cv_ports. cv_ports requires exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. It observes bounded host PortSetup metadata, with no assignment values, routing verification or mutation capability. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, cv_ports, or cv_port_parameters. Both CV scopes require exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. cv_ports observes bounded host PortSetup metadata. cv_port_parameters discovers bounded direct indexed host parameters, without names or pagination. Neither establishes assignment roles, routing verification or mutation capability. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -351,12 +351,13 @@ fn named<T: JsonSchema>(
     }
     if operation == "pluginInspect" {
         schema["allOf"] = json!([{
-            "if":{"properties":{"node_scope":{"const":"cv_ports"}},"required":["node_scope"]},
+            "if":{"properties":{"node_scope":{"enum":["cv_ports","cv_port_parameters"]}},"required":["node_scope"]},
             "then":{"required":["expected_document","expected_instance","kind","track","plugin","source","include_nodes"],
                 "properties":{"expected_document":{"type":"string","minLength":1},"expected_instance":{"type":"string","minLength":36},
                     "kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},"source":{"const":"dsp"},
                     "include_nodes":{"const":true},"include_context":{"const":false}}}
-        }]);
+        }, {"if":{"properties":{"node_scope":{"const":"cv_port_parameters"}},"required":["node_scope"]},
+            "then":{"properties":{"names":{"maxItems":0}},"not":{"anyOf":[{"required":["offset"]},{"required":["limit"]}]}}}]);
     }
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
@@ -1019,7 +1020,13 @@ mod tests {
         assert_eq!(schema["additionalProperties"], false);
         assert_eq!(
             schema["$defs"]["NodeScope"]["enum"],
-            json!(["target", "graph", "plugin_controller", "cv_ports"])
+            json!([
+                "target",
+                "graph",
+                "plugin_controller",
+                "cv_ports",
+                "cv_port_parameters"
+            ])
         );
         for field in [
             "expected_document",
@@ -1043,7 +1050,10 @@ mod tests {
             .unwrap();
         let schema = Value::Object((*spec.tool.input_schema).clone());
         let rule = &schema["allOf"][0];
-        assert_eq!(rule["if"]["properties"]["node_scope"]["const"], "cv_ports");
+        assert_eq!(
+            rule["if"]["properties"]["node_scope"]["enum"],
+            json!(["cv_ports", "cv_port_parameters"])
+        );
         for field in [
             "expected_document",
             "expected_instance",

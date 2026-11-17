@@ -49,6 +49,11 @@ struct Fake {
     null_type: Cell<bool>,
     null_name: Cell<bool>,
     copy_family: Cell<*mut Fake>,
+    controller: Cell<*mut c_void>,
+    controller_status: Cell<Option<i32>>,
+    copy_action: RefCell<Option<Box<dyn FnOnce()>>>,
+    copy_calls: Cell<u32>,
+    copy_action_at: Cell<Option<u32>>,
 }
 unsafe fn fake<'a>(p: *mut c_void) -> &'a Fake {
     unsafe { &*(*p.cast::<View>()).owner }
@@ -90,6 +95,29 @@ unsafe extern "C" fn query_fake(p: *mut c_void, iid: *const Uid, out: *mut *mut 
     let f = unsafe { fake(p) };
     let iid = unsafe { *iid };
     f.queries.borrow_mut().push(iid);
+    if iid == CONTROLLER {
+        if let Some(status) = f.controller_status.get() {
+            let pointer = f.controller.get();
+            unsafe { *out = pointer };
+            if status == OK && !pointer.is_null() {
+                unsafe {
+                    let retain: unsafe extern "C" fn(*mut c_void) -> u32 = method(pointer, 1);
+                    retain(pointer);
+                };
+            }
+            return status;
+        }
+        let pointer = f.controller.get();
+        unsafe { *out = pointer };
+        if pointer.is_null() {
+            return NO_INTERFACE;
+        }
+        unsafe {
+            let retain: unsafe extern "C" fn(*mut c_void) -> u32 = method(pointer, 1);
+            retain(pointer);
+        };
+        return OK;
+    }
     if f.malformed.get() == Some(iid) {
         unsafe { *out = ptr::dangling_mut::<c_void>() };
         return NO_INTERFACE;
@@ -193,6 +221,16 @@ unsafe extern "C" fn copy(p: *mut c_void, buffer: *mut u16, cap: i32) -> i32 {
             .family
             .set(c"ChangedDuringFinalStringCopy");
     }
+    f.copy_calls.set(f.copy_calls.get() + 1);
+    if f.copy_action_at
+        .get()
+        .is_none_or(|at| at == f.copy_calls.get())
+    {
+        let action = f.copy_action.borrow_mut().take();
+        if let Some(action) = action {
+            action();
+        }
+    }
     let text = f.text.borrow();
     assert!(cap as usize > text.len());
     unsafe {
@@ -291,6 +329,11 @@ impl Fixture {
                 null_type: Cell::new(false),
                 null_name: Cell::new(false),
                 copy_family: Cell::new(ptr::null_mut()),
+                controller: Cell::new(ptr::null_mut()),
+                controller_status: Cell::new(None),
+                copy_action: RefCell::new(None),
+                copy_calls: Cell::new(0),
+                copy_action_at: Cell::new(None),
             });
             let owner = ptr::from_mut(&mut *f);
             for view in &mut f.views {
@@ -805,3 +848,6 @@ fn final_string_copy_class_reentry_must_fail_closed() {
         "full Inventory.check accepted root class drift during final borrowed Device ID copy"
     );
 }
+
+#[path = "parameters/tests.rs"]
+mod parameter_tests;
