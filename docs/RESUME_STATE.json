@@ -1,13 +1,13 @@
 {
   "schema": 1,
-  "updated_date": "2026-11-17",
-  "status": "paused",
+  "updated_date": "2026-11-18",
+  "status": "ACTIVE_USER_RESUMED_REPOSITORY_RELEASE_FIRST",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-17.md",
-  "product_source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
+  "product_source_commit": "4e75de66f591560de0558376e0496cb80b91aa2b",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
-  "keep_pull_request_draft": true,
+  "keep_pull_request_draft": false,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
   "installed_native_unit": 59,
@@ -608,7 +608,7 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "PAUSED2026-11-17afteruser18:00KSTcutoffsafeclosure. ResumeONLYonexplicituserinstruction. ReadRESUME/latestNov17handoff/state; do notreuseNov17cutoffasnextdeadline. Freshprocess/locks/install/saved/hardwareandruntimebindings; no replaycompletedR73..R81.",
+    "ExplicitlyRESUMED2026-11-18. FirstrepositorycommonOSSpermissions/verifiedmainmerge/READMEplainKoreanintro, thenexistingCVqueue. HardwareUSBconnecteduntil06:00KST; noactualnewunitsafter05:30, cleanup05:45, finaldocs/Gitby06:00. Freshbindings required; no replaycompletedR73..R81.",
     "Native59/source7f0cd1d normal and R81actual27 independentlyaccepted, closedNoSave/explicitwaitedchild0/preservation. Seven actualstructuredtrue, nochoices/lifecyclecalls/writes. Nextresume read exactstructured lifecycle staticreport thenidentifypublicownerIID andmax3cleanup/count/get bodies; designboundedlifecycle andstatepreservation beforeimplementation. NeverrepeatR80/R81capabilitysweeps. Nov17total239raw/222accepted/17nonadmitted. Fixed15/43done28remaining(software24hardware4).",
     "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
@@ -621,11 +621,11 @@
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
-  "current_progress_document": "docs/PROGRESS_2026-11-17.md",
+  "current_progress_document": "docs/PROGRESS_2026-11-18.md",
   "last_measurement": "fixed15/43done28remaining(software24/hardware4), presets40/46classes77cases, names6866/7112. Nov17actual239raw/222accepted/17nonadmitted allclosed. Native59 R81 observed7structuredtrue/56fields/60ms. Prepare/cleanup staticmutations established, lifecycle/read/presetpreservation NOTREADY.",
   "binary_source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
   "current_execution": {
-    "status": "PAUSED_USER_CUTOFF_NATIVE59_R81_ACCEPTED_AND_STATIC_COMPLETE",
+    "status": "ACTIVE_REPOSITORY_RELEASE_FIRST",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
@@ -634,7 +634,7 @@
     "R75_actual_DAQ_completed": 27,
     "new_product_changes_started": true,
     "fixed_count_increment": 0,
-    "hardware_stability": "UNPROVEN",
+    "hardware_stability": "FRESH_USB_INVENTORY_OBSERVED_PHYSICAL_EVENTS_AND_AUDIO_UNVERIFIED",
     "source_writer": null,
     "last_qualified_installed_native": 59,
     "no_new_build_or_install": false,
@@ -679,7 +679,9 @@
     "R81_actual_DAQ_completed": 27,
     "R81_actual_acceptance": "ACCEPTED_WITH_EXPLICIT_OBSERVATION_LIMITS",
     "R81_closed": true,
-    "R81_owner_waited_child_exit_code": 0
+    "R81_owner_waited_child_exit_code": 0,
+    "release_authorization": "Explicit2026-11-18verifiedcodepublicmainmerge; previousDraftlimit superseded",
+    "new_deadline": "2026-11-18T06:00:00+09:00"
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -935,119 +937,21 @@
     "reason": "User requested finishing only the current unit and ending the loop, with a detailed versioned handoff",
     "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md"
   },
-  "resumed_date": "2026-11-17",
+  "resumed_date": "2026-11-18",
   "resume_preflight_verified": true,
   "native34_runtime_verification_scope": "Read-only stored-model getter on the exact diagnostic fixture; not model editing, persistence, audio or output-pitch mapping",
   "hardware_window": {
-    "deadline_kst": "2026-11-13T06:30:00+09:00",
-    "deadline_utc": "2026-11-12T21:30:00Z",
-    "devices_declared": [
-      "Universal Audio Volt 276",
-      "M-Audio Keystation 88 MK3"
+    "status": "USB_RECONNECTED_USER_REPORT_AND_FRESH_OS_INVENTORY",
+    "deadline": "2026-11-18T06:00:00+09:00",
+    "no_new_live_units_after": "2026-11-18T05:30:00+09:00",
+    "cleanup_target": "2026-11-18T05:45:00+09:00",
+    "loopback_cabling": "Notadded; priorUSBonlysetup",
+    "devices": [
+      "Volt 276",
+      "Keystation 88 MK3"
     ],
-    "connection_confirmed_by_user": "usb_only",
-    "physical_loopback_cabling": false,
-    "os_audio_inventory_verified": true,
-    "midi_endpoint_presence_verified": true,
-    "daw_audio_device_verified": true,
-    "physical_key_events_verified": false,
-    "physical_loopback_verified": false,
-    "external_ping_verified": false,
-    "cv_routing_verified": false,
-    "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately.",
-    "daw_audio_device": "Original MacBook Pro speakers and microphone restored;48000Hz;512frames;actual UI reopened verified no document; app closed",
-    "original_daw_audio_setup_restore_required": false,
-    "original_daw_audio_setup": {
-      "playback": "MacBook Pro speakers",
-      "recording": "MacBook Pro microphone",
-      "sample_rate_hz": 48000,
-      "buffer_frames": 512
-    },
-    "daw_io_buses_verified": true,
-    "input_bus_table_empty": true,
-    "first_external_readonly_status": "failed_at_Main_exact0_precondition_before_full_provider_or_choices",
-    "external_full_provider_readonly_verified": true,
-    "UI_Main_minimum_is_exact_numeric0": false,
-    "exact_Main1_to0_API_preparation_verified": true,
-    "external_native_graph_complete": false,
-    "external_graph_diagnostics": [
-      "ancestor_limit",
-      "depth_limit"
-    ],
-    "external_provider_instances": 2,
-    "external_full_provider_reads": 8,
-    "external_choice_pages": 8,
-    "external_current_send_choice_count": 0,
-    "external_current_return_choice_count": 0,
-    "external_port_writes": 0,
-    "external_unset_minus1_generic_write_supported": false,
-    "external_io_diagnostic_copy_created": true,
-    "latest_new_hardware_stage_start_utc": "2026-11-12T20:15:00Z",
-    "original_AudioSetup_restore_start_no_later_utc": "2026-11-12T21:05:00Z",
-    "last_external_io_unit": {
-      "status": "failed_cleaned_up_before_providers",
-      "elapsed_seconds": 357.629,
-      "rpc_calls": 15,
-      "logical_rows_added_and_removed_UI": 4,
-      "native_channel_count_before": 67,
-      "native_channel_count_after_UI_add": 69,
-      "new_output_indices": [
-        66,
-        67
-      ],
-      "Main_index_change": [
-        66,
-        68
-      ],
-      "other_old_native_fields_unchanged": true,
-      "original_IO_UI_restored": true,
-      "full_providers": 0,
-      "choice_pages": 0,
-      "port_writes": 0
-    },
-    "mapped_unit_observation": {
-      "overall_status": "failed_cleaned_up",
-      "elapsed_seconds": 730.966,
-      "completed_io_stages": [
-        "A"
-      ],
-      "wrapper_accepted_metadata_stages": 0,
-      "full_provider_reads": 8,
-      "choice_pages": 8,
-      "all_port_counts_in_A": 0,
-      "rpc_calls": 55,
-      "BMONO_actual_UI_applied": true,
-      "BMONO_API_stage_accepted": false,
-      "BMONO_flag_not_written_after_deadline": true,
-      "original_IO_UI_restored": true,
-      "source_song_unchanged": true,
-      "global_AudioSetup_restore_required": true
-    },
-    "original_daw_audio_setup_restored_actual_UI": true,
-    "physical_only_unit": {
-      "status": "complete_cleaned_up",
-      "elapsed_seconds": 775.693,
-      "rpc_calls": 143,
-      "completed_io_stages": [
-        "BMONO",
-        "BSTEREO",
-        "RESTORE"
-      ],
-      "accepted_metadata_stages": 3,
-      "full_provider_reads": 24,
-      "choice_pages": 24,
-      "original_IO_UI_and_native_fixture_restored": true,
-      "all_five_owned_saved_songs_unchanged": true,
-      "plugin_port_state_transport_save_actions": 0,
-      "main_preparation_writes": 1,
-      "actual_GUI_send_bus_choices_observed": true,
-      "actual_GUI_stereo_return_choice_observed": true,
-      "physical_loopback_verified": false,
-      "all_controller_port_choice_counts": 0,
-      "controller_empty_does_not_prove_UI_menu_empty": true
-    },
-    "historical24record_provider_source": "controller",
-    "prior_DSP24_domain_description_corrected": true
+    "physical_events_verified": false,
+    "audio_roundtrip_verified": false
   },
   "tooling_update_checkpoint": {
     "scope": "Official acquisition, isolated CLI execution, Codex registration update and same-byte static analysis verified; existing connected MCP still6.5.0",
@@ -19841,7 +19745,7 @@
     "overall_completion_ETA": null
   },
   "historical_fields_notice": "Historical per-unit fields and top-level native55 counters retain their dated evidence. Current execution, Nov17 per-unit evidence, current_fixed_backlog and current_progress_document take precedence; pausedDate and Nov15cutoff do not mean the resumed Nov17run is paused.",
-  "resumed_at": "2026-11-17T08:42:57+09:00",
+  "resumed_at": "2026-11-18T01:58:32+09:00",
   "cv_preset_port_ownership_static_2026_11_17": {
     "schema": 1,
     "date": "2026-11-17",
@@ -20639,7 +20543,7 @@
     },
     "overall_loop_ETA": null
   },
-  "previous_product_source_commit": "1bc800247289daa1605536a064f795186704dd90",
+  "previous_product_source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
   "cv_ports_native56_normal_2026_11_17": {
     "schema": 1,
     "date": "2026-11-17",
@@ -21681,5 +21585,137 @@
     "private_check_sha256": "dcbff6e2503c57520a0e91c3fea293e9fa0526ba1803c5c19e677b722b280ac2",
     "resume_document": "docs/LOOP_HANDOFF_2026-11-15.md",
     "explicit_resume_required": true
+  },
+  "nov18_repository_release": {
+    "status": "LOCAL_CHECKS_AND_WORKFLOW_PUBLICATION_DONE_HOSTED_CI_AND_FINAL_REVIEW_PENDING",
+    "initial_head": "8c43ebcb9e3f7aa66f1546063feda7397b337905",
+    "initial_main": "61f63a49a7cb9cfa25074be7fe0609dc654810eb",
+    "pull_request": 4,
+    "required_checks": [
+      "Core offline checks",
+      "macOS arm64 native checks"
+    ],
+    "approval_count": 0,
+    "independent_review_required": true,
+    "mutation_document_guard_fix": "SOURCE_FIXED_EFBB24F_OFFLINE183_AND_INDEPENDENT_RUNTIME_AND_CLI_PASS",
+    "new_plugin_backlog_completions": 0,
+    "zip_security_fix": "9.6.1_RUST1.88_FULL183_PASS_FINAL_CLI_REVIEW_PENDING",
+    "workflow_commit": "3ec8494d5401a0ebdd9b41d45dbeb00145b846ac",
+    "workflow_sha256": "faebd6fcf59134f3ac867126a0718c8a090010b0ba2cd32948544fc8628f52d6",
+    "native_product_implementation_changed": false,
+    "native_test_only_change": "Two Cstring literal pointer assertions replaced with content equality; optimized448passed",
+    "github_connector_workflow_write": "403_RESOURCE_NOT_ACCESSIBLE_BY_INTEGRATION",
+    "workflow_publish_fallback": "ExistingauthenticatedbrowserUI; nobroadercredentialscreated"
+  },
+  "previous_hardware_window_before_2026_11_18": {
+    "deadline_kst": "2026-11-13T06:30:00+09:00",
+    "deadline_utc": "2026-11-12T21:30:00Z",
+    "devices_declared": [
+      "Universal Audio Volt 276",
+      "M-Audio Keystation 88 MK3"
+    ],
+    "connection_confirmed_by_user": "usb_only",
+    "physical_loopback_cabling": false,
+    "os_audio_inventory_verified": true,
+    "midi_endpoint_presence_verified": true,
+    "daw_audio_device_verified": true,
+    "physical_key_events_verified": false,
+    "physical_loopback_verified": false,
+    "external_ping_verified": false,
+    "cv_routing_verified": false,
+    "priority_policy": "Run bounded hardware-dependent checks before the deadline; no physical ping without a verified patch route. Ordinary plugin work can continue separately.",
+    "daw_audio_device": "Original MacBook Pro speakers and microphone restored;48000Hz;512frames;actual UI reopened verified no document; app closed",
+    "original_daw_audio_setup_restore_required": false,
+    "original_daw_audio_setup": {
+      "playback": "MacBook Pro speakers",
+      "recording": "MacBook Pro microphone",
+      "sample_rate_hz": 48000,
+      "buffer_frames": 512
+    },
+    "daw_io_buses_verified": true,
+    "input_bus_table_empty": true,
+    "first_external_readonly_status": "failed_at_Main_exact0_precondition_before_full_provider_or_choices",
+    "external_full_provider_readonly_verified": true,
+    "UI_Main_minimum_is_exact_numeric0": false,
+    "exact_Main1_to0_API_preparation_verified": true,
+    "external_native_graph_complete": false,
+    "external_graph_diagnostics": [
+      "ancestor_limit",
+      "depth_limit"
+    ],
+    "external_provider_instances": 2,
+    "external_full_provider_reads": 8,
+    "external_choice_pages": 8,
+    "external_current_send_choice_count": 0,
+    "external_current_return_choice_count": 0,
+    "external_port_writes": 0,
+    "external_unset_minus1_generic_write_supported": false,
+    "external_io_diagnostic_copy_created": true,
+    "latest_new_hardware_stage_start_utc": "2026-11-12T20:15:00Z",
+    "original_AudioSetup_restore_start_no_later_utc": "2026-11-12T21:05:00Z",
+    "last_external_io_unit": {
+      "status": "failed_cleaned_up_before_providers",
+      "elapsed_seconds": 357.629,
+      "rpc_calls": 15,
+      "logical_rows_added_and_removed_UI": 4,
+      "native_channel_count_before": 67,
+      "native_channel_count_after_UI_add": 69,
+      "new_output_indices": [
+        66,
+        67
+      ],
+      "Main_index_change": [
+        66,
+        68
+      ],
+      "other_old_native_fields_unchanged": true,
+      "original_IO_UI_restored": true,
+      "full_providers": 0,
+      "choice_pages": 0,
+      "port_writes": 0
+    },
+    "mapped_unit_observation": {
+      "overall_status": "failed_cleaned_up",
+      "elapsed_seconds": 730.966,
+      "completed_io_stages": [
+        "A"
+      ],
+      "wrapper_accepted_metadata_stages": 0,
+      "full_provider_reads": 8,
+      "choice_pages": 8,
+      "all_port_counts_in_A": 0,
+      "rpc_calls": 55,
+      "BMONO_actual_UI_applied": true,
+      "BMONO_API_stage_accepted": false,
+      "BMONO_flag_not_written_after_deadline": true,
+      "original_IO_UI_restored": true,
+      "source_song_unchanged": true,
+      "global_AudioSetup_restore_required": true
+    },
+    "original_daw_audio_setup_restored_actual_UI": true,
+    "physical_only_unit": {
+      "status": "complete_cleaned_up",
+      "elapsed_seconds": 775.693,
+      "rpc_calls": 143,
+      "completed_io_stages": [
+        "BMONO",
+        "BSTEREO",
+        "RESTORE"
+      ],
+      "accepted_metadata_stages": 3,
+      "full_provider_reads": 24,
+      "choice_pages": 24,
+      "original_IO_UI_and_native_fixture_restored": true,
+      "all_five_owned_saved_songs_unchanged": true,
+      "plugin_port_state_transport_save_actions": 0,
+      "main_preparation_writes": 1,
+      "actual_GUI_send_bus_choices_observed": true,
+      "actual_GUI_stereo_return_choice_observed": true,
+      "physical_loopback_verified": false,
+      "all_controller_port_choice_counts": 0,
+      "controller_empty_does_not_prove_UI_menu_empty": true
+    },
+    "historical24record_provider_source": "controller",
+    "prior_DSP24_domain_description_corrected": true
   }
 }

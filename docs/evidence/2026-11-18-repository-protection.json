@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "date": "2026-11-18",
+  "scope": "Repositorysettings readback only; not software or DAW verification",
+  "repository": "https://github.com/dev-universe/fender-studio-pro-mcp",
+  "visibility": "public",
+  "main": {
+    "pull_requests_required": true,
+    "required_approving_reviews": 0,
+    "enforce_admins": true,
+    "strict_required_checks": [
+      {
+        "context": "Core offline checks",
+        "app_id": 15368
+      },
+      {
+        "context": "macOS arm64 native checks",
+        "app_id": 15368
+      }
+    ],
+    "conversation_resolution": true,
+    "force_pushes": false,
+    "deletion": false
+  },
+  "actions": {
+    "default_token": "read",
+    "may_approve_pull_requests": false,
+    "allowed": "GitHubownedactions",
+    "external_contributor_approval": "all_external_contributors"
+  },
+  "security": {
+    "vulnerability_alerts": true,
+    "automated_security_fixes": true,
+    "private_vulnerability_reporting": true,
+    "secret_scanning": true,
+    "secret_scanning_push_protection": true
+  },
+  "delete_branch_on_merge": true,
+  "collaborator_permissions_changed": false,
+  "readback_all_endpoints_exit_zero": true
+}

@@ -1,8 +1,13 @@
+**그래서 이게 뭔가요?** Fender Studio Pro에서 트랙과 이펙트를 AI에게 말로 부탁해 조작할 수 있게 해 주는 연결 도구입니다.
+
 # Fender Studio Pro MCP
 
-The user resumed the run on 2026-11-13. See the
-[current progress](docs/PROGRESS_2026-11-15.md), [resume guide](docs/RESUME.md)
-and [latest detailed handoff](docs/LOOP_HANDOFF_2026-11-12.md) for completed work and remaining tasks.
+현재는 **macOS Apple Silicon의 Fender Studio Pro 8.1.1**에서 검증 중인 실험 버전입니다. MCP를 지원하는 AI 앱에 연결하면 트랙·믹서·MIDI·지원되는 내장 이펙트를 대화로 조작할 수 있습니다. Studio Pro 안에 채팅창을 추가하는 프로그램은 아니며, 처음 연결할 때 아래의 빌드·설정 과정이 필요합니다.
+
+내장 플러그인 전체를 빠짐없이 제어하는 것이 목표이지만 아직 완료되지는 않았습니다. 검증된 기능과 미완료 기능을 아래와 [검증 보고서](docs/VALIDATION.md)에 구분했습니다. Windows와 Intel Mac의 DAW 연결은 검증하지 않았습니다.
+
+See the [current progress](docs/PROGRESS_2026-11-18.md), [resume guide](docs/RESUME.md)
+and [latest completed handoff](docs/LOOP_HANDOFF_2026-11-17.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
@@ -10,7 +15,7 @@ Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Sili
 
 The 46 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. [Hardware inventory and bounded MIDI input observation](docs/HARDWARE.md) also have standalone CLI paths that bypass the DAW runtime. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
 
-The [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records newer model, preset, nested-fixture and full-parameter work, including successful actual-host cases and stopped restoration tests. Chorder has a separately verified scratch Save/reopen case; earlier persistence failures remain recorded. Complete current-provider enumeration does not establish full parameter, model or musical-event coverage. The [fixed remaining-work list](docs/WORK_BREAKDOWN_2026-11-13.md) currently has 13 of 43 deliverables complete and 30 remaining, including four hardware-dependent items. This is a bounded backlog count, not a whole-product completion percentage.
+The [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records newer model, preset, nested-fixture and full-parameter work, including successful actual-host cases and stopped restoration tests. Chorder has a separately verified scratch Save/reopen case; earlier persistence failures remain recorded. Complete current-provider enumeration does not establish full parameter, model or musical-event coverage. The [fixed remaining-work list](docs/WORK_BREAKDOWN_2026-11-13.md) currently has 15 of 43 deliverables complete and 28 remaining: 24 software items and four hardware-dependent items. This is a bounded backlog count, not a whole-product completion percentage.
 
 Build with Rust 1.88 or newer and Cargo. The installed server runs as a native binary. Node.js and Python are development and validation tools. The server does not launch either runtime.
 
@@ -273,6 +278,7 @@ Use these documents for details.
 - [Architecture](docs/ARCHITECTURE.md).
 - [Reference project research](docs/RESEARCH.md).
 - [Local checks and CI status](ci/README.md).
+- [Contributing](CONTRIBUTING.md) and [private security reports](SECURITY.md).
 
 This independent project is not affiliated with Fender or PreSonus. Fender Studio Pro and Studio One are trademarks of their respective owners. The project uses the [MIT license](LICENSE). Copied upstream assets retain their notices in [third-party notices](THIRD_PARTY_NOTICES.md).
 

@@ -1,30 +1,39 @@
-# Run local checks
+# Checks and verification
 
-Run the root server and embedded-script checks from the repository root.
+The active [GitHub Actions workflow](../.github/workflows/ci.yml) runs on pull requests and pushes to `main`. Both jobs are required for merging.
+
+| Required check | Runner | Scope |
+| --- | --- | --- |
+| Core offline checks | Ubuntu 24.04 | Rust 1.88 formatting, Clippy with warnings denied, root tests and release build, JavaScript contract tests, Python tests |
+| macOS arm64 native checks | macOS 15 arm64, verified with `uname` | Root tests, formatting and tests for five native libraries, optimized serial add-on tests, native package/plist/XML/dSYM build |
+
+The workflow uses read-only tokens and full commit SHA pins for GitHub-owned Actions. It does not install Studio Pro, launch the DAW, use signing credentials or publish packages. The repository requires approval for all external contributors' workflow runs. Current results belong to the [Actions page](https://github.com/dev-universe/fender-studio-pro-mcp/actions); a workflow file alone is not a passing run.
+
+Run the server and embedded-script checks locally from the repository root.
 
 ```sh
-rustup component add rustfmt clippy
-./scripts/check.sh
+rustup toolchain install 1.88.0 --profile minimal --component rustfmt --component clippy
+RUSTUP_TOOLCHAIN=1.88.0 bash scripts/check.sh
 ```
 
-The script requires Cargo and Node.js. It fails if either is missing. It checks Rust formatting, runs Clippy with warnings as errors, runs Rust tests, builds the release binary, and runs the actual bridge and EditTask assets in Node.js VM contract tests. Those VM tests simulate host objects. They do not establish actual DAW behavior. Python supports the separate scratch-session live plugin verification script.
+The script requires Cargo, Node.js and Python 3. It checks Rust formatting, runs Clippy with warnings denied, runs Rust tests, builds the release binary, executes the actual bridge and EditTask assets in Node.js VM contract tests, and runs the offline Python suite. VM tests simulate host objects; they do not establish actual DAW behavior.
 
-The optional native extension has separate crates. On the supported macOS arm64 host, run their Rust 1.88 checks too:
+On the supported macOS arm64 host, also run the separate native crates.
 
 ```sh
-for native_crate in parameter-api dsp-api editor-api addon; do
-  cargo +1.88.0 fmt --manifest-path "native/$native_crate/Cargo.toml" -- --check
-  cargo +1.88.0 clippy --manifest-path "native/$native_crate/Cargo.toml" --all-targets -- -D warnings
-  cargo +1.88.0 test --manifest-path "native/$native_crate/Cargo.toml"
+for crate in parameter-api editor-api node-api dsp-api preset-api; do
+  cargo +1.88.0 fmt --manifest-path "native/$crate/Cargo.toml" -- --check
+  cargo +1.88.0 test --manifest-path "native/$crate/Cargo.toml"
 done
+cargo +1.88.0 fmt --manifest-path native/addon/Cargo.toml -- --check
+cargo +1.88.0 test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
+sh native/build.sh
 ```
 
-The first three crates use portable mocks; the add-on links macOS services. Normal Cargo checks need no vendor SDK. Optional exact-CCL header/compiler checks and package construction are described in the [native guide](../native/addon/README.md); do not substitute CCL 5.2 headers for the pinned 5.1.2 ABI. Building does not install or launch Studio Pro. The actual final run used 53 root Rust tests, 131 script tests, 60 native mocks and six native compile-fail documentation checks.
+The add-on's bounded large-capsule test exceeded its real two-second budget in a loaded local debug run. The CI uses an optimized serial test build without raising that budget. Two test assertions compared addresses of distinct C string literals; they now compare the metadata text, allowing the optimized suite to pass all 448 tests. A pre-existing `observe` dead-code warning in native external-menu code remains documented; the root server's Clippy gate still denies warnings.
 
-Node.js and Python are validation tools. The installed MCP server runs in Rust, and embedded JavaScript executes inside Studio Pro.
+Normal native builds need no vendor SDK and do not modify the Studio Pro app bundle. Optional exact-CCL header/compiler checks are described in the [native guide](../native/addon/README.md). Do not substitute CCL 5.2 headers for the pinned 5.1.2 ABI. Node.js and Python are validation tools; the installed server runs in Rust and embedded JavaScript executes inside Studio Pro.
 
-[rust.yml](rust.yml) is a workflow template. It lives outside `.github/workflows`, so GitHub Actions does not run it. The current OAuth credential lacks `workflow` authorization, and the connected integration returned HTTP 403 for workflow updates. No remote CI pass is claimed.
+[rust.yml](rust.yml) is an older, inactive template outside `.github/workflows`; it is not the current CI. Earlier workflow-publication permission failures are historical.
 
-When an authorized credential can publish workflows, place the template in `.github/workflows/rust.yml`. The template runs Rust and JavaScript contract checks on macOS and Ubuntu and expects Cargo and Node.js on those runner images. Publishing it still requires workflow authorization; its existence is not a remote validation result.
-
-Actual host results and remaining gaps belong in the [validation report](../docs/VALIDATION.md) and [plugin matrix](../docs/BUILTIN_PLUGINS.md). A compile or VM test pass does not verify Studio Pro integration on another operating system or host version.
+Actual host results and remaining gaps belong in the [validation report](../docs/VALIDATION.md) and [plugin matrix](../docs/BUILTIN_PLUGINS.md). A compile, unit-test or VM pass does not verify Studio Pro integration on another operating system or host version.
