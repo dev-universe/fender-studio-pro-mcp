@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "updated_date": "2026-11-15",
-  "status": "paused",
+  "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-15.md",
   "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
@@ -608,7 +608,7 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "Read docs/RESUME.md, latestNov15handoff, currentstate and workbreakdown. Program paused for usertravel; resume only after explicit 진행 재개해. Revalidateprocesses/locks/source177/art13/saved10/MIDI, AppFIRST thennewnormalMCPowner onlyfornextadmittedfiniteunit. No expiredsession/document/owner reuse; persistent legitimateobjectUID may repeat butmustfreshlyobserve currentidentity.",
+    "User explicitly resumed2026-11-17. Read latestNov15handoff, currentstate and workbreakdown; first CV preset/state external-route ownership read-only investigation. Freshpreflight177source/13artifact/10archives exact, DAW/MCP absent/twolocksfree/MIDI0. No oldsession/owner reuse. Newdeadline notset; reportunitcountsandETAs.",
     "PRESET-CV next is read-only preset/state external-route ownership boundary. ActualR72 isolatedroute22 accepted, butfuturepreset/load preservationofNoneunproven. R1optionalcombined36capture-readiness draft NOTEXECUTIONREADY, nofullpresetwire issued. glide.glideTime historicalcandidateonly, nofreshseedadmitted. Futurecase97writableexactP/110metadata/13readonlydynamicseparate/A-B/lifetime/routeNonegates required. No hardware/presetcompletionfromreadiness.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
@@ -621,19 +621,16 @@
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
-  "current_progress_document": "docs/PROGRESS_2026-11-15.md",
+  "current_progress_document": "docs/PROGRESS_2026-11-17.md",
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases,6classesremaining;fixed43completed15remaining28;Native55raw289=accepted139+failed150, hardware4separate.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "status": "PAUSED_ALL_DAW_MCP_AND_ANALYSIS_OWNERS_CLOSED",
-    "actual_DAQ": 0,
-    "owner_stopped": true,
-    "app_closed": true,
-    "analysis_engine_closed": true,
-    "last_actual_namespace": "r72",
-    "last_actual_DAQ": 22,
-    "readiness_accepted": true,
-    "next_namespace_reserved_not_started": "r73"
+    "status": "CV_PRESET_CATALOG_TO_PORT_CONSUMER_LINK_INVESTIGATION",
+    "DAQ": 0,
+    "app_opened": false,
+    "MCP_owner_started": false,
+    "first_static_unit_complete": true,
+    "fixed_count_increment": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -889,7 +886,7 @@
     "reason": "User requested finishing only the current unit and ending the loop, with a detailed versioned handoff",
     "resume_document": "docs/LOOP_HANDOFF_2026-11-12.md"
   },
-  "resumed_date": "2026-11-13",
+  "resumed_date": "2026-11-17",
   "resume_preflight_verified": true,
   "native34_runtime_verification_scope": "Read-only stored-model getter on the exact diagnostic fixture; not model editing, persistence, audio or output-pitch mapping",
   "hardware_window": {
@@ -19776,5 +19773,79 @@
     "resume_document": "docs/LOOP_HANDOFF_2026-11-15.md",
     "explicit_resume_required": true
   },
-  "historical_fields_notice": "Current status/current_execution/next_units_in_order/latest resume_document control resumption. Older named units, preparation statuses, counts and verification flags are historical evidence; they never authorize replay or override current PAUSED state."
+  "historical_fields_notice": "Current status/current_execution/next_units_in_order/latest resume_document control resumption. Older named units, preparation statuses, counts and verification flags are historical evidence; they never authorize replay or override current PAUSED state.",
+  "resumed_at": "2026-11-17T08:42:57+09:00",
+  "cv_preset_port_ownership_static_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "PARTIAL_STATIC_BOUNDARY_NO_DAQ_NO_APPLY_LOAD",
+    "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+    "native_unit": 55,
+    "current_preflight": {
+      "source_files": 177,
+      "artifact_files": 13,
+      "saved_archives_unchanged": 10,
+      "DAW_MCP_absent": true,
+      "two_locks_free": true,
+      "MIDI0": true
+    },
+    "installed_packaged_preset": {
+      "bytes": 2174,
+      "sha256": "a897c943b25e4c0d08990218608c401423ceb06d72b84bc622f5e13075a48adc",
+      "class_uid": "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85",
+      "members": {
+        "PortSetup.data": {
+          "bytes": 315,
+          "sha256": "d9189e206dfc17e22e63e6bb512ed6cb6d111e11ab5706a9f0c8b385260c7656"
+        },
+        "data.fxpreset": {
+          "bytes": 3991,
+          "sha256": "d19cee4a5c81792e2a32df2c7729779d85d683cf9a828e7e343b55136d44bac3"
+        },
+        "metainfo.xml": {
+          "bytes": 1084,
+          "sha256": "af5c4181ed99f48592b3ea3762f73aff9ae9dfc35a6e517ffb2e04a81ab31be5"
+        }
+      },
+      "factory_origin_authenticated": false,
+      "current_native_issued_URL_binding": false,
+      "port_setup_nonempty_assignments": 1,
+      "nonempty_assignment_output": "Output03"
+    },
+    "saved_CV_host": {
+      "PortSetup_output_entries": 6,
+      "output_ids": "Output01..Output06",
+      "saved_nodes_have_assignments": false,
+      "separate_DSP_ComponentData": true,
+      "saved_Music_input_is_Not_fresh_None_witness": true
+    },
+    "static_Main_port_member_consumer_candidate": true,
+    "exact_catalog_IDataTarget_recall_link_verified": false,
+    "alias_IStorable_route_preservation_verified": false,
+    "Output03_to_displayed_port_mapping_verified": false,
+    "runtime_apply_load_admitted": false,
+    "new_DAQ": 0,
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "native_static_elapsed_seconds": 524.591306,
+    "evidence_sha256": {
+      "native_boundary_report": "6ecc736fa73c4d89ee6873b402aa008360efe5eb1571477bbb80272f60af0820",
+      "native_boundary_manifest": "855842a02ced19e854be50d2583b50bc388b2e786553e0ee5fa8b77c10e33f1a",
+      "preset_payload_report": "275c455edc0886f044cda2b0c4c3e79a2929cd09f968990701cdac42e924ad48"
+    },
+    "engine_cleanup": {
+      "worker_exported_records": 30,
+      "worker_closed_reset_EOF0": true,
+      "Root_archive_exported_records": 2,
+      "Root_archive_closed_reset": true,
+      "original_checkpoints_preserved": true
+    },
+    "next_unit": "Trace exact Presets IDataTarget dispatch and port-load policy; capture/load remains separately gated."
+  }
 }
