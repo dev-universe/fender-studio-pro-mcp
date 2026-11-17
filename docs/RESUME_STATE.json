@@ -20459,5 +20459,69 @@
       "hardware_remaining": 4
     },
     "overall_loop_ETA": null
-  }
+  },
+  "cv_port_entry_interface_static_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "STATIC_CV_PAIRED_SUBOBJECT_INTERFACE_IDENTITY_ONLY",
+    "status": "FINAL_SUBOBJECT_IID_AND_RECEIVER_ESTABLISHED_ENTRY_TYPE_AND_5C_UNKNOWN",
+    "actual_DAQ": 0,
+    "new_function_bodies": 6,
+    "unique_evidence_records": 17,
+    "duplicate_queries": 0,
+    "facts": [
+      "Final AudioEffect+0x188 table has offset-to-top -0x188.",
+      "Its queryInterface thunk adjusts the receiver to the outer object; base QI recognizes exact raw IID and returns owner+0x188.",
+      "Exact IID memory search found one initialized copy and grounded caller sites."
+    ],
+    "raw_iid_hex": "8b7ae5c96b74ad4d988d44be29fd6370",
+    "interface_name": "UNKNOWN",
+    "entry_type": "UNKNOWN",
+    "entry_plus_0x5c": "UNKNOWN",
+    "no_assignment_eligibility_or_route_preservation_inference": true,
+    "next_grounded_seed": {
+      "exact_IID_user": "0x100da8da0",
+      "sole_resolved_direct_callee": "0x100d98808",
+      "argument_aliases_and_semantics": "UNKNOWN"
+    },
+    "worker_recorded_elapsed_seconds": 486.98,
+    "timing_discrepancy": {
+      "earliest_worker_start_message_UTC": "02:40:49",
+      "persisted_start_marker_UTC": "02:41:02",
+      "report_freeze_UTC": "02:49:08.979925",
+      "Root_elapsed_from_earliest_declared_start_seconds": 499.98,
+      "original_frozen_report_not_rewritten": true
+    },
+    "timebox_seconds": 600,
+    "engine": {
+      "exported_records": 17,
+      "closed": true,
+      "open": false,
+      "cleanup_pending": false,
+      "reset_records": 17,
+      "EOF_exit": 0
+    },
+    "immutable_Main_arm64_checkpoint_prior_inputs7_equal": true,
+    "mutable_product_source_read_or_hashed": false,
+    "deviations": [
+      "An initial pin script failed on a relative-path dictionary key before copying or opening any engine. The immediately attempted client launch then failed because no client had been written. Fixed absolute path and launched exactly one private REA process/engine.",
+      "Two of the six function bodies inspect table destructor thunks. They are included explicitly and did not establish entry access.",
+      "The sixth exact-IID xref candidate was another queryInterface body rather than an entry accessor. Its own receiver+0x178 must not be equated to AudioEffect+0x188."
+    ],
+    "evidence_sha256": {
+      "report": "8bd8f192df69756fb172909ac30acbc678b74ee5f1f02249ec06ff2554a64da2",
+      "result": "52ab6287c25a34d6e6f9224054f150071a7889e3839cfb0f53e290aaecce3df9",
+      "evidence17": "394985ce285c828948f8ffb2b4772c36b2551eedbed8098a18da6e029b814657"
+    },
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "whole_loop_ETA": null
+  },
+  "cv_static_next_seed": "Exact-IID user0x100da8da0 -> sole resolved directcallee0x100d98808; establish argumentalias/entryaccess before type/+0x5c interpretation. Reuse frozen6body/interface17evidence; no unrelated offsetsearch."
 }
