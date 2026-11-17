@@ -4,14 +4,14 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-15.md",
-  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "product_source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 55,
-  "installed_native_uuid": "52EFF0D5-FC83-3CF7-AE23-FD669D821098",
+  "installed_native_unit": 56,
+  "installed_native_uuid": "AB9D3D67-A619-313F-9D90-F48B5C9FD19F",
   "app_closed_observed": true,
   "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Latest current evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline historical; newdeadline notset. R73/R74 closed; use fresh session/owner/metadata/UI and bothlocks for R75, never replay completed trials.",
-    "CVPORTS currentblocker: r1implementation9filesuncommitted; independentreviewNOTREADY afternative417/main178/JS96PASS becauseprivatefullInventory String.copy callbackchangesrootclassAFTERHeaderwitnessandcheckreturnsOk. Frozenr1report/repro preserved. FreshR2writer limitedcv_ports.rs/tests.rs: ALLborrowedIDcopiesbeforefinalretainedHeader sweep, thenowner-freeUID/topology/Context, noAPI/ABI/newowners. RegressionMUSTfailr1andpassr2. IndependentnarrowrecheckandfinalnativefullbeforeanyRootbuild/install/newactual. LastqualifiedinstalledNative55own13backedup. R73/R74/R75closedacceptedboundedonly; no presetapply/routevalues/physicalproof; noSource177historicalhashreuseonchangedworktree. KeepselectedSYNTHfresh<=32membershipNOTold8, root9/1/0/8limits, exactCV/document/instancegates, publicationinvalidation. Native56labelreservedfornewverifiednormalinstallafterfix.",
+    "CURRENT Native56normalinstallation/source26444b1,source179/artifact13/installedsource12/metadata46/action5/state7 verified; DAQ0/livefalse. r1Stringcallbackgapfailed preserved, r2allIDbeforeHeaderfix acceptedoriginalprivatechallenge/native418. R76fresh exact27kit preparing: original22isolation +cv_ports1 +terminal4, nootherwrites/params/capsules/catalog/preset. Newactualmustusefreshsession/doc/instance/newmetadata and50closed-sessionban (R75a79db... included); reusepersistentCVUIDonlywithfreshnativeidentity. RootkitreviewthenactualtypeAudioFXPortSetup/ownerindexeduniquecurrent<=32/child7DataIDs/partialmetadata+fourfalseclaims/NoneUI/NoSave/179source13artifacts10saved. Stopunexpectedoutcomes, nofallback/retry. LastactualhostqualifiedNative55; nofullCV/preset/routephysicalclaimyet. RollbackownNative55artifacts13available.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -623,21 +623,24 @@
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-17.md",
   "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ114(40+47+27)allclosed; oldnative55countersdatedNov15historical.",
-  "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "binary_source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
   "current_execution": {
-    "status": "CV_PORTS_R1_CODE_REVIEW_NOT_READY_R2_ORDER_FIX_IN_PROGRESS",
+    "status": "NATIVE56_NORMAL_INSTALL_METADATA_VERIFIED_R76_EXACT27_KIT_PREPARATION",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
     "R73_actual_DAQ_completed": 40,
     "R74_actual_DAQ_completed": 47,
     "R75_actual_DAQ_completed": 27,
-    "new_product_changes_started": true,
+    "new_product_changes_started": false,
     "fixed_count_increment": 0,
     "hardware_stability": "UNPROVEN",
-    "source_writer": "cv_ports_observer_fix_r2",
+    "source_writer": null,
     "last_qualified_installed_native": 55,
-    "no_new_build_or_install": true
+    "no_new_build_or_install": false,
+    "installed_native": 56,
+    "last_actual_host_qualified_native": 55,
+    "R76_actual_started": false
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -669,10 +672,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "Implement selected cv_ports scope and focused offline review; build/install/live follows separately",
+      "next_finite_unit": "R76 exact27 current Native56 CV host port metadata read preparation/review/live/closure",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        25,
-        45
+        15,
+        25
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -681,15 +684,15 @@
       ],
       "bookkeeping_overrun_reason": "underestimated reconciliation/report time while integrating and installing Level40; not new plugin scope"
     },
-    "next_finite_unit": "Implement selected cv_ports scope and focused offline review; build/install/live follows separately",
+    "next_finite_unit": "R76 exact27 current Native56 CV host port metadata read preparation/review/live/closure",
     "next_finite_unit_preparation_and_runtime_minutes": [
-      25,
-      45
+      15,
+      25
     ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "installed_native_sha256": "952ad216fcdadae7ddb5b2fdf20bb9fd8cea4a103f7480c78268101a7124a982",
-  "binary_sha256": "d6e6d2eb1fa56f701d0b508fa6303cc836da3cff930bc8d9fd3f000d65546278",
+  "installed_native_sha256": "8b51e3295ee18a47151049e187564b2061fdb2d26afcd7486f4035e2e1c6b729",
+  "binary_sha256": "85a6bd72198b97bcf616e229a8e63b6d910dce5841471a774fdf9ebe0ee8cb13",
   "installed_bridge_files_sha256": {
     "BridgeComponent.js": "665e6bef4f08ddf3612044286a54f76b94f3946cdf934d7625f600668c6a1d78",
     "BridgeCore.js": "d290cee40654fbae1d61c0b3783232cbb08a881f3d9e00f2d8717a57455f3ba9",
@@ -20560,6 +20563,79 @@
     },
     "next": "Fresh fix writer restricted to cv_ports module and its tests; source r1 retained as failed immutable evidence. Independent narrow recheck precedes build/install.",
     "installed_runtime": "Native55_last_qualified_own13_artifacts_backed_up",
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "overall_loop_ETA": null
+  },
+  "previous_product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "cv_ports_native56_normal_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "CV_PORTS_R2_SOURCE_AND_NORMAL_NATIVE56_INSTALL_NOT_YET_LIVE",
+    "source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+    "r1_failure_preserved": true,
+    "r2": {
+      "elapsed_seconds": 232,
+      "fix": "All borrowed ID copies precede final retained Header sweep; later owner-free UID/topology/Context checks unchanged.",
+      "new_owners_ABI_API": false,
+      "behavior_regression_before": "FAIL",
+      "behavior_regression_after": "PASS",
+      "focused_CV_passed": 22,
+      "full_native_passed": 418,
+      "other7_product_files_and6_nodeAPI_pins_unchanged": true,
+      "independent_original_private_fault_passed": 1,
+      "independent_recheck_elapsed_seconds": 220.818,
+      "independent_verdict": "READY_FOR_ROOT_BUILD_AND_SEPARATE_LIVE_READ"
+    },
+    "normal_install": {
+      "elapsed_seconds": 333.33,
+      "source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+      "source_files": 179,
+      "artifact_files": 13,
+      "installed_source_pairs": 12,
+      "native_package_files": 4,
+      "native_uuid": "AB9D3D67-A619-313F-9D90-F48B5C9FD19F",
+      "native_sha256": "8b51e3295ee18a47151049e187564b2061fdb2d26afcd7486f4035e2e1c6b729",
+      "main_cli_sha256": "85a6bd72198b97bcf616e229a8e63b6d910dce5841471a774fdf9ebe0ee8cb13",
+      "normal_main_release_build_seconds": 25.67,
+      "normal_native_release_build_seconds": 28.87,
+      "builds_exit0": true,
+      "normal_script_no_experimental_overrides": true,
+      "bridge_and_native_installed": true,
+      "doctor_current_but_live_verified_false": true,
+      "fresh_metadata46_action5_state7_cv_ports_gate": true,
+      "metadata_owner_EOF0": true,
+      "actual_DAQ": 0,
+      "app_opened": false,
+      "DAW_MCP_absent": true,
+      "both_locks_reacquired_released": true,
+      "saved10_Main_preserved": true,
+      "passive_snapshot_complete_before_ps": true,
+      "MIDI0": true,
+      "hardware_stability": "UNPROVEN",
+      "ownNative55_rollback13_verified": true,
+      "coverage_increment": 0
+    },
+    "normal_qualification": "source179/artifact13/package4/installed-source12/doctor-current and CLI metadata only",
+    "fresh_tool_metadata_modified_specs": [
+      "plugin_parameters",
+      "plugin_inspect",
+      "operation_run"
+    ],
+    "live_verified": false,
+    "actual_DAQ": 0,
+    "next": "Separate fresh R76 exact27 kit: original22 isolation prefix, one new cv_ports read, terminal4 context reads. No preset apply, route changes, parameter pages or capsule calls.",
+    "evidence_sha256": {
+      "r2_writer_report": "4e634722fbe3cd13a2006d3d0f77f7032226e141bd09db7318f9ea6bb824f263",
+      "r2_independent_recheck_report": "4ab8afdf9272d87ec5d361b7545771eac6fe9a2900e7b8b98a79fc0dcbd7ac9e",
+      "normal_manifest": "f94e7f7bd12c5a27a134c154d3dfe9244c723862aec70ad76ca9c04a3124c01c"
+    },
     "coverage_increment": 0,
     "fixed_counts": {
       "total": 43,

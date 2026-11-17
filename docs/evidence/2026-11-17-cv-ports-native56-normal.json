@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CV_PORTS_R2_SOURCE_AND_NORMAL_NATIVE56_INSTALL_NOT_YET_LIVE",
+  "source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+  "r1_failure_preserved": true,
+  "r2": {
+    "elapsed_seconds": 232,
+    "fix": "All borrowed ID copies precede final retained Header sweep; later owner-free UID/topology/Context checks unchanged.",
+    "new_owners_ABI_API": false,
+    "behavior_regression_before": "FAIL",
+    "behavior_regression_after": "PASS",
+    "focused_CV_passed": 22,
+    "full_native_passed": 418,
+    "other7_product_files_and6_nodeAPI_pins_unchanged": true,
+    "independent_original_private_fault_passed": 1,
+    "independent_recheck_elapsed_seconds": 220.818,
+    "independent_verdict": "READY_FOR_ROOT_BUILD_AND_SEPARATE_LIVE_READ"
+  },
+  "normal_install": {
+    "elapsed_seconds": 333.33,
+    "source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+    "source_files": 179,
+    "artifact_files": 13,
+    "installed_source_pairs": 12,
+    "native_package_files": 4,
+    "native_uuid": "AB9D3D67-A619-313F-9D90-F48B5C9FD19F",
+    "native_sha256": "8b51e3295ee18a47151049e187564b2061fdb2d26afcd7486f4035e2e1c6b729",
+    "main_cli_sha256": "85a6bd72198b97bcf616e229a8e63b6d910dce5841471a774fdf9ebe0ee8cb13",
+    "normal_main_release_build_seconds": 25.67,
+    "normal_native_release_build_seconds": 28.87,
+    "builds_exit0": true,
+    "normal_script_no_experimental_overrides": true,
+    "bridge_and_native_installed": true,
+    "doctor_current_but_live_verified_false": true,
+    "fresh_metadata46_action5_state7_cv_ports_gate": true,
+    "metadata_owner_EOF0": true,
+    "actual_DAQ": 0,
+    "app_opened": false,
+    "DAW_MCP_absent": true,
+    "both_locks_reacquired_released": true,
+    "saved10_Main_preserved": true,
+    "passive_snapshot_complete_before_ps": true,
+    "MIDI0": true,
+    "hardware_stability": "UNPROVEN",
+    "ownNative55_rollback13_verified": true,
+    "coverage_increment": 0
+  },
+  "normal_qualification": "source179/artifact13/package4/installed-source12/doctor-current and CLI metadata only",
+  "fresh_tool_metadata_modified_specs": [
+    "plugin_parameters",
+    "plugin_inspect",
+    "operation_run"
+  ],
+  "live_verified": false,
+  "actual_DAQ": 0,
+  "next": "Separate fresh R76 exact27 kit: original22 isolation prefix, one new cv_ports read, terminal4 context reads. No preset apply, route changes, parameter pages or capsule calls.",
+  "evidence_sha256": {
+    "r2_writer_report": "4e634722fbe3cd13a2006d3d0f77f7032226e141bd09db7318f9ea6bb824f263",
+    "r2_independent_recheck_report": "4ab8afdf9272d87ec5d361b7545771eac6fe9a2900e7b8b98a79fc0dcbd7ac9e",
+    "normal_manifest": "f94e7f7bd12c5a27a134c154d3dfe9244c723862aec70ad76ca9c04a3124c01c"
+  },
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "overall_loop_ETA": null
+}
