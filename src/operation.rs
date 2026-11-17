@@ -670,7 +670,7 @@ pub struct PluginEditor {
     pub plugin: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PluginState {
     pub channel: Option<String>,
@@ -683,9 +683,51 @@ pub struct PluginState {
     pub token: Option<String>,
 }
 
+impl<'de> Deserialize<'de> for PluginState {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = Value::deserialize(deserializer)?;
+        if value["action"] == "inspect_cv_port_structure"
+            && value.as_object().is_none_or(|object| {
+                object.keys().any(|key| {
+                    !["kind", "track", "plugin", "expected_instance", "action"]
+                        .contains(&key.as_str())
+                })
+            })
+        {
+            return Err(serde::de::Error::custom(
+                "CV structure accepts only its fixed instrument target",
+            ));
+        }
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct Input {
+            channel: Option<String>,
+            slot: Option<u32>,
+            kind: Option<PluginKind>,
+            track: Option<String>,
+            plugin: String,
+            expected_instance: String,
+            action: PluginStateAction,
+            token: Option<String>,
+        }
+        let input: Input = serde_json::from_value(value).map_err(serde::de::Error::custom)?;
+        Ok(Self {
+            channel: input.channel,
+            slot: input.slot,
+            kind: input.kind,
+            track: input.track,
+            plugin: input.plugin,
+            expected_instance: input.expected_instance,
+            action: input.action,
+            token: input.token,
+        })
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PluginStateAction {
+    InspectCvPortStructure,
     ReadRumbleState,
     ReadRumbleParameters,
     ReadRumbleNamedParameters,
@@ -1591,6 +1633,22 @@ impl Operation {
                         })
                 });
                 match p.action {
+                    PluginStateAction::InspectCvPortStructure
+                        if p.token.is_none()
+                            && p.channel.is_none()
+                            && p.slot.is_none()
+                            && matches!(p.kind, Some(PluginKind::Instrument))
+                            && p.track.as_ref().is_some_and(|track| {
+                                !track.trim().is_empty()
+                                    && track.encode_utf16().count() <= 256
+                                    && !track.chars().any(char::is_control)
+                            })
+                            && p.plugin == "CV Instrument"
+                            && p.expected_instance != "00000000-0000-0000-0000-000000000000"
+                            && !p
+                                .expected_instance
+                                .bytes()
+                                .any(|byte| byte.is_ascii_lowercase()) => {}
                     PluginStateAction::InspectRumbleSerialization
                     | PluginStateAction::ReadRumbleState
                     | PluginStateAction::ReadRumbleParameters
@@ -2152,13 +2210,69 @@ fn remove_nulls(value: &mut Value) {
     }
 }
 
+pub(crate) fn cv_structure_schema(schema: &mut Value) {
+    schema["allOf"] = json!([{"if":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]},
+        "then":{"required":["kind","track","plugin","expected_instance"],"properties":{"kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},"track":{"type":"string","minLength":1,"maxLength":256,"pattern":"\\S"}},
+        "not":{"anyOf":[{"required":["channel"]},{"required":["slot"]},{"required":["token"]}]}}}]);
+}
 pub fn schema() -> Value {
-    serde_json::to_value(schemars::schema_for!(Request)).expect("operation schema")
+    let mut schema =
+        serde_json::to_value(schemars::schema_for!(Request)).expect("operation schema");
+    cv_structure_schema(&mut schema["$defs"]["PluginState"]);
+    schema["allOf"] = json!([{"if":{"properties":{"operation":{"enum":["pluginState","plugin_state"]},"args":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]}},"required":["operation","args"]},"then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}]);
+    schema
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cv_structure_is_closed_mutating_and_requires_only_the_fixed_instrument_target() {
+        let base = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"inspect_cv_port_structure"});
+        let op = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(op.validate().is_ok());
+        assert!(!op.is_read_only());
+        for key in [
+            "channel", "slot", "token", "source", "port", "name", "param", "tag", "index", "iid",
+            "method", "path", "depth", "offset", "limit", "script",
+        ] {
+            for value in [Value::Null, json!(0), json!("unchecked")] {
+                let mut bad = base.clone();
+                bad[key] = value;
+                assert!(Operation::from_parts("plugin_state", bad).is_err(), "{key}");
+            }
+        }
+        for (key, value) in [
+            ("kind", Value::Null),
+            ("kind", json!("effect")),
+            ("track", json!("  ")),
+            ("track", json!("bad\0name")),
+            ("plugin", json!("CV")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_state", bad)
+                    .map_or(true, |op| op.validate().is_err()),
+                "{key}"
+            );
+        }
+        let mut direct = match op {
+            Operation::PluginState(q) => q,
+            _ => unreachable!(),
+        };
+        direct.token = Some("unchecked".into());
+        assert!(Operation::PluginState(direct).validate().is_err());
+    }
 
     #[test]
     fn named_rumble_action_is_closed_readonly_and_requires_canonical_effect_target() {

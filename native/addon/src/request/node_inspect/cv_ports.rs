@@ -2,6 +2,8 @@ use super::*;
 
 #[path = "cv_ports/parameters.rs"]
 pub(super) mod parameters;
+#[path = "cv_ports/structure.rs"]
+pub(in crate::native_script::request) mod structure;
 
 const CV_CLASS: &str = "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85";
 const MAX_SLOT_CHILDREN: u32 = 32;

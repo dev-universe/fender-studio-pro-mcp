@@ -95,6 +95,9 @@ fn supplied_folder<'de, D: serde::Deserializer<'de>>(
 #[derive(Debug, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Request {
+    CvPortStructureInspect {
+        expected_instance: String,
+    },
     ExternalPortMenu {
         port: external_menu::Port,
         expected_instance: String,
@@ -279,7 +282,8 @@ impl Request {
     fn source(&self) -> Source {
         match self {
             Self::ExternalPortMenu { .. } => Source::Controller,
-            Self::ParameterAction { .. }
+            Self::CvPortStructureInspect { .. }
+            | Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
@@ -314,7 +318,8 @@ impl Request {
     }
     fn expected(&self) -> Option<&str> {
         match self {
-            Self::ExternalPortMenu {
+            Self::CvPortStructureInspect { expected_instance }
+            | Self::ExternalPortMenu {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::InsertChainCapture { .. }
@@ -1519,7 +1524,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
                 ),
             };
         }
-        Request::ExternalPortMenu { .. }
+        Request::CvPortStructureInspect { .. }
+        | Request::ExternalPortMenu { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
@@ -1760,6 +1766,7 @@ impl Reply {
             .expect("object response")
             .remove("verified");
         external_menu::invalidate(&mut self.value);
+        node_inspect::cv_ports::structure::invalidate(&mut self.value);
         digest::invalidate(&mut self.value);
         chorder_chords::invalidate(&mut self.value);
         if self.rumble_inspection() {
@@ -2043,7 +2050,8 @@ fn dispatch_device(
     let source = request.source();
     let mutation = matches!(
         request,
-        Request::ExternalPortMenu { .. }
+        Request::CvPortStructureInspect { .. }
+            | Request::ExternalPortMenu { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
@@ -2095,6 +2103,9 @@ fn dispatch_device(
             reply.context = Some(ctx);
             return reply;
         }
+    }
+    if matches!(request, Request::CvPortStructureInspect { .. }) {
+        return node_inspect::cv_ports::structure::dispatch(ctx);
     }
     if let Request::ExternalPortMenu {
         port,
@@ -2714,6 +2725,40 @@ mod tests {
             },
         }
     }
+    #[test]
+    fn cv_structure_request_is_dedicated_fixed_dsp_and_rejects_selector_fields() {
+        let base = json!({"operation":"cv_port_structure_inspect","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let request: Request = serde_json::from_value(base.clone()).unwrap();
+        assert!(request.validate().is_ok());
+        assert_eq!(request.source(), Source::Dsp);
+        assert!(matches!(request, Request::CvPortStructureInspect { .. }));
+        assert!(!request.needs_auxiliary());
+        for key in [
+            "source", "port", "token", "channel", "slot", "param", "name", "tag", "index", "iid",
+            "method", "path", "depth", "offset", "limit", "script",
+        ] {
+            for value in [Value::Null, json!(0), json!("unchecked")] {
+                let mut bad = base.clone();
+                bad[key] = value;
+                assert!(serde_json::from_value::<Request>(bad).is_err(), "{key}");
+            }
+        }
+        for uid in [
+            "00000000-0000-0000-0000-000000000000",
+            "12345678-1234-1234-1234-123456789abc",
+            "",
+        ] {
+            let mut bad = base.clone();
+            bad["expected_instance"] = json!(uid);
+            assert!(
+                serde_json::from_value::<Request>(bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+    }
+
     #[test]
     fn native_normalized_preserves_applicability_signed_zero_and_exact_float32_bits() {
         for (normalized, expected) in [

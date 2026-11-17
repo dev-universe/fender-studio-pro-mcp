@@ -9,9 +9,14 @@
 mod ffi;
 mod menu;
 mod parameter;
+mod structured;
 pub use menu::{
     ExternalPort, LeafCheckOnly, LeafProvenance, MenuObservation, MenuPhase, MenuProvenance,
     MenuReadAttempt, MenuReadLease, MenuRow, ProvenanceChainEnd,
+};
+pub use structured::{
+    MAX_STRUCTURED_CHILDREN, MAX_STRUCTURED_TEXT_BYTES, StructureAttempt, StructureObservation,
+    StructurePhase,
 };
 mod text;
 mod value;

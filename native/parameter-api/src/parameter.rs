@@ -42,8 +42,8 @@ pub use pulse::{PulseError, PulseOutcome, PulseReceipt, PulseState};
 /// require_sync::<RawParameter>();
 /// ```
 pub struct RawParameter {
-    parameter: Owned,
-    text: TextApi,
+    pub(crate) parameter: Owned,
+    pub(crate) text: TextApi,
     thread: ThreadId,
 }
 enum Expected {
@@ -82,6 +82,19 @@ impl RawParameter {
     }
     pub fn as_borrowed_raw(&self) -> NonNull<c_void> {
         NonNull::new(self.parameter.raw()).expect("owned pointer is nonnull")
+    }
+    pub(crate) fn check_structure_header(&self, expected: &Description) -> Result<(), Error> {
+        let (name, tag, kind) = self.signature()?;
+        let (enabled, read_only) = self.flags();
+        if name != expected.name
+            || tag != expected.tag
+            || kind != expected.kind
+            || enabled != expected.enabled
+            || read_only != expected.read_only
+        {
+            return Err(Error::MetadataChanged);
+        }
+        Ok(())
     }
     /// Reads one fixed String parameter's display without property reflection,
     /// formatting inputs, edits or updates. The caller pins and guards its
@@ -228,7 +241,7 @@ impl RawParameter {
         };
         Ok(ListSnapshot { name, tag, count })
     }
-    fn check_thread(&self) -> Result<(), Error> {
+    pub(crate) fn check_thread(&self) -> Result<(), Error> {
         if thread::current().id() == self.thread {
             Ok(())
         } else {

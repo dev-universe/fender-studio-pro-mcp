@@ -375,6 +375,25 @@ impl CvPortParametersInventory {
         self.route.borrowed_attachments()?;
         borrowed_guard()
     }
+    pub(super) fn fixed_output_parameter(&self) -> Result<&RawParameter, String> {
+        if self.rows != Rows::Complete || self.route.root.is_none() {
+            return Err("complete CV parent inventory required".into());
+        }
+        let node = self
+            .nodes
+            .iter()
+            .find(|node| node.snapshot.id == "Output01")
+            .ok_or("fixed Output01 unavailable")?;
+        match &node.controller {
+            DirectController::Present(controller) => controller
+                .parameters
+                .first()
+                .filter(|parameter| parameter.index == 0)
+                .map(|parameter| &parameter.parameter)
+                .ok_or("fixed indexed Output01 parameter unavailable".into()),
+            _ => Err("fixed Output01 controller unavailable".into()),
+        }
+    }
     pub(in crate::native_script::request) fn value(&self) -> Value {
         let nodes: Vec<Value> = self.nodes.iter().enumerate().map(|(index,node)| {
             let controller = match &node.controller {
@@ -404,13 +423,16 @@ fn text_bytes(value: &Value) -> usize {
         _ => 0,
     }
 }
-fn observed_details(d: &parameter_api::ParameterDetails, structured_interface: bool) -> Value {
+pub(super) fn observed_details(
+    d: &parameter_api::ParameterDetails,
+    structured_interface: bool,
+) -> Value {
     json!({"precision":d.precision,"storable":d.storable,"mutable":d.mutable,
         "store_list_value":d.store_list_value,"read_only":d.read_only,
         "can_undo":d.can_undo,"list_interface":d.list_interface,
         "structured_interface":structured_interface})
 }
-fn observed_parameter(index: u32, d: &parameter_api::Description) -> Value {
+pub(super) fn observed_parameter(index: u32, d: &parameter_api::Description) -> Value {
     json!({"index":index,"name":d.name,"tag":d.tag,"kind":format!("{:?}",d.kind),"enabled":d.enabled,"read_only":d.read_only,
         "value":typed(d.raw.as_ref()),"min":typed(d.min.as_ref()),"max":typed(d.max.as_ref()),"default":typed(d.default_value.as_ref()),
         "normalized":match d.normalized {parameter_api::Normalized::NotApplicable=>json!({"kind":"not_applicable"}),parameter_api::Normalized::Finite(v)=>json!({"kind":"float32","bits_hex":format!("{:08X}",v.to_bits())}),parameter_api::Normalized::NonFinite{bits}=>json!({"kind":"non_finite_float32","bits_hex":format!("{bits:08X}")})},
