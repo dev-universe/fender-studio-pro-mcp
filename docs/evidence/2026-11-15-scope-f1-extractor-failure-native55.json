@@ -1,0 +1,69 @@
+{
+  "status": "CLOSED_NOT_ACCEPTED_FREE_F1_TRACE_EXTRACTION_FAILURE",
+  "namespace": "r67",
+  "native_unit": 55,
+  "closed_epoch_ms": 1794702212050,
+  "actual_DAQ": 51,
+  "first_id": 3,
+  "last_id": 53,
+  "all51_request_guards_passed": true,
+  "unknown_outcomes": 0,
+  "MCP_predispatch_rejections": 0,
+  "startup_order": "app_initialized_before_MCP",
+  "Tone_On_episodes": 1,
+  "Oneshot_mode_writes": 0,
+  "Scope_retrigger_pulses": 0,
+  "no_DAQ_after53": true,
+  "unplanned_recovery_DAQ": 0,
+  "planned_Off_or_configuration_restore_reached": false,
+  "failure": {
+    "phase": "free_f1",
+    "rule": "unqualified same-side missing curve",
+    "where": "fixed R5/R6 period.py ordinary gap qualification",
+    "image_timing_passed": true
+  },
+  "planned_original_images": 6,
+  "extra_postfailure_codec_diagnostic_images": 1,
+  "diagnostic_codec": "JPEG",
+  "diagnostic_sha256": "7f2726d9f86066beb3adc95dc6bff2e44cd509679d58589a982cfb05c413a180",
+  "flat_pair_passed": true,
+  "free_f2_pair_passed": true,
+  "free_f2_periods": [
+    67.0,
+    67.0
+  ],
+  "capture_pair_timings": {
+    "flat": {
+      "second_after_guard_ms": 13816,
+      "pair_spacing_ms": 8404
+    },
+    "free_f2": {
+      "second_after_guard_ms": 15693,
+      "pair_spacing_ms": 11822
+    },
+    "free_f1": {
+      "second_after_guard_ms": 11690,
+      "pair_spacing_ms": 8396
+    }
+  },
+  "Root_NoSave": true,
+  "app_closed_CUA_observed": true,
+  "immediate_CUA_completion": true,
+  "owner_EOF_exit_code": 0,
+  "passive_hardware_finished_before_ps": true,
+  "process_absent": true,
+  "both_locks_reacquired_released": true,
+  "saved10_equal": true,
+  "MIDI_sources_after": 0,
+  "MIDI_destinations_after": 0,
+  "source177_artifact13_exact": true,
+  "elapsed_first_DAQ_to_closure_seconds": 663.411,
+  "elapsed_connection_seconds": 864.638,
+  "effect_accepted": false,
+  "completed_unit_acceptance": false,
+  "fixed_count_increment": 0,
+  "schema": 1,
+  "date": "2026-11-15",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "private_closure_sha256": "1bfdb72f80757fa857ef11b260773d10ba9a48efad998dd579abf6fea1059714"
+}

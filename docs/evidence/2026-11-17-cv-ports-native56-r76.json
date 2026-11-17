@@ -1,0 +1,178 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "ACTUAL_TYPED_CV_PORTSETUP_BOUNDED_METADATA_OBSERVATION",
+  "product_source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+  "native_unit": 56,
+  "runtime_namespace": "r76",
+  "actual_DAQ": 27,
+  "IDs": "3..29",
+  "guards_passed": 27,
+  "DAQ_errors": 0,
+  "unknown_outcomes": 0,
+  "metadata_original_records": 3,
+  "node_read": {
+    "ID": 25,
+    "API": "plugin_inspect",
+    "source": "dsp",
+    "include_nodes": true,
+    "node_scope": "cv_ports",
+    "include_context": false,
+    "implementation_limits": {
+      "nodes": 9,
+      "depth": 1,
+      "ancestors": 0,
+      "children_per_node": 8
+    },
+    "caller_numeric_limits_added": false,
+    "availability": "observed",
+    "root_type_observed": true,
+    "root_first_type": "AudioFXPortSetup",
+    "root_child_count": 7,
+    "direct_children_observed": [
+      {
+        "child_index": 0,
+        "node_index": 1,
+        "id": "Input00"
+      },
+      {
+        "child_index": 1,
+        "node_index": 2,
+        "id": "Output01"
+      },
+      {
+        "child_index": 2,
+        "node_index": 3,
+        "id": "Output02"
+      },
+      {
+        "child_index": 3,
+        "node_index": 4,
+        "id": "Output03"
+      },
+      {
+        "child_index": 4,
+        "node_index": 5,
+        "id": "Output04"
+      },
+      {
+        "child_index": 5,
+        "node_index": 6,
+        "id": "Output05"
+      },
+      {
+        "child_index": 6,
+        "node_index": 7,
+        "id": "Output06"
+      }
+    ],
+    "indexed_membership": {
+      "child_index": 8,
+      "slot_child_count": 9,
+      "unique_canonical_match": true
+    },
+    "node_count": 8,
+    "edge_count": 7,
+    "child_metadata_complete": false,
+    "metadata_counts": {
+      "types": 38,
+      "methods": 24,
+      "properties": 24,
+      "text_bytes": 2079
+    },
+    "controller_support": "unknown",
+    "assignment_values_observed": false,
+    "routing_verified": false,
+    "atomic_snapshot": false,
+    "mutation_capability": false,
+    "physical_stability": "UNPROVEN",
+    "root_type": "AudioFXPortSetup",
+    "Input00_first_type": "AudioFXEndPointComponent",
+    "Output01_to_Output06_first_type": "AudioOutputNode",
+    "output_base_type": "AudioIONode",
+    "actual_current_index8_count9_not_historical_binding": true,
+    "whole_metadata_complete": false,
+    "IController_support": "UNOBSERVED_not_among_three_fixed_QI_checks",
+    "no_property_values_or_parameter_reads": true
+  },
+  "UI": {
+    "original_photos": 9,
+    "current_routes6_and_AudioIn_None_at4_checkpoints": true,
+    "Music_input_None_one_observed_choice": true,
+    "final_context_RPC_verified": true,
+    "final_Main_Music_UI_recaptured_after_editor": false,
+    "numeric_internalMonitorVol": "UNOBSERVED",
+    "route_dropdown_actions": 0,
+    "physical_test_MIDI_events": 0,
+    "internal_RPC_wakeup_is_separate": true,
+    "after_nodes_final_Music_record_monitor_attestation": "FALSE_LABEL_editor_only_images; full RUNBOOK UI checkpoint contract NOT_VERIFIED"
+  },
+  "parameter_pages_capture_load_catalog_preset_apply": 0,
+  "closure": {
+    "named_Scratch_NoSave": true,
+    "appfalse_then_immediate_CUA_completion": true,
+    "owner_EOF_exit0": true,
+    "DAW_MCP_absent": true,
+    "both_locks_reacquired_released": true,
+    "source179_artifact13_saved10_Main_exact": true,
+    "passive_hardware_complete_before_process_check": true
+  },
+  "hardware": {
+    "passive_audio_before": 2,
+    "passive_audio_after": 2,
+    "before_after_MIDI_endpoints0": true,
+    "supplementary_owner_virtual_source1_name_and_profile_UID_matched": true,
+    "passive_inventory_equal": true,
+    "operator_hardware_audio_configuration_actions": 0,
+    "physical_stability": "UNPROVEN"
+  },
+  "elapsed_seconds": {
+    "full_unit_including_preflight_wait_context": 907.1,
+    "first_DAQ_write_to_closure": 468.668,
+    "first_to_last_DAQ_write": 353.944,
+    "metadata_first_write_to_closure": 711.28,
+    "post_audit_file_to_closure": 99.078,
+    "context_compaction_gap21_to22": 238.466,
+    "offline_preparation": 579.709,
+    "offline_kit_review": 400.296,
+    "offline_kit_review_hard_limit": 480
+  },
+  "deviations": [
+    "Context compaction between21 and22 extended the open-session interval; no extra request or retry.",
+    "Root closure first local attempt used list as map and failed before any file output or DAQ; corrected.",
+    "Offline preparation exceeded its60second report reserve by39.709seconds while staying under hard600seconds.",
+    "Offline kit reviewer used one70.02second sleep; this violated the60second wait rule and is disclosed.",
+    "Frozen after-nodes/final UI attestations overclaim Main Music input/record/monitor observation; editor-only images support only CV route None. No full-checkpoint UI acceptance or replay."
+  ],
+  "evidence_sha256": {
+    "actual_manifest85": "06b85217dffc03af936a530a74ba01728b257949f7d6a529a7f4915dd14aabd1",
+    "actual_closure": "ebf183903045724b981fe0168ec84914fd8dfd24884b91751138d871f3b53f2b",
+    "complete27_audit": "e5a96d74a88f0ee43eb95bfa5b929276af01e93f5e97895fa0a8083f621b1e1b",
+    "offline_kit_review_report": "ea48897db8db5112170f62c7108a570926fd8781500e582adef7078c2f7d977b",
+    "independent_acceptance_report": "90976b67dce4cece8e74b86ec9268132f8e3514fd031455e42d8bfc10434dae9",
+    "independent_acceptance_manifest": "7f015d421e7bedd698a7e65f056b33241c8474f01f66a03466f7917f1e8d6604"
+  },
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "preset_classes_completed": 40,
+  "preset_classes_total": 46,
+  "preset_cases": 77,
+  "verified_names": 6866,
+  "inventory_names": 7112,
+  "independent_acceptance": {
+    "verdict": "ACCEPTED_BOUNDED_NATIVE_METADATA_AND_CURRENT_CV_NONE_UI",
+    "all_checkpoint_Music_record_monitor_UI_contract": "NOT_VERIFIED",
+    "elapsed_seconds": 202.825,
+    "original_actual_files_checked": 85,
+    "mismatches": 0,
+    "reviewer_DAQ": 0,
+    "new_schema_semantic_or_broad_tests_rerun": false,
+    "actual_audit_rerun_readonly": true
+  }
+}

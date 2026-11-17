@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "status": "BOUNDED_STATIC_COMPLETE_RUNTIME_MAPPING_UNPROVED",
+  "REA_version": "6.9.0",
+  "Ghidra_version": "12.1.4",
+  "procedure": "0xf8cc",
+  "artifact_sha256": "fc3c18837b74ebc01880af6976f323107b9c5aaf3f62576e0827eed2376f6c14",
+  "evidence_id": "ev_e3dcb199f2e79796b74a6f32fde9006bd7449bef57351d7a2219f27bbaae69d1",
+  "analysis_profile_sha256": "11d2ec66a15afbf17c4fda7ad01c92dcd41ee88c6ea4510ff03dbc3f696f750a",
+  "private_evidence_sha256": "5005019fdc01a1758291e3f0d0b8020d53c55cb129aa708c850246df1e2fe017",
+  "static_functions_requested": 1,
+  "DAW_calls": 0,
+  "vendor_writes": 0,
+  "provider_closed": true,
+  "facts": [
+    "empty chord path uses range/remainder/backward search when fill is allowed",
+    "selected chord output adds input-source difference and effective transpose, bounded below128"
+  ],
+  "observed_runtime_config": {
+    "autofill": 1,
+    "loKey": 48,
+    "hiKey": 72,
+    "transpose_raw": 12,
+    "transpose_text": "0",
+    "learnMode": 0
+  },
+  "hypothesis_only": {
+    "canonical_input": 49,
+    "MIDI_input": 48,
+    "selected_stored_input": 60,
+    "stored_outputs": [
+      60,
+      63,
+      67,
+      70,
+      74
+    ],
+    "shift": -12,
+    "predicted_canonical_output_live": [
+      49,
+      52,
+      56,
+      59,
+      63
+    ]
+  },
+  "actually_observed_positive_output_live_in_failed_page": [
+    49,
+    52
+  ],
+  "unobserved_predicted_outputs": [
+    56,
+    59,
+    63
+  ],
+  "direct_range_helper_semantics_not_separately_decompiled": "0x1570c",
+  "actual_current_value_success_cases_added": 0,
+  "MIDI_mapping_verified": false,
+  "audio_noteoff_verified": false,
+  "next_scope": "only one fixed canonical49 hypothesis with full908/128 stablepairs and exact restoration; no generic allowlist widening"
+}

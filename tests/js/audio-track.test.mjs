@@ -1,16 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { editTaskHarness } from './host.mjs';
+import { bridgeHarness, editTaskHarness } from './host.mjs';
 
 function audioTrackHarness() {
   const task = editTaskHarness();
   const tracks = [{ name: 'Existing', mediaType: 'Audio' }];
-  const format = { name: '5.1', mediaType: 'Audio' };
+  const format = { name: 'Audio Stereo', mediaType: 'Audio', formatData: { name: '스테레오', type: 3 } };
+  const formats = [format];
   const formatLookups = [];
+  const formatReads = [];
   const calls = [];
-  task.Host.Engine = { TrackFormats: {
-    findEqual(name) { formatLookups.push(name); return name === '5.1' ? format : null; },
-  } };
+  const formatList = {
+    get count() { return formats.length; },
+    at(index) { formatReads.push(index); return formats[index]; },
+    findEqual(name) { formatLookups.push(name); return name === format.name ? format : null; },
+  };
+  task.Host.Engine = { TrackFormats: formatList };
   const functions = {
     executeImmediately: false,
     root: {
@@ -28,18 +33,24 @@ function audioTrackHarness() {
     },
   };
   const context = { functions, mainTrackList: { getInsertPosition: () => tracks.length } };
-  const op = { op: 'addAudioTrack', name: 'Surround scratch', format: '5.1' };
-  return { task, tracks, format, formatLookups, calls, functions, context, op };
+  const op = { op: 'addAudioTrack', name: 'Surround scratch', format: '스테레오' };
+  return { task, tracks, format, formats, formatList, formatLookups, formatReads, calls, functions, context, op };
 }
 
-test('audio track creation passes the exact named format and reports the created track before its channel settles', () => {
+test('a bridge-advertised Korean format creates a track with the original native record before its channel settles', () => {
   const h = audioTrackHarness();
-  const result = h.task.run([h.op], h.context).results[0];
-  assert.deepEqual(h.formatLookups, ['5.1']);
+  const bridge = bridgeHarness();
+  bridge.Host.Engine = h.task.Host.Engine;
+  const advertised = bridge.request({ op: 'trackFormats' }).result;
+  assert.deepEqual(advertised.formats, [{ format: '스테레오', speakerType: 3, mediaType: 'Audio' }]);
+  assert.equal(advertised.truncated, false);
+  const result = h.task.run([{ ...h.op, format: advertised.formats[0].format }], h.context).results[0];
+  assert.equal(result.created, true, result.error);
   assert.equal(h.calls.length, 1);
+  assert.deepEqual(h.formatLookups, []);
   assert.equal(h.calls[0].format, h.format);
   assert.deepEqual(h.calls[0], { index: 1, name: 'Surround scratch', format: h.format, immediate: true });
-  assert.deepEqual(result, { op: 'addAudioTrack', created: true, track: 'Surround scratch', format: '5.1' });
+  assert.deepEqual(result, { op: 'addAudioTrack', created: true, track: 'Surround scratch', format: '스테레오' });
   assert.equal(h.functions.executeImmediately, false);
 });
 
@@ -47,7 +58,7 @@ test('unknown audio format refuses creation without falling back to the master o
   const h = audioTrackHarness();
   const result = h.task.run([{ ...h.op, format: 'Unknown format' }], h.context).results[0];
   assert.match(result.error, /no track format named/);
-  assert.deepEqual(h.formatLookups, ['Unknown format']);
+  assert.deepEqual(h.formatLookups, []);
   assert.equal(h.calls.length, 0);
   assert.equal(h.tracks.length, 1);
 });
@@ -56,7 +67,7 @@ test('a known non-audio format refuses creation', () => {
   const h = audioTrackHarness();
   h.format.mediaType = 'Music';
   const result = h.task.run([h.op], h.context).results[0];
-  assert.match(result.error, /not audio/);
+  assert.match(result.error, /no track format named/);
   assert.equal(h.calls.length, 0);
 });
 
@@ -91,6 +102,7 @@ test('invalid names and formats refuse before native format lookup or creation',
       const result = h.task.run([{ ...h.op, [field]: value }], h.context).results[0];
       assert.match(result.error, /required/);
       assert.deepEqual(h.formatLookups, []);
+      assert.deepEqual(h.formatReads, []);
       assert.equal(h.calls.length, 0);
     }
   }
@@ -121,6 +133,65 @@ test('audio track creation uses the existing document and session guard', () => 
   h.task.arm([h.op], { request: { expectedDocument: 'another-document' } });
   const result = h.task.invoke(h.context);
   assert.match(result.error, /context does not match/);
+  assert.deepEqual(h.formatLookups, []);
+  assert.deepEqual(h.formatReads, []);
+  assert.equal(h.calls.length, 0);
+});
+
+test('duplicate advertised Audio labels refuse creation even for distinct internal names', () => {
+  const h = audioTrackHarness();
+  h.formats.push({ name: 'Other Stereo', mediaType: 'Audio', formatData: { name: h.op.format, type: 3 } });
+  const result = h.task.run([h.op], h.context).results[0];
+  assert.match(result.error, /ambiguous/);
+  assert.equal(h.calls.length, 0);
+});
+
+test('a non-Audio label does not shadow the exact Audio format', () => {
+  const h = audioTrackHarness();
+  h.formats.unshift({ name: 'Instrument', mediaType: 'Music', formatData: { name: h.op.format, type: 3 } });
+  const result = h.task.run([h.op], h.context).results[0];
+  assert.equal(result.created, true);
+  assert.equal(h.calls[0].format, h.format);
+});
+
+test('unsafe or truncated format counts refuse before enumeration or creation', () => {
+  for (const count of [-1, 0.5, Infinity, NaN, '1', 129, Number.MAX_SAFE_INTEGER + 1]) {
+    const h = audioTrackHarness();
+    Object.defineProperty(h.formatList, 'count', { value: count });
+    const result = h.task.run([h.op], h.context).results[0];
+    assert.match(result.error, /format list/);
+    assert.deepEqual(h.formatReads, []);
+    assert.equal(h.calls.length, 0);
+  }
+});
+
+test('a complete 128-record list remains selectable', () => {
+  const h = audioTrackHarness();
+  for (let i = 1; i < 128; i++) h.formats.push({ mediaType: 'Music' });
+  const result = h.task.run([h.op], h.context).results[0];
+  assert.equal(result.created, true);
+  assert.equal(h.calls[0].format, h.format);
+});
+
+test('malformed native records refuse creation even after an exact match', () => {
+  for (const malformed of [null, {}, { mediaType: 'Audio' },
+    { mediaType: 'Audio', formatData: {} },
+    { mediaType: 'Audio', formatData: { name: 3, type: 3 } },
+    { mediaType: 'Audio', formatData: { name: 'Other', type: '3' } },
+    { mediaType: 'Audio', formatData: { name: 'Other', type: NaN } }]) {
+    const h = audioTrackHarness();
+    h.formats.push(malformed);
+    const result = h.task.run([h.op], h.context).results[0];
+    assert.match(result.error, /format (list|metadata)/);
+    assert.equal(h.calls.length, 0);
+  }
+});
+
+test('an unavailable native enumerator refuses creation without findEqual fallback', () => {
+  const h = audioTrackHarness();
+  delete h.formatList.at;
+  const result = h.task.run([h.op], h.context).results[0];
+  assert.match(result.error, /format list/);
   assert.deepEqual(h.formatLookups, []);
   assert.equal(h.calls.length, 0);
 });

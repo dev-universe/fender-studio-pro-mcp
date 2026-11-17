@@ -1,0 +1,69 @@
+{
+  "status": "ACCEPTED_ROOT_INDEPENDENTLY_REVIEWED_EIGHT_NAME_DELTA",
+  "tuple_key": [
+    "class_uid",
+    "source",
+    "canonical_name"
+  ],
+  "canonical_tuples": [
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch10.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch11.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch12.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch13.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch14.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch15.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch16.guiInput"
+    ],
+    [
+      "A7E3529F-6316-4E52-9A07-31739B027C88",
+      "dsp",
+      "keyboard.pitch17.guiInput"
+    ]
+  ],
+  "previous_accepted": 6669,
+  "new_disjoint": 8,
+  "fixed_inventory": 7112,
+  "InputFilter_remaining": 111,
+  "Chorder_remaining_unchanged": 83,
+  "remaining_classes": 19,
+  "original_collector_strict_increment_unchanged": 0,
+  "backlog42_unchanged": true,
+  "preset30_of46_unchanged": true,
+  "actual_new_calls": 0,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "whole_InputFilter_complete": false,
+  "accepted_after": 6677,
+  "remaining_after": 435,
+  "proposal_freeze_sha256": "cd124bbfd5eaadf490333fbced21f37970c23ff57956efeacdbe71533de5ca30",
+  "root_review_sha256": "fce110034d9c4d688758a5d98bccb11ba6a2965f138f6242d0b5b3fc09adaeec",
+  "accepted_union_sha256": "0e3583bb36375329f1c58e48d235be36c2aa9eb4664fef0b6053d743df647f96"
+}

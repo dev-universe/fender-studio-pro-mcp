@@ -1,0 +1,55 @@
+{
+  "status": "CLOSED_NOT_ACCEPTED_TRACK_SELECTION_RECORD_MONITOR_COUPLING",
+  "namespace": "r65",
+  "native_unit": 55,
+  "closed_epoch_ms": 1794706338887,
+  "actual_DAQ": 11,
+  "last_id": 13,
+  "guards_passed": 10,
+  "unknown_outcomes": 0,
+  "MCP_predispatch_rejections": 0,
+  "actual_selection_effects": {
+    "CV_Instrument": {
+      "recordArmed": [
+        0,
+        1
+      ],
+      "monitor": [
+        0,
+        1
+      ]
+    },
+    "Mojito_10": {
+      "recordArmed": [
+        1,
+        0
+      ],
+      "monitor": [
+        1,
+        0
+      ]
+    }
+  },
+  "last_session14_not_sent": true,
+  "plugin_inspect_or_editor_or_route_DAQ": 0,
+  "input_None_choice": 0,
+  "unplanned_record_monitor_setters": 0,
+  "MIDI_events": 0,
+  "unplanned_inverse_or_retry": 0,
+  "Root_NoSave_appfalse_immediate_CUA": true,
+  "owner_EOF_exit_code": 0,
+  "passive_hardware_finished_before_ps": true,
+  "process_absent": true,
+  "both_locks_reacquired_released": true,
+  "saved10_equal": true,
+  "source177_artifact13_exact": true,
+  "MIDI0_after": true,
+  "elapsed_first_DAQ_to_closure_seconds": 73.285,
+  "elapsed_connection_seconds": 108.448,
+  "whole_unit_accepted": false,
+  "fixed_count_increment": 0,
+  "schema": 1,
+  "date": "2026-11-15",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "private_closure_sha256": "568085d632f546fea8e54ff6328cf8cab4009ec21a133ee7c5e19c11b650ed3f"
+}

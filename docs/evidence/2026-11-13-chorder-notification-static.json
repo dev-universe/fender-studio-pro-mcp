@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "status": "static_observations_complete_live_keyboard_unverified",
+  "REA": "6.9.0",
+  "Ghidra": "12.1.4",
+  "helper_table": {
+    "active_unit_elapsed_seconds": 107.447,
+    "worker_lifetime_seconds": 402.794,
+    "initial_idle_before_open_seconds": 295.347,
+    "bundle_sha256": "44a4772736800d57946642144bd6d65ca8960aaf0167b251201702f4c1dd2c4d",
+    "bundle_bytes": 91757
+  },
+  "IID_notification": {
+    "unit_elapsed_seconds": 164.003,
+    "bundle_sha256": "d281a647e9d9686b617363bedec26dda233b386e938745e5af007aa943a89ec6",
+    "bundle_bytes": 19524,
+    "observed_IID_matches_public_ISubject": true,
+    "notification_entry_is_8byte_this_adjustment_thunk": true,
+    "destination_not_newly_analyzed": true
+  },
+  "both_sources_unchanged": true,
+  "both_processes_normal_exit_and_absent": true,
+  "target_execution_calls": 0,
+  "DAW_calls": 0,
+  "Song_changes": 0,
+  "guiInput_mapping_verified": false,
+  "note_release_verified": false,
+  "current_value_names_added": 0,
+  "research_parked": true,
+  "next_fixed_scope": "Tuner index0 preset apply and exact restoration, collector UNBOUND",
+  "current_names": 6610,
+  "fixed_inventory": 7112,
+  "remaining_names": 502
+}

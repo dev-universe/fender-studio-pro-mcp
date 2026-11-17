@@ -1,0 +1,21 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 538.799,
+  "raw_tool_requests": 64,
+  "parent_verified_requests": 64,
+  "Main_and_Mojito9_volume_preparation_writes": 2,
+  "plugin_parameter_writes": 0,
+  "state_port_Save_transport_writes": 0,
+  "positive_isolation_checkpoint_reached": true,
+  "accepted_cases": 0,
+  "failure": "Root UI confirmation was not delivered within300seconds; positive setter never dispatched",
+  "full908_original_snapshots": 2,
+  "stored128_original_passes": 2,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "result_sha256": "b8ddc97710e3d9b8e3c4f5c94154ce96540ddf5a048975459800c11cb12228c3",
+  "journal_sha256": "3db24efa7d8d75e8cfabd7e4e76777afcff9fe68310fe0179e68d85ac27a720d"
+}

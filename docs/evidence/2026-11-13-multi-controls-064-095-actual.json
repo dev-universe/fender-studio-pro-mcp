@@ -1,0 +1,42 @@
+{
+  "status": "independently_verified_actual_current_value_batch",
+  "plugin": "Multi Instrument",
+  "fixed_scope": "control64 through control95",
+  "accepted_current_value_cases": 32,
+  "DAW_tool_requests": 787,
+  "parameter_setters": 64,
+  "changed_raw_value_by_kind": {
+    "Float": 2500,
+    "Integer": 64
+  },
+  "restored_raw_value": 0,
+  "native_kind_counts": {
+    "Float": 27,
+    "Integer": 5
+  },
+  "native_variant_tag": 2,
+  "full150_snapshots": 129,
+  "provider_pages": 387,
+  "exact_original_restored_each_case": true,
+  "all149_peer_values_nonvalue_unknown_preserved": true,
+  "normalization_linearity_assumed": false,
+  "Main_preparation_writes": 1,
+  "Save_actions": 0,
+  "transport_actions": 0,
+  "state_actions": 0,
+  "port_writes": 0,
+  "actual_elapsed_seconds": 732.323,
+  "NoSave_app_closed_owner_stopped_saved6_verified": true,
+  "previous_completed_roles_not_written": true,
+  "strict_name_coverage_increment": 0,
+  "MIDI_verified": false,
+  "callback_verified": false,
+  "assignment_verified": false,
+  "graph_verified": false,
+  "audio_verified": false,
+  "persistence_verified": false,
+  "audit_new_DAW_calls": 0,
+  "audit_freeze_sha256": "bf1228dc7f3e2d8ca1ef36a36e2bfc70f7fb1a3e8f6cf299eaf419918be3b6cd",
+  "audit_report_sha256": "d7048664b6ab38b58f13ae2705a85e10d47e0b778bbf4017eef72e5b44d4d22d",
+  "audit_evidence_sha256": "ab11d664547cf0dadf2619cda93adb777091629b55d664a8b45484e7e3069ddc"
+}

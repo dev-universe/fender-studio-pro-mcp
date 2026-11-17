@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "STATIC_EXACT_PAIRED_STORAGE_AND_SELECTED_INDEXED_READ_DESIGN",
+  "product_source_baseline": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
+  "actual_DAQ": 0,
+  "static_R2": {
+    "verdict": "EXACT_PAIRED_STORAGE_ENTRY_LOOKUP_ESTABLISHED_ENTRY_CLASS_AND_5C_UNKNOWN",
+    "elapsed_seconds": 453.322,
+    "analysis_seconds": 299.075,
+    "new_bodies": 8,
+    "unique_evidence": 12,
+    "duplicate_queries": 0,
+    "prior_queries_compared": 100,
+    "private_REA_processes": 1,
+    "Ghidra_engines": 1,
+    "warm_restore_observed": true,
+    "auto_analysis_rerun": false,
+    "paired_collection_offsets": [
+      "0x8",
+      "0x68"
+    ],
+    "count_get_index_virtual_offsets": [
+      "0xf0",
+      "0xf8"
+    ],
+    "resolved_accessors": [
+      "0x1001cd1fc",
+      "0x1001cd204"
+    ],
+    "exact_AudioEffect_buffer_count_fields": [
+      [
+        "0x1d8",
+        "0x1e0"
+      ],
+      [
+        "0x238",
+        "0x240"
+      ]
+    ],
+    "lookup_entry_key_bytes": 16,
+    "entry_key_virtual_offset": "0x100",
+    "entry_operation_virtual_offsets_unnamed": [
+      "0x128",
+      "0x138"
+    ],
+    "entry_class_and_element_5c": "UNKNOWN",
+    "input_output_roles": "UNKNOWN",
+    "next_grounded_seed": "0x100da8ffc",
+    "all_immutable_pins_matched": 14,
+    "export_close_sessionfalse_reset_EOF0": true,
+    "report_sha256": "afa5f8aa5a385075fcb67105825d9db5641358880c9cfffec4a711a73cd7b343",
+    "manifest_sha256": "4ff81de25a5539b63a237de82b4729cf61a2d52881ae5c21a4f83c481f24a541",
+    "bundle_sha256": "743e25f453d633b8e3d9b843830104303d23727857d89e5a5fc833cdd5dc69bd"
+  },
+  "design": {
+    "scope": "PROPOSED_PLUGIN_INSPECT_CV_PORT_PARAMETERS_INDEXED_DISCOVERY",
+    "same_parent_model_independent_candidates": 2,
+    "candidate_elapsed_seconds": [
+      332.967,
+      323.699
+    ],
+    "candidate_scores_out_of25": [
+      18,
+      20
+    ],
+    "candidate_report_sha256": [
+      "0227d868e39c3733c44e3ee28e0b4094eb6751b5dc46cd0e9e35e734baa671c7",
+      "cb15ae81fc19a6f2dc1db1e08c98a5dbc7459d688cba8c799725dbcef53c23c3"
+    ],
+    "cross_judge_elapsed_seconds": 212.894,
+    "cross_judge_report_sha256": "f5c0a836a80f7d8924985fa2b5d65f7e324703e0b21bc7dd32c38e38399873c9",
+    "selected_base": "B_private_indexed_witnesses",
+    "mandatory_grafts": [
+      "retain actual IParameter interface plus canonical and observed indexed pointer through receipt publication",
+      "after ALL Route and child ID copies, compare borrowed counts and indexed pointers before retained node Headers and UID/topology/context tail",
+      "declared IParameter controller association and original binding explicitly UNOBSERVED"
+    ],
+    "Root_final_policy_after_judge_freeze": "stable duplicate canonical indexed parameters allowed; per-index rows and witnesses retained; no unique-name or unique-parameter claim",
+    "rejected_A_costs": [
+      "shared ParameterBindingReadLease Rust API addition",
+      "complete original-chain requirement",
+      "up to512 retained original links"
+    ],
+    "shared_node_parameter_API_ABI_SDK_changes": false,
+    "scope_only_indexed_membership": true,
+    "assignment_values_observed": false,
+    "routing_verified": false,
+    "atomic_snapshot": false,
+    "mutation_capability": false,
+    "limits_proposed": {
+      "nodes": 8,
+      "per_controller": 32,
+      "all_parameters": 64,
+      "retained_DTO_text_bytes": 49152,
+      "encoded_native_response_bytes": 262144
+    },
+    "text_limit_is_cumulative_copy_or_total_memory_bound": false,
+    "describe_has_injected_inner_guards": false,
+    "count_limit_reads_zero_parameters_globally": true,
+    "R76_false_Main_UI_labels_not_reused": true,
+    "blind_candidate_grading": false,
+    "deviation": "Root FRAME included rubric and was supplied to candidates; no blind candidate claim",
+    "synthesis_sha256": "e87f27a59dcf50ad9315a9ef5721a4c13c2538b40095b4c2de9fa039d4f39161",
+    "implementation_started_one_writer": true,
+    "new_feature_runtime_support": "UNVERIFIED"
+  },
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "completed": 15,
+    "total": 43,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "next_work": "one indexed parameter implementation writer plus private UI recorder correction; regression review, normal build/install and separate finite actual trial; generic paired-entry branch PARKED pending new concrete evidence",
+  "conditional_next_bundle_ETA_minutes": [
+    40,
+    65
+  ],
+  "overall_loop_ETA": "UNKNOWN_RESEARCH_AND_HARDWARE",
+  "static_R3": {
+    "verdict": "PARKED_AFTER_ONE_UNTYPED_ENTRY_USER",
+    "elapsed_seconds": 200.122,
+    "analysis_seconds": 116.495,
+    "new_function_bodies": 1,
+    "unique_evidence": 1,
+    "seed": "0x100da8ffc",
+    "prior_queries_compared": 112,
+    "duplicates": 0,
+    "warm_restored_no_auto_analysis": true,
+    "immutable_pins_matched": 20,
+    "one_private_process_one_engine": true,
+    "export1_close_sessionfalse_reset1_EOF0": true,
+    "entry_type_element_5c_roles": "UNKNOWN",
+    "generic_helper_caller_branch_parked": true,
+    "resume_requires_new_concrete_type_vtable_accessor_or_writer_evidence": true,
+    "report_sha256": "1e2a2fa686522f11fe117d5f7ea4bc1518318acbb45620ee16e0cdd045b18f7c",
+    "manifest_sha256": "f318022de5b73e5566f53deb6d20bd766dd2d1833428dee09c375fec4af715ba",
+    "bundle_sha256": "e8ff229ac95cd6b885ee4d31c34f6dc5877f0e0c331e7f43975e8ae139c1914e"
+  },
+  "private_future_UI_recorder": {
+    "scope": "PRIVATE_BOOKKEEPING_ONLY_NOT_ACTUAL_UI_PROOF",
+    "elapsed_seconds": 298.3,
+    "analysis_freeze_seconds": 227.427,
+    "planned_freeze_seconds": 220,
+    "hard_limit_seconds": 300,
+    "tests_synthetic_passed": 25,
+    "Root_reviewed_code_usage_report": true,
+    "Root_broad_test_rerun": false,
+    "report_sha256": "347a72c489c6bd7acbddf72e18f4b27e528c44fb46984ad6c88b482de6b0ab25",
+    "helper_sha256": "e7518f5cfa22697d37c62802ea4987913ae2e1210ac1cce6f967ec71ff070d10",
+    "manifest_sha256": "cbdd8a76fa2864178403eefc1602cba11256ee37812918b4ac2c20038722a98f",
+    "surfaces": [
+      "cv_editor",
+      "song_main"
+    ],
+    "fields_cannot_cross_surfaces": true,
+    "same_image_cannot_identify_different_surfaces": true,
+    "paired_checkpoint_and_receipt_intent_timeline_required": true,
+    "Root_original_manual_view_required": true,
+    "independent_original_image_review_required": true,
+    "automatic_pixel_classification": false,
+    "actual_DAQ_authorized": false
+  }
+}

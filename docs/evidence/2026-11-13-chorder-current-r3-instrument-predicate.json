@@ -1,0 +1,23 @@
+{
+  "status": "failed_cleaned_up",
+  "actual_elapsed_seconds": 323.391,
+  "raw_tool_requests": 18,
+  "parent_verified_requests": 17,
+  "all_raw_receipts_observed_or_verified": true,
+  "Main_and_Mojito9_volume_preparation_writes": 2,
+  "plugin_parameter_writes": 0,
+  "state_port_Save_transport_writes": 0,
+  "positive_isolation_checkpoint_reached": false,
+  "accepted_cases": 0,
+  "Chorder_inspect_observed": true,
+  "Chorder_reported_count": 908,
+  "target_selected_unarmed_unmonitored": true,
+  "instrument_inspect_observed": true,
+  "failure": "collector required Mojito instead of exact assigned instance Mojito 9",
+  "app_closed_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "result_sha256": "2b48c131d9208748a0f9c6ecf10bb05396e198b5568b842c19a87170ccd10ab6",
+  "journal_sha256": "9ae0a15ba421924dd85ea537a56ed5c08c07e270ad9f1170c62ebdf0ec0b0b66",
+  "not_a_product_inspection_failure": true
+}

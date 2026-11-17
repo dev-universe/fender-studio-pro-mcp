@@ -1,0 +1,18 @@
+{
+  "status": "ROOT_REVIEW_NORMAL_NATIVE_BUILD_INSTALL_ALL_PINS_MATCH",
+  "native_unit": 44,
+  "product_source_commit": "c7747f60b7e2de156c43c92cafe3b90f40c08198",
+  "native_uuid": "3C0F65AA-B963-35D9-9233-CC84D6C466B6",
+  "native_manifest_sha256": "6eadbe981fd64d3f07c7e7638a9389df8bf613ffce526668f0f75c64a21ec937",
+  "main_sha256": "a99f6b3adc266474af1ba6177c2258c55c3a84cad28ebc582e7b75a23f701915",
+  "source_pin_count": 150,
+  "package_file_count": 4,
+  "native_build_seconds": 9.17,
+  "doctor_current": true,
+  "native_files_match": true,
+  "force_used": false,
+  "main_rebuild_needed": false,
+  "main_source_unchanged_since": "bd43f35",
+  "actual_DAW_calls": 0,
+  "at": "2026-11-14T00:33:42.746926+00:00"
+}

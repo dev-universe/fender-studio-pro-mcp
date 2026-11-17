@@ -1,0 +1,255 @@
+{
+  "at": "2026-11-13T23:03:16.198550+00:00",
+  "status": "PASS",
+  "job_id": "a7aa0bf4-d377-41fe-a307-20fc8ae4e00e",
+  "actual_elapsed_seconds": 406.206,
+  "raw_tool_requests": 579,
+  "parent_verified_requests": 579,
+  "mixer_writes": 2,
+  "track_selection_attempts": 1,
+  "plugin_parameter_writes": 14,
+  "state_actions": 0,
+  "state_port_transport_Save_actions": 0,
+  "accepted_fixed_current_value_cases": 7,
+  "strict_name_increment": 0,
+  "provider_records": 388,
+  "provider_snapshots": 42,
+  "provider_pages": 294,
+  "exact_full_restoration": true,
+  "all_units_session_original_same": true,
+  "other385_exact": true,
+  "all_nonvalue_unknown_exact": true,
+  "actual_same_selected_track_instrument": "Mojito 7",
+  "actual_unique_channel_index": 59,
+  "instrument_verified_before_any_setter": true,
+  "units": [
+    {
+      "canonical_pitch": 122,
+      "name": "keyboard.pitch122.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 367,
+          "name": "keyboard.pitch122.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 368,
+          "name": "keyboard.pitch122.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 369,
+          "name": "keyboard.pitch122.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 123,
+      "name": "keyboard.pitch123.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 370,
+          "name": "keyboard.pitch123.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 371,
+          "name": "keyboard.pitch123.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 372,
+          "name": "keyboard.pitch123.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 124,
+      "name": "keyboard.pitch124.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 373,
+          "name": "keyboard.pitch124.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 374,
+          "name": "keyboard.pitch124.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 375,
+          "name": "keyboard.pitch124.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 125,
+      "name": "keyboard.pitch125.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 376,
+          "name": "keyboard.pitch125.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 377,
+          "name": "keyboard.pitch125.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 378,
+          "name": "keyboard.pitch125.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 126,
+      "name": "keyboard.pitch126.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 379,
+          "name": "keyboard.pitch126.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 380,
+          "name": "keyboard.pitch126.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 381,
+          "name": "keyboard.pitch126.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 127,
+      "name": "keyboard.pitch127.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 382,
+          "name": "keyboard.pitch127.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 383,
+          "name": "keyboard.pitch127.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 384,
+          "name": "keyboard.pitch127.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    },
+    {
+      "canonical_pitch": 128,
+      "name": "keyboard.pitch128.guiInput",
+      "setters": 2,
+      "whole388_restored": true,
+      "other385_exact": true,
+      "observed_values": [
+        {
+          "index": 385,
+          "name": "keyboard.pitch128.guiInput",
+          "original": 0,
+          "positive": 5000,
+          "restored": 0
+        },
+        {
+          "index": 386,
+          "name": "keyboard.pitch128.playingLive",
+          "original": 0,
+          "positive": 1,
+          "restored": 0
+        },
+        {
+          "index": 387,
+          "name": "keyboard.pitch128.playingScheduled",
+          "original": 0,
+          "positive": 0,
+          "restored": 0
+        }
+      ]
+    }
+  ],
+  "app_closed_observed": true,
+  "NoSave_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "result_sha256": "2efe9f909b073b5049d36e33a768d183b6935ec95348581d2c89b6538b97acc3",
+  "journal_sha256": "40b2b5a1e93024164eea62c8e14b619a3cde06baaa6a7f023d4eee6726505e3b",
+  "proof_sha256": "0b5129a908c57a600c7cf867658045b81480df0eaf663d1816d58db4ed3bb63f",
+  "journal_bytes": 35764093,
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "product_source_commit": "c733ce5",
+  "native_unit": 41,
+  "scope": "seven fixed Input Filter canonical122..128 current values only; not general MIDI/pitch mapping, events, noteoff, audio or persistence"
+}

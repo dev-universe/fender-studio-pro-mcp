@@ -1,0 +1,41 @@
+{
+  "verified_epoch_ms": 1794905240479,
+  "source_files": 181,
+  "artifact_files": 13,
+  "saved_songs_unchanged": 10,
+  "Main_unchanged": true,
+  "DAW_MCP_absent": true,
+  "two_locks_reacquired_released": true,
+  "normal_and_actual_owner_explicit_waited_child0": true,
+  "last_static_engine_explicit_waited_child0": true,
+  "doctor_current": true,
+  "doctor_live_verified": false,
+  "bridge_closed": true,
+  "MIDI_sources_destinations": [
+    0,
+    0
+  ],
+  "OS_audio_count": 5,
+  "operator_hardware_configuration_actions": 0,
+  "physical_stability": "UNPROVEN",
+  "new_actual_after_R81": 0,
+  "automatic_resume_scheduled": false,
+  "schema": 1,
+  "date": "2026-11-17",
+  "status": "PAUSED_AT_USER_CUTOFF_SAFE_BOUNDARY",
+  "paused_at": "2026-11-17T17:47:20+09:00",
+  "user_cutoff_KST": "18:00",
+  "native_unit": 59,
+  "product_source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
+  "final_private_manifest_sha256": "8bf2ec0947342912a66103a9fb6e7d9e05d23920c8c5739dada63d350d5384a9",
+  "resume_phrase": "진행 재개해",
+  "all_builtin_plugins_fully_verified": false,
+  "fixed_counts": {
+    "completed": 15,
+    "total": 43,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "overall_completion_ETA": null
+}

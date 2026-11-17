@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CONCRETE_CV_STRUCTURED_PREPARE_CLEANUP_STATIC",
+  "status": "PARTIAL_LIFECYCLE_MUTATION_ESTABLISHED",
+  "new_function_bodies": 3,
+  "focused_records": 10,
+  "elapsed_seconds": 297.327,
+  "engine_closed_elapsed_seconds": 175.469,
+  "DAQ": 0,
+  "public_interface_table_grounded_by_exact_IID": true,
+  "prepare_builds_objects_lists_and_changes_fields": true,
+  "prepare_invokes_unidentified_owner_interface_callback": true,
+  "owner_IID": "FBB66AB6-CDF0-4E39-8E8E-0CB99F062C46",
+  "owner_interface_name": "UNKNOWN",
+  "cleanup_writes_fields_and_calls_helper": true,
+  "pure_read_established": false,
+  "assignment_preservation_established": false,
+  "one_exact_constant_read": "INCOMPLETE_zero_bytes_not_absence",
+  "engine_exported_closed_reset": true,
+  "explicit_waited_child_exit_code": 0,
+  "original_pins_unchanged": 6,
+  "exact_240_second_status_marker": "not_written_analysis_and_engine_already_closed_before240",
+  "next_max_three_bodies": [
+    "0x101594844",
+    "0x1014933c4",
+    "0x1014933dc"
+  ],
+  "next": "Identify owner IID from pinned public SDK if available, then cleanup/count/get ownership and before-prepare validity. No live lifecycle calls yet.",
+  "evidence_sha256": {
+    "report": "f9828f274232d404d0bbec6fbfb8a6136541788edfbe75c71be7bcff00196e47",
+    "manifest": "90f378e7bc70165ca5f5ab3b4523376ba53a1ef7983624504ab802502f5546df"
+  },
+  "fixed_count_increment": 0
+}

@@ -190,11 +190,13 @@ impl SongArchive {
             let entry = zip
                 .by_index(i)
                 .map_err(|e| format!("invalid ZIP entry: {e}"))?;
-            let name = entry.name();
-            if !safe_entry_name(name) {
+            let name = entry
+                .name()
+                .map_err(|e| format!("invalid ZIP member name: {e}"))?;
+            if !safe_entry_name(&name) {
                 return Err("song archive contains an unsafe member path".into());
             }
-            if !names.insert(name.to_owned()) {
+            if !names.insert(name.into_owned()) {
                 return Err("song archive contains duplicate member paths".into());
             }
             total = total.checked_add(entry.size()).ok_or("ZIP size overflow")?;

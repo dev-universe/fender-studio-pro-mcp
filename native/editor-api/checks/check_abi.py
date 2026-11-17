@@ -6,6 +6,7 @@ if len(sys.argv) != 2:
     raise SystemExit("Usage: check_abi.py /path/to/compiled-arm64.s")
 assembly = Path(sys.argv[1]).read_text()
 expected = {
+    "control_parameter": 24,
     "query": 0, "retain": 8, "release": 16, "object_type": 24,
     "type_name": 40, "node_uid": 32, "node_class": 40,
     "node_find": 80, "node_lookup": 104,

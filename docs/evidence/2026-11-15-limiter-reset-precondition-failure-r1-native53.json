@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "status": "FAILED_FRESH_FORMATTER_PRECONDITION_BEFORE_SIGNAL_OR_RESET",
+  "product_source": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+  "native_unit": 53,
+  "elapsed_seconds": 298.424,
+  "planned_DAQ": 48,
+  "actual_DAQ": 18,
+  "accepted_completed_unit_DAQ": 0,
+  "failed_or_nonadmitted_DAQ": 18,
+  "last_RPC": 20,
+  "first_unexecuted_RPC": 21,
+  "fresh_formatter_observation": {
+    "parameter": "level",
+    "plugin": "Tone Generator",
+    "native_kind": "Float",
+    "native_max_bits": "40C3880000000000",
+    "requested_value": 10000,
+    "actual_text": "24.00",
+    "current_unchanged": true,
+    "failed_expected_text": "0dB",
+    "implementation_error_proved": false
+  },
+  "mutations": {
+    "Main_volume0": 1,
+    "new_fixture_volume0": 1,
+    "new_unsaved_Audio_track": 1,
+    "Tone_added_Off": 1,
+    "Tone_level_setters": 0,
+    "ToneOn": 0,
+    "Limiter_added": 0,
+    "reset_pulses": 0,
+    "preset_or_state_load_or_Save": 0
+  },
+  "closure": {
+    "owned_Scratch_NoSave": true,
+    "CUA_app_open": false,
+    "owner_EOF_exit_code": 0,
+    "sequential_hardware_then_process": true,
+    "no_relevant_processes": true,
+    "locks_reacquired_released": 2,
+    "saved_files_unchanged": 10,
+    "MIDI_sources_and_destinations_before_after": 0
+  },
+  "evidence_pins": {
+    "closure": "c85616d003428978d9a936365005f2075a6c55575f10bff2e479f0eaddc26f61",
+    "original_formatter_RPC20": "904028ee8497c2105696bd4d76d198efd947f6a9180a3381cbc2576a95fa9886",
+    "literal_intents": "61ef7e5f8ffa2433151ead32e4570441ec9c0ba7f371b8eaa06ecc060a3ccebe",
+    "original_stdout": "b59c1c8b30feef426300d28ea0673ab7049acb6e214a44b28efe2bcd84288396",
+    "saved10_after": "910be246841c287fe54d3b0045e5ea3074cb6e108a93d19caa95bbe99c32d8c8"
+  },
+  "next": "Fresh separately reviewed R2 with one explicitly admitted +24dB current native maximum formatter case, same dual-zero/noexternal fixture and unchanged independent effect/restoration guards. No interpolation or in-place R1 change.",
+  "accounting": {
+    "fixed_total": 43,
+    "fixed_complete": 11,
+    "remaining": 32,
+    "hardware_blocked": 4,
+    "fixed_parameter_names": 6866,
+    "fixed_parameter_names_total": 7112,
+    "preset_classes_complete": 39,
+    "preset_classes_total": 46,
+    "preset_cases": 76
+  }
+}

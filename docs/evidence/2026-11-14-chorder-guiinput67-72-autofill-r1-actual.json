@@ -1,0 +1,158 @@
+{
+  "at": "2026-11-13T18:32:54.865180+00:00",
+  "status": "PASS",
+  "job_id": "a49f97c0-6f26-4702-abeb-0fdd65e5f732",
+  "actual_elapsed_seconds": 617.613,
+  "raw_tool_requests": 691,
+  "parent_verified_requests": 691,
+  "mixer_writes": 2,
+  "track_selection_attempts": 1,
+  "plugin_parameter_writes": 12,
+  "state_actions": 0,
+  "port_Save_transport_writes": 0,
+  "accepted_fixed_current_value_cases": 6,
+  "strict_name_increment": 0,
+  "provider_records": 908,
+  "provider_snapshots": 36,
+  "provider_pages": 288,
+  "stored_model_inputs": 128,
+  "stored_model_snapshots": 36,
+  "stored_model_pages": 288,
+  "exact_full_restoration": true,
+  "model_unchanged": true,
+  "all_units_session_original_and_model_same": true,
+  "other901_peers_per_case_exact": true,
+  "all_nonvalue_unknown_exact": true,
+  "units": [
+    {
+      "canonical_pitch": 67,
+      "name": "chorder.pitch67.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 114.175,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    },
+    {
+      "canonical_pitch": 68,
+      "name": "chorder.pitch68.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.043,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    },
+    {
+      "canonical_pitch": 69,
+      "name": "chorder.pitch69.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 79.707,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    },
+    {
+      "canonical_pitch": 70,
+      "name": "chorder.pitch70.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.042,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    },
+    {
+      "canonical_pitch": 71,
+      "name": "chorder.pitch71.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 81.174,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    },
+    {
+      "canonical_pitch": 72,
+      "name": "chorder.pitch72.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.742,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other901_exact": true
+    }
+  ],
+  "app_closed_observed": true,
+  "NoSave_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "positive_predicted_output_canonical_names": {
+    "67": [
+      67,
+      70,
+      74,
+      77,
+      81
+    ],
+    "68": [
+      68,
+      71,
+      75,
+      78,
+      82
+    ],
+    "69": [
+      69,
+      72,
+      76,
+      79,
+      83
+    ],
+    "70": [
+      70,
+      73,
+      77,
+      80,
+      84
+    ],
+    "71": [
+      71,
+      74,
+      78,
+      81,
+      85
+    ],
+    "72": [
+      72,
+      75,
+      79,
+      82,
+      86
+    ]
+  },
+  "six_readonly_predictions_observed_exact": true,
+  "model_mapping_verified": false,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "result_sha256": "21aadfe97edccde53f570e63bad28853944750aa97be6f575727c64c5c6095c4",
+  "journal_sha256": "90f807e8c1f9c8a90344b631224254ff734d335ec514b226928e7f6ef53e22b0",
+  "proof_sha256": "4efd5b22149dea3845b16c334a13e58ca441ac836fb3694359492e37b89dcd96",
+  "journal_bytes": 68961334,
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "product_source_commit": "c733ce5",
+  "native_unit": 41,
+  "scope": "six fixed canonical67..72 AutoFill current values; six readonly predictions each; no general MIDI/model mapping, noteoff, audio or persistence"
+}

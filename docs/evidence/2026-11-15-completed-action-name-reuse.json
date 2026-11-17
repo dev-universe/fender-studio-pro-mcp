@@ -1,0 +1,57 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "scope": "READ_ONLY_REUSE_AUDIT_NO_NEW_ADMISSIONS",
+  "candidate_count": 7,
+  "eligible_current_value_name_additions": 0,
+  "existing_accepted_names": 6866,
+  "inventory_names": 7112,
+  "remaining_names": 246,
+  "candidate_tuples": [
+    [
+      "831A0046-BD71-45BF-A419-6FC90D6E9F2F",
+      "dsp",
+      "swapfreqs"
+    ],
+    [
+      "132C0E1F-06FD-4C96-BD65-678C04FE1C92",
+      "dsp",
+      "swapfreqs"
+    ],
+    [
+      "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
+      "dsp",
+      "studiocomp.swapfreqs"
+    ],
+    [
+      "36F3F4D1-CBB4-4BF7-A7E3-EBCCED53718B",
+      "dsp",
+      "studiocomp.resetmin"
+    ],
+    [
+      "61B18D53-26FA-4220-8614-89944A1990EC",
+      "dsp",
+      "resetmin"
+    ],
+    [
+      "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+      "dsp",
+      "resethold"
+    ],
+    [
+      "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6",
+      "dsp",
+      "resetloudness"
+    ]
+  ],
+  "candidate_intersection_accepted6866": 0,
+  "candidate_intersection_remaining246": 7,
+  "independent_own_button_values_did_not_change": true,
+  "internal_pulses_or_other_meter_filter_effects_not_scalar_current_value_pairs": true,
+  "prior_action_effect_acceptance_not_reversed": true,
+  "completed_same_sweeps_not_replayed": true,
+  "new_DAQ": 0,
+  "fixed_count_increment": 0,
+  "report_sha256": "00c44e08fa98ce2e15bd8c68f7b2f8a6c200f850d6c49a3c6dd9244c50732ef5",
+  "matrix_sha256": "66bea2c6214c43ef89035fd89001d6640d09de55c14581c3101f9344aa62cacb"
+}

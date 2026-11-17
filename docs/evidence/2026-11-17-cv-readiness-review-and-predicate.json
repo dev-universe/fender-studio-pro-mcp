@@ -1,0 +1,51 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "OFFLINE_READ_CAPTURE_KIT_REVIEW_FAILED_NO_RUNTIME",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "native_unit": 55,
+  "kit": {
+    "planned_DAQ": 40,
+    "ids": "3..42",
+    "prep_elapsed_seconds": 575.537,
+    "schema40_pass": true,
+    "current_Rust_semantics40_pass": true,
+    "legacy_offline_padding41_not_live_authority": true
+  },
+  "independent_review": {
+    "verdict": "NOTREADY",
+    "elapsed_seconds": 381.444099,
+    "late_duplicate_prior_receipt_causes_one_mock_send": true,
+    "late_extraneous_receipt_causes_one_mock_send": true,
+    "preexisting_unsent_current_receipt_accepted": true,
+    "final_UI_time_negatives_rejected": true,
+    "frozen_files_unchanged": [
+      93,
+      159
+    ],
+    "report_sha256": "5c910198f2a9c66f946f955f14108bea8d0c74136eadf191f6ffc26a0e7059be"
+  },
+  "predicate_static": {
+    "elapsed_seconds": 369.812,
+    "new_bodies": 8,
+    "records": 29,
+    "owner_AudioEffect_verified": true,
+    "entry_field_semantics": "UNKNOWN",
+    "None_implies_gate_result": false,
+    "report_sha256": "c45b449e37ad118357de380d7ad4c0668f8201f5f6a447bc2fab67ed55b9f431",
+    "evidence_sha256": "c2fb7e6fea5dff28fea84675c2f55e7bd85d7595e6d12dca962aec2b9399d472",
+    "engine_close_reset_EOF0": true
+  },
+  "actual_DAQ": 0,
+  "actual_app_or_owner_started": false,
+  "preset_apply_load_seed_admitted": false,
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "next": "Correct private request/receipt pre-send causality in a fresh kit, independently review, then fresh read/capture-only runtime if admitted."
+}

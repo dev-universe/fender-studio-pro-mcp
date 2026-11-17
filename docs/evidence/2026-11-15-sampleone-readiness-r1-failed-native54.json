@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "status": "FAILED_READINESS_SEMANTIC_VALIDATION_BEFORE_FIRST_PLUGIN_INSPECT",
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "native_unit": 54,
+  "source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+  "elapsed_seconds": 330.168,
+  "elapsed_first_request_to_closure_seconds": 98.196,
+  "MCP_tool_calls_sent": 8,
+  "actual_DAW_requests": 7,
+  "MCP_predispatch_rejections": 1,
+  "rejected_RPC": 10,
+  "accepted_completed_prefix_DAQ": 0,
+  "failed_or_nonadmitted_DAQ": 7,
+  "failure": {
+    "outcome": "not_applied",
+    "code": "invalid_argument",
+    "message": "Context observations require a bound Music target, explicit provider and no node inventory",
+    "source_rule": "src/operation.rs1682-1704 requires nonnil expected_instance for include_context=true",
+    "planning_defect": "Initial instance lookup requested context before obtaining expected_instance. JSON Schema validation did not execute actual domain validation.",
+    "product_guard_retained": true,
+    "UI_checkpoint_reached": false
+  },
+  "mutations": {
+    "Main_volume_preparation": 1,
+    "track_selection": 1,
+    "plugin_parameter_writes": 0,
+    "preset_calls": 0,
+    "state_capture_or_load": 0,
+    "UI_isolation_changes": 0
+  },
+  "closure": {
+    "owned_Scratch_NoSave": true,
+    "app_running_after": false,
+    "immediate_CUA_completion_after_appfalse": true,
+    "owner_EOF_exit_code": 0,
+    "hardware_completed_before_process_check": true,
+    "two_locks_reacquired_released": true,
+    "saved10_equal": true,
+    "MIDI_before_after0": true,
+    "source177_artifact13_equal": true,
+    "no_retry_or_cleanup_mutation": true
+  },
+  "pins": {
+    "original_closure": "e0e8985984147fa6fad9b9c9475dbd6e273687f77a90e3ec683dc5b78442bea2",
+    "original_predispatch_rejection10": "a44fc843c091416d15f36ca5e13229c2bf800f233957c148c4dd5f42bb27b1ec",
+    "operation_source": "08c7d43420d7c7b993c0b80247536c54bd8c253e32ff85442c6d7349f0774efa",
+    "frozen_prefix_manifest": "ec85e8479b465582429b3a553ee8cc774f0467594e594c206479abd96711a063",
+    "source_review_report": "dc574ba4c9dafaca3a51cebbf89c6db5ac62399a7670600b17c863820f33357a"
+  },
+  "next": "SeparateR2 initial lookup without context, bind nonzeroUID, then actualUI and boundcontext. Run all prospective requests through actual Rust semantic validation before any new DAQ. No product guard change.",
+  "accounting": {
+    "Native54_raw_DAW": 66,
+    "Native54_admitted_DAW": 58,
+    "Native54_nonadmitted_DAW": 8,
+    "Native54_outer_unknown_subset": 1,
+    "Native54_MCP_predispatch_rejections_separate": 1,
+    "fixed_complete": 13,
+    "fixed_total": 43,
+    "remaining": 30,
+    "hardware_blocked": 4,
+    "preset_classes": 39,
+    "preset_classes_total": 46,
+    "preset_cases": 76
+  }
+}

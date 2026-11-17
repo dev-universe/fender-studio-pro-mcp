@@ -1,9 +1,10 @@
-//! Exact-device External Effect editor resolution. No opening, setters or IPC.
+//! Exact-device editor ownership and External Effect routing. No opening or setters.
 #![deny(unsafe_op_in_unsafe_fn)]
 mod ffi;
 use ffi::{CONTROLLER, NODE, OBJECT, Owned, UNKNOWN, VIEW};
 pub use ffi::{EXTERNAL_MONO, EXTERNAL_STEREO, Uid};
 use std::{
+    cell::RefCell,
     ffi::{c_char, c_void},
     ptr::NonNull,
     thread::{self, ThreadId},
@@ -86,12 +87,10 @@ impl Device {
         }
     }
 }
-struct Frame {
-    controller: Owned,
-    component_identity: Owned,
-    component_object: Owned,
-    component: Owned,
-    views: Vec<Owned>,
+struct RootFrame {
+    _view_witness: Option<(Owned, Owned)>,
+    view_identity: Owned,
+    view: Owned,
     device: Device,
     device_ref: Owned,
     slot: Owned,
@@ -102,6 +101,96 @@ struct Frame {
     window: Owned,
     windows: i32,
     matched_by: DeviceMatch,
+}
+struct ExternalFrame {
+    controller: Owned,
+    component_identity: Owned,
+    component_object: Owned,
+    component: Owned,
+    views: Vec<Owned>,
+    root: RootFrame,
+}
+/// Retains only an exact DeviceEditor window and its public IView root.
+///
+/// ```compile_fail
+/// use fender_native_editor_api::EditorRootLease;
+/// fn worker(lease:EditorRootLease){std::thread::spawn(move||drop(lease));}
+/// ```
+/// ```compile_fail
+/// use fender_native_editor_api::EditorRootLease;
+/// fn sync<T:Sync>(){}
+/// sync::<EditorRootLease>();
+/// ```
+pub struct EditorRootLease {
+    validation: RefCell<Option<RootFrame>>,
+    root: RootFrame,
+    expected: Device,
+    _expected_ref: Owned,
+    gui: GuiApi,
+    thread: ThreadId,
+}
+
+/// Resolve an already-open exact DeviceEditor independently of widget routing.
+///
+/// # Safety
+/// Consumes one owned Device IUnknown reference, including on error. Validate
+/// the exact supported runtime images and GUI thread before calling. Keep the
+/// document/model/service and runtime alive through Drop, serialize requests,
+/// prevent reentrant writes, and validate context around every native use.
+/// The GuiApi pointers must be valid CCL5.1.2 exports. No exception may unwind.
+pub unsafe fn resolve_read_only_root_owned(
+    expected_device: NonNull<c_void>,
+    gui: GuiApi,
+) -> Result<EditorRootLease, Error> {
+    let expected_ref = unsafe { Owned::take(expected_device) };
+    let expected = Device::new(&expected_ref)?;
+    let root = resolve_root(&expected, gui)?;
+    let lease = EditorRootLease {
+        validation: RefCell::new(None),
+        root,
+        expected,
+        _expected_ref: expected_ref,
+        gui,
+        thread: thread::current().id(),
+    };
+    lease.check()?;
+    Ok(lease)
+}
+impl EditorRootLease {
+    pub fn identity(&self) -> Identity {
+        self.root.identity(&self.expected)
+    }
+    pub fn check(&self) -> Result<(), Error> {
+        if self.thread != thread::current().id() {
+            return Err(Error::WrongThread);
+        }
+        let previous = self.validation.borrow_mut().take();
+        drop(previous);
+        let fresh = resolve_root(&self.expected, self.gui)?;
+        if !self.root.same(&fresh) {
+            return Err(Error::Stale);
+        }
+        *self.validation.borrow_mut() = Some(fresh);
+        self.check_pinned()
+    }
+    /// Check pinned attachment with borrowed getters and no native owner release.
+    /// The caller still checks its active document/model/service afterward.
+    pub fn check_pinned(&self) -> Result<(), Error> {
+        if self.thread != thread::current().id() {
+            return Err(Error::WrongThread);
+        }
+        self.root.check_pinned(&self.expected, self.gui)
+    }
+    /// Borrowed IView; it conveys ownership only, never widget routing authority.
+    ///
+    /// # Safety
+    /// Keep this lease and its validated GUI-thread runtime/context alive through
+    /// use. Retain before transferring ownership or native reentry. Recheck the
+    /// exact context after this call and before consuming the pointer.
+    pub unsafe fn as_borrowed_root(&self) -> Result<NonNull<c_void>, Error> {
+        self.check()?;
+        NonNull::new(self.root.view.raw()).ok_or(Error::MissingObject)
+    }
 }
 /// Retains the exact editor/device/controller identities for one synchronous request.
 ///
@@ -115,7 +204,7 @@ struct Frame {
 /// sync::<ExternalEditorLease>();
 /// ```
 pub struct ExternalEditorLease {
-    frame: Frame,
+    frame: ExternalFrame,
     expected: Device,
     _expected_ref: Owned,
     gui: GuiApi,
@@ -152,11 +241,7 @@ pub unsafe fn resolve_external_owned(
 }
 impl ExternalEditorLease {
     pub fn identity(&self) -> Identity {
-        Identity {
-            device_uid: self.expected.uid,
-            device_class: self.expected.class,
-            matched_by: self.frame.matched_by,
-        }
+        self.frame.root.identity(&self.expected)
     }
     /// Borrowed IController; valid only while the lease and caller context live.
     /// After check, the caller makes final borrowed document/model/Device
@@ -169,9 +254,7 @@ impl ExternalEditorLease {
             return Err(Error::WrongThread);
         }
         let fresh = resolve(&self.expected, self.gui)?;
-        let same = fresh.window_identity.raw() == self.frame.window_identity.raw()
-            && fresh.editor_identity.raw() == self.frame.editor_identity.raw()
-            && fresh.device.canonical.raw() == self.frame.device.canonical.raw()
+        let same = fresh.root.same(&self.frame.root)
             && fresh.component_identity.raw() == self.frame.component_identity.raw()
             && fresh.controller.query(&UNKNOWN)?.raw()
                 == self.frame.controller.query(&UNKNOWN)?.raw();
@@ -184,33 +267,8 @@ impl ExternalEditorLease {
         self.check_pinned()
     }
     fn check_pinned(&self) -> Result<(), Error> {
-        let desktop = desktop(self.gui)?;
-        let count = window_count(desktop)?;
-        if count != self.frame.windows {
-            return Err(Error::Stale);
-        }
-        let at: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
-            unsafe { ffi::method(desktop, 7) };
-        let matches = (0..count)
-            .filter(|&i| unsafe { at(desktop, i) } == self.frame.window.raw())
-            .count();
-        if matches != 1 {
-            return Err(Error::Stale);
-        }
         let f = &self.frame;
-        if ffi::borrowed(f.window.raw(), 30) != f.editor.raw()
-            || ffi::find_raw(&f.editor_node, self.gui, c"DeviceSlot")? != f.slot.raw()
-            || ffi::find_raw(&f.slot, self.gui, c"Device")? != f.device_ref.raw()
-        {
-            return Err(Error::Stale);
-        }
-        if ffi::uid(&self.expected.node, 4)? != self.expected.uid
-            || ffi::uid(&self.expected.node, 5)? != self.expected.class
-            || ffi::uid(&f.device.node, 4)? != f.device.uid
-            || ffi::uid(&f.device.node, 5)? != f.device.class
-        {
-            return Err(Error::Stale);
-        }
+        f.root.check_pinned(&self.expected, self.gui)?;
         for pair in f.views.windows(2) {
             let children = ffi::borrowed(pair[0].raw(), 20);
             if children.is_null() {
@@ -227,15 +285,48 @@ impl ExternalEditorLease {
         {
             return Err(Error::Stale);
         }
-        if window_count(desktop)? != count {
+        f.root.check_pinned(&self.expected, self.gui)
+    }
+}
+impl RootFrame {
+    fn identity(&self, expected: &Device) -> Identity {
+        Identity {
+            device_uid: expected.uid,
+            device_class: expected.class,
+            matched_by: self.matched_by,
+        }
+    }
+    fn same(&self, other: &Self) -> bool {
+        self.window_identity.raw() == other.window_identity.raw()
+            && self.editor_identity.raw() == other.editor_identity.raw()
+            && self.device.canonical.raw() == other.device.canonical.raw()
+            && self.view_identity.raw() == other.view_identity.raw()
+    }
+    fn check_pinned(&self, expected: &Device, gui: GuiApi) -> Result<(), Error> {
+        let desktop = desktop(gui)?;
+        let count = window_count(desktop)?;
+        if count != self.windows {
             return Err(Error::Stale);
         }
-        // A later relationship getter can replace this window without changing
-        // the total count. Recheck actual reachability after those native reads.
-        let matches = (0..count)
-            .filter(|&i| unsafe { at(desktop, i) } == f.window.raw())
-            .count();
-        if matches != 1 {
+        let at: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
+            unsafe { ffi::method(desktop, 7) };
+        let reachable = || {
+            (0..count)
+                .filter(|&i| unsafe { at(desktop, i) } == self.window.raw())
+                .count()
+                == 1
+        };
+        if !reachable()
+            || ffi::borrowed(self.window.raw(), 30) != self.editor.raw()
+            || ffi::find_raw(&self.editor_node, gui, c"DeviceSlot")? != self.slot.raw()
+            || ffi::find_raw(&self.slot, gui, c"Device")? != self.device_ref.raw()
+            || ffi::uid(&expected.node, 4)? != expected.uid
+            || ffi::uid(&expected.node, 5)? != expected.class
+            || ffi::uid(&self.device.node, 4)? != self.device.uid
+            || ffi::uid(&self.device.node, 5)? != self.device.class
+            || window_count(desktop)? != count
+            || !reachable()
+        {
             return Err(Error::Stale);
         }
         Ok(())
@@ -257,7 +348,7 @@ fn window_count(desktop: *mut c_void) -> Result<i32, Error> {
         Ok(n)
     }
 }
-fn resolve(expected: &Device, gui: GuiApi) -> Result<Frame, Error> {
+fn resolve_root(expected: &Device, gui: GuiApi) -> Result<RootFrame, Error> {
     let desktop = desktop(gui)?;
     let n = window_count(desktop)?;
     let at: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
@@ -292,33 +383,11 @@ fn resolve(expected: &Device, gui: GuiApi) -> Result<Frame, Error> {
         if hit.is_some() {
             return Err(Error::AmbiguousEditor);
         }
-        let mut views = vec![window.query(&VIEW)?];
-        let mut budget = 1;
-        for index in PATH {
-            let next = child_at(
-                views.last().ok_or(Error::MissingViewPath)?,
-                index,
-                &mut budget,
-            )?;
-            views.push(next);
-        }
-        let component = unsafe {
-            Owned::hold(ffi::borrowed(
-                views.last().ok_or(Error::MissingViewPath)?.raw(),
-                32,
-            ))
-        }
-        .map_err(|_| Error::MissingExternalController)?;
-        if ffi::class(&component)? != "ExternalEffectComponent" {
-            return Err(Error::MissingExternalController);
-        }
-        let controller = component.query(&CONTROLLER)?;
-        hit = Some(Frame {
-            controller,
-            component_identity: component.query(&UNKNOWN)?,
-            component_object: component.query(&OBJECT)?,
-            component,
-            views,
+        let view = window.query(&VIEW)?;
+        hit = Some(RootFrame {
+            _view_witness: None,
+            view_identity: view.query(&UNKNOWN)?,
+            view,
             device,
             device_ref,
             slot,
@@ -334,7 +403,46 @@ fn resolve(expected: &Device, gui: GuiApi) -> Result<Frame, Error> {
     if window_count(desktop)? != n {
         return Err(Error::Stale);
     }
-    hit.ok_or(Error::MissingEditor)
+    let mut root = hit.ok_or(Error::MissingEditor)?;
+    let view = root.window.query(&VIEW)?;
+    let identity = view.query(&UNKNOWN)?;
+    if identity.raw() != root.view_identity.raw() {
+        return Err(Error::Stale);
+    }
+    root._view_witness = Some((identity, view));
+    Ok(root)
+}
+fn resolve(expected: &Device, gui: GuiApi) -> Result<ExternalFrame, Error> {
+    let root = resolve_root(expected, gui)?;
+    let mut views = vec![unsafe { Owned::hold(root.view.raw()) }?];
+    let mut budget = 1;
+    for index in PATH {
+        let next = child_at(
+            views.last().ok_or(Error::MissingViewPath)?,
+            index,
+            &mut budget,
+        )?;
+        views.push(next);
+    }
+    let component = unsafe {
+        Owned::hold(ffi::borrowed(
+            views.last().ok_or(Error::MissingViewPath)?.raw(),
+            32,
+        ))
+    }
+    .map_err(|_| Error::MissingExternalController)?;
+    if ffi::class(&component)? != "ExternalEffectComponent" {
+        return Err(Error::MissingExternalController);
+    }
+    let controller = component.query(&CONTROLLER)?;
+    Ok(ExternalFrame {
+        controller,
+        component_identity: component.query(&UNKNOWN)?,
+        component_object: component.query(&OBJECT)?,
+        component,
+        views,
+        root,
+    })
 }
 fn child_at(parent: &Owned, index: usize, budget: &mut usize) -> Result<Owned, Error> {
     if index >= MAX_VIEWS || *budget >= MAX_VIEWS || PATH.len() > MAX_DEPTH {

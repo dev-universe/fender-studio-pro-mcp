@@ -1,0 +1,44 @@
+{
+  "normal_native_unit": 39,
+  "native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
+  "native_sha256": "4a98733c2547e1a267fca961f22359317d25c467f1ec9ebcde02c206dc03cb02",
+  "native_manifest_sha256": "69f08e3af6c319cc9848490fb13f929576c7103422edf25ad728e6aff550eca6",
+  "manifest_source_count": 148,
+  "approved_native_sources": 146,
+  "build_support_sources": 2,
+  "installed_bridge_sha256": {
+    "BridgeComponent.js": "e879c6916f07895074d52c09fdc35d79f33dac5624ace31205ab5d2fdd0eb570",
+    "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+    "NativePluginControls.js": "43433279dcf1393a49e4f627dbd6d6f517d1d17d458b783267eb4a75011d025a"
+  },
+  "main_binary_sha256": "74475e50b723abf72233f6068f873856535bae889cc11d4eac11f2c95f04e144",
+  "tools_schema_canonical_sha256": "8d3a7c4c6f60c644ad46999fe9fc5b0283520a9becc953cdad1e6c138a1a7871",
+  "normal_bridge_install_exit_code": 0,
+  "normal_native_install_exit_code": 0,
+  "force_used": false,
+  "DAW_tool_calls": 0,
+  "runtime_verification_pending": true,
+  "schema": 1,
+  "source_commit": "ff866cb",
+  "approved_total_sources": 208,
+  "wire_sources": 62,
+  "independent_integration_review_report_sha256": "174771168e667845f38cfe5023aa63be548cdfd2c100f4f9f45e86d27af97511",
+  "independent_integration_review_freeze_sha256": "bb9c5cce2c2d0d4ad33f8f942f14b3cba62c4b06f7fbc50ee036f2bc362c2e33",
+  "format_overlay_authority_sha256": "0a9ed52ac536b1e6ac205c89036b5b9bca7272c3eb23f35a990b05c2698d2c6e",
+  "main_release_build_seconds": 19.51,
+  "native_release_build_seconds": 10.95,
+  "root_focused_tests": {
+    "JavaScript": 20,
+    "Rust_main": 11,
+    "Rust_native_provenance": 2
+  },
+  "format_check_passed": true,
+  "main_tool_count": 46,
+  "changed_tools": [
+    "external_port_menu",
+    "operation_run"
+  ],
+  "port_selection_authority": false,
+  "atomicity_verified": false,
+  "continuous_mixer_membership_verified": false
+}

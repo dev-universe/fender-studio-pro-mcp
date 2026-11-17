@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "date": "2026-11-13",
+  "host_version": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "source_commit": "fab605b",
+  "source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
+  "independent_review_report_sha256": "a6998f145cd3477f99ea85290a28a51081a882699088bba7514a4c9ecfc7eb80",
+  "status": "BUILT_INSTALLED_METADATA_VERIFIED_ACTUAL_DAW_PENDING",
+  "native_unit": 38,
+  "native_source_files_unchanged": 144,
+  "native_package_files_unchanged": 4,
+  "tool_count": 46,
+  "tool_description_changes": [
+    "plugin_inspect"
+  ],
+  "input_schemas_and_other_tool_metadata_unchanged": true,
+  "canonical_tools_schema_sha256": "212c7c33261ef670bb192b39ed8a2972bcbf8c72fb857cb30779806255306aeb",
+  "main_binary_sha256": "722cbfb08bbc719490cf672d5275ec7413a66895a9b5f53c44c45957d59c7b75",
+  "bridge_files_sha256": {
+    "BridgeComponent.js": "16cd0474c93ae0b220b82d8339dcefded3edd811eb2d6034dca07c84c1b016a2",
+    "BridgeCore.js": "a1b2e0990245d38051e40aa726a54ff96ec6ed0dca202a2762b22959e5db751c",
+    "NativePluginControls.js": "be99b580f1b91d0055da4e80e1aad2e9a85d519c3551c2e67b3ce126866f12b1"
+  },
+  "checks": {
+    "JS_focused_passed": 15,
+    "Rust_server_passed": 15,
+    "format_check_passed": true,
+    "diff_check_passed": true,
+    "release_build_seconds": 19.9,
+    "metadata_process_exit_code": 0
+  },
+  "new_actual_DAW_calls": 0,
+  "new_mutation_authority": false,
+  "all_builtin_plugins_fully_verified": false
+}

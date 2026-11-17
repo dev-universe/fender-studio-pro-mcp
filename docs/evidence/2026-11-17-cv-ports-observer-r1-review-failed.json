@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CV_PORTS_OBSERVER_R1_OFFLINE_CODE_REVIEW",
+  "verdict": "NOT_READY",
+  "product_implementation_elapsed_seconds": 1325,
+  "independent_review_elapsed_seconds": 430.12,
+  "actual_DAQ_release_build_install": 0,
+  "tests": {
+    "final_source_native_full": 417,
+    "final_source_main_full": 178,
+    "selected_JS": 96,
+    "all_existing_suites_passed": true,
+    "independent_private_full_inventory_challenge": "FAIL_reproduced_unchecked_root_class_drift"
+  },
+  "finding": {
+    "priority": "P1",
+    "trigger": "Final borrowed Device ID IString.copyTo callback changes the PortSetup root class after the earlier retained Header witnesses.",
+    "observed": "Inventory.check returns Ok despite changed root class.",
+    "required_fix": "Complete every borrowed ID copy before the final retained Header sweep; preserve subsequent owner-free UID/topology and Context checks, add the behavioral regression.",
+    "contract_not_weakened_as_non_atomic_waiver": true
+  },
+  "other_reviewed_constraints": "finite exact target/document/instance gates, bounded unique slot membership, retained owners/limits/null semantics, final report clearing and receipt lease",
+  "SDK_basis": "Pinned standard Object uses myClass/static MetaClass for immediate borrowed type/name reads. Immutable String content methods do not establish absence of unrelated graph reentry.",
+  "limitations": [
+    "No actual DAW failure was observed.",
+    "No new feature installation or live coverage was admitted.",
+    "Arbitrary later Context getter reentry remains outside an atomic snapshot claim."
+  ],
+  "evidence_sha256": {
+    "implementation_report": "fa91ca3675886cd7f09ad3c92a5985bceb557aba10dc70f6428fd64baa5ed27b",
+    "independent_review_report": "c96173478eabdeaa193644bdcdec887ef712895bfca9706a8d65101f32d0daf3",
+    "independent_private_repro_tests": "d9e1d9a6f7d0052313fb2ae2c8c1f7d3563f89bf42f16a4689f75e908578e3f7"
+  },
+  "next": "Fresh fix writer restricted to cv_ports module and its tests; source r1 retained as failed immutable evidence. Independent narrow recheck precedes build/install.",
+  "installed_runtime": "Native55_last_qualified_own13_artifacts_backed_up",
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "overall_loop_ETA": null
+}

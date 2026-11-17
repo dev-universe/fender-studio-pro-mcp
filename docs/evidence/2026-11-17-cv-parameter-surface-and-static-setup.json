@@ -1,0 +1,86 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "SOURCE_FEASIBILITY_AND_FAILED_PRIVATE_STATIC_SETUP",
+  "actual_DAQ": 0,
+  "product_changes": 0,
+  "source_feasibility": {
+    "verdict": "SOURCE_SUPPORTED_DIRECT_CONTROLLER_PROBE_RUNTIME_SUPPORT_UNKNOWN",
+    "elapsed_seconds": 285.1,
+    "read_inputs": {
+      "current_product_source_files": 17,
+      "actual_R76_files": 3,
+      "official_pinned_SDK_headers": 2,
+      "total_pins_with_existing_metadata": 23
+    },
+    "public_API": [
+      "IController.countParameters",
+      "IController.getParameterAt",
+      "existing RawParameter.describe"
+    ],
+    "target_nodes": "retained typed PortSetup and seven direct indexed children",
+    "IController_actual_support": "UNKNOWN",
+    "assignment_value_semantics": "UNKNOWN",
+    "must_distinguish": [
+      "strict NO_INTERFACE with null",
+      "failed or malformed QI",
+      "observed zero indexed count",
+      "unavailable or limit exceeded"
+    ],
+    "external_menu_gate_widening_allowed": false,
+    "proposed_limits_not_runtime_verified": {
+      "nodes": 8,
+      "parameters_per_controller": 32,
+      "total_rows": 64,
+      "aggregate_copied_text_bytes": 49152
+    },
+    "reflection_methods_do_not_prove_controller_support": true,
+    "typed_opaque_objects_remain_opaque": true,
+    "report_sha256": "4ddb25af28b5079132ffec097a97fa9675499c71de729c2052c415c96ec312dd",
+    "manifest_sha256": "fba3ec3f9d52291d3a912112378712b93ca5a8b991a278f884eec22d88f930cf"
+  },
+  "static_setup": {
+    "verdict": "BLOCKED_LOCAL_CHECKPOINT_RECIPE_BEFORE_ENGINE_START",
+    "elapsed_seconds": 296.005,
+    "REA_processes": 3,
+    "failed_body_calls": 4,
+    "Ghidra_engines_started": 0,
+    "new_function_bodies": 0,
+    "native_evidence_records": 0,
+    "all_processes_EOF_exit0": true,
+    "open_false_cleanup_pending_false_reset0": true,
+    "immutable_input_pins_matched": 12,
+    "causes": [
+      "selected per-profile checkpoint directory remained0755; correcting root only did not resolve it",
+      "packed Program copied without required current.json manifest"
+    ],
+    "not_established": [
+      "cached configuration error",
+      "upstream REA defect",
+      "Fender runtime defect"
+    ],
+    "corrected_next_recipe_prepared_not_executed": {
+      "root_and_selected_profile_modes": "0700",
+      "manifest_and_Program_modes": "0600",
+      "complete_manifest_and_Program_copied": true,
+      "source_manifest_sha256": "11d1d210fd1f7671f80f1a89def5eeb144940c75ffec017888d117230d124436"
+    },
+    "next_exact_seed": [
+      "0x100da8da0",
+      "0x100d98808"
+    ],
+    "entry_type_and_element_5c": "UNKNOWN",
+    "report_sha256": "9b7d93adc2f3f605addd5c390155b5539d391a9923814a2a2ea3cfa6127331e7",
+    "manifest50_sha256": "6e00b76a8ff8bffe13287ca37fb8ba48b9d248ea98415fd1309ec48decb7af70"
+  },
+  "fixed_counts": {
+    "completed": 15,
+    "total": 43,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "coverage_increment": 0,
+  "next_work": "two independent same-parent-model ownership designs; one fresh corrected private static process; no new live unit admitted",
+  "overall_loop_ETA": "UNKNOWN_RESEARCH_AND_HARDWARE"
+}

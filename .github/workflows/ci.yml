@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTUP_TOOLCHAIN: 1.88.0
+
+jobs:
+  core:
+    name: Core offline checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Install Rust 1.88.0
+        run: rustup toolchain install 1.88.0 --profile minimal --component rustfmt --component clippy
+      - name: Check the server and bridge without a DAW
+        run: bash scripts/check.sh
+
+  native:
+    name: macOS arm64 native checks
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify the native build platform
+        run: test "$(uname -s)" = Darwin && test "$(uname -m)" = arm64
+      - name: Install Rust 1.88.0
+        run: rustup toolchain install 1.88.0 --profile minimal --component rustfmt
+      - name: Test the server on macOS
+        run: cargo test --locked
+      - name: Check native formatting and library tests
+        env:
+          CARGO_TARGET_DIR: ${{ github.workspace }}/target/native-addon
+        run: |
+          for crate in parameter-api editor-api node-api dsp-api preset-api; do
+            cargo fmt --manifest-path "native/$crate/Cargo.toml" -- --check
+            cargo test --manifest-path "native/$crate/Cargo.toml"
+          done
+          cargo fmt --manifest-path native/addon/Cargo.toml -- --check
+          cargo test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
+      - name: Build and validate the native package without installation
+        run: sh native/build.sh

@@ -1,0 +1,63 @@
+{
+  "at": "2026-11-13T16:22:00.958458+00:00",
+  "status": "PASS",
+  "job_id": "d940b5d9-00ea-4371-b0c4-7465c9aad564",
+  "actual_elapsed_seconds": 175.862,
+  "raw_tool_requests": 99,
+  "parent_verified_requests": 99,
+  "plugin_parameter_writes": 2,
+  "mixer_writes": 2,
+  "track_selection_attempts": 1,
+  "provider_records": 388,
+  "provider_snapshots": 6,
+  "provider_pages": 42,
+  "other385_exact": true,
+  "all_nonvalue_unknown_exact": true,
+  "exact_full_restoration": true,
+  "actual_same_selected_track_instrument": "Mojito 7",
+  "actual_unique_channel_index": 59,
+  "instrument_verified_before_any_setter": true,
+  "observed_values": [
+    {
+      "index": 4,
+      "name": "keyboard.pitch1.guiInput",
+      "original": 0,
+      "positive": 5000,
+      "restored": 0
+    },
+    {
+      "index": 5,
+      "name": "keyboard.pitch1.playingLive",
+      "original": 0,
+      "positive": 1,
+      "restored": 0
+    },
+    {
+      "index": 6,
+      "name": "keyboard.pitch1.playingScheduled",
+      "original": 0,
+      "positive": 0,
+      "restored": 0
+    }
+  ],
+  "accepted_fixed_current_value_cases": 1,
+  "strict_name_increment": 0,
+  "app_closed_observed": true,
+  "NoSave_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "state_port_transport_Save_actions": 0,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "result_sha256": "790493b0db72fa5c4eff5d8f508af1c89745422b1075554fcc4af915ea602d54",
+  "journal_sha256": "b38f5ce566946c7fb59ff5afb50ceb22882312d4edb4e450f3691d72f7aabaa7",
+  "proof_sha256": "e9603a1e51b99df5d899e5bfa8938d8f86c05c631b67c547b54f8ec9d245d426",
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "product_source_commit": "c733ce5",
+  "native_unit": 41,
+  "scope": "one fixed keyboard.pitch1.guiInput current value; not MIDI pitch mapping, noteoff, events, audio or persistence proof"
+}

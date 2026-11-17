@@ -182,7 +182,6 @@ mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "I
 mtoOps.addMixFx = function (context, op) { return mtoInsertInto(context, op, "AudioBusMixFX", "AudioMixEffect"); };
 mtoOps.addFxSend = function (context, op) { return mtoInsertInto(context, op, "Sends"); };
 
-// { name, format }: format is an exact entry from Host.Engine.TrackFormats.
 mtoOps.addAudioTrack = function (context, op) {
 	if (typeof op.name !== "string" || !op.name.trim() || op.name.length > 256 || /[\u0000-\u001f\u007f]/.test(op.name)) return { error: "audio track name is required and must be at most 256 characters without control characters" };
 	if (typeof op.format !== "string" || !op.format.trim() || op.format.length > 256 || /[\u0000-\u001f\u007f]/.test(op.format)) return { error: "an exact audio track format is required and must be at most 256 characters without control characters" };
@@ -191,10 +190,19 @@ mtoOps.addAudioTrack = function (context, op) {
 	var formats = Host.Engine ? Host.Engine.TrackFormats : null;
 	var tl = context.mainTrackList;
 	if (!mtoFn(f, "addMediaTrack") || !mtoFn(root, "createIterator") || !mtoFn(tl, "getInsertPosition")) return { error: "audio track creation or the track list is not available" };
-	if (!mtoFn(formats, "findEqual")) return { error: "the audio track format list is not available" };
-	var fmt = formats.findEqual(op.format);
-	if (!fmt) return { error: "no track format named " + op.format };
-	if (fmt.mediaType !== "Audio") return { error: "the requested track format is not audio: " + op.format };
+	if (!mtoFn(formats, "at")) return { error: "the audio track format list is not available" };
+	var count = formats.count;
+	if (typeof count !== "number" || !isFinite(count) || count < 0 || count > 128 || count % 1 !== 0) return { error: "the audio track format list is incomplete or unsafe" };
+	var fmt = null, matches = 0;
+	for (var i = 0; i < count; i++) {
+		var candidate = formats.at(i);
+		if (!candidate || typeof candidate.mediaType !== "string") return { error: "the audio track format list is incomplete" };
+		if (candidate.mediaType !== "Audio") continue;
+		var speaker = candidate.formatData;
+		if (!speaker || typeof speaker.name !== "string" || typeof speaker.type !== "number" || !isFinite(speaker.type)) return { error: "native audio format metadata is incomplete" };
+		if (speaker.name === op.format) { fmt = candidate; matches++; }
+	}
+	if (matches !== 1) return { error: matches ? "audio track format name is ambiguous: " + op.format : "no track format named " + op.format };
 	var it = root.createIterator();
 	if (!mtoFn(it, "done") || !mtoFn(it, "next")) return { error: "the track list is not available to check duplicate names" };
 	while (!it.done()) {

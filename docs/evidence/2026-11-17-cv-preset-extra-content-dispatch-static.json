@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "PARTIAL_STATIC_LINKAGE_NO_DAQ_NO_APPLY_LOAD",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "native_unit": 55,
+  "observed": {
+    "adjacent_timer_exact_IID_verified": true,
+    "PortSetup_two_entry_callback_table_separate": true,
+    "global_callback_registration_and_dispatch": true,
+    "primary_content_precedes_extra_content": true,
+    "slot_mediator_exact_IID_verified": true,
+    "slot_restore_owner_global_matches_PortSetup_gate_global": true,
+    "callback_return_values_ignored_by_dispatch_loop": true
+  },
+  "inference": {
+    "public_CCL_IExtraContentHandler_structural_match": "high_confidence",
+    "public_CCL_revision": "8a8cab590b1a2e10cdef3df76ea4b2739c92121f",
+    "exact_public_source_revision_of_proprietary_binary_verified": false
+  },
+  "supersedes": "Earlier interpretation of PortSetup callbacks as methods on the neighboring PortList timer table. Immutable prior evidence retained.",
+  "unknown": [
+    "exact native Presets IDataTarget insert implementation and mediator field",
+    "current retained CV preset subtype and specialized branch",
+    "current CV gate predicate results and assignment meanings",
+    "six None preservation after recall or capsule load",
+    "CV component-alias IStorable route semantics"
+  ],
+  "runtime_apply_load_admitted": false,
+  "new_DAQ": 0,
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "full_worker_elapsed_seconds": 564.51,
+  "timebox_seconds": 900,
+  "body_queries": 19,
+  "body_query_aim": 12,
+  "body_query_deviation_documented": true,
+  "evidence_sha256": {
+    "report": "7339317710abefaf052112d3a65749e03aa1577ee3eed9bd0e7b3dfe69251465",
+    "result": "9b49735daeaae7d5bca69551009e7ec2566514afbe5911c6dff370105d1ce417",
+    "native_evidence37": "0e7055fa15ae4f970252cf64bf21962f3a6fe731f3f66dc9be56a80cbede4087"
+  },
+  "cleanup": {
+    "one_engine": true,
+    "exported_records": 37,
+    "close_reset_EOF0": true,
+    "original_checkpoint_preserved": true,
+    "Root_independent_hash_and_key_bodies_spotcheck": true
+  }
+}

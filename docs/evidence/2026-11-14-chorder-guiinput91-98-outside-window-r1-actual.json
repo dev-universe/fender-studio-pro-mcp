@@ -1,0 +1,162 @@
+{
+  "at": "2026-11-13T20:36:38.609267+00:00",
+  "status": "PASS",
+  "job_id": "8be37876-eaac-40a8-b28f-e21b9ecf8863",
+  "actual_elapsed_seconds": 1082.238,
+  "raw_tool_requests": 915,
+  "parent_verified_requests": 915,
+  "mixer_writes": 2,
+  "track_selection_attempts": 1,
+  "plugin_parameter_writes": 16,
+  "state_actions": 0,
+  "port_Save_transport_writes": 0,
+  "accepted_fixed_current_value_cases": 8,
+  "strict_name_increment": 0,
+  "provider_records": 908,
+  "provider_snapshots": 48,
+  "provider_pages": 384,
+  "stored_model_inputs": 128,
+  "stored_model_snapshots": 48,
+  "stored_model_pages": 384,
+  "exact_full_restoration": true,
+  "model_unchanged": true,
+  "all_units_session_original_and_model_same": true,
+  "other905_peers_per_case_exact": true,
+  "all_nonvalue_unknown_exact": true,
+  "units": [
+    {
+      "canonical_pitch": 91,
+      "name": "chorder.pitch91.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 380.69,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 92,
+      "name": "chorder.pitch92.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.847,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 93,
+      "name": "chorder.pitch93.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.466,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 94,
+      "name": "chorder.pitch94.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.816,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 95,
+      "name": "chorder.pitch95.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 81.218,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 96,
+      "name": "chorder.pitch96.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 81.308,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 97,
+      "name": "chorder.pitch97.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 80.984,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    },
+    {
+      "canonical_pitch": 98,
+      "name": "chorder.pitch98.guiInput",
+      "setters": 2,
+      "approx_elapsed_seconds": 81.19,
+      "whole908_restored": true,
+      "whole128_unchanged": true,
+      "input_live_positive": 1,
+      "own_output_live_positive": 1,
+      "other905_exact": true
+    }
+  ],
+  "app_closed_observed": true,
+  "NoSave_observed": true,
+  "owner_processes_absent": true,
+  "saved6_same_hash": true,
+  "post_owner_midi_sources": 0,
+  "post_owner_midi_destinations": 0,
+  "positive_predicted_output_canonical_names": {
+    "91": [
+      91
+    ],
+    "92": [
+      92
+    ],
+    "93": [
+      93
+    ],
+    "94": [
+      94
+    ],
+    "95": [
+      95
+    ],
+    "96": [
+      96
+    ],
+    "97": [
+      97
+    ],
+    "98": [
+      98
+    ]
+  },
+  "two_readonly_predictions_observed_exact": true,
+  "model_mapping_verified": false,
+  "MIDI_verified": false,
+  "noteoff_verified": false,
+  "audio_verified": false,
+  "result_sha256": "eafab230dd8a682e8643abefd9e0d93b2b460a539769786d018b8f9c64f6b090",
+  "journal_sha256": "3a608da082ea3731596de345fce67d6f203ec54e120103dd7033a042524cd82f",
+  "proof_sha256": "2172029382dfb16108b59dbe1a8418942d0d25fe79689ad290a0f29a6573d475",
+  "journal_bytes": 91915514,
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "product_source_commit": "c733ce5",
+  "native_unit": 41,
+  "scope": "eight fixed canonical91..98 outside-window current values only; not general MIDI/model mapping, events, noteoff, audio or persistence"
+}

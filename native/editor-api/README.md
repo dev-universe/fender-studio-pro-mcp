@@ -1,6 +1,7 @@
-# Exact-device External Effect editor lease
+# Exact-device editor leases
 
-A std-only Rust resolver for an **already open** External Effect editor in the
+Std-only Rust ownership for an **already open** exact Device editor, plus the
+separate fixed External Effect controller route in the
 validated Fender Studio Pro **8.1.1 Build 113103 arm64 / CCL5.1.2** runtime. It
 binds the UI controller to the caller's actual native Device identity, without
 matching window/channel captions. It performs no opening, clicks, native setter,
@@ -68,7 +69,9 @@ UIDs, observed on the validated 8.1.1 runtime:
 | External Effect Mono | `873281D9-58DE-4B2D-B3BD-528F549B1AD9` |
 | External Effect Stereo | `889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4` |
 
-Other device classes are explicitly unsupported. Up to **64** desktop windows
+Other device classes are explicitly unsupported by the External controller route.
+The root-only route described below has no External widget authority.
+Up to **64** desktop windows
 are inspected. A candidate requires the exact IObject class `DeviceEditor` and
 the fixed IObjectNode route `DeviceSlot/Device`. The returned Device class must
 match the expected class. Canonical IUnknown identity is preferred; a distinct
@@ -98,6 +101,38 @@ has **mock verification only** until separately exercised by the owning add-on
 in the app. Do not claim that the earlier caption-guarded proof validated this
 new identity binding or all editor layouts.
 
+## Read-only exact editor root
+
+`unsafe resolve_read_only_root_owned(expected_device, gui)` consumes one owned
+Device IUnknown and returns an `EditorRootLease`. It shares only the exact
+`DeviceEditor` window, fixed `DeviceSlot/Device` attachment, canonical/UID matching,
+and window-IView prefix with the External resolver. It accepts other nonempty
+Device classes. The caller supplies the operation's finite class/parameter policy.
+It never applies External's child path, resolves a widget controller, opens an
+editor, or authorizes mutation.
+
+`identity()` returns the existing Device/match record. `check()` re-resolves the
+same window/editor/Device/root canonical identities and checks pinned mapping,
+UIDs and desktop reachability. `check_pinned()` repeats only the creator-thread
+and borrowed attachment checks, without allocating/QI or releasing native
+owners. After other retained witnesses are checked, the caller can finish with
+this pinned check and its own final document/model/service guard.
+`unsafe as_borrowed_root()` performs the full check
+and returns a borrowed IView under the same GUI-thread, context and native
+lifetime contract. Retain the view before transferring ownership or reentry,
+then validate the caller's document/model/service context again.
+
+A root lease retains its final validation cohort through publication. On the
+next check, the previous cohort is released before fresh observation. This
+prevents a successful check from releasing a temporary root afterward and
+accepting a root changed by that release callback. The cohort remains bounded
+to one fresh root frame. Both leases are `!Send`/`!Sync`. Root ownership is a
+separate type from the External controller proof and cannot be converted to it.
+
+The root seam is mock-verified. Actual Chorder editor attachment/root exposure
+and any exact-name IControl candidate remain separate runtime questions. It
+claims neither GUI semantic correspondence nor saved-state persistence.
+
 ## Build and optional ABI validation
 
 ```sh
@@ -108,16 +143,21 @@ sh native/editor-api/checks/check_sdk.sh /path/to/separate/ccl-framework-5.1.2
 ```
 
 The optional command pins the exact official commit and 32 API header hashes,
-checks UID/String layouts and compiles all **18** used virtual calls to verify
-their arm64 offsets, including IViewChildren's readonly `isChildView` slot12.
+checks UID/String layouts and compiles **19** public virtual calls to verify
+their arm64 offsets, including IViewChildren's readonly `isChildView` slot12 and the compiler-only
+`IControl::getParameter` getter at byte24/slot3. The latter is not invoked by
+this root resolver. The check also verifies IControl's fixed public IID.
 Compiler output is temporary; no SDK code is linked or loaded. The compiler
 probe uses public declarations for IUnknown, IObject/ITypeInfo, IObjectNode,
-IDesktop/IWindow, IView/IViewChildren/IViewIterator and text constants. C++
+IDesktop/IWindow, IView/IViewChildren/IViewIterator/IControl and text constants. C++
 Variant returns and other unverified private methods are absent.
 
 Mocks cover canonical and stable UID matching, wrong Device with the same class,
 class mismatch, unsupported Device, missing/duplicate windows, missing path,
 wrong component, detached/reassigned editors, native UID changes, native release
 reentry, ownership balance, window limits and wrong-thread rejection. Compile-fail
-checks verify that leases cannot be sent or shared across threads. These checks
+checks verify that leases cannot be sent or shared across threads. Root mocks
+also cover non-External devices without a widget path, absent attachment/root,
+unique-editor enforcement, stable UID adapters, root rebinding and release
+reentry. These checks
 perform no app, profile, SDK or native library I/O.

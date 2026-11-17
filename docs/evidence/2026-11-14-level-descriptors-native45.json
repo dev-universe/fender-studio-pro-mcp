@@ -1,0 +1,157 @@
+{
+  "schema": 1,
+  "status": "ROOT_ACCEPTED_COMPLETE_FIXED33_NATIVE_DESCRIPTIONS_CURRENT_VALUES_AND_OWNERS_READONLY_ROUTE",
+  "host": "Fender Studio Pro 8.1.1 Build113103 macOS arm64",
+  "job_id": "abd61d5f-8148-48a9-9861-c291614afb9d",
+  "product_source_commit": "86c5610e18f55ae851eed8293403ad7a0ae70796",
+  "native_unit": 45,
+  "actual_elapsed_seconds": 381.821,
+  "raw_DAW_requests": 9,
+  "metadata_MCP_requests": 2,
+  "paired_unique_receipts": 9,
+  "mixer_preparation_writes": 1,
+  "plugin_parameter_writes": 0,
+  "state_or_preset_actions": 0,
+  "reset_actions": 0,
+  "Song_Save_or_transport_actions": 0,
+  "new_descriptor_observations": 1,
+  "root_parameter_records": 8,
+  "OutLevels_parameter_records": 25,
+  "all33_current_values_available": true,
+  "all33_native_descriptions_preserved": true,
+  "all33_declared_owners_canonical_match": true,
+  "all33_route_can_set_false": true,
+  "native_writable_metadata_count": 32,
+  "native_readOnly_metadata_count": 0,
+  "registered_candidate_settings": [
+    {
+      "index": 0,
+      "name": "mode",
+      "kind": "List",
+      "tag": 1299145829,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 0,
+      "text": "Peak/RMS",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 0
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 4
+    },
+    {
+      "index": 2,
+      "name": "rmsLength",
+      "kind": "List",
+      "tag": 1382904652,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 0,
+      "text": "0.6 s",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 0
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 2
+    },
+    {
+      "index": 3,
+      "name": "holdLength",
+      "kind": "List",
+      "tag": 1215261772,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 0,
+      "text": "2 s",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 0
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 2
+    },
+    {
+      "index": 4,
+      "name": "vuHold",
+      "kind": "Toggle",
+      "tag": 1450526828,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 1,
+      "text": "1",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 1
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 1
+    },
+    {
+      "index": 17,
+      "name": "loudnessInLUFS",
+      "kind": "Toggle",
+      "tag": 1280658799,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 0,
+      "text": "0",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 0
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 1
+    },
+    {
+      "index": 18,
+      "name": "loudnessEBU18",
+      "kind": "Toggle",
+      "tag": 1280651576,
+      "readOnly": false,
+      "native_writable": true,
+      "value": 0,
+      "text": "0",
+      "native_value": {
+        "data": {
+          "kind": "integer",
+          "value": 0
+        },
+        "variant_tag": 1
+      },
+      "min": 0,
+      "max": 1
+    }
+  ],
+  "new_hidden_setting_write_authority": false,
+  "whole_Level_complete": false,
+  "strict_name_increment": 0,
+  "preset_cases_increment": 0,
+  "NoSave_observed": true,
+  "app_closed_observed": true,
+  "owner_process_absent": true,
+  "owner_exit_code": 0,
+  "saved6_hashes_unchanged": true,
+  "post_owner_MIDI_sources": 0,
+  "post_owner_MIDI_destinations": 0,
+  "request_journal_sha256": "497ea4186c6e3457cb9e1e255db7b2ab265ba10a4b0708bc51a12a6f1f60c726",
+  "response_journal_sha256": "7004b1b73b22e623d80b19e4e8a6c3c2ed8d0919747df9500042cd511fc9c039",
+  "installation_proof_sha256": "bc8b90e52d27395299da52cd07932881ab90035b6d4ba441803cdf797806c665",
+  "finished_at": "2026-11-14T00:57:06.822588+00:00"
+}

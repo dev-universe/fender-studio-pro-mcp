@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "status": "known_read_prefix_failed_helper_cleanup_complete",
+  "daw_tool_calls": 57,
+  "model_writers": 0,
+  "normal_saves": 0,
+  "accepted_persistence_cases": 0,
+  "all_known_paired_receipts": true,
+  "actual_parent_execution_seconds": 899.31,
+  "root_elapsed_seconds_through_cleanup": 1532.556,
+  "actual_app_closed_without_save": true,
+  "all_six_original_saved_archives_unchanged": true,
+  "exceptional_known_orphan_owner_SIGTERM": true,
+  "both_owner_and_MCP_child_absent": true,
+  "normal_owner_exit_zero_claimed": false,
+  "MCP_child_exit_code_observed": false,
+  "original_result_preserved_sha256": "17ff8608603de9744cd1eb36f0c1eb89bef9390ef7539fc9c8b170c8fa8c8d4e",
+  "independent_failure_review_report_sha256": "7a251944c72d0c4a83c53f20c39caa6b119694410c5baa84d039e3c0feb78fc4",
+  "independent_failure_review_freeze_sha256": "7b7dc3b0c1b91ed9ebd8966ed6485f6ad5b97163a204ded0c82c36f8e68e9b94",
+  "helper_failure_reason": "The parent checked GUI freshness after16 slow model page reads. No editor_context UI challenge was issued. Child had no pending request but inherited EOF loop could not accept normal stop.",
+  "persistence_verified": false,
+  "audio_verified": false
+}

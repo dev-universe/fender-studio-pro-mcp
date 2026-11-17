@@ -67,6 +67,109 @@ are owned and released on all paths, including a native false result. Objects
 are exposed only as `OpaqueObject { present }`; nonfinite floats are represented
 as bits. Missing properties remain `None`.
 
+`details(guard)` returns separate `ParameterDetails` data with the native
+precision, storable, mutable, store-list-value, read-only, and can-undo flags,
+plus `list_interface`. That last field reports whether querying IListParameter
+succeeded. A missing interface returns false. Other query failures return an
+error. Query references are released before the final context check. Precision
+is the host's increment/decrement setting. It does not establish a choice count.
+
+`controller_owner(guard)` observes the parameter's declared owning controller
+through the public IParameter getter. It returns `None` for a stable null
+observation, or a `ControllerOwner` retaining the parameter, controller view,
+and canonical IUnknown identity. Acquisition checks the association again.
+No IObject, IObjectNode, or IController support is assumed or queried here.
+No owner property name, workspace path, model catalog, or update is guessed.
+
+`ControllerOwner::check(guard)` revalidates its creator thread, fixed interface
+view, canonical identity, and caller context. Temporary references finish
+releasing before a final comparison against the still-retained controller view.
+A replacement, missing owner, canonical identity change, or changed interface
+view returns `MetadataChanged`. This deliberately rejects a changed view even
+when that view reports the same canonical object. Observations do not promise
+continued association after the call.
+
+The handle is `!Send` and `!Sync`. Its unsafe `as_borrowed_unknown()` is a
+Rust-only IUnknown borrow for a separately validated API. The pointer remains
+borrowed. Retain it before transferring a reference to another native owner,
+and keep the handle, runtime, GUI thread, and document/provider context alive.
+Never expose it as a JSON pointer or general invocation capability. Call
+`release(guard)` to release the persistent references between context checks.
+Ordinary Drop has the same creator-thread and retained-context obligation as
+RawParameter. Integrations retain the handle through reflection and response
+publication, with their own association/context checks.
+
+`original_chain(guard)` returns `OriginalChain { parameters, end }`. Each
+`OriginalParameter` contains the existing `Description` and separate details.
+Entry zero describes the receiver. Later entries describe the original
+parameters returned by `getOriginal`. Each borrowed original is retained before
+the guard can reenter. Retained canonical IUnknown identities deduplicate
+interface views and prevent identity pointer reuse during observation.
+
+The chain contains at most eight distinct parameters. `SelfReference` is the
+normal endpoint when an original refers to the current canonical object.
+`MissingOriginal` records a null original. `Cycle { index }` identifies an
+earlier entry. `Limit` means the eighth entry was not followed. A cycle or limit
+does not establish that the full original chain was inspected.
+
+These observations use getters, fixed property reads, and interface queries.
+They expose no original pointers or mutation capability. Scalar reads and
+interface queries have context checks before and after each call. Each existing
+`describe()` snapshot is enclosed by context checks, including a check after its
+native output owners are released. All retained original and identity owners
+are released with context checks before the chain is returned. Any guard failure
+discards the entire observation. Snapshots are sequential, not atomic, and may
+change after the call. Float bounds, precision, and an IListParameter capability
+do not authorize list-label reads or original-parameter writes.
+
+`format_values(values, guard)` formats 1..32 explicit raw numeric values through
+the same public `IParameter::getString(String OUT, Variant IN)` method. It
+preserves input order and duplicates. Inputs must be finite, inside the observed
+typed numeric bounds, and losslessly convertible to the current Integer or
+Float representation. The entire batch is validated before any format call.
+Numeric kinds can be disabled or read-only. String, Command, opaque, and other
+unsupported kinds remain rejected. No choice count or domain is inferred.
+
+The owned `FormattedValues` result contains `values` with each `requested`
+number, the actual typed `native_value` carrier, and its observed `label`.
+It also contains `before`, `after`, and `current_unchanged:true`. Metadata,
+precision, state flags, current raw bits, and normalized bits are rechecked
+between values and at the end. Any change, copy failure, or context failure
+discards the batch. Native OUT owners are released between context checks.
+`getString` returns void. An empty output cannot distinguish an empty native
+representation from provider refusal, so the result preserves the empty string
+without claiming a choice or selection. No setter, parser, or update is called.
+
+`pulse_range(guard)` implements the parameter sequence used by the reviewed
+SDK button: set the maximum with notification enabled, then set the minimum
+with notification disabled. It accepts only enabled, writable Toggle parameters
+with exact numeric bounds 0..1 and a current Integer or Float value of 0 or 1.
+Both input carriers are prepared before the first dispatch. It does not call
+the formatter, normalized or default getters, parser, performUpdate, or edit
+notification methods.
+
+This operation requires a trusted integration's separate, source-proven class
+and action registry. A Toggle, storable state, or signal flag does not establish
+an action role. The library does not implement a button view's separate onPush
+signal, expose an arbitrary update flag, or verify a controller's effect.
+
+`PulseState` contains the finite name, tag, kind, access and typed value/min/max
+observations used by this operation. A present `ControllerOwner` remains pinned
+and checked. An absent owner is observed through the stable-null API again
+before the reset. A new, missing or replaced association is an error. An action
+may synchronously reset its own value after the upper write. The SDK's lower
+write still runs with notification disabled if context and metadata remain
+current.
+
+`PulseReceipt` records both dispatches and the observed reset. Its outcome is
+always `AppliedUnverified` and `effects_verified` is always false. The caller
+must independently verify the registered action's effect. `PulseError` is
+`NotApplied` before the upper dispatch and `Unknown` afterward, including reset
+failure or context loss during temporary cleanup. Any failure after the upper
+dispatch prevents further writes. There is no automatic reset or retry on an
+unknown path. The caller retains the RawParameter and its document/provider
+pins through receipt publication.
+
 | Method | Accepted data | Readback |
 | --- | --- | --- |
 | `set_raw_number` | Toggle, Integer, Float, List index, Scroll; finite values within the native numeric range, with lossless coercion to the existing representation | Exact raw integer or f64 bits |
@@ -145,7 +248,7 @@ python3 native/parameter-api/checks/regression.py /path/to/ccl-framework-5.2
 
 The first command verifies official `ccl-5.1.2` commit
 `ad5876b1a7b64aa247f4378c86a7862e7c284ba3`, 32 header hashes, C++ scalar/reference
-and layout assertions, and 23 arm64 virtual dispatch offsets. It needs Apple
+and layout assertions, and 26 arm64 virtual dispatch offsets. It needs Apple
 Clang and Python. Temporary compiler output is removed automatically. The
 second command confirms that a separately obtained newer SDK is rejected by
 both the version pin and compiled call map. Neither command links the SDK,

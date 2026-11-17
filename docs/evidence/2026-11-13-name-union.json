@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "scope": "historical_fixed_59_provider_current_fixture_name_inventory",
+  "key": [
+    "native_class_uid",
+    "source",
+    "canonical_parameter_name"
+  ],
+  "strict_writable": {
+    "readOnly": false,
+    "writable": true
+  },
+  "inventory_provider_pairs": 59,
+  "inventory_records": 8668,
+  "inventory_names": 7112,
+  "accepted_names": 6423,
+  "remaining_names": 689,
+  "cutoff_chorder_roles": 92,
+  "later_roles_excluded": true,
+  "global_support_percentage": false,
+  "previous_verified_union": 6288,
+  "new_disjoint_names": {
+    "Focus": 26,
+    "Impact_MIDI": 2,
+    "Vocal_Tune": 13,
+    "Chorder_input": 1,
+    "Chorder_mode": 1,
+    "Chorder_members": 92
+  },
+  "remaining_names_by_class_at_cutoff": {
+    "Ampire": 19,
+    "CV Instrument": 97,
+    "Chorder": 169,
+    "Compressor": 2,
+    "Expander": 1,
+    "External Effect Mono": 4,
+    "External Effect Stereo": 4,
+    "Gate": 1,
+    "Input Filter": 128,
+    "Level Meter": 2,
+    "Limiter": 1,
+    "Mai Tai": 7,
+    "Mojito": 3,
+    "Multi Instrument": 150,
+    "Mustang Native": 29,
+    "Pedalboard": 12,
+    "Presence": 22,
+    "Rumble Native": 29,
+    "SampleOne": 6,
+    "Scope": 2,
+    "Vocal Tune": 1
+  },
+  "reconciler_report_sha256": "0a6008f3b444bf609a7bffeda7ad8c275c65d58033e403971cfe8231cb0c1f0b",
+  "independent_review_report_sha256": "213999823c06bc1b5685d1f9caff9771bb1cb33cf7b4e2a8d8f0666e0cb9bd05",
+  "independent_review_evidence_sha256": "a521207310afff4d721948cb416ab48d92ace24c671bc0d9ddd7e2e3b6810987",
+  "immutable_input_files": 13512,
+  "review_groups": 16,
+  "actual_runtime_calls_in_audit": 0,
+  "all_builtins_fully_verified": false
+}

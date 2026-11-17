@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "STATIC_CV_PORT_PREDICATE_PAIRED_STORAGE_OWNERSHIP_PARTIAL",
+  "status": "ENTRY_TYPE_AND_FIELD_SEMANTICS_UNKNOWN",
+  "actual_DAQ": 0,
+  "new_function_bodies": 6,
+  "unique_evidence_records": 16,
+  "query_calls": 17,
+  "duplicate_body_free_callers_query_disclosed": true,
+  "elapsed_seconds": 505.034,
+  "timebox_seconds": 600,
+  "facts": [
+    "AudioEffect inherits a paired collection subobject at owner+0x188.",
+    "Its first buffer/count map to owner+0x1d8/0x1e0 and second buffer/count to owner+0x238/0x240 used by the frozen predicate.",
+    "Constructor, copy and destructor corroborate paired storage; inherited vtable replacement stages remain distinct."
+  ],
+  "unknowns": [
+    "Concrete collection element class",
+    "Meaning of element+0x5c",
+    "Mapping of predicate to current route assignment or serialization eligibility"
+  ],
+  "next_grounded_seed": "Final derived-stage subobject table0x101b77118; establish interface/receiver then one typed entry accessor/insertion path.",
+  "no_offset_coincidence_semantic_inference": true,
+  "source_Main_checkpoint_and15_inputs_unchanged": true,
+  "engine": {
+    "isolated": true,
+    "export_records": 16,
+    "closed": true,
+    "reset": true,
+    "EOF_exit_code": 0
+  },
+  "evidence_sha256": {
+    "report": "f39847c8d8e0edb5d03de71c9e91c46567aec4b828db5279ce80fe5656c75766",
+    "result": "d4f4505653ac946ffc821b9947a85c35de1ebc6e2e8b4036b66cbe77e0eb5d9a",
+    "evidence16": "1fc4247df176c29964c5b04f3a3b6be11444bcec3a37153ffeab796404256f11"
+  },
+  "coverage_increment": 0
+}

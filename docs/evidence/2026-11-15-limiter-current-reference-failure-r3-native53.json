@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "status": "FAILED_VERIFIER_CURRENT_METER_MAXIMUM_ASSUMPTION",
+  "source_commit": "d508651cd108394bb3578bdfec5d891fb52e0fc2",
+  "native_unit": 53,
+  "elapsed_seconds": 468.561,
+  "planned_DAQ": 48,
+  "actual_DAQ": 35,
+  "accepted_completed_unit_DAQ": 0,
+  "failed_or_nonadmitted_DAQ": 35,
+  "last_RPC": 37,
+  "first_unexecuted_RPC": 38,
+  "observed_meter_reference": {
+    "fresh_minimum": {
+      "data": {
+        "bits_hex": "40C3880000000000",
+        "kind": "float",
+        "value": 10000
+      },
+      "variant_tag": 2
+    },
+    "post_signal_minimum": {
+      "data": {
+        "bits_hex": "40BD6AF717F00000",
+        "kind": "float",
+        "value": 7530.965209007263
+      },
+      "variant_tag": 2
+    },
+    "post_signal_minimum_text": "-35.55",
+    "fresh_current_meter": {
+      "data": {
+        "bits_hex": "0000000000000000",
+        "kind": "float",
+        "value": 0
+      },
+      "variant_tag": 2
+    },
+    "post_signal_current_meter": {
+      "data": {
+        "bits_hex": "0000000000000000",
+        "kind": "float",
+        "value": 0
+      },
+      "variant_tag": 2
+    },
+    "current_meter_maximum": {
+      "data": {
+        "bits_hex": "40C3880000000000",
+        "kind": "float",
+        "value": 10000
+      },
+      "variant_tag": 2
+    },
+    "current_equals_initial_not_maximum": true
+  },
+  "mutations": {
+    "Tone_level_prepare_and_restore": 2,
+    "ToneOn_requests": 1,
+    "ToneOff_requests": 1,
+    "Tone_whole10_exact_original_restore_verified": true,
+    "Limiter_threshold_preparation": 1,
+    "Limiter_threshold_restored_before_close": false,
+    "reset_pulses": 0,
+    "preset_or_state_load_or_Save": 0
+  },
+  "GUI_observation": {
+    "initial_reduction_text": "0.00 dB",
+    "post_signal_held_minimum_text": "-35.55 dB",
+    "initial_threshold_text": "-3.00 dB",
+    "prepared_threshold_text": "-12.00 dB",
+    "actual_rendered_screenshots_observed": true,
+    "reset_effect_verified": false,
+    "two_native_retention_observations_completed": false
+  },
+  "closure": {
+    "owned_Scratch_NoSave": true,
+    "CUA_app_open": false,
+    "owner_EOF_exit_code": 0,
+    "hardware_then_process_check_sequential": true,
+    "no_relevant_processes": true,
+    "two_locks_reacquired_released": true,
+    "saved_files_unchanged": 10,
+    "MIDI_sources_destinations_before_after": 0
+  },
+  "evidence_pins": {
+    "original_baseline25": "b04c7f4543627841afc6e6d6622c53a019fe1babdd1f98bbe2732488ba950372",
+    "original_baseline26": "e06936c9a873691a62f75564208d14885b64a42e5d92be86bdb523a614f879d2",
+    "Tone_exact_original36": "fa4f9210241c2f91719d00d439532b604b2d69995d46a2bbc824dcc56a583f6b",
+    "actual_first_quiet37": "d96f261f482f978cc9201bc5719392bd31f308dc21ac59e5459517a8377bf401",
+    "original_intents": "56241699d5141f55d8ce5ec27376961d4d6324246a7634aa59c4895a1d431315",
+    "closure": "75ec7d5e390dadfcdb2a13c13d4593e2996a3db0594ced8fdd0cf640fb0f8b32",
+    "meter_reference_projection": "7740652e55f8f0f7bf17985c3d33b5ca45ff4fd8074a75212bbd03c0f863db8e"
+  },
+  "next": "R4 current-meter reference is the exact two-page initial no-input state, not its maximum. The distinct held minimum must still be stable nonneutral and return to its own initial value after one pulse. Preserve old failures and all effect/metadata/closure guards.",
+  "accounting": {
+    "Native53_raw_requests": 72,
+    "Native53_accepted_completed_unit_requests": 0,
+    "Native53_failed_or_nonadmitted_requests": 72,
+    "fixed_total": 43,
+    "complete": 11,
+    "remaining": 32,
+    "hardware_blocked": 4
+  }
+}

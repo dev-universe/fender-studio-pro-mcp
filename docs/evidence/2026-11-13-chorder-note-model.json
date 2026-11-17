@@ -1,0 +1,102 @@
+{
+  "schema": 1,
+  "date_kst": "2026-11-13",
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "product_source": "eb29bc4",
+  "native_unit": 35,
+  "native_uuid": "5F7778ED-A4AD-3021-B6F9-1358F2C53FE4",
+  "main_sha256": "bb78844f0bf14d4a3351d3c34b073847a6ec800942b6e4413e3ce668ce617fe6",
+  "status": "complete",
+  "elapsed_seconds_with_UI_cleanup": 119.06,
+  "tool_requests": 179,
+  "input_pitch": 60,
+  "output_pitch": 0,
+  "model_setter_intents": [
+    "enable",
+    "disable"
+  ],
+  "model_setter_count": 2,
+  "preparatory_UI_actions": 1,
+  "preparatory_UI_scope": "transient Learn Mode on; selected input C3 appeared; independent native getter required MIDI60",
+  "complete908provider_reads": 6,
+  "whole128model_passes": 6,
+  "fresh_serializations": 48,
+  "other907provider_records_unchanged": true,
+  "other127model_inputs_unchanged": true,
+  "added_model_contains_only_one_new_output": true,
+  "final_provider_pair_exact_original": true,
+  "final_model_pair_exact_original": true,
+  "all_five_saved_songs_unchanged": true,
+  "state_capsule_actions": 0,
+  "preset_actions": 0,
+  "transport_actions": 0,
+  "Song_Save": 0,
+  "app_closed_observed": true,
+  "owner_stopped": true,
+  "native_setter_receipt_scope": "GUI_current_value_only",
+  "independent_model_witness": true,
+  "mapping_scope": "input60_output0_only",
+  "persistence_verified": false,
+  "audio_verified": false,
+  "atomic": false,
+  "proof_checkpoints": [
+    {
+      "stage": "before",
+      "provider_sha256": "d5426c29c22e8adc61cad395bbb70d8dd4e5496fb36c8d0300de197ebb60ae55",
+      "reads": 2
+    },
+    {
+      "stage": "before",
+      "model_pass": 1,
+      "model_sha256": "1dc362665f88c5e083ca1334db73d038ba1c2d9941cdf0fbab69e102847d06d4",
+      "capture_byte_count": 581,
+      "capture_sha256": "6874d20b68956d27d749e48d309a47467bad3302f0fd7085754565d872777b3d"
+    },
+    {
+      "stage": "before",
+      "model_pass": 2,
+      "model_sha256": "1dc362665f88c5e083ca1334db73d038ba1c2d9941cdf0fbab69e102847d06d4",
+      "capture_byte_count": 581,
+      "capture_sha256": "6874d20b68956d27d749e48d309a47467bad3302f0fd7085754565d872777b3d"
+    },
+    {
+      "stage": "added",
+      "provider_sha256": "b095b6ceefe32f5c1a5943d14c758669babccad24e862f7b59592933d53db204",
+      "reads": 2
+    },
+    {
+      "stage": "added",
+      "model_pass": 1,
+      "model_sha256": "4594671b2a52c2e65cf488ba940b9417f7c4f2303616a0479cbeddd7bebf4cbc",
+      "capture_byte_count": 612,
+      "capture_sha256": "403fe7f78be5f80a10c44e53d8d55c6c6d035a1665b8a47e4c89ac8714939736"
+    },
+    {
+      "stage": "added",
+      "model_pass": 2,
+      "model_sha256": "4594671b2a52c2e65cf488ba940b9417f7c4f2303616a0479cbeddd7bebf4cbc",
+      "capture_byte_count": 612,
+      "capture_sha256": "403fe7f78be5f80a10c44e53d8d55c6c6d035a1665b8a47e4c89ac8714939736"
+    },
+    {
+      "stage": "final",
+      "provider_sha256": "d5426c29c22e8adc61cad395bbb70d8dd4e5496fb36c8d0300de197ebb60ae55",
+      "reads": 2
+    },
+    {
+      "stage": "final",
+      "model_pass": 1,
+      "model_sha256": "1dc362665f88c5e083ca1334db73d038ba1c2d9941cdf0fbab69e102847d06d4",
+      "capture_byte_count": 581,
+      "capture_sha256": "6874d20b68956d27d749e48d309a47467bad3302f0fd7085754565d872777b3d"
+    },
+    {
+      "stage": "final",
+      "model_pass": 2,
+      "model_sha256": "1dc362665f88c5e083ca1334db73d038ba1c2d9941cdf0fbab69e102847d06d4",
+      "capture_byte_count": 581,
+      "capture_sha256": "6874d20b68956d27d749e48d309a47467bad3302f0fd7085754565d872777b3d"
+    }
+  ],
+  "private_result_sha256": "af09422fea3cd282614d6ae1cea1dbbae94f25791c552e2982618e529573906a"
+}

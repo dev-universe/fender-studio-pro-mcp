@@ -1,0 +1,601 @@
+{
+  "schema": 1,
+  "date_kst": "2026-11-13",
+  "host": "Fender Studio Pro8.1.1 Build113103 macOS arm64",
+  "main_source_commit": "eb29bc4",
+  "main_sha256": "bb78844f0bf14d4a3351d3c34b073847a6ec800942b6e4413e3ce668ce617fe6",
+  "native_unit": 35,
+  "new_preset_plan": {
+    "classes_total": 46,
+    "classes_complete": 28,
+    "accepted_cases": 56,
+    "classes_remaining": 18,
+    "capsule_only_classes": 23,
+    "capsule_only_cases": 46,
+    "hybrid_classes": 5,
+    "hybrid_cases": 10,
+    "cases_in_completed_classes": 56,
+    "partial_hybrid_cases": 0
+  },
+  "unit66": {
+    "elapsed_seconds_including_UI_cleanup": 209.528,
+    "overall_status": "failed_cleaned_up",
+    "previous_full_class_gates_retained": true,
+    "accepted_classes": [
+      {
+        "name": "Studio Verb",
+        "provider_records": 151,
+        "catalog_count": 121,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          9,
+          9
+        ]
+      },
+      {
+        "name": "Compressor",
+        "provider_records": 154,
+        "catalog_count": 89,
+        "issued_indices": [
+          1,
+          2
+        ],
+        "changed_writable_counts": [
+          7,
+          8
+        ]
+      }
+    ],
+    "not_accepted": {
+      "name": "Voice FX",
+      "provider_records": 5,
+      "indices": [
+        0,
+        1
+      ],
+      "reason": "provider_schema_changed_not_accepted_by_fixed_provider_runner",
+      "restoration_and_release_verified": true,
+      "baseline_provider_records": 5,
+      "changed_provider_records": 6,
+      "model_before": "De-Tuner",
+      "model_after": "Transformer",
+      "actual_value_changes_observed": true,
+      "legacy_no_state_change_status_misleading": true
+    },
+    "unrun_classes": [
+      "Rotor",
+      "De-Esser",
+      "Vocoder",
+      "Vocal Tune",
+      "Open AIR"
+    ],
+    "unrun_selected_cases": 9,
+    "normal_saves": 0,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true
+  },
+  "unit65": {
+    "accepted_classes": 0,
+    "accepted_cases": 0,
+    "stopped_class": "Mixverb",
+    "reason": "exact_original_restoration_not_confirmed",
+    "postload_complete9record_reads": 8,
+    "normalized_predelay_original_bits": "3D23D70D",
+    "normalized_predelay_postload_bits": "3D23D70E",
+    "elapsed_seconds_including_UI_cleanup": 98.823,
+    "saved_source_unchanged": true
+  },
+  "hardware": {
+    "mcp_tools": 45,
+    "full_product_tests": 127,
+    "independent_inventory_tests": 17,
+    "independent_observer_tests": 29,
+    "audio_device_count": 5,
+    "midi_source_count": 3,
+    "midi_destination_count": 3,
+    "volt_input_channels": 2,
+    "volt_output_channels": 2,
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "observer_windows_ms": [
+      105,
+      5002,
+      102
+    ],
+    "observed_midi_events": 0,
+    "disconnect_statuses": [
+      0,
+      0,
+      0
+    ],
+    "port_dispose_statuses": [
+      0,
+      0,
+      0
+    ],
+    "physical_keys_verified": false,
+    "audio_verified": false,
+    "physical_loopback": false,
+    "native_client_lifetime": "one_per_process",
+    "actual_DAW_device_and_IO_UI_observed": true,
+    "original_AudioSetup_restoration_required": false,
+    "original_AudioSetup_restoration_confirmed": true
+  },
+  "first_External_readonly_unit": {
+    "status": "failed_cleaned_up_before_full_provider_or_choice_reads",
+    "reason": "UI_fader_minimum_not_exact_native_zero",
+    "Main_native_volume_after_UI_minimum": 6.309418287428427e-08,
+    "rpc_calls": 8,
+    "complete_provider_reads": 0,
+    "choice_pages": 0,
+    "accepted_instances": 0,
+    "elapsed_seconds_including_UI_cleanup": 218.139,
+    "parameter_writes": 0,
+    "normal_saves": 0,
+    "saved_source_unchanged": true
+  },
+  "all_builtins_fully_verified": false,
+  "External_mainzero_unit": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds_including_UI_cleanup": 199.771,
+    "rpc_calls": 18,
+    "Main_API1to0_verified": true,
+    "mixer_write_attempts": 1,
+    "graph_complete": false,
+    "graph_diagnostics": [
+      "ancestor_limit",
+      "depth_limit"
+    ],
+    "complete_provider_reads": 0,
+    "choice_pages": 0,
+    "saved_source_unchanged": true
+  },
+  "unit68": {
+    "elapsed_seconds_including_UI_cleanup": 184.288,
+    "overall_status": "failed_cleaned_up",
+    "previous_full_class_gates_retained": true,
+    "accepted_classes": [
+      {
+        "name": "Rotor",
+        "provider_records": 29,
+        "catalog_count": 18,
+        "issued_indices": [
+          1,
+          2
+        ],
+        "changed_writable_counts": [
+          9,
+          10
+        ]
+      },
+      {
+        "name": "De-Esser",
+        "provider_records": 10,
+        "catalog_count": 14,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          1,
+          2
+        ]
+      },
+      {
+        "name": "Vocoder",
+        "provider_records": 117,
+        "catalog_count": 27,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          42,
+          61
+        ]
+      },
+      {
+        "name": "Vocal Tune",
+        "provider_records": 26,
+        "catalog_count": 13,
+        "issued_indices": [
+          0,
+          1
+        ],
+        "changed_writable_counts": [
+          3,
+          4
+        ]
+      }
+    ],
+    "not_accepted": {
+      "name": "Open AIR",
+      "provider_records": 94,
+      "catalog_count": 1,
+      "indices": [
+        0
+      ],
+      "reason": "no_observable_value_or_schema_change",
+      "baseline_schema_changed": false,
+      "restoration_and_release_verified": true
+    },
+    "unrun_classes": [],
+    "normal_saves": 0,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true
+  },
+  "External_provider_choices_only": {
+    "status": "passed_cleaned_up",
+    "elapsed_seconds_including_UI_cleanup": 417.436,
+    "rpc_calls": 51,
+    "instances": 2,
+    "complete24record_provider_reads": 8,
+    "record_observations": 192,
+    "complete_choice_pages": 8,
+    "each_send_and_receive_count": 0,
+    "complete_insert_list_reads": 4,
+    "Main_API1to0_preparations": 1,
+    "plugin_parameter_writes": 0,
+    "state_writes": 0,
+    "port_writes": 0,
+    "transport_actions": 0,
+    "normal_saves": 0,
+    "complete_graph_verified": false,
+    "topology_not_assessed": true,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true,
+    "physical_ping_verified": false,
+    "audio_verified": false
+  },
+  "External_IO_copy_preparation": {
+    "normal_save_as_observed": true,
+    "elapsed_seconds_including_UI_cleanup": 324.610276,
+    "new_title_and_file_url_observed": true,
+    "new_named_scratch": "MCP External IO Diagnostic",
+    "three_existing_saved_sources_unchanged": true,
+    "io_changes": 0,
+    "mcp_calls": 0,
+    "app_closed": true,
+    "original_AudioSetup_restoration_required": true
+  },
+  "unit67_independent_actual_trace_audit": {
+    "verdict": "PASS",
+    "original_wrapper_status": "failed_cleaned_up",
+    "original_wrapper_accepted_cases": 0,
+    "audit_accepted_hybrid_pilot_cases": 1,
+    "ordinary_class_complete": false,
+    "elapsed_seconds_including_UI_cleanup": 148.2,
+    "rpc_calls": 101,
+    "ledger_events": 227,
+    "issued_indices": [
+      0
+    ],
+    "original_capsule_loads": 1,
+    "predeclared_predelay_setters": 1,
+    "known_postload_complete9record_reads": 4,
+    "independent_exact_final_complete_reads": 2,
+    "exact_raw_and_normalized_original_verified": true,
+    "state_and_catalog_releases_verified": true,
+    "expired_catalog_refusal_verified": true,
+    "independent_groups_passed": 5,
+    "negative_counterexamples_refused": 14,
+    "correction": "exact four-field identity with literal AudioEffect/Mixverb; single clause only",
+    "actual_trace_sha256": "dfe77a893d86541516066e92adb4187d462a02d32b28a410bf80b88a43ea0118",
+    "original_validator_sha256": "30200620bc0b9ab0e0e268ccb27ab53d7e935272b829c81cba56c6e20c13cfbb",
+    "independent_audit_validator_sha256": "cd8e60795aadbae46fa0d7bf454919a97c78f9e08dcef793bbe573c54442c248",
+    "mutation_replay": false,
+    "saved_source_unchanged": true,
+    "app_and_owner_closed": true,
+    "capsule_only_restoration_verified": false,
+    "audio_or_persistence_verified": false
+  },
+  "External_IO_stageA_first_observation": {
+    "status": "failed_cleaned_up_before_providers",
+    "elapsed_seconds": 357.629,
+    "rpc_calls": 15,
+    "Main_API1to0_preparations": 1,
+    "logical_rows_added_and_removed_UI": 4,
+    "channel_counts": [
+      67,
+      69
+    ],
+    "new_output_indices": [
+      66,
+      67
+    ],
+    "Main_index_before_after": [
+      66,
+      68
+    ],
+    "other_old_channel_fields_changed": 0,
+    "actual_native_layout": "oldprefix66,newMono66,newStereo67,Main68",
+    "actual_IO_UI_reopen_order": "Main,newMono,newStereo,sixCVrows",
+    "original_IO_UI_restored": true,
+    "full_provider_reads": 0,
+    "choice_pages": 0,
+    "plugin_parameter_writes": 0,
+    "port_writes": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "four_saved_sources_unchanged": true,
+    "global_AudioSetup_restoration_required": true
+  },
+  "External_mapped_unit_partial_A": {
+    "overall_status": "failed_cleaned_up",
+    "elapsed_seconds": 730.966,
+    "completed_io_stages": [
+      "A"
+    ],
+    "original_wrapper_accepted_metadata_stages": 0,
+    "full24record_provider_reads": 8,
+    "complete_choice_pages": 8,
+    "all_send_return_counts_in_A": 0,
+    "rpc_calls": 55,
+    "Main_API_preparation_writes": 1,
+    "BMONO_actual_UI_mapping_observed": true,
+    "BMONO_API_queries": 0,
+    "BMONO_not_flagged_after_UI_deadline": true,
+    "original_IO_UI_restored": true,
+    "port_parameter_state_transport_Save_writes": 0,
+    "source_unchanged": true,
+    "app_and_owner_closed": true,
+    "global_AudioSetup_restoration_required": true
+  },
+  "voicefx_schema_aware_R2": {
+    "status": "complete",
+    "accepted_new_classes": 1,
+    "accepted_new_cases": 2,
+    "issued_indices": [
+      0,
+      1
+    ],
+    "actual_rpc_pairs": 154,
+    "suite_rpc_pairs_each": 72,
+    "catalog_count_each": 12,
+    "original_provider_records": 5,
+    "changed_provider_records": 6,
+    "original_model": "De-Tuner",
+    "changed_model": "Transformer",
+    "complete_changed_pair_each": true,
+    "complete_original_pair_before_release_each": true,
+    "complete_original_pair_after_refusal_each": true,
+    "whole_saved_source_unchanged": true,
+    "all_five_saved_songs_unchanged": true,
+    "main_preparation_sets": 1,
+    "scalar_or_model_repair_setters": 0,
+    "Song_Save": 0,
+    "elapsed_seconds_with_UI_cleanup": 116.953,
+    "app_closed_observed": true,
+    "owner_stopped": true,
+    "historical_unit66_failure_unchanged": true,
+    "original_ledger_sha256": [
+      "d51bb198dedb61f1aba77becf0d578795f61b3ba171332dba2231a8e137bf85f",
+      "155cfa7c12d2eb5d5ca42ace029f72c111991016cb4040cf453501df65714574"
+    ],
+    "result_sha256": "e0634ab0e5735dd31ba8c4953392973ca82ca9595b6da631efef751d401636c3"
+  },
+  "external_physical_mapping_metadata": {
+    "status": "complete",
+    "rpc_calls": 143,
+    "elapsed_seconds_with_UI_cleanup": 775.693,
+    "accepted_stages": [
+      "BMONO",
+      "BSTEREO",
+      "RESTORE"
+    ],
+    "complete24record_provider_reads": 24,
+    "complete_choice_pages": 24,
+    "actual_UI_software_bus_choices_observed": true,
+    "plugin_port_changes": 0,
+    "state_actions": 0,
+    "transport_actions": 0,
+    "Song_Save": 0,
+    "Main_exact1_to0_preparation": 1,
+    "original_IO_matrix_restored": true,
+    "original_native_fixture_restored": true,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true,
+    "physical_loopback_verified": false,
+    "ping_verified": false,
+    "audio_verified": false,
+    "result_sha256": "db289a05b7427bd3fffc5ae549cfb6ba41a1a5990ec26c46242c564d33a601dc",
+    "controller_send_receive_choice_counts_all_zero": true,
+    "controller_empty_does_not_establish_GUI_menu_empty": true,
+    "historical24record_provider_source": "controller",
+    "old_DSP_label_withdrawn": true
+  },
+  "global_audio_setup_restored": {
+    "actual_preferences_UI": true,
+    "reopened_after_OK": true,
+    "playback": "MacBook Pro speakers",
+    "recording": "MacBook Pro microphone",
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "whole_preference_files_overwritten": false
+  },
+  "external36_first_pilot": {
+    "status": "failed_cleaned_up",
+    "elapsed_seconds_with_UI_cleanup": 148.841,
+    "actual_receipts": 12,
+    "verified_requests_before_refusal": 11,
+    "preeditor_Auto_native_source": "dsp",
+    "preeditor_Auto_reported_count": 0,
+    "GUI_provider_reads": 0,
+    "GUI_choices_reads": 0,
+    "plugin_port_writes": 0,
+    "Main_preparation_sets": 1,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true
+  },
+  "external36_editor_ready_R2": {
+    "status": "complete",
+    "elapsed_seconds_with_UI_cleanup": 103.882,
+    "rpc_calls": 37,
+    "native_unit": 36,
+    "native_uuid": "E295BC24-C968-37A1-9A0D-57D4837139A8",
+    "Auto_complete24record_reads": 4,
+    "exact_GUI_complete24record_reads": 4,
+    "complete_choice_streams": 8,
+    "Auto_provider_equals_exact_GUI_after_editor": true,
+    "None_native_integer": -1,
+    "None_normalized_bits": "3F800000",
+    "send_and_return_choice_count": 0,
+    "actual_Send_menu_has_Main": true,
+    "actual_Return_menu_None_only": true,
+    "parameter_list_does_not_enumerate_popup_menu": true,
+    "plugin_parameter_writes": 0,
+    "port_writes": 0,
+    "Main_preparation_sets": 1,
+    "all_five_saved_songs_unchanged": true,
+    "app_and_owner_closed": true,
+    "physical_loopback_verified": false,
+    "ping_verified": false,
+    "audio_verified": false,
+    "result_sha256": "58ff7836cc06026d6d0832d0f5888c3b3a138e2c0be4e31815fbbfb5cd7dacd6"
+  },
+  "openair_sentinel_attempt": {
+    "status": "failed_cleaned_up",
+    "actual_rpc_receipts": 61,
+    "case_rpc_receipts": 51,
+    "elapsed_seconds_with_UI_cleanup": 136.58,
+    "seed_normalized": 0.5,
+    "seed_raw": 5000,
+    "seed_full94record_pair_verified": true,
+    "other93records_unchanged": true,
+    "seed_setters": 1,
+    "fresh_issued_index": 0,
+    "issued_recalls": 1,
+    "recall_reset_observed": false,
+    "following_original_capsule_loads": 0,
+    "following_repair_or_retry": 0,
+    "accepted_cases": 0,
+    "accepted_classes": 0,
+    "all_five_saved_songs_unchanged": true,
+    "app_closed": true,
+    "owner_stopped": true,
+    "result_sha256": "d99702f54cba2c071853a476a8a02a9a857770e55af84d57dfcf8d22a9a22bf3"
+  },
+  "Mixverb_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_audit": true,
+    "elapsed_seconds_with_UI_cleanup": 99.66,
+    "actual_rpc_calls": 121,
+    "suite_rpc_calls": 111,
+    "original_result_counter_preserved": 0,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "6602702b746b47eb544a2deae4cab214a4461e74ec365cc41c75c0a3b8eb6f53",
+    "raw_audit_sha256": "6599db36e8304dab2adb7309e5b123c5dae3fae66fc51fbe93cf09306dc960bd"
+  },
+  "post_hardware_detach": {
+    "user_confirmed": true,
+    "inventory_passes": 2,
+    "audio_device_count": 4,
+    "midi_source_count": 0,
+    "midi_destination_count": 0,
+    "volt_absent": true,
+    "os_defaults_builtin_microphone_and_speakers": true,
+    "actual_DAW_UI_builtin_microphone_and_speakers": true,
+    "sample_rate_hz": 48000,
+    "buffer_frames": 512,
+    "settings_changed": false,
+    "actual_audio_or_physical_keys_verified": false
+  },
+  "Surround_Delay_index0_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 84.958,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "ccd3d82d9954a9623ecabeb72409430e40df69eb9cb4d9d9ffa0fc322dd06a7f",
+    "raw_audit_sha256": "63a2f517a89312a5de81de3dfa2b28b34edc7094e6ffac64ea67cff2f016e4b0"
+  },
+  "Multiband_Dynamics_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete": false,
+    "elapsed_seconds_with_UI_cleanup": 83.145,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "2bfed60855989f13dd1c36212cfede891c61a494de4fd8b715e439bdc2e467ce",
+    "raw_audit_sha256": "b449083a1c019a5f339051b62cff3434bd185ff5addf305f15c120e57084df13"
+  },
+  "Room_Reverb_index0_hybrid": {
+    "status": "failed_cleaned_up",
+    "accepted_new_cases": 0,
+    "elapsed_seconds_with_UI_cleanup": 113.363,
+    "actual_rpc_calls": 106,
+    "last_terminal_observed": true,
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "de57cbbaeaedc7839cf66bfc334c4ded37128a0923de8786ee37893f301f2e89",
+    "raw_audit_sha256": "b6eb1eaf12681f6b5d07c39208d030111d38863ef5fface88819e18590182298",
+    "first_failure_details": "pending_readonly_raw_audit"
+  },
+  "Surround_Delay_index1_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index0_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 98.645,
+    "actual_rpc_calls": 151,
+    "suite_rpc_calls": 141,
+    "provider_records": 79,
+    "catalog_count": 74,
+    "fixed_restoration_parameters": [
+      "time3",
+      "time6"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "f2d7e3b8a8c9a8e56c7cfeb216835ea9c332352fd7f20a7cdc72d920b1888786",
+    "raw_audit_sha256": "f0341e6ed26e19c77e418fa0889c2984078ed77a58c543b5f4fdd86d38981ba0"
+  },
+  "Multiband_Dynamics_index2_hybrid": {
+    "accepted_new_cases": 1,
+    "class_complete_with_prior_index1_actual": true,
+    "elapsed_seconds_with_UI_cleanup": 88.578,
+    "actual_rpc_calls": 179,
+    "suite_rpc_calls": 169,
+    "provider_records": 71,
+    "catalog_count": 28,
+    "fixed_restoration_parameters": [
+      "releaseband1",
+      "releaseband2",
+      "releaseband3",
+      "releaseband4",
+      "releaseband5"
+    ],
+    "normal_saves": 0,
+    "app_and_owner_closed": true,
+    "all_six_saved_songs_unchanged": true,
+    "result_sha256": "8013452269d0dd4884efa987a4e9b1787b4dd1fa25ee75df4ded8843f01058c9",
+    "raw_audit_sha256": "fbee4bd521b00d4f52f8f27b4c9bd2fc66106d994aa78d4f578cab68f1fcb8ec"
+  }
+}

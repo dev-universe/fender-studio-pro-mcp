@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "status": "ORIGINAL_REMAINING_WORK_PREREQUISITES_ONLY",
+  "DAQ": 0,
+  "product_edits": 0,
+  "count_increment": 0,
+  "official_CCL_commit": "ad5876b1a7b64aa247f4378c86a7862e7c284ba3",
+  "graph": {
+    "completed_48_queries_reused": true,
+    "new_owner_normalization": {
+      "elapsed_seconds": 223.656,
+      "new_bodies": 3,
+      "IID_reads": 1,
+      "actual_Program_warm_restore": true,
+      "autoanalysis_rerun": false,
+      "normal_close_reset_REA_exit0": true
+    },
+    "official_source_match": {
+      "elapsed_seconds": 172.455,
+      "IActionContext_IID": "63FFD68E-F46D-43E6-BE26-1457334A2377",
+      "first_specific_method": "getActionJournal",
+      "slot3_byte_offset": "0x18",
+      "actual_comparison_is_ActionJournal_pointer_equality": true,
+      "document_or_graph_identity_claim_rejected": true,
+      "IActionExecuter_IID": "11A9FB1D-5338-4F70-AAC9-97393EB64AFD",
+      "six_declared_methods_match_existing_observation": true,
+      "script_handled_true_does_not_prove_action_effect": true
+    },
+    "component_source": {
+      "files_read": 2,
+      "elapsed_seconds": 118.692,
+      "bounded_selected_files_do_not_resolve_factory": true,
+      "header_order_not_used_to_guess_deployed_offset": true
+    },
+    "owner_type": {
+      "elapsed_seconds": 160.327,
+      "new_bodies": 2,
+      "static_reads": 2,
+      "both_reads_returned0bytes_incomplete": true,
+      "not_null_or_absence_evidence": true,
+      "actual_warm_restore_and_normal_cleanup": true
+    },
+    "still_unresolved": [
+      "exact factory receiver and virtual+0x4a8 implementation",
+      "receiver virtual+0x200 identity",
+      "owned Inserts/Graph canonical binding",
+      "graph endpoints, signal order and mutation completion/restore"
+    ],
+    "live_mutation_capability": false,
+    "owner_type_initializer": {
+      "elapsed_seconds": 160.187,
+      "new_records": 3,
+      "exact_reference_list_counts": [
+        434,
+        28
+      ],
+      "reviewed_reference_counts": [
+        16,
+        16
+      ],
+      "unreviewed_reference_counts": [
+        418,
+        12
+      ],
+      "references_not_classified_as_writes": true,
+      "constructor_source_match": "RootComponent-like initialization with root name and two initial false flags",
+      "direct_TypeInfo_class_name_claim": false,
+      "concrete_factory_route_resolved": false,
+      "actual_warm_restore_and_normal_cleanup": true
+    }
+  },
+  "Multi_selected_static_candidates": {
+    "elapsed_seconds": 286.656,
+    "selected_archives": 2,
+    "issued_URL_file_identity_claim": false,
+    "factory_origin_claim": false,
+    "Big_Band": {
+      "synth_children": 9,
+      "graph_nodes": 29,
+      "edges": 28,
+      "MusicFX": 1,
+      "macros": 10,
+      "distinct_external_package_URLs": 986,
+      "serialized_title_differs_from_catalog_name": true
+    },
+    "Kalimba": {
+      "synth_children": 3,
+      "graph_nodes": 13,
+      "edges": 12,
+      "MusicFX": 3,
+      "macros": 4,
+      "distinct_external_package_URLs": 483
+    },
+    "not_yet_live_preset_cases": true,
+    "root150_not_whole_nested_control": true,
+    "resource_resolution_and_independent_live_nested_restore_unverified": true
+  },
+  "Scope": {
+    "elapsed_seconds": 335.716,
+    "provider_rows": 31,
+    "Oneshot": "Toggle mode, not a direct armed/completed flag",
+    "Retrigger": "immediate Button, not registered in Native54 action enum",
+    "generic_two_scalar_writes_not_equivalent_to_SDK_pulse": true,
+    "rendered_testScope_view_declared": true,
+    "waveform_effect_readiness": false,
+    "next_prefix": "13requests including one Main0 preparation; no Scope/Tone writes"
+  },
+  "official_sources": [
+    "https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/app/actions/actionexecuter.cpp#L50",
+    "https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/app/actions/iactioncontext.h#L34",
+    "https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/app/iactionjournal.h#L55"
+  ],
+  "private_report_sha256": {
+    "graph_next_boundary": "dfdabd7226aa28bbe573c16aed366281836ae9859d9fd1b69293681f0f066c94",
+    "graph_owner_normalization": "6fb2e332a0480b5ab22f75aa4ae71c99c81732b689d8f249af561f77ad748cdd",
+    "official_action_context_match": "0420539c9b8c7e53b88c7915082a5d2e90e08a45b689c1e9e8b9249b3f578df9",
+    "component_boundary": "9b65652a6a85129fd4b055e868f14ddf7cb80c639db7803029a8e7ac5a367c00",
+    "owner_type": "8e2b2f01ded97b1cc4ffdca74bb20e79aee20aa961074d530be7100e53a46c21",
+    "multi_candidates": "df94ef48a21055788b171bcfa224fb852de2a66d4303031be51b7788d02b7e38",
+    "scope_effect_readiness": "67daf193b0ced1319acb49b9707a5c500ebcef339d9523a70109ea7975989dba",
+    "owner_type_initializer": "024571c959a73ad6232b7b849d664d685ba349000c0559a2a368a0daf5cae78b"
+  },
+  "counts": {
+    "fixed_completed": 14,
+    "fixed_remaining": 29,
+    "baseline": 43,
+    "preset_classes_completed": 40,
+    "preset_cases": 77,
+    "hardware_blocked": 4
+  },
+  "proprietary_resources_or_source_copied_to_Git": false
+}

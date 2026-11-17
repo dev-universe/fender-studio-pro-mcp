@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "date": "2026-11-15",
+  "status": "ROOT_READINESS18_COMPLETE_ONLY_CONTINUATION_PENDING",
+  "app_version": "8.1.1 Build 113103",
+  "native_unit": 54,
+  "product_source_commit": "a991fd3745d7c420dee85d5f9b65b961fabfb6bc",
+  "actual_DAQ": 18,
+  "MCP_predispatch_rejections": 0,
+  "plugin_setting_writes": 0,
+  "preset_applies": 0,
+  "state_captures_restores": 0,
+  "full_current_provider_observations": 1,
+  "current_provider_records": 235,
+  "all_current_rows_readable_writable_metadata_complete": true,
+  "complete_plugin_coverage": false,
+  "elapsed_from_preflight_seconds": 811.644,
+  "elapsed_from_first_DAQ_seconds": 539.074,
+  "first_inspect_without_context_then_bound_context": true,
+  "actual_UI_observation": {
+    "selected_Music_row": 53,
+    "MIDI_input_None": true,
+    "Music_mute1": true,
+    "record0_monitor0": true,
+    "actual_audio_output_association": true,
+    "MIDI_input_UI_setters": 1,
+    "Music_mute_UI_setters": 1,
+    "record_disarm_UI_setters": 1,
+    "monitor_UI_setters": 0,
+    "monitor_disabled_with_record_disarm": true
+  },
+  "independent_native_context": {
+    "before_after_equal": true,
+    "Music_mute1_record0_monitor0": true,
+    "same_document_session_selection_instance": true,
+    "empty_Music_track": true,
+    "stopped_transport": true
+  },
+  "mixer": {
+    "Main_volume0": true,
+    "associated_audio_mute_0_to_1": true,
+    "fader_and_peers_unchanged": true
+  },
+  "real_Rust_semantic_gate": {
+    "original_R1_rejection_reproduced": true,
+    "resolved_R2_requests_validated": 18,
+    "product_validator_unchanged": true,
+    "DAQ_in_semantic_test": 0
+  },
+  "prior_R1_failure_preserved": true,
+  "source177_artifacts13_exact_after_prefix": true,
+  "owner_and_app_intentionally_active_for_separate_continuation": true,
+  "catalog_issued": false,
+  "closure_verified": false,
+  "preset_setting_case_accepted": false,
+  "fixed_backlog": {
+    "completed": 13,
+    "remaining": 30,
+    "baseline": 43,
+    "hardware_blocked": 4
+  },
+  "preset_settings": {
+    "completed_classes": 39,
+    "planned_classes": 46,
+    "completed_cases": 76
+  },
+  "evidence_sha256": {
+    "intents.jsonl": "01f54880fbd0bd5506c1b1de0f05799870b759950975f06f83420d882a168cbf",
+    "mcp-stdout.jsonl": "e52bf7099e88174b5845be37b5c23252b809601492c23948b60ffe7574fa7df4",
+    "ui-isolation-binding.json": "0cabc384974541ebd1946bc46efe8604bee4982744c848c226f343f146ddd67d",
+    "ui-isolation-observation.json": "9d3aa8b3c43c84ce98f922b5d3db0847bea480cb9cbf2a9a5f5a1867fda59225",
+    "readiness-complete.json": "7a129e7bb8354621adc744378b36df6a7507de2dbd42c3b194da8c4615321dac",
+    "post-readiness-pins.json": "d21546081bf2a7bf4706b302aa40bcef49b29f68ae1d5a22afdd07d93e42d5b3"
+  },
+  "limitations": [
+    "One complete provider observation only; independent P pair not established.",
+    "Preset positive contrast, state capture, one-load restoration, independent A/B equality and capability lifecycle remain unverified for this case.",
+    "Issued setting is the acceptance scope; factory origin and issued URL identity are not claimed.",
+    "UI and owner remain active. No completed NoSave closure is claimed."
+  ]
+}

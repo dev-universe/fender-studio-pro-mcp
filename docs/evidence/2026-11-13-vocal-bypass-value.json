@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "status": "independent_saved_actual_current_value_verified",
+  "canonical_tuple": [
+    "90D01A1C-EB13-4C5F-8C45-904F4AD0AFC0",
+    "dsp",
+    "bypass"
+  ],
+  "tool_requests": 36,
+  "direct_parameter_writers": 2,
+  "full26_provider_reads": 8,
+  "unchanged_peer_records": 25,
+  "strict_writable_names_in_fixed_Vocal_inventory": 19,
+  "raw_float64_sequence": [
+    0,
+    1,
+    0
+  ],
+  "setter_outcomes": [
+    "applied_verified",
+    "applied_verified"
+  ],
+  "full26_final_restored": true,
+  "coherent_selected_display": true,
+  "normal_saves": 0,
+  "historical_root_appfalse_nosave_owner_exit0_and_six_preservation_verified": true,
+  "callback_proved": false,
+  "audio_verified": false,
+  "host_alias_equivalence_proved": false,
+  "persistence_verified": false,
+  "new_disjoint_canonical_names": 1,
+  "accepted_union_after": 6460,
+  "fixed_inventory_names": 7112,
+  "remaining_names": 652,
+  "elapsed_seconds_with_UI_cleanup": 179.918,
+  "main_preparation_writes": 1,
+  "tools_list_metadata_calls_separate": 1,
+  "independent_review": {
+    "verdict": "PASS_CURRENT_VALUE",
+    "report_sha256": "8865a36e840c4f58e9df5156d440b7b17335687b0beb816300e0b03044364aa1",
+    "evidence_sha256": "17cace8a6e06f6d439059a7f994e7dd448462949bc5eeb51e7b4400d575d9df1",
+    "reviewed_proposal_sha256": "380dde6ef3f5e3a111946ccf934a032c1008d7666d8d0d70bc896ec94b080d44"
+  },
+  "result_sha256": "b6b503a4e7c75aea014d6025725d1eb3de07fdd17f80ce5d2e0849f01eff7382",
+  "base_union_evidence": "2026-11-13-name-union-128.json"
+}

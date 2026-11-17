@@ -1,0 +1,103 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "NATIVE59_R81_FIXED_STRUCTURED_INTERFACE_PRESENCE_ACTUAL",
+  "status": "ACCEPTED_WITH_EXPLICIT_OBSERVATION_LIMITS",
+  "source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
+  "actual": {
+    "requests": 27,
+    "IDs": "3..29",
+    "guards_passed": 27,
+    "native_read_elapsed_ms": 60,
+    "controllers": 8,
+    "rows": 7,
+    "details_fields": 56,
+    "structured_interface_true_count": 7,
+    "retained_text_bytes": 459,
+    "full_serialized_causal_audit_exit": 0,
+    "errors": 0,
+    "unknown_outcomes": 0,
+    "Root_elapsed_seconds": 620.268,
+    "independent_review_seconds": 273.821,
+    "closed_session_exclusions": 55
+  },
+  "observed_structured_support": [
+    "Input00",
+    "Output01",
+    "Output02",
+    "Output03",
+    "Output04",
+    "Output05",
+    "Output06"
+  ],
+  "other_seven_details_fields_match_R80": true,
+  "UI": {
+    "distinct_CV_Main_original_pairs": 4,
+    "independently_viewed_originals": 10,
+    "CV_outputs6_AudioIn": "None",
+    "Main": "CV_target_input_None_record_monitor_off_CV_mute_Master_negative_infinity_Stop",
+    "numeric_Monitor_Vol": "UNOBSERVED",
+    "None_option_choice_count": 1
+  },
+  "closure": {
+    "Root_NoSave_and_app_absent_observed": true,
+    "immediate_CUA_completion": true,
+    "explicit_waited_owner_child_exit_code": 0,
+    "source181_artifact13_saved10_Main_unchanged": true,
+    "both_locks_free_Root_observed": true,
+    "owner_stderr_empty": true,
+    "OS_audio_before_after": [
+      5,
+      5
+    ],
+    "MIDI_before_owner_after": [
+      0,
+      1,
+      0
+    ],
+    "owned_virtual_source_only": true,
+    "physical_stability": "UNPROVEN",
+    "operator_hardware_configuration_actions": 0,
+    "extra_readonly_doctor_before_DAQ": 1
+  },
+  "not_executed": [
+    "prepareStructure",
+    "cleanupStructure",
+    "countSubParameters",
+    "getSubParameter",
+    "menu_build",
+    "getController",
+    "getOriginal",
+    "plugin_parameter_write",
+    "factory_preset_apply",
+    "capsule_load",
+    "port_assignment_write"
+  ],
+  "authority": {
+    "assignment_values_observed": false,
+    "routing_verified": false,
+    "atomic_snapshot": false,
+    "mutation_capability": false,
+    "choices": false,
+    "preset_route_preservation": false
+  },
+  "review_deviations": {
+    "initial_pin_check_exit1": "reviewer_manifest_object_parser_error_not_actual_mismatch",
+    "corrected_pin_check_exit0": true,
+    "hard300_met": true,
+    "17_41_target_overrun_seconds": 19.821
+  },
+  "evidence_sha256": {
+    "actual_manifest141": "3c215a8c648f94da5125c677e17361fdb4a4698209b954c979257b25e385a0ae",
+    "acceptance_report": "19b725ac7e17dd648620a7655eb4aac926596ac021e4f6e6ac288b27c8050c77",
+    "acceptance_manifest12": "7fd071978b550a68c049581f79c9fc0787c35112b2997f3fc554b1ba96950fe0"
+  },
+  "series_totals": {
+    "raw": 239,
+    "accepted": 222,
+    "nonadmitted": 17,
+    "all_closed": true
+  },
+  "fixed_count_increment": 0,
+  "overall_completion_ETA": null
+}

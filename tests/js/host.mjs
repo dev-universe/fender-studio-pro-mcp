@@ -46,6 +46,7 @@ export function memoryHost() {
 export function bridgeHarness() {
   const host = memoryHost();
   const context = vm.createContext({ Host: host.Host, PreSonus: {} });
+  vm.runInContext(asset('edit-tasks/package/McpDocumentContext.js'), context, { filename: 'McpDocumentContext.js' });
   vm.runInContext(asset('bridge/BridgeCore.js'), context, { filename: 'BridgeCore.js' });
   const Bridge = vm.runInContext('Bridge', context);
   const bridge = new Bridge({ mailbox, allowEval: true }, null);
