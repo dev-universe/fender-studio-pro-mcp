@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Read latestNov15handoff, currentstate and workbreakdown; first CV preset/state external-route ownership read-only investigation. Freshpreflight177source/13artifact/10archives exact, DAW/MCP absent/twolocksfree/MIDI0. No oldsession/owner reuse. Newdeadline notset; reportunitcountsandETAs.",
-    "PRESET-CV: r73 actualNOTSTARTED. Original40 read/capture-only kit NOTREADY from independent late duplicate/extraneous/unsent-current stdout reproductions; no actual DAQ. Fresh r3 kit/driver r2 correction in progress: exact original prefix BEFORE intent and again BEFORE oncewrite, send-provenance before collect. Independent narrow re-review mandatory. Then fresh40 runtime may be admitted; no presetapply/load/seed. Static extra-content route/context known, current subtype/gate semantics/None preservation remain UNKNOWN. Predicate AudioEffect base constructor0x100d5d5c8 is next grounded seed; no repeated genericoffset scans.",
+    "PRESET-CV: R73 real40 closed; bounded read/capture97currents/110metadata/current None UI/NoSave observations accepted, whole readiness not fully certified due CoreAudio3→2 drift; MIDI0. One3900byte capture and catalog1default, success releases, no apply/load/seed/A-B. Fresh R74 exact47 seed-and-same-origin-A-restore kit preparing. Requires new session/owner/metadata/fullP/formatter, enableGlide/calibrate/monitor/calibrationProgress0, declared glide.glideTime5000 only, fullQ exactlyone writable change, one planned restoreA and fullP/currentroutesNone. No nativepresetapply/directIPresetrestore. Preserve all completed evidence; no hardware stability inference from passive IDs.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -625,15 +625,15 @@
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases,6classesremaining;fixed43completed15remaining28;Native55raw289=accepted139+failed150, hardware4separate.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "status": "CV_READ_CAPTURE_PRIVATE_KIT_CAUSALITY_CORRECTION",
+    "status": "R73_CLOSED_BOUNDED_OBSERVATIONS_ACCEPTED_R74_SEED_RESTORE_KIT_PREPARATION",
     "DAQ": 0,
-    "app_opened": false,
-    "MCP_owner_started": false,
-    "first_static_unit_complete": true,
-    "fixed_count_increment": 0,
-    "second_static_unit_complete": true,
-    "actual_runtime_started": false,
-    "offline_review_verdict": "NOTREADY"
+    "r73_actual_DAQ_completed": 40,
+    "app_opened_now": false,
+    "MCP_owner_running_now": false,
+    "R73_whole_readiness_fully_certified": false,
+    "R73_hardware_stability": "UNPROVEN",
+    "R74_actual_started": false,
+    "fixed_count_increment": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -19957,5 +19957,121 @@
       "hardware_remaining": 4
     },
     "next": "Correct private request/receipt pre-send causality in a fresh kit, independently review, then fresh read/capture-only runtime if admitted."
+  },
+  "cv_r73_read_capture_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "BOUNDED_CV_READ_CAPTURE_OBSERVATIONS_ACCEPTED_HARDWARE_STABILITY_UNPROVEN",
+    "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+    "native_unit": 55,
+    "runtime_namespace": "r73",
+    "actual_DAQ": 40,
+    "IDs": "3..42",
+    "guards_passed": 40,
+    "DAQ_errors": 0,
+    "unknown_outcomes": 0,
+    "metadata_original_records": 3,
+    "parameter_observations": {
+      "complete_rows_per_observation": 110,
+      "complete_observations": 5,
+      "writable_currents": 97,
+      "writable_currents_preserved_exactly": true,
+      "nonvalue_access_unknown_metadata110_preserved": true,
+      "readOnly_currents": 13,
+      "dynamic_differences": [
+        "cvMod1.voltage",
+        "cvMod2.voltage"
+      ],
+      "dynamic_differences_reported_separately": true
+    },
+    "capture": {
+      "count": 1,
+      "bytes": 3900,
+      "sha256": "90cfcfa88a439177ac40be229bf2e691942b3e3c438c40b28924ed9558ee5672",
+      "serialization": "component_alias_IStorable",
+      "raw_bytes_exported": false,
+      "A_released_at_ID": 35,
+      "A_B_equality_performed": false
+    },
+    "catalog": {
+      "observed_count": 1,
+      "name": "default",
+      "read_only": true,
+      "released_at_ID": 36,
+      "URL_file_identity": "UNKNOWN",
+      "factory_origin": "NOT_INFERRED",
+      "apply_performed": false
+    },
+    "UI": {
+      "original_photos": 13,
+      "six_output_selectors_None_at_seven_route_checkpoints": true,
+      "AudioIn_None": true,
+      "Music_input_None_before_and_final_observed": true,
+      "Music_record_monitor0": true,
+      "output_route_dropdown_actions": 0,
+      "MIDI_None_input_choices": 1,
+      "numeric_internalMonitorVol": "UNOBSERVED",
+      "calibration_or_monitor_start_actions": 0,
+      "MIDI_events": 0
+    },
+    "closure": {
+      "named_Scratch_NoSave": true,
+      "appfalse_then_immediate_CUA_completion": true,
+      "owner_EOF_exit0": true,
+      "DAW_MCP_absent": true,
+      "both_locks_reacquired_released": true,
+      "source177_artifact13_exact": true,
+      "saved10_equal": true,
+      "original_Main_exact": true,
+      "passive_hardware_completed_before_process_check": true,
+      "MIDI0_before_after": true
+    },
+    "elapsed_seconds": {
+      "full_unit_including_preparation_and_review_wait": 1948.051,
+      "metadata_intent_to_closure": 748.166,
+      "first_DAQ_to_closure": 674.926,
+      "independent_acceptance_review": 281.153
+    },
+    "limitations": {
+      "whole_readiness_contract_fully_certified": false,
+      "hardware_stability": "UNPROVEN",
+      "CoreAudio_inventory_before": 3,
+      "CoreAudio_inventory_after": 2,
+      "transient_CoreAudio_object_IDs_changed": true,
+      "strict_no_hardware_change_flag_retrospectively_certified": false,
+      "physical_CV_or_audio_effect_verified": false,
+      "preset_apply_or_capsule_load_performed": false,
+      "whole_running_P_restoration_claim": false,
+      "hidden_route_serialization_proven": false
+    },
+    "local_bookkeeping_incident": {
+      "missing_PIL_before_any_request19": true,
+      "corrected_using_macOS_read_only_sips": true,
+      "DAQ_retried": false,
+      "actual_DAW_failure_reinterpreted": false
+    },
+    "audit_count_disclosure": "Reused audit output contains a hardcoded offline actual_DAQ0 label; actual40 is established independently from exact original intents, dispatch records and receipts.",
+    "evidence_sha256": {
+      "actual_manifest109": "0a646662c3b3c92dc23226875e1c16fb9dc8b33dbddaa7f3dc56867535320d11",
+      "actual_closure": "6e2742cc09cba695bef5f21c0946559d325ccbb8ef0549f0fa879c3204593875",
+      "complete40_audit": "2964d624f95b57524eda8326a4703fb3f971e16d784d1bd5a69713e566628707",
+      "independent_acceptance_report": "b7f1896c2e933257775376b2fe32e5c61a87ae2e307754277e2185725f8534a3",
+      "corrective_review_report": "b051534c691d8a374a83067c0e0c51d5dfd14e30642d3520a1669bde80674cb1"
+    },
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    }
+  },
+  "cv_direct_IPreset_restore_design_2026_11_17": {
+    "verdict": "NOTREADY_NOT_IMPLEMENTED",
+    "elapsed_seconds": 235.673,
+    "report_sha256": "0818dc4cce1b9f055b15f859a02dec74de085bfe31ff222f7e591d0958a180b8",
+    "actual_DAQ": 0,
+    "route_preservation_verified": false
   }
 }

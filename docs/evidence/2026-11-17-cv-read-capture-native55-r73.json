@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "BOUNDED_CV_READ_CAPTURE_OBSERVATIONS_ACCEPTED_HARDWARE_STABILITY_UNPROVEN",
+  "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "native_unit": 55,
+  "runtime_namespace": "r73",
+  "actual_DAQ": 40,
+  "IDs": "3..42",
+  "guards_passed": 40,
+  "DAQ_errors": 0,
+  "unknown_outcomes": 0,
+  "metadata_original_records": 3,
+  "parameter_observations": {
+    "complete_rows_per_observation": 110,
+    "complete_observations": 5,
+    "writable_currents": 97,
+    "writable_currents_preserved_exactly": true,
+    "nonvalue_access_unknown_metadata110_preserved": true,
+    "readOnly_currents": 13,
+    "dynamic_differences": [
+      "cvMod1.voltage",
+      "cvMod2.voltage"
+    ],
+    "dynamic_differences_reported_separately": true
+  },
+  "capture": {
+    "count": 1,
+    "bytes": 3900,
+    "sha256": "90cfcfa88a439177ac40be229bf2e691942b3e3c438c40b28924ed9558ee5672",
+    "serialization": "component_alias_IStorable",
+    "raw_bytes_exported": false,
+    "A_released_at_ID": 35,
+    "A_B_equality_performed": false
+  },
+  "catalog": {
+    "observed_count": 1,
+    "name": "default",
+    "read_only": true,
+    "released_at_ID": 36,
+    "URL_file_identity": "UNKNOWN",
+    "factory_origin": "NOT_INFERRED",
+    "apply_performed": false
+  },
+  "UI": {
+    "original_photos": 13,
+    "six_output_selectors_None_at_seven_route_checkpoints": true,
+    "AudioIn_None": true,
+    "Music_input_None_before_and_final_observed": true,
+    "Music_record_monitor0": true,
+    "output_route_dropdown_actions": 0,
+    "MIDI_None_input_choices": 1,
+    "numeric_internalMonitorVol": "UNOBSERVED",
+    "calibration_or_monitor_start_actions": 0,
+    "MIDI_events": 0
+  },
+  "closure": {
+    "named_Scratch_NoSave": true,
+    "appfalse_then_immediate_CUA_completion": true,
+    "owner_EOF_exit0": true,
+    "DAW_MCP_absent": true,
+    "both_locks_reacquired_released": true,
+    "source177_artifact13_exact": true,
+    "saved10_equal": true,
+    "original_Main_exact": true,
+    "passive_hardware_completed_before_process_check": true,
+    "MIDI0_before_after": true
+  },
+  "elapsed_seconds": {
+    "full_unit_including_preparation_and_review_wait": 1948.051,
+    "metadata_intent_to_closure": 748.166,
+    "first_DAQ_to_closure": 674.926,
+    "independent_acceptance_review": 281.153
+  },
+  "limitations": {
+    "whole_readiness_contract_fully_certified": false,
+    "hardware_stability": "UNPROVEN",
+    "CoreAudio_inventory_before": 3,
+    "CoreAudio_inventory_after": 2,
+    "transient_CoreAudio_object_IDs_changed": true,
+    "strict_no_hardware_change_flag_retrospectively_certified": false,
+    "physical_CV_or_audio_effect_verified": false,
+    "preset_apply_or_capsule_load_performed": false,
+    "whole_running_P_restoration_claim": false,
+    "hidden_route_serialization_proven": false
+  },
+  "local_bookkeeping_incident": {
+    "missing_PIL_before_any_request19": true,
+    "corrected_using_macOS_read_only_sips": true,
+    "DAQ_retried": false,
+    "actual_DAW_failure_reinterpreted": false
+  },
+  "audit_count_disclosure": "Reused audit output contains a hardcoded offline actual_DAQ0 label; actual40 is established independently from exact original intents, dispatch records and receipts.",
+  "evidence_sha256": {
+    "actual_manifest109": "0a646662c3b3c92dc23226875e1c16fb9dc8b33dbddaa7f3dc56867535320d11",
+    "actual_closure": "6e2742cc09cba695bef5f21c0946559d325ccbb8ef0549f0fa879c3204593875",
+    "complete40_audit": "2964d624f95b57524eda8326a4703fb3f971e16d784d1bd5a69713e566628707",
+    "independent_acceptance_report": "b7f1896c2e933257775376b2fe32e5c61a87ae2e307754277e2185725f8534a3",
+    "corrective_review_report": "b051534c691d8a374a83067c0e0c51d5dfd14e30642d3520a1669bde80674cb1"
+  },
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  }
+}
