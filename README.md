@@ -209,6 +209,17 @@ The manifest describes CCL enumeration order and first native class metadata.
 It grants no graph mutation authority or audio-edge coverage. See the
 [graph ownership proof](docs/evidence/2026-11-14-graph-ownership-native48-r3.json).
 
+`plugin_inspect` also accepts `node_scope:"cv_ports"` for an explicit
+`kind:"instrument"`, `plugin:"CV Instrument"` target with a nonempty `track`,
+`source:"dsp"`, `include_nodes:true`, `include_context:false`, and fresh
+`expected_document` and `expected_instance`. It checks the owning synth slot
+and a unique current indexed PortSetup child before reading at most nine nodes.
+The report distinguishes missing lookup, unavailable type information and
+partial metadata. Actual Native56 observed `AudioFXPortSetup`, one input and
+six output children. Assignment values, controller support, route preservation
+and mutation remain unverified. See the
+[bounded CV port evidence](docs/evidence/2026-11-17-cv-ports-native56-r76.json).
+
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
 
 Use `track_formats` to read the host's exact audio format names, then `tracks_edit` with `{"ops":[{"op":"addAudioTrack","name":"Scratch 5.1","format":"5.1"}]}` and the current `expected_document`, using a returned format name. Mono and stereo names can be localized. The operation refuses unknown/non-audio formats and duplicate track names. `panner_get` includes the channel's readable `speakerFormat` descriptor.
@@ -227,7 +238,7 @@ These commands inspect local files without connecting to the DAW or taking its c
 
 `local-catalog` reads candidate parameter names from the installed app's metadata. `song-read` reports the last saved archive, including partial plugin snapshots, rather than unsaved live edits. `audio-analyze` reports WAV loudness, peak, RMS, and stereo measurements with explicit format and measurement limits. Dedicated DAW capture and export workflows remain unfinished.
 
-After a source update, quit Studio Pro, stop the active owner, rebuild and run `install`. Rebuild/reinstall the optional native package separately when its sources change. The installers refuse unknown files and preserve backups when explicitly replacing modified managed files with `--force`. `doctor` reports whether managed assets match their manifests. `uninstall` removes unchanged bridge/EditTask assets; `native-uninstall` separately removes unchanged native files. Modified files are preserved. Restart the DAW with the owner already running after installation changes.
+After a source update, quit Studio Pro, stop the active owner, rebuild and run `install`. Rebuild/reinstall the optional native package separately when its sources change. The installers refuse unknown files and preserve backups when explicitly replacing modified managed files with `--force`. `doctor` reports whether managed assets match their manifests. `uninstall` removes unchanged bridge/EditTask assets; `native-uninstall` separately removes unchanged native files. Modified files are preserved. After installation changes, start the DAW, initialize the owned scratch song, then start the MCP owner. This order worked in the recorded checks; it does not establish the cause of earlier startup stalls.
 
 Use these documents for details.
 
