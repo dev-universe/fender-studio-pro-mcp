@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Latest current evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline historical; newdeadline notset. R73/R74 closed; use fresh session/owner/metadata/UI and bothlocks for R75, never replay completed trials.",
-    "PRESET-CV currentfrontier: R73/R74/R75 closed andboundedaccepted; no presetapply/assignment/physicalproof. R75 actualPortSetupidentifier+Input00/Output01..06 known,typeunobserved duebudget. SelectedA existingNodeInspectorrootPortSetup newcv_ports closedenum; privateexactCV/slot/root+freshunique indexedmembershipscan<=32, NOTfixedhistorical8; nullstableabsence nofallback; limits9/1/0/8,stableidentitymax11,existingparent/delegateprobes/partialmetadatahonest. Oneproductwriter implementing finitegates/bridge/nativeinventory+meaningfultests. No sharednode-api changes/IController/newtool/setter/serializer. Root mustreadcurrentimplementationreport andselecteddesign, independentdiffreview, thennewsource/artifactpins/build/install asNative56beforefreshfiniteactual. InstalledNative55islastqualified; source177oldhashes arehistoricalwhilecodechanges. Do notreplayR73/R74/R75 orusedeadbindings. Preservecounts.",
+    "CVPORTS currentblocker: r1implementation9filesuncommitted; independentreviewNOTREADY afternative417/main178/JS96PASS becauseprivatefullInventory String.copy callbackchangesrootclassAFTERHeaderwitnessandcheckreturnsOk. Frozenr1report/repro preserved. FreshR2writer limitedcv_ports.rs/tests.rs: ALLborrowedIDcopiesbeforefinalretainedHeader sweep, thenowner-freeUID/topology/Context, noAPI/ABI/newowners. RegressionMUSTfailr1andpassr2. IndependentnarrowrecheckandfinalnativefullbeforeanyRootbuild/install/newactual. LastqualifiedinstalledNative55own13backedup. R73/R74/R75closedacceptedboundedonly; no presetapply/routevalues/physicalproof; noSource177historicalhashreuseonchangedworktree. KeepselectedSYNTHfresh<=32membershipNOTold8, root9/1/0/8limits, exactCV/document/instancegates, publicationinvalidation. Native56labelreservedfornewverifiednormalinstallafterfix.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -625,7 +625,7 @@
   "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ114(40+47+27)allclosed; oldnative55countersdatedNov15historical.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "status": "R75_CLOSED_ACCEPTED_CV_PORTS_OBSERVER_IMPLEMENTATION_IN_PROGRESS",
+    "status": "CV_PORTS_R1_CODE_REVIEW_NOT_READY_R2_ORDER_FIX_IN_PROGRESS",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
@@ -635,7 +635,7 @@
     "new_product_changes_started": true,
     "fixed_count_increment": 0,
     "hardware_stability": "UNPROVEN",
-    "source_writer": "cv_ports_observer_impl",
+    "source_writer": "cv_ports_observer_fix_r2",
     "last_qualified_installed_native": 55,
     "no_new_build_or_install": true
   },
@@ -20523,5 +20523,51 @@
     },
     "whole_loop_ETA": null
   },
-  "cv_static_next_seed": "Exact-IID user0x100da8da0 -> sole resolved directcallee0x100d98808; establish argumentalias/entryaccess before type/+0x5c interpretation. Reuse frozen6body/interface17evidence; no unrelated offsetsearch."
+  "cv_static_next_seed": "Exact-IID user0x100da8da0 -> sole resolved directcallee0x100d98808; establish argumentalias/entryaccess before type/+0x5c interpretation. Reuse frozen6body/interface17evidence; no unrelated offsetsearch.",
+  "cv_ports_observer_r1_review_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "CV_PORTS_OBSERVER_R1_OFFLINE_CODE_REVIEW",
+    "verdict": "NOT_READY",
+    "product_implementation_elapsed_seconds": 1325,
+    "independent_review_elapsed_seconds": 430.12,
+    "actual_DAQ_release_build_install": 0,
+    "tests": {
+      "final_source_native_full": 417,
+      "final_source_main_full": 178,
+      "selected_JS": 96,
+      "all_existing_suites_passed": true,
+      "independent_private_full_inventory_challenge": "FAIL_reproduced_unchecked_root_class_drift"
+    },
+    "finding": {
+      "priority": "P1",
+      "trigger": "Final borrowed Device ID IString.copyTo callback changes the PortSetup root class after the earlier retained Header witnesses.",
+      "observed": "Inventory.check returns Ok despite changed root class.",
+      "required_fix": "Complete every borrowed ID copy before the final retained Header sweep; preserve subsequent owner-free UID/topology and Context checks, add the behavioral regression.",
+      "contract_not_weakened_as_non_atomic_waiver": true
+    },
+    "other_reviewed_constraints": "finite exact target/document/instance gates, bounded unique slot membership, retained owners/limits/null semantics, final report clearing and receipt lease",
+    "SDK_basis": "Pinned standard Object uses myClass/static MetaClass for immediate borrowed type/name reads. Immutable String content methods do not establish absence of unrelated graph reentry.",
+    "limitations": [
+      "No actual DAW failure was observed.",
+      "No new feature installation or live coverage was admitted.",
+      "Arbitrary later Context getter reentry remains outside an atomic snapshot claim."
+    ],
+    "evidence_sha256": {
+      "implementation_report": "fa91ca3675886cd7f09ad3c92a5985bceb557aba10dc70f6428fd64baa5ed27b",
+      "independent_review_report": "c96173478eabdeaa193644bdcdec887ef712895bfca9706a8d65101f32d0daf3",
+      "independent_private_repro_tests": "d9e1d9a6f7d0052313fb2ae2c8c1f7d3563f89bf42f16a4689f75e908578e3f7"
+    },
+    "next": "Fresh fix writer restricted to cv_ports module and its tests; source r1 retained as failed immutable evidence. Independent narrow recheck precedes build/install.",
+    "installed_runtime": "Native55_last_qualified_own13_artifacts_backed_up",
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "overall_loop_ETA": null
+  }
 }
