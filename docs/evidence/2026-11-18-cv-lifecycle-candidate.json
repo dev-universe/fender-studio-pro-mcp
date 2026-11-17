@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "date": "2026-11-18",
+  "scope": "CV_STRUCTURED_LIFECYCLE_CANDIDATE_NOT_ACTUALLY_QUALIFIED",
+  "public_main": "15304714c14cf8d765dd0acb08dbb59463924129",
+  "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/6",
+  "product_source_commit": "921f8890597fbfbb20368b06a00a6e460b60345a",
+  "workflow_only_commit": "06bcb1bdbf4123d213b9f4c4c943df055d382321",
+  "candidate": {
+    "native_unit": 60,
+    "action": "plugin_state.inspect_cv_port_structure",
+    "fixed_target": "CV Instrument instrument Output01/index0/portAssignment/tag100",
+    "source_review": "PASS_WITH_NOTES",
+    "normal_install_verified": true,
+    "metadata_tools": 46,
+    "metadata_state_actions": 8,
+    "normal_owner_explicit_waited_exit_code": 0,
+    "actual_lifecycle_qualified": false
+  },
+  "source_checks": {
+    "root_tests": 190,
+    "optimized_native_addon_tests": 466,
+    "parameter_api_unit_tests": 142,
+    "parameter_api_doctests": 4,
+    "bridge_js_tests": 389,
+    "source_files_pinned": 187,
+    "installed_and_CLI_artifacts_pinned": 13
+  },
+  "actual_attempt": {
+    "metadata_writes": 3,
+    "actual_requests": 7,
+    "receipt_ids": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "guard_passed_ids": [
+      3,
+      4,
+      5,
+      6,
+      7,
+      8
+    ],
+    "halted_id": 9,
+    "reason": "CV channel mute1 returned before0/after0 and applied_unverified",
+    "CV_lifecycle_calls": 0,
+    "full110_parameter_reads": 0,
+    "additional_DAQ_after_halt": 0,
+    "retry": false,
+    "Root_NoSave_and_app_absence_observed": true,
+    "explicit_waited_owner_child_exit_code": 0,
+    "source187_artifact13_saved10_vendor_Main_audio_midi_settings_preserved": true,
+    "locks_reacquired_and_released": 2,
+    "MIDI_sources_before_owner_after": [
+      3,
+      4,
+      3
+    ],
+    "elapsed_seconds_to_closure_check": 162.545
+  },
+  "hardware_comparison": {
+    "identity": "direction_and_signed_unique_ID_plus_observed_properties",
+    "opaque_endpoint_handles_not_stable_identity": true,
+    "owned_bridge_unavailable_properties_remain_unobserved": true,
+    "physical_key_events_verified": false,
+    "audio_roundtrip_verified": false,
+    "loopback_cable_present": false
+  },
+  "authority": {
+    "choices": false,
+    "port_selection": false,
+    "routing": false,
+    "preset_route_preservation": false,
+    "audio_effect": false,
+    "persistence": false,
+    "atomic_snapshot": false
+  },
+  "evidence_sha256": {
+    "source_freeze_manifest": "d28d56a9876586f6c7b6d0097af6bb4ca78c62263096503a10850cd8104f2767",
+    "independent_code_review": "5a0672de6478668b4ca3f350cf997a6df0ea67fd474150179ff1940897882047",
+    "hardware_kit_contract": "34fde72a346be37520c17a3842572de7e1947a990cb631261ac26fd53b969f79",
+    "read_only_hardware_kit_audit": "680b5e81eea314db2bbb7d62c349fa71abf8f3e94f6af072e3068c2bfa078b78",
+    "workflow_followup_review": "f072cda11c84570d6e1a993c16666cb0a2490d2d9f97183559ca59539c5245c3",
+    "mute_failure_diagnosis": "9c23f3afc6527303d5f0c347ed35fd67adcd3d0af44b53ee9c1f6d29ae8cbd6f",
+    "R84_actual_review": "0f527baaf80b940b6d6ef20f50afd0492c861b5e2a272974e5383b6eb0b2168f",
+    "R85_actual_halted_audit": "8eb78622bff73764f9a461e71858e3cabb6b90b9cab7a615d3032eb785dd4eb8"
+  },
+  "backlog": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4,
+    "increment_from_this_candidate": 0
+  },
+  "R84_separate_GUI_to_read_diagnostic": {
+    "independently_accepted": true,
+    "actual_DAQ": 8,
+    "metadata_writes": 3,
+    "GUI_CV_audio_mute_clicks": 1,
+    "API_CV_mute_reads": [
+      1,
+      1
+    ],
+    "full67_peer_fields_unchanged_except_Main0_and_CV_mute": true,
+    "original_CV_and_Main_images": 4,
+    "first_read_after_GUI_seconds": 28.217,
+    "two_read_gap_seconds": 11.949,
+    "immediate_propagation_guarantee": false,
+    "NoSave_app_absence_and_immediate_CUA_completion_Root_observed": true,
+    "owner_explicit_wait_exit_code": 0,
+    "source187_artifact13_saved10_Main_global_settings_preserved": true,
+    "hardware_MIDI_sources": [
+      3,
+      4,
+      3
+    ],
+    "unit_elapsed_seconds_including_preparation": 1143.969,
+    "independent_review_seconds_from_first_record": 165.589,
+    "MCP_channel_set_mute_correctness": false,
+    "Native60_lifecycle_qualification": false
+  },
+  "R85_proposal": {
+    "status": "RUNTIME_KIT_REVIEWED_ACTUAL_HALTED_BEFORE_REQUEST9",
+    "exact_requests": 31,
+    "request9": "channels_list_after_actual_GUI_preparation",
+    "Rust_validation_tests_passed": 1,
+    "requests_translated_and_runtime_validated": 31,
+    "invalid_controls_rejected": 11,
+    "actual_DAQ": 6,
+    "proposal_manifest_sha256": "651104be596b431df06b65fe63e411a33ff7063b707749f46c970c2e9f22f9d7",
+    "native_lifecycle_calls": 0,
+    "GUI_mute_after_one_click": 0,
+    "visible_peer_FX_mute_changes": true,
+    "full67_after_failure_read": false,
+    "additional_DAQ_after_unexpected_GUI": 0,
+    "NoSave_owner_wait0_preservation_verified": true,
+    "elapsed_seconds_including_preflight": 1039.877
+  },
+  "PR6_CI26": {
+    "run": "https://github.com/dev-universe/fender-studio-pro-mcp/actions/runs/44158025862",
+    "core": "SUCCESS",
+    "native": "CANCELLED",
+    "runner_id": 0,
+    "executed_steps": 0,
+    "reason": "runner_not_acquired_macOS_arm64_capacity",
+    "checks_bypassed": false
+  },
+  "restored_runtime": {
+    "source": "public_main15304714",
+    "native_unit": 59,
+    "tools": 46,
+    "state_actions": 7,
+    "candidate60_action_exposed": false,
+    "managed13_match_lastqualified_backup": true,
+    "candidate60_artifacts_preserved": 13,
+    "candidate60_install_manifests_preserved": 2,
+    "nonlive_doctor_current": true,
+    "new_DAW_requests_after_restore": 0,
+    "restored_main_metadata_owner_waited_exit0_Root_observed": true,
+    "vendor_Main_and_saved10_global_AudioMIDI_preserved": true
+  }
+}

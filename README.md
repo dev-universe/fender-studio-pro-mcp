@@ -7,7 +7,7 @@
 내장 플러그인 전체를 빠짐없이 제어하는 것이 목표이지만 아직 완료되지는 않았습니다. 검증된 기능과 미완료 기능을 아래와 [검증 보고서](docs/VALIDATION.md)에 구분했습니다. Windows와 Intel Mac의 DAW 연결은 검증하지 않았습니다.
 
 See the [current progress](docs/PROGRESS_2026-11-18.md), [resume guide](docs/RESUME.md)
-and [latest completed handoff](docs/LOOP_HANDOFF_2026-11-17.md) for completed work and remaining tasks.
+and [latest handoff](docs/LOOP_HANDOFF_2026-11-18.md) for completed work and remaining tasks.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
@@ -249,6 +249,14 @@ observed it as true on the input and all six outputs. This fixed public-interfac
 presence query invokes no structure preparation, cleanup, child enumeration or
 menu methods. Those lifecycle methods remain outside the verified read scope. See
 [structured CV support evidence](docs/evidence/2026-11-17-cv-structured-native59-r81.json).
+
+The Draft Native60 candidate adds `plugin_state` action
+`inspect_cv_port_structure` for only CV Instrument Output01. It bounds public
+structure preparation, child observation and cleanup and treats the callbacks as
+a mutation. Source checks, normal installation and metadata passed. Its actual
+host trial stopped at an earlier channel-mute safety check, before any lifecycle
+call. It has no verified choice, port-write, routing or preset-preservation
+authority. See the [candidate and stopped trial](docs/evidence/2026-11-18-cv-lifecycle-candidate.json).
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
 
