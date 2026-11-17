@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Read latestNov15handoff, currentstate and workbreakdown; first CV preset/state external-route ownership read-only investigation. Freshpreflight177source/13artifact/10archives exact, DAW/MCP absent/twolocksfree/MIDI0. No oldsession/owner reuse. Newdeadline notset; reportunitcountsandETAs.",
-    "PRESET-CV next is read-only preset/state external-route ownership boundary. ActualR72 isolatedroute22 accepted, butfuturepreset/load preservationofNoneunproven. R1optionalcombined36capture-readiness draft NOTEXECUTIONREADY, nofullpresetwire issued. glide.glideTime historicalcandidateonly, nofreshseedadmitted. Futurecase97writableexactP/110metadata/13readonlydynamicseparate/A-B/lifetime/routeNonegates required. No hardware/presetcompletionfromreadiness.",
+    "PRESET-CV: installed packaged default has nonempty PortSetup.data. Static slot mediator owner context and global extra-content callback dispatch established; initial PortList timer-table interpretation superseded. Current issued preset subtype/gates/None preservation remain unknown. Next fresh r73 read/capture-only finite40 procedure requires independent review/current schema+Rust semantics and fresh Root bindings. No preset apply/load/seed admitted. Fixed counts unchanged.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -625,12 +625,13 @@
   "last_measurement": "6866/7112names,246remaining;40/46presetclasses77cases,6classesremaining;fixed43completed15remaining28;Native55raw289=accepted139+failed150, hardware4separate.",
   "binary_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
   "current_execution": {
-    "status": "CV_PRESET_CATALOG_TO_PORT_CONSUMER_LINK_INVESTIGATION",
+    "status": "CV_READ_CAPTURE_READINESS_INDEPENDENT_REVIEW",
     "DAQ": 0,
     "app_opened": false,
     "MCP_owner_started": false,
     "first_static_unit_complete": true,
-    "fixed_count_increment": 0
+    "fixed_count_increment": 0,
+    "second_static_unit_complete": true
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -19847,5 +19848,61 @@
       "original_checkpoints_preserved": true
     },
     "next_unit": "Trace exact Presets IDataTarget dispatch and port-load policy; capture/load remains separately gated."
+  },
+  "cv_preset_extra_content_dispatch_static_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "PARTIAL_STATIC_LINKAGE_NO_DAQ_NO_APPLY_LOAD",
+    "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+    "native_unit": 55,
+    "observed": {
+      "adjacent_timer_exact_IID_verified": true,
+      "PortSetup_two_entry_callback_table_separate": true,
+      "global_callback_registration_and_dispatch": true,
+      "primary_content_precedes_extra_content": true,
+      "slot_mediator_exact_IID_verified": true,
+      "slot_restore_owner_global_matches_PortSetup_gate_global": true,
+      "callback_return_values_ignored_by_dispatch_loop": true
+    },
+    "inference": {
+      "public_CCL_IExtraContentHandler_structural_match": "high_confidence",
+      "public_CCL_revision": "8a8cab590b1a2e10cdef3df76ea4b2739c92121f",
+      "exact_public_source_revision_of_proprietary_binary_verified": false
+    },
+    "supersedes": "Earlier interpretation of PortSetup callbacks as methods on the neighboring PortList timer table. Immutable prior evidence retained.",
+    "unknown": [
+      "exact native Presets IDataTarget insert implementation and mediator field",
+      "current retained CV preset subtype and specialized branch",
+      "current CV gate predicate results and assignment meanings",
+      "six None preservation after recall or capsule load",
+      "CV component-alias IStorable route semantics"
+    ],
+    "runtime_apply_load_admitted": false,
+    "new_DAQ": 0,
+    "coverage_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "full_worker_elapsed_seconds": 564.51,
+    "timebox_seconds": 900,
+    "body_queries": 19,
+    "body_query_aim": 12,
+    "body_query_deviation_documented": true,
+    "evidence_sha256": {
+      "report": "7339317710abefaf052112d3a65749e03aa1577ee3eed9bd0e7b3dfe69251465",
+      "result": "9b49735daeaae7d5bca69551009e7ec2566514afbe5911c6dff370105d1ce417",
+      "native_evidence37": "0e7055fa15ae4f970252cf64bf21962f3a6fe731f3f66dc9be56a80cbede4087"
+    },
+    "cleanup": {
+      "one_engine": true,
+      "exported_records": 37,
+      "close_reset_EOF0": true,
+      "original_checkpoint_preserved": true,
+      "Root_independent_hash_and_key_bodies_spotcheck": true
+    }
   }
 }
