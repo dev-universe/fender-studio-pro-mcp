@@ -75,8 +75,7 @@ impl RuntimeHandle {
     }
 
     pub async fn execute(&self, request: Request) -> Result<Receipt, OperationError> {
-        request.operation.validate()?;
-        require_learning_document(&request)?;
+        validate_request(&request)?;
         let (reply, result) = oneshot::channel();
         self.sender
             .try_send(Envelope { request, reply })
@@ -97,16 +96,21 @@ impl RuntimeHandle {
     }
 }
 
+pub(crate) fn validate_request(request: &Request) -> Result<(), OperationError> {
+    request.operation.validate()?;
+    require_learning_document(request)
+}
+
 fn require_learning_document(request: &Request) -> Result<(), OperationError> {
-    if request.operation.requires_explicit_document()
+    if (!request.operation.is_read_only() || request.operation.requires_explicit_document())
         && request
             .expected_document
-            .as_ref()
-            .is_none_or(String::is_empty)
+            .as_deref()
+            .is_none_or(|document| document.trim().is_empty())
     {
         return Err(OperationError::new(
             "missing_precondition",
-            "Read host_status and supply expected_document for context-bound native controls",
+            "Read host_status and supply expected_document for mutations and context-bound native controls",
         ));
     }
     Ok(())
@@ -1017,6 +1021,235 @@ fn host_error(response: &WireResponse) -> OperationError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn mutating_operations() -> Vec<Operation> {
+        [
+            ("setPanner", json!({"channel":"Scratch","param":"panX1","value":0.5})),
+            ("setSplitter", json!({"channel":"Scratch","node":"Splitter","label":"Splitter","param":"numOutputs","value":2})),
+            ("setSend", json!({"channel":"Scratch","index":0,"level":0.5})),
+            ("setInsertBypass", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","bypassed":true})),
+            ("setAutomation", json!({"channel":"Scratch","mode":"read"})),
+            ("metronome", json!({"click":true})),
+            ("takes", json!({"track":"Scratch","action":"next"})),
+            ("trackState", json!({"track":"Scratch","action":"hide"})),
+            ("editEvents", json!({"track":"Scratch","action":"mute"})),
+            ("externalPortMenu", json!({"channel":"Scratch","slot":0,"plugin":"External Effect Stereo","expected_instance":"12345678-1234-1234-1234-123456789ABC","port":"send"})),
+            ("pluginEditorOpen", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter"})),
+            ("pluginState", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"capture"})),
+            ("insertChainState", json!({"channel":"Scratch","action":"capture"})),
+            ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
+            ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
+            ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
+            ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
+            ("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","param":"gain","value":0})),
+            ("setChannel", json!({"channel":"Scratch","field":"mute","value":true})),
+            ("setChannelLabel", json!({"channel":"Scratch","name":"Scratch"})),
+            ("setChannelColor", json!({"channel":"Scratch","argb":0})),
+            ("setTransport", json!({"tempo":120})),
+            ("transport", json!({"action":"stop"})),
+            ("setLoop", json!({"start":0,"end":4,"enabled":true})),
+            ("addTrack", json!({"type":"audioMono"})),
+            ("selectTrack", json!({"name":"Scratch"})),
+            ("command", json!({"category":"Transport","name":"Stop","checkOnly":false})),
+            ("trackTask", json!({"ops":[{"op":"focusTrack","track":"Scratch"}]})),
+            ("editNotes", json!({"track":"Scratch","ops":[{"op":"transpose","semitones":1}]})),
+            ("markers", json!({})),
+            ("addMarker", json!({"position":1})),
+            ("deleteMarker", json!({"number":1})),
+            ("selectEvents", json!({"track":"Scratch","all":true})),
+            ("save", json!({})),
+            ("undo", json!({"steps":1})),
+            ("redo", json!({"steps":1})),
+        ]
+        .into_iter()
+        .map(|(name, args)| {
+            let operation = Operation::from_parts(name, args).unwrap();
+            operation.validate().unwrap_or_else(|error| panic!("{name}: {error:?}"));
+            assert!(!operation.is_read_only(), "{name}");
+            operation
+        })
+        .collect()
+    }
+
+    #[test]
+    fn mutation_document_fixtures_cover_every_registered_operation() {
+        let schema = crate::operation::schema();
+        let registered = schema["oneOf"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|variant| {
+                variant["properties"]["operation"]["const"]
+                    .as_str()
+                    .unwrap()
+            })
+            .collect::<std::collections::BTreeSet<_>>();
+        let operations = mutating_operations();
+        let mut covered = operations
+            .iter()
+            .map(|operation| operation.wire().0)
+            .collect::<std::collections::BTreeSet<_>>();
+        covered.extend(
+            [
+                "ping",
+                "context",
+                "hostProbe",
+                "song",
+                "tracks",
+                "trackFormats",
+                "channels",
+                "panner",
+                "splitters",
+                "meters",
+                "notes",
+                "plugins",
+                "pluginCatalog",
+                "inserts",
+                "sends",
+                "pluginParams",
+                "pluginChoices",
+                "pluginParameterDetails",
+                "chorderLearningGet",
+                "chorderChordsGet",
+                "pluginParameterFormat",
+                "pluginParameterDigest",
+                "pluginModels",
+                "pluginInspect",
+                "listCommands",
+            ]
+            .into_iter()
+            .map(str::to_owned),
+        );
+        assert_eq!(
+            covered
+                .iter()
+                .map(String::as_str)
+                .collect::<std::collections::BTreeSet<_>>(),
+            registered
+        );
+    }
+
+    #[test]
+    fn all_mutations_require_nonblank_document_before_owner_enqueue() {
+        let (sender, receiver) = mpsc::sync_channel(1);
+        let runtime = RuntimeHandle { sender };
+        let executor = tokio::runtime::Runtime::new().unwrap();
+        for operation in mutating_operations() {
+            for expected_document in [None, Some(String::new()), Some(" \t\n".into())] {
+                let error = executor
+                    .block_on(async {
+                        tokio::time::timeout(
+                            std::time::Duration::from_secs(1),
+                            runtime.execute(Request {
+                                operation: operation.clone(),
+                                expected_document,
+                            }),
+                        )
+                        .await
+                        .expect("A rejected request must not wait for the DAW owner")
+                    })
+                    .unwrap_err();
+                assert_eq!(error.code, "missing_precondition", "{}", operation.wire().0);
+                assert!(matches!(
+                    receiver.try_recv(),
+                    Err(mpsc::TryRecvError::Empty)
+                ));
+            }
+        }
+    }
+
+    #[test]
+    fn valid_mutation_documents_and_ordinary_reads_reach_owner_admission() {
+        let (sender, receiver) = mpsc::sync_channel(1);
+        drop(receiver);
+        let runtime = RuntimeHandle { sender };
+        let executor = tokio::runtime::Runtime::new().unwrap();
+        let mutations = mutating_operations().into_iter().map(|operation| Request {
+            operation,
+            expected_document: Some("session:1".into()),
+        });
+        let reads = [
+            ("context", json!({})),
+            ("song", json!({})),
+            ("tracks", json!({})),
+            ("metronome", json!({})),
+            ("takes", json!({"track":"Scratch","action":"list"})),
+            (
+                "command",
+                json!({"category":"Transport","name":"Stop","checkOnly":true}),
+            ),
+        ]
+        .into_iter()
+        .map(|(name, args)| {
+            let operation = Operation::from_parts(name, args).unwrap();
+            assert!(operation.is_read_only());
+            Request {
+                operation,
+                expected_document: None,
+            }
+        });
+        for request in mutations.chain(reads) {
+            let name = request.operation.wire().0;
+            let error = executor.block_on(runtime.execute(request)).unwrap_err();
+            assert_eq!(error.code, "owner_stopped", "{name}");
+        }
+    }
+
+    #[test]
+    fn context_bound_reads_still_require_nonblank_document_before_enqueue() {
+        let target = json!({"channel":"Scratch","slot":0,"plugin":"Level Meter","source":"level_meter","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let (sender, receiver) = mpsc::sync_channel(1);
+        drop(receiver);
+        let runtime = RuntimeHandle { sender };
+        let executor = tokio::runtime::Runtime::new().unwrap();
+        let mut operations = vec![Operation::from_parts("chorderLearningGet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})).unwrap()];
+        operations.push(Operation::from_parts("chorderChordsGet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","offset":0,"limit":1})).unwrap());
+        for action in [
+            "read_rumble_state",
+            "read_rumble_parameters",
+            "read_rumble_named_parameters",
+            "inspect_rumble_serialization",
+        ] {
+            operations.push(Operation::from_parts("pluginState", json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":action})).unwrap());
+        }
+        for node_scope in ["cv_ports", "cv_port_parameters"] {
+            operations.push(Operation::from_parts("pluginInspect", json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC","include_nodes":true,"node_scope":node_scope})).unwrap());
+        }
+        for (name, extra) in [
+            ("pluginParams", json!({"names":[]})),
+            ("pluginChoices", json!({"param":"mode"})),
+            (
+                "pluginParameterFormat",
+                json!({"param":"mode","values":[0,1]}),
+            ),
+        ] {
+            let mut args = target.clone();
+            args.as_object_mut()
+                .unwrap()
+                .extend(extra.as_object().unwrap().clone());
+            operations.push(Operation::from_parts(name, args).unwrap());
+        }
+        for operation in operations {
+            assert!(operation.is_read_only());
+            assert!(operation.requires_explicit_document());
+            for expected_document in [None, Some(String::new()), Some(" \t\n".into())] {
+                let error = executor
+                    .block_on(runtime.execute(Request {
+                        operation: operation.clone(),
+                        expected_document,
+                    }))
+                    .unwrap_err();
+                assert_eq!(error.code, "missing_precondition", "{}", operation.wire().0);
+            }
+            let error = executor
+                .block_on(runtime.execute(Request {
+                    operation,
+                    expected_document: Some("session:1".into()),
+                }))
+                .unwrap_err();
+            assert_eq!(error.code, "owner_stopped");
+        }
+    }
 
     #[test]
     fn named_rumble_guards_run_before_enqueue_and_rejected_context_has_closed_failure() {

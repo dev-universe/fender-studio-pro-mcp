@@ -187,17 +187,16 @@ async fn main() -> Result<()> {
             arguments,
             expected_document,
         } => {
+            let request = Request {
+                operation: Operation::from_parts(
+                    &operation,
+                    serde_json::from_str(&arguments).context("arguments must be a JSON object")?,
+                )?,
+                expected_document,
+            };
+            runtime::validate_request(&request)?;
             let runtime = RuntimeHandle::start(cli.config)?;
-            let receipt = runtime
-                .execute(Request {
-                    operation: Operation::from_parts(
-                        &operation,
-                        serde_json::from_str(&arguments)
-                            .context("arguments must be a JSON object")?,
-                    )?,
-                    expected_document,
-                })
-                .await?;
+            let receipt = runtime.execute(request).await?;
             print_json(&serde_json::to_value(receipt)?)?;
         }
         Command::Hold => {
