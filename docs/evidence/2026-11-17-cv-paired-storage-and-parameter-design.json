@@ -138,5 +138,29 @@
     "report_sha256": "1e2a2fa686522f11fe117d5f7ea4bc1518318acbb45620ee16e0cdd045b18f7c",
     "manifest_sha256": "f318022de5b73e5566f53deb6d20bd766dd2d1833428dee09c375fec4af715ba",
     "bundle_sha256": "e8ff229ac95cd6b885ee4d31c34f6dc5877f0e0c331e7f43975e8ae139c1914e"
+  },
+  "private_future_UI_recorder": {
+    "scope": "PRIVATE_BOOKKEEPING_ONLY_NOT_ACTUAL_UI_PROOF",
+    "elapsed_seconds": 298.3,
+    "analysis_freeze_seconds": 227.427,
+    "planned_freeze_seconds": 220,
+    "hard_limit_seconds": 300,
+    "tests_synthetic_passed": 25,
+    "Root_reviewed_code_usage_report": true,
+    "Root_broad_test_rerun": false,
+    "report_sha256": "347a72c489c6bd7acbddf72e18f4b27e528c44fb46984ad6c88b482de6b0ab25",
+    "helper_sha256": "e7518f5cfa22697d37c62802ea4987913ae2e1210ac1cce6f967ec71ff070d10",
+    "manifest_sha256": "cbdd8a76fa2864178403eefc1602cba11256ee37812918b4ac2c20038722a98f",
+    "surfaces": [
+      "cv_editor",
+      "song_main"
+    ],
+    "fields_cannot_cross_surfaces": true,
+    "same_image_cannot_identify_different_surfaces": true,
+    "paired_checkpoint_and_receipt_intent_timeline_required": true,
+    "Root_original_manual_view_required": true,
+    "independent_original_image_review_required": true,
+    "automatic_pixel_classification": false,
+    "actual_DAQ_authorized": false
   }
 }
