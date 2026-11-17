@@ -4,14 +4,14 @@
   "status": "in_progress",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-15.md",
-  "product_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
+  "product_source_commit": "1bc800247289daa1605536a064f795186704dd90",
   "branch": "feature/plugin-state-and-exhaustive-validation",
   "pull_request": "https://github.com/dev-universe/fender-studio-pro-mcp/pull/4",
   "keep_pull_request_draft": true,
   "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
   "mcp_tools": 46,
-  "installed_native_unit": 57,
-  "installed_native_uuid": "40BF4F0D-24D8-3DF5-BB15-784249CF8222",
+  "installed_native_unit": 58,
+  "installed_native_uuid": "146A23BC-2288-3DC3-BEC4-3ECF72FBD254",
   "app_closed_observed": true,
   "mcp_owner_stopped": true,
   "owned_songs_closed_without_save": true,
@@ -609,8 +609,8 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Current evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline is historical; no new deadline. R73/R74/R75/R76/R77 are closed. Never replay completed trials or expired runtime capabilities.",
-    "CURRENT installed Native57/product46630db, accepted R77 bounded indexed read27, all actuals closed. Worktree has one writer changing only CV parameters.rs/tests.rs for fixed ParameterDetails. Selected B additive all rows with two-pass graft: register before observations, complete full description text budget then full-inventory-guarded details only for complete rows. No menu/newQI/Variant-returnABI/selector/API/setter/preset. Private implementation root start and1200s cap are authoritative; parallel R78 conditional kit has720s cap. Reuse unchanged Rust/schema/protocol/UI helper evidence; no current source181 proof while two files change. Next independent code review, normal source181/artifact13 install+metadata, final kit review, fresh exact27 actual R78. R78 ADMISSION remains false until normal/fresh bindings; closed-session ban becomes52 incl R77. Never reuse old owner or runtime tokens. Program15/43done28remaining; finite bundle1/6done5remaining.",
-    "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
+    "CURRENT Native58/source1bc8002 normal and R80actual27 independently accepted, closed with NoSave/explicit waitedchild0/preservation. R78one and R79sixteen remain17raw nonadmitted; never repair/reuse either session. R80 typed Root UI generators validated input/pairs, actual7rows49details allList with noIListParameter and storablefalse. Nov17total212raw/195accepted/17nonadmitted. Details bundle6/6complete, fixed15/43done28remaining. No rebuild/install for doc changes. Continue exact portAssignment constructor0x100c3dab4 tracing from concrete AudioOutputNode; then choose grounded menu/persistence design or explicitly park unsupported path. No inferred setter, assignment or preset preservation authority.",
+    "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
     "Genericnestedgraph create/connect/reorder/delete requires actualowner/endpoint/transaction/independentedgeevidence and whole topology/state restore. ExistingSplitter42/twoMixtoolroundtrip/directFXInsertsread arecompleteevidence; noreplay.",
@@ -622,10 +622,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-17.md",
-  "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ168(40+47+27+27+27)allclosed. R77direct8controllers7rows observed; independentboundedreadacceptancecomplete. No CV preset routepreservation claim. PriorR76boundedacceptance and MainUIgap remain historical.",
-  "binary_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
+  "last_measurement": "fixed15/43done28remaining(software24/hardware4), presets40/46classes77cases, names6866/7112. Nov17actual212 raw/195 accepted/17 nonadmitted allclosed. Native58 R80 observed7rows/49detailsfields. No CV preset route preservation claim.",
+  "binary_source_commit": "1bc800247289daa1605536a064f795186704dd90",
   "current_execution": {
-    "status": "CV_PORT_DETAILS_IMPLEMENTATION_ACTIVE_NATIVE57_INSTALLED_CLOSED",
+    "status": "NATIVE58_R80_ACCEPTED_CLOSED_EXACT_PORT_ASSIGNMENT_CONSTRUCTOR_STATIC_ACTIVE",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
@@ -635,11 +635,11 @@
     "new_product_changes_started": true,
     "fixed_count_increment": 0,
     "hardware_stability": "UNPROVEN",
-    "source_writer": "cv_port_details_impl_r1",
-    "last_qualified_installed_native": 57,
+    "source_writer": null,
+    "last_qualified_installed_native": 58,
     "no_new_build_or_install": false,
-    "installed_native": 57,
-    "last_actual_host_qualified_native": 57,
+    "installed_native": 58,
+    "last_actual_host_qualified_native": 58,
     "R76_actual_started": true,
     "R76_actual_DAQ_completed": 27,
     "R76_independent_acceptance": "ACCEPTED_BOUNDED_NATIVE_METADATA_AND_CURRENT_CV_NONE_UI",
@@ -662,8 +662,20 @@
     "cv_assignment_choice_feasibility": "COMPLETE_LIST_CHOICES_PREDICT_ZERO_DETAILS_SUPPORTED",
     "R77_CV_target_UI_contract": "ACCEPTED_SEPARATE_ORIGINAL_CV_AND_MAIN_VISIBLE_FIELDS_PLUS_RPC",
     "cv_port_details_design": "SELECTED_B_ADDITIVE_ALL_ROWS_WITH_TWO_PASS_GRAFT",
-    "current_source_vs_old181": "TWO_NATIVE_FILES_ARE_BEING_EDITED; OLD_NORMAL_PIN_IS_INSTALLED_BASELINE_ONLY",
-    "cv_port_details_design_synthesis_sha256": "793d63b1ad99e94bb355403dad5f1cb30f65bff5c964160c64437f8578be6942"
+    "current_source_vs_old181": "Native58 new181 freeze; two native files changed from oldNative57",
+    "cv_port_details_design_synthesis_sha256": "793d63b1ad99e94bb355403dad5f1cb30f65bff5c964160c64437f8578be6942",
+    "R78_actual_DAQ_completed": 1,
+    "R78_kit_original_review": "NOT_READY_root_identity_guard_gap_preserved",
+    "R78_guard_fix": "FROZEN_SUCCESSOR_PENDING_NARROW_INDEPENDENT_RECHECK",
+    "R78_owner_running": false,
+    "R78_actual_acceptance": "FAILED_GUARD_INCOMPLETE_LOCAL_MISSING_FILE",
+    "R79_actual_DAQ_completed": 16,
+    "R79_guard_prefix_passed": 16,
+    "R79_actual_acceptance": "FAILED_LOCAL_POSTSELECTION_RECORD_BEFORE_INTENT19",
+    "R80_actual_DAQ_completed": 27,
+    "R80_actual_acceptance": "ACCEPTED_WITH_EXPLICIT_OBSERVATION_LIMITS",
+    "R80_closed": true,
+    "R80_owner_waited_child_exit_code": 0
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -695,7 +707,7 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "R77 independent actual acceptance/public bookkeeping and exact observed CV portAssignment read-capability source feasibility",
+      "next_finite_unit": "Concrete portAssignment constructor trace, at most3new bodies, analysis300seconds plus cleanup120seconds; overall research and fourhardwareitems unestimated.",
       "next_finite_unit_preparation_and_runtime_minutes": [
         10,
         15
@@ -714,18 +726,18 @@
     ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "installed_native_sha256": "3fd3322fcb8d2f4b84445269bb43b1ea54ac9c6a0e324488a160c9d4c12948d0",
+  "installed_native_sha256": "c11771339828463d8a666f6403f968bb2d311930480df49a023307059c1d0a11",
   "binary_sha256": "16cb6ff2ee1708df932d060474df8fa81bd94794f90527faeced2d0b23540342",
   "installed_bridge_files_sha256": {
     "BridgeComponent.js": "9be5ec7b6173142f25c91db027035a9a75298804483da9abeb5057d1275046ad",
     "BridgeCore.js": "d90249e1f32dc5ddd9938cf3f8640ffd6629f623125dde5b5cb557f0d84403a9",
     "NativePluginControls.js": "6e4621059621cd94aee81de3a80779519d9f603d54442ccf024445863e708c3f"
   },
-  "last_runtime_verified_native_unit": 57,
-  "last_runtime_verified_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
+  "last_runtime_verified_native_unit": 58,
+  "last_runtime_verified_source_commit": "1bc800247289daa1605536a064f795186704dd90",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native57 R77 bounded CV indexed parameter read27 independently accepted with separate CV/Main UI evidence",
-  "last_completed_live_elapsed_seconds": 719.618,
+  "last_completed_live_unit": "Native58 R80 CV seven-row fixed details read27 independently accepted",
+  "last_completed_live_elapsed_seconds": 840.108,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2393,7 +2405,7 @@
     "workaround_performed": false,
     "new_actual_DAW_calls": 0
   },
-  "current_product_source_map_sha256": "e6d86a83a9d0a7b9a5a95eaf906eb65261e629120621ba5b0f1d4999f203eb39",
+  "current_product_source_map_sha256": "5a6689a4e330f9ac8c802d18719ec3ac04841d87295780a98e4a4bc2b832c393",
   "current_normal46_tool_schema_canonical_sha256": "6cb2b58ee17a2e6329acc6b0c8807c55fd950976cd68de12a745fa1ab52f62ac",
   "level_meter_fixed_payload": {
     "status": "SUPPORTED_SETTING_DELTA_EMPTY",
@@ -2561,7 +2573,7 @@
     "independent_review_freeze_sha256": "bb9c5cce2c2d0d4ad33f8f942f14b3cba62c4b06f7fbc50ee036f2bc362c2e33"
   },
   "prior_normal38_source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
-  "current_product_source_authority_kind": "reviewed_native57_normal_source181_freeze",
+  "current_product_source_authority_kind": "reviewed_native58_normal_source181_freeze",
   "native39_installation": {
     "normal_native_unit": 39,
     "native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
@@ -3146,7 +3158,7 @@
     "collector_review_report_sha256": "bcf589de8da1f4fed3439fdcb8f00585f0742916096a65b88e6a4ec240a720e8",
     "execution_calls": 0
   },
-  "current_product_source_authority_sha256": "e6d86a83a9d0a7b9a5a95eaf906eb65261e629120621ba5b0f1d4999f203eb39",
+  "current_product_source_authority_sha256": "5a6689a4e330f9ac8c802d18719ec3ac04841d87295780a98e4a4bc2b832c393",
   "native41_installation": {
     "all208_sources_match": true,
     "manifest_sources": 148,
@@ -18004,7 +18016,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native57 R77 accepted27 closed NoSave with explicit waited child exit0",
+  "last_closed_runtime_unit": "Native58 R80 accepted27 NoSave, explicit waited child0 and preservation verified",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -20232,13 +20244,18 @@
   "nov17_actual_DAQ": {
     "r73": 40,
     "r74": 47,
-    "total": 168,
+    "total": 212,
     "all_closed": true,
     "old_top_level_native55_counters_as_of": "2026-11-15",
-    "not_included_in_old_counters": 168,
+    "not_included_in_old_counters": 212,
     "r75": 27,
     "r76": 27,
-    "r77": 27
+    "r77": 27,
+    "r78": 1,
+    "accepted": 195,
+    "failed_or_nonadmitted": 17,
+    "r79": 16,
+    "r80": 27
   },
   "cv_r75_host_node_read_2026_11_17": {
     "schema": 1,
@@ -20551,7 +20568,7 @@
     },
     "whole_loop_ETA": null
   },
-  "cv_static_next_seed": "Exact-IID user0x100da8da0 -> sole resolved directcallee0x100d98808; establish argumentalias/entryaccess before type/+0x5c interpretation. Reuse frozen6body/interface17evidence; no unrelated offsetsearch.",
+  "cv_static_next_seed": "Exact portAssignment literal0x10189a8e5 reference0x100c3db6c in AudioIONode base constructor0x100c3dab4 called by concrete AudioOutputNode. Second reference function0x100c8b2f0. Bounded constructor trace active; old generic branch parked.",
   "cv_ports_observer_r1_review_2026_11_17": {
     "schema": 1,
     "date": "2026-11-17",
@@ -20885,8 +20902,8 @@
   "current_finite_bundle": {
     "name": "CV direct parameter details read",
     "total_units": 6,
-    "completed": 1,
-    "remaining": 5,
+    "completed": 6,
+    "remaining": 0,
     "units": [
       "architecture_synthesis",
       "implementation_and_behavior_tests",
@@ -20896,12 +20913,13 @@
       "actual_read_closure_and_independent_acceptance"
     ],
     "estimate_minutes": [
-      35,
-      55
+      0,
+      0
     ],
     "estimate_started_UTC": "2026-11-17 05:33:00 UTC",
     "overall_program_loop_ETA": null,
-    "current": "implementation_and_behavior_tests"
+    "current": "COMPLETE_R80_ACTUAL_ACCEPTED",
+    "completed_date": "2026-11-17"
   },
   "cv_port_details_design_2026_11_17": {
     "schema": 1,
@@ -21014,6 +21032,321 @@
         55
       ]
     },
+    "overall_loop_ETA": null
+  },
+  "cv_port_details_native58_source_normal_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "CV_FIXED_DETAILS_SOURCE_REVIEW_AND_NORMAL_NATIVE58_ONLY",
+    "status": "SOURCE_AND_NORMAL_ACCEPTED_NO_DETAILS_ACTUAL_YET",
+    "source_commit": "1bc800247289daa1605536a064f795186704dd90",
+    "source_files": 181,
+    "changed_source_files": 2,
+    "unchanged_source_files": 179,
+    "implementation": {
+      "elapsed_seconds": 569.671,
+      "focused_tests": 26,
+      "full_native_tests": 445,
+      "full_native_process_exit_code": 0,
+      "counterfactual_context_only_guard": "FAIL_exit101_five_later_flags_instead_of_zero",
+      "restored_original": "PASS1_exit0",
+      "final_check_function_unchanged": true,
+      "parameter_witness_registered_before_observation": true,
+      "all_descriptions_text_budget_before_details": true,
+      "index_or_text_limit_details_calls": 0,
+      "new_comments": 0
+    },
+    "independent_code_review": {
+      "verdict": "READY_FOR_ROOT_NORMAL_BUILD_WITH_REVIEW_PROCESS_DEVIATIONS",
+      "elapsed_through_clarification_seconds": 371,
+      "new_sequential_flag_challenge": "PASS1_output",
+      "independent_challenge_exact_process_exit": "UNRECORDED",
+      "shared_debug_cache_write_outside_private_scope": true,
+      "no_source_or_installed_release_artifact_change": true,
+      "broad_tests_reused": true,
+      "analysis_reserve_miss_seconds": 15.795
+    },
+    "normal": {
+      "elapsed_seconds": 237.394,
+      "main_release_build_seconds": 0.288,
+      "native_build_seconds": 22.561,
+      "both_builds_exit0": true,
+      "offline_normal_script_no_experimental_override": true,
+      "native_uuid": "146A23BC-2288-3DC3-BEC4-3ECF72FBD254",
+      "native_sha256": "c11771339828463d8a666f6403f968bb2d311930480df49a023307059c1d0a11",
+      "CLI_sha256": "16cb6ff2ee1708df932d060474df8fa81bd94794f90527faeced2d0b23540342",
+      "artifact_files": 13,
+      "installed_source_pairs": 12,
+      "native_package_files": 4,
+      "tools": 46,
+      "actions": 5,
+      "state_actions": 7,
+      "metadata_exact_prior_Native57": true,
+      "metadata_originals": 2,
+      "metadata_prewrite_writes": 3,
+      "explicit_waited_owner_child_exit_code": 0,
+      "saved_songs": 10,
+      "saved_songs_and_Main_unchanged": true,
+      "app_opened": false,
+      "actual_DAQ": 0,
+      "doctor_current": true,
+      "doctor_live_verified": false,
+      "two_locks_reacquired_released": true,
+      "audio_snapshot_counts": [
+        3,
+        3
+      ],
+      "MIDI_before_after0": true,
+      "physical_stability": "UNPROVEN",
+      "own_Native57_rollback_files": 13,
+      "three_optional_filename_lookup_failures_before_DAQ": true
+    },
+    "R78_kit": {
+      "original_full_review": "NOT_READY_due_root_identity_guard_gap",
+      "guard_issue": "Malformed synthetic root/output identity IDs and controller swap was accepted",
+      "successor_fix": "Require root node0 identity.id PortSetup; output order remains flexible",
+      "corrected_runtime_narrow_review": "READY_FOR_ROOT_FRESH_ACTUAL27",
+      "original_full_review_seconds": 502,
+      "guard_fix_seconds": 175.379,
+      "narrow_check_seconds": 123.653,
+      "narrow_report_freeze_seconds": 223.522,
+      "narrow_total_with_clarification_seconds": 250.691,
+      "narrow_hard210_overrun_seconds": 13.522,
+      "no_product_guard_failure_observed": true
+    },
+    "authority": {
+      "new_details_actual_verified": false,
+      "choices": false,
+      "assignment_roles": false,
+      "setter": false,
+      "route_preservation": false,
+      "preset_persistence": false
+    },
+    "evidence_sha256": {
+      "implementation_report": "08ce01965c94a20913d37cbbfb31fc8e72bba57d8969311f5dd8a6e293e4a068",
+      "implementation_manifest93": "99dbde182ae073ac7e047bc39d4c3f575cd0ffdbef5259e0b729928053b6b275",
+      "independent_review_report": "ca58d5680dea8044d64c2349095f3404944bf09b10233d18b9aaee661e09a6a2",
+      "independent_original_manifest72": "045ff05477f2caaefda654fc07351d95efb6c8b1060fa89179cb23520f8cd0ea",
+      "normal_manifest34": "925002be8364bc6077ca1577a8d0e7e23e188d10562f2ee2f19af6518869472c",
+      "own_Native57_rollback_manifest13": "1214dc80f519d2186f5c52520a2d22a5cf7a2e0fa62ee86b2fc44db6e4081c13",
+      "original_kit_review_report": "7fb8ef51f4631e0dd73c8d95e3e276a2e065753023758127bb6cc427d0e3e4bb",
+      "guard_fix_manifest21": "c0e53b03a29e0d7dc4713e6d7e52289ac93a8a30f55dcc5c0e6787ae2dedea1a",
+      "corrected_check": "764cdb6fc3d8d0f1f75867d76dc337e0aa05d8a16dbe04d958bf01dc2a0eb7d0",
+      "narrow_review_report": "bfeb27186ceb8ae0fc20353379638c12ee60520d4eb0115ccd6b9de407f212ef"
+    },
+    "fixed_count_increment": 0,
+    "fixed_counts": {
+      "completed": 15,
+      "total": 43,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "overall_loop_ETA": null
+  },
+  "cv_port_details_r78_failed_preparation_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "R78_CLOSED_FAILED_LOCAL_PREPARATION",
+    "status": "FAILED_UNACCEPTED_READ_ONLY_ATTEMPT",
+    "actual_DAQ": 1,
+    "operation": "MCP host_status with empty arguments",
+    "request_id_number": 3,
+    "original_result": "observed",
+    "guard": "INCOMPLETE_missing_required_local_hardware_attestation",
+    "cause": "Root omitted required hardware observation record; driver halted during collection before request4",
+    "retries": 0,
+    "later_DAQ": 0,
+    "plugin_parameter_menu_preset_or_port_writes": 0,
+    "product_failure_proven": false,
+    "app_closed_without_save": true,
+    "CUA_process_not_found_after_CmdQ": "App had exited; no relaunch",
+    "CUA_app_absence_and_immediate_completion": true,
+    "explicit_waited_owner_exit_code": 0,
+    "source181_artifact13_saved10_Main_unchanged": true,
+    "two_locks_free": true,
+    "hardware_stability": "UNPROVEN",
+    "metadata_write_invocation_return_timestamps": "UNRECORDED_METADATA_ONLY",
+    "actual_unit_seconds": 429.693,
+    "failure_manifest34_sha256": "33d34fdb28e0172bd8ed48dac857a7057fdc4297e62534f2b5862d7a1a5f961a",
+    "no_repair_or_continuation_of_failed_session": true,
+    "next": "Fresh R79 with ban53 and mandatory required-file/hardware validation before first prepare; no rebuild or reinstall",
+    "independent_failure_audit": {
+      "verdict": "UNACCEPTED_ACTUAL_READ_LOCAL_PREPARATION_FAILURE_CLOSED",
+      "report_sha256": "aa48dca72c218118d99b4c034bf368f2f6f2803516d029ddbcffaf10813b5931",
+      "manifest6_sha256": "91b96014c2d85a446dce8966ef4494f88cec23b1f3efd364e66d25ef66078b79",
+      "elapsed_seconds": 209.484,
+      "hard180_overrun_seconds": 29.484
+    },
+    "fixed_count_increment": 0,
+    "overall_loop_ETA": null,
+    "frozen_closure_internal_label": "getSongInfo; preserve original label while distinguishing exact MCP wire"
+  },
+  "cv_port_details_r79_failed_preparation_2026_11_17": {
+    "status": "CLOSED_FAILED_LOCAL_UI_RECORD_SCHEMA_BEFORE_INTENT19",
+    "actual_DAQ": 16,
+    "IDs": "3..18",
+    "guards_passed": 16,
+    "unexpected_DAW_results": 0,
+    "attempted19_intent_or_send": false,
+    "cause": "Root omitted surface and Root_viewed_original from manually assembled postselection record",
+    "retries": 0,
+    "new_parameter_details_reads": 0,
+    "Root_input_None_choice_count": 1,
+    "NoSave_and_explicit_waited_owner0": true,
+    "source181_artifact13_saved10_Main_unchanged": true,
+    "locks_free": true,
+    "CUA_old_AX_id_click_rejected_then_fresh_No_clicked": true,
+    "elapsed_seconds": 564.255,
+    "manifest75_sha256": "4e9385f412c9e261b73490bc3a4f7909b512df68d3d7a7e0fc3fe0f266aedfe7",
+    "next": "R80 namespace and ban54, use validated input/pair record generators; do not repair or resume R79"
+  },
+  "cv_port_details_native58_r80_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "NATIVE58_CV_DIRECT_PARAMETER_DETAILS_R80",
+    "status": "ACCEPTED_WITH_EXPLICIT_OBSERVATION_LIMITS",
+    "product_source_commit": "1bc800247289daa1605536a064f795186704dd90",
+    "actual": {
+      "requests": 27,
+      "IDs": "3..29",
+      "guards_passed": 27,
+      "independent_causal_audit_exit_code": 0,
+      "current_kit_readonly_audit_exit_code": 0,
+      "native_read_elapsed_ms": 79,
+      "controllers": 8,
+      "parameter_rows": 7,
+      "new_details_fields": 49,
+      "retained_parameter_text_bytes": 459,
+      "Root_actual_elapsed_seconds": 840.108,
+      "independent_acceptance_elapsed_seconds": 238.287,
+      "fresh_closed_session_exclusions": 54,
+      "errors": 0,
+      "unknown_outcomes": 0
+    },
+    "observed_details": {
+      "all_seven": {
+        "precision": 1,
+        "storable": false,
+        "mutable": false,
+        "store_list_value": false,
+        "read_only": false,
+        "list_interface": false
+      },
+      "Input00_can_undo": true,
+      "Output01_through_Output06_can_undo": false,
+      "List_kind_is_IListParameter": false,
+      "display": "None",
+      "min": 0,
+      "max": -1,
+      "input_raw": -1,
+      "outputs_raw": 0,
+      "outputs_normalized_bits_hex": "80000000"
+    },
+    "UI": {
+      "independently_viewed_originals": 10,
+      "separate_CV_Main_pairs": 4,
+      "CV_outputs6_and_AudioIn": "None",
+      "Main": "target_CV_Inspector_input_None_record_monitor_off_CV_mute_Master_negative_infinity_Stop",
+      "Monitor_Vol_numeric": "UNOBSERVED",
+      "Root_None_option_choice_count": 1,
+      "pixel_content_automatically_verified": false
+    },
+    "closure": {
+      "NoSave_Root_observed": true,
+      "app_absent_Root_observed": true,
+      "explicit_waited_child_exit_code": 0,
+      "source181_artifact13_saved10_Main_unchanged": true,
+      "both_locks_free_Root_observed": true,
+      "owner_stderr_empty": true,
+      "audio_before_after_counts": [
+        2,
+        2
+      ],
+      "MIDI_source_before_owner_after_counts": [
+        0,
+        1,
+        0
+      ],
+      "owner_virtual_source_only": true,
+      "physical_stability": "UNPROVEN",
+      "operator_hardware_configuration_actions": 0,
+      "plugin_parameter_menu_preset_capsule_or_port_writes": 0
+    },
+    "authority": {
+      "assignment_values_observed": false,
+      "routing_verified": false,
+      "atomic_snapshot": false,
+      "mutation_capability": false,
+      "choices": false,
+      "preset_route_preservation": false,
+      "declared_parameter_controller": "unobserved",
+      "original_binding": "unobserved"
+    },
+    "preparation": {
+      "typed_Root_UI_record_generators": true,
+      "R78_R79_failed_sessions_not_reused": true,
+      "R78_R79_raw_nonadmitted_requests": 17,
+      "R80_kit_manifest_files": 391,
+      "R80_kit_review": "READY_FOR_ROOT_FRESH_R80_27",
+      "generator_worker_elapsed_seconds": 505.851,
+      "generator_worker_hard480_overrun_seconds": 25.851,
+      "generator_review_elapsed_seconds": 233.924,
+      "generator_review_hard240_met": true
+    },
+    "series_totals": {
+      "actual_raw": 212,
+      "accepted": 195,
+      "failed_or_nonadmitted": 17,
+      "all_closed": true
+    },
+    "evidence_sha256": {
+      "actual_manifest140": "4424068ab17f1a55e1554e0b4dc840b7cace89641069a6f00b83136618621307",
+      "kit_manifest391": "eda4bd973a92ab5d469337b3a570d22d8ac3ad6112163ae8a4644e3315c3ab86",
+      "kit_review_report": "5c1bd9b137e84a4a7035ee614a570da3181964ede2bfa87cb74f3ea7ca9f4d3d",
+      "independent_acceptance_report": "9990d27caf6114443a6bfea11d5be9f5e466b3f978aab6ee8d1f74833e513c52",
+      "independent_acceptance_manifest11": "85d2cb318ded652ee0ec936ce3c59322dd54b143b7f0681f8a28f5f87fa006f8"
+    },
+    "fixed_count_increment": 0,
+    "overall_loop_ETA": null
+  },
+  "cv_output_member_base_static_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "CONCRETE_AUDIO_OUTPUT_MEMBER_AND_PARAMETER_NAME_STATIC",
+    "status": "PARTIAL_EXACT_NAME_CONSTRUCTOR_SEED_FOUND",
+    "elapsed_seconds": 365.029,
+    "new_decompiled_bodies": 3,
+    "focused_records": 9,
+    "DAQ": 0,
+    "member_class": "UNKNOWN",
+    "public_menu_or_persistence_contract": "UNKNOWN",
+    "exact_portAssignment_literal": "0x10189a8e5",
+    "code_references": [
+      {
+        "site": "0x100c3db6c",
+        "function": "0x100c3dab4",
+        "relationship": "AudioIONode base called by concrete AudioOutputNode constructor"
+      },
+      {
+        "site": "0x100c8b498",
+        "function": "0x100c8b2f0",
+        "relationship": "not yet decompiled"
+      }
+    ],
+    "unhelpful_bounded_probe": "Third new body was deleting destructor, not class identity",
+    "warm_Program_restored": true,
+    "autoanalysis_rerun": false,
+    "original_pins_preserved": true,
+    "exported_records": 9,
+    "engine_closed_and_reset": true,
+    "explicit_waited_child_exit_code": 0,
+    "evidence_sha256": {
+      "report": "0fcd61778b7cd4214671c8ac8ac55c73289b641e38a4811bb18320e4be704ceb",
+      "manifest34": "93d72ff54d29155a5fcf3842fe3db17032bab70e05f6afbf7824b2008c289fed"
+    },
+    "next": "Bounded exact portAssignment constructor trace; keep generic paired-entry branch parked",
+    "fixed_count_increment": 0,
     "overall_loop_ETA": null
   }
 }

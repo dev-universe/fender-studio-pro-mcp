@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "NATIVE58_CV_DIRECT_PARAMETER_DETAILS_R80",
+  "status": "ACCEPTED_WITH_EXPLICIT_OBSERVATION_LIMITS",
+  "product_source_commit": "1bc800247289daa1605536a064f795186704dd90",
+  "actual": {
+    "requests": 27,
+    "IDs": "3..29",
+    "guards_passed": 27,
+    "independent_causal_audit_exit_code": 0,
+    "current_kit_readonly_audit_exit_code": 0,
+    "native_read_elapsed_ms": 79,
+    "controllers": 8,
+    "parameter_rows": 7,
+    "new_details_fields": 49,
+    "retained_parameter_text_bytes": 459,
+    "Root_actual_elapsed_seconds": 840.108,
+    "independent_acceptance_elapsed_seconds": 238.287,
+    "fresh_closed_session_exclusions": 54,
+    "errors": 0,
+    "unknown_outcomes": 0
+  },
+  "observed_details": {
+    "all_seven": {
+      "precision": 1,
+      "storable": false,
+      "mutable": false,
+      "store_list_value": false,
+      "read_only": false,
+      "list_interface": false
+    },
+    "Input00_can_undo": true,
+    "Output01_through_Output06_can_undo": false,
+    "List_kind_is_IListParameter": false,
+    "display": "None",
+    "min": 0,
+    "max": -1,
+    "input_raw": -1,
+    "outputs_raw": 0,
+    "outputs_normalized_bits_hex": "80000000"
+  },
+  "UI": {
+    "independently_viewed_originals": 10,
+    "separate_CV_Main_pairs": 4,
+    "CV_outputs6_and_AudioIn": "None",
+    "Main": "target_CV_Inspector_input_None_record_monitor_off_CV_mute_Master_negative_infinity_Stop",
+    "Monitor_Vol_numeric": "UNOBSERVED",
+    "Root_None_option_choice_count": 1,
+    "pixel_content_automatically_verified": false
+  },
+  "closure": {
+    "NoSave_Root_observed": true,
+    "app_absent_Root_observed": true,
+    "explicit_waited_child_exit_code": 0,
+    "source181_artifact13_saved10_Main_unchanged": true,
+    "both_locks_free_Root_observed": true,
+    "owner_stderr_empty": true,
+    "audio_before_after_counts": [
+      2,
+      2
+    ],
+    "MIDI_source_before_owner_after_counts": [
+      0,
+      1,
+      0
+    ],
+    "owner_virtual_source_only": true,
+    "physical_stability": "UNPROVEN",
+    "operator_hardware_configuration_actions": 0,
+    "plugin_parameter_menu_preset_capsule_or_port_writes": 0
+  },
+  "authority": {
+    "assignment_values_observed": false,
+    "routing_verified": false,
+    "atomic_snapshot": false,
+    "mutation_capability": false,
+    "choices": false,
+    "preset_route_preservation": false,
+    "declared_parameter_controller": "unobserved",
+    "original_binding": "unobserved"
+  },
+  "preparation": {
+    "typed_Root_UI_record_generators": true,
+    "R78_R79_failed_sessions_not_reused": true,
+    "R78_R79_raw_nonadmitted_requests": 17,
+    "R80_kit_manifest_files": 391,
+    "R80_kit_review": "READY_FOR_ROOT_FRESH_R80_27",
+    "generator_worker_elapsed_seconds": 505.851,
+    "generator_worker_hard480_overrun_seconds": 25.851,
+    "generator_review_elapsed_seconds": 233.924,
+    "generator_review_hard240_met": true
+  },
+  "series_totals": {
+    "actual_raw": 212,
+    "accepted": 195,
+    "failed_or_nonadmitted": 17,
+    "all_closed": true
+  },
+  "evidence_sha256": {
+    "actual_manifest140": "4424068ab17f1a55e1554e0b4dc840b7cace89641069a6f00b83136618621307",
+    "kit_manifest391": "eda4bd973a92ab5d469337b3a570d22d8ac3ad6112163ae8a4644e3315c3ab86",
+    "kit_review_report": "5c1bd9b137e84a4a7035ee614a570da3181964ede2bfa87cb74f3ea7ca9f4d3d",
+    "independent_acceptance_report": "9990d27caf6114443a6bfea11d5be9f5e466b3f978aab6ee8d1f74833e513c52",
+    "independent_acceptance_manifest11": "85d2cb318ded652ee0ec936ce3c59322dd54b143b7f0681f8a28f5f87fa006f8"
+  },
+  "fixed_count_increment": 0,
+  "overall_loop_ETA": null
+}

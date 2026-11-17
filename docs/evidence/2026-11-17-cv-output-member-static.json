@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CONCRETE_AUDIO_OUTPUT_MEMBER_AND_PARAMETER_NAME_STATIC",
+  "status": "PARTIAL_EXACT_NAME_CONSTRUCTOR_SEED_FOUND",
+  "elapsed_seconds": 365.029,
+  "new_decompiled_bodies": 3,
+  "focused_records": 9,
+  "DAQ": 0,
+  "member_class": "UNKNOWN",
+  "public_menu_or_persistence_contract": "UNKNOWN",
+  "exact_portAssignment_literal": "0x10189a8e5",
+  "code_references": [
+    {
+      "site": "0x100c3db6c",
+      "function": "0x100c3dab4",
+      "relationship": "AudioIONode base called by concrete AudioOutputNode constructor"
+    },
+    {
+      "site": "0x100c8b498",
+      "function": "0x100c8b2f0",
+      "relationship": "not yet decompiled"
+    }
+  ],
+  "unhelpful_bounded_probe": "Third new body was deleting destructor, not class identity",
+  "warm_Program_restored": true,
+  "autoanalysis_rerun": false,
+  "original_pins_preserved": true,
+  "exported_records": 9,
+  "engine_closed_and_reset": true,
+  "explicit_waited_child_exit_code": 0,
+  "evidence_sha256": {
+    "report": "0fcd61778b7cd4214671c8ac8ac55c73289b641e38a4811bb18320e4be704ceb",
+    "manifest34": "93d72ff54d29155a5fcf3842fe3db17032bab70e05f6afbf7824b2008c289fed"
+  },
+  "next": "Bounded exact portAssignment constructor trace; keep generic paired-entry branch parked",
+  "fixed_count_increment": 0,
+  "overall_loop_ETA": null
+}
