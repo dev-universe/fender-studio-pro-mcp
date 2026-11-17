@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "User explicitly resumed2026-11-17. Latest evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline historical; newdeadline notset. R73/R74/R75/R76 closed; never replay completed trials or old runtime capabilities.",
-    "CURRENT Native56source26444b1 installed/source179/artifact13. R76actualexact27 closed, 27guards/fullauditPASS and boundedindependentacceptanceaccepted; fullafter-nodes/finalMainMusicUIcheckpointcontractNOT_VERIFIED. ActualrootAudioFXPortSetup/7children Input00+Output01..06/8nodes7edges andfreshuniqueindexedmembershipobserved. Metadata partial, assignmentvalues/controller/routing unknown; fourfalsecapabilityclaims retained. NoneUI4checkpoints/NoSave/source179artifact13saved10Mainexact. No params/capsules/catalog/presetapply. No replay; futuremutatingunitneedsfreshMainMusicUIateachrequiredcheckpoint. Nextread-onlysourcefeasibility for publicIController/parameter/menu assignmentobservation and static exactIIDuser100da8da0→100d98808; no newproductwriter yet. NeverreplayR76 toaddressmissingassignmentvalues. Sourcefeasibility285.1s complete: directIController/count/index/RawParameter.describe, strictQI+canonicalmatchingrequired; externalmenugatenotwidened. Two privateownershipdesignscompareParameterBindingReadLease andindexedwitness, noimplementationyet. Staticr1setup296.005s failedpreengine(rootonlypermissionrepairincomplete/missingcurrent.json); correctedfullprofile0700+manifest0600 nowR2oneprocesspreflight, norepeatunchangedfailure.",
+    "CURRENT Native56source26444b1 remainsinstalled; R76closed27 acceptedboundedtypedmetadata/currentCVNoneUI only, fullMainMusiccheckpointUI NOT_VERIFIED. Newcv_port_parameters productimplementation singlewriteractive. SelectedBprivateindexedwitness+retainedactualIParameterinterface/canonical/indexpointer; afterALLIDcopies finalborrowedcount/indexpointer tail thenHeaders/UID/topology/context. Declaredparametercontroller/originalbindingUNOBSERVED, stableindexedduplicatesallowed, fourfalseclaims. StrictQI/8nodes/count32and64/globalzerorowlimit/retainedDTOtext48KiB andexisting2sec/256KiB. No sharedABI/node-api/parameter-api/SDK/dependency/menu/provider/original/setterchanges. Do not claimsource179currentlymatcheswhilewriteredits. Thenindependentregressionreview→normalbuild/install/newsourcepins→separatereviewedfiniteactualwithfreshMainMusicUI/CVimages; noR76replay orpresetapplypermission. StaticR2exactarraysclosed8bodies12evidence453.322s; R3inspected100da8ffc1body200.122s; noresolvedconcretetypepath, genericpairedbranchPARKEDuntilnewconcretetype/vtable/accessor/writerevidence. Neverreplay100da8ffc ormoregenericcallerloops. NewprivateUIrecorderprepproceedswithseparateCVeditor/Mainphotos; noactualornewscopeadmissionyet. Fixed15/43done28remaining.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -625,17 +625,17 @@
   "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ141(40+47+27+27)allclosed; R76boundedmetadata/currentCVNoneUIaccepted; fullMainMusicUIcheckpointcontractNOT_VERIFIED. Oldnative55countersdatedNov15historical.",
   "binary_source_commit": "26444b1a5df45bc250aab37148a64cc3d44f82c6",
   "current_execution": {
-    "status": "NATIVE56_R76_BOUNDED_METADATA_ACCEPTED_NEXT_CV_ASSIGNMENT_RESEARCH",
+    "status": "CV_PORT_PARAMETERS_IMPLEMENTATION_ONE_WRITER_NATIVE56_STILL_INSTALLED",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
     "R73_actual_DAQ_completed": 40,
     "R74_actual_DAQ_completed": 47,
     "R75_actual_DAQ_completed": 27,
-    "new_product_changes_started": false,
+    "new_product_changes_started": true,
     "fixed_count_increment": 0,
     "hardware_stability": "UNPROVEN",
-    "source_writer": null,
+    "source_writer": "cv_port_parameters_impl",
     "last_qualified_installed_native": 56,
     "no_new_build_or_install": false,
     "installed_native": 56,
@@ -643,11 +643,13 @@
     "R76_actual_started": true,
     "R76_actual_DAQ_completed": 27,
     "R76_independent_acceptance": "ACCEPTED_BOUNDED_NATIVE_METADATA_AND_CURRENT_CV_NONE_UI",
-    "cv_port_entry_user_chain_static": "R1_LOCAL_RECIPE_BLOCKED_0_ENGINE_R2_CORRECTED_IN_PROGRESS",
+    "cv_port_entry_user_chain_static": "R2_EXACT_ARRAYS_R3_ONE_BODY_DONE_GENERIC_BRANCH_PARKED_PENDING_CONCRETE_TYPE_EVIDENCE",
     "cv_port_parameter_surface_source": "COMPLETED_DIRECT_PUBLIC_CONTROLLER_SOURCE_SUPPORTED_RUNTIME_UNKNOWN",
     "actual_host_qualification_scope": "CV cv_ports bounded metadata/current CV None UI only; full all-checkpoint Main/Music UI NOT_VERIFIED",
     "all_checkpoint_Music_record_monitor_UI_contract": "NOT_VERIFIED",
-    "cv_port_parameter_design": "TWO_INDEPENDENT_SAME_PARENT_MODEL_CANDIDATES_IN_PROGRESS"
+    "cv_port_parameter_design": "B_SELECTED_WITH_RETAINED_INTERFACE_POST_ID_POINTER_TAIL_AND_NARROW_PROVENANCE",
+    "mutable_source_matches_old179_pin": "NOT_CLAIMED_DURING_IMPLEMENTATION",
+    "cv_R77_UI_evidence_recorder": "PRIVATE_CORRECTION_IN_PROGRESS_NO_APP_OR_DAQ"
   },
   "progress_reporting": {
     "after_each_completed_unit": [
