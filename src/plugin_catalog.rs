@@ -606,7 +606,10 @@ fn parse_preset(bytes: &[u8], path: &str, builder: &mut CatalogBuilder) -> Resul
         if total > MAX_ARCHIVE_BYTES || member.size() > MAX_FILE_BYTES {
             return Err("preset uncompressed size limit exceeded".into());
         }
-        let name = member.name().to_owned();
+        let name = member
+            .name()
+            .map_err(|e| format!("invalid preset ZIP member name: {e}"))?
+            .into_owned();
         if name == "metainfo.xml" || name.starts_with("data.") {
             let mut content = Vec::new();
             member
