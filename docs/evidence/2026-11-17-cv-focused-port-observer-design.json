@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "SELECTED_DESIGN_NOT_YET_IMPLEMENTED_OR_LIVE_VERIFIED",
+  "selected": "Candidate A existing NodeInspector rooted at fixed current CV PortSetup",
+  "public_surface": "One proposed cv_ports value on existing plugin_inspect node_scope",
+  "current_predicate": "Observed exact first type, guarded identifier topology and existing three fixed QIs; not all child headers or assignments",
+  "global_node_API_changes": false,
+  "closed_compiled_limits": {
+    "report_nodes": 9,
+    "depth": 1,
+    "ancestors": 0,
+    "children_per_node": 8,
+    "slot_membership_scan": 32
+  },
+  "ownership": "Fresh unique canonical match between fixed lookup and current indexed owning-slot child; count/index/pointer/UID rechecked through metadata cleanup and publication. No historical index8, UID or count9 binding.",
+  "null_semantics": "Stable lookup_absent, not routing_empty; no indexed fallback.",
+  "retention": "Stable unique identities at most11; temporary query owners bounded separately.",
+  "honest_limits": [
+    "Existing compiled parent/delegate probes remain.",
+    "Child and inherited metadata may remain partial.",
+    "No new whole-output16/32KiB promise.",
+    "Actual AudioFXPortSetup first type is not yet live observed.",
+    "IController and assignment values remain unobserved."
+  ],
+  "false_capability_claims": [
+    "assignment_values_observed",
+    "routing_verified",
+    "atomic_snapshot",
+    "mutation_capability"
+  ],
+  "alternatives": [
+    "B direct-child first-header traversal deferred until its stronger guarantee is required.",
+    "Global budget increase and implicit generic traversal reorder rejected.",
+    "Dedicated new tool and arbitrary selectors rejected."
+  ],
+  "candidate_scores_before_required_ownership_completion": {
+    "A": [
+      2,
+      3,
+      5,
+      4,
+      5
+    ],
+    "B": [
+      2,
+      5,
+      3,
+      4,
+      5
+    ]
+  },
+  "elapsed_seconds": {
+    "candidate_A": 416.326,
+    "candidate_B": 356.332,
+    "cross_judge": 276.21
+  },
+  "deviations": [
+    "A and judge stayed under hard caps but missed report reserve.",
+    "Root briefly considered fixed index8 witness; final synthesis uses bounded fresh membership scan."
+  ],
+  "evidence_sha256": {
+    "candidate_A_report": "af8ad22c4f69d0c3f20c6bb84f99aaa20f88ef46dc2305e35c9154141d7db4cb",
+    "candidate_B_report": "2a29411e74e21d5d2e71b391b152f5c5682aacbdf53f02871581f47a3510ed2f",
+    "judge_report": "37b96407fd1a63b755bacc562925c220a612b5bb70f95502b99669b3996d76a0",
+    "selected_synthesis": "0d65e8f1c7084f56686cb76f638c4e79be3074bc5c42c3e21319ad3425c4ba3f"
+  },
+  "implementation_and_offline_review_estimate_minutes": [
+    25,
+    45
+  ],
+  "build_install_live_estimate": "Separate after chosen diff is verified",
+  "coverage_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "overall_loop_ETA": null
+}
