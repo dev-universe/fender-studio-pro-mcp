@@ -608,8 +608,8 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "User explicitly resumed2026-11-17. Latest evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline historical; newdeadline notset. R73/R74/R75/R76 closed; never replay completed trials or old runtime capabilities.",
-    "CURRENT product46630db/Native57 normalinstalled source181/artifact13/metadata46/action5/state7. Newcv_port_parameters codeoffline main179/native440/JS97 andindependentreviewcounterfactual1FAIL/original21PASS accepted; actualruntimeunknown. R77exact27kit andRootnormalbinding independentlyREADY, actualnotstartedyet. Freshapp+ownedScratchbeforewrappedowner; all51closedsessions excluded; newdoc/session/instance; MainonlyUI18 andCVeditor/Mainpairs20/21/25/29; originalintent→onesend→originalreceipt→guard chronology. Rootmustexplicitlyrecord0or1Noneinputchoice. Stopunexpectedactuals, nofallback/retry/inverse. Owner-exit.json waitedchild0 mandatory; do notinferPTYwrapperstatus. NormalmetadataownerexitcodeUNRECORDED onlyprocessabsence/locksfreeproven. LastactualhostqualifiedNative56boundedCVmetadata. After27/audit immediateNoSave thenwrappedownerEOF/exitreceipt/source181artifact13saved10Mainpostproof. Genericpaired-entrybranchparkedpendingconcretetypeevidence. Fixed15/43done28remaining.",
+    "User explicitly resumed2026-11-17. Current evidence is docs/PROGRESS_2026-11-17.md and this state. OldNov15deadline is historical; no new deadline. R73/R74/R75/R76/R77 are closed. Never replay completed trials or expired runtime capabilities.",
+    "CURRENT product46630db/Native57 normal source181/artifact13/tools46/action5/state7. R77 actual27 and all guards/audit passed, closed NoSave with explicit waited owner child exit0; independent bounded indexed read acceptance complete. Direct controllers8 and rows7 observed, input port and six output portAssignment List rows display None. Assignment/routing/writes remain unproved. New source-only feasibility examines exact observed parameter list/menu choices, with no DAQ or existing External gate widening. Generic paired-entry branch remains parked pending concrete type evidence. No preset apply or route write admission. Keep actual137 immutable. Future actual work requires fresh current provenance/doc/session/instance, include R77 in closed-session ban, separate CV-editor and Main UI evidence, strict unexpected-result halt and explicit owner-exit receipt.",
     "Ghidra next onebody0x1015ef048 afterclosedconstructor100f0c354+identifier1012a1470. ActualEnvironmentownership/cacheitemABI/factoryreceiver+0x4a8/directionsemantics stillunknown. No speculativeQI/ABI/portorgraphwrites. Reuse warmcheckpointandfinishedstaticreports; noHopper.",
     "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
@@ -622,10 +622,10 @@
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
   "current_progress_document": "docs/PROGRESS_2026-11-17.md",
-  "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ141(40+47+27+27)allclosed; R76boundedmetadata/currentCVNoneUIaccepted; fullMainMusicUIcheckpointcontractNOT_VERIFIED. Oldnative55countersdatedNov15historical.",
+  "last_measurement": "fixed15/43done28remaining(software24/hardware4),presets40/46classes77cases,names6866/7112. Nov17actualDAQ168(40+47+27+27+27)allclosed. R77direct8controllers7rows observed; independentboundedreadacceptancecomplete. No CV preset routepreservation claim. PriorR76boundedacceptance and MainUIgap remain historical.",
   "binary_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
   "current_execution": {
-    "status": "NATIVE57_NORMAL_VERIFIED_R77_KIT_READY_PENDING_FRESH_ACTUAL",
+    "status": "NATIVE57_R77_ACCEPTED_CLOSED_CV_CHOICE_READ_FEASIBILITY_ACTIVE",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
@@ -636,16 +636,16 @@
     "fixed_count_increment": 0,
     "hardware_stability": "UNPROVEN",
     "source_writer": null,
-    "last_qualified_installed_native": 56,
+    "last_qualified_installed_native": 57,
     "no_new_build_or_install": false,
     "installed_native": 57,
-    "last_actual_host_qualified_native": 56,
+    "last_actual_host_qualified_native": 57,
     "R76_actual_started": true,
     "R76_actual_DAQ_completed": 27,
     "R76_independent_acceptance": "ACCEPTED_BOUNDED_NATIVE_METADATA_AND_CURRENT_CV_NONE_UI",
     "cv_port_entry_user_chain_static": "R2_EXACT_ARRAYS_R3_ONE_BODY_DONE_GENERIC_BRANCH_PARKED_PENDING_CONCRETE_TYPE_EVIDENCE",
     "cv_port_parameter_surface_source": "COMPLETED_DIRECT_PUBLIC_CONTROLLER_SOURCE_SUPPORTED_RUNTIME_UNKNOWN",
-    "actual_host_qualification_scope": "CV cv_ports bounded metadata/current CV None UI only; full all-checkpoint Main/Music UI NOT_VERIFIED",
+    "actual_host_qualification_scope": "Bounded CV indexed metadata and typed values only; separate original CV-editor and Main visible checks at4checkpoints. No assignment roles, menu choices, routing, setter or preset preservation authority.",
     "all_checkpoint_Music_record_monitor_UI_contract": "NOT_VERIFIED",
     "cv_port_parameter_design": "B_SELECTED_WITH_RETAINED_INTERFACE_POST_ID_POINTER_TAIL_AND_NARROW_PROVENANCE",
     "mutable_source_matches_old179_pin": "REPLACED_BY_FRESH181_NORMAL_PINS",
@@ -653,9 +653,14 @@
     "source181_artifact13_verified": true,
     "cv_port_parameter_code_review": "READY_COUNTERFACTUAL_FAIL1_ORIGINAL21_PASS",
     "R77_kit_review": "READY_FOR_ROOT_ACTUAL27",
-    "R77_actual_DAQ_completed": 0,
+    "R77_actual_DAQ_completed": 27,
     "normal_metadata_owner_exact_exit_code": "UNRECORDED",
-    "R77_owner_explicit_exit_receipt_required": true
+    "R77_owner_explicit_exit_receipt_required": true,
+    "R77_closed": true,
+    "R77_owner_waited_child_exit_code": 0,
+    "R77_actual_acceptance": "ACCEPTED_BOUNDED_INDEXED_READ_ONLY",
+    "cv_assignment_choice_feasibility": "SOURCE_ONLY_IN_PROGRESS",
+    "R77_CV_target_UI_contract": "ACCEPTED_SEPARATE_ORIGINAL_CV_AND_MAIN_VISIBLE_FIELDS_PLUS_RPC"
   },
   "progress_reporting": {
     "after_each_completed_unit": [
@@ -687,10 +692,10 @@
       ],
       "observed_32_case_elapsed_seconds": 768.751,
       "observed_latest_32_case_elapsed_seconds": 732.323,
-      "next_finite_unit": "R76 exact27 current Native56 CV host port metadata read preparation/review/live/closure",
+      "next_finite_unit": "R77 independent actual acceptance/public bookkeeping and exact observed CV portAssignment read-capability source feasibility",
       "next_finite_unit_preparation_and_runtime_minutes": [
-        15,
-        25
+        10,
+        15
       ],
       "post_Multi_bookkeeping_report_minutes_observed": 12,
       "post_Multi_bookkeeping_prior_estimate_minutes": [
@@ -699,25 +704,25 @@
       ],
       "bookkeeping_overrun_reason": "underestimated reconciliation/report time while integrating and installing Level40; not new plugin scope"
     },
-    "next_finite_unit": "R76 exact27 current Native56 CV host port metadata read preparation/review/live/closure",
+    "next_finite_unit": "R77 independent actual acceptance/public bookkeeping and exact observed CV portAssignment read-capability source feasibility",
     "next_finite_unit_preparation_and_runtime_minutes": [
-      15,
-      25
+      10,
+      15
     ]
   },
   "previous_resume_document": "docs/LOOP_HANDOFF_2026-11-12.md",
-  "installed_native_sha256": "8b51e3295ee18a47151049e187564b2061fdb2d26afcd7486f4035e2e1c6b729",
-  "binary_sha256": "85a6bd72198b97bcf616e229a8e63b6d910dce5841471a774fdf9ebe0ee8cb13",
+  "installed_native_sha256": "3fd3322fcb8d2f4b84445269bb43b1ea54ac9c6a0e324488a160c9d4c12948d0",
+  "binary_sha256": "16cb6ff2ee1708df932d060474df8fa81bd94794f90527faeced2d0b23540342",
   "installed_bridge_files_sha256": {
-    "BridgeComponent.js": "665e6bef4f08ddf3612044286a54f76b94f3946cdf934d7625f600668c6a1d78",
-    "BridgeCore.js": "d290cee40654fbae1d61c0b3783232cbb08a881f3d9e00f2d8717a57455f3ba9",
+    "BridgeComponent.js": "9be5ec7b6173142f25c91db027035a9a75298804483da9abeb5057d1275046ad",
+    "BridgeCore.js": "d90249e1f32dc5ddd9938cf3f8640ffd6629f623125dde5b5cb557f0d84403a9",
     "NativePluginControls.js": "6e4621059621cd94aee81de3a80779519d9f603d54442ccf024445863e708c3f"
   },
-  "last_runtime_verified_native_unit": 55,
-  "last_runtime_verified_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406",
+  "last_runtime_verified_native_unit": 57,
+  "last_runtime_verified_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
   "native34_runtime_verified": true,
-  "last_completed_live_unit": "Native55 R75 bounded partial CV host identifier topology27 accepted",
-  "last_completed_live_elapsed_seconds": 991.03,
+  "last_completed_live_unit": "Native57 R77 bounded CV indexed parameter read27 independently accepted with separate CV/Main UI evidence",
+  "last_completed_live_elapsed_seconds": 719.618,
   "prepared_units": {
     "64": {
       "path": ".local/next-state/unit64-chorder-chords-readonly",
@@ -2385,8 +2390,8 @@
     "workaround_performed": false,
     "new_actual_DAW_calls": 0
   },
-  "current_product_source_map_sha256": "72a3af6bb53ee9008afef8ff6fc3389db6d55b5953026db9ba84f07d1fa9fe84",
-  "current_normal46_tool_schema_canonical_sha256": "0d239d82c614d432da8374af02e09814c14aeb2afe2428376dbb6f71150b56f3",
+  "current_product_source_map_sha256": "e6d86a83a9d0a7b9a5a95eaf906eb65261e629120621ba5b0f1d4999f203eb39",
+  "current_normal46_tool_schema_canonical_sha256": "6cb2b58ee17a2e6329acc6b0c8807c55fd950976cd68de12a745fa1ab52f62ac",
   "level_meter_fixed_payload": {
     "status": "SUPPORTED_SETTING_DELTA_EMPTY",
     "artifact_sha256": "8ce0017cdf97aa65f768249e629a288c08aba430852b674a2950c3d83c0a441c",
@@ -2553,7 +2558,7 @@
     "independent_review_freeze_sha256": "bb9c5cce2c2d0d4ad33f8f942f14b3cba62c4b06f7fbc50ee036f2bc362c2e33"
   },
   "prior_normal38_source_map_sha256": "174a9c9ed2ef912ae8a939b45e22cc868cba41cee96d44db1b2696d525e88dbf",
-  "current_product_source_authority_kind": "reviewed_native55_normal_source177_freeze",
+  "current_product_source_authority_kind": "reviewed_native57_normal_source181_freeze",
   "native39_installation": {
     "normal_native_unit": 39,
     "native_uuid": "88E8690A-47D5-380E-9A1B-AA4CEAEE44F4",
@@ -2781,7 +2786,7 @@
     "Multi_controls_128_129_actual": 67
   },
   "latest_root_observation_at": "2026-11-14T22:32:04.715283+00:00",
-  "current_live_unit": "r68 reviewed R8 algorithm, editor opened after28guards",
+  "current_live_unit": null,
   "multi_controls_000_031_actual": {
     "status": "independently_verified_actual_current_value_batch",
     "plugin": "Multi Instrument",
@@ -3138,7 +3143,7 @@
     "collector_review_report_sha256": "bcf589de8da1f4fed3439fdcb8f00585f0742916096a65b88e6a4ec240a720e8",
     "execution_calls": 0
   },
-  "current_product_source_authority_sha256": "72a3af6bb53ee9008afef8ff6fc3389db6d55b5953026db9ba84f07d1fa9fe84",
+  "current_product_source_authority_sha256": "e6d86a83a9d0a7b9a5a95eaf906eb65261e629120621ba5b0f1d4999f203eb39",
   "native41_installation": {
     "all208_sources_match": true,
     "manifest_sources": 148,
@@ -15108,7 +15113,7 @@
   "native46_runtime_actual_total_requests": 83,
   "native46_accepted_completed_unit_requests": 62,
   "native46_MCP_predispatch_validation_errors": 2,
-  "last_runtime_verified_scope": "Native55 r64 actual native identities, full41 parameters/formatters and scalar changes only; Scope pulse/effect not yet accepted",
+  "last_runtime_verified_scope": "Bounded CV indexed metadata and typed values only; separate original CV-editor and Main visible checks at4checkpoints. No assignment roles, menu choices, routing, setter or preset preservation authority.",
   "native46_level_settings_r1_failed": {
     "schema": 1,
     "status": "CLOSED_FAILED_POST_MODE_COUNT_GUARD_NO_RETRY_NO_INVERSE",
@@ -17996,7 +18001,7 @@
     "profile_app_or_security_changes": false
   },
   "last_completed_live_plugin_read_unit": "Native52 Rumble named-parameter absence;23DAQ202.062seconds",
-  "last_closed_runtime_unit": "Native54 r63 Scope readiness13 closed and qualified accepted; no effect or count increment",
+  "last_closed_runtime_unit": "Native57 R77 accepted27 closed NoSave with explicit waited child exit0",
   "native53_installation": {
     "schema": 1,
     "status": "REVIEWED_NORMAL_NATIVE53_INSTALLED_ACTUAL_EFFECT_PENDING",
@@ -18452,7 +18457,7 @@
     }
   },
   "previous_tool_schema_canonical_sha256": "46a0d62d85a194c2400526c72faa055706721cc083af7568196995d913208b02",
-  "current_tool_schema_status": "Fresh r66 Native55 tools46/action5/state7 exactly equal audited schema; actual r66DAQ0; owner active",
+  "current_tool_schema_status": "Native57 normal metadata tools46/action5/state7 verified, actual R77 metadata exactly matched frozen kit; actual owner now CLOSED. Only shared node_scope specifications changed from prior Native56.",
   "native54_compressor_reset_qualified": {
     "schema": 1,
     "status": "ACCEPTED_CONTROL_COMPRESSOR_EFFECT_AND_LIFECYCLE_ONLY",
@@ -20224,11 +20229,13 @@
   "nov17_actual_DAQ": {
     "r73": 40,
     "r74": 47,
-    "total": 114,
+    "total": 168,
     "all_closed": true,
     "old_top_level_native55_counters_as_of": "2026-11-15",
-    "not_included_in_old_counters": 114,
-    "r75": 27
+    "not_included_in_old_counters": 168,
+    "r75": 27,
+    "r76": 27,
+    "r77": 27
   },
   "cv_r75_host_node_read_2026_11_17": {
     "schema": 1,
@@ -20660,5 +20667,189 @@
       "hardware_remaining": 4
     },
     "overall_loop_ETA": null
-  }
+  },
+  "cv_port_parameters_native57_r77_2026_11_17": {
+    "schema": 1,
+    "date": "2026-11-17",
+    "scope": "NATIVE57_CV_DIRECT_INDEXED_PARAMETER_READ_R77",
+    "status": "ACCEPTED_BOUNDED_INDEXED_READ_ONLY",
+    "product_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
+    "runtime": {
+      "native_unit": 57,
+      "native_uuid": "40BF4F0D-24D8-3DF5-BB15-784249CF8222",
+      "source_files": 181,
+      "artifact_files": 13,
+      "tools": 46,
+      "fixed_actions": 5,
+      "state_actions": 7
+    },
+    "source_verification": {
+      "main_tests": 179,
+      "native_tests": 440,
+      "selected_JS_tests": 97,
+      "independent_counterfactual_removed_tail": "FAIL_one_actual_Reply_final_check_regression",
+      "independent_restored_original": "PASS_21_focused_tests",
+      "implementation_seconds": 1475.48,
+      "independent_review_seconds": 377.025,
+      "normal_install_seconds": 458.874,
+      "normal_metadata_owner_exact_exit_code": "UNRECORDED_process_absence_and_free_locks_only"
+    },
+    "actual": {
+      "requests": 27,
+      "IDs": "3..29",
+      "new_read_ID": 25,
+      "new_read_elapsed_ms": 59,
+      "guards_passed": 27,
+      "causal_one_write_prefix_audit": true,
+      "errors": 0,
+      "unknown_outcomes": 0,
+      "fresh_context": true,
+      "closed_session_exclusions": 51,
+      "terminal_context_reads_match": true,
+      "observed_nodes": 8,
+      "observed_controllers": 8,
+      "indexed_parameter_rows": 7,
+      "indexed_inventory_complete": true,
+      "status": "complete",
+      "retained_parameter_text_bytes": 459
+    },
+    "observed_parameters": [
+      {
+        "node": "PortSetup",
+        "first_type": "AudioFXPortSetup",
+        "controller_count": 0
+      },
+      {
+        "node": "Input00",
+        "first_type": "AudioFXEndPointComponent",
+        "name": "port",
+        "tag": 1349481076,
+        "kind": "List",
+        "integer_value": -1,
+        "display": "없음",
+        "read_only": false,
+        "min": 0,
+        "max": -1,
+        "default": 0,
+        "normalized_bits_hex": "3F800000"
+      },
+      {
+        "nodes": "Output01..Output06",
+        "node_count": 6,
+        "first_type": "AudioOutputNode",
+        "name": "portAssignment",
+        "tag": 100,
+        "kind": "List",
+        "integer_value": 0,
+        "display": "없음",
+        "read_only": false,
+        "min": 0,
+        "max": -1,
+        "default": 0,
+        "normalized_bits_hex": "80000000"
+      }
+    ],
+    "limits": {
+      "nodes": 8,
+      "parameters_per_node": 32,
+      "total_parameters": 64,
+      "retained_DTO_parameter_text_bytes": 49152,
+      "existing_encoded_response_bytes": 262144,
+      "existing_GUI_deadline_ms": 2000,
+      "describe_inner_call_preemption": false,
+      "text_limit_is_peak_memory_or_cumulative_copy_limit": false
+    },
+    "authority": {
+      "indexed_metadata_and_values_observed": true,
+      "declared_parameter_controller": "unobserved",
+      "original_binding": "unobserved",
+      "assignment_values_observed": false,
+      "routing_verified": false,
+      "atomic_snapshot": false,
+      "mutation_capability": false,
+      "writable_metadata_is_setter_authority": false
+    },
+    "UI": {
+      "paired_distinct_original_surfaces_at_IDs": [
+        20,
+        21,
+        25,
+        29
+      ],
+      "CV_editor": "six_outputs_and_AudioIn_display_None",
+      "song_main": "CV target Inspector input_None_record_and_monitor_off_CV_muted_Master_negative_infinity",
+      "Monitor_Vol_numeric": "UNOBSERVED",
+      "Root_input_None_selection_count": 1,
+      "independent_original_photo_acceptance": "ACCEPTED_FOR_VISIBLE_FIELDS"
+    },
+    "closure": {
+      "NoSave": true,
+      "app_absent": true,
+      "explicit_waited_owner_child_exit_code": 0,
+      "saved_songs_checked": 10,
+      "saved_songs_and_Main_unchanged": true,
+      "source181_artifact13_unchanged": true,
+      "both_locks_reacquired_and_released": true,
+      "parameter_writes_capsules_catalog_preset_apply_port_choices": 0,
+      "audio_devices_before_after": [
+        3,
+        3
+      ],
+      "MIDI_external_before_after": [
+        0,
+        0
+      ],
+      "physical_stability": "UNPROVEN",
+      "operator_hardware_configuration_actions": 0
+    },
+    "elapsed_seconds": {
+      "actual_unit": 719.618,
+      "first_DAQ_write_to_closure": 451.322,
+      "first_to_last_DAQ_write": 283.181,
+      "post_audit_file_to_closure": 129.35,
+      "live_kit_preparation": 678.183,
+      "independent_kit_review": 415.485
+    },
+    "deviations": [
+      "Root read-only search used an unmatched glob before any DAQ; corrected without any additional DAQ.",
+      "Normal metadata-owner exact exit code was not recorded. Actual R77 uses and checks a separate explicit waited child exit receipt.",
+      "The saved root runtime-state file is a pre-final snapshot at26 sends/guard28. The full27 original responses/intents/writes/guards/audit and owner exit establish completion.",
+      "Reviewer initial broad app-name glob hashed an unrelated executable without launching or exporting it; the accepted pin proof uses only the exact intended Main. Reviewer corrected an initial process-name filter before accepting absence."
+    ],
+    "evidence_sha256": {
+      "implementation_report": "99a44979a7424ad726a6025b7050d0c37eacdbab2b1572a1053f3d0367677574",
+      "independent_code_review_report": "b5329e7543d8a38ca91e808643b5095185ef887cd29ae158ed4fb2fc6d63949e",
+      "normal_manifest": "f4ee13e0198e16b9f86f62a9aa716c4b4ab340f4a590b52245a0ffed4967b942",
+      "final_kit_review_report": "0c90c857b0598bfbb905ecd48f97275f20ec175de574b6e78ad7ed8f43ca912d",
+      "actual_manifest137": "d24edac5fc5bbb47cf8bc777b246f1d1f5eae5c67dd1a5e8e2dc9527a8c48d88",
+      "actual_closure": "0d09026380c7e58924b0d61c1a76ac454313c90f4e99dc620eb557cc84bc060d",
+      "actual_rpc25": "afa551627f29bdd0bbe0af8222ab81fae814ecff51e1dfe1f1cf37ac4f390f69",
+      "independent_actual_report": "113cdf750b575dc60319049058fc3fa4b76ee45d80e0773e6f5fd9c36504608b",
+      "independent_actual_manifest9": "22878fae1a6f5b686df4fd0cff10dde5c4adb3fa752407d4c8416760b99c8891"
+    },
+    "fixed_count_increment": 0,
+    "fixed_counts": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
+    "overall_loop_ETA": null,
+    "next": "Bounded source feasibility for exact observed port and portAssignment list or menu capabilities. No preset or route change admitted.",
+    "independent_acceptance": {
+      "verdict": "ACCEPTED_BOUNDED_INDEXED_READ_ONLY",
+      "elapsed_seconds": 265.229,
+      "original_images_directly_viewed": 12,
+      "frozen_manifest_files": 9,
+      "independent_raw_checks": "PASS27",
+      "Root_only_operational_attestations": [
+        "NoSave click and immediate CUA completion",
+        "lock reacquisition and release",
+        "None input click count"
+      ],
+      "coverage_increment": 0
+    }
+  },
+  "current_normal46_tool_schema_canonical_encoding": "UTF-8 JSON tools array, ensure_ascii=False, sort_keys=True, separators comma/colon, no trailing newline"
 }

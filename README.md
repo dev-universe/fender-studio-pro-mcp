@@ -216,9 +216,23 @@ It grants no graph mutation authority or audio-edge coverage. See the
 and a unique current indexed PortSetup child before reading at most nine nodes.
 The report distinguishes missing lookup, unavailable type information and
 partial metadata. Actual Native56 observed `AudioFXPortSetup`, one input and
-six output children. Assignment values, controller support, route preservation
-and mutation remain unverified. See the
+six output children. This scope does not query controllers or grant mutation
+authority. See the
 [bounded CV port evidence](docs/evidence/2026-11-17-cv-ports-native56-r76.json).
+
+The same exact target and context requirements also admit
+`node_scope:"cv_port_parameters"`. It reads direct indexed controller parameters
+on PortSetup and its seven fixed children. It retains the actual parameter
+interfaces and rechecks count, indexed pointers and owning nodes before returning.
+Limits are eight nodes, 32 parameters per node, 64 parameters in total and 48 KiB
+of retained parameter text. These limits do not bound peak memory or preempt an
+individual native call. Counts above the limit return no parameter rows.
+Actual Native57 returned seven List rows, one input `port` and six output
+`portAssignment` parameters, all displaying None. The read preserves typed values
+and normalized bits, including negative zero. `read_only:false` metadata grants no
+setter authority. Choices, assignment roles and preset route preservation remain
+unverified. See the
+[CV indexed parameter evidence](docs/evidence/2026-11-17-cv-port-parameters-native57-r77.json).
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
 

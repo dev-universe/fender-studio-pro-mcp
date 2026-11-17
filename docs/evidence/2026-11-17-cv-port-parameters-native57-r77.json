@@ -1,0 +1,183 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "NATIVE57_CV_DIRECT_INDEXED_PARAMETER_READ_R77",
+  "status": "ACCEPTED_BOUNDED_INDEXED_READ_ONLY",
+  "product_source_commit": "46630dbd504ca2ce94246207933b118881c02a14",
+  "runtime": {
+    "native_unit": 57,
+    "native_uuid": "40BF4F0D-24D8-3DF5-BB15-784249CF8222",
+    "source_files": 181,
+    "artifact_files": 13,
+    "tools": 46,
+    "fixed_actions": 5,
+    "state_actions": 7
+  },
+  "source_verification": {
+    "main_tests": 179,
+    "native_tests": 440,
+    "selected_JS_tests": 97,
+    "independent_counterfactual_removed_tail": "FAIL_one_actual_Reply_final_check_regression",
+    "independent_restored_original": "PASS_21_focused_tests",
+    "implementation_seconds": 1475.48,
+    "independent_review_seconds": 377.025,
+    "normal_install_seconds": 458.874,
+    "normal_metadata_owner_exact_exit_code": "UNRECORDED_process_absence_and_free_locks_only"
+  },
+  "actual": {
+    "requests": 27,
+    "IDs": "3..29",
+    "new_read_ID": 25,
+    "new_read_elapsed_ms": 59,
+    "guards_passed": 27,
+    "causal_one_write_prefix_audit": true,
+    "errors": 0,
+    "unknown_outcomes": 0,
+    "fresh_context": true,
+    "closed_session_exclusions": 51,
+    "terminal_context_reads_match": true,
+    "observed_nodes": 8,
+    "observed_controllers": 8,
+    "indexed_parameter_rows": 7,
+    "indexed_inventory_complete": true,
+    "status": "complete",
+    "retained_parameter_text_bytes": 459
+  },
+  "observed_parameters": [
+    {
+      "node": "PortSetup",
+      "first_type": "AudioFXPortSetup",
+      "controller_count": 0
+    },
+    {
+      "node": "Input00",
+      "first_type": "AudioFXEndPointComponent",
+      "name": "port",
+      "tag": 1349481076,
+      "kind": "List",
+      "integer_value": -1,
+      "display": "없음",
+      "read_only": false,
+      "min": 0,
+      "max": -1,
+      "default": 0,
+      "normalized_bits_hex": "3F800000"
+    },
+    {
+      "nodes": "Output01..Output06",
+      "node_count": 6,
+      "first_type": "AudioOutputNode",
+      "name": "portAssignment",
+      "tag": 100,
+      "kind": "List",
+      "integer_value": 0,
+      "display": "없음",
+      "read_only": false,
+      "min": 0,
+      "max": -1,
+      "default": 0,
+      "normalized_bits_hex": "80000000"
+    }
+  ],
+  "limits": {
+    "nodes": 8,
+    "parameters_per_node": 32,
+    "total_parameters": 64,
+    "retained_DTO_parameter_text_bytes": 49152,
+    "existing_encoded_response_bytes": 262144,
+    "existing_GUI_deadline_ms": 2000,
+    "describe_inner_call_preemption": false,
+    "text_limit_is_peak_memory_or_cumulative_copy_limit": false
+  },
+  "authority": {
+    "indexed_metadata_and_values_observed": true,
+    "declared_parameter_controller": "unobserved",
+    "original_binding": "unobserved",
+    "assignment_values_observed": false,
+    "routing_verified": false,
+    "atomic_snapshot": false,
+    "mutation_capability": false,
+    "writable_metadata_is_setter_authority": false
+  },
+  "UI": {
+    "paired_distinct_original_surfaces_at_IDs": [
+      20,
+      21,
+      25,
+      29
+    ],
+    "CV_editor": "six_outputs_and_AudioIn_display_None",
+    "song_main": "CV target Inspector input_None_record_and_monitor_off_CV_muted_Master_negative_infinity",
+    "Monitor_Vol_numeric": "UNOBSERVED",
+    "Root_input_None_selection_count": 1,
+    "independent_original_photo_acceptance": "ACCEPTED_FOR_VISIBLE_FIELDS"
+  },
+  "closure": {
+    "NoSave": true,
+    "app_absent": true,
+    "explicit_waited_owner_child_exit_code": 0,
+    "saved_songs_checked": 10,
+    "saved_songs_and_Main_unchanged": true,
+    "source181_artifact13_unchanged": true,
+    "both_locks_reacquired_and_released": true,
+    "parameter_writes_capsules_catalog_preset_apply_port_choices": 0,
+    "audio_devices_before_after": [
+      3,
+      3
+    ],
+    "MIDI_external_before_after": [
+      0,
+      0
+    ],
+    "physical_stability": "UNPROVEN",
+    "operator_hardware_configuration_actions": 0
+  },
+  "elapsed_seconds": {
+    "actual_unit": 719.618,
+    "first_DAQ_write_to_closure": 451.322,
+    "first_to_last_DAQ_write": 283.181,
+    "post_audit_file_to_closure": 129.35,
+    "live_kit_preparation": 678.183,
+    "independent_kit_review": 415.485
+  },
+  "deviations": [
+    "Root read-only search used an unmatched glob before any DAQ; corrected without any additional DAQ.",
+    "Normal metadata-owner exact exit code was not recorded. Actual R77 uses and checks a separate explicit waited child exit receipt.",
+    "The saved root runtime-state file is a pre-final snapshot at26 sends/guard28. The full27 original responses/intents/writes/guards/audit and owner exit establish completion.",
+    "Reviewer initial broad app-name glob hashed an unrelated executable without launching or exporting it; the accepted pin proof uses only the exact intended Main. Reviewer corrected an initial process-name filter before accepting absence."
+  ],
+  "evidence_sha256": {
+    "implementation_report": "99a44979a7424ad726a6025b7050d0c37eacdbab2b1572a1053f3d0367677574",
+    "independent_code_review_report": "b5329e7543d8a38ca91e808643b5095185ef887cd29ae158ed4fb2fc6d63949e",
+    "normal_manifest": "f4ee13e0198e16b9f86f62a9aa716c4b4ab340f4a590b52245a0ffed4967b942",
+    "final_kit_review_report": "0c90c857b0598bfbb905ecd48f97275f20ec175de574b6e78ad7ed8f43ca912d",
+    "actual_manifest137": "d24edac5fc5bbb47cf8bc777b246f1d1f5eae5c67dd1a5e8e2dc9527a8c48d88",
+    "actual_closure": "0d09026380c7e58924b0d61c1a76ac454313c90f4e99dc620eb557cc84bc060d",
+    "actual_rpc25": "afa551627f29bdd0bbe0af8222ab81fae814ecff51e1dfe1f1cf37ac4f390f69",
+    "independent_actual_report": "113cdf750b575dc60319049058fc3fa4b76ee45d80e0773e6f5fd9c36504608b",
+    "independent_actual_manifest9": "22878fae1a6f5b686df4fd0cff10dde5c4adb3fa752407d4c8416760b99c8891"
+  },
+  "fixed_count_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "overall_loop_ETA": null,
+  "next": "Bounded source feasibility for exact observed port and portAssignment list or menu capabilities. No preset or route change admitted.",
+  "independent_acceptance": {
+    "verdict": "ACCEPTED_BOUNDED_INDEXED_READ_ONLY",
+    "elapsed_seconds": 265.229,
+    "original_images_directly_viewed": 12,
+    "frozen_manifest_files": 9,
+    "independent_raw_checks": "PASS27",
+    "Root_only_operational_attestations": [
+      "NoSave click and immediate CUA completion",
+      "lock reacquisition and release",
+      "None input click count"
+    ],
+    "coverage_increment": 0
+  }
+}
