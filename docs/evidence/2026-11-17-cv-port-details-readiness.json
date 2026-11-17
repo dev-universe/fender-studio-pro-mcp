@@ -1,0 +1,113 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CV_FIXED_PARAMETER_DETAILS_DESIGN_AND_SOURCE_READINESS",
+  "status": "SELECTED_NOT_IMPLEMENTED_OR_ACTUAL_VERIFIED",
+  "source_feasibility": {
+    "seconds": 340.717,
+    "list_choices_from_observed_min0_max_minus1": "zero_labels",
+    "existing_method": "RawParameter.details",
+    "public_interface": "IListParameter QI presence only; no by-value Variant call",
+    "new_menu_probe": false,
+    "actual_DAQ": 0
+  },
+  "selected_design": {
+    "base": "candidate B, consensus additive details on all bounded rows",
+    "different_alternative": "separate exact Output01 scope rejected",
+    "candidate_A_seconds": 197.185,
+    "candidate_B_seconds": 174.44,
+    "judge_original_freeze_seconds": 105.504,
+    "judge_supplemental_time": "not included in original freeze duration",
+    "Root_scores": {
+      "A": [
+        4,
+        5,
+        5,
+        4,
+        5
+      ],
+      "B": [
+        4,
+        5,
+        5,
+        5,
+        5
+      ]
+    },
+    "judge_scores": {
+      "A": [
+        5,
+        5,
+        5,
+        4,
+        5
+      ],
+      "B": [
+        5,
+        5,
+        5,
+        5,
+        5
+      ]
+    },
+    "model_policy": "independent same-parent-model perspectives, not model diversity",
+    "graft": "register current witness before observation; complete all bounded descriptions and text budget first, then details pass only for complete inventory",
+    "guards": "full retained inventory around details precision/flags/QI release; unchanged final ID-copy, borrowed pointer/count, Header, attachment, Context tail",
+    "regression": "precision-triggered current pointer replacement must stop subsequent flags; private context-only guard counterfactual must fail",
+    "scope": "two existing native CV module/test files; no tool, scope, selector, shared API or ABI change"
+  },
+  "fixed_details": {
+    "precision": "signed i32 metadata",
+    "storable": "bool",
+    "mutable": "bool",
+    "store_list_value": "bool",
+    "read_only": "bool",
+    "can_undo": "bool",
+    "list_interface": "bool"
+  },
+  "incomplete_inventory": "index_limit or text_limit performs zero details calls; no parameter rows",
+  "authority": {
+    "menu_choices": false,
+    "assignment_roles": false,
+    "setter": false,
+    "route_preservation": false,
+    "preset_or_song_persistence": false,
+    "atomic_snapshot": false
+  },
+  "deviations": [
+    "Candidate analysis-reserve targets missed by about6s and24.440s, both hard210s met.",
+    "Judge original report freeze missed100s reserve by5.504s. A separate later clarification preserves the original and corrects the counterfactual choice.",
+    "The selected two-pass structure means moving registration after describe alone does not challenge the details guard; use a context-only details-guard counterfactual."
+  ],
+  "evidence_sha256": {
+    "source_report": "ddb6f8bd3fe927ca1168a04da428c5552eb0e5df8bf5813db41378608bbc6fc3",
+    "source_manifest12": "69a866cdd433b36952f05857b57c89a7cc4882b16bd21c1dcb4d768d6e5881e0",
+    "candidate_A_report": "0c840f2e91fdcdf0268c4258c9f6f964154b85eb6b34838fab3f92399941cd5f",
+    "candidate_A_manifest": "beb3e30385aa016faf4de8bcd438082900f49d84cf57c0002691a6e835afb618",
+    "candidate_B_sketch": "2067d0d8b55f4bc2446f86dd9a194789c1042e609a066a253ab22cf68ae2637a",
+    "candidate_B_manifest": "9cc3370cde8d03c63b6f9bd7ef98a21004479ff0f63c046025f3f318da0835d8",
+    "judge_report": "8b348cac6cb0eabc74f0dc21bb11b3886ba2208e8abdea5f7b51f1e49996fa72",
+    "judge_original_manifest": "086fe65a7185fa53e7ede1a3cc16eaf18d35a6289c1e0fd463295d27e29d0fce",
+    "selected_synthesis": "793d63b1ad99e94bb355403dad5f1cb30f65bff5c964160c64437f8578be6942"
+  },
+  "official_primary_source": "https://github.com/cclsoftware/ccl-framework/blob/ad5876b1a7b64aa247f4378c86a7862e7c284ba3/ccl/public/gui/framework/iparametermenu.h",
+  "fixed_count_increment": 0,
+  "fixed_counts": {
+    "total": 43,
+    "completed": 15,
+    "remaining": 28,
+    "software_remaining": 24,
+    "hardware_remaining": 4
+  },
+  "current_finite_bundle": {
+    "completed": 1,
+    "total": 6,
+    "remaining": 5,
+    "implementation_active": true,
+    "estimate_minutes_remaining": [
+      35,
+      55
+    ]
+  },
+  "overall_loop_ETA": null
+}
