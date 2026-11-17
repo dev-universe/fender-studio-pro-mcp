@@ -160,7 +160,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, or the declared plugin_controller. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, or cv_ports. cv_ports requires exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. It observes bounded host PortSetup metadata, with no assignment values, routing verification or mutation capability. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -348,6 +348,15 @@ fn named<T: JsonSchema>(
             .as_array_mut()
             .unwrap()
             .push(json!("expected_document"));
+    }
+    if operation == "pluginInspect" {
+        schema["allOf"] = json!([{
+            "if":{"properties":{"node_scope":{"const":"cv_ports"}},"required":["node_scope"]},
+            "then":{"required":["expected_document","expected_instance","kind","track","plugin","source","include_nodes"],
+                "properties":{"expected_document":{"type":"string","minLength":1},"expected_instance":{"type":"string","minLength":36},
+                    "kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},"source":{"const":"dsp"},
+                    "include_nodes":{"const":true},"include_context":{"const":false}}}
+        }]);
     }
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
@@ -1010,7 +1019,7 @@ mod tests {
         assert_eq!(schema["additionalProperties"], false);
         assert_eq!(
             schema["$defs"]["NodeScope"]["enum"],
-            json!(["target", "graph", "plugin_controller"])
+            json!(["target", "graph", "plugin_controller", "cv_ports"])
         );
         for field in [
             "expected_document",
@@ -1024,6 +1033,43 @@ mod tests {
         for field in ["value", "eval", "script", "action", "path"] {
             assert!(schema["properties"].get(field).is_none(), "{field}");
         }
+    }
+
+    #[test]
+    fn cv_ports_schema_keeps_its_conditional_document_and_exact_target_gate() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "plugin_inspect")
+            .unwrap();
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        let rule = &schema["allOf"][0];
+        assert_eq!(rule["if"]["properties"]["node_scope"]["const"], "cv_ports");
+        for field in [
+            "expected_document",
+            "expected_instance",
+            "kind",
+            "track",
+            "plugin",
+            "source",
+            "include_nodes",
+        ] {
+            assert!(
+                rule["then"]["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!(field)),
+                "{field}"
+            );
+        }
+        assert_eq!(
+            rule["then"]["properties"]["include_context"]["const"],
+            false
+        );
+        assert_eq!(
+            rule["then"]["properties"]["plugin"]["const"],
+            "CV Instrument"
+        );
+        assert_eq!(McpServer::specs().len(), 46);
     }
 
     #[test]

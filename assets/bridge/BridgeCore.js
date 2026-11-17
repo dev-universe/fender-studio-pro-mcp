@@ -147,7 +147,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || req.op === "pluginInspect" && req.args && req.args.node_scope === "cv_ports") && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {

@@ -530,7 +530,10 @@ impl Request {
             } => Err("parameter_details requires explicit dsp or controller source".into()),
             Self::Inspect {
                 include_nodes: false,
-                node_scope: node_inspect::Scope::Graph | node_inspect::Scope::PluginController,
+                node_scope:
+                    node_inspect::Scope::Graph
+                    | node_inspect::Scope::PluginController
+                    | node_inspect::Scope::CvPorts,
                 ..
             } => Err("this node_scope requires include_nodes=true".into()),
             Self::Inspect {
@@ -538,6 +541,18 @@ impl Request {
                 expected_instance: None,
                 ..
             } => Err("plugin_controller node_scope requires expected_instance".into()),
+            Self::Inspect {
+                node_scope: node_inspect::Scope::CvPorts,
+                source,
+                expected_instance,
+                ..
+            } if *source != Source::Dsp
+                || expected_instance
+                    .as_deref()
+                    .is_none_or(|uid| !valid_uid(uid)) =>
+            {
+                Err("cv_ports requires explicit dsp and expected_instance".into())
+            }
             Self::StateCapture {
                 expected_instance: None,
             }
@@ -2067,6 +2082,19 @@ fn dispatch_device(
             mutation,
         };
     }
+    if matches!(
+        request,
+        Request::Inspect {
+            node_scope: node_inspect::Scope::CvPorts,
+            ..
+        }
+    ) {
+        if let Err(reason) = node_inspect::validate_cv_target(&ctx.instance) {
+            let mut reply = Reply::error("unsupported_cv_port_target", &reason, "not_applied");
+            reply.context = Some(ctx);
+            return reply;
+        }
+    }
     if let Request::ExternalPortMenu {
         port,
         provenance,
@@ -3063,6 +3091,34 @@ mod tests {
             }
         ));
     }
+    #[test]
+    fn cv_ports_decode_requires_explicit_dsp_nodes_and_instance() {
+        let args = json!({"operation":"inspect","include_nodes":true,"node_scope":"cv_ports",
+            "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        assert!(matches!(
+            parse(args.clone()).unwrap(),
+            Request::Inspect {
+                node_scope: node_inspect::Scope::CvPorts,
+                ..
+            }
+        ));
+        for field in ["include_nodes", "source", "expected_instance"] {
+            let mut invalid = args.clone();
+            invalid.as_object_mut().unwrap().remove(field);
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+        for (field, value) in [
+            ("source", json!("controller")),
+            ("expected_instance", json!(ZERO_UID)),
+            ("node_scope", json!("PortSetup")),
+            ("path", json!("PortSetup")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = value;
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
     #[test]
     fn choice_requests_are_read_only_finite_and_bounded() {
         let request =

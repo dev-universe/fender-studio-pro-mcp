@@ -616,6 +616,12 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginInspect(args) {
+        if (args.node_scope === "cv_ports" && (args.include_nodes !== true
+            || args.kind !== "instrument" || args.plugin !== "CV Instrument" || args.source !== "dsp"
+            || typeof args.track !== "string" || !args.track.trim()
+            || typeof args.expected_instance !== "string" || !/^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000" || args.include_context === true))
+            return { error: "cv_ports requires a bound exact CV Instrument instrument, dsp and include_nodes=true without context" };
         if (args.node_scope === "plugin_controller" && (args.include_nodes !== true
             || typeof args.plugin !== "string" || !args.plugin.trim()
             || typeof args.expected_instance !== "string" || !args.expected_instance))

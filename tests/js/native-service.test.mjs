@@ -1016,3 +1016,36 @@ test('Scope Retrigger malformed or ambiguous receipts never trigger a retry', ()
     assert.equal(calls, 1);
   }
 });
+
+
+test('cv_ports forwards only its exact finite target and requires document and session envelopes', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    calls.push(JSON.parse(body));
+    return success({ node_report: { scope: 'cv_ports', availability: 'lookup_absent', routing_verified: false } });
+  }); } });
+  const base = { kind: 'instrument', track: 'Scratch CV', plugin: 'CV Instrument', source: 'dsp',
+    include_nodes: true, node_scope: 'cv_ports', expected_instance: instance.object_uid };
+  assert.equal(h.component.pluginInspect(base).native.node_report.availability, 'lookup_absent');
+  assert.deepEqual(calls, [{ operation: 'inspect', source: 'dsp', include_nodes: true,
+    node_scope: 'cv_ports', expected_instance: instance.object_uid }]);
+  for (const patch of [{ kind: 'note_effect' }, { plugin: 'Other' }, { source: undefined }, { source: 'controller' },
+    { expected_instance: undefined }, { expected_instance: '00000000-0000-0000-0000-000000000000' },
+    { include_nodes: false }, { include_context: true }, { track: '' }]) {
+    assert.equal(typeof h.component.pluginInspect({ ...base, ...patch }).error, 'string');
+  }
+  assert.equal(calls.length, 1);
+  const host = bridgeHarness();
+  let dispatches = 0;
+  host.bridge.component = { pluginInspect() { dispatches++; return { observed: true }; } };
+  const context = host.current();
+  for (const envelope of [{}, { expectedSession: context.session }, { expectedDocument: context.document }]) {
+    assert.equal(host.request({ op: 'pluginInspect', args: base, ...envelope }).code, 'context_required');
+  }
+  assert.equal(dispatches, 0);
+  assert.equal(host.request({ op: 'pluginInspect', args: base,
+    expectedSession: context.session, expectedDocument: 'stale' }).code, 'document_changed');
+  assert.equal(host.request({ op: 'pluginInspect', args: base,
+    expectedSession: context.session, expectedDocument: context.document }).ok, true);
+  assert.equal(dispatches, 1);
+});

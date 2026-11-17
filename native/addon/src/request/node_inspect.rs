@@ -6,6 +6,8 @@ use fender_native_node_api::{
 #[path = "node_inspect/ownership.rs"]
 mod ownership;
 use ownership::GraphOwnership;
+#[path = "node_inspect/cv_ports.rs"]
+mod cv_ports;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -14,9 +16,18 @@ pub(super) enum Scope {
     Target,
     Graph,
     PluginController,
+    CvPorts,
 }
 
 pub(super) fn limits(scope: Scope) -> Limits {
+    if scope == Scope::CvPorts {
+        return Limits {
+            nodes: 9,
+            depth: 1,
+            ancestors: 0,
+            children_per_node: 8,
+        };
+    }
     let (nodes, depth) = if scope == Scope::PluginController {
         (96, 5)
     } else {
@@ -173,6 +184,7 @@ pub(super) enum Inventory {
         ownership: GraphOwnership,
     },
     PluginController(alias_controller::Inventory),
+    CvPorts(cv_ports::CvPortsInventory),
 }
 
 /// Read-only metadata of a bridge-created object. This never authorizes a
@@ -572,6 +584,7 @@ impl Inventory {
     pub(super) fn report(&self) -> &Report {
         match self {
             Self::Target(inspection) | Self::Graph { inspection, .. } => inspection.report(),
+            Self::CvPorts(inventory) => inventory.report().expect("present CV ports"),
             Self::PluginController(inventory) => {
                 inventory.report().expect("synthetic present controller")
             }
@@ -590,10 +603,14 @@ impl Inventory {
                 value
             }
             Self::PluginController(inventory) => inventory.value(),
+            Self::CvPorts(inventory) => inventory.value(),
         }
     }
     pub(super) fn requires_report_invalidation(&self) -> bool {
-        matches!(self, Self::Graph { .. } | Self::PluginController(_))
+        matches!(
+            self,
+            Self::Graph { .. } | Self::PluginController(_) | Self::CvPorts(_)
+        )
     }
     pub(super) fn check<G, B>(&self, guard: &mut G, borrowed_guard: &mut B) -> Result<(), String>
     where
@@ -602,6 +619,7 @@ impl Inventory {
     {
         match self {
             Self::PluginController(inventory) => inventory.check(guard),
+            Self::CvPorts(inventory) => inventory.check(guard, borrowed_guard),
             Self::Target(inspection) => {
                 inspection.check(guard).map_err(|error| error.to_string())?;
                 guard()
@@ -636,9 +654,15 @@ impl Inventory {
             Self::Target(inspection) | Self::Graph { inspection, .. } => {
                 Auxiliary::TypeMetadata(inspection)
             }
-            Self::PluginController(_) => panic!("synthetic target inventory required"),
+            Self::PluginController(_) | Self::CvPorts(_) => {
+                panic!("synthetic target inventory required")
+            }
         }
     }
+}
+
+pub(super) fn validate_cv_target(instance: &Instance) -> Result<(), String> {
+    cv_ports::admit(instance)
 }
 
 pub(super) fn capture(ctx: &Context<'static>, scope: Scope) -> Result<Inventory, String> {
@@ -652,6 +676,9 @@ pub(super) fn capture(ctx: &Context<'static>, scope: Scope) -> Result<Inventory,
             >(get_string)
         },
     };
+    if scope == Scope::CvPorts {
+        return cv_ports::CvPortsInventory::capture(ctx, text).map(Inventory::CvPorts);
+    }
     if scope == Scope::PluginController {
         return alias_controller::capture(ctx, text, limits(scope))
             .map(Inventory::PluginController);
@@ -714,7 +741,7 @@ pub(super) fn report(report: &Report, scope: Scope) -> Value {
     let limits = limits(scope);
     json!({
         "coverage":"bounded_native_nodes_and_reflection",
-        "scope":match scope { Scope::Target=>"target", Scope::Graph=>"graph", Scope::PluginController=>"alias_declared_controller_observation" },
+        "scope":match scope { Scope::Target=>"target", Scope::Graph=>"graph", Scope::PluginController=>"alias_declared_controller_observation", Scope::CvPorts=>"cv_ports" },
         "complete":report.complete,
         "limits":{"nodes":limits.nodes,"depth":limits.depth,"ancestors":limits.ancestors,"children_per_node":limits.children_per_node},
         "nodes":report.nodes.iter().map(|node| json!({
