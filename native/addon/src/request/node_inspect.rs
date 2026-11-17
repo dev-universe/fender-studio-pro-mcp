@@ -7,7 +7,7 @@ use fender_native_node_api::{
 mod ownership;
 use ownership::GraphOwnership;
 #[path = "node_inspect/cv_ports.rs"]
-mod cv_ports;
+pub(super) mod cv_ports;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]

@@ -820,6 +820,19 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginState(args) {
+        if (args.action === "inspect_cv_port_structure") {
+            const controls=new NativePluginControls(this), failure=()=>controls.cvStructureFailure(false,null);
+            if (Object.keys(args).some(key=>["kind","track","plugin","expected_instance","action"].indexOf(key)<0)
+                || args.kind !== "instrument" || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f]/.test(args.track) || args.plugin !== "CV Instrument") return failure();
+            const request={operation:"cv_port_structure_inspect",expected_instance:args.expected_instance};
+            if (!controls.cvStructureRequest(request)) return failure();
+            const plug=this.pluginOf(args);
+            if (!plug || plug.error || plug.name !== "CV Instrument") return failure();
+            const native=this.nativePluginRequest(plug.device,request);
+            if (!native || native.ok !== true) return controls.cvStructureFailure(true,native);
+            if (!controls.cvStructureResult(native,request)) return controls.cvStructureFailure(true,null);
+            return Object.assign({},native,{plugin:"CV Instrument",native_outcome:native.outcome});
+        }
         if (args.action === "read_rumble_named_parameters") {
             const controls=new NativePluginControls(this),failure=()=>controls.rumbleNamedParametersFailure();
             if (Object.keys(args).some(k=>["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k)<0) || args.plugin !== "Rumble Native" || args.kind !== undefined && args.kind !== "effect"

@@ -18,6 +18,7 @@ use crate::{
 
 mod chorder_chords;
 mod chorder_learning;
+mod cv_port_structure;
 mod external_menu;
 mod rumble_named_parameters;
 mod rumble_parameters;
@@ -269,6 +270,7 @@ fn execute(
     }
     if response.document != context.document
         || (matches!(operation, Operation::ExternalPortMenu(_))
+            || cv_port_structure::requested(&operation)
             || rumble_serialization::requested(&operation)
             || rumble_processor_state::requested(&operation)
             || rumble_parameters::requested(&operation)
@@ -305,6 +307,12 @@ fn execute(
         && !chorder_learning::valid_get(query, &response.result)
     {
         chorder_learning::invalidate_get(&mut response.result);
+    }
+    if let Operation::PluginState(query) = &operation
+        && cv_port_structure::requested(&operation)
+        && (!response.ok || !cv_port_structure::valid_get(query, &response.result))
+    {
+        cv_port_structure::invalidate(&mut response.result, true);
     }
     if let Operation::ExternalPortMenu(query) = &operation
         && response.ok
@@ -355,7 +363,9 @@ fn execute(
         soft_error.map(|error| OperationError::new("host_rejected", error.to_string()))
     };
     let outcome = if let Some(error) = &error {
-        if matches!(operation, Operation::ExternalPortMenu(_)) {
+        if cv_port_structure::requested(&operation) {
+            cv_port_structure::failure_outcome(&response.result)
+        } else if matches!(operation, Operation::ExternalPortMenu(_)) {
             external_menu::failure_outcome(&response.result)
         } else if read_only
             || [
@@ -371,7 +381,10 @@ fn execute(
         } else {
             Outcome::Unknown
         }
-    } else if read_only || matches!(operation, Operation::ExternalPortMenu(_)) {
+    } else if read_only
+        || matches!(operation, Operation::ExternalPortMenu(_))
+        || cv_port_structure::requested(&operation)
+    {
         Outcome::Observed
     } else {
         let outcome = mutation_outcome(&response.result);
@@ -399,7 +412,9 @@ fn execute(
         };
     }
     if error.is_some() {
-        if matches!(operation, Operation::ExternalPortMenu(_)) {
+        if cv_port_structure::requested(&operation) {
+            cv_port_structure::invalidate(&mut response.result, true);
+        } else if matches!(operation, Operation::ExternalPortMenu(_)) {
             external_menu::invalidate(&mut response.result, true);
         } else {
             invalidate_gui_evidence(&operation, &mut response.result);
@@ -823,6 +838,10 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 }
 
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if cv_port_structure::requested(operation) {
+        cv_port_structure::invalidate(result, false);
+        return;
+    }
     if rumble_named_parameters::requested(operation) {
         rumble_named_parameters::invalidate(result);
         return;

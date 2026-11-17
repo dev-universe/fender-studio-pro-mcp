@@ -131,6 +131,15 @@ struct Parameter {
     object: ObjectView,
     list: ObjectView,
     structured: ObjectView,
+    tag: Cell<i32>,
+    structure_children: RefCell<Vec<*mut c_void>>,
+    structure_count: Cell<Option<i32>>,
+    prepare_calls: Cell<u32>,
+    cleanup_calls: Cell<u32>,
+    get_calls: Cell<u32>,
+    prepared: Cell<bool>,
+    prepare_action: RefCell<Option<Box<dyn FnOnce()>>>,
+    cleanup_action: RefCell<Option<Box<dyn FnOnce()>>>,
     precision: Cell<i32>,
     normalized: Cell<f32>,
     state: Cell<i32>,
@@ -158,12 +167,18 @@ struct Parameter {
     forbidden: Cell<u32>,
     fail_property: Cell<bool>,
     canonical_reply: Cell<Option<(i32, *mut c_void)>>,
+    canonical_override: Cell<*mut c_void>,
     release_observer: RefCell<Option<Box<dyn FnMut()>>>,
 }
 unsafe fn par<'a>(p: *mut c_void) -> &'a Parameter {
     unsafe { &*p.cast() }
 }
 unsafe extern "C" fn pr(p: *mut c_void) -> u32 {
+    BORROW_PENDING.with(|pending| {
+        if pending.get() == p {
+            BORROW_RETAINED.with(|retained| retained.set(true));
+        }
+    });
     let p = unsafe { par(p) };
     p.refs.set(p.refs.get() + 1);
     p.refs.get()
@@ -228,6 +243,14 @@ unsafe extern "C" fn pq(p: *mut c_void, iid: *const Uid, out: *mut *mut c_void) 
         return OK;
     }
     if q == UNKNOWN {
+        let replacement = f.canonical_override.get();
+        if !replacement.is_null() {
+            unsafe {
+                pr(replacement);
+                *out = replacement;
+            }
+            return OK;
+        }
         if let Some((status, pointer)) = f.canonical_reply.get() {
             unsafe { *out = pointer };
             return status;
@@ -333,8 +356,8 @@ unsafe extern "C" fn structured_release(pointer: *mut c_void) -> u32 {
     }
     unsafe { pd(ptr::from_ref(p).cast_mut().cast()) }
 }
-unsafe extern "C" fn pt(_: *mut c_void) -> i32 {
-    17
+unsafe extern "C" fn pt(p: *mut c_void) -> i32 {
+    unsafe { par(p) }.tag.get()
 }
 unsafe extern "C" fn norm(pointer: *mut c_void) -> f32 {
     unsafe { par(pointer) }.normalized.get()
@@ -367,7 +390,7 @@ struct Parameters {
     _parameter_table: Box<[*const c_void; 46]>,
     _object_table: Box<[*const c_void; 5]>,
     _list_table: Box<[*const c_void; 3]>,
-    _structured_table: Box<[*const c_void; 3]>,
+    _structured_table: Box<[*const c_void; 7]>,
     _text_table: Box<[*const c_void; 22]>,
 }
 impl Parameters {
@@ -422,7 +445,11 @@ impl Parameters {
         list_table[0] = oq as *const c_void;
         list_table[1] = or as *const c_void;
         list_table[2] = list_release as *const c_void;
-        let mut structured_table = Box::new([ptr::null(); 3]);
+        let mut structured_table = Box::new([ptr::null(); 7]);
+        structured_table[3] = structure_prepare as *const c_void;
+        structured_table[4] = structure_cleanup as *const c_void;
+        structured_table[5] = structure_count as *const c_void;
+        structured_table[6] = structure_get as *const c_void;
         structured_table[0] = oq as *const c_void;
         structured_table[1] = or as *const c_void;
         structured_table[2] = structured_release as *const c_void;
@@ -475,6 +502,15 @@ impl Parameters {
                     table: structured_table.as_ptr(),
                     owner: ptr::null_mut(),
                 },
+                tag: Cell::new(17),
+                structure_children: RefCell::new(vec![]),
+                structure_count: Cell::new(None),
+                prepare_calls: Cell::new(0),
+                cleanup_calls: Cell::new(0),
+                get_calls: Cell::new(0),
+                prepared: Cell::new(false),
+                prepare_action: RefCell::new(None),
+                cleanup_action: RefCell::new(None),
                 precision: Cell::new(1),
                 normalized: Cell::new(0.25),
                 state: Cell::new(0),
@@ -505,6 +541,7 @@ impl Parameters {
                 forbidden: Cell::new(0),
                 fail_property: Cell::new(false),
                 canonical_reply: Cell::new(None),
+                canonical_override: Cell::new(ptr::null_mut()),
                 release_observer: RefCell::new(None),
             });
             p.object.owner = ptr::from_mut(&mut *p);
@@ -1186,4 +1223,495 @@ fn indeterminate_structured_qi_stops_before_later_parameters_without_poison_adop
         assert_eq!(f.parameters[1].structured_query_calls.get(), 0);
         assert!(f.parameters.iter().all(|p| p.refs.get() == 1));
     }
+}
+
+thread_local! {
+    static BORROW_PENDING: Cell<*mut c_void> = const { Cell::new(ptr::null_mut()) };
+    static BORROW_RETAINED: Cell<bool> = const { Cell::new(false) };
+}
+unsafe fn structured_owner<'a>(pointer: *mut c_void) -> &'a Parameter {
+    unsafe { &*(*pointer.cast::<ObjectView>()).owner }
+}
+unsafe extern "C" fn structure_prepare(pointer: *mut c_void) {
+    let p = unsafe { structured_owner(pointer) };
+    p.prepare_calls.set(p.prepare_calls.get() + 1);
+    assert!(!p.prepared.replace(true));
+    if let Some(action) = p.prepare_action.borrow_mut().take() {
+        action();
+    }
+}
+unsafe extern "C" fn structure_cleanup(pointer: *mut c_void) {
+    let p = unsafe { structured_owner(pointer) };
+    p.cleanup_calls.set(p.cleanup_calls.get() + 1);
+    assert!(p.prepared.replace(false));
+    if let Some(action) = p.cleanup_action.borrow_mut().take() {
+        action();
+    }
+}
+unsafe extern "C" fn structure_count(pointer: *mut c_void) -> i32 {
+    let p = unsafe { structured_owner(pointer) };
+    assert!(p.prepared.get());
+    p.structure_count
+        .get()
+        .unwrap_or(p.structure_children.borrow().len() as i32)
+}
+unsafe extern "C" fn structure_get(pointer: *mut c_void, index: i32) -> *mut c_void {
+    let p = unsafe { structured_owner(pointer) };
+    assert!(p.prepared.get());
+    p.get_calls.set(p.get_calls.get() + 1);
+    let raw = p
+        .structure_children
+        .borrow()
+        .get(index as usize)
+        .copied()
+        .unwrap_or(ptr::null_mut());
+    BORROW_PENDING.with(|pending| pending.set(raw));
+    BORROW_RETAINED.with(|retained| retained.set(false));
+    raw
+}
+fn fixed_parent(f: &mut Parameters) -> RawParameter {
+    let name = std::ffi::CString::new("portAssignment").unwrap();
+    f.parameters[0].name.text = name.as_ptr();
+    f.parameters[0]._name = name;
+    f.parameters[0].tag.set(100);
+    f.parameters[0].structured_interface.set(true);
+    let held = hold(f.p(0)).unwrap();
+    let p = unsafe { RawParameter::from_owned(NonNull::new(held.0).unwrap(), text_api()) };
+    std::mem::forget(held);
+    BORROW_PENDING.with(|pending| pending.set(ptr::null_mut()));
+    p
+}
+fn assert_lifecycle(f: &Parameters, prepare: u32, cleanup: u32) {
+    assert_eq!(f.parameters[0].prepare_calls.get(), prepare);
+    assert_eq!(f.parameters[0].cleanup_calls.get(), cleanup);
+    assert!(!f.parameters[0].prepared.get());
+}
+
+#[test]
+fn structured_public_abi_zero_and_over_limit_close_once_without_child_gets() {
+    for count in [0, 33, i32::MAX] {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        f.parameters[0].structure_count.set(Some(count));
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        assert_eq!(result.phase, pa::StructurePhase::ClosedChecked);
+        assert_eq!(
+            (
+                result.prepare_calls,
+                result.cleanup_calls,
+                result.cleanup_returned
+            ),
+            (1, 1, true)
+        );
+        let observed = result.result.unwrap();
+        assert_eq!(observed.child_count, count);
+        assert_eq!(observed.observation_complete, count <= 32);
+        assert!(observed.children.is_empty());
+        assert_eq!(f.parameters[0].get_calls.get(), 0);
+        assert_lifecycle(&f, 1, 1);
+    }
+}
+
+#[test]
+fn structured_invalid_qi_and_signature_make_no_lifecycle_calls() {
+    for (status, pointer) in [
+        (OK, ptr::null_mut()),
+        (NO_INTERFACE, ptr::dangling_mut()),
+        (-7, ptr::dangling_mut()),
+        (-7, ptr::null_mut()),
+        (1, ptr::dangling_mut()),
+    ] {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        f.parameters[0]
+            .structured_reply
+            .set(Some((status, pointer)));
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        assert!(result.result.is_err());
+        assert_eq!(result.phase, pa::StructurePhase::BeforePrepare);
+        assert_eq!(f.parameters[0].structured_release_calls.get(), 0);
+        assert_lifecycle(&f, 0, 0);
+    }
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.parameters[0].tag.set(99);
+    assert!(
+        p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()))
+            .result
+            .is_err()
+    );
+    assert_lifecycle(&f, 0, 0);
+}
+
+#[test]
+fn structured_borrow_is_retained_before_guard_and_released_while_prepared() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || {
+        let pending = BORROW_PENDING.with(Cell::get);
+        if !pending.is_null()
+            && !BORROW_RETAINED.with(Cell::get)
+            && f.parameters[0].get_calls.get() == 1
+        {
+            return Err("guard ran before borrowed retain".into());
+        }
+        Ok(())
+    });
+    assert!(result.result.is_ok(), "{:?}", result.result);
+    assert_eq!(f.parameters[1].refs.get(), 1);
+    assert_lifecycle(&f, 1, 1);
+    assert_eq!(f.parameters[0].get_calls.get(), 3);
+}
+
+#[test]
+fn structured_error_timeout_and_service_stop_keep_original_cleanup_exactly_once() {
+    for mode in 0..4 {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+        if mode == 0 {
+            f.parameters[0].structure_count.set(Some(-1));
+        }
+        if mode == 1 {
+            f.parameters[1].fail_property.set(true);
+        }
+        let failed = std::rc::Rc::new(Cell::new(false));
+        if mode >= 2 {
+            let failed = failed.clone();
+            *f.parameters[0].prepare_action.borrow_mut() = Some(Box::new(move || failed.set(true)));
+        }
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || {
+            if failed.get() {
+                Err(if mode == 2 {
+                    "deadline"
+                } else {
+                    "service stopped"
+                }
+                .into())
+            } else {
+                Ok(())
+            }
+        });
+        assert!(result.result.is_err());
+        assert_eq!(result.phase, pa::StructurePhase::Unknown);
+        assert_eq!(result.cleanup_calls, 1);
+        assert!(result.cleanup_returned);
+        assert_lifecycle(&f, 1, 1);
+        if mode >= 2 {
+            assert_eq!(f.parameters[0].get_calls.get(), 0);
+        }
+    }
+}
+
+#[test]
+fn structured_null_self_alias_and_second_pass_replacement_are_unknown() {
+    for mode in 0..4 {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        *f.parameters[0].structure_children.borrow_mut() = match mode {
+            0 => vec![ptr::null_mut()],
+            1 => vec![f.p(0)],
+            2 => vec![f.p(1), f.p(1)],
+            _ => vec![f.p(1)],
+        };
+        if mode == 3 {
+            let parent = ptr::from_ref(&*f.parameters[0]);
+            let replacement = f.p(2);
+            *f.parameters[1].display_action.borrow_mut() = Some(Box::new(move || unsafe {
+                (*parent).structure_children.borrow_mut()[0] = replacement;
+            }));
+        }
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        assert!(result.result.is_err(), "case {mode}");
+        assert_eq!(result.phase, pa::StructurePhase::Unknown);
+        assert_lifecycle(&f, 1, 1);
+    }
+}
+
+#[test]
+fn structured_child_release_and_cleanup_metadata_changes_fail_closed() {
+    for mode in 0..3 {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+        let original = ptr::from_ref(&*f.parameters[0]);
+        if mode == 0 {
+            *f.parameters[1].release_observer.borrow_mut() = Some(Box::new(move || unsafe {
+                (*original).tag.set(101);
+            }));
+        } else {
+            *f.parameters[0].cleanup_action.borrow_mut() = Some(Box::new(move || unsafe {
+                (*original).tag.set(101);
+            }));
+        }
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        assert!(result.result.is_err());
+        assert_eq!(result.phase, pa::StructurePhase::Unknown);
+        assert_lifecycle(&f, 1, 1);
+    }
+}
+
+#[test]
+fn structured_canonical_second_pass_detects_replacement_with_same_index_pointer() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    let child = ptr::from_ref(&*f.parameters[1]);
+    let replacement = f.p(2);
+    *f.parameters[1].display_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*child).canonical_override.set(replacement);
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert_lifecycle(&f, 1, 1);
+}
+
+#[test]
+fn structured_whole_inventory_rejects_other_row_parameter_replacement() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.controllers[0].parameters.borrow_mut().clear();
+    f.controllers[2].parameters.borrow_mut().push(f.p(0));
+    f.controllers[7].parameters.borrow_mut().push(f.p(3));
+    let inventory = f.capture().unwrap();
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    let other = ptr::from_ref(&*f.controllers[7]);
+    let replacement = f.p(4);
+    *f.parameters[1].display_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*other).parameters.borrow_mut()[0] = replacement;
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || {
+        inventory.check(&mut || Ok(()), &mut || Ok(()))
+    });
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert_lifecycle(&f, 1, 1);
+}
+
+#[test]
+fn structured_transient_parent_replacement_during_child_release_keeps_first_guard_error() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.controllers[0].parameters.borrow_mut().clear();
+    f.controllers[2].parameters.borrow_mut().push(f.p(0));
+    let inventory = f.capture().unwrap();
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    let parent = ptr::from_ref(&*f.controllers[2]);
+    let original = f.p(0);
+    let replacement = f.p(2);
+    let child = ptr::from_ref(&*f.parameters[1]);
+    *f.parameters[1].release_observer.borrow_mut() = Some(Box::new(move || unsafe {
+        if (*child).refs.get() == 2 {
+            (*parent).parameters.borrow_mut()[0] = replacement;
+        } else if (*child).refs.get() == 1 {
+            (*parent).parameters.borrow_mut()[0] = original;
+        }
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || {
+        inventory.check(&mut || Ok(()), &mut || Ok(()))
+    });
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert_lifecycle(&f, 1, 1);
+    inventory.check(&mut || Ok(()), &mut || Ok(())).unwrap();
+}
+
+#[test]
+fn structured_real_service_stop_keeps_retained_original_cleanup_then_invalidates_late_receipt() {
+    let _serial = crate::native_script::tests::TEST_LOCK.lock().unwrap();
+    let mut context_fixture = crate::native_script::request::guard_tests::Fixture::new();
+    let context = context_fixture.context();
+    let service = context.service;
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    *f.parameters[0].prepare_action.borrow_mut() = Some(Box::new(move || {
+        assert_eq!(unsafe { crate::native_script::stop(service) }, OK);
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || {
+        context.check()
+    });
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert!(result.cleanup_returned);
+    assert_eq!(f.parameters[0].get_calls.get(), 0);
+    assert_lifecycle(&f, 1, 1);
+    let mut reply = Reply::unbound(
+        json!({"ok":true,"operation":"cv_port_structure_inspect","outcome":"observed","children":[{"name":"unconfirmed"}]}),
+    );
+    reply.context = Some(context);
+    reply.mutation = true;
+    assert!(!reply.final_check(service));
+    assert_eq!(reply.value["outcome"], "unknown");
+    assert!(reply.value.get("children").is_none());
+}
+
+#[test]
+fn structured_final_borrowed_tail_detects_change_from_child_final_release() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    let parent = ptr::from_ref(&*f.parameters[0]);
+    let replacement = f.p(2);
+    let child = ptr::from_ref(&*f.parameters[1]);
+    *f.parameters[1].release_observer.borrow_mut() = Some(Box::new(move || unsafe {
+        if (*child).refs.get() == 1 {
+            (*parent).structure_children.borrow_mut()[0] = replacement;
+        }
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert_lifecycle(&f, 1, 1);
+}
+
+#[test]
+fn structured_child_second_pass_preserves_negative_zero_bits() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+    f.parameters[1].values[0].set((2, (-0.0f64).to_bits()));
+    let child = ptr::from_ref(&*f.parameters[1]);
+    *f.parameters[1].display_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*child).values[0].set((2, 0.0f64.to_bits()));
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert_lifecycle(&f, 1, 1);
+}
+
+#[test]
+fn structured_real_deadline_expiry_stops_enumeration_and_still_cleans_known_prepare() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    let before = p.inspect_structure(Instant::now() - Duration::from_millis(1), &mut || Ok(()));
+    assert!(before.result.is_err());
+    assert_eq!(before.phase, pa::StructurePhase::BeforePrepare);
+    assert_lifecycle(&f, 0, 0);
+    *f.parameters[0].prepare_action.borrow_mut() =
+        Some(Box::new(|| std::thread::sleep(Duration::from_millis(5))));
+    let result = p.inspect_structure(Instant::now() + Duration::from_millis(1), &mut || Ok(()));
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::Unknown);
+    assert!(result.cleanup_returned);
+    assert_eq!(f.parameters[0].get_calls.get(), 0);
+    assert_lifecycle(&f, 1, 1);
+}
+
+#[test]
+fn structured_nonnumeric_group_string_and_opaque_values_remain_copied_metadata() {
+    for mode in 0..3 {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        f.parameters[0].structure_children.borrow_mut().push(f.p(1));
+        let child = &f.parameters[1];
+        match mode {
+            0 => {
+                child.kind.set(3);
+                *f.value_text.text.borrow_mut() = "nested label".encode_utf16().collect();
+                child.values[0].set((3, ptr::from_ref(&*f.value_text) as usize as u64));
+            }
+            1 => {
+                child.kind.set(11);
+                child.values[0].set((7, 0));
+            }
+            _ => {
+                child.kind.set(11);
+                child.values[0].set((4, 1));
+            }
+        }
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        assert_eq!(result.phase, pa::StructurePhase::ClosedChecked);
+        let observed = result.result.unwrap();
+        let value = super::super::parameters::observed_parameter(0, &observed.children[0]);
+        assert!(value.get("support").is_none());
+        assert!(value.get("choice_id").is_none());
+        assert!(value.get("pointer").is_none());
+        assert_eq!(
+            value["value"]["data"]["kind"],
+            match mode {
+                0 => "text",
+                1 => "unsupported",
+                _ => "opaque_object",
+            }
+        );
+        if mode == 2 {
+            assert_eq!(
+                value["value"]["data"],
+                json!({"kind":"opaque_object","present":true})
+            );
+        }
+        assert_lifecycle(&f, 1, 1);
+    }
+}
+
+#[test]
+fn structured_exact_32_children_succeed_and_total_text_excess_stops_before_next_child() {
+    for limited in [false, true] {
+        let mut f = Parameters::new();
+        let p = fixed_parent(&mut f);
+        let count = if limited { 9 } else { 32 };
+        *f.parameters[0].structure_children.borrow_mut() =
+            (1..=count).map(|index| f.p(index)).collect();
+        if limited {
+            for index in 1..=count {
+                *f.parameters[index].display.borrow_mut() = "X".repeat(4096);
+            }
+        }
+        let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+        if limited {
+            assert!(result.result.is_err());
+            assert_eq!(result.phase, pa::StructurePhase::Unknown);
+            assert_eq!(f.parameters[0].get_calls.get(), 8);
+        } else {
+            assert_eq!(result.phase, pa::StructurePhase::ClosedChecked);
+            assert_eq!(result.result.unwrap().children.len(), 32);
+        }
+        assert_lifecycle(&f, 1, 1);
+    }
+}
+
+#[test]
+fn independent_final_parent_description_owner_release_cannot_publish_stale_signature() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    let original = ptr::from_ref(&*f.parameters[0]);
+    *f.parameters[0].cleanup_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*original)
+            .release_action
+            .borrow_mut()
+            .replace(Box::new(move || {
+                (*original).tag.set(101);
+            }));
+    }));
+    let attempt = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+    assert_eq!(
+        f.parameters[0].tag.get(),
+        101,
+        "the final descriptor owner release must actually change the live parent"
+    );
+    assert_lifecycle(&f, 1, 1);
+    assert_eq!(
+        attempt.phase,
+        pa::StructurePhase::Unknown,
+        "a copied tag100 must not survive a final owner release that leaves the live tag101"
+    );
+    assert!(attempt.result.is_err());
+}
+
+#[test]
+fn structured_before_prepare_rejects_signature_changed_by_descriptor_owner_release() {
+    let mut f = Parameters::new();
+    let p = fixed_parent(&mut f);
+    let original = ptr::from_ref(&*f.parameters[0]);
+    *f.parameters[0].release_action.borrow_mut() = Some(Box::new(move || unsafe {
+        (*original).tag.set(101);
+    }));
+    let result = p.inspect_structure(Instant::now() + Duration::from_secs(2), &mut || Ok(()));
+    assert_eq!(f.parameters[0].tag.get(), 101);
+    assert!(result.result.is_err());
+    assert_eq!(result.phase, pa::StructurePhase::BeforePrepare);
+    assert_lifecycle(&f, 0, 0);
 }

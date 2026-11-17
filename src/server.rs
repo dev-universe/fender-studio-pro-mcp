@@ -202,7 +202,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(
@@ -359,6 +359,9 @@ fn named<T: JsonSchema>(
         }, {"if":{"properties":{"node_scope":{"const":"cv_port_parameters"}},"required":["node_scope"]},
             "then":{"properties":{"names":{"maxItems":0}},"not":{"anyOf":[{"required":["offset"]},{"required":["limit"]}]}}}]);
     }
+    if operation == "pluginState" {
+        crate::operation::cv_structure_schema(&mut schema);
+    }
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
@@ -508,6 +511,44 @@ mod tests {
     use super::*;
 
     #[test]
+    fn cv_structure_schema_keeps_46_tools_and_a_mutating_fixed_action() {
+        let specs = McpServer::specs();
+        assert_eq!(specs.len(), 46);
+        let tool = &specs
+            .iter()
+            .find(|s| s.tool.name == "plugin_state")
+            .unwrap()
+            .tool;
+        let named = Value::Object((*tool.input_schema).clone());
+        assert_eq!(
+            named["allOf"][0]["then"]["properties"]["kind"]["const"],
+            "instrument"
+        );
+        assert_eq!(
+            named["allOf"][0]["then"]["not"]["anyOf"]
+                .as_array()
+                .unwrap()
+                .len(),
+            3
+        );
+        assert_eq!(schema()["$defs"]["PluginState"]["allOf"], named["allOf"]);
+        assert_eq!(
+            named["$defs"]["PluginStateAction"]["enum"]
+                .as_array()
+                .unwrap()
+                .len(),
+            8
+        );
+        assert!(
+            named["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("expected_document"))
+        );
+        assert!(tool.annotations.is_none());
+    }
+
+    #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
         assert_eq!(specs.len(), 46);
@@ -521,6 +562,7 @@ mod tests {
         assert_eq!(
             schema["$defs"]["PluginStateAction"]["enum"],
             json!([
+                "inspect_cv_port_structure",
                 "read_rumble_state",
                 "read_rumble_parameters",
                 "read_rumble_named_parameters",
