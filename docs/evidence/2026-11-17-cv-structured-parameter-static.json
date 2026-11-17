@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "CONCRETE_OUTPUT_PARAMETER_STRUCTURED_INTERFACE_STATIC",
+  "status": "STATIC_PUBLIC_INTERFACE_GROUNDED_RUNTIME_UNOBSERVED",
+  "new_function_bodies": 6,
+  "exported_records": 15,
+  "concrete_class": "UNKNOWN",
+  "public_interface": "IStructuredParameter",
+  "public_IID": "C8B4992D-F767-457D-B52F-CA2C3ABEB40C",
+  "exact_constructor_query_branch_matches_public_SDK": true,
+  "IListParameter_and_IStructuredParameter_are_distinct": true,
+  "runtime_QI_performed": false,
+  "prepare_cleanup_or_child_calls_performed": false,
+  "menu_builder_public_source_calls_prepare_cleanup": true,
+  "menu_builder_callback_free": false,
+  "DAQ": 0,
+  "engine_process_closed_elapsed_seconds": 452.725,
+  "whole_elapsed_seconds": 869.512,
+  "hard_limit_seconds": 600,
+  "hard_met": false,
+  "timing_deviation": "Root report and post-close source processing exceeded whole-unit budget; not provider latency",
+  "unhelpful_body_probes": 3,
+  "original_Program_and_binary_pins_preserved": true,
+  "engine_closed_reset": true,
+  "explicit_waited_child_exit_code": 0,
+  "evidence_sha256": {
+    "report": "831c1b015597c2776e8d367022cd8a087a48016cbeca8cf4ba5380ecb643bb08",
+    "manifest35": "08cfa064aeb232b77579560a48e205f18ce74804141d32b267db955cd5bb68a4"
+  },
+  "next": "Fixed presence-only CV observation; no prepare/cleanup/enumeration or setter authority",
+  "fixed_count_increment": 0
+}

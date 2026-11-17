@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "date": "2026-11-17",
+  "scope": "EXACT_AUDIOIONODE_PORT_ASSIGNMENT_CONSTRUCTION_STATIC",
+  "status": "PARTIAL_EXACT_PARAMETER_CONSTRUCTION_GROUNDED",
+  "new_decompiled_bodies": 1,
+  "focused_records": 1,
+  "elapsed_seconds": 495.801,
+  "hard_limit_seconds": 420,
+  "overrun_seconds": 75.801,
+  "first_body_examined_elapsed_seconds": 409.799,
+  "exact_provider_reply_latency": "UNRECORDED",
+  "deviation": "Agent orientation and scheduling/processing gaps are included; no provider-timeout claim",
+  "DAQ": 0,
+  "portAssignment_name_and_tag100_from_concrete_output_node_path": true,
+  "parameter_class": "UNKNOWN",
+  "byte_plus_a0_semantics": "UNKNOWN",
+  "public_menu_or_persistence_contract": "UNKNOWN",
+  "next_seed": "Resolve exact thunk called by grounded portAssignment constructor before another body",
+  "exported_records": 1,
+  "engine_closed_reset": true,
+  "explicit_waited_child_exit_code": 0,
+  "original_pins_preserved": true,
+  "evidence_sha256": {
+    "report": "f1bf8e15ad90c97f72f44704608d5d2ffa268d4d4e7ad79a81cf656617ed9c3f",
+    "manifest23": "ebb4ce07cd8dfdc85e6aa555b48f0ca19dbaccfb8b9e0ab6997c02da1c542cf5"
+  },
+  "fixed_count_increment": 0
+}

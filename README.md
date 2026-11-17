@@ -239,6 +239,11 @@ Native58 adds a fixed `details` object to each complete row: `precision`,
 `list_interface:false`; the List kind therefore supplies no IListParameter
 enumeration path. These flags do not establish output-route persistence. See the
 [CV details actual evidence](docs/evidence/2026-11-17-cv-port-details-native58-r80.json).
+Native59 adds `structured_interface` to complete CV row details. Actual R81
+observed it as true on the input and all six outputs. This fixed public-interface
+presence query invokes no structure preparation, cleanup, child enumeration or
+menu methods. Those lifecycle methods remain outside the verified read scope. See
+[structured CV support evidence](docs/evidence/2026-11-17-cv-structured-native59-r81.json).
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
 
