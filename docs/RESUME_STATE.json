@@ -22365,6 +22365,24 @@
     "impact_r116_independent_pairs": 2,
     "impact_r116_requests": 274,
     "impact_r116_seconds": 34.199,
-    "impact_r116_protected_files": 36
+    "impact_r116_protected_files": 36,
+    "impact_r117_preset_name_observed": "Drum Extraction",
+    "impact_r117_loaded_capsule_bytes": 49993,
+    "impact_r117_original_writable_values_restored": 4262,
+    "impact_r117_original_plugin_capsule_digest_restored": true,
+    "impact_r117_full_mixer_restored": false,
+    "impact_r117_extra_outputs_after_restore": ["Impact St 2", "Impact St 3", "Impact St 4", "Impact St 5"],
+    "impact_r117_requests": 237,
+    "impact_r117_seconds": 27.822,
+    "impact_r117_protected_files": 38,
+    "proq4_r38_midi_input_diagnostic_candidate": "83b90c56403e407e504447ce33747f73269f5e1d",
+    "proq4_r38_native_active_inputs": 1,
+    "proq4_r38_native_input_flags": 3,
+    "proq4_r38_native_music_unit_child_observed": true,
+    "proq4_r38_selector_registration_or_route_verified": false,
+    "proq4_r38_writable_values_unchanged": 903,
+    "proq4_r38_total_requests": 65,
+    "proq4_r38_total_active_seconds": 7.345,
+    "proq4_r38_protected_files": 25
   }
 }
