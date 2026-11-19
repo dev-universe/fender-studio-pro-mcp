@@ -517,9 +517,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cv_structure_schema_keeps_46_tools_and_a_mutating_fixed_action() {
+    fn cv_structure_schema_keeps_47_tools_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 46);
+        assert_eq!(specs.len(), 47);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
