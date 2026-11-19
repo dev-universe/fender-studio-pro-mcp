@@ -2,7 +2,7 @@
 //! No IPC, native discovery, arbitrary invoker or caller-supplied preset bytes.
 #![deny(unsafe_op_in_unsafe_fn)]
 mod cv_settings;
-pub use cv_settings::{CvSettingsInspection, IssuedCvSettingsFile};
+pub use cv_settings::{CvSettingsInspection, IssuedCvSettingsFile, PreparedCvSettings};
 mod ffi;
 pub mod folder;
 mod list;
@@ -371,6 +371,10 @@ impl Catalog {
             catalog_complete: self.complete,
         })
     }
+    pub fn matches_target_identity(&self, canonical: NonNull<c_void>) -> bool {
+        thread::current().id() == self.thread && self.target.identity.raw() == canonical.as_ptr()
+    }
+
     pub fn recall<G: FnMut() -> Result<(), String>>(
         &self,
         index: u32,

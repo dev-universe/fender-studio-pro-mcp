@@ -486,6 +486,38 @@ fn state_tokens_are_bound_to_device_and_expire_with_document_identity() {
     drop(ctx);
 }
 #[test]
+fn guarded_primary_load_passes_exact_bytes_once_and_distinguishes_context_drift() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = Fixture::new();
+    let plugin = ptr::addr_of_mut!(*fixture.plugin);
+    let service = ptr::addr_of_mut!(*fixture.service);
+    let ctx = fixture.context();
+    let lease = AliasLease::capture(&ctx).unwrap();
+    let settings: Arc<[u8]> =
+        Arc::from(b"<AudioEffectPreset><ComponentData/></AudioEffectPreset>".as_slice());
+    let blocked = load_once(&lease.storable, settings.clone(), &mut || {
+        Err("stale source witness".into())
+    })
+    .unwrap_err();
+    assert!(!blocked.dispatched);
+    assert_eq!(unsafe { &*plugin }.loads.load(Ordering::Relaxed), 0);
+
+    load_once(&lease.storable, settings.clone(), &mut || lease.guard(&ctx)).unwrap();
+    assert_eq!(unsafe { &*plugin }.loads.load(Ordering::Relaxed), 1);
+    assert_eq!(
+        unsafe { &*plugin }.bytes.lock().unwrap().as_slice(),
+        &*settings
+    );
+
+    unsafe { (*plugin).stop_on_load = service };
+    let post = load_once(&lease.storable, settings, &mut || lease.guard(&ctx)).unwrap_err();
+    assert!(post.dispatched);
+    assert_eq!(unsafe { &*plugin }.loads.load(Ordering::Relaxed), 2);
+    drop(lease);
+    drop(ctx);
+}
+
+#[test]
 fn load_failure_and_service_reentry_are_unknown_after_dispatch() {
     let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
     for stop in [false, true] {
