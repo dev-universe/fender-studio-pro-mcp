@@ -608,8 +608,8 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "NOV20 LIVE: Native59 R88 verified CV Console Group Assignment None and exact mute roundtrip. Native60 R89 completed one bounded Output01 lifecycle in actual 8.1.1. R90 observed that Output03 portAssignment declares the direct node as its controller, with 97 writable, seven direct port and 67 mixer observations preserved. Next investigate exact issued preset identity and supported PortSetup preservation. No physical or preset action is qualified. Do not replay R83 through R90.",
-    "FABFILTER: 23 official VST3 versions inserted and representative writes passed in real 8.1.1. Host .preset results 22 pass, one Pro-Q 4 mismatch. R10 confirmed a Twin 3 preset change after direct EditTask import and brief playback with the late-note control. R12 program-only direct import returned zero with zero parts. R13 setup proved exact Pro-Q 4 insertion, and effect MIDI routing remains open. Investigate a dedicated program-event path and finish all 23 factory and exhaustive writable qualifications. Continue the built-in queue independently.",
+    "NOV20 LIVE: R89 completed the bounded Output01 lifecycle, merged in PR11. R90 observed that Output03 declares its direct port node as controller. R91 restored all 97 settings and preserved seven unassigned ports in 8.1.1 after explicit import of a test copy and MCP recall. Next validate preservation of an actually assigned port and a guarded MCP-only workflow. Do not replay closed R83-R91.",
+    "FABFILTER: All 23 official VST3 versions inserted and enumerated in real 8.1.1. Host preset automatic result 22 pass, one Pro-Q 4 mismatch. R19 matches all 736 only with one explicit internal write per direction. R17 proved Twin 3 playback with zero notes and 1509 exact values. Continue guarded program-only part integration and review, exact Pro-Q 4 effect MIDI routing, and all 23 factory and exhaustive writable qualifications.",
     "PAUSEDNov18before06KST. Publicmain15304714/PR4releaseCOMPLETE; mainCLI/Native59installedrestored,metadata46/state7,doctorcurrent,noDAQafterrestore. Native60source921f889/187andcandidate13+manifest2preserved. R83actual7halt;R84GUIread8ACCEPTED;R85actual6GUI0peerFXunmutehalt,Native60lifecycle0,NoSave/wait0/preservation. FirstREADONLYmute/group/link/operatorcontextdiagnosis;doNOTreplayclosedR83/R84/R85. SeeNov18handoff15beforeanyNative60reinstall/build;oldnormalartifactmapcurrentmismatchbyintent.",
     "Native59R81actual27remainlastfullCVqualified. Native60boundedsource/normalmetadata8/SDKreviewcompletebutlifecycleactual0. Reusecompletedstaticbodies/design6/sourceR2/R8andR85Rust31proof/runtimekitreview;newlivecontractrequiresresolvedpreparationandfreshnormal187/13/session/doc/instance. Fixed15/43done28remaining(24software4hardware).",
     "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
@@ -22005,6 +22005,25 @@
     "proq4_r19_automatic_restore_values": 735,
     "proq4_r19_requests": 62,
     "proq4_r19_elapsed_seconds": 7.146,
-    "proq4_r19_protected_files": 22
+    "proq4_r19_protected_files": 22,
+    "cv_native60_r89_merged_main": "d7970fa085d06cec19d77eb08869e120c425b962",
+    "cv_native60_r89_merged_tree_matches_candidate": true,
+    "cv_r91_current_port_setup_bytes": 62,
+    "cv_r91_factory_port_setup_bytes": 315,
+    "cv_r91_factory_original_applied": false,
+    "cv_r91_catalog_only_copy_recognized": false,
+    "cv_r91_registration_ui": true,
+    "cv_r91_mcp_recall_accepted": true,
+    "cv_r91_independent_exact_writable_values": 97,
+    "cv_r91_unassigned_ports_unchanged": 7,
+    "cv_r91_independent_exact_mixer_channels": 67,
+    "cv_r91_mcp_recall_requests": 27,
+    "cv_r91_mcp_recall_elapsed_seconds": 3.77,
+    "cv_r91_total_requests": 128,
+    "cv_r91_owner_clean_exits": 7,
+    "cv_r91_protected_files": 18,
+    "cv_r91_test_preset_files_recovered": 2,
+    "cv_r91_nonempty_route_preservation_verified": false,
+    "cv_r91_mcp_only_workflow_verified": false
   }
 }
