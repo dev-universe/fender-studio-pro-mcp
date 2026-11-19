@@ -86,6 +86,8 @@ For edits, the client passes the current `document` token from `host_status` as 
 
 `applied_verified` includes operation-specific readback. `applied_unverified` records an acknowledged edit with incomplete verification. `partially_applied` means some changes took effect. If the client receives `outcome_unknown`, check the current state before repeating the request.
 
+To control an instrument on a track, read its exact name with `tracks_list`. Call `track_select` with that name and the current document token. Check that `tracks_list` shows only that track selected before inspecting or editing the instrument.
+
 ### Troubleshooting
 
 | Symptom | What to check |
