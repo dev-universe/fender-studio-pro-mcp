@@ -51,6 +51,7 @@ function fixture(kind = 'effect') {
   return {
     task, category, ids, classes, rows, menuState, context, op, mutations, inserts, synths, track, slot,
     run(edits = {}) { return task.run([{ ...op, ...edits }], context).results[0]; },
+    runByClass(edits = {}) { return this.run({ ...edits, op: op.op + 'ByClass' }); },
   };
 }
 
@@ -63,7 +64,7 @@ test('addPlugin uses the exact class object behind a catalog ID shared by repeat
   assert.equal(catalog.complete, true);
   assert.equal(catalog.plugins.length, 2);
   const selected = catalog.plugins[1];
-  const result = h.run({ plugin: selected.name, classId: selected.classId });
+  const result = h.runByClass({ plugin: selected.name, classId: selected.classId });
   assert.deepEqual(result, { op: 'addPlugin', channel: 'Scratch', added: selected.name, classId: h.ids[1] });
   assert.deepEqual(h.mutations, [{ folder: h.inserts, cls: h.classes[1] }]);
   assert.equal(h.mutations[0].cls, h.classes[1]);
@@ -79,12 +80,12 @@ test('name-only adds keep the original first matching class and result shape', (
 
 test('explicit selection refuses stale and malformed IDs or mismatched display names', () => {
   for (const edits of [
-    { classId: '{stale}' }, { classId: null }, { classId: '' }, { classId: 42 },
+    {}, { classId: '{stale}' }, { classId: null }, { classId: '' }, { classId: 42 },
     { classId: 'id\u0085' }, { classId: 'id\u3000' }, { classId: 'é'.repeat(129) },
     { classId: '{F8A2BFA1-2C5B-482C-AEA3-3925E25D8A29}', plugin: 'shared name' },
   ]) {
     const h = fixture();
-    assert.equal(typeof h.run(edits).error, 'string', JSON.stringify(edits));
+    assert.equal(typeof h.runByClass(edits).error, 'string', JSON.stringify(edits));
     assert.deepEqual(h.mutations, []);
   }
 });
@@ -99,16 +100,16 @@ test('explicit selection refuses an incomplete or unreadable menu and a changed 
   ]) {
     const h = fixture();
     alter(h);
-    assert.equal(typeof h.run({ classId: h.ids[1] }).error, 'string');
+    assert.equal(typeof h.runByClass({ classId: h.ids[1] }).error, 'string');
     assert.deepEqual(h.mutations, []);
   }
 });
 
 test('explicit instruments resolve their class before allocating or connecting a track', () => {
   const h = fixture('instrument');
-  assert.equal(typeof h.run({ classId: '{stale}' }).error, 'string');
+  assert.equal(typeof h.runByClass({ classId: '{stale}' }).error, 'string');
   assert.deepEqual(h.mutations, []);
-  const result = h.run({ classId: h.ids[1] });
+  const result = h.runByClass({ classId: h.ids[1] });
   assert.deepEqual(result, { op: 'addInstrumentTrack', track: 'Synth', instrument: 'Shared name', connected: true, channel: 'Synth', classId: h.ids[1] });
   assert.deepEqual(h.mutations, [
     { index: 0, name: 'Shared name' }, { folder: h.synths, cls: h.classes[1] }, { track: h.track, slot: h.slot },
@@ -118,7 +119,15 @@ test('explicit instruments resolve their class before allocating or connecting a
 
 test('explicit class selection retains the EditTask document guard', () => {
   const h = fixture();
-  h.task.arm([{ ...h.op, classId: h.ids[1] }], { request: { expectedDocument: 'another-document' } });
+  h.task.arm([{ ...h.op, op: 'addPluginByClass', classId: h.ids[1] }], { request: { expectedDocument: 'another-document' } });
   assert.match(h.task.invoke(h.context).error, /context does not match/);
   assert.deepEqual(h.mutations, []);
+});
+
+test('legacy add tags reject a classId before mutating', () => {
+  for (const kind of ['effect', 'instrument']) {
+    const h = fixture(kind);
+    assert.match(h.run({ classId: h.ids[1] }).error, /classId requires/);
+    assert.deepEqual(h.mutations, []);
+  }
 });

@@ -157,8 +157,7 @@ function mtoPluginClassById(name, category, classId) {
 	}
 }
 
-function mtoPluginClass(name, category, classId) {
-	if (typeof classId !== "undefined") return mtoPluginClassById(name, category, classId);
+function mtoPluginClass(name, category) {
 	var menu = mtoPluginMenu(category);
 	if (!menu) return { error: "the plug-in list is not available" };
 	var exact = -1, loose = -1, want = String(name || "");
@@ -172,6 +171,12 @@ function mtoPluginClass(name, category, classId) {
 	if (at < 0) return { error: "no " + (category === "AudioSynth" ? "instrument" : "plug-in") + " named " + want };
 	menu.setValue(at, true);
 	return { cls: menu.getSelectedClass(), name: String(menu.string) };
+}
+
+function mtoRequestedPluginClass(op, name, category, byClass) {
+	if (byClass) return mtoPluginClassById(name, category, op.classId);
+	if (Object.prototype.hasOwnProperty.call(op, "classId")) return { error: "classId requires a class-specific operation" };
+	return mtoPluginClass(name, category);
 }
 
 function mtoChannel(context, label) {
@@ -200,8 +205,8 @@ function mtoDeviceFunctions(context) {
 }
 
 // { channel, plugin, folder: "Inserts" | "Sends" }
-function mtoInsertInto(context, op, folderName, category, classId) {
-	var p = mtoPluginClass(op.plugin, category || "AudioEffect", classId);
+function mtoInsertInto(context, op, folderName, category, byClass) {
+	var p = mtoRequestedPluginClass(op, op.plugin, category || "AudioEffect", byClass);
 	if (p.error) return p;
 	var c = mtoChannel(context, op.channel);
 	if (c.error) return c;
@@ -216,7 +221,12 @@ function mtoInsertInto(context, op, folderName, category, classId) {
 	return result;
 }
 
-mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "Inserts", "AudioEffect", op.classId); };
+mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "Inserts"); };
+mtoOps.addPluginByClass = function (context, op) {
+	var result = mtoInsertInto(context, op, "Inserts", "AudioEffect", true);
+	result.op = "addPlugin";
+	return result;
+};
 mtoOps.addMixFx = function (context, op) { return mtoInsertInto(context, op, "AudioBusMixFX", "AudioMixEffect"); };
 mtoOps.addFxSend = function (context, op) { return mtoInsertInto(context, op, "Sends"); };
 
@@ -265,11 +275,11 @@ mtoOps.addAudioTrack = function (context, op) {
 };
 
 // { name, instrument }: an instrument track playing a new instance of the instrument.
-mtoOps.addInstrumentTrack = function (context, op) {
+function mtoAddInstrumentTrack(context, op, byClass) {
 	var f = context.functions;
 	var root = f ? f.root : null;
 	if (!mtoFn(f, "addMediaTrack") || !root) return { error: "addMediaTrack is not available" };
-	var p = mtoPluginClass(op.instrument, "AudioSynth", op.classId);
+	var p = mtoRequestedPluginClass(op, op.instrument, "AudioSynth", byClass);
 	if (p.error) return p;
 	var fmt = Host.Engine && Host.Engine.TrackFormats && mtoFn(Host.Engine.TrackFormats, "findEqual") ? Host.Engine.TrackFormats.findEqual("Instrument") : null;
 	var synths = root.environment && mtoFn(root.environment, "find") ? root.environment.find("Synths") : null;
@@ -287,6 +297,13 @@ mtoOps.addInstrumentTrack = function (context, op) {
 	if (!slot) return { error: "the track was added but " + p.name + " was not", track: String(track.name) };
 	var result = { track: String(track.name), instrument: p.name, connected: !!connected, channel: track.channel && typeof track.channel.label === "string" ? track.channel.label : null };
 	if (p.classId) result.classId = p.classId;
+	return result;
+}
+
+mtoOps.addInstrumentTrack = function (context, op) { return mtoAddInstrumentTrack(context, op, false); };
+mtoOps.addInstrumentTrackByClass = function (context, op) {
+	var result = mtoAddInstrumentTrack(context, op, true);
+	result.op = "addInstrumentTrack";
 	return result;
 };
 

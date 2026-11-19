@@ -1180,6 +1180,25 @@ impl Operation {
         let mut args = value["args"].clone();
         remove_nulls(&mut args);
         match self {
+            Self::TrackTask(task) => {
+                // Older EditTasks ignore extra fields on the name-only tags.
+                let wire_ops = args["ops"].as_array_mut().expect("serialized track edits");
+                for (op, wire_op) in task.ops.iter().zip(wire_ops) {
+                    match op {
+                        TrackEdit::AddPlugin {
+                            class_id: Some(_), ..
+                        } => {
+                            wire_op["op"] = json!("addPluginByClass");
+                        }
+                        TrackEdit::AddInstrumentTrack {
+                            class_id: Some(_), ..
+                        } => {
+                            wire_op["op"] = json!("addInstrumentTrackByClass");
+                        }
+                        _ => {}
+                    }
+                }
+            }
             Self::ChorderLearningSet(change) => {
                 args["change"] =
                     serde_json::to_value(&change.change).expect("closed learning change");
@@ -2959,13 +2978,18 @@ mod tests {
         ] {
             let mut selected = entry.clone();
             selected["classId"] = json!("{F8A2BFA1-2C5B-482C-AEA3-3925E25D8A29}");
-            for op in [entry, selected] {
-                let args = json!({"ops":[op]});
-                let operation = Operation::from_parts("trackTask", args.clone()).unwrap();
-                operation.validate().unwrap();
-                assert!(!operation.is_read_only());
-                assert_eq!(operation.wire(), ("trackTask".into(), args));
-            }
+            let internal_tag = format!("{}ByClass", entry["op"].as_str().unwrap());
+            let args = json!({"ops":[entry, selected, {"op":"events","track":"Scratch"}]});
+            let operation = Operation::from_parts("trackTask", args.clone()).unwrap();
+            operation.validate().unwrap();
+            assert!(!operation.is_read_only());
+
+            let mut wire_args = args;
+            wire_args["ops"][1]["op"] = json!(internal_tag);
+            assert!(
+                Operation::from_parts("trackTask", json!({"ops":[wire_args["ops"][1]]})).is_err()
+            );
+            assert_eq!(operation.wire(), ("trackTask".into(), wire_args));
         }
 
         let schema = serde_json::to_value(schemars::schema_for!(TrackEdit)).unwrap();
