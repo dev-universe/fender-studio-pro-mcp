@@ -8,6 +8,8 @@ if len(sys.argv) != 2:
 assembly = Path(sys.argv[1]).read_text()
 expected = {
     "query": 0, "retain": 8, "release": 16,
+    "structure_prepare": 24, "structure_cleanup": 32,
+    "structure_count": 40, "structure_get": 48,
     "parameter_type": 24, "parameter_name": 32,
     "parameter_enabled": 48, "parameter_state": 64, "parameter_tag": 104,
     "parameter_controller": 112,

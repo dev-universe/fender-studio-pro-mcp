@@ -1,0 +1,133 @@
+{
+  "assignment_values_observed": false,
+  "atomic_snapshot": false,
+  "audio_verified": false,
+  "can_set_via_this_action": false,
+  "child_count": 0,
+  "children": [],
+  "cleanup_calls": 1,
+  "cleanup_elapsed_ms": 0,
+  "cleanup_returned": true,
+  "instance": {
+    "class_uid": "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85",
+    "native_class": "AudioSynth",
+    "object_id": "CV Instrument",
+    "object_uid": "12345678-1234-1234-1234-123456789ABC"
+  },
+  "limits": {
+    "children": 32,
+    "deadline_ms": 2000,
+    "depth": 1,
+    "encoded_response_bytes": 262144,
+    "name_bytes": 512,
+    "parents": 1,
+    "text_utf16_units": 4096,
+    "total_child_text_bytes": 32768
+  },
+  "mutation_capability": false,
+  "observation_complete": true,
+  "ok": true,
+  "operation": "cv_port_structure_inspect",
+  "outcome": "observed",
+  "parent_after": {
+    "default": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "display": "None",
+    "enabled": true,
+    "index": 0,
+    "kind": "List",
+    "max": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "min": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "name": "portAssignment",
+    "normalized": {
+      "bits_hex": "00000000",
+      "kind": "float32"
+    },
+    "read_only": false,
+    "tag": 100,
+    "value": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    }
+  },
+  "parent_before": {
+    "default": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "display": "None",
+    "enabled": true,
+    "index": 0,
+    "kind": "List",
+    "max": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "min": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    },
+    "name": "portAssignment",
+    "normalized": {
+      "bits_hex": "00000000",
+      "kind": "float32"
+    },
+    "read_only": false,
+    "tag": 100,
+    "value": {
+      "data": {
+        "kind": "integer",
+        "value": 0
+      },
+      "variant_tag": 1
+    }
+  },
+  "parent_details": {
+    "can_undo": true,
+    "list_interface": true,
+    "mutable": false,
+    "precision": 1,
+    "read_only": false,
+    "storable": true,
+    "store_list_value": false,
+    "structured_interface": true
+  },
+  "persistence_verified": false,
+  "phase": "closed_checked",
+  "prepare_calls": 1,
+  "retained_text_bytes": 0,
+  "routing_verified": false,
+  "scope": "fixed_output01_direct_nested_parameters",
+  "selection_authority": false,
+  "source": "dsp",
+  "status": "complete"
+}

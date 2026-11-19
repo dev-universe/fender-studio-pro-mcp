@@ -1089,6 +1089,91 @@ class NativePluginControls {
         }
     }
 
+    cvStructureTyped(value) {
+        if (value === null) return true;
+        if (!this.guiExact(value,["variant_tag","data"]) || !this.guiInteger(value.variant_tag,-32768,32767)) return false;
+        const data=value.data,tag=value.variant_tag & 15;
+        if (!data || typeof data !== "object") return false;
+        if (data.kind === "empty") return tag === 0 && this.guiExact(data,["kind"]);
+        if (data.kind === "integer") {
+            if (tag !== 1) return false;
+            if (this.guiExact(data,["kind","value"])) return Number.isSafeInteger(data.value) && !Object.is(data.value,-0);
+            if (!this.guiExact(data,["kind","exact_decimal"]) || typeof data.exact_decimal !== "string" || !/^-?[1-9][0-9]*$/.test(data.exact_decimal)) return false;
+            const negative=data.exact_decimal.charAt(0) === "-",digits=negative?data.exact_decimal.slice(1):data.exact_decimal;
+            return (digits.length>16 || digits.length === 16 && digits>"9007199254740991")
+                && (digits.length<19 || digits.length === 19 && digits<=(negative?"9223372036854775808":"9223372036854775807"));
+        }
+        if (data.kind === "float" || data.kind === "non_finite_float") {
+            if (tag !== 2 || typeof data.bits_hex !== "string" || !/^[0-9A-F]{16}$/.test(data.bits_hex)) return false;
+            const finite=(parseInt(data.bits_hex.slice(0,3),16)&2047)!==2047;
+            if (data.kind === "non_finite_float") return !finite && this.guiExact(data,["kind","bits_hex"]);
+            if (!finite || !this.guiExact(data,["kind","value","bits_hex"]) || typeof data.value !== "number" || !Number.isFinite(data.value)) return false;
+            const view=new DataView(new ArrayBuffer(8));view.setFloat64(0,data.value);
+            const bits=("00000000"+view.getUint32(0).toString(16)).slice(-8)+("00000000"+view.getUint32(4).toString(16)).slice(-8);
+            return bits.toUpperCase() === data.bits_hex;
+        }
+        if (data.kind === "text") return tag === 3 && this.guiExact(data,["kind","value"]) && typeof data.value === "string" && data.value.length<=4096 && data.value.indexOf("\0")<0 && Number.isFinite(this.externalMenuTextBytes(data.value));
+        if (data.kind === "opaque_object") return tag === 4 && this.guiExact(data,["kind","present"]) && typeof data.present === "boolean";
+        return tag>4 && data.kind === "unsupported" && this.guiExact(data,["kind","tag"]) && data.tag === tag;
+    }
+    cvStructureParameter(value,index) {
+        if (!this.guiExact(value,["index","name","tag","kind","enabled","read_only","value","min","max","default","normalized","display"])
+            || value.index !== index || typeof value.name !== "string" || value.name.indexOf("\0")>=0 || this.externalMenuTextBytes(value.name)>512
+            || !this.guiInteger(value.tag,-2147483648,2147483647) || typeof value.enabled !== "boolean" || typeof value.read_only !== "boolean"
+            || typeof value.display !== "string" || value.display.length>4096 || value.display.indexOf("\0")>=0 || !Number.isFinite(this.externalMenuTextBytes(value.display))
+            || ["value","min","max","default"].some(key=>!this.cvStructureTyped(value[key]))) return false;
+        if (["Toggle","Integer","Float","String","List","Command","Color","Image","Segments","Scroll","TextModel"].indexOf(value.kind)<0
+            && !(typeof value.kind === "string" && /^Unknown\(-?(0|[1-9][0-9]*)\)$/.test(value.kind) && this.guiInteger(Number(value.kind.slice(8,-1)),-2147483648,2147483647))) return false;
+        const normalized=value.normalized;
+        if (normalized && normalized.kind === "not_applicable") return this.guiExact(normalized,["kind"]);
+        return this.guiExact(normalized,["kind","bits_hex"]) && ["float32","non_finite_float32"].indexOf(normalized.kind)>=0
+            && typeof normalized.bits_hex === "string" && /^[0-9A-F]{8}$/.test(normalized.bits_hex)
+            && (((parseInt(normalized.bits_hex.slice(0,3),16)&2040)!==2040) === (normalized.kind === "float32"));
+    }
+    cvStructureTextBytes(value) {
+        return this.externalMenuTextBytes(value.name)+this.externalMenuTextBytes(value.display)
+            + ["value","min","max","default"].reduce((total,key)=>total+(value[key] && value[key].data.kind === "text" ? this.externalMenuTextBytes(value[key].data.value):0),0);
+    }
+    cvStructureRequest(request) {
+        return this.guiExact(request,["operation","expected_instance"]) && request.operation === "cv_port_structure_inspect"
+            && typeof request.expected_instance === "string" && /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
+    }
+    cvStructureFailure(dispatched, result) {
+        const known = result && result.ok === false && result.outcome === "not_applied" && result.phase === "before_prepare"
+            && this.guiExact(result.error,["code","message"]) && typeof result.error.code === "string" && result.error.code.length > 0 && result.error.code.length <= 64
+            && typeof result.error.message === "string" && result.error.message.length <= 512
+            && (result.native_outcome === undefined || result.native_outcome === "not_applied")
+            && Object.keys(result).every(k=>["ok","outcome","native_outcome","phase","error"].indexOf(k)>=0);
+        const outcome = !dispatched || known ? "not_applied" : "unknown";
+        return {ok:false,outcome:outcome,native_outcome:outcome,phase:outcome === "not_applied" ? "before_prepare" : "unknown",
+            error:{code:"cv_structure_unconfirmed",message:"The exact closed CV structure observation was not established"}};
+    }
+    cvStructureResult(result, request) {
+        const keys=["ok","outcome","operation","source","instance","scope","phase","prepare_calls","cleanup_calls","cleanup_returned","cleanup_elapsed_ms","parent_before","parent_after","parent_details","child_count","children","observation_complete","status","retained_text_bytes","limits","assignment_values_observed","routing_verified","selection_authority","can_set_via_this_action","mutation_capability","atomic_snapshot","audio_verified","persistence_verified"];
+        if (!this.cvStructureRequest(request) || !this.guiExact(result,keys) || result.ok !== true || result.outcome !== "observed"
+            || result.operation !== "cv_port_structure_inspect" || result.source !== "dsp" || result.scope !== "fixed_output01_direct_nested_parameters"
+            || result.phase !== "closed_checked" || result.prepare_calls !== 1 || result.cleanup_calls !== 1 || result.cleanup_returned !== true || !Number.isInteger(result.cleanup_elapsed_ms) || result.cleanup_elapsed_ms<0 || result.cleanup_elapsed_ms>2000
+            || !this.guiExact(result.instance,["object_uid","class_uid","native_class","object_id"]) || result.instance.object_uid !== request.expected_instance
+            || result.instance.class_uid !== "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85" || result.instance.native_class !== "AudioSynth" || result.instance.object_id !== "CV Instrument"
+            || ["assignment_values_observed","routing_verified","selection_authority","can_set_via_this_action","mutation_capability","atomic_snapshot","audio_verified","persistence_verified"].some(k=>result[k] !== false)
+            || !Number.isInteger(result.child_count) || result.child_count < 0 || result.child_count > 2147483647 || !Array.isArray(result.children)
+            || result.children.length > 32 || JSON.stringify(result.parent_before) !== JSON.stringify(result.parent_after)
+            || !this.cvStructureParameter(result.parent_before,0) || result.parent_before.name !== "portAssignment" || result.parent_before.tag !== 100 || result.parent_before.kind !== "List"
+            || !this.guiExact(result.limits,["deadline_ms","parents","depth","children","name_bytes","text_utf16_units","total_child_text_bytes","encoded_response_bytes"])
+            || ["deadline_ms","parents","depth","children","name_bytes","text_utf16_units","total_child_text_bytes","encoded_response_bytes"].some((key,index)=>result.limits[key] !== [2000,1,1,32,512,4096,32768,262144][index])
+            || !this.guiExact(result.parent_details,["precision","storable","mutable","store_list_value","read_only","can_undo","list_interface","structured_interface"])
+            || !this.guiInteger(result.parent_details.precision,-2147483648,2147483647) || result.parent_details.structured_interface !== true
+            || ["storable","mutable","store_list_value","read_only","can_undo","list_interface"].some(key=>typeof result.parent_details[key] !== "boolean")
+            || !Number.isInteger(result.retained_text_bytes) || result.retained_text_bytes < 0 || result.retained_text_bytes > 32768
+            || this.rumbleSerializationBytes(result)>262144) return false;
+        return result.child_count > 32
+            ? result.children.length === 0 && result.observation_complete === false && result.status === "child_limit" && result.retained_text_bytes === 0
+            : result.children.length === result.child_count && result.observation_complete === true && result.status === "complete"
+                && result.children.every((child,index)=>this.cvStructureParameter(child,index))
+                && result.children.reduce((bytes,child)=>bytes+this.cvStructureTextBytes(child),0) === result.retained_text_bytes;
+    }
+
     request(device, request, auxiliary) {
         let dispatched = false;
         let parsed = null;
@@ -1102,7 +1187,9 @@ class NativePluginControls {
         const rumbleParameters = request.operation === "rumble_parameters_read";
         const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
+        const cvStructure = request.operation === "cv_port_structure_inspect";
         try {
+            if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
             if (rumbleState && !this.rumbleStateRequest(request)) throw new Error("invalid fixed Rumble state request");
@@ -1122,14 +1209,14 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu || rumbleNamedParameters) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu || rumbleNamedParameters) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
@@ -1145,6 +1232,10 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (cvStructure) {
+                if (result.ok === false) return this.cvStructureFailure(true,result);
+                if (!this.cvStructureResult(result,request)) throw new Error("invalid CV structure lifecycle result");
+            }
             if (externalMenu) {
                 if (result.ok === false) return this.externalMenuFailure(true, result);
                 if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
@@ -1203,6 +1294,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (cvStructure) return this.cvStructureFailure(dispatched,null);
             if (rumbleNamedParameters) return this.rumbleNamedParametersFailure();
             if (rumbleParameters) return this.rumbleParametersFailure();
             if (rumbleState) return this.rumbleStateFailure();

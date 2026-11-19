@@ -215,15 +215,23 @@ presence query invokes no structure preparation, cleanup, child enumeration or
 menu methods. Those lifecycle methods remain outside the verified read scope. See
 [structured CV support evidence](evidence/2026-11-17-cv-structured-native59-r81.json).
 
-### Native60 draft branch follow-up
+### Native60 Output01 structure inspection
 
-The Draft Native60 candidate adds `plugin_state` action
-`inspect_cv_port_structure` for only CV Instrument Output01. It bounds public
-structure preparation, child observation and cleanup and treats the callbacks as
-a mutation. Source checks, normal installation and metadata passed. Its actual
-host trial stopped at an earlier channel-mute safety check, before any lifecycle
-call. It has no verified choice, port-write, routing or preset-preservation
-authority. See the [candidate and stopped trial](https://github.com/dev-universe/fender-studio-pro-mcp/blob/10b24e5f7ec0e30839178013ec90619cc6701534/docs/evidence/2026-11-18-cv-lifecycle-candidate.json).
+`plugin_state` action `inspect_cv_port_structure` inspects the public structured
+parameter interface for CV Instrument Output01 only. Supply the current document
+token, the exact instrument track and the DSP instance ID from `plugin_inspect`.
+The operation runs a bounded prepare/cleanup pair on the exact instance.
+
+Actual 8.1.1 R89 completed one pair for the `portAssignment` parent. This
+unassigned output reported a complete list of zero children. Independent reads
+matched all 97 writable controls, all seven direct port observations and all
+67 mixer channels before and after the action. The editor displayed the same
+seven unassigned paths. [R89 verification](evidence/2026-11-20-cv-native60-r89.json)
+
+The earlier R85 trial stopped during mixer preparation, before any lifecycle
+call. R89 qualifies the configured empty structure and its observed state
+preservation. Choice interpretation, port writes, preset output preservation,
+physical routing and saved state require their own evidence.
 
 ## Exact parameter values and digests
 

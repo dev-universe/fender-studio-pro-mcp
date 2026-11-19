@@ -34,6 +34,10 @@ static_assert(CCL::IParameter::kStoreListValue==0x100);
 static_assert(CCL::IParameter::kMutable==0x800);
 static_assert(CCL::IParameter::kCanUndo==0x10000);
 #endif
+static_assert(std::is_same_v<decltype(std::declval<CCL::IStructuredParameter&>().prepareStructure()),void>);
+static_assert(std::is_same_v<decltype(std::declval<CCL::IStructuredParameter&>().cleanupStructure()),void>);
+static_assert(std::is_same_v<decltype(std::declval<CCL::IStructuredParameter&>().countSubParameters()),int>);
+static_assert(std::is_same_v<decltype(std::declval<CCL::IStructuredParameter&>().getSubParameter(0)),CCL::IParameter*>);
 static_assert(CCL::kResultNoInterface==static_cast<CCL::tresult>(0x80004002u));
 static_assert(CCL::IFormatter::kNormalized==1 && CCL::IFormatter::kStateful==2);
 
@@ -69,3 +73,8 @@ extern "C" CCL::tbool abi_formatter_scan(CCL::IFormatter* p,CCL::Variant* out,co
 extern "C" void abi_forbidden_value_return(CCL::IParameter* p,void* out) {new(out) CCL::Variant(p->getValue());}
 extern "C" CCL::IString* abi_empty_export() {return &CCL::System::GetEmptyString();}
 extern "C" const CCL::CString* abi_cstring_export(const char* text) {return &CCL::System::GetConstantCString(text);}
+
+extern "C" void abi_structure_prepare(CCL::IStructuredParameter* p) {p->prepareStructure();}
+extern "C" void abi_structure_cleanup(CCL::IStructuredParameter* p) {p->cleanupStructure();}
+extern "C" int abi_structure_count(CCL::IStructuredParameter* p) {return p->countSubParameters();}
+extern "C" CCL::IParameter* abi_structure_get(CCL::IStructuredParameter* p,int index) {return p->getSubParameter(index);}
