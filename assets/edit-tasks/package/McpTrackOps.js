@@ -118,13 +118,49 @@ function mtoEventInfo(ev, number) {
 	return out;
 }
 
-// ---- plug-ins by name (same list as the bridge's live_plugins) -------------------
+// ---- plug-ins from the host catalog ---------------------------------------------
 
-function mtoPluginClass(name, category) {
-	if (!Host.Classes || !mtoFn(Host.Classes, "createInstance")) return { error: "the plug-in list is not available" };
+function mtoPluginMenu(category) {
+	if (!Host.Classes || !mtoFn(Host.Classes, "createInstance")) return null;
 	var menu = Host.Classes.createInstance("Host:PlugInMenuParam");
-	if (!menu || !mtoFn(menu, "setCategory") || !mtoFn(menu, "setValue") || !mtoFn(menu, "getSelectedClass")) return { error: "the plug-in list is not available" };
+	if (!menu || !mtoFn(menu, "setCategory") || !mtoFn(menu, "setValue") || !mtoFn(menu, "getSelectedClass")) return null;
 	menu.setCategory(category);
+	return menu;
+}
+
+function mtoPluginClassById(name, category, classId) {
+	if (typeof classId !== "string" || !classId || classId.length > 256 || /[\u0000-\u0020\u007f-\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/.test(classId)) return { error: "invalid plug-in classId" };
+	try {
+		if (encodeURIComponent(classId).replace(/%[0-9a-f]{2}/gi, "x").length > 256) return { error: "invalid plug-in classId" };
+		var menu = mtoPluginMenu(category);
+		if (!menu) return { error: "the plug-in list is not available" };
+		var min = menu.min, max = menu.max;
+		if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max) || max < min || max - min >= 8192)
+			return { error: "the plug-in class list is incomplete or unsafe" };
+		var at = null;
+		for (var offset = 0; offset <= max - min; offset++) {
+			menu.setValue(min + offset, true);
+			var cls = menu.getSelectedClass();
+			if (cls && String(cls) === classId && String(menu.string) === name && at === null) at = min + offset;
+		}
+		if (menu.min !== min || menu.max !== max) return { error: "the plug-in class list changed during selection" };
+		if (at === null) return { error: "no plug-in matches both the name and classId in " + category };
+		menu.setValue(at, true);
+		var selected = menu.getSelectedClass();
+		var selectedId = selected ? String(selected) : null;
+		var selectedName = String(menu.string);
+		if (selectedId !== classId || selectedName !== name || menu.min !== min || menu.max !== max)
+			return { error: "the plug-in class selection changed" };
+		return { cls: selected, name: selectedName, classId: selectedId };
+	} catch (_) {
+		return { error: "could not resolve the plug-in class from the host list" };
+	}
+}
+
+function mtoPluginClass(name, category, classId) {
+	if (typeof classId !== "undefined") return mtoPluginClassById(name, category, classId);
+	var menu = mtoPluginMenu(category);
+	if (!menu) return { error: "the plug-in list is not available" };
 	var exact = -1, loose = -1, want = String(name || "");
 	for (var i = menu.min; i <= menu.max; i++) {
 		menu.setValue(i, true);
@@ -164,8 +200,8 @@ function mtoDeviceFunctions(context) {
 }
 
 // { channel, plugin, folder: "Inserts" | "Sends" }
-function mtoInsertInto(context, op, folderName, category) {
-	var p = mtoPluginClass(op.plugin, category || "AudioEffect");
+function mtoInsertInto(context, op, folderName, category, classId) {
+	var p = mtoPluginClass(op.plugin, category || "AudioEffect", classId);
 	if (p.error) return p;
 	var c = mtoChannel(context, op.channel);
 	if (c.error) return c;
@@ -175,10 +211,12 @@ function mtoInsertInto(context, op, folderName, category) {
 	if (!dev) return { error: "insertDevice is not available" };
 	var slot = dev.insertDevice(folder, p.cls);
 	if (!slot) return { error: "Studio One did not add " + p.name };
-	return { channel: op.channel, added: p.name };
+	var result = { channel: op.channel, added: p.name };
+	if (p.classId) result.classId = p.classId;
+	return result;
 }
 
-mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "Inserts"); };
+mtoOps.addPlugin = function (context, op) { return mtoInsertInto(context, op, "Inserts", "AudioEffect", op.classId); };
 mtoOps.addMixFx = function (context, op) { return mtoInsertInto(context, op, "AudioBusMixFX", "AudioMixEffect"); };
 mtoOps.addFxSend = function (context, op) { return mtoInsertInto(context, op, "Sends"); };
 
@@ -231,7 +269,7 @@ mtoOps.addInstrumentTrack = function (context, op) {
 	var f = context.functions;
 	var root = f ? f.root : null;
 	if (!mtoFn(f, "addMediaTrack") || !root) return { error: "addMediaTrack is not available" };
-	var p = mtoPluginClass(op.instrument, "AudioSynth");
+	var p = mtoPluginClass(op.instrument, "AudioSynth", op.classId);
 	if (p.error) return p;
 	var fmt = Host.Engine && Host.Engine.TrackFormats && mtoFn(Host.Engine.TrackFormats, "findEqual") ? Host.Engine.TrackFormats.findEqual("Instrument") : null;
 	var synths = root.environment && mtoFn(root.environment, "find") ? root.environment.find("Synths") : null;
@@ -247,7 +285,9 @@ mtoOps.addInstrumentTrack = function (context, op) {
 	f.executeImmediately = false;
 	if (!track) return { error: "Studio One did not add the track" };
 	if (!slot) return { error: "the track was added but " + p.name + " was not", track: String(track.name) };
-	return { track: String(track.name), instrument: p.name, connected: !!connected, channel: track.channel && typeof track.channel.label === "string" ? track.channel.label : null };
+	var result = { track: String(track.name), instrument: p.name, connected: !!connected, channel: track.channel && typeof track.channel.label === "string" ? track.channel.label : null };
+	if (p.classId) result.classId = p.classId;
+	return result;
 };
 
 // ---- track order ------------------------------------------------------------------
