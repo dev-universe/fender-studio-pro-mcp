@@ -259,6 +259,7 @@ mtoOps.addAudioTrack = function (context, op) {
 		if (existing.name === op.name) return { error: "a track already has the requested name: " + op.name };
 	}
 	var at = tl.getInsertPosition();
+	if (at === -1 && tl.numTracks === 0) at = 0;
 	if (typeof at !== "number" || !isFinite(at) || at < 0 || at % 1 !== 0) return { error: "the track insertion position is not available" };
 	var previousImmediate = typeof f.executeImmediately === "boolean" ? f.executeImmediately : false;
 	var track = null;
