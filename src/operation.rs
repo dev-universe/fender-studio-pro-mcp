@@ -430,6 +430,7 @@ pub enum NodeScope {
     PluginController,
     CvPorts,
     CvPortParameters,
+    CvPresetTarget,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1340,7 +1341,7 @@ impl Operation {
             _ => false,
         };
         level
-            || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters)))
+            || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
                         | PluginStateAction::ReadRumbleNamedParameters))
@@ -1819,7 +1820,11 @@ impl Operation {
                 }
                 if matches!(
                     p.node_scope,
-                    Some(NodeScope::CvPorts | NodeScope::CvPortParameters)
+                    Some(
+                        NodeScope::CvPorts
+                            | NodeScope::CvPortParameters
+                            | NodeScope::CvPresetTarget
+                    )
                 ) && (!matches!(p.kind, Some(PluginKind::Instrument))
                     || p.plugin.as_deref() != Some("CV Instrument")
                     || p.track.as_ref().is_none_or(|name| {
@@ -1834,14 +1839,16 @@ impl Operation {
                     || p.include_context == Some(true))
                 {
                     return Err(invalid(
-                        "cv_ports requires exact CV Instrument, instrument kind, dsp source, expected_instance and no context inventory",
+                        "CV node inspection requires exact CV Instrument, instrument kind, dsp source, expected_instance and no context inventory",
                     ));
                 }
-                if matches!(p.node_scope, Some(NodeScope::CvPortParameters))
-                    && (!p.names.is_empty() || p.offset.is_some() || p.limit.is_some())
+                if matches!(
+                    p.node_scope,
+                    Some(NodeScope::CvPortParameters | NodeScope::CvPresetTarget)
+                ) && (!p.names.is_empty() || p.offset.is_some() || p.limit.is_some())
                 {
                     return Err(invalid(
-                        "cv_port_parameters does not accept names or pagination",
+                        "this CV node scope does not accept names or pagination",
                     ));
                 }
                 validate_instance_uid(p.expected_instance.as_deref())?;
@@ -3593,6 +3600,40 @@ mod tests {
                 .validate()
                 .is_err()
         );
+    }
+
+    #[test]
+    fn cv_preset_target_is_a_document_bound_cv_only_read() {
+        let args = json!({"kind":"instrument","track":"Scratch CV","plugin":"CV Instrument",
+            "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "include_nodes":true,"node_scope":"cv_preset_target"});
+        let operation = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(operation.wire().1["node_scope"], "cv_preset_target");
+        for (field, value) in [
+            ("plugin", json!("Other")),
+            ("source", json!("controller")),
+            ("include_nodes", json!(false)),
+            ("include_context", json!(true)),
+            ("names", json!(["unchecked"])),
+            ("offset", json!(0)),
+            ("limit", json!(1)),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("plugin_inspect", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{field}"
+            );
+        }
+        let mut invalid = args;
+        invalid["iid"] = json!("unchecked");
+        assert!(Operation::from_parts("plugin_inspect", invalid).is_err());
     }
 
     #[test]

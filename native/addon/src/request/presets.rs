@@ -4,6 +4,9 @@ use super::*;
 use fender_native_preset_api::{Availability, Catalog, Inputs, Page};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
+#[path = "presets/target_proof.rs"]
+pub(super) mod target_proof;
+
 const MAX_CATALOGS: usize = 4;
 pub(super) const MAX_PAGE: u32 = 64;
 static LIVE_CATALOGS: AtomicU32 = AtomicU32::new(0);
@@ -163,6 +166,9 @@ impl Route {
         if slot_identity != self.slot_identity || presets_identity != self.presets_identity {
             return Err("Device slot or Presets attachment changed".into());
         }
+        self.borrowed_attachment()
+    }
+    fn borrowed_attachment(&self) -> Result<(), String> {
         // Reflection cleanup may also change UIDs in place. Refresh these
         // borrowed identity values after BOTH reflection owners have released;
         // no new native owner or reflected metadata follows this phase.
@@ -396,13 +402,13 @@ fn page_value(token: &str, page: &Page) -> Value {
 }
 /// Only a public QI's documented absence is an optional capability miss.
 /// Failed/malformed outputs are not owned references and are never inspected.
-fn name_interface(object: *mut c_void, iid: &Uid) -> Result<Option<Owned>, String> {
+fn optional_interface(object: *mut c_void, iid: &Uid) -> Result<Option<Owned>, String> {
     let mut out = ptr::null_mut();
     let result = unsafe { (unknown_vtable(object).query)(object, iid, &mut out) };
     match (result, out.is_null()) {
         (OK, false) => Ok(Some(Owned(out))),
         (NO_INTERFACE, true) => Ok(None),
-        _ => Err("preset name interface query returned invalid evidence".into()),
+        _ => Err("preset interface query returned invalid evidence".into()),
     }
 }
 fn unavailable_name(reason: &'static str) -> Value {
@@ -419,7 +425,7 @@ fn current_name<G: FnMut() -> Result<(), String>>(
     let mut canonical = None;
     let mut parameter = None;
     let result = (|| {
-        let queried = name_interface(presets.0, &CONTROLLER);
+        let queried = optional_interface(presets.0, &CONTROLLER);
         controller = queried?.map(|handle| Controller {
             handle,
             lease: None,
@@ -428,7 +434,7 @@ fn current_name<G: FnMut() -> Result<(), String>>(
         let Some(controller) = controller.as_ref() else {
             return Ok(unavailable_name("controller_unavailable"));
         };
-        canonical = name_interface(controller.handle.0, &UNKNOWN)?;
+        canonical = optional_interface(controller.handle.0, &UNKNOWN)?;
         guard()?;
         if canonical.as_ref().is_none_or(|owner| owner.0 != identity.0) {
             return Err("preset name controller identity changed".into());
@@ -630,6 +636,9 @@ mod family_tests {
         class_uid: Cell<Uid>,
         class_uid_available: Cell<bool>,
         object_available: Cell<bool>,
+        mediator: Cell<*mut c_void>,
+        alias: Cell<*mut c_void>,
+        storable: Cell<*mut c_void>,
         class_name: Cell<&'static CStr>,
         object: View,
         info: View,
@@ -660,7 +669,20 @@ mod family_tests {
         } else if iid == OBJECT && node.object_available.get() {
             ptr::from_ref(&node.object).cast_mut().cast()
         } else {
-            return NO_INTERFACE;
+            let found = match iid {
+                MEDIATOR => node.mediator.get(),
+                ALIAS => node.alias.get(),
+                state::STORABLE => node.storable.get(),
+                _ => ptr::null_mut(),
+            };
+            if found.is_null() {
+                return NO_INTERFACE;
+            }
+            unsafe {
+                (unknown_vtable(found).retain)(found);
+                *out = found;
+            }
+            return OK;
         };
         unsafe {
             retain(pointer);
@@ -743,6 +765,9 @@ mod family_tests {
                 class_uid: Cell::new(API_CLASS),
                 class_uid_available: Cell::new(index != 1),
                 object_available: Cell::new(true),
+                mediator: Cell::new(ptr::null_mut()),
+                alias: Cell::new(ptr::null_mut()),
+                storable: Cell::new(ptr::null_mut()),
                 class_name: Cell::new(if index == 1 {
                     family
                 } else if index == 2 {
@@ -808,6 +833,172 @@ mod family_tests {
                 "route/reflection reference leak"
             );
         }
+    }
+
+    #[repr(C)]
+    struct ProbeInterface {
+        table: *const *const c_void,
+        refs: Cell<u32>,
+        target: Cell<*mut c_void>,
+        identity: *mut c_void,
+        detach_child: Cell<Option<*const Cell<*mut c_void>>>,
+    }
+    unsafe extern "C" fn probe_query(
+        pointer: *mut c_void,
+        iid: *const Uid,
+        out: *mut *mut c_void,
+    ) -> i32 {
+        let view = unsafe { &*pointer.cast::<ProbeInterface>() };
+        if unsafe { *iid } != UNKNOWN || view.identity.is_null() {
+            return NO_INTERFACE;
+        }
+        unsafe {
+            (unknown_vtable(view.identity).retain)(view.identity);
+            *out = view.identity;
+        }
+        OK
+    }
+    unsafe extern "C" fn probe_retain(pointer: *mut c_void) -> u32 {
+        let view = unsafe { &*pointer.cast::<ProbeInterface>() };
+        let refs = &view.refs;
+        refs.set(refs.get() + 1);
+        refs.get()
+    }
+    unsafe extern "C" fn probe_release(pointer: *mut c_void) -> u32 {
+        let view = unsafe { &*pointer.cast::<ProbeInterface>() };
+        if let Some(child) = view.detach_child.take() {
+            unsafe { &*child }.set(ptr::null_mut());
+        }
+        view.refs
+            .set(view.refs.get().checked_sub(1).expect("double release"));
+        view.refs.get()
+    }
+    unsafe extern "C" fn probe_target(pointer: *mut c_void) -> *mut c_void {
+        unsafe { &*pointer.cast::<ProbeInterface>() }.target.get()
+    }
+    impl ProbeInterface {
+        fn new(table: &[*const c_void; 5], target: *mut c_void, identity: *mut c_void) -> Self {
+            Self {
+                table: table.as_ptr(),
+                refs: Cell::new(1),
+                target: Cell::new(target),
+                identity,
+                detach_child: Cell::new(None),
+            }
+        }
+        fn pointer(&self) -> *mut c_void {
+            ptr::from_ref(self).cast_mut().cast()
+        }
+    }
+    fn probe_vtable() -> [*const c_void; 5] {
+        [
+            probe_query as *const c_void,
+            probe_retain as *const c_void,
+            probe_release as *const c_void,
+            probe_target as *const c_void,
+            probe_target as *const c_void,
+        ]
+    }
+    impl Drop for ProbeInterface {
+        fn drop(&mut self) {
+            assert_eq!(self.refs.get(), 1, "CV preset binding leaked a reference");
+        }
+    }
+
+    #[test]
+    fn cv_preset_target_rechecks_mediator_alias_and_document_before_receipt() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioSynthSlot");
+        let mut ctx = host.context();
+        let device = nodes.pointer(0);
+        ctx.node = hold(device).unwrap();
+        ctx.target = hold(device).unwrap();
+        let table = probe_vtable();
+        let mediator = ProbeInterface::new(&table, device, ptr::null_mut());
+        let alias = ProbeInterface::new(&table, device, ptr::null_mut());
+        let storable = ProbeInterface::new(&table, ptr::null_mut(), device);
+        nodes.nodes[1].mediator.set(mediator.pointer());
+        nodes.nodes[0].alias.set(alias.pointer());
+        nodes.nodes[0].storable.set(storable.pointer());
+
+        let proof =
+            target_proof::TargetProof::observe(nodes.route(&ctx), &mut || ctx.check()).unwrap();
+        assert_eq!(
+            proof.value(),
+            json!({
+                "scope":"cv_preset_target","coverage":"canonical_identity_and_interface_presence",
+                "mediator_target_vs_device":"same","mediator_target_vs_component_alias":"same",
+                "target_istorable":"present","primary_restore_target_verified":false,
+                "atomic_snapshot":false,"mutation_capability":false,
+            })
+        );
+        assert_eq!(storable.refs.get(), 1);
+        mediator.target.set(nodes.pointer(2));
+        assert!(
+            proof
+                .check(&mut || ctx.check())
+                .unwrap_err()
+                .contains("mediator target changed")
+        );
+        mediator.target.set(device);
+        alias.target.set(nodes.pointer(2));
+        assert!(
+            proof
+                .check(&mut || ctx.check())
+                .unwrap_err()
+                .contains("component alias changed")
+        );
+        alias.target.set(device);
+        nodes.nodes[0].alias.set(ptr::null_mut());
+        assert!(
+            proof
+                .check(&mut || ctx.check())
+                .unwrap_err()
+                .contains("component alias changed")
+        );
+        nodes.nodes[0].alias.set(alias.pointer());
+        proof.check(&mut || ctx.check()).unwrap();
+        host.switch_document();
+        assert!(
+            proof
+                .check(&mut || ctx.check())
+                .unwrap_err()
+                .contains("document")
+        );
+    }
+
+    #[test]
+    fn cv_preset_target_rejects_cleanup_detachment_and_reports_documented_absence() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioSynthSlot");
+        let mut ctx = host.context();
+        ctx.node = hold(nodes.pointer(0)).unwrap();
+        ctx.target = hold(nodes.pointer(0)).unwrap();
+        let selected = nodes.pointer(2);
+        let table = probe_vtable();
+        let mediator = ProbeInterface::new(&table, selected, ptr::null_mut());
+        nodes.nodes[1].mediator.set(mediator.pointer());
+
+        let proof =
+            target_proof::TargetProof::observe(nodes.route(&ctx), &mut || ctx.check()).unwrap();
+        assert_eq!(proof.value()["target_istorable"], "absent");
+        assert_eq!(proof.value()["mediator_target_vs_device"], "distinct");
+        assert_eq!(
+            proof.value()["mediator_target_vs_component_alias"],
+            "unavailable"
+        );
+        drop(proof);
+
+        let storable = ProbeInterface::new(&table, ptr::null_mut(), selected);
+        nodes.nodes[2].storable.set(storable.pointer());
+        storable.detach_child.set(Some(&nodes.nodes[1].child));
+        let failure = target_proof::TargetProof::observe(nodes.route(&ctx), &mut || ctx.check());
+        assert!(matches!(failure, Err(reason) if reason.contains("attachment changed")));
+        assert_eq!(storable.refs.get(), 1);
     }
 
     #[test]
