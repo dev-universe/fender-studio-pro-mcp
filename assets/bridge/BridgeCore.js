@@ -176,6 +176,10 @@ class Bridge {
             result = { ok: false, outcome: outcome, native_outcome: outcome,
                 error: { code: "insert_chain_context_changed", message: "The insert-chain document lease changed before publication" } };
         }
+        if (!isFail(result) && req.op === "midiProgramPartAdd"
+            && (!sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            result = { native_outcome: "unknown", stage: "publication" };
+        }
         if (!isFail(result) && req.op === "editChorderAutofill"
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
@@ -299,6 +303,7 @@ class Bridge {
             case "selectTrack": return this.selectTrack(args);
             case "notes": return this.notes(args);
             case "editNotes": return this.editNotes(args);
+            case "midiProgramPartAdd": return this.midiProgramPartAdd(args);
             case "trackTask": return this.trackTask(args);
             case "plugins": return this.plugins(args);
             case "pluginCatalog": return this.pluginCatalog(args);
@@ -389,7 +394,7 @@ class Bridge {
         return result;
     }
 
-    fixtureContext(args) {
+    fixtureContext(args, program) {
         const tp = this.transportPanel();
         if (!tp) return fail("fixture transport is unavailable");
         const switches = {};
@@ -417,10 +422,20 @@ class Bridge {
         if (matches.length !== 1 || matches[0].mediaType !== "Music")
             return fail("fixture requires one exact Music track");
         const track = matches[0];
+        if (program && program.track && program.track !== track) return fail("program track identity changed");
         if (!has(track, "createIterator", "function")) return fail("fixture event enumeration is unavailable");
         const iterator = track.createIterator();
         if (!iterator || !has(iterator, "next", "function")) return fail("fixture event enumeration is incomplete");
-        if (iterator.next() !== null) return fail("fixture events are nonempty or their exhaustion is unknown");
+        const first = iterator.next();
+        let events = [];
+        if (program && program.noteCount !== null) {
+            if (!first || iterator.next() !== null) return fail("the generated part is not the sole event");
+            const part = readMidiProgramPart(first, program.partName, program.noteCount);
+            if (isFail(part)) return part;
+            events = [part];
+        } else if (first !== null) {
+            return fail("fixture events are nonempty or their exhaustion is unknown");
+        }
         for (let i = 0; i < selectedCount; i++) {
             const current = list.getSelectedTrack(i);
             if (!current || tracks.indexOf(current) < 0) return fail("fixture selected-track enumeration is incomplete");
@@ -433,13 +448,114 @@ class Bridge {
             ? c.fixtureTrackState() : { error: "strict fixture track state is unavailable" });
         if (isFail(focused)) return focused;
         if (!focused || focused.label !== args.track) return fail("focused fixture identity changed");
+        if (program) {
+            const time = tp.findParameter("primaryTime"), loop = tp.findParameter("loop");
+            if (switches.start || switches.record || !time || time.value !== 0
+                || !loop || (loop.value !== false && loop.value !== 0)
+                || focused.recordArmed === true || focused.recordArmed === 1
+                || focused.monitor === true || focused.monitor === 1)
+                return fail("stop at song start, disable loop, and disarm the target and its monitor");
+        }
         const context = this.context();
         if (!sameFixtureContext(context, this.requestContext)) return fail("fixture document changed during observation");
+        if (program && context.fileUrl !== this.requestContext.fileUrl) return fail("program document path changed");
+        if (program) program.track = track;
         return { context: { session: context.session, document: context.document, open: true, title: context.title },
             song: { title: context.title, transport: { playing: switches.start, recording: switches.record } },
-            target_track: { exact_match_count: 1, name: args.track, mediaType: "Music", eventCount: 0, events: [], events_complete: true },
+            target_track: { exact_match_count: 1, name: args.track, mediaType: "Music", eventCount: events.length, events: events, events_complete: true },
             selection: { complete: true, tracks: [{ name: args.track, mediaType: "Music" }] },
             focused_track: focused };
+    }
+
+    midiProgramPartBinding(args, program) {
+        if (this.documentMode !== "native") return fail("a native document lease is required");
+        const before = this.fixtureContext(args, program);
+        if (isFail(before)) return before;
+        const report = this.fromComponent(c => c.pluginInspect({
+            kind: "instrument", track: args.track, plugin: "Twin 3", source: "dsp",
+            expected_instance: args.expected_instance
+        }));
+        const native = !isFail(report) && report && report.native;
+        const identity = native && native.instance;
+        if (!native || native.ok !== true || native.source !== "dsp" || report.plugin !== "Twin 3"
+            || !identity || identity.native_class !== "AudioSynth" || identity.class_uid !== kTwin3Class
+            || identity.object_uid !== args.expected_instance)
+            return fail("the exact Twin 3 VST3 route was not established");
+        const after = this.fixtureContext(args, program);
+        if (isFail(after)) return after;
+        if (JSON.stringify(before) !== JSON.stringify(after))
+            return fail("the Music track or document changed during route verification");
+        return after;
+    }
+
+    midiProgramPartAdd(args) {
+        const refused = (reason, detailCode) => {
+            const result = { native_outcome: "not_applied", stage: "preflight", reason: reason };
+            if (detailCode !== undefined) result.detail_code = detailCode;
+            return result;
+        };
+        const uncertain = (stage, detailCode) => {
+            const result = { native_outcome: "unknown", stage: stage };
+            if (detailCode !== undefined) result.detail_code = detailCode;
+            return result;
+        };
+        if (Object.keys(args).sort().join(",") !== "bank_lsb,bank_msb,expected_instance,fixture,program,track"
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
+            || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.expected_instance !== "string" || args.expected_instance.length !== 36
+            || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || typeof args.fixture !== "string" || !isMidiProgramFixture(args.fixture)
+            || [args.bank_msb, args.bank_lsb, args.program].some(value =>
+                typeof value !== "number" || Math.floor(value) !== value || value < 0 || value > 127))
+            return refused("invalid bound MIDI program request");
+        if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit")
+            || !Host.GUI.Commands.findCommand("Musical Functions", "Fender MCP Edit"))
+            return refused("the guarded Track and Note EditTasks are required");
+        const program = { track: null, partName: args.fixture.slice(0, -4) + " CH1", noteCount: null };
+        const original = this.midiProgramPartBinding(args, program);
+        if (isFail(original)) return refused(original.bridgeError);
+        const imported = this.trackTask({
+            ops: [{ op: "importMidiProgramFixture", track: args.track, fixture: args.fixture }]
+        }, true);
+        if (isFail(imported)) return uncertain("import", imported.detail_code);
+        const call = Array.isArray(imported.results) && imported.results.length === 1 && imported.results[0];
+        if (!call || call.op !== "importMidiProgramFixture") return uncertain("import", "import_receipt_invalid");
+        if (call.called === false && ["selection_not_empty", "selection_unavailable"].indexOf(call.detail_code) >= 0)
+            return refused("MIDI program parts require a known empty arrangement selection", call.detail_code);
+        if (call.called === false) return uncertain("import", call.detail_code);
+        if (call.error || call.called !== true || call.returnType !== "number")
+            return uncertain("import", "import_receipt_invalid");
+
+        program.noteCount = 1;
+        const seeded = this.midiProgramPartBinding(args, program);
+        if (isFail(seeded)) return uncertain("seed_verification");
+        const seededPart = seeded.target_track.events[0];
+        const clean = this.editNotes({ track: args.track, ops: [{ op: "delete", filter: { pitch: 60 } }] }, {
+            partName: program.partName,
+            check: () => {
+                const current = this.midiProgramPartBinding(args, program);
+                if (isFail(current)) return current;
+                return JSON.stringify(current.target_track.events[0]) === JSON.stringify(seededPart)
+                    ? current : fail("the generated part changed before note cleanup");
+            }
+        });
+        if (isFail(clean) || !clean || clean.notesBefore !== 1 || !Array.isArray(clean.errors) || clean.errors.length
+            || !Array.isArray(clean.applied) || clean.applied.length !== 1
+            || clean.applied[0].op !== "delete" || clean.applied[0].notes !== 1)
+            return uncertain("note_cleanup", isFail(clean) ? "cleanup_preflight_unverified"
+                : clean && clean.detail_code || "seed_delete_unverified");
+        program.noteCount = 0;
+        const verified = this.midiProgramPartBinding(args, program);
+        if (isFail(verified)) return uncertain("final_verification");
+        const part = verified.target_track.events[0];
+        if (part.start !== seededPart.start || part.end !== seededPart.end) return uncertain("final_verification");
+        return {
+            stage: "complete", import_return_type: call.returnType, track: args.track,
+            expected_instance: args.expected_instance, class_uid: kTwin3Class,
+            channel: 1, bank_msb: args.bank_msb, bank_lsb: args.bank_lsb, program: args.program,
+            part: part, atomic: false, program_events_verified: false, delivery_verified: false
+        };
     }
 
     // An edit command sent to the song's arrangement editor itself. Edit/Copy and
@@ -521,24 +637,34 @@ class Bridge {
     // Track edits through the "Fender MCP Track Edit" task (device/EditTasks): routing,
     // folders, event names. Request in track-edit-request.json, result in
     // track-edit-result.json; the task needs no selection.
-    trackTask(args) {
+    trackTask(args, internalProgramPart) {
+        const taskFailure = (result, detailCode) => {
+            if (internalProgramPart) result.detail_code = detailCode;
+            return result;
+        };
         if (!Array.isArray(args.ops) || !args.ops.length) return fail("ops: one or more track edit operations");
-        if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit")) return fail("the MCP Track Edit task is not installed: reinstall the device, then restart Studio One");
+        if (!internalProgramPart && args.ops.some(op => op && (op.op === "importMidiProgramFixture" || op.op === "midiProgramSelection")))
+            return fail("the MIDI importer and selection are private to the bound program part operation");
+        if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit"))
+            return taskFailure(fail("the MCP Track Edit task is not installed: reinstall the device, then restart Studio One"), "track_task_unavailable");
         const id = newSession();
         this.mailbox.write("track-edit-result.json", { id: null });
-        const armed = this.armTask("track", "track-edit-request.json", id, args.ops);
-        if (isFail(armed)) return armed;
+        const armed = this.armTask("track", "track-edit-request.json", id, args.ops, internalProgramPart);
+        if (isFail(armed)) return taskFailure(armed, "track_task_arm_failed");
         const r = this.runArmedTask("Track", "Fender MCP Track Edit", "track-edit-request.json");
-        if (isFail(r)) return r;
+        if (isFail(r)) return taskFailure(r, "track_task_dispatch_unconfirmed");
         const res = this.mailbox.read("track-edit-result.json");
-        if (!res || res.id !== id) return fail("the track edit task did not report back");
-        if (res.error) return fail(res.error);
+        if (!res || res.id !== id) return taskFailure(fail("the track edit task did not report back"), "track_task_receipt_unavailable");
+        if (res.error) return taskFailure(fail(res.error), "track_task_lease_rejected");
         return { results: res.results };
     }
 
-    armTask(kind, filename, id, ops) {
+    armTask(kind, filename, id, ops, strictDocument) {
         const context = this.context();
         if (!this.requestContext || context.document !== this.requestContext.document || !context.open) return fail("the task document changed before dispatch");
+        if (strictDocument && (this.documentMode !== "native" || !sameFixtureContext(context, this.requestContext)
+            || context.fileUrl !== this.requestContext.fileUrl))
+            return fail("the program document lease changed before dispatch");
         const lease = { id: id, kind: kind, session: this.session, document: context.document, fileUrl: context.fileUrl, title: context.title, expiresAt: Date.now() + 10000 };
         if (this.documentMode === "native") {
             if (this.contextError || !this.nativeDocument || !this.nativeDocument.open) return fail("native task document is unavailable");
@@ -769,7 +895,7 @@ class Bridge {
     // Note edits through the "Fender MCP Edit" task (device/EditTasks): the request goes
     // to edit-request.json, the track's parts are selected, the task's command
     // runs and writes edit-result.json. The selection is restored.
-    editNotes(args) {
+    editNotes(args, programCleanup) {
         if (!Array.isArray(args.ops) || !args.ops.length) return fail("ops: one or more edit operations");
         if (!Host.GUI.Commands.findCommand("Musical Functions", "Fender MCP Edit")) return fail("the MCP Edit task is not installed: reinstall the device, then restart Studio One");
         const initial = this.notes({ track: args.track, maxNotes: 1 });
@@ -782,40 +908,75 @@ class Bridge {
         if (!listed || listed.error || !Array.isArray(listed.events)) return fail(listed && listed.error || "could not enumerate the target parts");
         const ordered = initial.parts.slice().sort((a, b) => a.start - b.start);
         if (listed.events.length !== ordered.length) return fail("the target part list changed");
+        if (programCleanup && (ordered.length !== 1 || ordered[0].name !== programCleanup.partName || ordered[0].noteCount !== 1))
+            return fail("the sole generated part was not located for note cleanup");
+        if (args.ops.some(op => op && op.program_part_name !== undefined))
+            return fail("the MIDI program note guard is private");
         if (args.ops.some(op => op.op === "add") && ordered.some(part => !part.noteCount)) return fail("use trackTask addNotes with an explicit part to add notes to empty parts");
         const applied = [], errors = [], results = [];
-        let notesBefore = 0;
-        const r = this.withTrack(args.track, () => {
+        let notesBefore = 0, detailCode;
+        const recordError = (message, code) => {
+            errors.push(message);
+            if (programCleanup && detailCode === undefined) detailCode = code;
+        };
+        const programSelection = action => this.trackTask({
+            ops: [{ op: "midiProgramSelection", action: action, track: args.track, partName: programCleanup.partName }]
+        }, true);
+        const apply = () => {
+            let programSelectionPrepared = false;
             try {
                 for (let i = 0; i < ordered.length; i++) {
                     const part = ordered[i], expected = listed.events[i];
-                    if (Math.abs(part.start - expected.start) > 0.001 || Math.abs(part.end - expected.end) > 0.001 || part.name !== expected.name) { errors.push("the target part ordering changed"); break; }
+                    if (Math.abs(part.start - expected.start) > 0.001 || Math.abs(part.end - expected.end) > 0.001 || part.name !== expected.name) { recordError("the target part ordering changed", "selection_target_changed"); break; }
                     if (!part.noteCount) { results.push({ part: i + 1, skipped: "empty part" }); continue; }
-                    const selected = this.trackTask({ ops: [{ op: "selectEvent", track: args.track, event: i + 1 }] });
+                    const selected = programCleanup ? programSelection("select")
+                        : this.trackTask({ ops: [{ op: "selectEvent", track: args.track, event: i + 1 }] });
                     const selection = !isFail(selected) && selected.results && selected.results[0];
-                    const actual = selection && selection.selected;
-                    if (!selection || selection.error || !actual) { errors.push(isFail(selected) ? selected.bridgeError : "could not select the target part"); break; }
-                    if (Math.abs(actual.start - expected.start) > 0.001 || Math.abs(actual.end - expected.end) > 0.001 || actual.name !== expected.name) { errors.push("the selected part changed before edit dispatch"); break; }
+                    const actual = selection && (programCleanup ? selection.selection_target : selection.selected);
+                    if (!selection || selection.error || !actual) { recordError(isFail(selected) ? selected.bridgeError : "could not select the target part", "selection_request_unconfirmed"); break; }
+                    if (Math.abs(actual.start - expected.start) > 0.001 || Math.abs(actual.end - expected.end) > 0.001 || actual.name !== expected.name) { recordError("the selected part changed before edit dispatch", "selection_target_changed"); break; }
+                    if (programCleanup) {
+                        programSelectionPrepared = true;
+                        const current = programCleanup.check();
+                        if (isFail(current)) { recordError(current.bridgeError, "cleanup_route_or_part_changed"); break; }
+                        const check = programSelection("check");
+                        const checked = !isFail(check) && check.results && check.results[0];
+                        if (!checked || checked.exact !== true) { recordError("the exact program selection was not verified after the selection task", "selection_post_commit_unverified"); break; }
+                    }
                     const id = newSession();
                     this.mailbox.write("edit-result.json", { id: null });
-                    const armed = this.armTask("notes", "edit-request.json", id, args.ops);
-                    if (isFail(armed)) { errors.push(armed.bridgeError); break; }
+                    const ops = programCleanup
+                        ? [{ op: "delete", filter: { pitch: 60 }, program_part_name: programCleanup.partName }]
+                        : args.ops;
+                    const armed = this.armTask("notes", "edit-request.json", id, ops, !!programCleanup);
+                    if (isFail(armed)) { recordError(armed.bridgeError, "note_task_arm_failed"); break; }
                     const done = this.runArmedTask("Musical Functions", "Fender MCP Edit", "edit-request.json");
-                    if (isFail(done)) { errors.push(done.bridgeError); break; }
+                    if (isFail(done)) { recordError(done.bridgeError, "note_task_dispatch_unconfirmed"); break; }
                     const res = this.mailbox.read("edit-result.json");
-                    if (!res || res.id !== id || res.error) { errors.push(res && res.error || "the edit task did not report back; this part's outcome is unknown"); break; }
+                    if (!res || res.id !== id || res.error) { recordError(res && res.error || "the edit task did not report back; this part's outcome is unknown", "note_task_receipt_unavailable"); break; }
                     notesBefore += res.notesBefore || 0;
                     for (const item of res.applied || []) applied.push(item);
-                    for (const error of res.errors || []) errors.push(error);
+                    for (const error of res.errors || []) recordError(error, res.detail_code || "seed_delete_unverified");
                     results.push({ part: i + 1, applied: res.applied, errors: res.errors });
                     if (errors.length) break;
                 }
                 return { completed: !errors.length };
-            } finally { this.command({ category: "Edit", name: "Deselect All" }); }
-        });
+            } finally {
+                if (!programCleanup) {
+                    this.command({ category: "Edit", name: "Deselect All" });
+                } else if (programSelectionPrepared) {
+                    const release = programSelection("release");
+                    const released = !isFail(release) && release.results && release.results[0];
+                    if (!released || released.released !== true) recordError("the exact program selection release was not verified", "selection_release_unverified");
+                }
+            }
+        };
+        const r = programCleanup ? apply() : this.withTrack(args.track, apply);
         if (isFail(r)) return r;
         const after = this.notes({ track: args.track });
-        return { track: args.track, applied: applied, errors: errors, results: results, notesBefore: notesBefore, parts: isFail(after) ? null : after.parts };
+        const outcome = { track: args.track, applied: applied, errors: errors, results: results, notesBefore: notesBefore, parts: isFail(after) ? null : after.parts };
+        if (detailCode !== undefined) outcome.detail_code = detailCode;
+        return outcome;
     }
 
     selectTrack(args) {
@@ -1209,6 +1370,34 @@ function sameFixtureContext(a, b) {
         && typeof a.session === "string" && !!a.session && a.session === b.session
         && typeof a.document === "string" && !!a.document && a.document === b.document
         && typeof a.title === "string" && a.title === b.title;
+}
+
+const kTwin3Class = "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+
+function isMidiProgramFixture(name) {
+    return name.length === 57 && /^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mid$/.test(name);
+}
+
+function readMidiProgramPart(event, name, noteCount) {
+    if (event.name !== name || event.isMuted || !has(event, "createSequenceIterator", "function"))
+        return fail("the generated Music part identity did not match");
+    const start = event.startTime && event.startTime.seconds;
+    const end = event.endTime && event.endTime.seconds;
+    if (start !== 0 || !Number.isFinite(end) || end <= 0) return fail("the generated Music part range did not match");
+    const notes = event.createSequenceIterator();
+    if (!has(notes, "done", "function") || !has(notes, "next", "function"))
+        return fail("the generated Music part note inventory is unavailable");
+    if (noteCount === 1) {
+        const exhausted = notes.done();
+        if (exhausted !== false && exhausted !== 0) return fail("the generated seed note was not found");
+        const note = notes.next();
+        if (!note || note.pitch !== 60 || !Number.isFinite(note.velocity) || Math.round(note.velocity * 127) !== 1
+            || !note.startTime || note.startTime.musical !== 2.5 || note.isMuted)
+            return fail("the only note did not match the generated seed");
+    }
+    const exhausted = notes.done();
+    if (exhausted !== true && exhausted !== 1) return fail("the generated Music part contains unexpected notes");
+    return { name: name, start: start, end: end, note_count: noteCount };
 }
 
 function has(obj, key, type) {

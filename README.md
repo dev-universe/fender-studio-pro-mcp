@@ -115,6 +115,20 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### FabFilter Twin 3 program changes
+
+Use `midi_program_part_add` with the exact Twin 3 VST3 track, its current
+`expected_instance` and `expected_document`, and MIDI `bank_msb`, `bank_lsb`,
+and `program` numbers from 0 to 127. The track must be empty and exclusively
+selected, with record arm and monitoring off. Stop at the song start and
+disable looping. The tool adds a program-change part without musical notes.
+
+With Twin 3's **Enable MIDI Program Changes** option active, playback of the
+part can change the preset. Check the bank and program numbers in the current
+preset browser, since they can change with the preset library. Actual Studio
+Pro 8.1.1 playback of MSB 0, LSB 0, program 5 loaded **Ambient Mover** and
+matched 1,509 independently observed settings. [R25 evidence](docs/evidence/2026-11-20-twin3-midi-r25.json) · [FabFilter documentation](https://www.fabfilter.com/help/twin/presets/loadingpresets)
+
 ## Inspect files offline
 
 These commands run without connecting to Studio Pro.

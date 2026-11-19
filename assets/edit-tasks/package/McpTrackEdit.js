@@ -253,7 +253,7 @@ function mteDescribe(value, depth) {
 	return out;
 }
 
-function mteApply(context, ops) {
+function mteApply(context, ops, lease) {
 	var fns = context.functions;
 	var root = fns ? fns.root : null;
 	var env = root ? root.environment : null;
@@ -396,7 +396,7 @@ function mteApply(context, ops) {
 		} else if (op.op === "eval") {
             r.error = "arbitrary script execution is not supported";
 		} else if (typeof mtoOps === "object" && mtoOps.hasOwnProperty(op.op)) {
-			var more = mtoOps[op.op](context, op) || {};
+			var more = mtoOps[op.op](context, op, lease) || {};
 			for (var key in more) if (more.hasOwnProperty(key)) r[key] = more[key];
 		} else {
 			r.error = "unknown op " + op.op;
@@ -416,7 +416,7 @@ function McpTrackEditTask() {
 			mteWrite("track-edit-result.json", { id: req && req.id ? req.id : null, error: claim.error });
 			return Host.Results.kResultOk;
 		}
-		mteWrite("track-edit-result.json", { id: req.id, results: mteApply(context, req.ops) });
+		mteWrite("track-edit-result.json", { id: req.id, results: mteApply(context, req.ops, claim.lease) });
 		return Host.Results.kResultOk;
 	};
 }

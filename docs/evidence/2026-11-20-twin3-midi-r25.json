@@ -1,0 +1,33 @@
+{
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "plugin": "FabFilter Twin 3 VST3",
+  "candidate": "1f01565f6b3f9f7bb011ba40c027ea87279d4006",
+  "bank_msb": 0,
+  "bank_lsb": 0,
+  "program": 5,
+  "channel": 1,
+  "insertion_verified": {
+    "note_count": 0,
+    "exact_part_retained": true,
+    "writable_equal": 1509,
+    "requests": 36,
+    "seconds": 4.899
+  },
+  "independent_playback": {
+    "changed_from_baseline": 435,
+    "matches_positive_control": 1509,
+    "writable_compared": 1509,
+    "note_count_before_and_after": 0,
+    "requests": 42,
+    "seconds": 7.196,
+    "visual_preset": "Ambient Mover",
+    "managed_files_restored": 18,
+    "protected_files": 27,
+    "owners_clean": 5,
+    "saved": false,
+    "preference_restored_byte_exact": true,
+    "fixture_disappeared_on_success": true,
+    "total_requests": 147
+  },
+  "other_banks_or_automated_preset_lookup_verified": false
+}
