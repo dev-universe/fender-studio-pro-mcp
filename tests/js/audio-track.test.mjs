@@ -32,7 +32,11 @@ function audioTrackHarness() {
       return track;
     },
   };
-  const context = { functions, mainTrackList: { getInsertPosition: () => tracks.length } };
+  const mainTrackList = {
+    get numTracks() { return tracks.length; },
+    getInsertPosition: () => tracks.length,
+  };
+  const context = { functions, mainTrackList };
   const op = { op: 'addAudioTrack', name: 'Surround scratch', format: '스테레오' };
   return { task, tracks, format, formats, formatList, formatLookups, formatReads, calls, functions, context, op };
 }
@@ -106,6 +110,18 @@ test('invalid names and formats refuse before native format lookup or creation',
       assert.equal(h.calls.length, 0);
     }
   }
+});
+
+test('a blank song can create its first audio track when the host has no insertion position', () => {
+  const h = audioTrackHarness();
+  h.tracks.length = 0;
+  h.context.mainTrackList.getInsertPosition = () => -1;
+  const result = h.task.run([h.op], h.context).results[0];
+  assert.equal(result.created, true, result.error);
+  assert.deepEqual(h.tracks.map(track => track.name), [h.op.name]);
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].index, 0);
+  assert.equal(h.calls[0].format, h.format);
 });
 
 test('an invalid insertion position refuses creation', () => {
