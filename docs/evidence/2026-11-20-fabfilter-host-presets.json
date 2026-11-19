@@ -203,5 +203,17 @@
     "versions_attempted": 23,
     "verified": 22,
     "mismatch": 1
+  },
+  "pro_q_4_r19_explicit_workflow": {
+    "writable_rows": 736,
+    "host_preset_automatic_matching": 735,
+    "captured_state_automatic_matching": 735,
+    "explicit_write_target": "vstp1073741826",
+    "target_matching_after_explicit_write": 736,
+    "original_matching_after_explicit_write": 736,
+    "requests": 62,
+    "elapsed_seconds": 7.146,
+    "protected_files_matching": 22,
+    "closed_without_saving": true
   }
 }

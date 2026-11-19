@@ -62,7 +62,23 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 296,
+  "distinct_individual_roundtrips_including_representative": 697,
+  "r15_named_control_groups": [
+    {"plugin": "One", "individual_controls": 31, "typed_snapshot_size": 167, "requests": 261, "elapsed_seconds": 22.990},
+    {"plugin": "Pro-R", "individual_controls": 85, "typed_snapshot_size": 221, "requests": 695, "elapsed_seconds": 57.013},
+    {"plugin": "Pro-R 2", "individual_controls": 136, "typed_snapshot_size": 272, "requests": 1376, "elapsed_seconds": 109.712},
+    {"plugin": "Pro-MB", "individual_controls": 151, "typed_snapshot_size": 287, "requests": 1526, "elapsed_seconds": 135.783}
+  ],
+  "r15_internal_roundtrips": {
+    "parameter": "vstp1073741826",
+    "actual_host": [
+      {"plugin": "Pro-Q 4", "typed_snapshot_size": 736, "requests": 39, "elapsed_seconds": 4.573},
+      {"plugin": "Twin 3", "typed_snapshot_size": 1509, "requests": 55, "elapsed_seconds": 6.219}
+    ],
+    "public_sdk_elapsed_seconds": 1.237,
+    "host_preset_restoration_qualified": false,
+    "protected_files_matching_at_closure": 19
+  },
   "r11_named_control_groups": [
     {
       "plugin": "Pro-DS",
