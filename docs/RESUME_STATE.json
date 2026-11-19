@@ -21810,7 +21810,7 @@
     "native60_candidate13_preserved": true
   },
   "installed_source_commit": "15304714c14cf8d765dd0acb08dbb59463924129",
-  "public_main_commit": "7242a9867a7de3b0309a072dbe5082a7e04f31f2",
+  "public_main_commit": "115f6bd6da7e288f799c84d6a890c15da5b3bbbc",
   "closed_sessions_nov18": [
     "c9ee2273f0c00e31f1860ad7ea104bf3",
     "374088cd08676d823a2063ccf1b191b1",
@@ -21891,7 +21891,7 @@
     "twin3_native_program_R5_rpc": 49,
     "twin3_settings_restored_exact": true,
     "fabfilter_writable_parameter_rows": 12455,
-    "fabfilter_next_live_route": "FRESH_SCRATCH_ACTUAL_MIDI_EVENTS",
+    "fabfilter_next_live_route": "FRESH_LSB_NONZERO_BANK_TWIN3_AND_EXACT_PROQ4_INSERT_ROUTE",
     "fabfilter_next_offline_route": "VST3_PUBLIC_COMPONENT_AND_CONTROLLER_STATE_ROUND_TRIP",
     "volt_and_keystation_detected": false,
     "cv_r87_independent_selection_verified": true,
@@ -21904,6 +21904,17 @@
     "micro_r6_full_snapshot_writable_rows": 145,
     "micro_r6_pitch_bend_internal_peer_changed": true,
     "micro_public_controller_reproduced_internal_peer_change": false,
-    "overall_completion_ETA": null
+    "overall_completion_ETA": null,
+    "track_selection_merged_main": "115f6bd6da7e288f799c84d6a890c15da5b3bbbc",
+    "fabfilter_named_sweep_r7_control_count": 165,
+    "twin3_factory_r8_positive_midi_program": 5,
+    "twin3_factory_r8_positive_writable_changes": 435,
+    "twin3_factory_r8_positive_mcp_requests": 39,
+    "twin3_factory_r8_msb_restoration_accepted": false,
+    "twin3_factory_r8_msb_restoration_match": 1073,
+    "twin3_factory_r8_protected_files": 15,
+    "twin3_factory_r8_program_option_restored": true,
+    "fabfilter_factory_actual_midi_timeline_pass": 1,
+    "graph_registry_references": 273
   }
 }

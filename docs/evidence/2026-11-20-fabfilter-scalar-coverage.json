@@ -1,0 +1,78 @@
+{
+  "host": "8.1.1.113103 macOS arm64",
+  "native_bridge": 59,
+  "scope": "individual write/read/restore with a full typed writable-state comparison",
+  "named_control_groups": [
+    {
+      "plugin": "Micro",
+      "individual_controls": 9,
+      "types": {
+        "Float": 6,
+        "Toggle": 3
+      },
+      "typed_snapshot_size": 145,
+      "requests": 87,
+      "elapsed_seconds": 9.582
+    },
+    {
+      "plugin": "Pro-C 2",
+      "individual_controls": 46,
+      "types": {
+        "Float": 24,
+        "Integer": 7,
+        "Toggle": 15
+      },
+      "typed_snapshot_size": 182,
+      "requests": 383,
+      "elapsed_seconds": 34.001
+    },
+    {
+      "plugin": "Pro-C 3",
+      "individual_controls": 100,
+      "types": {
+        "Float": 40,
+        "Integer": 32,
+        "Toggle": 28
+      },
+      "typed_snapshot_size": 236,
+      "requests": 815,
+      "elapsed_seconds": 66.606
+    },
+    {
+      "plugin": "Simplon",
+      "individual_controls": 19,
+      "types": {
+        "Float": 7,
+        "Integer": 6,
+        "Toggle": 6
+      },
+      "typed_snapshot_size": 155,
+      "requests": 167,
+      "elapsed_seconds": 15.38
+    }
+  ],
+  "micro_virtual_controls": {
+    "host_bypass": {
+      "verified": true
+    },
+    "pitch_bend": {
+      "match": false,
+      "peer": "vstp1073741825"
+    }
+  },
+  "total_observed_writable": 12455,
+  "fully_exhaustive_products": 0,
+  "r8_midi_twin3": {
+    "actual_preset_applied": "Ambient Mover",
+    "program": 5,
+    "bank": 0,
+    "changed_writable": 435,
+    "match_previous_gui_recall": 1507,
+    "compared": 1509,
+    "elapsed_seconds": 5.96,
+    "requests": 39,
+    "bank4_msb_restored": false,
+    "bank4_passing_value_count": 1073,
+    "protected_files_matching": 15
+  }
+}
