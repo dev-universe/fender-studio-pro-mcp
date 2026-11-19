@@ -613,7 +613,7 @@
     "PAUSEDNov18before06KST. Publicmain15304714/PR4releaseCOMPLETE; mainCLI/Native59installedrestored,metadata46/state7,doctorcurrent,noDAQafterrestore. Native60source921f889/187andcandidate13+manifest2preserved. R83actual7halt;R84GUIread8ACCEPTED;R85actual6GUI0peerFXunmutehalt,Native60lifecycle0,NoSave/wait0/preservation. FirstREADONLYmute/group/link/operatorcontextdiagnosis;doNOTreplayclosedR83/R84/R85. SeeNov18handoff15beforeanyNative60reinstall/build;oldnormalartifactmapcurrentmismatchbyintent.",
     "Native59R81actual27remainlastfullCVqualified. Native60boundedsource/normalmetadata8/SDKreviewcompletebutlifecycleactual0. Reusecompletedstaticbodies/design6/sourceR2/R8andR85Rust31proof/runtimekitreview;newlivecontractrequiresresolvedpreparationandfreshnormal187/13/session/doc/instance. Fixed15/43done28remaining(24software4hardware).",
     "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
-    "SHARED-EVENT remainsunstarted. Prepare finitepress/release/neutral/duplicate/contextloss/unknownretention plusindependentreceived/heldwitness. Do notreplayChorder/InputFilter128currentvalues, Chorder128modelroles/selector240/persistence339, Multi150/3752 completedrequests.",
+    "SHARED-EVENT partial: R92 verified two scheduled Chorder note-on/note-off cycles, exact held and neutral values and 268 writable values after playback. Remaining exact overlapping repeats, live route, context loss and unknown retention. Reuse accepted Chorder/InputFilter current reads and model evidence, and keep the four hardware units separate.",
     "Continue existing Ampire/Pedalboard alias/linkedmix/hostbypass/structure, Mustang/Rumble actualmodeldomain, Chorder5actions/otherinputmodels, instrumentMIDI/macros/otherpadFocus and remaining6presetclasses withnewfinitecontracts. OfficialinstallercomparisonUSER_SKIPPED: neveraskpath/MyFenderagainorwaitforit; do notclaimsignatureproblemresolved.",
     "Genericnestedgraph create/connect/reorder/delete requires actualowner/endpoint/transaction/independentedgeevidence and whole topology/state restore. ExistingSplitter42/twoMixtoolroundtrip/directFXInsertsread arecompleteevidence; noreplay.",
     "ScopeR68 boundedprimarycapture/hold/oneRetrigger/full41restore81/12 accepted, wholeCONTROL-SCOPE remainspartialfordirectarmed/completionandhiddenmemory/inactiveCmappinglimits. Canonicalpixelhashofflinecorrectioncompleted withclosedcopyaudit; noactualScope replayforBMPpadding. CONTROL-VOCAL completefromoldDSPproof+R71host/UI36/6; noreplay. OlderR69/R70/R65failures remainfailed.",
@@ -22068,6 +22068,16 @@
     "cv_r93_protected_files": 19,
     "cv_r93_restored_managed_files": 18,
     "cv_r93_late_document_result_guard_review": "BLOCKED_PENDING_FIX",
-    "cv_r93_settings_only_load_verified": false
+    "cv_r93_settings_only_load_verified": false,
+    "chorder_r92_two_schedule_press_release_verified": true,
+    "chorder_r92_held_windows": 5,
+    "chorder_r92_post_neutral": true,
+    "chorder_r92_exact_writable": 268,
+    "chorder_r92_primary_requests": 113,
+    "chorder_r92_primary_seconds": 14.055,
+    "chorder_r92_all_requests": 161,
+    "chorder_r92_protected_files": 19,
+    "chorder_r92_physical_midi_verified": false,
+    "chorder_r92_signal_verified": false
   }
 }
