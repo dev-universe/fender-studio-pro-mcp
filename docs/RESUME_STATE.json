@@ -609,7 +609,7 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "NOV20 CV: R89/R94 observation released. R93 alias capture matched the host primary. R101 verified the 3991-byte factory primary without writes, shipped by PR14. R106 verified the integrated settings-only apply twice against 97 values, seven unassigned ports and 67 channels, then restored. Check and merge PR15, verify nonempty hardware assignments separately, and clear the three retired own index entries.",
+    "NOV20 CV: R89/R94 observation released. R93 alias capture matched the host primary. R101 verified the 3991-byte factory primary without writes, shipped by PR14. R106 verified the integrated settings-only apply against 97 values, seven unassigned ports and 67 channels, then restored. PR15 shipped to main after both required checks. Verify nonempty hardware assignments separately and clear the three retired own index entries.",
     "FABFILTER: 23 official VST3 variants inserted and enumerated, 1867 of 12455 writable rows individually checked. Host presets 22 automatic matches, Pro-Q 4 requires one explicit separate internal write per direction. Twin 3 R25/R28 verified MCP-generated no-note part and Ambient Mover 0/0/5, merged PR13. Test One and Twin 2 from the exact signed candidate one product at a time. Continue Pro-Q 4 effect MIDI routing, all 23 manufacturer preset paths and full writable qualification.",
     "PAUSEDNov18before06KST. Publicmain15304714/PR4releaseCOMPLETE; mainCLI/Native59installedrestored,metadata46/state7,doctorcurrent,noDAQafterrestore. Native60source921f889/187andcandidate13+manifest2preserved. R83actual7halt;R84GUIread8ACCEPTED;R85actual6GUI0peerFXunmutehalt,Native60lifecycle0,NoSave/wait0/preservation. FirstREADONLYmute/group/link/operatorcontextdiagnosis;doNOTreplayclosedR83/R84/R85. SeeNov18handoff15beforeanyNative60reinstall/build;oldnormalartifactmapcurrentmismatchbyintent.",
     "Native59R81actual27remainlastfullCVqualified. Native60boundedsource/normalmetadata8/SDKreviewcompletebutlifecycleactual0. Reusecompletedstaticbodies/design6/sourceR2/R8andR85Rust31proof/runtimekitreview;newlivecontractrequiresresolvedpreparationandfreshnormal187/13/session/doc/instance. Fixed15/43done28remaining(24software4hardware).",
@@ -22283,6 +22283,21 @@
     "ampire_r112_seconds": 4.449,
     "ampire_r112_protected_files": 36,
     "ampire_verified_required_preset_cases": 2,
-    "preset_ampire_complete": true
+    "preset_ampire_complete": true,
+    "cv_r106_merged_main": "8575dcc10d7819479a067466af1adf0daa9561d0",
+    "cv_r106_merged_tree_matches_candidate": true,
+    "fabfilter_one_r29_halted_at_main_index_change": true,
+    "fabfilter_one_r30_note_free_program_part_verified": true,
+    "fabfilter_one_r30_program": 0,
+    "fabfilter_one_r30_intended_preset": "Pink Noise",
+    "fabfilter_one_r30_played_title": "Default Sound",
+    "fabfilter_one_r30_writable_compared": 167,
+    "fabfilter_one_r30_target_writable_matches": 150,
+    "fabfilter_one_r30_playback_requests": 25,
+    "fabfilter_one_r30_playback_seconds": 3.626,
+    "fabfilter_one_r30_total_requests": 157,
+    "fabfilter_one_r30_reselect_internal_restored": true,
+    "fabfilter_one_r30_protected_files": 29,
+    "fabfilter_one_r30_preference_restored": true
   }
 }
