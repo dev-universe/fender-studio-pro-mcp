@@ -62,6 +62,41 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
+  "distinct_individual_roundtrips_including_representative": 296,
+  "r11_named_control_groups": [
+    {
+      "plugin": "Pro-DS",
+      "individual_controls": 20,
+      "types": {"Float": 10, "Integer": 1, "Toggle": 9},
+      "typed_snapshot_size": 156,
+      "requests": 175,
+      "elapsed_seconds": 18.912
+    },
+    {
+      "plugin": "Pro-G",
+      "individual_controls": 35,
+      "types": {"Float": 24, "Integer": 2, "Toggle": 9},
+      "typed_snapshot_size": 171,
+      "requests": 295,
+      "elapsed_seconds": 28.568
+    },
+    {
+      "plugin": "Pro-L 2",
+      "individual_controls": 32,
+      "types": {"Float": 8, "Integer": 7, "Toggle": 17},
+      "typed_snapshot_size": 168,
+      "requests": 271,
+      "elapsed_seconds": 24.762
+    },
+    {
+      "plugin": "Pro-L",
+      "individual_controls": 19,
+      "types": {"Float": 7, "Integer": 5, "Toggle": 7},
+      "typed_snapshot_size": 155,
+      "requests": 167,
+      "elapsed_seconds": 16.461
+    }
+  ],
   "r8_midi_twin3": {
     "actual_preset_applied": "Ambient Mover",
     "program": 5,
@@ -74,5 +109,19 @@
     "bank4_msb_restored": false,
     "bank4_passing_value_count": 1073,
     "protected_files_matching": 15
+  },
+  "r9_midi_twin3": {
+    "bank_msb": 0,
+    "bank_lsb": 4,
+    "presets_observed": ["Default Sound", "Clean", "Default Sound"],
+    "programs": [59, 60],
+    "apply_changed_writable": 370,
+    "restore_matching_writable": 1505,
+    "compared": 1509,
+    "mismatches": ["vstp1073741825", "vstp1073741826", "vstp1073741863", "vstp1073741959"],
+    "closed_without_saving": true,
+    "protected_files_matching": 16,
+    "requests": 88,
+    "elapsed_seconds": 12.232
   }
 }

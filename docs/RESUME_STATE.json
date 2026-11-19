@@ -21928,6 +21928,12 @@
     "twin3_factory_r9_protected_files": 16,
     "twin3_factory_r9_program_option_restored": true,
     "fixed_midi_import_signature_statically_verified": true,
-    "fixed_midi_import_actual_verified": false
+    "fixed_midi_import_actual_verified": false,
+    "graph_registry_add_remove_pair_static_verified": true,
+    "fabfilter_named_sweep_r11_control_count": 106,
+    "fabfilter_named_sweep_r11_requests": 908,
+    "fabfilter_named_sweep_r11_elapsed_seconds": 88.703,
+    "fabfilter_named_sweep_r11_protected_files": 17,
+    "fabfilter_distinct_individual_write_read_restore_rows": 296
   }
 }
