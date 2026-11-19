@@ -233,6 +233,19 @@ call. R89 qualifies the configured empty structure and its observed state
 preservation. Choice interpretation, port writes, preset output preservation,
 physical routing and saved state require their own evidence.
 
+### CV preset target inspection
+
+Use `plugin_inspect` with `kind:"instrument"`, `plugin:"CV Instrument"`,
+`source:"dsp"`, `include_nodes:true` and `node_scope:"cv_preset_target"`.
+Supply the exact instrument track, current document token and DSP instance ID.
+
+In actual 8.1.1 R94, the preset mediator target matched the component alias,
+was distinct from the Device, and exposed `IStorable`. Independent reads matched
+all 97 writable settings, all seven direct port observations and all 67 mixer
+channels. The bridge discards the observation if the active document changes
+before the reply is formed. Settings-only loading and assigned route preservation
+remain under investigation. [R94 verification](evidence/2026-11-20-cv-preset-target-r94.json)
+
 ## Exact parameter values and digests
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
