@@ -22094,6 +22094,8 @@
     "twin3_r23_played": false,
     "cv_r94_candidate": "ac6e37c3483a588b968bb0d7e91787c293d4cb10",
     "cv_r94_public_pr": 12,
+    "cv_r94_merged_main": "bf78650f61463d67b91063630d262032b353202a",
+    "cv_r94_merged_tree_matches_candidate": true,
     "cv_r94_late_document_result_regression_pass": true,
     "cv_r94_exact_writable": 97,
     "cv_r94_ports_exact": 7,
