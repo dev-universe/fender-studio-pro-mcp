@@ -13,7 +13,7 @@ use crate::{
     config::Config,
     midi::MidiWakeup,
     model::{HostContext, OperationError, Outcome, Receipt},
-    operation::{Operation, Request},
+    operation::{NodeScope, Operation, Request},
 };
 
 mod chorder_chords;
@@ -271,6 +271,7 @@ fn execute(
     if response.document != context.document
         || (matches!(operation, Operation::ExternalPortMenu(_))
             || cv_port_structure::requested(&operation)
+            || cv_preset_target_requested(&operation)
             || rumble_serialization::requested(&operation)
             || rumble_processor_state::requested(&operation)
             || rumble_parameters::requested(&operation)
@@ -837,7 +838,14 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
     }
 }
 
+fn cv_preset_target_requested(operation: &Operation) -> bool {
+    matches!(operation, Operation::PluginInspect(query) if matches!(query.node_scope, Some(NodeScope::CvPresetTarget)))
+}
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
+    if cv_preset_target_requested(operation) {
+        *result = Value::Null;
+        return;
+    }
     if cv_port_structure::requested(operation) {
         cv_port_structure::invalidate(result, false);
         return;
@@ -1325,6 +1333,26 @@ mod tests {
             "rumble_named_parameters_unavailable"
         );
         assert!(!receipt.result.to_string().contains("PRIVATE"));
+    }
+
+    #[test]
+    fn changed_cv_preset_target_receipt_discards_all_native_evidence() {
+        let mut args = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument",
+            "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "include_nodes":true,"node_scope":"cv_preset_target"});
+        let operation = Operation::from_parts("plugin_inspect", args.clone()).unwrap();
+        let stale = json!({"plugin":"CV Instrument","native":{"ok":true,
+            "instance":{"object_uid":args["expected_instance"]},"node_report":{"scope":"cv_preset_target",
+            "target_istorable":"present"}}});
+        let mut result = stale.clone();
+        invalidate_gui_evidence(&operation, &mut result);
+        assert_eq!(result, Value::Null);
+
+        args["node_scope"] = json!("cv_ports");
+        let ordinary = Operation::from_parts("plugin_inspect", args).unwrap();
+        let mut result = stale.clone();
+        invalidate_gui_evidence(&ordinary, &mut result);
+        assert_eq!(result, stale);
     }
 
     #[test]

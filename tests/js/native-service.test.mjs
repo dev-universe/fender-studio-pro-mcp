@@ -1118,3 +1118,23 @@ test('cv_preset_target returns the bounded native receipt for its exact document
     expectedSession: session, expectedDocument: document }).ok, true);
   assert.equal(dispatches, 1);
 });
+
+test('cv_preset_target discards native evidence when the document switches before publication', () => {
+  const h = bridgeHarness();
+  const context = h.current();
+  const scope = 'cv_preset_target';
+  let dispatches = 0;
+  h.bridge.component = { pluginInspect() {
+    dispatches++;
+    h.manager.activeDocument = { title: 'Other', path: { url: 'file:///other.song' } };
+    return { native: { ok: true, instance, node_report: { scope, target_istorable: 'present' } } };
+  } };
+  const reply = h.request({ op: 'pluginInspect', args: { node_scope: scope },
+    expectedSession: context.session, expectedDocument: context.document });
+  assert.equal(dispatches, 1);
+  assert.notEqual(reply.document, context.document);
+  assert.equal(reply.ok, false);
+  assert.equal(reply.code, 'native_context_lost');
+  assert.equal(reply.result, undefined);
+  assert.ok(!JSON.stringify(reply).includes('node_report'));
+});
