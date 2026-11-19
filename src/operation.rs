@@ -119,6 +119,8 @@ pub enum Operation {
     TrackTask(TrackTask),
     #[serde(rename = "editNotes", alias = "notes_edit")]
     EditNotes(EditNotes),
+    #[serde(rename = "midiProgramPartAdd", alias = "midi_program_part_add")]
+    MidiProgramPartAdd(MidiProgramPartAdd),
     #[serde(rename = "markers")]
     Markers(Empty),
     #[serde(rename = "addMarker")]
@@ -1125,6 +1127,19 @@ pub struct EditNotes {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct MidiProgramPartAdd {
+    pub track: String,
+    pub expected_instance: String,
+    #[schemars(range(min = 0, max = 127))]
+    pub bank_msb: u8,
+    #[schemars(range(min = 0, max = 127))]
+    pub bank_lsb: u8,
+    #[schemars(range(min = 0, max = 127))]
+    pub program: u8,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "op", rename_all = "camelCase", deny_unknown_fields)]
 pub enum NoteEdit {
     Transpose {
@@ -2030,6 +2045,25 @@ impl Operation {
             }
             Self::TrackTask(task) if task.ops.is_empty() || task.ops.len() > 100 => {
                 return Err(invalid("Track tasks require between 1 and 100 operations"));
+            }
+            Self::MidiProgramPartAdd(change) => {
+                validate_instance_uid(Some(&change.expected_instance))?;
+                if change.track.trim().is_empty()
+                    || change.track.len() > 256
+                    || change.track.chars().any(char::is_control)
+                    || change.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || change
+                        .expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                    || [change.bank_msb, change.bank_lsb, change.program]
+                        .into_iter()
+                        .any(|value| value > 127)
+                {
+                    return Err(invalid(
+                        "MIDI program parts require an exact track, a canonical native instance and MIDI values in 0..127",
+                    ));
+                }
             }
             Self::EditNotes(task) if task.ops.is_empty() || task.ops.len() > 100 => {
                 return Err(invalid("Note edits require between 1 and 100 operations"));

@@ -125,6 +125,18 @@ function mcpApply(context, ops) {
 			case "delete":
 				if (!op.filter) { errors.push("delete needs a filter (refusing to delete every note)"); break; }
 				if (!mcpHas(fns, "deleteEvent")) { errors.push("delete not available"); break; }
+				if (op.program_part_name !== undefined) {
+					var seed = notes.length === 1 && hit.length === 1 ? hit[0] : null;
+					var region = seed && seed.region;
+					if (ops.length !== 1 || typeof op.program_part_name !== "string" || op.program_part_name.length !== 57
+						|| !/^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12} CH1$/.test(op.program_part_name)
+						|| !seed || !region || region.name !== op.program_part_name
+						|| seed.pitch !== 60 || mcpStart(seed) !== 2.5
+						|| typeof seed.velocity !== "number" || Math.round(seed.velocity * 127) !== 1 || seed.isMuted) {
+						errors.push("the selected seed note or its generated region did not match");
+						break;
+					}
+				}
 				for (var e = 0; e < hit.length; e++) { fns.deleteEvent(hit[e]); count++; }
 				break;
 			case "add":
