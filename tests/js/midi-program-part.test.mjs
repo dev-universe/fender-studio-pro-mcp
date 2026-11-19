@@ -18,6 +18,7 @@ function harness() {
     classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0, integerNoteDone: false,
     document: { token: 'ndc1:0000000000000001:1', title: 'Scratch', fileUrl: 'file:///scratch/song.song' },
     nextDocument: null,
+    selectMode: 'immediate', pendingSelection: null,
     onImport() {}, onSelect() {}, onInspect() {}, onTrackTask() {},
   };
   const iterator = list => {
@@ -70,9 +71,13 @@ function harness() {
     createSelectFunctions: () => ({
       select(event) {
         assert.equal(this.selectExclusive, false);
-        state.selected.push(event);
         selectionActions.push('select');
-        state.onSelect();
+        if (state.selectMode === 'immediate') {
+          state.selected.push(event);
+          state.onSelect();
+        } else {
+          state.pendingSelection = event;
+        }
       },
     }),
     unselect(event) {
@@ -105,7 +110,14 @@ function harness() {
   const handlers = {
     'Track/Fender MCP Track Edit': () => {
       state.onTrackTask(host.read('track-edit-request.json').ops[0]);
-      return trackTask.performEdit(song.context);
+      const result = trackTask.performEdit(song.context);
+      const pending = state.pendingSelection;
+      state.pendingSelection = null;
+      if (pending && state.selectMode === 'deferred') {
+        state.selected.push(pending);
+        state.onSelect();
+      }
+      return result;
     },
     'Musical Functions/Fender MCP Edit': () => noteTask.performEdit({
       iterator: iterator(state.selected.flatMap(event => event.notes)),
@@ -156,6 +168,30 @@ test('track events use exact null and note sequences admit bounded integer exhau
     assert.equal(response.result.stage, 'complete');
     assert.deepEqual(h.edits, ['import', 'delete']);
     assert.deepEqual(h.selectionActions, ['select', 'unselect']);
+  }
+});
+
+test('a staged selection is verified only after the separate task returns', () => {
+  const h = harness();
+  h.state.selectMode = 'deferred';
+  const response = h.request();
+  assert.equal(response.result.stage, 'complete');
+  assert.deepEqual(h.edits, ['import', 'delete']);
+  assert.deepEqual(h.selectionActions, ['select', 'unselect']);
+});
+
+test('a dropped selection or a peer added at commit prevents the note task', () => {
+  for (const mode of ['dropped', 'deferred']) {
+    const h = harness();
+    const peer = { name: 'Selection to preserve', notes: [] };
+    h.state.selectMode = mode;
+    h.state.onSelect = () => { h.state.selected.push(peer); };
+    const response = h.request();
+    assert.deepEqual(response.result, { native_outcome: 'unknown', stage: 'note_cleanup', detail_code: 'selection_post_commit_unverified' });
+    assert.deepEqual(h.edits, ['import']);
+    assert.deepEqual(h.selectionActions, ['select']);
+    assert.equal(h.song.keys.events[0].notes.length, 1);
+    assert.deepEqual(h.state.selected, mode === 'deferred' ? [h.song.keys.events[0], peer] : []);
   }
 });
 
@@ -273,18 +309,19 @@ test('replacement of the issued selection within the same document prevents a re
 });
 
 test('post-write mismatches report unknown and leave unverified notes untouched', () => {
-  for (const [alter, stage] of [
+  for (const [alter, stage, detail] of [
     [h => { h.state.numeric = undefined; }, 'import'],
     [h => { h.state.onImport = () => { h.state.classUid = 'changed route'; }; }, 'seed_verification'],
     [h => { h.state.onImport = part => { part.notes.push({ pitch: 64 }); }; }, 'seed_verification'],
     [h => { h.state.onImport = part => { part.createSequenceIterator = () => ({ next: () => part.notes[0], done: () => '' }); }; }, 'seed_verification'],
-    [h => { h.state.noteRegion = { name: 'some other part' }; }, 'note_cleanup'],
+    [h => { h.state.noteRegion = { name: 'some other part' }; }, 'note_cleanup', 'seed_region_mismatch'],
   ]) {
     const h = harness();
     alter(h);
     const response = h.request();
     assert.equal(response.result.native_outcome, 'unknown');
     assert.equal(response.result.stage, stage);
+    if (detail) assert.equal(response.result.detail_code, detail);
     assert.deepEqual(h.edits, ['import']);
     assert.ok(h.song.keys.events[0].notes.length > 0);
   }

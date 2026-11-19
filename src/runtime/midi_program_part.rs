@@ -173,28 +173,47 @@ pub(super) fn classify(
     let mut observation = unverified(change, basename, stage);
     if response.ok
         && same_context
-        && stage == "import"
         && result["native_outcome"] == "unknown"
         && let Some(code) = detail_code.filter(|code| {
             matches!(
-                *code,
-                "fixture_request_invalid"
-                    | "target_track_unresolved"
-                    | "target_track_not_music"
-                    | "track_iterator_unavailable"
-                    | "track_has_events"
-                    | "track_iterator_exhaustion_unknown"
-                    | "importer_unavailable"
-                    | "import_time_unavailable"
-                    | "fixture_url_unavailable"
-                    | "fixture_file_unavailable"
-                    | "import_native_lease_changed"
-                    | "import_receipt_invalid"
-                    | "track_task_unavailable"
-                    | "track_task_arm_failed"
-                    | "track_task_dispatch_unconfirmed"
-                    | "track_task_receipt_unavailable"
-                    | "track_task_lease_rejected"
+                (stage, *code),
+                (
+                    "import",
+                    "fixture_request_invalid"
+                        | "target_track_unresolved"
+                        | "target_track_not_music"
+                        | "track_iterator_unavailable"
+                        | "track_has_events"
+                        | "track_iterator_exhaustion_unknown"
+                        | "importer_unavailable"
+                        | "import_time_unavailable"
+                        | "fixture_url_unavailable"
+                        | "fixture_file_unavailable"
+                        | "import_native_lease_changed"
+                        | "import_receipt_invalid"
+                        | "track_task_unavailable"
+                        | "track_task_arm_failed"
+                        | "track_task_dispatch_unconfirmed"
+                        | "track_task_receipt_unavailable"
+                        | "track_task_lease_rejected"
+                ) | (
+                    "note_cleanup",
+                    "cleanup_preflight_unverified"
+                        | "selection_target_changed"
+                        | "selection_request_unconfirmed"
+                        | "selection_post_commit_unverified"
+                        | "cleanup_route_or_part_changed"
+                        | "note_task_arm_failed"
+                        | "note_task_dispatch_unconfirmed"
+                        | "note_task_receipt_unavailable"
+                        | "seed_notes_not_singular"
+                        | "seed_notes_incomplete"
+                        | "seed_note_identity_mismatch"
+                        | "seed_region_mismatch"
+                        | "seed_document_lease_changed"
+                        | "seed_delete_unverified"
+                        | "selection_release_unverified"
+                )
             )
         })
     {
@@ -325,6 +344,12 @@ mod tests {
         assert_eq!(outcome, Outcome::Unknown);
         assert!(evidence.get("detail_code").is_none());
         response.result = json!({"stage":"note_cleanup","native_outcome":"unknown","detail_code":"track_has_events"});
+        assert!(observe(&response).1.get("detail_code").is_none());
+        response.result["detail_code"] = json!("selection_post_commit_unverified");
+        let (outcome, evidence, _) = observe(&response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert_eq!(evidence["detail_code"], "selection_post_commit_unverified");
+        response.result["detail_code"] = json!("file:///private/selection");
         assert!(observe(&response).1.get("detail_code").is_none());
         response.result = json!({"stage":"preflight","native_outcome":"not_applied","reason":SELECTION_PREFLIGHT,"detail_code":"selection_not_empty"});
         let (outcome, evidence, _) = observe(&response);

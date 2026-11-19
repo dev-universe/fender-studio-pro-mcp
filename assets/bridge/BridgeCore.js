@@ -542,7 +542,8 @@ class Bridge {
         if (isFail(clean) || !clean || clean.notesBefore !== 1 || !Array.isArray(clean.errors) || clean.errors.length
             || !Array.isArray(clean.applied) || clean.applied.length !== 1
             || clean.applied[0].op !== "delete" || clean.applied[0].notes !== 1)
-            return uncertain("note_cleanup");
+            return uncertain("note_cleanup", isFail(clean) ? "cleanup_preflight_unverified"
+                : clean && clean.detail_code || "seed_delete_unverified");
         program.noteCount = 0;
         const verified = this.midiProgramPartBinding(args, program);
         if (isFail(verified)) return uncertain("final_verification");
@@ -912,30 +913,34 @@ class Bridge {
             return fail("the MIDI program note guard is private");
         if (args.ops.some(op => op.op === "add") && ordered.some(part => !part.noteCount)) return fail("use trackTask addNotes with an explicit part to add notes to empty parts");
         const applied = [], errors = [], results = [];
-        let notesBefore = 0;
+        let notesBefore = 0, detailCode;
+        const recordError = (message, code) => {
+            errors.push(message);
+            if (programCleanup && detailCode === undefined) detailCode = code;
+        };
         const programSelection = action => this.trackTask({
             ops: [{ op: "midiProgramSelection", action: action, track: args.track, partName: programCleanup.partName }]
         }, true);
         const apply = () => {
-            let selectedProgram = false;
+            let programSelectionPrepared = false;
             try {
                 for (let i = 0; i < ordered.length; i++) {
                     const part = ordered[i], expected = listed.events[i];
-                    if (Math.abs(part.start - expected.start) > 0.001 || Math.abs(part.end - expected.end) > 0.001 || part.name !== expected.name) { errors.push("the target part ordering changed"); break; }
+                    if (Math.abs(part.start - expected.start) > 0.001 || Math.abs(part.end - expected.end) > 0.001 || part.name !== expected.name) { recordError("the target part ordering changed", "selection_target_changed"); break; }
                     if (!part.noteCount) { results.push({ part: i + 1, skipped: "empty part" }); continue; }
                     const selected = programCleanup ? programSelection("select")
                         : this.trackTask({ ops: [{ op: "selectEvent", track: args.track, event: i + 1 }] });
                     const selection = !isFail(selected) && selected.results && selected.results[0];
-                    const actual = selection && selection.selected;
-                    if (!selection || selection.error || !actual) { errors.push(isFail(selected) ? selected.bridgeError : "could not select the target part"); break; }
-                    if (Math.abs(actual.start - expected.start) > 0.001 || Math.abs(actual.end - expected.end) > 0.001 || actual.name !== expected.name) { errors.push("the selected part changed before edit dispatch"); break; }
+                    const actual = selection && (programCleanup ? selection.selection_target : selection.selected);
+                    if (!selection || selection.error || !actual) { recordError(isFail(selected) ? selected.bridgeError : "could not select the target part", "selection_request_unconfirmed"); break; }
+                    if (Math.abs(actual.start - expected.start) > 0.001 || Math.abs(actual.end - expected.end) > 0.001 || actual.name !== expected.name) { recordError("the selected part changed before edit dispatch", "selection_target_changed"); break; }
                     if (programCleanup) {
-                        selectedProgram = true;
+                        programSelectionPrepared = true;
                         const current = programCleanup.check();
-                        if (isFail(current)) { errors.push(current.bridgeError); break; }
+                        if (isFail(current)) { recordError(current.bridgeError, "cleanup_route_or_part_changed"); break; }
                         const check = programSelection("check");
                         const checked = !isFail(check) && check.results && check.results[0];
-                        if (!checked || checked.exact !== true) { errors.push("the exact program selection changed before note dispatch"); break; }
+                        if (!checked || checked.exact !== true) { recordError("the exact program selection was not verified after the selection task", "selection_post_commit_unverified"); break; }
                     }
                     const id = newSession();
                     this.mailbox.write("edit-result.json", { id: null });
@@ -943,14 +948,14 @@ class Bridge {
                         ? [{ op: "delete", filter: { pitch: 60 }, program_part_name: programCleanup.partName }]
                         : args.ops;
                     const armed = this.armTask("notes", "edit-request.json", id, ops, !!programCleanup);
-                    if (isFail(armed)) { errors.push(armed.bridgeError); break; }
+                    if (isFail(armed)) { recordError(armed.bridgeError, "note_task_arm_failed"); break; }
                     const done = this.runArmedTask("Musical Functions", "Fender MCP Edit", "edit-request.json");
-                    if (isFail(done)) { errors.push(done.bridgeError); break; }
+                    if (isFail(done)) { recordError(done.bridgeError, "note_task_dispatch_unconfirmed"); break; }
                     const res = this.mailbox.read("edit-result.json");
-                    if (!res || res.id !== id || res.error) { errors.push(res && res.error || "the edit task did not report back; this part's outcome is unknown"); break; }
+                    if (!res || res.id !== id || res.error) { recordError(res && res.error || "the edit task did not report back; this part's outcome is unknown", "note_task_receipt_unavailable"); break; }
                     notesBefore += res.notesBefore || 0;
                     for (const item of res.applied || []) applied.push(item);
-                    for (const error of res.errors || []) errors.push(error);
+                    for (const error of res.errors || []) recordError(error, res.detail_code || "seed_delete_unverified");
                     results.push({ part: i + 1, applied: res.applied, errors: res.errors });
                     if (errors.length) break;
                 }
@@ -958,17 +963,19 @@ class Bridge {
             } finally {
                 if (!programCleanup) {
                     this.command({ category: "Edit", name: "Deselect All" });
-                } else if (selectedProgram) {
+                } else if (programSelectionPrepared) {
                     const release = programSelection("release");
                     const released = !isFail(release) && release.results && release.results[0];
-                    if (!released || released.released !== true) errors.push("the exact program selection release was not verified");
+                    if (!released || released.released !== true) recordError("the exact program selection release was not verified", "selection_release_unverified");
                 }
             }
         };
         const r = programCleanup ? apply() : this.withTrack(args.track, apply);
         if (isFail(r)) return r;
         const after = this.notes({ track: args.track });
-        return { track: args.track, applied: applied, errors: errors, results: results, notesBefore: notesBefore, parts: isFail(after) ? null : after.parts };
+        const outcome = { track: args.track, applied: applied, errors: errors, results: results, notesBefore: notesBefore, parts: isFail(after) ? null : after.parts };
+        if (detailCode !== undefined) outcome.detail_code = detailCode;
+        return outcome;
     }
 
     selectTrack(args) {

@@ -178,10 +178,10 @@ mtoOps.midiProgramSelection = function (context, op, lease) {
 			return { error: "the arrangement selection changed before selecting the program part" };
 		select.select(event);
 		if (!mcpNativeLeaseCurrent(lease)) return { error: "the selected program document changed" };
-		var after = mtoProgramSelection(editor, event);
-		if (!after || !after.onlyEvent) return { error: "the exclusive program part selection was not established" };
 	}
-	return { selected: mtoEventInfo(event, 1) };
+	// SelectFunctions queues a SelectAction in the edit context. The bridge
+	// must use the separate "check" task after this task returns to the host.
+	return { selection_target: mtoEventInfo(event, 1) };
 };
 
 // `seconds` as a number in an event's own time format, or null.
