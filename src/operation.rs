@@ -814,6 +814,7 @@ pub enum PluginPresetAction {
     Apply,
     Release,
     InspectCvPresetSettings,
+    ApplyCvPresetSettings,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1353,6 +1354,10 @@ impl Operation {
         matches!(self, Self::PluginPresets(args) if matches!(args.action, PluginPresetAction::InspectCvPresetSettings))
     }
 
+    pub(crate) fn applies_cv_preset_settings(&self) -> bool {
+        matches!(self, Self::PluginPresets(args) if matches!(args.action, PluginPresetAction::ApplyCvPresetSettings))
+    }
+
     pub fn requires_explicit_document(&self) -> bool {
         let level = match self {
             Self::PluginParams(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
@@ -1363,6 +1368,7 @@ impl Operation {
         };
         level
             || self.inspects_cv_preset_settings()
+            || self.applies_cv_preset_settings()
             || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
@@ -1778,7 +1784,8 @@ impl Operation {
                             && p.offset.is_none()
                             && p.limit.is_none()
                     }
-                    PluginPresetAction::InspectCvPresetSettings => {
+                    PluginPresetAction::InspectCvPresetSettings
+                    | PluginPresetAction::ApplyCvPresetSettings => {
                         matches!(p.kind, Some(PluginKind::Instrument))
                             && p.plugin == "CV Instrument"
                             && p.channel.is_none()
@@ -1802,7 +1809,7 @@ impl Operation {
                 };
                 if !valid {
                     return Err(invalid(
-                        "List takes a bounded page. Apply and CV settings inspection require an issued token and index. CV settings inspection requires the exact CV Instrument track and instance. Release takes only the catalog token.",
+                        "List takes a bounded page. Apply and CV settings actions require an issued token and index. CV settings actions require the exact CV Instrument track and instance. Release takes only the catalog token.",
                     ));
                 }
             }
@@ -3405,6 +3412,43 @@ mod tests {
             let mut args = json!({"channel":"Scratch","action":"capture"});
             args[field] = json!("untrusted");
             assert!(Operation::from_parts("insert_chain_state", args).is_err());
+        }
+    }
+
+    #[test]
+    fn cv_preset_settings_apply_is_a_document_bound_exact_mutation() {
+        let args = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"apply_cv_preset_settings","catalog_token":"A".repeat(64),"index":7});
+        let op = Operation::from_parts("plugin_presets", args.clone()).unwrap();
+        op.validate().unwrap();
+        assert!(!op.is_read_only());
+        assert!(op.requires_explicit_document());
+        assert_eq!(op.wire(), ("pluginPresets".into(), args.clone()));
+        for (key, value) in [
+            ("plugin", json!("Other")),
+            ("kind", json!("effect")),
+            ("track", json!(" ")),
+            ("channel", json!("Scratch")),
+            ("slot", json!(1)),
+            ("offset", json!(0)),
+            ("index", json!(4096)),
+            ("catalog_token", Value::Null),
+            ("path", json!("/unsupported.preset")),
+            ("bytes", json!("unsupported")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = value;
+            assert!(
+                Operation::from_parts("plugin_presets", invalid)
+                    .and_then(|op| op.validate())
+                    .is_err(),
+                "{key}"
+            );
         }
     }
 

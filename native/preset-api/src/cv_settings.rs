@@ -52,9 +52,9 @@ impl IssuedCvSettingsFile {
         guard(g)
     }
 
-    fn read_settings(&self) -> Result<(u64, String), Error> {
+    fn read_settings(&self) -> Result<Vec<u8>, Error> {
         let mut handle = self.file.reopen()?;
-        let result = archive_settings(&mut handle, self.file.stamp.len, &self.title);
+        let result = validated_primary(&mut handle, self.file.stamp.len, &self.title);
         let unchanged = self.file.check_open(&handle);
         drop(handle);
         self.file.check_named()?;
@@ -82,6 +82,20 @@ impl CvSettingsInspection {
         g: &mut G,
     ) -> Result<(), Error> {
         self.issued.check(catalog, g)
+    }
+
+    pub fn check_file(&self) -> Result<(), Error> {
+        self.issued.file.check_named()
+    }
+}
+
+pub struct PreparedCvSettings {
+    inspection: CvSettingsInspection,
+    primary: Vec<u8>,
+}
+impl PreparedCvSettings {
+    pub fn into_load_parts(self) -> (CvSettingsInspection, Vec<u8>) {
+        (self.inspection, self.primary)
     }
 }
 
@@ -111,15 +125,28 @@ impl Catalog {
         issued: Rc<IssuedCvSettingsFile>,
         g: &mut G,
     ) -> Result<CvSettingsInspection, Error> {
+        self.prepare_cv_settings(issued, g)
+            .map(|prepared| prepared.inspection)
+    }
+
+    pub fn prepare_cv_settings<G: FnMut() -> Result<(), String>>(
+        &self,
+        issued: Rc<IssuedCvSettingsFile>,
+        g: &mut G,
+    ) -> Result<PreparedCvSettings, Error> {
         issued.check(self, g)?;
         let result = issued.read_settings();
         guard(g)?;
         issued.check(self, g)?;
-        let (byte_count, hash) = result?;
-        Ok(CvSettingsInspection {
-            issued,
-            byte_count,
-            hash,
+        let primary = result?;
+        let (byte_count, hash) = fingerprint(&primary);
+        Ok(PreparedCvSettings {
+            inspection: CvSettingsInspection {
+                issued,
+                byte_count,
+                hash,
+            },
+            primary,
         })
     }
 
@@ -341,11 +368,7 @@ fn central_directory<R: Read + Seek>(
     Ok((start, entry_count))
 }
 
-fn archive_settings<R: Read + Seek>(
-    reader: R,
-    end: u64,
-    title: &str,
-) -> Result<(u64, String), Error> {
+fn validated_primary<R: Read + Seek>(reader: R, end: u64, title: &str) -> Result<Vec<u8>, Error> {
     let structural_start = Cell::new(0);
     let mut reader = BoundedReader {
         inner: reader,
@@ -392,10 +415,23 @@ fn archive_settings<R: Read + Seek>(
     validate_xml(&metadata, Format::Metadata { title })?;
     let settings = read_member(&mut archive, SETTINGS, MAX_SETTINGS)?;
     validate_xml(&settings, Format::Settings)?;
-    Ok((
+    Ok(settings)
+}
+
+fn fingerprint(settings: &[u8]) -> (u64, String) {
+    (
         settings.len() as u64,
         format!("{:x}", Sha256::digest(settings)),
-    ))
+    )
+}
+
+#[cfg(test)]
+fn archive_settings<R: Read + Seek>(
+    reader: R,
+    end: u64,
+    title: &str,
+) -> Result<(u64, String), Error> {
+    validated_primary(reader, end, title).map(|settings| fingerprint(&settings))
 }
 
 fn read_member<R: Read + Seek>(
@@ -626,11 +662,8 @@ mod tests {
             forbidden: start..start + route.len() as u64,
         };
         assert_eq!(
-            archive_settings(reader, bytes.len() as u64, "default").unwrap(),
-            (
-                settings.len() as u64,
-                format!("{:x}", Sha256::digest(&settings))
-            )
+            validated_primary(reader, bytes.len() as u64, "default").unwrap(),
+            settings.as_bytes()
         );
     }
 
@@ -798,7 +831,7 @@ mod tests {
             file,
         };
         let expected = format!("{:x}", Sha256::digest(primary.as_bytes()));
-        assert_eq!(issued.read_settings().unwrap().1, expected);
+        assert_eq!(fingerprint(&issued.read_settings().unwrap()).1, expected);
 
         std::fs::remove_file(&alias).unwrap();
         std::os::unix::fs::symlink(&second, &alias).unwrap();

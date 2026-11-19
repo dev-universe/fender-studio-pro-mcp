@@ -19,6 +19,7 @@ use crate::{
 mod chorder_chords;
 mod chorder_learning;
 mod cv_port_structure;
+mod cv_preset_apply;
 mod external_menu;
 mod midi_program_part;
 mod rumble_named_parameters;
@@ -325,16 +326,23 @@ fn execute(
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
             || operation.inspects_cv_preset_settings()
+            || operation.applies_cv_preset_settings()
             || rumble_serialization::requested(&operation)
             || rumble_processor_state::requested(&operation)
             || rumble_parameters::requested(&operation)
             || rumble_named_parameters::requested(&operation))
             && response.session != context.session
     {
-        invalidate_gui_evidence(&operation, &mut response.result);
+        let cv_apply_refused =
+            operation.applies_cv_preset_settings() && cv_preset_apply::refused(&response);
+        if operation.applies_cv_preset_settings() {
+            response.result = Value::Null;
+        } else {
+            invalidate_gui_evidence(&operation, &mut response.result);
+        }
         return Ok(Receipt {
             request_id,
-            outcome: if read_only {
+            outcome: if read_only || cv_apply_refused {
                 Outcome::NotApplied
             } else {
                 Outcome::Unknown
@@ -409,6 +417,11 @@ fn execute(
         && (!response.ok || !rumble_named_parameters::valid_get(query, &response.result))
     {
         rumble_named_parameters::invalidate(&mut response.result);
+    }
+    if let Operation::PluginPresets(args) = &operation
+        && operation.applies_cv_preset_settings()
+    {
+        cv_preset_apply::normalize_result(&mut response, args.index);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -1084,7 +1097,8 @@ fn rejected(
 }
 
 fn bounded_cv_preset_error(operation: &Operation, error: OperationError) -> OperationError {
-    if !operation.inspects_cv_preset_settings() {
+    let applying = operation.applies_cv_preset_settings();
+    if !operation.inspects_cv_preset_settings() && !applying {
         return error;
     }
     let (code, message) = match error.code.as_str() {
@@ -1094,6 +1108,18 @@ fn bounded_cv_preset_error(operation: &Operation, error: OperationError) -> Oper
         "native_context_lost" | "invalid_context" => (
             "native_context_lost",
             "The native document context is unavailable",
+        ),
+        "outcome_unknown" if applying => (
+            "outcome_unknown",
+            "The CV preset settings load outcome could not be established",
+        ),
+        "native_rejected" if applying => (
+            "native_rejected",
+            "CV preset settings were refused before loading",
+        ),
+        _ if applying => (
+            "cv_preset_settings_apply_failed",
+            "The CV preset settings apply request failed",
         ),
         _ => (
             "cv_preset_settings_unavailable",
@@ -1410,25 +1436,29 @@ mod tests {
     }
 
     #[test]
-    fn cv_preset_inspection_errors_discard_text_from_an_older_bridge_only_in_scope() {
+    fn cv_preset_settings_errors_discard_text_and_codes_from_an_older_bridge() {
         let mut args = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument",
             "expected_instance":"12345678-1234-1234-1234-123456789ABC",
-            "action":"inspect_cv_preset_settings","catalog_token":"A".repeat(64),"index":7});
-        let operation = Operation::from_parts("plugin_presets", args.clone()).unwrap();
-        let raw = "/private/mock/path.preset";
-        let error = bounded_cv_preset_error(&operation, OperationError::new(raw, raw));
-        assert_eq!(error.code, "cv_preset_settings_unavailable");
-        assert!(!error.message.contains(raw));
-        let error =
-            bounded_cv_preset_error(&operation, OperationError::new("document_changed", raw));
-        assert_eq!(error.code, "document_changed");
-        assert!(!error.message.contains(raw));
-
+            "catalog_token":"A".repeat(64),"index":7});
+        let private = "/private/mock/path.preset";
+        for action in ["inspect_cv_preset_settings", "apply_cv_preset_settings"] {
+            args["action"] = json!(action);
+            let operation = Operation::from_parts("plugin_presets", args.clone()).unwrap();
+            let error = bounded_cv_preset_error(&operation, OperationError::new(private, private));
+            assert!(!error.code.contains(private));
+            assert!(!error.message.contains(private));
+            let error = bounded_cv_preset_error(
+                &operation,
+                OperationError::new("document_changed", private),
+            );
+            assert_eq!(error.code, "document_changed");
+            assert!(!error.message.contains(private));
+        }
         args["action"] = json!("apply");
-        let legacy = Operation::from_parts("plugin_presets", args).unwrap();
+        let ordinary = Operation::from_parts("plugin_presets", args).unwrap();
         assert_eq!(
-            bounded_cv_preset_error(&legacy, OperationError::new("host_error", raw)).message,
-            raw
+            bounded_cv_preset_error(&ordinary, OperationError::new("host_error", private)).message,
+            private
         );
     }
 

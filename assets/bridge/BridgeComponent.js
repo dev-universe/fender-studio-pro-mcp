@@ -901,30 +901,35 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginPresets(args) {
-        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
-            return { error: "an expected plugin and native instance are required" };
-        if (args.catalog_token !== undefined && (typeof args.catalog_token !== "string" || !/^[0-9A-F]{64}$/.test(args.catalog_token)))
-            return { error: "an issued uppercase hexadecimal catalog token is required" };
         const inspecting = args.action === "inspect_cv_preset_settings";
-        if (inspecting && (args.kind !== "instrument" || args.plugin !== "CV Instrument"
+        const applying = args.action === "apply_cv_preset_settings";
+        const cvSettings = inspecting || applying;
+        const refuse = (message, outcome = "not_applied") => applying
+            ? { ok: false, native_outcome: outcome, errors: [{ code: "cv_preset_settings_apply_failed", message }] }
+            : { error: message };
+        if (typeof args.plugin !== "string" || !args.plugin.trim() || typeof args.expected_instance !== "string" || !args.expected_instance)
+            return refuse("an expected plugin and native instance are required");
+        if (args.catalog_token !== undefined && (typeof args.catalog_token !== "string" || !/^[0-9A-F]{64}$/.test(args.catalog_token)))
+            return refuse("an issued uppercase hexadecimal catalog token is required");
+        if (cvSettings && (args.kind !== "instrument" || args.plugin !== "CV Instrument"
             || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
             || !/^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
             || args.expected_instance === "00000000-0000-0000-0000-000000000000"
             || args.slot !== undefined && args.slot !== 0
             || Object.keys(args).some(key => !["action", "kind", "track", "slot", "plugin", "expected_instance", "catalog_token", "index"].includes(key))))
-            return { error: "CV settings inspection requires the exact CV Instrument track, instance and issued index" };
+            return refuse("CV settings require the exact CV Instrument track, instance and issued index");
         const operations = { list: "presets", apply: "preset_apply", release: "preset_release",
-            inspect_cv_preset_settings: "inspect_cv_preset_settings" };
+            inspect_cv_preset_settings: "inspect_cv_preset_settings", apply_cv_preset_settings: "apply_cv_preset_settings" };
         const operation = operations[args.action];
         if (typeof operation !== "string") return { error: "unsupported plugin preset action" };
         const pageValid = (args.offset === undefined || (Number.isInteger(args.offset) && args.offset >= 0 && args.offset <= 4096))
             && (args.limit === undefined || (Number.isInteger(args.limit) && args.limit >= 1 && args.limit <= 64));
         const valid = args.action === "list" ? args.index === undefined && pageValid
             : args.catalog_token !== undefined && args.offset === undefined && args.limit === undefined
-                && (args.action === "apply" || inspecting ? Number.isInteger(args.index) && args.index >= 0 && args.index < 4096 : args.index === undefined);
-        if (!valid) return { error: "list takes a bounded page; apply and CV settings inspection require a catalog token and index; release takes only the catalog token" };
+                && (args.action === "apply" || cvSettings ? Number.isInteger(args.index) && args.index >= 0 && args.index < 4096 : args.index === undefined);
+        if (!valid) return refuse("list takes a bounded page; apply and CV settings require a catalog token and index; release takes only the catalog token");
         const plug = this.pluginOf(args);
-        if (plug.error) return inspecting ? { error: "The bound CV Instrument is unavailable" } : plug;
+        if (plug.error) return cvSettings ? refuse("The bound CV Instrument is unavailable") : plug;
         let auxiliary;
         if (args.action === "list" && args.catalog_token === undefined) {
             if (typeof Host === "undefined" || typeof Host.Url !== "function") return { error: "the native preset catalog requires the host URL factory" };
@@ -936,21 +941,34 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (args.action === "list") {
             request.offset = args.offset === undefined ? 0 : args.offset;
             request.limit = args.limit === undefined ? 32 : args.limit;
-        } else if (args.action === "apply" || inspecting) request.index = args.index;
+        } else if (args.action === "apply" || cvSettings) request.index = args.index;
         const native = this.nativePluginRequest(plug.device, request, auxiliary);
-        if (!native) return { error: "plugin presets require the matching native extension" };
-        if (inspecting) {
-            if (native.ok === false) return { error: "CV preset settings inspection is unavailable" };
+        if (!native) return refuse("plugin presets require the matching native extension");
+        if (cvSettings) {
+            if (native.ok === false) {
+                if (inspecting) return refuse("CV preset settings inspection is unavailable");
+                const refused = native.outcome === "not_applied" && native.load_accepted === undefined
+                    && native.cv_preset_settings === undefined && native.error
+                    && typeof native.error.code === "string" && typeof native.error.message === "string"
+                    && native.error.message.length > 0;
+                return refused
+                    ? refuse("CV preset settings were refused before loading")
+                    : refuse("The CV preset settings load outcome could not be established", "unknown");
+            }
             const settings = native.cv_preset_settings;
-            if (native.ok !== true || native.outcome !== "observed" || native.index !== args.index
+            if (native.ok !== true || native.outcome !== (applying ? "applied_unverified" : "observed") || native.index !== args.index
+                || applying && (native.operation !== args.action || native.load_accepted !== true || native.verified !== false)
+                || native.error !== undefined && native.error !== null
                 || !native.instance || native.instance.object_uid !== args.expected_instance
                 || native.instance.class_uid !== "EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85"
                 || !settings || !Number.isInteger(settings.byte_count) || settings.byte_count < 1 || settings.byte_count > 262144
                 || typeof settings.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(settings.sha256))
-                return { error: "CV preset settings inspection response is malformed" };
-            return { action: args.action, index: native.index, plugin: "CV Instrument",
-                cv_preset_settings: { byte_count: settings.byte_count, sha256: settings.sha256 },
-                mutation_capability: false };
+                return refuse("CV preset settings response is malformed", "unknown");
+            const result = { action: args.action, index: native.index, plugin: "CV Instrument",
+                cv_preset_settings: { byte_count: settings.byte_count, sha256: settings.sha256 } };
+            return applying
+                ? Object.assign(result, { ok: true, native_outcome: "applied_unverified", load_accepted: true, verified: false })
+                : Object.assign(result, { mutation_capability: false });
         }
         if (!native.ok) return { plugin: plug.name, native_outcome: native.outcome, errors: [native.error] };
         return Object.assign({}, native, { channel: args.channel, slot: args.slot, plugin: plug.name, native_outcome: native.outcome });

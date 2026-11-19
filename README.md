@@ -115,6 +115,20 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### CV Instrument preset settings
+
+Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
+on the selected track. Carry `expected_document`, `expected_instance`, and
+the index and `catalog_token` issued by `list`. `inspect_cv_preset_settings`
+returns a byte count and SHA-256. `apply_cv_preset_settings` loads the primary
+settings without loading the preset's port-setup record.
+
+If you want to restore the original settings, capture them with `plugin_state`
+before applying. After an `applied_unverified` receipt, read parameters and
+port assignments to check the result. The 8.1.1 trial verified 97 writable
+values, seven unassigned ports, and restoration. Testing with assigned
+physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r106.json)
+
 ### FabFilter Twin 3 program changes
 
 Use `midi_program_part_add` with the exact Twin 3 VST3 track, its current

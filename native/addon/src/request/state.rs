@@ -422,6 +422,44 @@ pub(super) fn invalidate_rumble_serialization(value: &mut Value) {
         *value = rumble_failure();
     }
 }
+#[derive(Debug)]
+pub(super) struct LoadFailure {
+    pub(super) reason: String,
+    pub(super) dispatched: bool,
+}
+
+pub(super) fn load_once<G: FnMut() -> Result<(), String>>(
+    storable: &Owned,
+    bytes: Arc<[u8]>,
+    guard: &mut G,
+) -> Result<(), LoadFailure> {
+    let stream = MemoryStream::restore(bytes);
+    let load: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
+        unsafe { method(storable.0, 5) };
+    guard().map_err(|reason| LoadFailure {
+        reason,
+        dispatched: false,
+    })?;
+    let accepted = unsafe { load(storable.0, stream.raw()) } != 0;
+    let stream_result = stream.finish_restore();
+    drop(stream);
+    guard().map_err(|reason| LoadFailure {
+        reason,
+        dispatched: true,
+    })?;
+    stream_result.map_err(|reason| LoadFailure {
+        reason,
+        dispatched: true,
+    })?;
+    if !accepted {
+        return Err(LoadFailure {
+            reason: "IStorable.load returned failure after possible state changes".into(),
+            dispatched: true,
+        });
+    }
+    Ok(())
+}
+
 pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLease>) {
     let lease = match AliasLease::capture(ctx) {
         Ok(lease) => lease,
@@ -441,26 +479,11 @@ pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLea
             );
         }
     };
-    let mut dispatched = false;
-    let result: Result<Value, String> = (|| {
-        capsule.binding.matches(ctx, &lease)?;
-        let stream = MemoryStream::restore(capsule.bytes.clone());
-        let load: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
-            unsafe { method(lease.storable.0, 5) };
-        lease.guard(ctx)?;
-        dispatched = true;
-        let accepted = unsafe { load(lease.storable.0, stream.raw()) } != 0;
-        let stream_result = stream.finish_restore();
-        drop(stream);
-        lease.guard(ctx)?;
-        stream_result?;
-        if !accepted {
-            return Err("IStorable.load returned failure after possible state changes".into());
-        }
-        Ok(
-            json!({"ok":true,"token":token,"byte_count":capsule.bytes.len(),"sha256":capsule.sha256,"load_accepted":true,"verified":false,"outcome":"applied_unverified"}),
-        )
-    })();
+    let result = capsule.binding.matches(ctx, &lease)
+        .map_err(|reason| LoadFailure { reason, dispatched: false })
+        .and_then(|()| load_once(&lease.storable, capsule.bytes.clone(), &mut || lease.guard(ctx)))
+        .map(|()| json!({"ok":true,"token":token,"byte_count":capsule.bytes.len(),
+            "sha256":capsule.sha256,"load_accepted":true,"verified":false,"outcome":"applied_unverified"}));
     // A removed token remains reusable only while the original context and
     // alias are still current. No native owner is dropped inside the registry.
     if lease.guard(ctx).is_ok() {
@@ -470,10 +493,14 @@ pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLea
     }
     let value = match result {
         Ok(value) => value,
-        Err(reason) => error(
+        Err(failure) => error(
             "state_restore_failed",
-            &reason,
-            if dispatched { "unknown" } else { "not_applied" },
+            &failure.reason,
+            if failure.dispatched {
+                "unknown"
+            } else {
+                "not_applied"
+            },
         ),
     };
     (value, Some(lease))

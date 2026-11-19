@@ -1190,22 +1190,129 @@ test('CV preset settings rejects a late document switch without publishing a dig
   assert.equal(result.result, undefined);
 });
 
-test('CV preset settings inspection publishes fixed errors for native, resolver and caught script failures', () => {
-  const privatePath = '/private/mock/path.preset';
-  const h = harness({ getObjectByName() { return native(() => JSON.stringify({
-    ok: false, outcome: 'not_applied', error: { code: privatePath, message: privatePath },
-  })); } });
-  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'CV preset settings inspection is unavailable');
-  assert.ok(JSON.stringify(h.component.pluginPresets({ ...cvPresetSettingsArgs, action: 'apply' })).includes(privatePath));
-  h.component.pluginOf = () => ({ error: privatePath });
-  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'The bound CV Instrument is unavailable');
+const cvPresetApplyArgs = { ...cvPresetSettingsArgs, action: 'apply_cv_preset_settings' };
+const cvApplyNative = request => ({
+  capabilities() {
+    return JSON.stringify({ ok: true, api: 'fender-mcp-native-v1', cv_preset_settings_apply_api: 'cv_primary_settings_v1' });
+  },
+  request,
+});
+const cvApplyAccepted = () => success({
+  instance: { ...instance, class_uid: 'EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85' },
+  outcome: 'applied_unverified', operation: 'apply_cv_preset_settings', index: 7,
+  cv_preset_settings: { byte_count: 3991, sha256: 'a'.repeat(64) }, load_accepted: true, verified: false,
+});
+const cvApplyRefused = () => JSON.stringify({ ok: false, outcome: 'not_applied',
+  error: { code: 'cv_preset_settings_apply_failed', message: 'Current issued preset file changed' } });
 
+test('CV settings apply dispatches only its exact bound selector and projects an unverified load receipt', () => {
+  const calls = [];
+  const h = harness({ getObjectByName() { return cvApplyNative((target, body, auxiliary) => {
+    assert.equal(target, h.device);
+    assert.equal(auxiliary, undefined);
+    calls.push(JSON.parse(body));
+    return cvApplyAccepted();
+  }); } });
+  for (const patch of [{ plugin: 'Other' }, { kind: 'effect' }, { path: '/other.preset' }, { bytes: 'raw' },
+    { index: 4096 }, { catalog_token: undefined }, { expected_instance: undefined }, { offset: 0 }]) {
+    const refused = h.component.pluginPresets({ ...cvPresetApplyArgs, ...patch });
+    assert.equal(refused.native_outcome, 'not_applied');
+  }
+  assert.equal(calls.length, 0);
+  const result = h.component.pluginPresets(cvPresetApplyArgs);
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    action: 'apply_cv_preset_settings', index: 7, plugin: 'CV Instrument',
+    cv_preset_settings: { byte_count: 3991, sha256: 'a'.repeat(64) },
+    ok: true, native_outcome: 'applied_unverified', load_accepted: true, verified: false,
+  });
+  assert.deepEqual(calls, [{ operation: 'apply_cv_preset_settings', expected_instance: instance.object_uid,
+    catalog_token: 'A'.repeat(64), index: 7 }]);
+});
+
+test('CV settings apply preserves pre-load refusal and reports unknown after a disputed native dispatch', () => {
+  let calls = 0;
+  const old = harness({ getObjectByName() { return native(() => { calls++; return cvApplyAccepted(); }); } });
+  assert.equal(old.component.pluginPresets(cvPresetApplyArgs).native_outcome, 'not_applied');
+  assert.equal(calls, 0);
+  const malformed = harness({ getObjectByName() { return cvApplyNative(() => { calls++; return 'not-json'; }); } });
+  const unknown = malformed.component.pluginPresets(cvPresetApplyArgs);
+  assert.equal(unknown.native_outcome, 'unknown');
+  assert.equal(unknown.cv_preset_settings, undefined);
+  assert.equal(calls, 1);
+
+  for (const [nativeReply, outcome] of [[cvApplyAccepted, 'unknown'], [cvApplyRefused, 'not_applied']]) {
+    const h = harness({ getObjectByName() { return cvApplyNative(() => {
+      calls++;
+      h.component.bridge.context = () => ({ open: true, document: 'contract:2', session: 'contract' });
+      return nativeReply();
+    }); } });
+    const result = h.component.pluginPresets(cvPresetApplyArgs);
+    assert.equal(result.native_outcome, outcome);
+    assert.equal(result.cv_preset_settings, undefined);
+    assert.equal(result.load_accepted, undefined);
+  }
+  assert.equal(calls, 3);
+});
+
+test('CV settings apply strips a late bridge reply after the active document changes', () => {
+  for (const refused of [false, true]) {
+    const h = bridgeHarness();
+    const context = h.current();
+    let dispatches = 0;
+    h.bridge.component = { pluginPresets() {
+      dispatches++;
+      h.manager.activeDocument = { title: 'Other', path: { url: 'file:///other.song' } };
+      return refused ? { ok: false, native_outcome: 'not_applied', errors: [{ message: 'refused' }] }
+        : { ok: true, native_outcome: 'applied_unverified', load_accepted: true,
+            cv_preset_settings: { byte_count: 3991, sha256: 'a'.repeat(64) } };
+    } };
+    const request = { op: 'pluginPresets', args: cvPresetApplyArgs, expectedSession: context.session };
+    assert.equal(h.request(request).code, 'context_required');
+    assert.equal(dispatches, 0);
+    const envelope = h.request({ ...request, expectedDocument: context.document });
+    assert.equal(dispatches, 1);
+    assert.notEqual(envelope.document, context.document);
+    assert.equal(envelope.result.ok, false);
+    assert.equal(envelope.result.native_outcome, refused ? 'not_applied' : 'unknown');
+    assert.equal(envelope.result.cv_preset_settings, undefined);
+    assert.equal(envelope.result.load_accepted, undefined);
+  }
+});
+
+test('CV settings read and apply publish fixed errors without native or resolver file paths', () => {
+  const privatePath = '/private/mock/path.preset';
+  for (const outcome of ['not_applied', 'unknown']) {
+    const h = harness({ getObjectByName() { return cvApplyNative(() => JSON.stringify({
+      ok: false, outcome, error: { code: privatePath, message: privatePath },
+    })); } });
+    const inspection = h.component.pluginPresets(cvPresetSettingsArgs);
+    assert.equal(inspection.error, 'CV preset settings inspection is unavailable');
+    const application = h.component.pluginPresets(cvPresetApplyArgs);
+    assert.equal(application.native_outcome, outcome);
+    assert.ok(!JSON.stringify(application).includes(privatePath));
+    assert.ok(JSON.stringify(h.component.pluginPresets({ ...cvPresetApplyArgs, action: 'apply' })).includes(privatePath));
+    h.component.pluginOf = () => ({ error: privatePath });
+    assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'The bound CV Instrument is unavailable');
+    const refused = h.component.pluginPresets(cvPresetApplyArgs);
+    assert.equal(refused.native_outcome, 'not_applied');
+    assert.ok(!JSON.stringify(refused).includes(privatePath));
+  }
+});
+
+test('CV settings bridge catches thrown path details with fixed text and preserves uncertainty', () => {
+  const privatePath = '/private/mock/path.preset';
   const host = bridgeHarness();
   const context = host.current();
   host.bridge.component = { pluginPresets() { throw new Error(privatePath); } };
-  const result = host.request({ op: 'pluginPresets', args: cvPresetSettingsArgs,
-    expectedSession: context.session, expectedDocument: context.document });
-  assert.equal(result.ok, false);
-  assert.equal(result.error, 'CV preset settings inspection is unavailable');
-  assert.ok(!JSON.stringify(result).includes(privatePath));
+  for (const args of [cvPresetSettingsArgs, cvPresetApplyArgs]) {
+    const reply = host.request({ op: 'pluginPresets', args,
+      expectedSession: context.session, expectedDocument: context.document });
+    assert.ok(!JSON.stringify(reply).includes(privatePath));
+    if (args === cvPresetApplyArgs) {
+      assert.equal(reply.result.native_outcome, 'unknown');
+      assert.equal(reply.result.cv_preset_settings, undefined);
+    } else {
+      assert.equal(reply.error, 'CV preset settings inspection is unavailable');
+    }
+  }
 });

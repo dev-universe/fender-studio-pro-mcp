@@ -134,6 +134,7 @@ class Bridge {
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
         const cvNodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
+        const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
         this.requestContext = context;
         try {
@@ -156,11 +157,25 @@ class Bridge {
                 result = this.handle(req.op, req.args || {});
             }
         } catch (e) {
-            result = fail(cvPresetSettings ? "CV preset settings inspection is unavailable" : (e && e.message || e));
+            result = cvPresetApply
+                ? { ok: false, native_outcome: "unknown", errors: [{
+                    code: "cv_preset_settings_apply_failed",
+                    message: "The CV preset settings load outcome could not be established",
+                }] }
+                : fail(cvPresetSettings ? "CV preset settings inspection is unavailable" : (e && e.message || e));
         }
         this.requestContext = null;
         const afterContext = this.context();
-        if (!isFail(result) && this.contextError) {
+        if (!isFail(result) && cvPresetApply
+            && (this.contextError || context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const outcome = result && result.ok === false && result.native_outcome === "not_applied"
+                && Array.isArray(result.errors) && result.errors.length ? "not_applied" : "unknown";
+            result = { ok: false, native_outcome: outcome, errors: [{
+                code: "cv_preset_settings_context_changed",
+                message: "The CV preset settings document lease changed before publication",
+            }] };
+        } else if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
@@ -344,7 +359,12 @@ class Bridge {
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
-            case "pluginPresets": return this.fromComponent(c => c.pluginPresets(args));
+            case "pluginPresets":
+                if (args.action === "apply_cv_preset_settings" && (!this.component || typeof this.component.pluginPresets !== "function"))
+                    return { ok: false, native_outcome: "not_applied", errors: [{
+                        code: "cv_preset_settings_apply_failed", message: "CV preset settings require the matching control surface",
+                    }] };
+                return this.fromComponent(c => c.pluginPresets(args));
             case "editChorderAutofill": return this.fromComponent(c => c.editChorderAutofill(args));
             case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
             default: return fail("unknown op: " + op);

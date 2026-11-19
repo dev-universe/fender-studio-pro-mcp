@@ -371,6 +371,7 @@ fn discover(ctx: &Context<'_>, auxiliary: Owned) -> Result<Rc<Lease>, String> {
 struct SettingsReceipt {
     token: String,
     file: CvSettingsInspection,
+    load_target: Option<target_proof::TargetProof>,
 }
 pub(super) struct Receipt {
     settings: Option<SettingsReceipt>,
@@ -395,7 +396,15 @@ impl Receipt {
                 .file
                 .check(&self.lease.catalog, &mut || self.lease.route.guard(ctx))
                 .map_err(|error| error.to_string())?;
-            current()
+            current()?;
+            if let Some(target) = &settings.load_target {
+                target.check(&mut || ctx.check())?;
+                settings
+                    .file
+                    .check_file()
+                    .map_err(|error| error.to_string())?;
+            }
+            ctx.check()
         } else if self.active {
             self.lease.check(ctx)
         } else {
@@ -500,6 +509,9 @@ pub(super) fn invalidate(value: &mut Value) {
     if let Some(value) = value.as_object_mut() {
         value.remove("current_preset_observation");
         value.remove("cv_preset_settings");
+        if value.get("operation").and_then(Value::as_str) == Some("apply_cv_preset_settings") {
+            value.remove("load_accepted");
+        }
     }
 }
 fn page(
@@ -596,21 +608,18 @@ fn apply(ctx: &Context<'_>, token: &str, index: u32) -> (Value, Option<Receipt>)
         }),
     )
 }
-fn inspect_cv_settings(
+fn issued_cv_settings(
     ctx: &Context<'_>,
     token: &str,
     index: u32,
-) -> Result<(Value, Receipt), String> {
+) -> Result<(Rc<Lease>, Rc<IssuedCvSettingsFile>), String> {
     node_inspect::validate_cv_target(&ctx.instance)?;
     let lease = with_registry(ctx.service, |registry| registry.get(token))?;
     lease.check(ctx)?;
     if lease.route.slot_identity.2 != "AudioSynthSlot"
         || !issued_index(&lease.issued.borrow(), index)
     {
-        return Err(
-            "CV preset settings inspection requires the current synth slot and an issued index"
-                .into(),
-        );
+        return Err("CV preset settings require the current synth slot and an issued index".into());
     }
     let issued = lease
         .cv_settings_pins
@@ -618,6 +627,15 @@ fn inspect_cv_settings(
         .and_then(|pins| pins.borrow().get(&index).cloned())
         .ok_or("the issued CV preset has no available local file witness")?
         .map_err(|error| error.to_string())?;
+    Ok((lease, issued))
+}
+
+fn inspect_cv_settings(
+    ctx: &Context<'_>,
+    token: &str,
+    index: u32,
+) -> Result<(Value, Receipt), String> {
+    let (lease, issued) = issued_cv_settings(ctx, token, index)?;
     let file = lease
         .catalog
         .inspect_cv_settings(issued, &mut || lease.route.guard(ctx))
@@ -628,12 +646,70 @@ fn inspect_cv_settings(
         settings: Some(SettingsReceipt {
             token: token.to_owned(),
             file,
+            load_target: None,
         }),
         lease,
         active: true,
     };
     receipt.check(ctx)?;
     Ok((value, receipt))
+}
+
+fn prepare_cv_settings_load(
+    ctx: &Context<'_>,
+    token: &str,
+    index: u32,
+) -> Result<(Receipt, Owned, Vec<u8>), String> {
+    let (lease, issued) = issued_cv_settings(ctx, token, index)?;
+    let (file, bytes) = lease
+        .catalog
+        .prepare_cv_settings(issued, &mut || lease.route.guard(ctx))
+        .map_err(|error| error.to_string())?
+        .into_load_parts();
+    let target = target_proof::TargetProof::capture(ctx)?;
+    let storable = target.load_storable(&lease.catalog, &mut || lease.route.guard(ctx))?;
+    let receipt = Receipt {
+        settings: Some(SettingsReceipt {
+            token: token.to_owned(),
+            file,
+            load_target: Some(target),
+        }),
+        lease,
+        active: true,
+    };
+    Ok((receipt, storable, bytes))
+}
+
+fn apply_cv_settings(ctx: &Context<'_>, token: &str, index: u32) -> (Value, Option<Receipt>) {
+    let failed = |reason: &str, dispatched| {
+        error(
+            "cv_preset_settings_apply_failed",
+            reason,
+            if dispatched { "unknown" } else { "not_applied" },
+        )
+    };
+    let (receipt, storable, bytes) = match prepare_cv_settings_load(ctx, token, index) {
+        Ok(prepared) => prepared,
+        Err(reason) => return (failed(&reason, false), None),
+    };
+    let result = state::load_once(&storable, bytes.into(), &mut || receipt.check(ctx));
+    drop(storable);
+    let after = receipt.check(ctx);
+    let value = match (result, after) {
+        (Err(failure), _) => failed(&failure.reason, failure.dispatched),
+        (Ok(()), Err(reason)) => failed(&reason, true),
+        (Ok(()), Ok(())) => {
+            let file = &receipt
+                .settings
+                .as_ref()
+                .expect("settings load has an issued file")
+                .file;
+            json!({"ok":true,"outcome":"applied_unverified","operation":"apply_cv_preset_settings","index":index,
+                "cv_preset_settings":{"byte_count":file.byte_count(),"sha256":file.sha256()},
+                "load_accepted":true,"verified":false})
+        }
+    };
+    (value, Some(receipt))
 }
 
 fn issued_index(issued: &[bool], index: u32) -> bool {
@@ -701,6 +777,11 @@ pub(super) fn execute(
                 ),
             };
         }
+        Request::ApplyCvPresetSettings {
+            catalog_token,
+            index,
+            ..
+        } => return apply_cv_settings(ctx, catalog_token, *index),
         Request::PresetRelease { catalog_token, .. } => release(ctx, catalog_token),
         _ => unreachable!("finite preset dispatch"),
     };
@@ -1071,6 +1152,34 @@ mod family_tests {
                 .unwrap_err()
                 .contains("document")
         );
+    }
+
+    #[test]
+    fn cv_settings_load_requires_a_distinct_device_and_the_same_component_alias() {
+        let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+        let mut host = super::super::guard_tests::Fixture::new();
+        host.canonical_queries();
+        let nodes = Nodes::new(c"AudioSynthSlot");
+        let mut ctx = host.context();
+        ctx.node = hold(nodes.pointer(0)).unwrap();
+        ctx.target = hold(nodes.pointer(0)).unwrap();
+        let table = probe_vtable();
+        let mediator = ProbeInterface::new(&table, nodes.pointer(2), ptr::null_mut());
+        let alias = ProbeInterface::new(&table, nodes.pointer(0), ptr::null_mut());
+        nodes.nodes[0].alias.set(alias.pointer());
+        nodes.nodes[1].mediator.set(mediator.pointer());
+
+        let observation =
+            target_proof::TargetProof::observe(nodes.route(&ctx), &mut || ctx.check()).unwrap();
+        assert!(!observation.same_component_alias());
+        drop(observation);
+
+        alias.target.set(nodes.pointer(2));
+        let observation =
+            target_proof::TargetProof::observe(nodes.route(&ctx), &mut || ctx.check()).unwrap();
+        assert!(observation.same_component_alias());
+        alias.target.set(nodes.pointer(0));
+        assert!(observation.check(&mut || ctx.check()).is_err());
     }
 
     #[test]

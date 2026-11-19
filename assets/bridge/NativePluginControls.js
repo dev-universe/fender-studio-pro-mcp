@@ -1174,6 +1174,26 @@ class NativePluginControls {
                 && result.children.reduce((bytes,child)=>bytes+this.cvStructureTextBytes(child),0) === result.retained_text_bytes;
     }
 
+    cvPresetApplyRequest(request) {
+        return this.guiExact(request, ["operation", "catalog_token", "index", "expected_instance"])
+            && typeof request.catalog_token === "string" && /^[0-9A-F]{64}$/.test(request.catalog_token)
+            && this.guiInteger(request.index, 0, 4095)
+            && typeof request.expected_instance === "string"
+            && /^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$/.test(request.expected_instance)
+            && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
+    }
+
+    cvPresetApplyFailure(dispatched, parsed) {
+        const refused = parsed && parsed.ok === false && parsed.outcome === "not_applied"
+            && parsed.load_accepted === undefined && parsed.cv_preset_settings === undefined
+            && parsed.error && typeof parsed.error.code === "string" && typeof parsed.error.message === "string";
+        const unknown = dispatched && !refused;
+        return { ok: false, outcome: unknown ? "unknown" : "not_applied",
+            error: { code: "cv_preset_settings_request_failed",
+                message: unknown ? "The CV preset settings load outcome could not be established"
+                    : "CV preset settings request was refused before loading" } };
+    }
+
     request(device, request, auxiliary) {
         let dispatched = false;
         let parsed = null;
@@ -1188,7 +1208,9 @@ class NativePluginControls {
         const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
         const cvStructure = request.operation === "cv_port_structure_inspect";
+        const cvPresetApply = request.operation === "apply_cv_preset_settings";
         try {
+            if (cvPresetApply && !this.cvPresetApplyRequest(request)) throw new Error("invalid fixed CV settings apply request");
             if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
@@ -1209,19 +1231,21 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
+            if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
+                throw new Error("unsupported CV preset settings apply API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
             if (guiLearning && capability.gui_model_edit_api !== "chorder_learning_controls_v1") throw new Error("unsupported native Chorder learning API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
@@ -1294,6 +1318,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (cvPresetApply) return this.cvPresetApplyFailure(dispatched, parsed);
             if (cvStructure) return this.cvStructureFailure(dispatched,null);
             if (rumbleNamedParameters) return this.rumbleNamedParametersFailure();
             if (rumbleParameters) return this.rumbleParametersFailure();

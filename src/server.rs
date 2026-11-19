@@ -226,7 +226,7 @@ impl McpServer {
             named::<PluginPresets>(
                 "plugin_presets",
                 "pluginPresets",
-                "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. For the exact CV Instrument, inspect_cv_preset_settings reads the primary settings byte count and SHA-256 from an issued index without loading the preset. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
+                "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. For the exact CV Instrument, inspect_cv_preset_settings reads the primary settings byte count and SHA-256 from an issued index without loading the preset. apply_cv_preset_settings loads those primary settings once on the bound CV component and reports applied_unverified on acceptance. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
                 true,
             ),
             named::<PluginEditor>(
@@ -373,7 +373,7 @@ fn named<T: JsonSchema>(
     }
     if operation == "pluginPresets" {
         schema["allOf"] = json!([{
-            "if":{"properties":{"action":{"const":"inspect_cv_preset_settings"}},"required":["action"]},
+            "if":{"properties":{"action":{"enum":["inspect_cv_preset_settings","apply_cv_preset_settings"]}},"required":["action"]},
             "then":{"required":["kind","track","catalog_token","index"],
                 "properties":{"kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},
                     "track":{"type":"string","minLength":1,"maxLength":512},

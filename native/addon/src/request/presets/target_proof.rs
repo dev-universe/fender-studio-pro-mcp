@@ -105,6 +105,40 @@ impl TargetProof {
         Ok(proof)
     }
 
+    pub(super) fn same_component_alias(&self) -> bool {
+        let selected = self.selected.identity.0;
+        selected != self.route._target.0
+            && self
+                .alias
+                .as_ref()
+                .and_then(|alias| alias.component.as_ref())
+                .is_some_and(|component| component.identity.0 == selected)
+    }
+
+    pub(super) fn load_storable<G: FnMut() -> Result<(), String>>(
+        &self,
+        catalog: &Catalog,
+        guard: &mut G,
+    ) -> Result<Owned, String> {
+        self.check(guard)?;
+        let identity =
+            NonNull::new(self.selected.identity.0).ok_or("CV preset target unavailable")?;
+        if !self.same_component_alias()
+            || !catalog.matches_target_identity(identity)
+            || !self.storable
+        {
+            return Err("CV preset load requires the retained mediator target and its exact component-alias IStorable".into());
+        }
+        let storable = optional_interface(self.selected.view.0, &state::STORABLE)?
+            .ok_or("CV preset target IStorable is no longer available")?;
+        guard()?;
+        if Target::identity(storable.0)?.0 != identity.as_ptr() {
+            return Err("CV preset target IStorable canonical identity changed".into());
+        }
+        self.check(guard)?;
+        Ok(storable)
+    }
+
     fn get(mediator: *mut c_void) -> *mut c_void {
         let get: Borrowed = unsafe { method(mediator, 4) };
         unsafe { get(mediator) }
