@@ -62,7 +62,26 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 1867,
+  "distinct_individual_roundtrips_including_representative": 2070,
+  "r34_timeless_2": {
+    "protected_files": 28,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 200,
+    "typed_snapshot_size": 841,
+    "requests": 3628,
+    "elapsed_seconds": 369.629
+  },
+  "r35_timeless_2": {
+    "protected_files": 30,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 3,
+    "typed_snapshot_size": 841,
+    "full_page_and_native_digest_parity": true,
+    "requests": 83,
+    "elapsed_seconds": 11.302
+  },
   "r20_pro_q_2": {
     "protected_files": 23,
     "clean_owner_exit": true,

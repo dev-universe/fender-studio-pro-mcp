@@ -2,7 +2,7 @@
 
 먼저 [11월 20일 실제 검증 인수인계](LOOP_HANDOFF_2026-11-20_LIVE.md)와 `RESUME_STATE.json`을 확인한다. CV 콘솔 그룹, 뮤트 왕복, Output01 구조 조회, Output03 컨트롤러 정체를 실제 8.1.1에서 확인했다. R103에서는 MCP로 공장 프리셋의 설정만 직접 적용하고 설정 97개와 미할당 포트 일곱 개를 확인한 뒤 원복했다. 설정 적용 후보의 공개 반영과 실제 배정된 포트의 보존 검증이 남았다. Pedalboard R102에서는 별칭과 직접 슬롯 토글의 왕복을 확인했고 호스트 바이패스와 랙 편집을 이어간다.
 
-공식 FabFilter VST3 23종에서 실제 삽입과 열거를 마쳤다. 개별값은 1,867개를 왕복 검증했다. 자동 Studio Pro 프리셋은 22종이 통과했다. Pro-Q 4는 R19의 별도 내부값 쓰기를 포함할 때 736개가 정확히 일치한다. Twin 3는 R28의 MCP 노트 없는 시험 파트에서 `Ambient Mover`를 확인했고 R10 결과와 1,509개가 같았다. One과 Twin 2의 독립 프로그램 재생, Pro-Q 4의 효과 MIDI 라우팅, 각 제품의 전체 쓰기와 프리셋, 그리고 [11월 18일의 내장 대기열](LOOP_HANDOFF_2026-11-18.md#11-빠짐없이-이어갈-28개-완료물)을 이어간다.
+공식 FabFilter VST3 23종에서 실제 삽입과 열거를 마쳤다. R35까지 개별값 2,070개를 왕복 검증했다. 자동 Studio Pro 프리셋은 22종이 통과했다. Pro-Q 4는 R19의 별도 내부값 쓰기를 포함할 때 736개가 정확히 일치한다. Twin 3는 R28에서 `Ambient Mover`와 1,509개 일치를 확인했다. One과 Twin 2도 각각 프로그램 1과 5의 프리셋이 재생 후 표시됐다. 두 경우의 내부값 한 개와 프로그램 0 동작, Pro-Q 4 효과 MIDI 라우팅, 각 제품의 전체 쓰기와 프리셋, 그리고 [11월 18일의 내장 대기열](LOOP_HANDOFF_2026-11-18.md#11-빠짐없이-이어갈-28개-완료물)을 이어간다.
 
 2026년 11월 18일 재개 실행은 오전 6시 이동 전에 종료했다. 공개 저장소 보호·검증된 코드의 메인 병합·README 갱신을 완료했다. [당시 전체 대기열](LOOP_HANDOFF_2026-11-18.md)과 [진행 기록](PROGRESS_2026-11-18.md)을 보존했다. 11월 18일의 오전 6시 마감은 그 실행에만 해당했다.
 
@@ -26,7 +26,7 @@
 
 ## 현재 제품과 범위
 
-공개 main `8575dcc10d7819479a067466af1adf0daa9561d0`에 [PR #15](https://github.com/dev-universe/fender-studio-pro-mcp/pull/15)의 CV 설정 적용과 [PR #14](https://github.com/dev-universe/fender-studio-pro-mcp/pull/14)의 조회가 병합됐다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트는 R28 실앱에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호, [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회가 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R30 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59였다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
+공개 main `3805b81ad9388422e1e7ff968a387f93ef3298fc`에 [PR #16](https://github.com/dev-universe/fender-studio-pro-mcp/pull/16)의 One·Twin 2 프로그램 파트, [PR #15](https://github.com/dev-universe/fender-studio-pro-mcp/pull/15)의 CV 설정 적용, [PR #14](https://github.com/dev-universe/fender-studio-pro-mcp/pull/14)의 조회가 병합됐다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트는 R28에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호, [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회도 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R33 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59였다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
 
 R83·R84·R85는 종료한 예비 실험이다. 당시 후보의 설치 증거는 [11월 18일 인수인계 15절](LOOP_HANDOFF_2026-11-18.md)에 보존했다. 실제로 준비와 정리를 한 번 왕복한 Native60 R89의 새 증거와 함께 보되, 과거 후보 파일을 현재 설치 증거로 재사용하지 않는다.
 문서만 바뀌면 같은 제품을 다시 빌드하거나 설치하지 않는다.
