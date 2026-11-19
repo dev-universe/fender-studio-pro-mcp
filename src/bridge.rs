@@ -120,6 +120,19 @@ pub struct ExchangeFailure {
     pub error: OperationError,
 }
 
+pub struct StagedProgramPart {
+    path: PathBuf,
+    pub basename: String,
+}
+
+impl StagedProgramPart {
+    pub fn remove(self) {
+        if let Err(error) = fs::remove_file(self.path) {
+            tracing::warn!(%error, "Could not remove the private MIDI program fixture");
+        }
+    }
+}
+
 impl Bridge {
     pub fn new(config: &Config) -> Result<Self, OperationError> {
         private_dir(&config.mailbox())?;
@@ -140,6 +153,28 @@ impl Bridge {
         self.exchange_with(op, args, expected_session, expected_document, || {
             midi.nudge()
         })
+    }
+
+    pub fn stage_midi_program(
+        &self,
+        contents: &[u8; 46],
+    ) -> Result<StagedProgramPart, OperationError> {
+        let basename = format!("mcp-midi-program-{}.mid", Uuid::new_v4());
+        let path = self.directory.join(&basename);
+        let mut options = OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::OpenOptionsExt;
+            options.mode(0o600);
+        }
+        let mut file = options.open(&path).map_err(io_error)?;
+        if let Err(error) = file.write_all(contents) {
+            drop(file);
+            let _ = fs::remove_file(&path);
+            return Err(io_error(error));
+        }
+        Ok(StagedProgramPart { path, basename })
     }
 
     fn exchange_with(
@@ -176,12 +211,13 @@ impl Bridge {
             dispatched: false,
             error,
         })?;
+        // The bridge can read the published request on any tick, including
+        // before this process sends its first wakeup.
+        let dispatched = true;
         let deadline = Instant::now() + self.timeout;
         let mut last_wake = None;
-        let mut dispatched = false;
         while Instant::now() < deadline {
             if last_wake.is_none_or(|t: Instant| t.elapsed() >= Duration::from_millis(150)) {
-                dispatched = true;
                 wake().map_err(|error| ExchangeFailure { dispatched, error })?;
                 last_wake = Some(Instant::now());
             }
@@ -285,6 +321,46 @@ pub fn io_error(error: std::io::Error) -> OperationError {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn staged_midi_is_private_unique_and_removable() {
+        let temp = tempfile::tempdir().unwrap();
+        let config = Config {
+            data_dir: Some(temp.path().to_owned()),
+            profile: None,
+            timeout_ms: 100,
+        };
+        let bridge = Bridge::new(&config).unwrap();
+        let first = bridge.stage_midi_program(&[1; 46]).unwrap();
+        let second = bridge.stage_midi_program(&[2; 46]).unwrap();
+        assert_ne!(first.basename, second.basename);
+        assert_eq!(
+            Uuid::parse_str(
+                first
+                    .basename
+                    .strip_prefix("mcp-midi-program-")
+                    .unwrap()
+                    .strip_suffix(".mid")
+                    .unwrap()
+            )
+            .unwrap()
+            .get_version_num(),
+            4
+        );
+        assert_eq!(fs::read(&first.path).unwrap(), [1; 46]);
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(&first.path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        let removed = first.path.clone();
+        first.remove();
+        assert!(!removed.exists());
+        assert_eq!(fs::read(&second.path).unwrap(), [2; 46]);
+    }
 
     #[test]
     fn second_owner_cannot_use_same_profile_with_another_mailbox() {

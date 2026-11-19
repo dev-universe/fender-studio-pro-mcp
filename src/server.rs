@@ -139,6 +139,12 @@ impl McpServer {
                 "Edit selected track notes through the in-DAW EditTask. Filters limit the target notes.",
                 true,
             ),
+            named::<MidiProgramPartAdd>(
+                "midi_program_part_add",
+                "midiProgramPartAdd",
+                "Create a note-free MIDI bank and program part at song start on the empty, exclusively selected Music track routed to the exact FabFilter Twin 3 VST3 instance. Requires an empty arrangement event selection and stopped transport at song start with loop, record arm, and input monitoring disabled. Verifies part and route only. If the outcome is unknown, inspect the track before retrying.",
+                true,
+            ),
             named::<TrackTask>(
                 "tracks_edit",
                 "trackTask",
@@ -528,9 +534,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cv_structure_schema_keeps_47_tools_and_a_mutating_fixed_action() {
+    fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -568,7 +574,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -615,7 +621,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 47);
+        assert_eq!(McpServer::specs().len(), 48);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -832,7 +838,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
     }
 
     #[test]
@@ -1081,9 +1087,45 @@ mod tests {
     }
 
     #[test]
+    fn midi_program_part_schema_exposes_only_typed_bank_program_and_identity() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|entry| entry.tool.name == "midi_program_part_add")
+            .unwrap();
+        assert_eq!(spec.operation, Some("midiProgramPartAdd"));
+        let schema = spec.tool.input_schema;
+        let fields = [
+            "bank_lsb",
+            "bank_msb",
+            "expected_document",
+            "expected_instance",
+            "program",
+            "track",
+        ];
+        assert_eq!(
+            schema["properties"].as_object().unwrap().len(),
+            fields.len()
+        );
+        for field in fields {
+            assert!(
+                schema["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!(field))
+            );
+        }
+        for field in ["bank_lsb", "bank_msb", "program"] {
+            let value = &schema["properties"][field];
+            assert_eq!(value["minimum"], 0);
+            assert_eq!(value["maximum"], 127);
+        }
+        assert_eq!(schema["additionalProperties"], false);
+    }
+
+    #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1165,7 +1207,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 47);
+        assert_eq!(McpServer::specs().len(), 48);
     }
 
     #[test]
@@ -1213,7 +1255,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

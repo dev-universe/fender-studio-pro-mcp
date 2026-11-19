@@ -20,6 +20,7 @@ mod chorder_chords;
 mod chorder_learning;
 mod cv_port_structure;
 mod external_menu;
+mod midi_program_part;
 mod rumble_named_parameters;
 mod rumble_parameters;
 mod rumble_processor_state;
@@ -178,7 +179,26 @@ fn execute(
             elapsed_ms: started.elapsed().as_millis(),
         });
     }
-    let (op, args) = operation.wire();
+    let (op, mut args) = operation.wire();
+    let staged_program = if let Operation::MidiProgramPartAdd(change) = &operation {
+        match bridge.stage_midi_program(&midi_program_part::smf(change)) {
+            Ok(staged) => {
+                args["fixture"] = json!(staged.basename);
+                Some(staged)
+            }
+            Err(error) => {
+                return Ok(rejected(
+                    &operation,
+                    request_id,
+                    started,
+                    error,
+                    Some(&context),
+                ));
+            }
+        }
+    } else {
+        None
+    };
     let response = bridge.transact(
         &op,
         &args,
@@ -190,6 +210,15 @@ fn execute(
         Ok(response) => response,
         Err(failure) => {
             let mut result = Value::Null;
+            if let (Operation::MidiProgramPartAdd(change), Some(staged)) =
+                (&operation, staged_program)
+            {
+                if failure.dispatched {
+                    result = midi_program_part::unverified(change, &staged.basename, "dispatch");
+                } else {
+                    staged.remove();
+                }
+            }
             if rumble_named_parameters::requested(&operation) {
                 rumble_named_parameters::invalidate(&mut result);
             }
@@ -208,6 +237,24 @@ fn execute(
             });
         }
     };
+    if let (Operation::MidiProgramPartAdd(change), Some(staged)) = (&operation, staged_program) {
+        let (outcome, result, error) =
+            midi_program_part::classify(change, &staged.basename, &context, &response);
+        // If the operation is uncertain, the host callback may still be reading
+        // the exclusively created fixture. Leave it in the private mailbox.
+        if outcome != Outcome::Unknown {
+            staged.remove();
+        }
+        return Ok(Receipt {
+            request_id,
+            outcome,
+            session: Some(response.session),
+            document: Some(response.document),
+            result,
+            error,
+            elapsed_ms: started.elapsed().as_millis(),
+        });
+    }
     if let Operation::PluginParams(parameters) = &mut operation
         && parameters.names.is_empty()
         && let Some(plugin) = parameters.plugin.as_deref()
@@ -1081,6 +1128,7 @@ mod tests {
             ("command", json!({"category":"Transport","name":"Stop","checkOnly":false})),
             ("trackTask", json!({"ops":[{"op":"focusTrack","track":"Scratch"}]})),
             ("editNotes", json!({"track":"Scratch","ops":[{"op":"transpose","semitones":1}]})),
+            ("midiProgramPartAdd", json!({"track":"Scratch","expected_instance":"12345678-1234-1234-1234-123456789ABC","bank_msb":0,"bank_lsb":0,"program":5})),
             ("markers", json!({})),
             ("addMarker", json!({"position":1})),
             ("deleteMarker", json!({"number":1})),
