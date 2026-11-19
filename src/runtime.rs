@@ -272,6 +272,7 @@ fn execute(
         || (matches!(operation, Operation::ExternalPortMenu(_))
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
+            || operation.inspects_cv_preset_settings()
             || rumble_serialization::requested(&operation)
             || rumble_processor_state::requested(&operation)
             || rumble_parameters::requested(&operation)
@@ -842,7 +843,7 @@ fn cv_preset_target_requested(operation: &Operation) -> bool {
     matches!(operation, Operation::PluginInspect(query) if matches!(query.node_scope, Some(NodeScope::CvPresetTarget)))
 }
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
-    if cv_preset_target_requested(operation) {
+    if cv_preset_target_requested(operation) || operation.inspects_cv_preset_settings() {
         *result = Value::Null;
         return;
     }
@@ -1333,6 +1334,17 @@ mod tests {
             "rumble_named_parameters_unavailable"
         );
         assert!(!receipt.result.to_string().contains("PRIVATE"));
+    }
+
+    #[test]
+    fn changed_cv_preset_settings_receipt_discards_the_digest() {
+        let args = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"inspect_cv_preset_settings","catalog_token":"A".repeat(64),"index":7});
+        let op = Operation::from_parts("plugin_presets", args).unwrap();
+        let mut result = json!({"cv_preset_settings":{"byte_count":3991,"sha256":"a".repeat(64)}});
+        invalidate_gui_evidence(&op, &mut result);
+        assert!(result.is_null());
     }
 
     #[test]

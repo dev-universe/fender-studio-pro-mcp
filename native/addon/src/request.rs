@@ -236,6 +236,11 @@ enum Request {
         index: u32,
         expected_instance: Option<String>,
     },
+    InspectCvPresetSettings {
+        catalog_token: String,
+        index: u32,
+        expected_instance: String,
+    },
     PresetRelease {
         catalog_token: String,
         expected_instance: Option<String>,
@@ -307,6 +312,7 @@ impl Request {
             | Self::StateRelease { .. }
             | Self::Presets { .. }
             | Self::PresetApply { .. }
+            | Self::InspectCvPresetSettings { .. }
             | Self::PresetRelease { .. }
             | Self::InspectAux { .. }
             | Self::InspectInsertFolderAncestry { .. }
@@ -319,6 +325,9 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::InspectCvPresetSettings {
+                expected_instance, ..
+            }
             | Self::ExternalPortMenu {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
@@ -595,6 +604,11 @@ impl Request {
             | Self::InspectInsertFolderPresetPreflight {
                 expected_instance: None,
             } => Err("state, preset and auxiliary operations require expected_instance".into()),
+            Self::InspectCvPresetSettings { catalog_token, index, expected_instance }
+                if !state::valid_token(catalog_token) || *index >= 4096 || !valid_uid(expected_instance) =>
+            {
+                Err("CV preset settings inspection requires an issued token, index and exact instance".into())
+            }
             Self::Presets { limit, .. } if !(1..=presets::MAX_PAGE).contains(limit) => {
                 Err("preset limit must be between 1 and 64".into())
             }
@@ -1546,6 +1560,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::StateRelease { .. }
         | Request::Presets { .. }
         | Request::PresetApply { .. }
+        | Request::InspectCvPresetSettings { .. }
         | Request::PresetRelease { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
@@ -2497,7 +2512,10 @@ fn dispatch_device(
     }
     if matches!(
         request,
-        Request::Presets { .. } | Request::PresetApply { .. } | Request::PresetRelease { .. }
+        Request::Presets { .. }
+            | Request::PresetApply { .. }
+            | Request::InspectCvPresetSettings { .. }
+            | Request::PresetRelease { .. }
     ) {
         let (mut value, catalog) = presets::execute(&ctx, &request, auxiliary);
         value["instance"] = json!(ctx.instance);
@@ -3220,6 +3238,28 @@ mod tests {
             let mut invalid = args.clone();
             invalid[field] = value;
             assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
+    #[test]
+    fn cv_preset_settings_native_request_only_takes_an_issued_selector() {
+        let args = json!({"operation":"inspect_cv_preset_settings","catalog_token":"A".repeat(64),"index":1,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let request = parse(args.clone()).unwrap();
+        assert!(matches!(request, Request::InspectCvPresetSettings { .. }));
+        assert!(!request.needs_auxiliary());
+        for (key, value) in [
+            ("path", json!("/other.preset")),
+            ("url", json!("file:///other.preset")),
+            ("bytes", json!("raw")),
+            ("index", json!(4096)),
+            ("catalog_token", json!("a".repeat(64))),
+            ("expected_instance", json!(ZERO_UID)),
+            ("expected_instance", Value::Null),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = value;
+            assert!(parse(invalid).is_err(), "{key}");
         }
     }
 

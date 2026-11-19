@@ -220,7 +220,7 @@ impl McpServer {
             named::<PluginPresets>(
                 "plugin_presets",
                 "pluginPresets",
-                "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
+                "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. For the exact CV Instrument, inspect_cv_preset_settings reads the primary settings byte count and SHA-256 from an issued index without loading the preset. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
                 true,
             ),
             named::<PluginEditor>(
@@ -364,6 +364,17 @@ fn named<T: JsonSchema>(
                     "include_nodes":{"const":true},"include_context":{"const":false}}}
         }, {"if":{"properties":{"node_scope":{"enum":["cv_port_parameters","cv_preset_target"]}},"required":["node_scope"]},
             "then":{"properties":{"names":{"maxItems":0}},"not":{"anyOf":[{"required":["offset"]},{"required":["limit"]}]}}}]);
+    }
+    if operation == "pluginPresets" {
+        schema["allOf"] = json!([{
+            "if":{"properties":{"action":{"const":"inspect_cv_preset_settings"}},"required":["action"]},
+            "then":{"required":["kind","track","catalog_token","index"],
+                "properties":{"kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},
+                    "track":{"type":"string","minLength":1,"maxLength":512},
+                    "slot":{"const":0},"catalog_token":{"type":"string","pattern":"^[0-9A-F]{64}$"},
+                    "index":{"type":"integer","minimum":0,"maximum":4095}},
+                "not":{"anyOf":[{"required":["channel"]},{"required":["offset"]},{"required":["limit"]}]}}
+        }]);
     }
     if operation == "pluginState" {
         crate::operation::cv_structure_schema(&mut schema);
