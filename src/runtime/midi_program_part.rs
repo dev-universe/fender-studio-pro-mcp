@@ -144,13 +144,19 @@ pub(super) fn classify(
             Some(super::host_error(response)),
         );
     }
-    let stage = match result["stage"].as_str() {
-        Some(
-            stage @ ("import" | "seed_verification" | "note_cleanup" | "final_verification"
-            | "publication"),
-        ) => stage,
-        _ => "verification",
-    };
+    let stage = result["stage"]
+        .as_str()
+        .filter(|stage| {
+            matches!(
+                *stage,
+                "import"
+                    | "seed_verification"
+                    | "note_cleanup"
+                    | "final_verification"
+                    | "publication"
+            )
+        })
+        .unwrap_or("verification");
     (
         Outcome::Unknown,
         unverified(change, basename, stage),

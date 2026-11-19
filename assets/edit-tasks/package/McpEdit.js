@@ -64,14 +64,22 @@ function mcpMatch(note, filter) {
 	return true;
 }
 
-function mcpApply(context, ops) {
+function mcpApply(context, ops, lease) {
 	var fns = context.functions;
 	var notes = [];
 	var it = context.iterator;
+	var guardedSeed = ops.length === 1 && ops[0] && ops[0].program_part_name !== undefined;
 	while (it && mcpHas(it, "done") && !it.done()) {
 		var n = it.next();
 		if (!n) break;
 		notes.push(n);
+		if (guardedSeed && notes.length > 1)
+			return { applied: [], errors: ["the program note selection is not singular"], notesBefore: notes.length };
+	}
+	if (guardedSeed) {
+		var exhausted = mcpHas(it, "done") ? it.done() : null;
+		if (exhausted !== true && exhausted !== 1)
+			return { applied: [], errors: ["the program note selection is not complete"], notesBefore: notes.length };
 	}
 	var applied = [];
 	var errors = [];
@@ -132,7 +140,8 @@ function mcpApply(context, ops) {
 						|| !/^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12} CH1$/.test(op.program_part_name)
 						|| !seed || !region || region.name !== op.program_part_name
 						|| seed.pitch !== 60 || mcpStart(seed) !== 2.5
-						|| typeof seed.velocity !== "number" || Math.round(seed.velocity * 127) !== 1 || seed.isMuted) {
+						|| typeof seed.velocity !== "number" || Math.round(seed.velocity * 127) !== 1 || seed.isMuted
+						|| !mcpNativeLeaseCurrent(lease)) {
 						errors.push("the selected seed note or its generated region did not match");
 						break;
 					}
@@ -180,7 +189,7 @@ function McpEditTask() {
 			mcpWrite("edit-result.json", { id: req && req.id ? req.id : null, error: claim.error });
 			return Host.Results.kResultOk;
 		}
-		var r = mcpApply(context, req.ops);
+		var r = mcpApply(context, req.ops, claim.lease);
 		r.id = req.id;
 		mcpWrite("edit-result.json", r);
 		return Host.Results.kResultOk;

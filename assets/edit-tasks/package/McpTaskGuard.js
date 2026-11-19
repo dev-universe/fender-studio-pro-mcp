@@ -1,5 +1,16 @@
 include_file("McpDocumentContext.js");
 
+function mcpNativeLeaseCurrent(lease) {
+	try {
+		var identity = lease && lease.nativeDocument;
+		if (!identity || typeof identity !== "object" || Array.isArray(identity)
+			|| Object.keys(identity).sort().join(",") !== "context_api,token"
+			|| identity.context_api !== "native_document_context_v1" || !mcpDocumentToken(identity.token)) return false;
+		var context = mcpReadNativeDocument(mcpNativeDocumentService());
+		return context.open && context.token === identity.token && context.title === lease.title && context.fileUrl === lease.fileUrl;
+	} catch (_) { return false; }
+}
+
 function mcpClaimTask(readFn, writeFn, requestFilename, kind) {
 	var request = readFn(requestFilename);
 	var lease = readFn("task-lease.json");
@@ -26,15 +37,7 @@ function mcpClaimTask(readFn, writeFn, requestFilename, kind) {
 	} else if (typeof Host === "undefined" || !Host.Objects || typeof Host.Objects.getObjectByUrl !== "function") {
 		error = "active document is not available";
 	} else if (lease.nativeDocument !== undefined) {
-		try {
-			var identity = lease.nativeDocument;
-			if (!identity || typeof identity !== "object" || Array.isArray(identity)
-				|| Object.keys(identity).sort().join(",") !== "context_api,token"
-				|| identity.context_api !== "native_document_context_v1" || !mcpDocumentToken(identity.token)) throw new Error("invalid native task identity");
-			var context = mcpReadNativeDocument(mcpNativeDocumentService());
-			if (!context.open || context.token !== identity.token || context.title !== lease.title || context.fileUrl !== lease.fileUrl)
-				throw new Error("native task document changed");
-		} catch (_) { error = "native document does not match EditTask lease"; }
+		if (!mcpNativeLeaseCurrent(lease)) error = "native document does not match EditTask lease";
 	} else {
 		var manager = Host.Objects.getObjectByUrl("://studioapp/DocumentManager");
 		var document = manager && typeof manager.activeDocument === "object" ? manager.activeDocument : null;
@@ -42,5 +45,5 @@ function mcpClaimTask(readFn, writeFn, requestFilename, kind) {
 		var fileUrl = document && document.path && typeof document.path.url === "string" ? document.path.url : null;
 		if (!document || title !== lease.title || fileUrl !== lease.fileUrl) error = "active document does not match EditTask lease";
 	}
-	return { request: request, error: error };
+	return { request: request, error: error, lease: error ? null : lease };
 }

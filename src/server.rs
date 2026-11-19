@@ -142,7 +142,7 @@ impl McpServer {
             named::<MidiProgramPartAdd>(
                 "midi_program_part_add",
                 "midiProgramPartAdd",
-                "Create a note-free MIDI bank and program part at song start on the empty, exclusively selected Music track routed to the exact FabFilter Twin 3 VST3 instance. Requires stopped transport at song start with loop, record arm, and input monitoring disabled. Verifies part and route only. If the outcome is unknown, inspect the track before retrying.",
+                "Create a note-free MIDI bank and program part at song start on the empty, exclusively selected Music track routed to the exact FabFilter Twin 3 VST3 instance. Requires an empty arrangement event selection and stopped transport at song start with loop, record arm, and input monitoring disabled. Verifies part and route only. If the outcome is unknown, inspect the track before retrying.",
                 true,
             ),
             named::<TrackTask>(
@@ -523,9 +523,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn cv_structure_schema_keeps_47_tools_and_a_mutating_fixed_action() {
+    fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 47);
+        assert_eq!(specs.len(), 48);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")

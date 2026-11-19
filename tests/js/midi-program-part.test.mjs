@@ -14,8 +14,10 @@ function harness() {
   const host = bridgeHarness();
   const song = musicContext();
   const state = {
-    selected: null, recordArmed: false, switches: { start: 0, record: 0, loop: 0, primaryTime: 0 },
-    classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0, onImport() {},
+    selected: [], recordArmed: false, switches: { start: 0, record: 0, loop: 0, primaryTime: 0 },
+    classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0,
+    document: { token: 'ndc1:0000000000000001:1', title: 'Scratch', fileUrl: 'file:///scratch/song.song' },
+    onImport() {}, onSelect() {}, onInspect() {},
   };
   const iterator = list => {
     let index = 0;
@@ -43,19 +45,39 @@ function harness() {
     documentContext() {
       return JSON.stringify({
         ok: true, api: 'fender-mcp-native-v1', context_api: 'native_document_context_v1',
-        token: 'ndc1:0000000000000001:1', open: true, title: 'Scratch', fileUrl: 'file:///scratch/song.song',
+        open: true, ...state.document,
       });
     },
   } : null;
   host.bridge.component = {
     fixtureTrackState: () => ({ label: 'Keys', mute: 0, recordArmed: state.recordArmed, monitor: false }),
-    pluginInspect: () => ({ plugin: 'Twin 3', native: { ok: true, source: 'dsp',
-      instance: { object_uid: instance, class_uid: state.classUid, native_class: 'AudioSynth' } } }),
+    pluginInspect() {
+      state.onInspect();
+      return { plugin: 'Twin 3', native: { ok: true, source: 'dsp',
+        instance: { object_uid: instance, class_uid: state.classUid, native_class: 'AudioSynth' } } };
+    },
   };
-  song.context.editor = { createSelectFunctions: () => ({
-    select(event) { assert.equal(this.selectExclusive, true); state.selected = event; },
-  }) };
-  const edits = [];
+  const edits = [], selectionActions = [];
+  song.context.editor = {
+    selection: {
+      isEmpty: () => state.selected.length === 0 ? 1 : 0,
+      isMultiple: () => state.selected.length > 1 ? 1 : 0,
+      isSelected: event => state.selected.includes(event) ? 1 : 0,
+    },
+    createSelectFunctions: () => ({
+      select(event) {
+        assert.equal(this.selectExclusive, false);
+        state.selected.push(event);
+        selectionActions.push('select');
+        state.onSelect();
+      },
+    }),
+    unselect(event) {
+      assert.equal(event, song.keys.events[0]);
+      state.selected = state.selected.filter(selected => selected !== event);
+      selectionActions.push('unselect');
+    },
+  };
   song.context.functions.importFile = (file, time, track, flags) => {
     assert.equal(file.url, mailbox + fixture);
     assert.equal(time.seconds, 0);
@@ -77,10 +99,10 @@ function harness() {
   const handlers = {
     'Track/Fender MCP Track Edit': () => trackTask.performEdit(song.context),
     'Musical Functions/Fender MCP Edit': () => noteTask.performEdit({
-      iterator: iterator(state.selected.notes),
-      functions: { deleteEvent(note) { state.selected.notes.splice(state.selected.notes.indexOf(note), 1); edits.push('delete'); } },
+      iterator: iterator(state.selected.flatMap(event => event.notes)),
+      functions: { deleteEvent(note) { note.region.notes.splice(note.region.notes.indexOf(note), 1); edits.push('delete'); } },
     }),
-    'Edit/Deselect All': () => { state.selected = null; },
+    'Edit/Deselect All': () => { state.selected = []; selectionActions.push('global_deselect'); },
   };
   host.Host.GUI.Commands.findCommand = (category, command) => handlers[`${category}/${command}`] ?? null;
   host.Host.GUI.Commands.interpretCommand = (category, command) => {
@@ -94,7 +116,7 @@ function harness() {
     op, expectedSession: scopeIdentity.session, expectedDocument: scopeIdentity.document,
     args: op === 'midiProgramPartAdd' ? { ...requestArgs, ...extra } : extra,
   });
-  return { ...host, request, state, song, edits, list };
+  return { ...host, request, state, song, edits, list, selectionActions };
 }
 
 test('the note-free part requires independent witnesses beyond the numeric importer return', () => {
@@ -109,7 +131,8 @@ test('the note-free part requires independent witnesses beyond the numeric impor
   assert.equal(response.result.atomic, false);
   assert.equal(response.result.program_events_verified, false);
   assert.equal(response.result.delivery_verified, false);
-  assert.equal(h.state.selected, null);
+  assert.deepEqual(h.state.selected, []);
+  assert.deepEqual(h.selectionActions, ['select', 'unselect']);
 });
 
 test('preflight rejects wrong or nonempty targets, untrusted paths and raw task dispatch', () => {
@@ -128,7 +151,64 @@ test('preflight rejects wrong or nonempty targets, untrusted paths and raw task 
     assert.equal(h.request(invalid).result.native_outcome, 'not_applied');
   }
   assert.equal(h.request({ ops: [{ op: 'importMidiProgramFixture', track: 'Keys', fixture }] }, 'trackTask').ok, false);
+  assert.equal(h.request({ ops: [{ op: 'midiProgramSelection', track: 'Keys', partName, action: 'release' }] }, 'trackTask').ok, false);
   assert.deepEqual(h.edits, []);
+});
+
+test('an existing same-document event selection is preserved before import', () => {
+  const h = harness();
+  const peer = { name: 'Other event', notes: [] };
+  h.state.selected = [peer];
+  const response = h.request();
+  assert.equal(response.result.native_outcome, 'not_applied');
+  assert.match(response.result.reason, /empty arrangement selection/);
+  assert.deepEqual(h.edits, []);
+  assert.deepEqual(h.selectionActions, []);
+  assert.deepEqual(h.state.selected, [peer]);
+});
+
+test('an unobservable arrangement selection prevents import', () => {
+  const h = harness();
+  h.song.context.editor.selection.isEmpty = () => undefined;
+  assert.equal(h.request().result.native_outcome, 'not_applied');
+  assert.deepEqual(h.edits, []);
+  assert.deepEqual(h.selectionActions, []);
+});
+
+test('document switch during select or route check preserves the new document selection', () => {
+  for (const [phase, update] of [
+    ['onSelect', { token: 'ndc1:0000000000000001:2', title: 'Other', fileUrl: 'file:///scratch/other.song' }],
+    ['onInspect', { token: 'ndc1:0000000000000001:2', title: 'Other', fileUrl: 'file:///scratch/other.song' }],
+    ['onInspect', { fileUrl: 'file:///scratch/renamed.song' }],
+  ]) {
+    const h = harness();
+    const sentinel = { name: 'Sentinel selection', notes: [] };
+    h.state[phase] = () => {
+      if (!h.state.selected.some(event => event.name === partName)) return;
+      Object.assign(h.state.document, update);
+      h.state.selected = [sentinel];
+    };
+    const response = h.request();
+    assert.equal(response.result.native_outcome, 'unknown', phase);
+    assert.deepEqual(h.edits, ['import'], phase);
+    assert.deepEqual(h.selectionActions, ['select'], phase);
+    assert.deepEqual(h.state.selected, [sentinel], phase);
+    assert.equal(h.song.keys.events[0].notes.length, 1, phase);
+  }
+});
+
+test('replacement of the issued selection within the same document prevents a release or delete', () => {
+  const h = harness();
+  const sentinel = { name: 'Peer selection', notes: [] };
+  h.state.onInspect = () => {
+    if (h.state.selected.some(event => event.name === partName)) h.state.selected = [sentinel];
+  };
+  const response = h.request();
+  assert.equal(response.result.native_outcome, 'unknown');
+  assert.deepEqual(h.edits, ['import']);
+  assert.deepEqual(h.selectionActions, ['select']);
+  assert.deepEqual(h.state.selected, [sentinel]);
+  assert.equal(h.song.keys.events[0].notes.length, 1);
 });
 
 test('post-write mismatches report unknown and leave unverified notes untouched', () => {
