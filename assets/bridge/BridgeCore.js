@@ -492,16 +492,17 @@ class Bridge {
         if (this.documentMode !== "native") return fail("a native document lease is required");
         const before = this.fixtureContext(args, program);
         if (isFail(before)) return before;
+        const target = program.instrument;
         const report = this.fromComponent(c => c.pluginInspect({
-            kind: "instrument", track: args.track, plugin: "Twin 3", source: "dsp",
+            kind: "instrument", track: args.track, plugin: target.name, source: "dsp",
             expected_instance: args.expected_instance
         }));
         const native = !isFail(report) && report && report.native;
         const identity = native && native.instance;
-        if (!native || native.ok !== true || native.source !== "dsp" || report.plugin !== "Twin 3"
-            || !identity || identity.native_class !== "AudioSynth" || identity.class_uid !== kTwin3Class
+        if (!native || native.ok !== true || native.source !== "dsp" || report.plugin !== target.name
+            || !identity || identity.native_class !== "AudioSynth" || identity.class_uid !== target.classUid
             || identity.object_uid !== args.expected_instance)
-            return fail("the exact Twin 3 VST3 route was not established");
+            return fail("the exact " + target.name + " VST3 route was not established");
         const after = this.fixtureContext(args, program);
         if (isFail(after)) return after;
         if (JSON.stringify(before) !== JSON.stringify(after))
@@ -520,7 +521,12 @@ class Bridge {
             if (detailCode !== undefined) result.detail_code = detailCode;
             return result;
         };
-        if (Object.keys(args).sort().join(",") !== "bank_lsb,bank_msb,expected_instance,fixture,program,track"
+        const explicitInstrument = Object.prototype.hasOwnProperty.call(args, "instrument");
+        const instrument = explicitInstrument ? args.instrument : "twin_3";
+        const keys = explicitInstrument ? "bank_lsb,bank_msb,expected_instance,fixture,instrument,program,track"
+            : "bank_lsb,bank_msb,expected_instance,fixture,program,track";
+        if (Object.keys(args).sort().join(",") !== keys
+            || typeof instrument !== "string" || !Object.prototype.hasOwnProperty.call(kMidiProgramInstruments, instrument)
             || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
             || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
             || typeof args.expected_instance !== "string" || args.expected_instance.length !== 36
@@ -533,7 +539,7 @@ class Bridge {
         if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit")
             || !Host.GUI.Commands.findCommand("Musical Functions", "Fender MCP Edit"))
             return refused("the guarded Track and Note EditTasks are required");
-        const program = { track: null, partName: args.fixture.slice(0, -4) + " CH1", noteCount: null };
+        const program = { instrument: kMidiProgramInstruments[instrument], track: null, partName: args.fixture.slice(0, -4) + " CH1", noteCount: null };
         const original = this.midiProgramPartBinding(args, program);
         if (isFail(original)) return refused(original.bridgeError);
         const imported = this.trackTask({
@@ -573,7 +579,7 @@ class Bridge {
         if (part.start !== seededPart.start || part.end !== seededPart.end) return uncertain("final_verification");
         return {
             stage: "complete", import_return_type: call.returnType, track: args.track,
-            expected_instance: args.expected_instance, class_uid: kTwin3Class,
+            expected_instance: args.expected_instance, class_uid: program.instrument.classUid,
             channel: 1, bank_msb: args.bank_msb, bank_lsb: args.bank_lsb, program: args.program,
             part: part, atomic: false, program_events_verified: false, delivery_verified: false
         };
@@ -1393,7 +1399,11 @@ function sameFixtureContext(a, b) {
         && typeof a.title === "string" && a.title === b.title;
 }
 
-const kTwin3Class = "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+const kMidiProgramInstruments = {
+    one: { name: "One", classUid: "9240FC40-10CD-45A0-B7DA-CECADDC2E97A" },
+    twin_2: { name: "Twin 2", classUid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2" },
+    twin_3: { name: "Twin 3", classUid: "91AF218E-111A-44CB-ABFE-F7CB065FF157" }
+};
 
 function isMidiProgramFixture(name) {
     return name.length === 57 && /^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mid$/.test(name);

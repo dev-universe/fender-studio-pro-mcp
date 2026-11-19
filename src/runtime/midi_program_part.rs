@@ -6,7 +6,6 @@ use crate::{
     operation::MidiProgramPartAdd,
 };
 
-const TWIN_CLASS: &str = "91AF218E-111A-44CB-ABFE-F7CB065FF157";
 const SELECTION_PREFLIGHT: &str = "MIDI program parts require a known empty arrangement selection";
 
 pub(super) fn smf(change: &MidiProgramPartAdd) -> [u8; 46] {
@@ -74,7 +73,7 @@ fn valid(change: &MidiProgramPartAdd, basename: &str, result: &Value) -> bool {
         && result["import_return_type"] == "number"
         && result["track"] == change.track
         && result["expected_instance"] == change.expected_instance
-        && result["class_uid"] == TWIN_CLASS
+        && result["class_uid"] == change.instrument.unwrap_or_default().class_uid()
         && result["channel"] == 1
         && result["bank_msb"] == change.bank_msb
         && result["bank_lsb"] == change.bank_lsb
@@ -232,7 +231,7 @@ pub(super) fn classify(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::operation::Operation;
+    use crate::operation::{MidiProgramInstrument, Operation};
 
     const INSTANCE: &str = "12345678-1234-1234-1234-123456789ABC";
     const FIXTURE: &str = "mcp-midi-program-12345678-1234-4000-8000-123456789abc.mid";
@@ -282,13 +281,42 @@ mod tests {
     }
 
     #[test]
+    fn instrument_selector_is_closed_and_omission_preserves_the_twin3_wire_request() {
+        let original = input();
+        let operation = Operation::from_parts("midi_program_part_add", original.clone()).unwrap();
+        assert_eq!(operation.wire().1, original);
+        for selector in ["one", "twin_2", "twin_3"] {
+            let mut request = input();
+            request["instrument"] = json!(selector);
+            let typed = Operation::from_parts("midi_program_part_add", request.clone()).unwrap();
+            assert_eq!(typed.wire().1, request);
+            let Operation::MidiProgramPartAdd(typed_change) = typed else {
+                panic!("wrong operation")
+            };
+            assert_eq!(smf(&typed_change), smf(&change()));
+        }
+        for selector in [
+            json!("Twin 2"),
+            json!(MidiProgramInstrument::One.class_uid()),
+            json!({"class_id": MidiProgramInstrument::One.class_uid()}),
+        ] {
+            let mut request = input();
+            request["instrument"] = selector;
+            assert!(Operation::from_parts("midi_program_part_add", request).is_err());
+        }
+        let mut request = input();
+        request["class_id"] = json!(MidiProgramInstrument::One.class_uid());
+        assert!(Operation::from_parts("midi_program_part_add", request).is_err());
+    }
+
+    #[test]
     fn a_numeric_import_return_without_exact_no_note_readback_is_unknown() {
         let context: HostContext = serde_json::from_value(json!({
             "session":"session","document":"document","open":true,"protocol":2
         }))
         .unwrap();
         let evidence = json!({
-            "stage":"complete","import_return_type":"number","track":"Keys","class_uid":TWIN_CLASS,
+            "stage":"complete","import_return_type":"number","track":"Keys","class_uid":MidiProgramInstrument::Twin3.class_uid(),
             "expected_instance":INSTANCE,"channel":1,"bank_msb":0,"bank_lsb":0,"program":5,
             "part":{"name":FIXTURE.replace(".mid", " CH1"),"start":0,"end":1.281,"note_count":0},
             "atomic":false,"program_events_verified":false,"delivery_verified":false
@@ -305,6 +333,23 @@ mod tests {
         assert_eq!(status(&response), Outcome::Unknown);
         response.result = evidence.clone();
         assert_eq!(status(&response), Outcome::AppliedVerified);
+        for instrument in [MidiProgramInstrument::One, MidiProgramInstrument::Twin2] {
+            let explicit = MidiProgramPartAdd {
+                instrument: Some(instrument),
+                ..change()
+            };
+            assert_eq!(
+                classify(&explicit, FIXTURE, &context, &response).0,
+                Outcome::Unknown
+            );
+            response.result["class_uid"] = json!(instrument.class_uid());
+            assert_eq!(
+                classify(&explicit, FIXTURE, &context, &response).0,
+                Outcome::AppliedVerified
+            );
+            assert_eq!(status(&response), Outcome::Unknown);
+            response.result = evidence.clone();
+        }
         for (field, value) in [
             ("class_uid", json!("other")),
             ("expected_instance", json!("other")),
