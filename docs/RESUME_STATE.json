@@ -22236,6 +22236,20 @@
     "pedalboard_r102_restored_writable": 22,
     "pedalboard_r102_requests": 61,
     "pedalboard_r102_seconds": 5.332,
-    "pedalboard_r102_protected_files": 24
+    "pedalboard_r102_protected_files": 24,
+    "cv_r101_merged_main": "31b27b3f40ce6a59e0333efd5628a2a5fa156ee3",
+    "cv_r101_merged_tree_matches_candidate": true,
+    "pedalboard_r104_single_slot_bypass_all_aggregate_changed": true,
+    "pedalboard_r104_requests": 37,
+    "pedalboard_r105_two_slot_aggregate_unchanged": true,
+    "pedalboard_r105_halted_on_access_metadata": true,
+    "pedalboard_r105_requests": 48,
+    "pedalboard_r107_host_bypass_roundtrip_verified": true,
+    "pedalboard_r107_native_live_rows_preserved_while_disabled": 40,
+    "pedalboard_r107_peer_phase_meter_preserved": true,
+    "pedalboard_r107_original_writable_restored": 22,
+    "pedalboard_r107_requests": 72,
+    "pedalboard_r107_seconds": 6.135,
+    "pedalboard_r107_protected_files": 27
   }
 }

@@ -26,7 +26,7 @@
 
 ## 현재 제품과 범위
 
-공개 main은 `ffa706f4ac8b6e6973985d1aaee839788a5b06a5`다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트가 병합됐고 동일한 후보가 R28 실앱에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호가 병합됐다. [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회가 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R91 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59였다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
+공개 main `31b27b3f40ce6a59e0333efd5628a2a5fa156ee3`에 [PR #14](https://github.com/dev-universe/fender-studio-pro-mcp/pull/14)의 CV 프리셋 설정 조회가 병합됐다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트는 R28 실앱에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호, [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회가 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R107 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59였다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
 
 R83·R84·R85는 종료한 예비 실험이다. 당시 후보의 설치 증거는 [11월 18일 인수인계 15절](LOOP_HANDOFF_2026-11-18.md)에 보존했다. 실제로 준비와 정리를 한 번 왕복한 Native60 R89의 새 증거와 함께 보되, 과거 후보 파일을 현재 설치 증거로 재사용하지 않는다.
 문서만 바뀌면 같은 제품을 다시 빌드하거나 설치하지 않는다.
