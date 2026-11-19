@@ -22349,6 +22349,22 @@
     "fabfilter_timeless2_r35_full_and_native_digest_parity": true,
     "fabfilter_timeless2_r35_requests": 83,
     "fabfilter_timeless2_r35_seconds": 11.302,
-    "fabfilter_timeless2_r35_protected_files": 30
+    "fabfilter_timeless2_r35_protected_files": 30,
+    "impact_r113_exact_output_label": "Impact St 1",
+    "impact_r113_requests": 16,
+    "impact_r114_mute_request_changed_current_value": false,
+    "impact_r114_requests": 19,
+    "impact_r115_issued_preset_titles": ["default", "Drum Extraction"],
+    "impact_r115_unchanged_writable_values": 4262,
+    "impact_r115_capsule_bytes": 35153,
+    "impact_r115_requests": 96,
+    "impact_r115_seconds": 10.749,
+    "impact_r115_protected_files": 34,
+    "impact_r116_issued_default_applied": true,
+    "impact_r116_original_values_restored": 4262,
+    "impact_r116_independent_pairs": 2,
+    "impact_r116_requests": 274,
+    "impact_r116_seconds": 34.199,
+    "impact_r116_protected_files": 36
   }
 }
