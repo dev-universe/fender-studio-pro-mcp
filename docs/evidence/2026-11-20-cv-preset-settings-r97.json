@@ -1,0 +1,24 @@
+{
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "candidate": "62a1de50e257d065976b29d114d44331dc2c4b9b",
+  "scope": "Digest of the primary settings for an exact locally issued CV Instrument preset",
+  "observed_preset": "default",
+  "host_read": {
+    "observed": true,
+    "primary_bytes": 3991,
+    "factory_digest_matches": true,
+    "exact_writable": 97,
+    "direct_ports": 7,
+    "mixer_channels": 67,
+    "lease_released": true,
+    "requests": 17,
+    "seconds": 2.356,
+    "total_requests": 56,
+    "restored_managed_files": 18,
+    "protected_files": 21,
+    "owner_exit_count": 3,
+    "saved": false
+  },
+  "write_or_preset_recall_dispatched": false,
+  "assigned_port_preservation_verified": false
+}

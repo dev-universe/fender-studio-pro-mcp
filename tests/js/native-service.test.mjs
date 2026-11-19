@@ -1138,3 +1138,74 @@ test('cv_preset_target discards native evidence when the document switches befor
   assert.equal(reply.result, undefined);
   assert.ok(!JSON.stringify(reply).includes('node_report'));
 });
+
+const cvPresetSettingsArgs = {
+  kind: 'instrument', track: 'Scratch', plugin: 'CV Instrument',
+  expected_instance: instance.object_uid, action: 'inspect_cv_preset_settings',
+  catalog_token: 'A'.repeat(64), index: 7,
+};
+
+test('CV preset settings forwards only the exact issued selector and projects the digest', () => {
+  const calls = [];
+  const settings = { byte_count: 3991, sha256: 'a'.repeat(64), rejected_extra: 'internal' };
+  const h = harness({ getObjectByName() { return native((target, body, auxiliary) => {
+    assert.equal(target, h.device);
+    assert.equal(auxiliary, undefined);
+    calls.push(JSON.parse(body));
+    return success({
+      instance: { ...instance, class_uid: 'EDCD22A5-A01E-4EA6-9FE4-2BB1AB243E85' },
+      outcome: 'observed', index: 7, cv_preset_settings: settings, rejected_extra: 'internal',
+    });
+  }); } });
+  const result = h.component.pluginPresets(cvPresetSettingsArgs);
+  assert.equal(result.mutation_capability, false);
+  assert.deepEqual({ ...result.cv_preset_settings }, { byte_count: 3991, sha256: 'a'.repeat(64) });
+  assert.ok(!JSON.stringify(result).includes('internal'));
+  for (const patch of [{ plugin: 'Other' }, { kind: 'note_effect' }, { track: ' ' },
+    { offset: 0 }, { limit: 1 }, { slot: 1 }, { path: '/other.preset' }, { bytes: 'raw' },
+    { expected_instance: '00000000-0000-0000-0000-000000000000' }, { index: 4096 },
+    { catalog_token: undefined }, { index: undefined }]) {
+    assert.equal(typeof h.component.pluginPresets({ ...cvPresetSettingsArgs, ...patch }).error, 'string');
+  }
+  assert.deepEqual(calls, [{ operation: 'inspect_cv_preset_settings', expected_instance: instance.object_uid,
+    catalog_token: 'A'.repeat(64), index: 7 }]);
+});
+
+test('CV preset settings rejects a late document switch without publishing a digest', () => {
+  const h = bridgeHarness();
+  const context = h.current();
+  let reads = 0;
+  h.bridge.component = { pluginPresets() {
+    reads++;
+    h.manager.activeDocument = { title: 'Other', path: { url: 'file:///other.song' } };
+    return { cv_preset_settings: { byte_count: 3991, sha256: 'a'.repeat(64) } };
+  } };
+  const request = { op: 'pluginPresets', args: cvPresetSettingsArgs, expectedSession: context.session };
+  assert.equal(h.request(request).code, 'context_required');
+  assert.equal(reads, 0);
+  const result = h.request({ ...request, expectedDocument: context.document });
+  assert.equal(reads, 1);
+  assert.equal(result.code, 'native_context_lost');
+  assert.equal(result.ok, false);
+  assert.equal(result.result, undefined);
+});
+
+test('CV preset settings inspection publishes fixed errors for native, resolver and caught script failures', () => {
+  const privatePath = '/private/mock/path.preset';
+  const h = harness({ getObjectByName() { return native(() => JSON.stringify({
+    ok: false, outcome: 'not_applied', error: { code: privatePath, message: privatePath },
+  })); } });
+  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'CV preset settings inspection is unavailable');
+  assert.ok(JSON.stringify(h.component.pluginPresets({ ...cvPresetSettingsArgs, action: 'apply' })).includes(privatePath));
+  h.component.pluginOf = () => ({ error: privatePath });
+  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'The bound CV Instrument is unavailable');
+
+  const host = bridgeHarness();
+  const context = host.current();
+  host.bridge.component = { pluginPresets() { throw new Error(privatePath); } };
+  const result = host.request({ op: 'pluginPresets', args: cvPresetSettingsArgs,
+    expectedSession: context.session, expectedDocument: context.document });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'CV preset settings inspection is unavailable');
+  assert.ok(!JSON.stringify(result).includes(privatePath));
+});

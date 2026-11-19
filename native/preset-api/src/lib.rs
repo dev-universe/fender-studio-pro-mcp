@@ -1,6 +1,8 @@
 //! Owned local preset catalogs, folder preflight and private collection primitives.
 //! No IPC, native discovery, arbitrary invoker or caller-supplied preset bytes.
 #![deny(unsafe_op_in_unsafe_fn)]
+mod cv_settings;
+pub use cv_settings::{CvSettingsInspection, IssuedCvSettingsFile};
 mod ffi;
 pub mod folder;
 mod list;

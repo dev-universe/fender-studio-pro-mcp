@@ -246,6 +246,19 @@ channels. The bridge discards the observation if the active document changes
 before the reply is formed. Settings-only loading and assigned route preservation
 remain under investigation. [R94 verification](evidence/2026-11-20-cv-preset-target-r94.json)
 
+### CV issued preset settings digest
+
+List presets with `plugin_presets`, then use `inspect_cv_preset_settings` with
+the current document, CV Instrument instance, catalog token and issued index.
+The response contains the byte count and SHA-256 of the preset's primary
+settings. It reads an available local file at its issued identity and returns
+no preset data or filesystem path.
+
+Actual 8.1.1 R97 matched the installed `default` preset's independently measured
+3,991-byte primary. The 97 writable settings, seven port observations and 67
+mixer channels matched before and after the read. Settings-only application is
+tracked separately. [R97 verification](evidence/2026-11-20-cv-preset-settings-r97.json)
+
 ## Exact parameter values and digests
 
 `plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.

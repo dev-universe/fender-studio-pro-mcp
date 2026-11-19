@@ -1,7 +1,9 @@
 //! Finite, service-local preset capabilities. Paths and imported bytes never
 //! cross this boundary; only entries observed through the fixed slot are used.
 use super::*;
-use fender_native_preset_api::{Availability, Catalog, Inputs, Page};
+use fender_native_preset_api::{
+    Availability, Catalog, CvSettingsInspection, Inputs, IssuedCvSettingsFile, Page,
+};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 #[path = "presets/target_proof.rs"]
@@ -211,10 +213,14 @@ impl Route {
     }
 }
 
+type CvSettingsPins =
+    RefCell<BTreeMap<u32, Result<Rc<IssuedCvSettingsFile>, fender_native_preset_api::Error>>>;
+
 pub(crate) struct Lease {
     catalog: Catalog,
     route: Route,
     issued: RefCell<Vec<bool>>,
+    cv_settings_pins: Option<CvSettingsPins>,
 }
 impl Drop for Lease {
     fn drop(&mut self) {
@@ -349,21 +355,48 @@ fn discover(ctx: &Context<'_>, auxiliary: Owned) -> Result<Rc<Lease>, String> {
     let catalog = unsafe { Catalog::discover_owned(inputs, &mut || route.guard(ctx)) }
         .map_err(|e| e.to_string())?;
     route.guard(ctx)?;
+    let cv_settings_pins = (route.slot_identity.2 == "AudioSynthSlot"
+        && ctx.instance.object_id == "CV Instrument"
+        && node_inspect::validate_cv_target(&ctx.instance).is_ok())
+    .then(CvSettingsPins::default);
     LIVE_CATALOGS.fetch_add(1, Ordering::Relaxed);
     Ok(Rc::new(Lease {
         catalog,
         route,
         issued: RefCell::new(vec![false; fender_native_preset_api::MAX_PRESETS]),
+        cv_settings_pins,
     }))
 }
 
+struct SettingsReceipt {
+    token: String,
+    file: CvSettingsInspection,
+}
 pub(super) struct Receipt {
+    settings: Option<SettingsReceipt>,
     lease: Rc<Lease>,
     active: bool,
 }
 impl Receipt {
     pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
-        if self.active {
+        if let Some(settings) = &self.settings {
+            self.lease.check(ctx)?;
+            let current = || {
+                let lease = with_registry(ctx.service, |registry| registry.get(&settings.token))?;
+                if !Rc::ptr_eq(&self.lease, &lease) {
+                    return Err(
+                        "CV preset catalog token no longer names the inspected catalog".into(),
+                    );
+                }
+                self.lease.route.guard(ctx)
+            };
+            current()?;
+            settings
+                .file
+                .check(&self.lease.catalog, &mut || self.lease.route.guard(ctx))
+                .map_err(|error| error.to_string())?;
+            current()
+        } else if self.active {
             self.lease.check(ctx)
         } else {
             self.lease.route.matches(ctx)
@@ -466,6 +499,7 @@ fn current_name<G: FnMut() -> Result<(), String>>(
 pub(super) fn invalidate(value: &mut Value) {
     if let Some(value) = value.as_object_mut() {
         value.remove("current_preset_observation");
+        value.remove("cv_preset_settings");
     }
 }
 fn page(
@@ -504,6 +538,20 @@ fn page(
         &mut || lease.route.guard(ctx),
     )?;
     for entry in &page.entries {
+        if let Some(pins) = &lease.cv_settings_pins
+            && matches!(
+                entry.availability,
+                Availability::LocalReadOnly | Availability::LocalWritable
+            )
+            && !pins.borrow().contains_key(&entry.index)
+        {
+            let witness = lease
+                .catalog
+                .pin_cv_settings_file(entry.index, &mut || lease.route.guard(ctx))
+                .map(Rc::new);
+            lease.route.guard(ctx)?;
+            pins.borrow_mut().entry(entry.index).or_insert(witness);
+        }
         lease.issued.borrow_mut()[entry.index as usize] = true;
     }
     if new {
@@ -518,6 +566,7 @@ fn page(
     Ok((
         value,
         Receipt {
+            settings: None,
             lease,
             active: true,
         },
@@ -541,11 +590,52 @@ fn apply(ctx: &Context<'_>, token: &str, index: u32) -> (Value, Option<Receipt>)
     (
         apply_value(token, index, result),
         Some(Receipt {
+            settings: None,
             lease,
             active: true,
         }),
     )
 }
+fn inspect_cv_settings(
+    ctx: &Context<'_>,
+    token: &str,
+    index: u32,
+) -> Result<(Value, Receipt), String> {
+    node_inspect::validate_cv_target(&ctx.instance)?;
+    let lease = with_registry(ctx.service, |registry| registry.get(token))?;
+    lease.check(ctx)?;
+    if lease.route.slot_identity.2 != "AudioSynthSlot"
+        || !issued_index(&lease.issued.borrow(), index)
+    {
+        return Err(
+            "CV preset settings inspection requires the current synth slot and an issued index"
+                .into(),
+        );
+    }
+    let issued = lease
+        .cv_settings_pins
+        .as_ref()
+        .and_then(|pins| pins.borrow().get(&index).cloned())
+        .ok_or("the issued CV preset has no available local file witness")?
+        .map_err(|error| error.to_string())?;
+    let file = lease
+        .catalog
+        .inspect_cv_settings(issued, &mut || lease.route.guard(ctx))
+        .map_err(|error| error.to_string())?;
+    let value = json!({"ok":true,"outcome":"observed","index":index,
+        "cv_preset_settings":{"byte_count":file.byte_count(),"sha256":file.sha256()}});
+    let receipt = Receipt {
+        settings: Some(SettingsReceipt {
+            token: token.to_owned(),
+            file,
+        }),
+        lease,
+        active: true,
+    };
+    receipt.check(ctx)?;
+    Ok((value, receipt))
+}
+
 fn issued_index(issued: &[bool], index: u32) -> bool {
     issued.get(index as usize).copied().unwrap_or(false)
 }
@@ -575,6 +665,7 @@ fn release(ctx: &Context<'_>, token: &str) -> Result<(Value, Receipt), String> {
     Ok((
         json!({"ok":true,"catalog_token":token,"released":true,"verified":true,"outcome":"applied_verified"}),
         Receipt {
+            settings: None,
             lease,
             active: false,
         },
@@ -597,6 +688,19 @@ pub(super) fn execute(
             index,
             ..
         } => return apply(ctx, catalog_token, *index),
+        Request::InspectCvPresetSettings {
+            catalog_token,
+            index,
+            ..
+        } => {
+            return match inspect_cv_settings(ctx, catalog_token, *index) {
+                Ok((value, receipt)) => (value, Some(receipt)),
+                Err(reason) => (
+                    error("cv_preset_settings_unavailable", &reason, "not_applied"),
+                    None,
+                ),
+            };
+        }
         Request::PresetRelease { catalog_token, .. } => release(ctx, catalog_token),
         _ => unreachable!("finite preset dispatch"),
     };
