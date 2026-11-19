@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "candidate_commit": "ca501c1e7723e8397ce68113ad30dfa3d12b4f33",
+  "native_build": 60,
+  "scope": "one fixed CV Instrument Output01 portAssignment parent",
+  "lifecycle": {
+    "phase": "closed_checked",
+    "prepare_calls": 1,
+    "cleanup_calls": 1,
+    "cleanup_returned": true,
+    "children": 0,
+    "observation_complete": true
+  },
+  "independent_readback": {
+    "writable_rows_equal": 97,
+    "direct_ports_equal": 7,
+    "mixer_channels_equal": 67,
+    "same_seven_unassigned_paths_visible": true,
+    "requests": 15,
+    "seconds": 2.224
+  },
+  "test_preparation_followup": {
+    "record_arm_also_enabled_monitor_on_same_cv_channel": true,
+    "extra_mixer_writes_after_guard": 0
+  },
+  "closure": {
+    "closed_without_saving": true,
+    "host_exit": 0,
+    "owner_exits_zero": 6,
+    "managed_files_and_manifests_restored": 18,
+    "protected_files_matching": 16
+  },
+  "further_qualification": {
+    "assignment_choices": false,
+    "port_writes": false,
+    "preset_output_preservation": false,
+    "physical_routing": false,
+    "saved_state": false
+  }
+}
