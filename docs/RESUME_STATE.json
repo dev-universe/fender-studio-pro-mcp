@@ -22327,6 +22327,16 @@
     "fabfilter_twin2_r31_total_requests": 259,
     "fabfilter_twin2_r31_protected_files": 30,
     "fabfilter_twin2_r31_preference_restored": true,
-    "fabfilter_finite_instrument_program_shipping_pr": 16
+    "fabfilter_finite_instrument_program_shipping_pr": 16,
+    "proq4_r33_private_selector_candidate": "229a88250b013ee5b9895107bb923a61fbdff15a",
+    "proq4_r33_midi_output_candidate_count": 1,
+    "proq4_r33_current_is_one": true,
+    "proq4_r33_both_candidate_bounds_reached": true,
+    "proq4_r33_effect_candidate_seen": false,
+    "proq4_r33_route_mutation_dispatched": false,
+    "proq4_r33_writable_values_unchanged": 903,
+    "proq4_r33_total_requests": 64,
+    "proq4_r33_total_active_seconds": 7.81,
+    "proq4_r33_protected_files": 24
   }
 }
