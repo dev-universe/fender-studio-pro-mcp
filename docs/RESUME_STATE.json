@@ -3,7 +3,7 @@
   "updated_date": "2026-11-20",
   "status": "SAFE_BOUNDARY_HOST_STARTUP_AND_PLUGIN_PROVENANCE_PENDING",
   "resume_phrase": "진행 재개해",
-  "resume_document": "docs/LOOP_HANDOFF_2026-11-20.md",
+  "resume_document": "docs/LOOP_HANDOFF_2026-11-20_LIVE.md",
   "product_source_commit": "15304714c14cf8d765dd0acb08dbb59463924129",
   "branch": "feature/cv-structured-lifecycle",
   "pull_request": 6,
@@ -608,8 +608,8 @@
     "vocal_tune_host_bypass_owning_UI_roundtrip_units": 1
   },
   "next_units_in_order": [
-    "NOV20: CV saved edit groups 0 and track-list global M vs console-channel M bindings distinguished. Actual Console mix group membership, selection, focus, and gesture attribution still unobserved. At fresh Native59 Scratch first read group and control context with third-party scan scope isolated. Do not replay R83/R84/R85.",
-    "FABFILTER: 23 signed official VST3 controllers read outside the DAW; resume host verification with exact Pro-Q 4 effect and Twin 3 instrument in an isolated signed environment. Use the separate plugin-class-selection branch and the latest evidence. Actual host 0/23. Continue the existing built-in queue below.",
+    "NOV20 LIVE: R86 Console Groups panel empty. Selecting the CV channel body changed arm/monitor on CV and one peer track without a mute change. Rebind a fresh Native59 scratch with neutral focus and verify exact console Group Assignment and Control Link before any Native60 lifecycle. Do not replay R83 through R86.",
+    "FABFILTER: 23 official VST3 versions inserted and representative-writes passed in real 8.1.1. Host .preset results 22 pass, one Pro-Q 4 mismatch. First qualify Twin 3 manufacturer program selection, precise track-selection MCP tool, and the Pro-Q 4 state gap. All 23 individual-writable sweeps and direct factory qualifications remain. Continue built-in queue independently.",
     "PAUSEDNov18before06KST. Publicmain15304714/PR4releaseCOMPLETE; mainCLI/Native59installedrestored,metadata46/state7,doctorcurrent,noDAQafterrestore. Native60source921f889/187andcandidate13+manifest2preserved. R83actual7halt;R84GUIread8ACCEPTED;R85actual6GUI0peerFXunmutehalt,Native60lifecycle0,NoSave/wait0/preservation. FirstREADONLYmute/group/link/operatorcontextdiagnosis;doNOTreplayclosedR83/R84/R85. SeeNov18handoff15beforeanyNative60reinstall/build;oldnormalartifactmapcurrentmismatchbyintent.",
     "Native59R81actual27remainlastfullCVqualified. Native60boundedsource/normalmetadata8/SDKreviewcompletebutlifecycleactual0. Reusecompletedstaticbodies/design6/sourceR2/R8andR85Rust31proof/runtimekitreview;newlivecontractrequiresresolvedpreparationandfreshnormal187/13/session/doc/instance. Fixed15/43done28remaining(24software4hardware).",
     "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
@@ -623,11 +623,11 @@
   "do_not_replay_old_runtime_capabilities": true,
   "all_builtin_plugins_fully_verified": false,
   "global_crash_fix_verified": false,
-  "current_progress_document": "docs/LOOP_HANDOFF_2026-11-20.md",
+  "current_progress_document": "docs/LOOP_HANDOFF_2026-11-20_LIVE.md",
   "last_measurement": "fixed15/43done28remaining(software24/hardware4), presets40/46classes77cases, names6866/7112. Nov17actual239raw/222accepted/17nonadmitted allclosed. Native59 R81 observed7structuredtrue/56fields/60ms. Prepare/cleanup staticmutations established, lifecycle/read/presetpreservation NOTREADY.",
   "binary_source_commit": "7f0cd1da13b18a0097344d1ad7a84c550d764b77",
   "current_execution": {
-    "status": "AFTER_NOV20_READ_ONLY_CV_DIAGNOSIS_AND_OFFICIAL_VST3_STANDALONE",
+    "status": "AFTER_NOV20_R86_AND_FABFILTER_R3_HOST_PRESETS",
     "DAQ_in_progress": 0,
     "app_opened_now": false,
     "MCP_owner_running_now": false,
@@ -21810,7 +21810,7 @@
     "native60_candidate13_preserved": true
   },
   "installed_source_commit": "15304714c14cf8d765dd0acb08dbb59463924129",
-  "public_main_commit": "70bd995a9c3864bcd7becd5abc08db25d28d8362",
+  "public_main_commit": "7242a9867a7de3b0309a072dbe5082a7e04f31f2",
   "closed_sessions_nov18": [
     "c9ee2273f0c00e31f1860ad7ea104bf3",
     "374088cd08676d823a2063ccf1b191b1",
@@ -21849,6 +21849,40 @@
     "fabfilter_candidate_commit": "57faf1784d9dfabdd6b0dc4318408728182a3bbe",
     "fabfilter_candidate_pull_request": 8,
     "fabfilter_exact_class_offline_review": "PASS_PREVIOUS_EDITTASK_REJECTS_BEFORE_TARGET_WRITE",
+    "overall_completion_ETA": null
+  },
+  "nov20_live_checkpoint": {
+    "evidence_document": "docs/LOOP_HANDOFF_2026-11-20_LIVE.md",
+    "review_and_insertion_main": "7242a9867a7de3b0309a072dbe5082a7e04f31f2",
+    "runtime_edit_task_source": "57faf1784d9dfabdd6b0dc4318408728182a3bbe",
+    "native_bridge": 59,
+    "cv_actual_r86_console_groups_visible": 0,
+    "cv_channel_body_click_changed_fields": 4,
+    "cv_actual_r86_mute_changes": 0,
+    "cv_read_only_live_requests": 7,
+    "cv_app_exit": 139,
+    "cv_group_assignment_and_control_link_fresh_value_verified": false,
+    "native60_lifecycle_calls": 0,
+    "graph_second_registry_helper_observed": true,
+    "fabfilter_official_static_versions": 23,
+    "fabfilter_actual_exact_insert_versions": 23,
+    "fabfilter_actual_parameters_read": 12478,
+    "fabfilter_representative_roundtrip_versions": 23,
+    "fabfilter_actual_host_preset_attempts": 23,
+    "fabfilter_actual_host_preset_pass": 22,
+    "fabfilter_actual_host_preset_mismatch": 1,
+    "fabfilter_factory_preset_mcp_pass": 0,
+    "fabfilter_exhaustively_written_versions": 0,
+    "fabfilter_latest_scratch_saved": false,
+    "fabfilter_latest_host_exit": 0,
+    "protected_files_matching": 13,
+    "builtin_fixed": {
+      "total": 43,
+      "completed": 15,
+      "remaining": 28,
+      "software_remaining": 24,
+      "hardware_remaining": 4
+    },
     "overall_completion_ETA": null
   }
 }

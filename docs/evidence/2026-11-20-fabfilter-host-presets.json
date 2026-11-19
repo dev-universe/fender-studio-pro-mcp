@@ -1,0 +1,207 @@
+{
+  "host": "8.1.1.113103 macOS arm64",
+  "native_bridge": 59,
+  "runtime_source": "57faf1784d9dfabdd6b0dc4318408728182a3bbe",
+  "merged_main": "7242a9867a7de3b0309a072dbe5082a7e04f31f2",
+  "scope": "MCP recall of individually saved Studio Pro presets after one verified parameter change",
+  "factory_direct_mcp_verified": 0,
+  "all_individual_writes_verified": 0,
+  "r3_cases": [
+    {
+      "plugin": "Micro",
+      "elapsed_seconds": 62.869,
+      "rpc_count": 27,
+      "writable_rows": 145,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "One",
+      "elapsed_seconds": 18.723,
+      "rpc_count": 28,
+      "writable_rows": 167,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-C 2",
+      "elapsed_seconds": 20.482,
+      "rpc_count": 27,
+      "writable_rows": 182,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-C 3",
+      "elapsed_seconds": 32.662,
+      "rpc_count": 27,
+      "writable_rows": 236,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-DS",
+      "elapsed_seconds": 11.603,
+      "rpc_count": 27,
+      "writable_rows": 156,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-G",
+      "elapsed_seconds": 9.229,
+      "rpc_count": 27,
+      "writable_rows": 171,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-L 2",
+      "elapsed_seconds": 9.076,
+      "rpc_count": 27,
+      "writable_rows": 168,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-L",
+      "elapsed_seconds": 9.319,
+      "rpc_count": 27,
+      "writable_rows": 155,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-MB",
+      "elapsed_seconds": 20.002,
+      "rpc_count": 30,
+      "writable_rows": 287,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-Q 2",
+      "elapsed_seconds": 9.583,
+      "rpc_count": 30,
+      "writable_rows": 327,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-Q 3",
+      "elapsed_seconds": 10.026,
+      "rpc_count": 36,
+      "writable_rows": 518,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-R 2",
+      "elapsed_seconds": 9.524,
+      "rpc_count": 30,
+      "writable_rows": 272,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Pro-R",
+      "elapsed_seconds": 21.352,
+      "rpc_count": 27,
+      "writable_rows": 221,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Saturn 2",
+      "elapsed_seconds": 12.203,
+      "rpc_count": 48,
+      "writable_rows": 1087,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Saturn",
+      "elapsed_seconds": 12.852,
+      "rpc_count": 48,
+      "writable_rows": 1035,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Simplon",
+      "elapsed_seconds": 9.61,
+      "rpc_count": 27,
+      "writable_rows": 155,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Timeless 2",
+      "elapsed_seconds": 20.431,
+      "rpc_count": 42,
+      "writable_rows": 841,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Timeless 3",
+      "elapsed_seconds": 12.961,
+      "rpc_count": 48,
+      "writable_rows": 1143,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Twin 2",
+      "elapsed_seconds": 26.015,
+      "rpc_count": 46,
+      "writable_rows": 1019,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Volcano 2",
+      "elapsed_seconds": 11.144,
+      "rpc_count": 42,
+      "writable_rows": 893,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    },
+    {
+      "plugin": "Volcano 3",
+      "elapsed_seconds": 13.12,
+      "rpc_count": 48,
+      "writable_rows": 1032,
+      "verified_full_typed_recall": true,
+      "verified_catalog_release": true
+    }
+  ],
+  "r3_total": {
+    "verified": 21,
+    "writable_rows": 10210,
+    "rpc_count": 719,
+    "seconds": 362.786,
+    "owner_exits_all_zero": true,
+    "scratch_no_save": true
+  },
+  "pilot_cases": [
+    {
+      "plugin": "Twin 3",
+      "writable_rows": 1509,
+      "matching_rows": 1509,
+      "status": "verified"
+    },
+    {
+      "plugin": "Pro-Q 4",
+      "writable_rows": 736,
+      "matching_rows": 735,
+      "status": "mismatch",
+      "parameter": "vstp1073741826"
+    }
+  ],
+  "total": {
+    "versions_attempted": 23,
+    "verified": 22,
+    "mismatch": 1
+  }
+}
