@@ -62,7 +62,7 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 887,
+  "distinct_individual_roundtrips_including_representative": 1268,
   "r20_pro_q_2": {
     "protected_files": 23,
     "clean_owner_exit": true,
@@ -72,6 +72,16 @@
     "typed_comparison_rows": 327,
     "requests": 1934,
     "elapsed_seconds": 183.921
+  },
+  "r21_pro_q_3": {
+    "protected_files": 24,
+    "clean_owner_exit": true,
+    "saved": false,
+    "named_roundtrips": 382,
+    "new_distinct_roundtrips": 381,
+    "typed_comparison_rows": 518,
+    "requests": 5374,
+    "elapsed_seconds": 505.302
   },
   "r15_named_control_groups": [
     {"plugin": "One", "individual_controls": 31, "typed_snapshot_size": 167, "requests": 261, "elapsed_seconds": 22.990},
