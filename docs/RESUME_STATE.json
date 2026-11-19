@@ -21883,6 +21883,28 @@
       "software_remaining": 24,
       "hardware_remaining": 4
     },
+    "track_selection_pr": 9,
+    "track_selection_exact_head": "c55bb8612eee532c29888d341c2d289acdd0c8b5",
+    "track_selection_actual_mcp_requests": 39,
+    "track_selection_accepted": "PASS_WITH_NOTES",
+    "twin3_native_program_R5": "PROGRAM_VALUES_CHANGED_PRESET_AND_DSP_WITNESS_UNCHANGED",
+    "twin3_native_program_R5_rpc": 49,
+    "twin3_settings_restored_exact": true,
+    "fabfilter_writable_parameter_rows": 12455,
+    "fabfilter_next_live_route": "FRESH_SCRATCH_ACTUAL_MIDI_EVENTS",
+    "fabfilter_next_offline_route": "VST3_PUBLIC_COMPONENT_AND_CONTROLLER_STATE_ROUND_TRIP",
+    "volt_and_keystation_detected": false,
+    "cv_r87_independent_selection_verified": true,
+    "cv_r87_arrange_inspector_group": "None",
+    "cv_r87_console_group_assignment_verified": false,
+    "cv_r87_requests": 14,
+    "cv_r87_preserved_files": 14,
+    "micro_r6_named_individual_roundtrips": 9,
+    "micro_r6_host_bypass_additional_roundtrip": true,
+    "micro_r6_full_snapshot_writable_rows": 145,
+    "micro_r6_pitch_bend_internal_peer_changed": true,
+    "micro_public_controller_reproduced_internal_peer_change": false,
+    "fabfilter_exhaustively_written_versions": 0,
     "overall_completion_ETA": null
   }
 }
