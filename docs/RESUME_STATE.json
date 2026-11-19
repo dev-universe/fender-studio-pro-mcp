@@ -21904,7 +21904,6 @@
     "micro_r6_full_snapshot_writable_rows": 145,
     "micro_r6_pitch_bend_internal_peer_changed": true,
     "micro_public_controller_reproduced_internal_peer_change": false,
-    "fabfilter_exhaustively_written_versions": 0,
     "overall_completion_ETA": null
   }
 }
