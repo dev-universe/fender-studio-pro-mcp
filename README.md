@@ -127,7 +127,7 @@ If you want to restore the original settings, capture them with `plugin_state`
 before applying. After an `applied_unverified` receipt, read parameters and
 port assignments to check the result. The 8.1.1 trial verified 97 writable
 values, seven unassigned ports, and restoration. Testing with assigned
-physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r103.json)
+physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r106.json)
 
 ### FabFilter Twin 3 program changes
 
