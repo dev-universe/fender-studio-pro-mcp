@@ -924,7 +924,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
                 && (args.action === "apply" || inspecting ? Number.isInteger(args.index) && args.index >= 0 && args.index < 4096 : args.index === undefined);
         if (!valid) return { error: "list takes a bounded page; apply and CV settings inspection require a catalog token and index; release takes only the catalog token" };
         const plug = this.pluginOf(args);
-        if (plug.error) return plug;
+        if (plug.error) return inspecting ? { error: "The bound CV Instrument is unavailable" } : plug;
         let auxiliary;
         if (args.action === "list" && args.catalog_token === undefined) {
             if (typeof Host === "undefined" || typeof Host.Url !== "function") return { error: "the native preset catalog requires the host URL factory" };
@@ -940,11 +940,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const native = this.nativePluginRequest(plug.device, request, auxiliary);
         if (!native) return { error: "plugin presets require the matching native extension" };
         if (inspecting) {
-            if (native.ok === false) {
-                const message = native.error && typeof native.error.message === "string"
-                    ? native.error.message.replace(/[\u0000-\u001f\u007f-\u009f]/g, " ").slice(0, 256).trim() : "";
-                return { error: message || "CV preset settings inspection unavailable" };
-            }
+            if (native.ok === false) return { error: "CV preset settings inspection is unavailable" };
             const settings = native.cv_preset_settings;
             if (native.ok !== true || native.outcome !== "observed" || native.index !== args.index
                 || !native.instance || native.instance.object_uid !== args.expected_instance

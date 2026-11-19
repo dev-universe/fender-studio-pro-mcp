@@ -1189,3 +1189,23 @@ test('CV preset settings rejects a late document switch without publishing a dig
   assert.equal(result.ok, false);
   assert.equal(result.result, undefined);
 });
+
+test('CV preset settings inspection publishes fixed errors for native, resolver and caught script failures', () => {
+  const privatePath = '/private/mock/path.preset';
+  const h = harness({ getObjectByName() { return native(() => JSON.stringify({
+    ok: false, outcome: 'not_applied', error: { code: privatePath, message: privatePath },
+  })); } });
+  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'CV preset settings inspection is unavailable');
+  assert.ok(JSON.stringify(h.component.pluginPresets({ ...cvPresetSettingsArgs, action: 'apply' })).includes(privatePath));
+  h.component.pluginOf = () => ({ error: privatePath });
+  assert.equal(h.component.pluginPresets(cvPresetSettingsArgs).error, 'The bound CV Instrument is unavailable');
+
+  const host = bridgeHarness();
+  const context = host.current();
+  host.bridge.component = { pluginPresets() { throw new Error(privatePath); } };
+  const result = host.request({ op: 'pluginPresets', args: cvPresetSettingsArgs,
+    expectedSession: context.session, expectedDocument: context.document });
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'CV preset settings inspection is unavailable');
+  assert.ok(!JSON.stringify(result).includes(privatePath));
+});

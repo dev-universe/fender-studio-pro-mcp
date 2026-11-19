@@ -150,8 +150,13 @@ fn execute(
             ));
         }
     };
-    let context: HostContext = serde_json::from_value(context_response.result.clone())
-        .map_err(|error| OperationError::new("invalid_context", error.to_string()))?;
+    let context: HostContext =
+        serde_json::from_value(context_response.result.clone()).map_err(|error| {
+            bounded_cv_preset_error(
+                &operation,
+                OperationError::new("invalid_context", error.to_string()),
+            )
+        })?;
     if request
         .expected_document
         .as_ref()
@@ -232,7 +237,7 @@ fn execute(
                 session: Some(context.session),
                 document: Some(context.document),
                 result,
-                error: Some(failure.error),
+                error: Some(bounded_cv_preset_error(&operation, failure.error)),
                 elapsed_ms: started.elapsed().as_millis(),
             });
         }
@@ -475,7 +480,7 @@ fn execute(
         session: Some(response.session),
         document: Some(response.document),
         result: response.result,
-        error,
+        error: error.map(|error| bounded_cv_preset_error(&operation, error)),
         elapsed_ms: started.elapsed().as_millis(),
     })
 }
@@ -1073,9 +1078,29 @@ fn rejected(
         session: context.map(|c| c.session.clone()),
         document: context.map(|c| c.document.clone()),
         result,
-        error: Some(error),
+        error: Some(bounded_cv_preset_error(operation, error)),
         elapsed_ms: started.elapsed().as_millis(),
     }
+}
+
+fn bounded_cv_preset_error(operation: &Operation, error: OperationError) -> OperationError {
+    if !operation.inspects_cv_preset_settings() {
+        return error;
+    }
+    let (code, message) = match error.code.as_str() {
+        "document_changed" => ("document_changed", "The active document changed"),
+        "session_changed" => ("session_changed", "The bridge session changed"),
+        "protocol_mismatch" => ("protocol_mismatch", "The bridge protocol is incompatible"),
+        "native_context_lost" | "invalid_context" => (
+            "native_context_lost",
+            "The native document context is unavailable",
+        ),
+        _ => (
+            "cv_preset_settings_unavailable",
+            "CV preset settings inspection is unavailable",
+        ),
+    };
+    OperationError::new(code, message)
 }
 
 fn host_error(response: &WireResponse) -> OperationError {
@@ -1382,6 +1407,29 @@ mod tests {
             "rumble_named_parameters_unavailable"
         );
         assert!(!receipt.result.to_string().contains("PRIVATE"));
+    }
+
+    #[test]
+    fn cv_preset_inspection_errors_discard_text_from_an_older_bridge_only_in_scope() {
+        let mut args = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "action":"inspect_cv_preset_settings","catalog_token":"A".repeat(64),"index":7});
+        let operation = Operation::from_parts("plugin_presets", args.clone()).unwrap();
+        let raw = "/private/mock/path.preset";
+        let error = bounded_cv_preset_error(&operation, OperationError::new(raw, raw));
+        assert_eq!(error.code, "cv_preset_settings_unavailable");
+        assert!(!error.message.contains(raw));
+        let error =
+            bounded_cv_preset_error(&operation, OperationError::new("document_changed", raw));
+        assert_eq!(error.code, "document_changed");
+        assert!(!error.message.contains(raw));
+
+        args["action"] = json!("apply");
+        let legacy = Operation::from_parts("plugin_presets", args).unwrap();
+        assert_eq!(
+            bounded_cv_preset_error(&legacy, OperationError::new("host_error", raw)).message,
+            raw
+        );
     }
 
     #[test]

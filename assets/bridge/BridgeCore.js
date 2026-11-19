@@ -156,7 +156,7 @@ class Bridge {
                 result = this.handle(req.op, req.args || {});
             }
         } catch (e) {
-            result = fail(e && e.message || e); // only reachable for plain-JS errors
+            result = fail(cvPresetSettings ? "CV preset settings inspection is unavailable" : (e && e.message || e));
         }
         this.requestContext = null;
         const afterContext = this.context();
