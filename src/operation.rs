@@ -971,6 +971,13 @@ pub enum TrackEdit {
     AddPlugin {
         channel: String,
         plugin: String,
+        #[serde(
+            default,
+            deserialize_with = "supplied_optional_string",
+            skip_serializing_if = "Option::is_none"
+        )]
+        #[schemars(with = "String", length(min = 1, max = 256))]
+        class_id: Option<String>,
     },
     AddMixFx {
         channel: String,
@@ -987,6 +994,13 @@ pub enum TrackEdit {
     AddInstrumentTrack {
         instrument: String,
         name: Option<String>,
+        #[serde(
+            default,
+            deserialize_with = "supplied_optional_string",
+            skip_serializing_if = "Option::is_none"
+        )]
+        #[schemars(with = "String", length(min = 1, max = 256))]
+        class_id: Option<String>,
     },
     MoveTrack {
         track: String,
@@ -1166,6 +1180,25 @@ impl Operation {
         let mut args = value["args"].clone();
         remove_nulls(&mut args);
         match self {
+            Self::TrackTask(task) => {
+                // Older EditTasks ignore extra fields on the name-only tags.
+                let wire_ops = args["ops"].as_array_mut().expect("serialized track edits");
+                for (op, wire_op) in task.ops.iter().zip(wire_ops) {
+                    match op {
+                        TrackEdit::AddPlugin {
+                            class_id: Some(_), ..
+                        } => {
+                            wire_op["op"] = json!("addPluginByClass");
+                        }
+                        TrackEdit::AddInstrumentTrack {
+                            class_id: Some(_), ..
+                        } => {
+                            wire_op["op"] = json!("addInstrumentTrackByClass");
+                        }
+                        _ => {}
+                    }
+                }
+            }
             Self::ChorderLearningSet(change) => {
                 args["change"] =
                     serde_json::to_value(&change.change).expect("closed learning change");
@@ -1951,6 +1984,21 @@ impl Operation {
         if let Self::TrackTask(task) = self {
             for op in &task.ops {
                 match op {
+                    TrackEdit::AddPlugin {
+                        class_id: Some(id), ..
+                    }
+                    | TrackEdit::AddInstrumentTrack {
+                        class_id: Some(id), ..
+                    } => {
+                        if id.is_empty()
+                            || id.len() > 256
+                            || id.chars().any(|c| c.is_whitespace() || c.is_control())
+                        {
+                            return Err(invalid(
+                                "Plugin classId must contain 1 to 256 UTF-8 bytes without whitespace or control characters",
+                            ));
+                        }
+                    }
                     TrackEdit::AddAudioTrack { name, format } => {
                         for (field, value) in [("name", name), ("format", format)] {
                             if value.trim().is_empty()
@@ -2919,6 +2967,82 @@ mod tests {
             op[field] = json!("x".repeat(256));
             let operation = Operation::from_parts("trackTask", json!({"ops":[op]})).unwrap();
             assert!(operation.validate().is_ok());
+        }
+    }
+
+    #[test]
+    fn track_edits_preserve_an_optional_exact_plugin_class_id_on_wire() {
+        for entry in [
+            json!({"op":"addPlugin","channel":"Scratch","plugin":"Shared name"}),
+            json!({"op":"addInstrumentTrack","instrument":"Shared name","name":"New track"}),
+        ] {
+            let mut selected = entry.clone();
+            selected["classId"] = json!("{F8A2BFA1-2C5B-482C-AEA3-3925E25D8A29}");
+            let internal_tag = format!("{}ByClass", entry["op"].as_str().unwrap());
+            let args = json!({"ops":[entry, selected, {"op":"events","track":"Scratch"}]});
+            let operation = Operation::from_parts("trackTask", args.clone()).unwrap();
+            operation.validate().unwrap();
+            assert!(!operation.is_read_only());
+
+            let mut wire_args = args;
+            wire_args["ops"][1]["op"] = json!(internal_tag);
+            assert!(
+                Operation::from_parts("trackTask", json!({"ops":[wire_args["ops"][1]]})).is_err()
+            );
+            assert_eq!(operation.wire(), ("trackTask".into(), wire_args));
+        }
+
+        let schema = serde_json::to_value(schemars::schema_for!(TrackEdit)).unwrap();
+        for op in ["addPlugin", "addInstrumentTrack"] {
+            let variant = schema["oneOf"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|variant| variant["properties"]["op"]["const"] == op)
+                .unwrap();
+            assert_eq!(
+                variant["properties"]["classId"],
+                json!({"type":"string","minLength":1,"maxLength":256})
+            );
+            assert!(
+                !variant["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!("classId"))
+            );
+        }
+    }
+
+    #[test]
+    fn invalid_plugin_class_ids_do_not_fall_back_to_name_only_edits() {
+        for mut op in [
+            json!({"op":"addPlugin","channel":"Scratch","plugin":"Shared name"}),
+            json!({"op":"addInstrumentTrack","instrument":"Shared name"}),
+        ] {
+            for id in [
+                Value::Null,
+                json!(17),
+                json!(""),
+                json!("leading "),
+                json!("id\u{0085}"),
+                json!("id\u{009f}"),
+                json!("id\u{3000}"),
+                json!("x".repeat(257)),
+                json!("é".repeat(129)),
+            ] {
+                op["classId"] = id;
+                assert!(
+                    Operation::from_parts("trackTask", json!({"ops":[op]}))
+                        .and_then(|operation| operation.validate())
+                        .is_err(),
+                    "{op}"
+                );
+            }
+            op["classId"] = json!("é".repeat(128));
+            Operation::from_parts("trackTask", json!({"ops":[op]}))
+                .unwrap()
+                .validate()
+                .unwrap();
         }
     }
 

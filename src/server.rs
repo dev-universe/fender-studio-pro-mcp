@@ -136,7 +136,7 @@ impl McpServer {
             named::<TrackTask>(
                 "tracks_edit",
                 "trackTask",
-                "Run finite EditTask operations for parts, routing, instruments, events and arranger sections. Results are per item and batches are not atomic.",
+                "Run finite EditTask operations for parts, routing, instruments, events and arranger sections. For addPlugin and addInstrumentTrack, pass the exact name and optional classId from a complete plugin_catalog result to select a specific class. Results are per item and batches are not atomic.",
                 true,
             ),
             named::<PluginQuery>(
