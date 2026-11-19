@@ -1,7 +1,9 @@
 //! Finite, service-local preset capabilities. Paths and imported bytes never
 //! cross this boundary; only entries observed through the fixed slot are used.
 use super::*;
-use fender_native_preset_api::{Availability, Catalog, CvSettingsInspection, Inputs, Page};
+use fender_native_preset_api::{
+    Availability, Catalog, CvSettingsInspection, Inputs, IssuedCvSettingsFile, Page,
+};
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
 #[path = "presets/target_proof.rs"]
@@ -211,10 +213,14 @@ impl Route {
     }
 }
 
+type CvSettingsPins =
+    RefCell<BTreeMap<u32, Result<Rc<IssuedCvSettingsFile>, fender_native_preset_api::Error>>>;
+
 pub(crate) struct Lease {
     catalog: Catalog,
     route: Route,
     issued: RefCell<Vec<bool>>,
+    cv_settings_pins: Option<CvSettingsPins>,
 }
 impl Drop for Lease {
     fn drop(&mut self) {
@@ -349,11 +355,16 @@ fn discover(ctx: &Context<'_>, auxiliary: Owned) -> Result<Rc<Lease>, String> {
     let catalog = unsafe { Catalog::discover_owned(inputs, &mut || route.guard(ctx)) }
         .map_err(|e| e.to_string())?;
     route.guard(ctx)?;
+    let cv_settings_pins = (route.slot_identity.2 == "AudioSynthSlot"
+        && ctx.instance.object_id == "CV Instrument"
+        && node_inspect::validate_cv_target(&ctx.instance).is_ok())
+    .then(CvSettingsPins::default);
     LIVE_CATALOGS.fetch_add(1, Ordering::Relaxed);
     Ok(Rc::new(Lease {
         catalog,
         route,
         issued: RefCell::new(vec![false; fender_native_preset_api::MAX_PRESETS]),
+        cv_settings_pins,
     }))
 }
 
@@ -527,6 +538,20 @@ fn page(
         &mut || lease.route.guard(ctx),
     )?;
     for entry in &page.entries {
+        if let Some(pins) = &lease.cv_settings_pins
+            && matches!(
+                entry.availability,
+                Availability::LocalReadOnly | Availability::LocalWritable
+            )
+            && !pins.borrow().contains_key(&entry.index)
+        {
+            let witness = lease
+                .catalog
+                .pin_cv_settings_file(entry.index, &mut || lease.route.guard(ctx))
+                .map(Rc::new);
+            lease.route.guard(ctx)?;
+            pins.borrow_mut().entry(entry.index).or_insert(witness);
+        }
         lease.issued.borrow_mut()[entry.index as usize] = true;
     }
     if new {
@@ -587,9 +612,15 @@ fn inspect_cv_settings(
                 .into(),
         );
     }
+    let issued = lease
+        .cv_settings_pins
+        .as_ref()
+        .and_then(|pins| pins.borrow().get(&index).cloned())
+        .ok_or("the issued CV preset has no available local file witness")?
+        .map_err(|error| error.to_string())?;
     let file = lease
         .catalog
-        .inspect_cv_settings(index, &mut || lease.route.guard(ctx))
+        .inspect_cv_settings(issued, &mut || lease.route.guard(ctx))
         .map_err(|error| error.to_string())?;
     let value = json!({"ok":true,"outcome":"observed","index":index,
         "cv_preset_settings":{"byte_count":file.byte_count(),"sha256":file.sha256()}});

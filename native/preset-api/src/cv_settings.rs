@@ -14,6 +14,7 @@ use std::{
         fs::{MetadataExt, OpenOptionsExt},
     },
     path::{Path, PathBuf},
+    rc::Rc,
 };
 use zip::{
     ZipArchive,
@@ -30,9 +31,40 @@ const MAX_SETTINGS: u64 = 256 * 1024;
 const MAX_XML_DEPTH: usize = 32;
 const SETTINGS: &str = "data.fxpreset";
 
-pub struct CvSettingsInspection {
+pub struct IssuedCvSettingsFile {
     index: u32,
+    title: String,
     file: FileWitness,
+}
+
+impl IssuedCvSettingsFile {
+    fn check<G: FnMut() -> Result<(), String>>(
+        &self,
+        catalog: &Catalog,
+        g: &mut G,
+    ) -> Result<(), Error> {
+        let (entry, path) = catalog.current_cv_preset(self.index, g)?;
+        if entry.info.name != self.title || path != self.file.path {
+            return Err(Error::Changed);
+        }
+        self.file.check_named()?;
+        catalog.borrowed_target()?;
+        guard(g)
+    }
+
+    fn read_settings(&self) -> Result<(u64, String), Error> {
+        let mut handle = self.file.reopen()?;
+        let result = archive_settings(&mut handle, self.file.stamp.len, &self.title);
+        let unchanged = self.file.check_open(&handle);
+        drop(handle);
+        self.file.check_named()?;
+        unchanged?;
+        result
+    }
+}
+
+pub struct CvSettingsInspection {
+    issued: Rc<IssuedCvSettingsFile>,
     byte_count: u64,
     hash: String,
 }
@@ -49,38 +81,46 @@ impl CvSettingsInspection {
         catalog: &Catalog,
         g: &mut G,
     ) -> Result<(), Error> {
-        if catalog.cv_preset_path(self.index, g)? != self.file.path {
-            return Err(Error::Changed);
-        }
-        self.file.check_named()?;
-        catalog.borrowed_target()?;
-        guard(g)
+        self.issued.check(catalog, g)
     }
 }
 
 impl Catalog {
-    pub fn inspect_cv_settings<G: FnMut() -> Result<(), String>>(
+    pub fn pin_cv_settings_file<G: FnMut() -> Result<(), String>>(
         &self,
         index: u32,
         g: &mut G,
-    ) -> Result<CvSettingsInspection, Error> {
-        let path = self.cv_preset_path(index, g)?;
-        let (file, mut handle) = FileWitness::open(path)?;
-        let report = (|| {
-            let (byte_count, hash) = archive_settings(&mut handle, file.stamp.len)?;
-            file.check_open(&handle)?;
-            Ok(CvSettingsInspection {
-                index,
-                file,
-                byte_count,
-                hash,
-            })
-        })();
+    ) -> Result<IssuedCvSettingsFile, Error> {
+        let (entry, path) = self.current_cv_preset(index, g)?;
+        let opened = FileWitness::open(path);
+        guard(g)?;
+        let (file, handle) = opened?;
         drop(handle);
         guard(g)?;
-        let report = report?;
-        report.check(self, g)?;
-        Ok(report)
+        let issued = IssuedCvSettingsFile {
+            index,
+            title: entry.info.name.clone(),
+            file,
+        };
+        issued.check(self, g)?;
+        Ok(issued)
+    }
+
+    pub fn inspect_cv_settings<G: FnMut() -> Result<(), String>>(
+        &self,
+        issued: Rc<IssuedCvSettingsFile>,
+        g: &mut G,
+    ) -> Result<CvSettingsInspection, Error> {
+        issued.check(self, g)?;
+        let result = issued.read_settings();
+        guard(g)?;
+        issued.check(self, g)?;
+        let (byte_count, hash) = result?;
+        Ok(CvSettingsInspection {
+            issued,
+            byte_count,
+            hash,
+        })
     }
 
     fn cv_preset_entry<G: FnMut() -> Result<(), String>>(
@@ -105,11 +145,11 @@ impl Catalog {
         Ok(entry)
     }
 
-    fn cv_preset_path<G: FnMut() -> Result<(), String>>(
+    fn current_cv_preset<G: FnMut() -> Result<(), String>>(
         &self,
         index: u32,
         g: &mut G,
-    ) -> Result<PathBuf, Error> {
+    ) -> Result<(&Entry, PathBuf), Error> {
         let entry = self.cv_preset_entry(index, g)?;
         let url = entry
             .url
@@ -119,7 +159,7 @@ impl Catalog {
         self.check_entry(entry, g)?;
         self.borrowed_target()?;
         guard(g)?;
-        Ok(path)
+        Ok((entry, path))
     }
 }
 
@@ -187,16 +227,23 @@ struct FileWitness {
 }
 impl FileWitness {
     fn open(path: PathBuf) -> Result<(Self, File), Error> {
-        let stamp = named_stamp(&path)?;
-        let file = OpenOptions::new()
+        let witness = Self {
+            stamp: named_stamp(&path)?,
+            path,
+        };
+        let handle = witness.reopen()?;
+        Ok((witness, handle))
+    }
+    fn reopen(&self) -> Result<File, Error> {
+        self.check_named()?;
+        let handle = OpenOptions::new()
             .read(true)
             .custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK)
-            .open(&path)
+            .open(&self.path)
             .map_err(|_| Error::Unavailable("preset regular file could not be opened"))?;
-        let witness = Self { path, stamp };
-        witness.check_open(&file)?;
-        witness.check_named()?;
-        Ok((witness, file))
+        self.check_open(&handle)?;
+        self.check_named()?;
+        Ok(handle)
     }
     fn check_open(&self, file: &File) -> Result<(), Error> {
         let stamp = file
@@ -294,7 +341,11 @@ fn central_directory<R: Read + Seek>(
     Ok((start, entry_count))
 }
 
-fn archive_settings<R: Read + Seek>(reader: R, end: u64) -> Result<(u64, String), Error> {
+fn archive_settings<R: Read + Seek>(
+    reader: R,
+    end: u64,
+    title: &str,
+) -> Result<(u64, String), Error> {
     let structural_start = Cell::new(0);
     let mut reader = BoundedReader {
         inner: reader,
@@ -338,7 +389,7 @@ fn archive_settings<R: Read + Seek>(reader: R, end: u64) -> Result<(u64, String)
         .validate_header_consistency()
         .map_err(|_| Error::InvalidData("inconsistent preset ZIP headers"))?;
     let metadata = read_member(&mut archive, "metainfo.xml", MAX_META)?;
-    validate_xml(&metadata, Format::Metadata)?;
+    validate_xml(&metadata, Format::Metadata { title })?;
     let settings = read_member(&mut archive, SETTINGS, MAX_SETTINGS)?;
     validate_xml(&settings, Format::Settings)?;
     Ok((
@@ -376,17 +427,17 @@ fn read_member<R: Read + Seek>(
 }
 
 #[derive(Clone, Copy)]
-enum Format {
-    Metadata,
+enum Format<'a> {
+    Metadata { title: &'a str },
     Settings,
 }
-fn validate_xml(bytes: &[u8], format: Format) -> Result<(), Error> {
+fn validate_xml(bytes: &[u8], format: Format<'_>) -> Result<(), Error> {
     let invalid = Error::InvalidData("unsupported CV preset XML structure");
     let bytes = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(bytes);
     std::str::from_utf8(bytes).map_err(|_| invalid.clone())?;
     let mut reader = Reader::from_reader(bytes);
     let fields = match format {
-        Format::Metadata => [
+        Format::Metadata { .. } => [
             (b"Class:ID".as_slice(), CV_CLASS_BRACED.as_bytes()),
             (b"Class:Name", b"CV Instrument"),
             (b"Preset:DataFile", SETTINGS.as_bytes()),
@@ -397,16 +448,17 @@ fn validate_xml(bytes: &[u8], format: Format) -> Result<(), Error> {
             (b"", b""),
         ],
     };
-    let required = if matches!(format, Format::Metadata) {
+    let required = if matches!(format, Format::Metadata { .. }) {
         3
     } else {
         2
     };
     let root = match format {
-        Format::Metadata => b"MetaInformation".as_slice(),
+        Format::Metadata { .. } => b"MetaInformation".as_slice(),
         Format::Settings => b"AudioEffectPreset".as_slice(),
     };
     let mut seen = [false; 3];
+    let mut title_seen = false;
     let mut root_seen = false;
     let mut depth = 0_usize;
     loop {
@@ -424,16 +476,32 @@ fn validate_xml(bytes: &[u8], format: Format) -> Result<(), Error> {
                     for (index, (key, value)) in fields[..required].iter().enumerate() {
                         seen[index] = xml_attr(tag, key)? == Some(*value);
                     }
-                } else if matches!(format, Format::Metadata)
+                } else if let Format::Metadata { title } = format
                     && tag.name().as_ref() == b"Attribute"
                     && let Some(id) = xml_attr(tag, b"id")?
-                    && let Some((index, (_, value))) =
-                        fields.iter().enumerate().find(|(_, (key, _))| *key == id)
                 {
-                    if depth != 1 || seen[index] || xml_attr(tag, b"value")? != Some(*value) {
-                        return Err(invalid);
+                    let id = decode_xml_attr(id)?;
+                    if id == "Document:Title" {
+                        if depth != 1 || title_seen {
+                            return Err(invalid);
+                        }
+                        title_seen = true;
+                        let text = xml_attr(tag, b"value")?
+                            .ok_or(Error::InvalidData("unsupported CV preset title field"))
+                            .and_then(decode_xml_attr)?;
+                        if text.as_ref() != title {
+                            return Err(Error::Changed);
+                        }
+                    } else if let Some((index, (_, value))) = fields
+                        .iter()
+                        .enumerate()
+                        .find(|(_, (key, _))| *key == id.as_bytes())
+                    {
+                        if depth != 1 || seen[index] || xml_attr(tag, b"value")? != Some(*value) {
+                            return Err(invalid);
+                        }
+                        seen[index] = true;
                     }
-                    seen[index] = true;
                 }
                 if matches!(event, Event::Start(_)) {
                     depth += 1;
@@ -456,6 +524,14 @@ fn validate_xml(bytes: &[u8], format: Format) -> Result<(), Error> {
         return Err(invalid);
     }
     Ok(())
+}
+fn decode_xml_attr(bytes: &[u8]) -> Result<std::borrow::Cow<'_, str>, Error> {
+    std::str::from_utf8(bytes)
+        .ok()
+        .and_then(|text| quick_xml::escape::unescape(text).ok())
+        .ok_or(Error::InvalidData(
+            "unsupported CV preset XML attribute encoding",
+        ))
 }
 fn xml_attr<'a>(tag: &'a BytesStart<'_>, key: &[u8]) -> Result<Option<&'a [u8]>, Error> {
     let mut value = None;
@@ -508,7 +584,7 @@ mod tests {
         zip.finish().unwrap().into_inner()
     }
     fn inspect(bytes: &[u8]) -> Result<(u64, String), Error> {
-        archive_settings(Cursor::new(bytes), bytes.len() as u64)
+        archive_settings(Cursor::new(bytes), bytes.len() as u64, "default")
     }
 
     struct GuardedReader<'a> {
@@ -550,7 +626,7 @@ mod tests {
             forbidden: start..start + route.len() as u64,
         };
         assert_eq!(
-            archive_settings(reader, bytes.len() as u64).unwrap(),
+            archive_settings(reader, bytes.len() as u64, "default").unwrap(),
             (
                 settings.len() as u64,
                 format!("{:x}", Sha256::digest(&settings))
@@ -644,6 +720,92 @@ mod tests {
                 ("metainfo.xml", metadata().as_bytes())
             ]))
             .is_err()
+        );
+    }
+
+    #[test]
+    fn compares_a_present_title_to_the_exact_issued_name() {
+        let metadata = metadata();
+        let settings = settings();
+        let with_title = |title: &str| {
+            metadata.replace(
+                "</MetaInformation>",
+                &format!(r#"<Attribute id="Document:Title" value="{title}"/></MetaInformation>"#),
+            )
+        };
+        let read = |meta: &str, issued_title: &str| {
+            let bytes = zip(&[
+                (SETTINGS, settings.as_bytes()),
+                ("metainfo.xml", meta.as_bytes()),
+            ]);
+            archive_settings(Cursor::new(&bytes), bytes.len() as u64, issued_title)
+        };
+        assert!(read(&metadata, "default").is_ok());
+        assert!(read(&with_title("default"), "default").is_ok());
+        assert!(read(&with_title("A &amp; B"), "A & B").is_ok());
+        assert_eq!(read(&with_title("other"), "default"), Err(Error::Changed));
+        let escaped_key = with_title("other").replace("Document:Title", "Document&#58;Title");
+        assert_eq!(read(&escaped_key, "default"), Err(Error::Changed));
+        let duplicate = with_title("default").replace(
+            "</MetaInformation>",
+            r#"<Attribute id="Document:Title" value="default"/></MetaInformation>"#,
+        );
+        assert!(read(&duplicate, "default").is_err());
+    }
+
+    #[test]
+    fn an_issued_file_refuses_a_same_url_same_title_replacement_before_inspection() {
+        let folder =
+            std::env::temp_dir().join(format!("fender-cv-issued-test-{}", std::process::id()));
+        std::fs::create_dir(&folder).unwrap();
+        struct Cleanup(PathBuf);
+        impl Drop for Cleanup {
+            fn drop(&mut self) {
+                std::fs::remove_dir_all(&self.0).unwrap();
+            }
+        }
+        let _cleanup = Cleanup(folder.clone());
+        let first = folder.join("first");
+        let second = folder.join("second");
+        let alias = folder.join("ancestor");
+        for directory in [&first, &second] {
+            std::fs::create_dir(directory).unwrap();
+        }
+        let metadata = metadata().replace(
+            "</MetaInformation>",
+            r#"<Attribute id="Document:Title" value="default"/></MetaInformation>"#,
+        );
+        let primary = settings();
+        let replacement = primary.replace("<ComponentData/>", "<ComponentStop/>");
+        let archive = |primary: &str| {
+            zip(&[
+                (SETTINGS, primary.as_bytes()),
+                ("metainfo.xml", metadata.as_bytes()),
+            ])
+        };
+        let original_bytes = archive(&primary);
+        let replacement_bytes = archive(&replacement);
+        assert_eq!(original_bytes.len(), replacement_bytes.len());
+        std::fs::write(first.join("default.preset"), &original_bytes).unwrap();
+        std::fs::write(second.join("default.preset"), &replacement_bytes).unwrap();
+        std::os::unix::fs::symlink(&first, &alias).unwrap();
+        let named = alias.join("default.preset");
+        let (file, handle) = FileWitness::open(named.clone()).unwrap();
+        drop(handle);
+        let issued = IssuedCvSettingsFile {
+            index: 7,
+            title: "default".into(),
+            file,
+        };
+        let expected = format!("{:x}", Sha256::digest(primary.as_bytes()));
+        assert_eq!(issued.read_settings().unwrap().1, expected);
+
+        std::fs::remove_file(&alias).unwrap();
+        std::os::unix::fs::symlink(&second, &alias).unwrap();
+        assert_eq!(issued.read_settings(), Err(Error::Changed));
+        assert_eq!(
+            FileWitness::open(named).unwrap().0.stamp.len,
+            original_bytes.len() as u64
         );
     }
 
