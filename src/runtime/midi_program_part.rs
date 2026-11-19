@@ -7,6 +7,7 @@ use crate::{
 };
 
 const TWIN_CLASS: &str = "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+const SELECTION_PREFLIGHT: &str = "MIDI program parts require a known empty arrangement selection";
 
 pub(super) fn smf(change: &MidiProgramPartAdd) -> [u8; 46] {
     // Format 0, one track, 480 ticks per quarter note. Keep the bank bytes
@@ -104,12 +105,20 @@ pub(super) fn classify(
 ) -> (Outcome, Value, Option<OperationError>) {
     let same_context = response.session == context.session && response.document == context.document;
     let result = &response.result;
+    let detail_code = result["detail_code"].as_str();
+    let selection_detail =
+        detail_code.filter(|code| matches!(*code, "selection_unavailable" | "selection_not_empty"));
     if response.ok && same_context && valid(change, basename, result) {
         return (Outcome::AppliedVerified, result.clone(), None);
     }
     if response.ok
         && same_context
-        && result.as_object().is_some_and(|value| value.len() == 3)
+        && result.as_object().is_some_and(|value| {
+            (value.len() == 3 && !value.contains_key("detail_code"))
+                || (value.len() == 4
+                    && selection_detail.is_some()
+                    && result["reason"] == SELECTION_PREFLIGHT)
+        })
         && result["stage"] == "preflight"
         && result["native_outcome"] == "not_applied"
     {
@@ -117,9 +126,13 @@ pub(super) fn classify(
             .as_str()
             .filter(|reason| reason.len() <= 256 && !reason.chars().any(char::is_control))
             .unwrap_or("invalid_precondition");
+        let mut observation = json!({"stage":"preflight","reason":reason});
+        if let Some(code) = selection_detail {
+            observation["detail_code"] = json!(code);
+        }
         return (
             Outcome::NotApplied,
-            json!({"stage":"preflight","reason":reason}),
+            observation,
             Some(OperationError::new(
                 "missing_precondition",
                 format!("MIDI program part preflight: {reason}"),
@@ -157,9 +170,39 @@ pub(super) fn classify(
             )
         })
         .unwrap_or("verification");
+    let mut observation = unverified(change, basename, stage);
+    if response.ok
+        && same_context
+        && stage == "import"
+        && result["native_outcome"] == "unknown"
+        && let Some(code) = detail_code.filter(|code| {
+            matches!(
+                *code,
+                "fixture_request_invalid"
+                    | "target_track_unresolved"
+                    | "target_track_not_music"
+                    | "track_iterator_unavailable"
+                    | "track_has_events"
+                    | "track_iterator_exhaustion_unknown"
+                    | "importer_unavailable"
+                    | "import_time_unavailable"
+                    | "fixture_url_unavailable"
+                    | "fixture_file_unavailable"
+                    | "import_native_lease_changed"
+                    | "import_receipt_invalid"
+                    | "track_task_unavailable"
+                    | "track_task_arm_failed"
+                    | "track_task_dispatch_unconfirmed"
+                    | "track_task_receipt_unavailable"
+                    | "track_task_lease_rejected"
+            )
+        })
+    {
+        observation["detail_code"] = json!(code);
+    }
     (
         Outcome::Unknown,
-        unverified(change, basename, stage),
+        observation,
         Some(OperationError::new(
             "outcome_unknown",
             "The note-free part was not verified. Inspect the named track and its notes before retrying.",
@@ -260,5 +303,37 @@ mod tests {
         response.result = evidence;
         response.document = "other".into();
         assert_eq!(status(&response), Outcome::Unknown);
+    }
+
+    #[test]
+    fn import_details_preserve_certainty_and_reject_unknown_text() {
+        let context: HostContext = serde_json::from_value(json!({
+            "session":"session","document":"document","open":true,"protocol":2
+        }))
+        .unwrap();
+        let mut response: WireResponse = serde_json::from_value(json!({
+            "protocol":2,"id":"test","session":"session","document":"document","ok":true
+        }))
+        .unwrap();
+        let observe = |response: &WireResponse| classify(&change(), FIXTURE, &context, response);
+        response.result = json!({"stage":"import","native_outcome":"unknown","detail_code":"fixture_file_unavailable"});
+        let (outcome, evidence, _) = observe(&response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert_eq!(evidence["detail_code"], "fixture_file_unavailable");
+        response.result["detail_code"] = json!("file:///private/fixture.mid");
+        let (outcome, evidence, _) = observe(&response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert!(evidence.get("detail_code").is_none());
+        response.result = json!({"stage":"note_cleanup","native_outcome":"unknown","detail_code":"track_has_events"});
+        assert!(observe(&response).1.get("detail_code").is_none());
+        response.result = json!({"stage":"preflight","native_outcome":"not_applied","reason":SELECTION_PREFLIGHT,"detail_code":"selection_not_empty"});
+        let (outcome, evidence, _) = observe(&response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert_eq!(evidence["detail_code"], "selection_not_empty");
+        response.result["reason"] = json!("file:///private/fixture.mid");
+        let (outcome, evidence, _) = observe(&response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert!(evidence.get("detail_code").is_none());
+        assert!(evidence.get("reason").is_none());
     }
 }

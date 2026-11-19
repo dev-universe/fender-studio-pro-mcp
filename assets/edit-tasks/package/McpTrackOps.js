@@ -88,31 +88,39 @@ mtoOps.importMidiProgramFixture = function (context, op, lease) {
 		|| typeof op.fixture !== "string" || op.fixture.length !== 57
 		|| !/^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mid$/.test(op.fixture)
 		|| typeof op.track !== "string" || !op.track.trim())
-		return { error: "invalid private MIDI program fixture" };
+		return { called: false, detail_code: "fixture_request_invalid" };
 	var target = mtoTrack(context, op.track);
-	if (target.error) return target;
+	if (target.error) return { called: false, detail_code: "target_track_unresolved" };
 	var track = target.track;
-	if (track.mediaType !== "Music" || !mtoFn(track, "createIterator"))
-		return { error: "the exact Music track is unavailable" };
+	if (track.mediaType !== "Music") return { called: false, detail_code: "target_track_not_music" };
+	if (!mtoFn(track, "createIterator")) return { called: false, detail_code: "track_iterator_unavailable" };
 	var events = track.createIterator();
-	if (!mtoFn(events, "done") || events.done() !== true)
-		return { error: "the exact Music track is not known empty" };
+	if (!mtoFn(events, "next")) return { called: false, detail_code: "track_iterator_unavailable" };
+	// Track event iteration uses null as its end sentinel. Iterator done()
+	// is not required here, and other falsy values do not establish exhaustion.
+	var first = events.next();
+	if (first !== null) return {
+		called: false, detail_code: first && typeof first === "object" ? "track_has_events" : "track_iterator_exhaustion_unknown"
+	};
 	var f = context.functions;
-	if (!mtoFn(f, "importFile")) return { error: "the guarded MIDI importer is unavailable" };
+	if (!mtoFn(f, "importFile")) return { called: false, detail_code: "importer_unavailable" };
 	var time = mtoTime(context, 0);
+	if (!time) return { called: false, detail_code: "import_time_unavailable" };
 	var url = Host.Url(McpEditConfig.mailbox + op.fixture);
-	if (!time || !url || !Host.IO.File(url).exists())
-		return { error: "the generated MIDI fixture is unavailable" };
+	if (!url) return { called: false, detail_code: "fixture_url_unavailable" };
+	var file = Host.IO.File(url);
+	if (!mtoFn(file, "exists") || mtoKnownBool(file.exists()) !== true)
+		return { called: false, detail_code: "fixture_file_unavailable" };
 	var editor = context.editor;
 	var selection = mtoProgramSelection(editor, null);
 	if (!selection || !selection.empty)
-		return { called: false, preflight: "MIDI program parts require a known empty arrangement selection" };
-	if (!mcpNativeLeaseCurrent(lease)) return { error: "the program document lease changed" };
+		return { called: false, detail_code: selection ? "selection_not_empty" : "selection_unavailable" };
+	if (!mcpNativeLeaseCurrent(lease)) return { called: false, detail_code: "import_native_lease_changed" };
 	var result = f.importFile(url, time, track, 0);
 	return { called: true, returnType: typeof result };
 };
 
-function mtoSelectionBool(value) {
+function mtoKnownBool(value) {
 	return value === true || value === 1 ? true : (value === false || value === 0 ? false : null);
 }
 
@@ -120,9 +128,9 @@ function mtoProgramSelection(editor, event) {
 	if (!mtoFn(editor, "createSelectFunctions") || !mtoFn(editor, "unselect")) return null;
 	var selection = editor.selection;
 	if (!mtoFn(selection, "isEmpty") || !mtoFn(selection, "isSelected") || !mtoFn(selection, "isMultiple")) return null;
-	var empty = mtoSelectionBool(selection.isEmpty());
-	var multiple = mtoSelectionBool(selection.isMultiple());
-	var selected = event ? mtoSelectionBool(selection.isSelected(event)) : false;
+	var empty = mtoKnownBool(selection.isEmpty());
+	var multiple = mtoKnownBool(selection.isMultiple());
+	var selected = event ? mtoKnownBool(selection.isSelected(event)) : false;
 	if (empty === null || multiple === null || selected === null || (empty && (multiple || selected))) return null;
 	return { empty: empty, onlyEvent: !empty && !multiple && selected };
 }
@@ -143,7 +151,7 @@ mtoOps.midiProgramSelection = function (context, op, lease) {
 		return { error: "the exact Music track is unavailable" };
 	var it = track.createIterator();
 	var event = mtoFn(it, "next") ? it.next() : null;
-	if (!event || !mtoFn(it, "done") || it.done() !== true
+	if (!event || it.next() !== null
 		|| event.name !== op.partName || !mtoFn(event, "createSequenceIterator")
 		|| !event.startTime || event.startTime.seconds !== 0)
 		return { error: "the sole generated program part was not located" };
@@ -166,7 +174,7 @@ mtoOps.midiProgramSelection = function (context, op, lease) {
 		if (!mtoFn(select, "select")) return { error: "selecting the program part is unavailable" };
 		select.selectExclusive = false;
 		var unchanged = mtoProgramSelection(editor, event);
-		if (mtoSelectionBool(select.selectExclusive) !== false || !unchanged || !unchanged.empty || !mcpNativeLeaseCurrent(lease))
+		if (mtoKnownBool(select.selectExclusive) !== false || !unchanged || !unchanged.empty || !mcpNativeLeaseCurrent(lease))
 			return { error: "the arrangement selection changed before selecting the program part" };
 		select.select(event);
 		if (!mcpNativeLeaseCurrent(lease)) return { error: "the selected program document changed" };

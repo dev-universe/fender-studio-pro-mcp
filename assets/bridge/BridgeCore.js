@@ -488,8 +488,16 @@ class Bridge {
     }
 
     midiProgramPartAdd(args) {
-        const refused = reason => ({ native_outcome: "not_applied", stage: "preflight", reason: reason });
-        const uncertain = stage => ({ native_outcome: "unknown", stage: stage });
+        const refused = (reason, detailCode) => {
+            const result = { native_outcome: "not_applied", stage: "preflight", reason: reason };
+            if (detailCode !== undefined) result.detail_code = detailCode;
+            return result;
+        };
+        const uncertain = (stage, detailCode) => {
+            const result = { native_outcome: "unknown", stage: stage };
+            if (detailCode !== undefined) result.detail_code = detailCode;
+            return result;
+        };
         if (Object.keys(args).sort().join(",") !== "bank_lsb,bank_msb,expected_instance,fixture,program,track"
             || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
             || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
@@ -509,12 +517,14 @@ class Bridge {
         const imported = this.trackTask({
             ops: [{ op: "importMidiProgramFixture", track: args.track, fixture: args.fixture }]
         }, true);
-        const call = !isFail(imported) && Array.isArray(imported.results) && imported.results.length === 1 && imported.results[0];
-        if (!call || call.op !== "importMidiProgramFixture") return uncertain("import");
-        if (call.called === false && call.preflight === "MIDI program parts require a known empty arrangement selection")
-            return refused(call.preflight);
+        if (isFail(imported)) return uncertain("import", imported.detail_code);
+        const call = Array.isArray(imported.results) && imported.results.length === 1 && imported.results[0];
+        if (!call || call.op !== "importMidiProgramFixture") return uncertain("import", "import_receipt_invalid");
+        if (call.called === false && ["selection_not_empty", "selection_unavailable"].indexOf(call.detail_code) >= 0)
+            return refused("MIDI program parts require a known empty arrangement selection", call.detail_code);
+        if (call.called === false) return uncertain("import", call.detail_code);
         if (call.error || call.called !== true || call.returnType !== "number")
-            return uncertain("import");
+            return uncertain("import", "import_receipt_invalid");
 
         program.noteCount = 1;
         const seeded = this.midiProgramPartBinding(args, program);
@@ -626,19 +636,24 @@ class Bridge {
     // folders, event names. Request in track-edit-request.json, result in
     // track-edit-result.json; the task needs no selection.
     trackTask(args, internalProgramPart) {
+        const taskFailure = (result, detailCode) => {
+            if (internalProgramPart) result.detail_code = detailCode;
+            return result;
+        };
         if (!Array.isArray(args.ops) || !args.ops.length) return fail("ops: one or more track edit operations");
         if (!internalProgramPart && args.ops.some(op => op && (op.op === "importMidiProgramFixture" || op.op === "midiProgramSelection")))
             return fail("the MIDI importer and selection are private to the bound program part operation");
-        if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit")) return fail("the MCP Track Edit task is not installed: reinstall the device, then restart Studio One");
+        if (!Host.GUI.Commands.findCommand("Track", "Fender MCP Track Edit"))
+            return taskFailure(fail("the MCP Track Edit task is not installed: reinstall the device, then restart Studio One"), "track_task_unavailable");
         const id = newSession();
         this.mailbox.write("track-edit-result.json", { id: null });
         const armed = this.armTask("track", "track-edit-request.json", id, args.ops, internalProgramPart);
-        if (isFail(armed)) return armed;
+        if (isFail(armed)) return taskFailure(armed, "track_task_arm_failed");
         const r = this.runArmedTask("Track", "Fender MCP Track Edit", "track-edit-request.json");
-        if (isFail(r)) return r;
+        if (isFail(r)) return taskFailure(r, "track_task_dispatch_unconfirmed");
         const res = this.mailbox.read("track-edit-result.json");
-        if (!res || res.id !== id) return fail("the track edit task did not report back");
-        if (res.error) return fail(res.error);
+        if (!res || res.id !== id) return taskFailure(fail("the track edit task did not report back"), "track_task_receipt_unavailable");
+        if (res.error) return taskFailure(fail(res.error), "track_task_lease_rejected");
         return { results: res.results };
     }
 
@@ -1365,13 +1380,15 @@ function readMidiProgramPart(event, name, noteCount) {
     if (!has(notes, "done", "function") || !has(notes, "next", "function"))
         return fail("the generated Music part note inventory is unavailable");
     if (noteCount === 1) {
-        if (notes.done() !== false) return fail("the generated seed note was not found");
+        const exhausted = notes.done();
+        if (exhausted !== false && exhausted !== 0) return fail("the generated seed note was not found");
         const note = notes.next();
         if (!note || note.pitch !== 60 || !Number.isFinite(note.velocity) || Math.round(note.velocity * 127) !== 1
             || !note.startTime || note.startTime.musical !== 2.5 || note.isMuted)
             return fail("the only note did not match the generated seed");
     }
-    if (notes.done() !== true) return fail("the generated Music part contains unexpected notes");
+    const exhausted = notes.done();
+    if (exhausted !== true && exhausted !== 1) return fail("the generated Music part contains unexpected notes");
     return { name: name, start: start, end: end, note_count: noteCount };
 }
 

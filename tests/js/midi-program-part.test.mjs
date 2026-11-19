@@ -15,9 +15,10 @@ function harness() {
   const song = musicContext();
   const state = {
     selected: [], recordArmed: false, switches: { start: 0, record: 0, loop: 0, primaryTime: 0 },
-    classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0,
+    classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0, integerNoteDone: false,
     document: { token: 'ndc1:0000000000000001:1', title: 'Scratch', fileUrl: 'file:///scratch/song.song' },
-    onImport() {}, onSelect() {}, onInspect() {},
+    nextDocument: null,
+    onImport() {}, onSelect() {}, onInspect() {}, onTrackTask() {},
   };
   const iterator = list => {
     let index = 0;
@@ -43,9 +44,11 @@ function harness() {
     : url.endsWith('/TrackList') ? { mainTrackList: list } : originalLookup(url);
   host.Host.Objects.getObjectByName = name => name === 'FenderMcpNative' ? {
     documentContext() {
+      const document = state.nextDocument ?? state.document;
+      state.nextDocument = null;
       return JSON.stringify({
         ok: true, api: 'fender-mcp-native-v1', context_api: 'native_document_context_v1',
-        open: true, ...state.document,
+        open: true, ...document,
       });
     },
   } : null;
@@ -85,7 +88,10 @@ function harness() {
     assert.equal(flags, 0);
     const part = {
       name: partName, startTime: { seconds: 0 }, endTime: { seconds: 1.281 }, isMuted: false,
-      notes: [], createSequenceIterator() { return iterator(this.notes); },
+      notes: [], createSequenceIterator() {
+        const sequence = iterator(this.notes);
+        return state.integerNoteDone ? { next: sequence.next, done: () => Number(sequence.done()) } : sequence;
+      },
     };
     part.notes.push({
       pitch: 60, velocity: 1 / 127, startTime: { time: 2.5, musical: 2.5, seconds: 1.25 },
@@ -97,7 +103,10 @@ function harness() {
     return state.numeric;
   };
   const handlers = {
-    'Track/Fender MCP Track Edit': () => trackTask.performEdit(song.context),
+    'Track/Fender MCP Track Edit': () => {
+      state.onTrackTask(host.read('track-edit-request.json').ops[0]);
+      return trackTask.performEdit(song.context);
+    },
     'Musical Functions/Fender MCP Edit': () => noteTask.performEdit({
       iterator: iterator(state.selected.flatMap(event => event.notes)),
       functions: { deleteEvent(note) { note.region.notes.splice(note.region.notes.indexOf(note), 1); edits.push('delete'); } },
@@ -135,6 +144,21 @@ test('the note-free part requires independent witnesses beyond the numeric impor
   assert.deepEqual(h.selectionActions, ['select', 'unselect']);
 });
 
+test('track events use exact null and note sequences admit bounded integer exhaustion', () => {
+  for (const done of [undefined, () => 1]) {
+    const h = harness();
+    h.song.keys.createIterator = () => {
+      let index = 0;
+      return { next: () => h.song.keys.events[index++] ?? null, done };
+    };
+    h.state.integerNoteDone = true;
+    const response = h.request();
+    assert.equal(response.result.stage, 'complete');
+    assert.deepEqual(h.edits, ['import', 'delete']);
+    assert.deepEqual(h.selectionActions, ['select', 'unselect']);
+  }
+});
+
 test('preflight rejects wrong or nonempty targets, untrusted paths and raw task dispatch', () => {
   for (const alter of [
     h => { h.state.switches.start = 1; }, h => { h.state.switches.loop = 1; },
@@ -161,6 +185,7 @@ test('an existing same-document event selection is preserved before import', () 
   h.state.selected = [peer];
   const response = h.request();
   assert.equal(response.result.native_outcome, 'not_applied');
+  assert.equal(response.result.detail_code, 'selection_not_empty');
   assert.match(response.result.reason, /empty arrangement selection/);
   assert.deepEqual(h.edits, []);
   assert.deepEqual(h.selectionActions, []);
@@ -170,9 +195,45 @@ test('an existing same-document event selection is preserved before import', () 
 test('an unobservable arrangement selection prevents import', () => {
   const h = harness();
   h.song.context.editor.selection.isEmpty = () => undefined;
-  assert.equal(h.request().result.native_outcome, 'not_applied');
+  const response = h.request();
+  assert.equal(response.result.native_outcome, 'not_applied');
+  assert.equal(response.result.detail_code, 'selection_unavailable');
   assert.deepEqual(h.edits, []);
   assert.deepEqual(h.selectionActions, []);
+});
+
+test('import prechecks distinguish bounded failure codes while edits remain unverified', () => {
+  for (const [detail, alter] of [
+    ['track_iterator_exhaustion_unknown', h => {
+      h.state.onTrackTask = op => {
+        if (op.op === 'importMidiProgramFixture') h.song.keys.createIterator = () => ({ next: () => undefined, done: () => true });
+      };
+    }],
+    ['track_has_events', h => {
+      h.state.onTrackTask = op => {
+        if (op.op === 'importMidiProgramFixture') h.song.keys.events.push({ name: 'Private peer' });
+      };
+    }],
+    ['fixture_url_unavailable', h => {
+      const originalUrl = h.Host.Url;
+      h.Host.Url = value => value.endsWith(fixture) ? null : originalUrl(value);
+    }],
+    ['fixture_file_unavailable', h => { h.files.delete(mailbox + fixture); }],
+    ['import_time_unavailable', h => { h.song.context.functions.newMediaTime = () => null; }],
+    ['import_native_lease_changed', h => {
+      h.song.context.editor.selection.isEmpty = () => {
+        h.state.nextDocument = { ...h.state.document, fileUrl: 'file:///scratch/private-alternate.song' };
+        return true;
+      };
+    }],
+  ]) {
+    const h = harness();
+    alter(h);
+    const response = h.request();
+    assert.deepEqual(response.result, { native_outcome: 'unknown', stage: 'import', detail_code: detail });
+    assert.deepEqual(h.edits, []);
+    assert.deepEqual(h.selectionActions, []);
+  }
 });
 
 test('document switch during select or route check preserves the new document selection', () => {
@@ -216,6 +277,7 @@ test('post-write mismatches report unknown and leave unverified notes untouched'
     [h => { h.state.numeric = undefined; }, 'import'],
     [h => { h.state.onImport = () => { h.state.classUid = 'changed route'; }; }, 'seed_verification'],
     [h => { h.state.onImport = part => { part.notes.push({ pitch: 64 }); }; }, 'seed_verification'],
+    [h => { h.state.onImport = part => { part.createSequenceIterator = () => ({ next: () => part.notes[0], done: () => '' }); }; }, 'seed_verification'],
     [h => { h.state.noteRegion = { name: 'some other part' }; }, 'note_cleanup'],
   ]) {
     const h = harness();
