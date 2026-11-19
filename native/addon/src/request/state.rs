@@ -19,7 +19,7 @@ pub(crate) const MAX_CAPSULE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TOTAL_BYTES: usize = 64 * 1024 * 1024;
 const MAX_CAPSULES: usize = 8;
 static LIVE_CAPSULES: AtomicU32 = AtomicU32::new(0);
-const STORABLE: Uid = Uid {
+pub(super) const STORABLE: Uid = Uid {
     a: 0xb131b242,
     b: 0xbff4,
     c: 0x446f,

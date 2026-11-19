@@ -1231,7 +1231,7 @@ mod tests {
         ] {
             operations.push(Operation::from_parts("pluginState", json!({"channel":"Scratch","slot":0,"plugin":"Rumble Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":action})).unwrap());
         }
-        for node_scope in ["cv_ports", "cv_port_parameters"] {
+        for node_scope in ["cv_ports", "cv_port_parameters", "cv_preset_target"] {
             operations.push(Operation::from_parts("pluginInspect", json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument","source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC","include_nodes":true,"node_scope":node_scope})).unwrap());
         }
         for (name, extra) in [
