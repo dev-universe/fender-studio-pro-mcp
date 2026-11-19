@@ -1,69 +1,66 @@
-**그래서 이게 뭔가요?** Fender Studio Pro에서 트랙과 이펙트를 AI에게 말로 부탁해 조작할 수 있게 해 주는 연결 도구입니다.
+<h1 align="center">Fender Studio Pro MCP</h1>
 
-# Fender Studio Pro MCP
+<p align="center">
+  <strong>Control Fender Studio Pro from an MCP-compatible AI client.</strong><br>
+  Experimental · Live-tested on Studio Pro 8.1.1 (Build 113103) on Apple Silicon Macs
+</p>
 
-현재는 **macOS Apple Silicon의 Fender Studio Pro 8.1.1**에서 검증 중인 실험 버전입니다. MCP를 지원하는 AI 앱에 연결하면 트랙·믹서·MIDI·지원되는 내장 이펙트를 대화로 조작할 수 있습니다. Studio Pro 안에 채팅창을 추가하는 프로그램은 아니며, 처음 연결할 때 아래의 빌드·설정 과정이 필요합니다.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#optional-native-add-on">Native add-on</a> ·
+  <a href="#validation">Validation</a>
+</p>
 
-내장 플러그인 전체를 빠짐없이 제어하는 것이 목표이지만 아직 완료되지는 않았습니다. 검증된 기능과 미완료 기능을 아래와 [검증 보고서](docs/VALIDATION.md)에 구분했습니다. Windows와 Intel Mac의 DAW 연결은 검증하지 않았습니다.
+---
 
-See the [current progress](docs/PROGRESS_2026-11-18.md), [resume guide](docs/RESUME.md)
-and [latest completed handoff](docs/LOOP_HANDOFF_2026-11-17.md) for completed work and remaining tasks.
+## Quick start
 
-A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
+You need Fender Studio Pro, Rust 1.88 or later with Cargo, and an MCP client that supports local stdio servers.
 
-Actual DAW checks use **Fender Studio Pro 8.1.1 Build 113103 on macOS Apple Silicon**. An earlier native-extension inventory covered **60 built-in classes**, enumerated **8,668 indexed parameter records across 59 current providers**, and resolved every reported DSP parameter name. Splitter adds 16 fixed graph controls. Fifty-nine classes passed a parameter or graph change/readback/restore; Phase Meter passed slot bypass. External Effect Mono and Stereo passed gain, mix, manual latency, phase and Unicode-note roundtrips. The same build passed the bridge/EditTask regression. Read the [validation report](docs/VALIDATION.md) and [plugin matrix](docs/BUILTIN_PLUGINS.md) for scope and evidence. Every GUI action, model and physical hardware path has not been certified.
+### 1. Build and install the bridge
 
-The 46 MCP tools cover session and transport state, tracks and mixer channels, MIDI parts and notes, native parameter pages, supported list choices, existing Splitter controls, and finite editing operations. They also expose bounded native state capsules, issued preset catalogs, parameter details, explicit-value formatting, fresh parameter digests, registered button actions and current-selector model lists. Saved-song inspection and WAV analysis run without a DAW connection. [Hardware inventory and bounded MIDI input observation](docs/HARDWARE.md) also have standalone CLI paths that bypass the DAW runtime. Current surface mappings cover at most 256 mixer channels, 16 insert slots and 8 sends per channel; note-edit batches cover at most 128 parts. Windows, Intel Mac, and Linux DAW integration have no actual-environment validation.
+The installer uses `~/Library/Application Support/Fender/Studio Pro 8` by default. For a custom profile, pass `--profile /path/to/profile` with each install and connection command. Add it to the client's `serve` arguments too.
 
-The [plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md) separately records newer model, preset, nested-fixture and full-parameter work, including successful actual-host cases and stopped restoration tests. Chorder has a separately verified scratch Save/reopen case; earlier persistence failures remain recorded. Complete current-provider enumeration does not establish full parameter, model or musical-event coverage. The [fixed remaining-work list](docs/WORK_BREAKDOWN_2026-11-13.md) currently has 15 of 43 deliverables complete and 28 remaining: 24 software items and four hardware-dependent items. This is a bounded backlog count, not a whole-product completion percentage.
+Quit Studio Pro, then build the server and install the bridge and EditTasks.
 
-Build with Rust 1.88 or newer and Cargo. The installed server runs as a native binary. Node.js and Python are development and validation tools. The server does not launch either runtime.
+```sh
+git clone https://github.com/dev-universe/fender-studio-pro-mcp.git
+cd fender-studio-pro-mcp
+cargo build --locked --release
+./target/release/fender-studio-pro-mcp install
+```
 
-Follow these steps for the first connection.
+### 2. Set up the control surface
 
-1. Clone, build, and install the bridge and EditTasks.
+Start the virtual MIDI source. Leave this command running until the control surface is configured.
 
-   ```sh
-   git clone https://github.com/dev-universe/fender-studio-pro-mcp.git
-   cd fender-studio-pro-mcp
-   cargo build --locked --release
-   ./target/release/fender-studio-pro-mcp install
-   ```
+```sh
+./target/release/fender-studio-pro-mcp hold
+```
 
-   The default DAW profile is `~/Library/Application Support/Fender/Studio Pro 8`. For a different profile, pass `--profile /path/to/profile` to each command. Installation adds the managed device and extension assets and preserves unrelated settings.
+When the command reports `"ready": true`, open Studio Pro. In **External Devices**, add a **Control Surface** with these settings.
 
-2. Start the MCP server through your client using the configuration below. For initial device setup without an MCP client, keep this command running in a terminal.
+| Setting | Value |
+| --- | --- |
+| Vendor | `fender-studio-pro-mcp` |
+| Device | `Fender MCP Bridge` |
+| Receive From | `fender-studio-pro-mcp` |
+| Send To | `None` |
 
-   ```sh
-   ./target/release/fender-studio-pro-mcp hold
-   ```
+Open a named scratch song with playback and recording stopped. An open song is required for the verified connection path.
 
-   The `hold` command prints `"ready": true` and publishes the virtual MIDI source. Keep the owner process running while you configure the DAW.
+### 3. Verify the connection and start your client
 
-3. Quit and restart Studio Pro after installation, with the server or `hold` process already running.
+Stop `hold` with Ctrl+C, then run the live diagnostic.
 
-4. Open **External Devices**, add a **Control Surface**, and select these settings.
+```sh
+./target/release/fender-studio-pro-mcp doctor --live
+```
 
-   | Setting | Value |
-   | --- | --- |
-   | Vendor | `fender-studio-pro-mcp` |
-   | Device | `Fender MCP Bridge` |
-   | Receive From | `fender-studio-pro-mcp` |
-   | Send To | `None` |
+Look for both `"installation_current": true` and `"live_verified": true` in the output.
 
-5. Open a session. Use a named disposable scratch session for the first editing checks, with playback and recording stopped. The validated request path requires an open session. The Home screen can time out.
-
-6. To check the installation and current connection, first disconnect the MCP client or stop `hold` with Ctrl-C. Then run the standalone diagnostic.
-
-   ```sh
-   ./target/release/fender-studio-pro-mcp doctor --live
-   ```
-
-   Look for `"installation_current": true` and `"live_verified": true`. A stored `status_file` alone reports a previous bridge load. It does not verify the current connection.
-
-7. Start your MCP client again. Only one server, `hold`, live diagnostic, or CLI controller can own the same profile at a time. A second owner returns `controller_busy`.
-
-Use an absolute binary path in a client that supports stdio MCP servers. Adapt this generic configuration to your client's settings format.
+Configure your MCP client to start `serve` with the absolute path to your built binary. Adapt this example to your client's configuration format.
 
 ```json
 {
@@ -76,218 +73,70 @@ Use an absolute binary path in a client that supports stdio MCP servers. Adapt t
 }
 ```
 
-The client starts `serve` and exchanges MCP JSON-RPC through stdin and stdout. The server writes diagnostics to stderr. Keep the server alive during the DAW session. If the input source disconnects after a server restart, reselect **Receive From** with the server running. Restarting the DAW with the owner already running is the first-connection sequence above. Reconnection across every launch order remains unverified.
+Start the client and ask it to call `host_status` to confirm it can see the open song.
 
-Ask the LLM to call `host_status` before editing. Mutations require its current `document` token as `expected_document`. Reopening or switching a document invalidates earlier editing intent. Call `operations_list` to inspect the finite operation schema and tool capabilities.
+## Usage
 
-For standalone CLI calls, stop any other owner first. Read the current context.
+The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
-```sh
-./target/release/fender-studio-pro-mcp call context
-```
+- "Which mixer channels are muted in this song?"
+- "Set the tempo to 100 BPM and read it back."
 
-For a scratch channel named `Scratch` with Mixtool in insert slot 0, read the parameter before setting it. Replace the names and document token with the values from your own scratch session. Insert slots start at zero, and normalized values range from 0 to 1.
+For edits, the client passes the current `document` token from `host_status` as `expected_document`. Read a fresh token after switching or reopening a song. Call `operations_list` to see the available operations and their arguments.
 
-```sh
-./target/release/fender-studio-pro-mcp call pluginParams \
-  '{"kind":"effect","channel":"Scratch","slot":0,"plugin":"Mixtool","names":["gain"]}'
+`applied_verified` includes operation-specific readback. `applied_unverified` records an acknowledged edit with incomplete verification. `partially_applied` means some changes took effect. If the client receives `outcome_unknown`, check the current state before repeating the request.
 
-./target/release/fender-studio-pro-mcp call setPluginParam \
-  '{"kind":"effect","channel":"Scratch","slot":0,"plugin":"Mixtool","param":"gain","normalized":0.5}' \
-  --expected-document 'DOCUMENT_TOKEN_FROM_CONTEXT'
-```
+### Troubleshooting
 
-Plugin writes require the expected plugin class or instance name. With the native extension, carry the returned `instance.object_uid` as `expected_instance` for subsequent reads/writes and the receipt's document token as `expected_document`. Model/pad/focus changes still require fresh discovery. Without the extension, candidate discovery is partial and class-only matching cannot identify a same-class replacement.
+| Symptom | What to check |
+| --- | --- |
+| `controller_busy` | Stop the other MCP server, `hold` process, or live CLI command using the same profile. |
+| MIDI source disconnected after a restart | Reselect **Receive From** while the server is running. |
+| The bridge request times out on the Home screen | Open a scratch song and retry the connection check. |
 
-For native enumeration and External Effect's controller, quit Studio Pro, stop the owner, then build and install the optional Rust extension.
+### Update or uninstall
+
+Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files.
+
+## Optional native add-on
+
+Install the add-on to enumerate native plugin parameters and use supported state capture, presets, and deeper plugin inspection. It requires the tested Studio Pro 8.1.1 arm64 build, Python 3, and the macOS command-line tools for the build.
+
+Quit Studio Pro and stop the MCP server or `hold` before installing. From the repository root, run the build with the Rust 1.88.0 toolchain installed.
 
 ```sh
 sh native/build.sh
 ./target/release/fender-studio-pro-mcp native-install artifacts/native/fender-studio-pro-mcp.native.mac
 ```
 
-For the currently validated 8.1.1 session sequence, initialize Studio Pro and open the named scratch song, then start the MCP owner. This order worked in the [bounded CV checks](docs/evidence/2026-11-17-cv-host-nodes-native55-r75.json); it does not establish the cause of earlier startup stalls. The extension accepts only the tested **8.1.1 arm64 / CCL 5.1.2** image identities. It uses the normal user extension loader and makes no changes to the vendor app bundle. Building requires Rust 1.88 and the usual macOS command-line tools; no SDK download or Ghidra installation is needed for an ordinary build. Optional SDK ABI checks and native tests are documented in the [native add-on guide](native/addon/README.md).
+Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
-Call `plugin_parameters` with `names` omitted and `limit:64`. Follow `next_offset` until null, keeping `expected_document`, `expected_instance` and the returned `source` unchanged. `page_complete` covers a page; `complete` is true only when one page covers the current provider. Counts include read-only meters and UI state, so they are not writable-control counts. Impact exposed 4,262 records; Pro EQ exposed 199. Re-enumerate after changing a model, pad or nested context.
+## Inspect files offline
 
-For External Effect, open its expected editor with `plugin_editor_open`, then query `plugin_parameters` with `source:"controller"`. Both modes exposed 24 controller records. `plugin_parameter_choices` reads integer-indexed native list labels without selecting a value. The tested send/receive lists had zero configured hardware ports; positive physical routing, ping/automatic latency and audible loopback remain unverified. Floating-scale DSP list facades do not use this index-list query; their ordinary raw/normalized/display-text parameter path remains available.
-
-`external_port_menu` observes a bounded Send or Return menu in the expected open External Effect editor. Menu construction invokes callbacks; the result contains metadata and no selection handles. Optional `provenance:true` adds fixed **External Effect Stereo / Send** public interface relationship observations. Successful results use `bracketed_current_mapped_bank_sequential_read_only`: current target resolution is checked before and after the native call, with `atomic_snapshot:false` and `continuous_active_mixer_membership_verified:false`. Typed menu-data values and port-selection authority remain unavailable. One fixed Stereo Send provenance observation passed on 8.1.1 with all 24 controller records unchanged across four reads. Port-value meaning and selection remain unverified.
-
-`plugin_parameter_details` reads precision, state flags and the bounded original-parameter chain. `plugin_parameter_format` formats up to 32 explicit numeric inputs without selecting them. For example, the tested Ampire `opt.ampmodel` inputs `[0,1,2,3,4,5]` returned distinct amplifier labels without changing the current provider. A Float List facade, its precision or its maximum does not by itself prove a complete choice domain.
-
-`plugin_action` accepts five fixed actions. `swap_filter_frequencies` supports Expander, Gate and Compressor. `reset_meter_hold` and `reset_meter_loudness` support Level Meter. `reset_minimum_reduction` supports Limiter and Compressor. `retrigger_scope` targets only Scope’s canonical `trigRetrig` button. Oneshot remains a separate mode parameter. Its [normal Native55 install and fresh schema proof](docs/evidence/2026-11-15-scope-retrigger-normal-native55.json) is separate from the subsequently accepted [primary-A capture, hold and single retrigger observation](docs/evidence/2026-11-15-scope-primary-functional-effect-native55.json). That bounded 81-request experiment restored all41 settings but does not establish direct silent-armed state, hidden waveform-memory restoration or all GUI/source mappings. Each action requires the freshly observed `expected_instance` and `expected_document`; class and canonical parameter admission are closed. Meter-reset receipts remain `applied_unverified`. Separate actual observations established the [Limiter](docs/evidence/2026-11-15-limiter-minimum-reset-qualified-native53.json) and [Compressor](docs/evidence/2026-11-15-compressor-minimum-reset-qualified-native54.json) reset effects and configuration restoration. Those proofs exclude audio, persistence and whole-plugin coverage. An outer `outcome_unknown` stays unknown even when its native error body says `not_applied`; never retry that request automatically.
-
-For Chorder `chorder.autofill`, `plugin_parameter_details` also accepts `compare_gui:true` with explicit `source:"dsp"` and `expected_instance`. It compares the direct parameter and its declared observer with a unique exactly named control in the already-open editor. The bounded read opens no UI and grants no mutation access. Missing, ambiguous or incomplete bindings remain unresolved. Identity equality does not establish visible-control semantics, saved-state persistence or audible processing; original-parameter equality remains unobserved.
-
-The experimental `chorder_autofill_set` edits the source-defined local GUI
-receiver instead of the direct DSP facade. Supply `track`, `slot`, Boolean
-`enabled`, `expected_instance` and `expected_document`, with the normal Chorder
-editor already open. Read its `gui_parameter` descriptor through the comparison
-first. A successful call remains `applied_unverified`; `gui_value_verified`
-covers only the typed GUI current value. DSP propagation, persistence and effects
-need independent observations. This finite operation accepts no arbitrary GUI
-name or path. One actual 8.1.1 on/off roundtrip passed Save and full app restart
-in both directions, with all 908 exposed values checked twice and the original
-Chorder preset member restored byte for byte. Other chord-model edits remain
-separate work.
-
-The experimental `chorder_learning_get` reads the already-open Chorder editor's
-learning mode and selected input pitch. `chorder_learning_set` also admits one
-bounded chord-note membership intent. Both
-require `track`, Note FX `slot`, `expected_instance` and `expected_document`.
-The setter's closed `change` accepts `{"kind":"learn_mode","enabled":true}`,
-`{"kind":"input_pitch","pitch":0}`, or
-`{"kind":"chord_note","expected_input_pitch":60,"output_pitch":0,"enabled":true}`.
-The last intent requires Learn Mode1 and an already selected matching input.
-It changes no selector or mode implicitly and reports only GUI current-value
-verification. Stored-model mapping, restoration, persistence and audio need
-separate evidence. One actual input60/output0 add/remove pilot passed all908
-provider values and all128stored-input model comparisons in179requests.
-Other pitches and persistence remain separate checks.
-An explicit `pitch:null` clears the
-selection; omitting `pitch` is an error. Pitches are MIDI 0..127. The getter's
-read-only discovery ceiling is 256 views; learning setter discovery is limited to
-144 views after an actual 131-view Mode-on measurement. The separate Auto Fill
-setter remains limited to 128 views. Incomplete bindings refuse the request. Successful edits remain
-`applied_unverified` with a separate GUI-current-value fact. These transient
-controls do not establish learned chord contents, persistence or audio results.
-The Mode-off getter completed a 125-view actual-host walk. One input-pitch
-null-to-MIDI0-to-null setter roundtrip passed complete 908-record changed and
-original comparisons. Native32 also passed one Mode-on, Mode-off and explicit
-input-null roundtrip. Eighteen complete provider reads covered its phases;
-the final 908 records and GUI descriptors matched the original. Five state
-captures retained identical stored chord bytes. Song Save/restart and learned
-chord editing remain separate checks. A separate full restart without Save
-reset Mode and input selection to the original, with four complete 908-record
-reads and unchanged stored chord bytes. Mode-only editing left the normal Save
-menu disabled in that experiment.
-
-`plugin_models` reads the current `categories` or `effects` flat list for an expected Mustang Native or Rumble Native instance through the matching native extension. Use the standard plugin target, `plugin`, `expected_instance`, `catalog`, and optional `offset`0..4096/`limit`1..32. Follow `next_offset` with the same document, instance and catalog. Titles can be unavailable; `complete` describes the requested page, while `all_flat_rows_observed` also requires reading the entire current list from offset0. Lists may be filtered by category and edit context. They do not establish every model, an atomic snapshot or permission to select/apply one. This tool performs no selection, preview or confirmation and issues no token.
-
-Capture `plugin_state` before changing a model or recalling a preset. Keep the returned opaque token, document token and native instance identity. `plugin_presets` lists an issued catalog and accepts only an index issued by that catalog; callers cannot supply preset paths or imported state bytes. State load and preset recall remain `applied_unverified` until independent reads establish the intended result. A capsule load can also introduce representational drift, so exact restoration must be checked. Release unused state and catalog tokens.
-
-The experimental `chorder_chords_get` reads stored chords through the matching
-native extension. Supply `track`, Note FX `slot`, `expected_instance`,
-`expected_document`, `offset` 0..127 and `limit` 1..16. Pages include empty input
-keys and sorted output MIDI pitches. Each page captures fresh state; compare
-the capture and model digests across pages. The bounded decoder accepts only
-the known Chorder serializer schema and exposes no XML, file path or state
-token. It grants no mutation authority or persistence/audio claim. Native34
-passed actual 8.1.1 unit64 with two complete 128-input passes, 16 serializer
-reads and four unchanged complete 908-record reads. The run made zero parameter
-writes, capsule actions, loads, transport actions or Song Saves. See the
-[read-only model evidence](docs/evidence/2026-11-13-chorder-chords-readonly.json).
-One input60/output0 membership edit and exact restoration passed independently
-through this getter. Other pitches, Save/restart and audio remain pending.
-
-Native33's fixed Chorder child probe also passed in the actual 8.1.1 host.
-It observed `pitch61` and its local `learnChord` and `chordAssigned` metadata.
-Four complete 908-record reads stayed original before and after the probe.
-The probe grants no mutation authority or output-pitch mapping. Stored-chord
-editing, restoration and persistence remain pending.
-
-The additional preset-setting plan has completed 40 of 46 classes with 77
-accepted representative cases. These include 59 capsule-only cases across 30
-classes, 12 predeclared hybrid cases across 6 classes, and 6 explicitly scoped
-setting cases across 4 classes. Six classes remain. The [current acceptance
-record](docs/PRESET_SETTING_ACCEPTANCE.md) preserves earlier strict failures,
-readonly and label differences, and each case's limits. Selected presets do not
-establish every available preset, hidden value, saved state or audio result.
-
-SampleOne's issued singleton default passed one actual Native54 setting case.
-All 235 current values and metadata returned exactly to the prepared state and
-the original baseline. Independent fresh 5222-byte A/B saves matched after one
-load. This case changed monophone only; MIDI effects, sample/model control,
-caption restoration, audio and Song Save remain separate. See the
-[actual proof](docs/evidence/2026-11-15-sampleone-singleton-native54.json).
-
-`insert_chain_state` adds a separate, capability-gated whole-Inserts lifecycle for one exact mixer channel. Every capture, restore and release requires `expected_document`; restore and release accept only its issued token, with optional `expected_folder` from the capture response. The native owner keeps the host-authored preset file private. Callers supply no file path or imported bytes. Restore remains `applied_unverified` and requires fresh graph and per-part parameter/model observations; a load may replace Device UIDs. A simple actual-host chain passed changed-value restoration with full exposed-state confirmation. A two-Mixtool nested fixture also passed changed child/Splitter restoration and visible connection checks. Initial Pro EQ preset-display preservation failed (`default*` became `default`); dirty/UI state, hidden values and generic topology editing remain unverified. See the [live validation checklist](docs/PLUGIN_STATE_VALIDATION.md).
-
-`plugin_inspect` with `include_nodes:true` and `node_scope:"graph"` now adds
-`native.node_report.ownership_manifest` for the current primary FX Inserts route.
-It reads all direct Graph children and fixed Slot-to-Device mappings, with a
-limit of 32 children and 97 retained nodes. Its completeness is separate from the
-legacy DFS report. Native48 passed three matching actual 8.1.1 observations of a
-nested fixture with six children and exact full 72-parameter checks for each Mixtool.
-The manifest describes CCL enumeration order and first native class metadata.
-It grants no graph mutation authority or audio-edge coverage. See the
-[graph ownership proof](docs/evidence/2026-11-14-graph-ownership-native48-r3.json).
-
-`plugin_inspect` also accepts `node_scope:"cv_ports"` for an explicit
-`kind:"instrument"`, `plugin:"CV Instrument"` target with a nonempty `track`,
-`source:"dsp"`, `include_nodes:true`, `include_context:false`, and fresh
-`expected_document` and `expected_instance`. It checks the owning synth slot
-and a unique current indexed PortSetup child before reading at most nine nodes.
-The report distinguishes missing lookup, unavailable type information and
-partial metadata. Actual Native56 observed `AudioFXPortSetup`, one input and
-six output children. This scope does not query controllers or grant mutation
-authority. See the
-[bounded CV port evidence](docs/evidence/2026-11-17-cv-ports-native56-r76.json).
-
-The same exact target and context requirements also admit
-`node_scope:"cv_port_parameters"`. It reads direct indexed controller parameters
-on PortSetup and its seven fixed children. It retains the actual parameter
-interfaces and rechecks count, indexed pointers and owning nodes before returning.
-Limits are eight nodes, 32 parameters per node, 64 parameters in total and 48 KiB
-of retained parameter text. These limits do not bound peak memory or preempt an
-individual native call. Counts above the limit return no parameter rows.
-Actual Native57 returned seven List rows, one input `port` and six output
-`portAssignment` parameters, all displaying None. The read preserves typed values
-and normalized bits, including negative zero. `read_only:false` metadata grants no
-setter authority. Choices, assignment roles and preset route preservation remain
-unverified. See the
-[CV indexed parameter evidence](docs/evidence/2026-11-17-cv-port-parameters-native57-r77.json).
-Native58 adds a fixed `details` object to each complete row: `precision`,
-`storable`, `mutable`, `store_list_value`, `read_only`, `can_undo` and
-`list_interface`. Actual R80 observed all seven rows with `storable:false` and
-`list_interface:false`; the List kind therefore supplies no IListParameter
-enumeration path. These flags do not establish output-route persistence. See the
-[CV details actual evidence](docs/evidence/2026-11-17-cv-port-details-native58-r80.json).
-Native59 adds `structured_interface` to complete CV row details. Actual R81
-observed it as true on the input and all six outputs. This fixed public-interface
-presence query invokes no structure preparation, cleanup, child enumeration or
-menu methods. Those lifecycle methods remain outside the verified read scope. See
-[structured CV support evidence](docs/evidence/2026-11-17-cv-structured-native59-r81.json).
-
-`plugin_parameter_set` accepts `float_bits` with an explicit native source to preserve the finite f64 bits returned in `native_value.data.bits_hex`. Its optional `edit_lifecycle:"native_user"` selector brackets one native edit; the current pilot admits only Chorder `chorder.autofill` raw 0/1 with explicit `source:"dsp"` and `expected_instance`. The returned edit phase and numeric readback do not establish saved-state persistence. `plugin_parameter_digest` reads the complete bounded provider afresh and hashes its exposed schema and typed values. It reports sequential observations, not an atomic snapshot or decoded opaque state. These hashes do not establish audible signal flow or model coverage.
-
-Use `track_formats` to read the host's exact audio format names, then `tracks_edit` with `{"ops":[{"op":"addAudioTrack","name":"Scratch 5.1","format":"5.1"}]}` and the current `expected_document`, using a returned format name. Mono and stereo names can be localized. The operation refuses unknown/non-audio formats and duplicate track names. `panner_get` includes the channel's readable `speakerFormat` descriptor.
-
-For an existing Splitter, `splitters_list` returns its native node name, label and active parameter descriptors; pass that identity to `splitter_set`. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed change/readback/restore checks. Graph creation, connection, deletion and nested graph editing remain unfinished. Surround Panner uses `plugin_parameters` and `plugin_parameter_set` with `kind:"panner"`, `slot:0` and `plugin:"Surround Panner"`. Its current 5.1 provider exposed 47 records; all 47 writable controls passed changed/readback/capsule-restore checks. Read native descriptors or use normalized writes: some raw scales are 0..10000.
-
-Read each outcome receipt. `applied_verified` includes operation-specific readback. `applied_unverified` acknowledges an edit without complete verification. `partially_applied` preserves successful earlier work. `outcome_unknown` can mean the edit happened before a timeout. Inspect the actual state before deciding whether to repeat an operation.
-
-These commands inspect local files without connecting to the DAW or taking its controller lock.
+These commands run without connecting to Studio Pro.
 
 ```sh
-./target/release/fender-studio-pro-mcp local-catalog --plugin 'Pro EQ'
 ./target/release/fender-studio-pro-mcp song-read /path/to/Scratch.song
 ./target/release/fender-studio-pro-mcp audio-analyze /path/to/render.wav
+./target/release/fender-studio-pro-mcp local-catalog --plugin 'Pro EQ'
 ```
 
-`local-catalog` reads candidate parameter names from the installed app's metadata. `song-read` reports the last saved archive, including partial plugin snapshots, rather than unsaved live edits. `audio-analyze` reports WAV loudness, peak, RMS, and stereo measurements with explicit format and measurement limits. Dedicated DAW capture and export workflows remain unfinished.
+`song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
 
-After a source update, quit Studio Pro, stop the active owner, rebuild and run `install`. Rebuild/reinstall the optional native package separately when its sources change. The installers refuse unknown files and preserve backups when explicitly replacing modified managed files with `--force`. `doctor` reports whether managed assets match their manifests. `uninstall` removes unchanged bridge/EditTask assets; `native-uninstall` separately removes unchanged native files. Modified files are preserved. After installation changes, start the DAW, initialize the owned scratch song, then start the MCP owner. This order worked in the recorded checks; it does not establish the cause of earlier startup stalls.
+## Validation
 
-Use these documents for details.
+A live run checked 60 built-in plugin classes. Of those, 59 passed a representative parameter or graph edit with readback and restoration. Phase Meter passed an insert-slot bypass check. [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md)
 
-- [Validation report and known limits](docs/VALIDATION.md).
-- [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md).
-- [Implementation plan](docs/IMPLEMENTATION_PLAN.md).
-- [Architecture](docs/ARCHITECTURE.md).
-- [Reference project research](docs/RESEARCH.md).
-- [Local checks and CI status](ci/README.md).
-- [Contributing](CONTRIBUTING.md) and [private security reports](SECURITY.md).
+The reports record the tested settings and the remaining gaps in model, preset, and hardware coverage. Live DAW integration has been tested on Apple Silicon Macs. Windows, Intel Mac, and Linux remain unverified. [Live validation report](docs/VALIDATION.md), [Plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md)
 
-This independent project is not affiliated with Fender or PreSonus. Fender Studio Pro and Studio One are trademarks of their respective owners. The project uses the [MIT license](LICENSE). Copied upstream assets retain their notices in [third-party notices](THIRD_PARTY_NOTICES.md).
+The detailed notes include run outcomes, remaining gaps, and links to evidence. [Built-in plugin experiment notes](docs/BUILTIN_PLUGIN_EXPERIMENTS.md)
 
+## Project docs
 
-For the exact External Effect Mono/Stereo classes, explicit `source:"controller"`
-reads require a matching retained open editor. The new actual Stereo check read
-its complete24-parameter provider before and after without changes. Its current
-None value is integer-1, but parameter choice lists are empty even when the
-visible menu has a Main bus row. These lists do not enumerate the popup menu.
-Explicit controller sendPort/receivePort writes are refused until a separate
-GUI port writer is verified. No physical loopback, ping or audio claim follows
-from these metadata reads.
+- How the Rust server, in-DAW JavaScript bridge, and CoreMIDI connection work. [Architecture](docs/ARCHITECTURE.md)
+- The development queue and latest handoff. [Project status](docs/RESUME.md)
+- Development setup, offline checks, and private security reports. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+
+## License
+
+This independent project uses the MIT license and retains notices for copied assets. Fender Studio Pro and Studio One are trademarks of their respective owners. [MIT license](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)
