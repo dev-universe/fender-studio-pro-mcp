@@ -67,6 +67,12 @@ impl McpServer {
                 "Read tracks, selection, layers and events from the active session.",
                 false,
             ),
+            named::<SelectTrack>(
+                "track_select",
+                "selectTrack",
+                "Select a track by its exact name in the current document. Selection is exclusive by default. For duplicate names, use mediaType from tracks_list to identify one track. Read tracks_list again to verify selection before controlling an instrument.",
+                true,
+            ),
             named::<Empty>(
                 "channels_list",
                 "channels",
@@ -510,7 +516,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 46);
+        assert_eq!(specs.len(), 47);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -556,7 +562,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 46);
+        assert_eq!(McpServer::specs().len(), 47);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -753,6 +759,7 @@ mod tests {
     fn named_mutations_require_the_document_token() {
         let specs = McpServer::specs();
         for name in [
+            "track_select",
             "chorder_autofill_set",
             "channel_set",
             "plugin_editor_open",
@@ -772,7 +779,32 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 46);
+        assert_eq!(specs.len(), 47);
+    }
+
+    #[test]
+    fn track_selection_reuses_the_document_bound_bridge_operation() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "track_select")
+            .unwrap();
+        let schema = &spec.tool.input_schema;
+        assert_eq!(schema["required"], json!(["name", "expected_document"]));
+        assert_eq!(schema["additionalProperties"], false);
+        let args = json!({"name":"Twin 3","exclusive":true,"mediaType":"Music"});
+        let selection = Operation::from_parts(spec.operation.unwrap(), args.clone()).unwrap();
+        assert_eq!(selection.wire(), ("selectTrack".into(), args));
+
+        let mut request = Request {
+            operation: selection,
+            expected_document: None,
+        };
+        assert_eq!(
+            crate::runtime::validate_request(&request).unwrap_err().code,
+            "missing_precondition"
+        );
+        request.expected_document = Some("session:1".into());
+        crate::runtime::validate_request(&request).unwrap();
     }
 
     #[test]
@@ -998,7 +1030,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 46);
+        assert_eq!(specs.len(), 47);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1079,7 +1111,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 46);
+        assert_eq!(McpServer::specs().len(), 47);
     }
 
     #[test]
@@ -1127,7 +1159,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 46);
+        assert_eq!(specs.len(), 47);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")
