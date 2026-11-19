@@ -1,0 +1,54 @@
+{
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "integrated_candidate": "e3096b875f070b4348fdb9098a08f7d4261b78eb",
+  "scope": "Exact VST3 instance and note-free part verification, with separate actual instrument playback",
+  "results": [
+    {
+      "trial": "R32",
+      "product": "One 3.52",
+      "bank": [0, 0],
+      "program": 1,
+      "part_note_count": 0,
+      "preset_shown_after_playback": "Sawtooth",
+      "matching_manual_selection": 165,
+      "writable_values_compared": 167,
+      "mismatched_names": ["vstp1073741825", "vstp1073741959"],
+      "reported_program_value": 1,
+      "reselect_drift_restored_with_independent_readback": true,
+      "playback_and_independent_read_requests": 37,
+      "playback_and_independent_read_seconds": 5.628,
+      "total_requests": 169
+    },
+    {
+      "trial": "R31",
+      "product": "Twin 2.41",
+      "bank": [0, 0],
+      "program": 5,
+      "part_note_count": 0,
+      "preset_shown_after_playback": "By Random Trance DJM",
+      "matching_manual_selection": 1017,
+      "writable_values_compared": 1019,
+      "mismatched_names": ["vstp1073741825", "vstp1073741959"],
+      "reported_program_value": 5,
+      "reselect_drift_restored_with_independent_readback": true,
+      "playback_and_independent_read_requests": 61,
+      "playback_and_independent_read_seconds": 8.327,
+      "total_requests": 259
+    }
+  ],
+  "one_program_zero": {
+    "trial": "R30",
+    "candidate": "5c3eae27fbc2c617f0f4c8ed54d716cc381e017a",
+    "program": 0,
+    "bank": [0, 0],
+    "part_note_count": 0,
+    "intended_preset": "Pink Noise",
+    "preset_shown_after_playback": "Default Sound",
+    "matching_manual_selection": 150,
+    "writable_values_compared": 167
+  },
+  "scratch_songs_saved": false,
+  "instrument_preferences_restored_byte_exact": true,
+  "managed_files_restored_per_trial": 18,
+  "opaque_state_or_audio_render_verified": false
+}

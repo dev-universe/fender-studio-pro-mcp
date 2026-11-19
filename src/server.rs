@@ -142,7 +142,7 @@ impl McpServer {
             named::<MidiProgramPartAdd>(
                 "midi_program_part_add",
                 "midiProgramPartAdd",
-                "Create a note-free MIDI bank and program part at song start on the empty, exclusively selected Music track routed to the exact FabFilter Twin 3 VST3 instance. Requires an empty arrangement event selection and stopped transport at song start with loop, record arm, and input monitoring disabled. Verifies part and route only. If the outcome is unknown, inspect the track before retrying.",
+                "Create a note-free MIDI bank and program part at song start on the empty, exclusively selected Music track routed to the exact requested FabFilter VST3 instrument. Use one for One, twin_2 for Twin 2, or twin_3 for Twin 3. Omit instrument to target Twin 3. Requires an empty arrangement event selection and stopped transport at song start with loop, record arm, and input monitoring disabled. Verifies part and route only. If the outcome is unknown, inspect the track before retrying.",
                 true,
             ),
             named::<TrackTask>(
@@ -1104,7 +1104,7 @@ mod tests {
         ];
         assert_eq!(
             schema["properties"].as_object().unwrap().len(),
-            fields.len()
+            fields.len() + 1
         );
         for field in fields {
             assert!(
@@ -1119,6 +1119,17 @@ mod tests {
             assert_eq!(value["minimum"], 0);
             assert_eq!(value["maximum"], 127);
         }
+        assert!(schema["properties"].get("instrument").is_some());
+        assert!(
+            !schema["required"]
+                .as_array()
+                .unwrap()
+                .contains(&json!("instrument"))
+        );
+        assert_eq!(
+            schema["$defs"]["MidiProgramInstrument"]["enum"],
+            json!(["one", "twin_2", "twin_3"])
+        );
         assert_eq!(schema["additionalProperties"], false);
     }
 

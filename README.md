@@ -129,19 +129,29 @@ port assignments to check the result. The 8.1.1 trial verified 97 writable
 values, seven unassigned ports, and restoration. Testing with assigned
 physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r106.json)
 
-### FabFilter Twin 3 program changes
+### FabFilter instrument program changes
 
-Use `midi_program_part_add` with the exact Twin 3 VST3 track, its current
+Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
 `expected_instance` and `expected_document`, and MIDI `bank_msb`, `bank_lsb`,
-and `program` numbers from 0 to 127. The track must be empty and exclusively
-selected, with record arm and monitoring off. Stop at the song start and
-disable looping. The tool adds a program-change part without musical notes.
+and `program` numbers from 0 to 127. Choose `instrument` as `one`, `twin_2`,
+or `twin_3`. Leaving it out selects Twin 3. The track must be empty and
+exclusively selected, with record arm and monitoring off. Stop at the song
+start and disable looping. The tool adds a program-change part without notes.
 
-With Twin 3's **Enable MIDI Program Changes** option active, playback of the
-part can change the preset. Check the bank and program numbers in the current
-preset browser, since they can change with the preset library. Actual Studio
-Pro 8.1.1 playback of MSB 0, LSB 0, program 5 loaded **Ambient Mover** and
-matched 1,509 independently observed settings. [R25 evidence](docs/evidence/2026-11-20-twin3-midi-r25.json) · [FabFilter documentation](https://www.fabfilter.com/help/twin/presets/loadingpresets)
+Enable **MIDI Program Changes** in the instrument's preset menu. Read the bank
+and program numbers from that menu, since the library can change the mapping.
+The part receipt verifies the part and instrument route. Read the plugin after
+playback to confirm the preset. [FabFilter One manual](https://www.fabfilter.com/help/one/presets/loadingpresets) · [FabFilter Twin manual](https://www.fabfilter.com/help/twin/presets/loadingpresets)
+
+| Studio Pro 8.1.1 trial | Program at bank 0/0 | Preset shown after playback | Matching writable values |
+| --- | ---: | --- | ---: |
+| One 3.52 | 1 | Sawtooth | 165/167 |
+| Twin 2.41 | 5 | By Random Trance DJM | 1,017/1,019 |
+| Twin 3.10 | 5 | Ambient Mover | 1,509/1,509 |
+
+One and Twin 2 differed from a manual preset selection in the program parameter
+and one internal parameter. In a separate One trial, program 0 created the part
+and playback left **Default Sound** selected. [One and Twin 2 evidence](docs/evidence/2026-11-20-fabfilter-program-parts.json) · [Twin 3 evidence](docs/evidence/2026-11-20-twin3-midi-r25.json)
 
 ## Inspect files offline
 

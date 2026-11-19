@@ -1134,12 +1134,34 @@ pub struct EditNotes {
 pub struct MidiProgramPartAdd {
     pub track: String,
     pub expected_instance: String,
+    pub instrument: Option<MidiProgramInstrument>,
     #[schemars(range(min = 0, max = 127))]
     pub bank_msb: u8,
     #[schemars(range(min = 0, max = 127))]
     pub bank_lsb: u8,
     #[schemars(range(min = 0, max = 127))]
     pub program: u8,
+}
+
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MidiProgramInstrument {
+    One,
+    #[serde(rename = "twin_2")]
+    Twin2,
+    #[default]
+    #[serde(rename = "twin_3")]
+    Twin3,
+}
+
+impl MidiProgramInstrument {
+    pub fn class_uid(self) -> &'static str {
+        match self {
+            Self::One => "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+            Self::Twin2 => "3E1E04C5-8250-42D1-B34E-D3F6779D00D2",
+            Self::Twin3 => "91AF218E-111A-44CB-ABFE-F7CB065FF157",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

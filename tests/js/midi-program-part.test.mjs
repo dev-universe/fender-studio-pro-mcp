@@ -9,13 +9,16 @@ const instance = '12345678-1234-1234-1234-123456789ABC';
 const requestArgs = {
   track: 'Keys', expected_instance: instance, fixture, bank_msb: 0, bank_lsb: 0, program: 5,
 };
+const one = { name: 'One', classUid: '9240FC40-10CD-45A0-B7DA-CECADDC2E97A' };
+const twin2 = { name: 'Twin 2', classUid: '3E1E04C5-8250-42D1-B34E-D3F6779D00D2' };
+const twin3 = { name: 'Twin 3', classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157' };
 
 function harness() {
   const host = bridgeHarness();
   const song = musicContext();
   const state = {
     selected: [], recordArmed: false, switches: { start: 0, record: 0, loop: 0, primaryTime: 0 },
-    classUid: '91AF218E-111A-44CB-ABFE-F7CB065FF157', noteRegion: null, numeric: 0, integerNoteDone: false,
+    ...twin3, noteRegion: null, numeric: 0, integerNoteDone: false,
     document: { token: 'ndc1:0000000000000001:1', title: 'Scratch', fileUrl: 'file:///scratch/song.song' },
     nextDocument: null,
     selectMode: 'immediate', pendingSelection: null,
@@ -53,11 +56,13 @@ function harness() {
       });
     },
   } : null;
+  const inspections = [];
   host.bridge.component = {
     fixtureTrackState: () => ({ label: 'Keys', mute: 0, recordArmed: state.recordArmed, monitor: false }),
-    pluginInspect() {
+    pluginInspect(query) {
+      inspections.push(query);
       state.onInspect();
-      return { plugin: 'Twin 3', native: { ok: true, source: 'dsp',
+      return { plugin: state.name, native: { ok: true, source: 'dsp',
         instance: { object_uid: instance, class_uid: state.classUid, native_class: 'AudioSynth' } } };
     },
   };
@@ -137,7 +142,7 @@ function harness() {
     op, expectedSession: scopeIdentity.session, expectedDocument: scopeIdentity.document,
     args: op === 'midiProgramPartAdd' ? { ...requestArgs, ...extra } : extra,
   });
-  return { ...host, request, state, song, edits, list, selectionActions };
+  return { ...host, request, state, song, edits, list, selectionActions, inspections };
 }
 
 test('the note-free part requires independent witnesses beyond the numeric importer return', () => {
@@ -154,6 +159,47 @@ test('the note-free part requires independent witnesses beyond the numeric impor
   assert.equal(response.result.delivery_verified, false);
   assert.deepEqual(h.state.selected, []);
   assert.deepEqual(h.selectionActions, ['select', 'unselect']);
+});
+
+test('each approved selector binds its corresponding exact live instrument class and instance', () => {
+  for (const [instrument, target] of [['one', one], ['twin_2', twin2], ['twin_3', twin3]]) {
+    const h = harness();
+    Object.assign(h.state, target);
+    const response = h.request({ instrument });
+    assert.equal(response.result.stage, 'complete');
+    assert.equal(response.result.class_uid, target.classUid);
+    assert.equal(response.result.delivery_verified, false);
+    assert.deepEqual(h.edits, ['import', 'delete']);
+    assert.ok(h.inspections.length > 1);
+    for (const query of h.inspections) {
+      assert.equal(query.kind, 'instrument');
+      assert.equal(query.plugin, target.name);
+      assert.equal(query.source, 'dsp');
+      assert.equal(query.expected_instance, instance);
+    }
+  }
+});
+
+test('an unapproved selector, a class mismatch, or a changed route cannot use an existing instrument', () => {
+  const h = harness();
+  for (const instrument of ['Twin 2', one.classUid, '__proto__', 'constructor', { class_id: one.classUid }, null]) {
+    assert.equal(h.request({ instrument }).result.native_outcome, 'not_applied');
+  }
+  assert.equal(h.request({ class_id: one.classUid }).result.native_outcome, 'not_applied');
+  assert.deepEqual(h.inspections, []);
+  h.state.name = one.name;
+  assert.equal(h.request({ instrument: 'one' }).result.native_outcome, 'not_applied');
+  h.state.classUid = one.classUid;
+  h.state.name = twin2.name;
+  assert.equal(h.request({ instrument: 'one' }).result.native_outcome, 'not_applied');
+  assert.deepEqual(h.edits, []);
+  Object.assign(h.state, one);
+  h.state.onImport = () => Object.assign(h.state, twin2);
+  const changed = h.request({ instrument: 'one' });
+  assert.equal(changed.result.native_outcome, 'unknown');
+  assert.equal(changed.result.stage, 'seed_verification');
+  assert.deepEqual(h.edits, ['import']);
+  assert.deepEqual(h.selectionActions, []);
 });
 
 test('track events use exact null and note sequences admit bounded integer exhaustion', () => {
