@@ -1081,3 +1081,60 @@ test('cv_port_parameters forwards only its exact finite target and requires docu
     expectedSession: context.session, expectedDocument: context.document }).ok, true);
   assert.equal(dispatches, 1);
 });
+
+test('cv_preset_target returns the bounded native receipt for its exact document and instance', () => {
+  const calls = [];
+  const report = { scope: 'cv_preset_target', mediator_target_vs_device: 'distinct', target_istorable: 'present' };
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    calls.push(JSON.parse(body));
+    return success({ node_report: report });
+  }); } });
+  const base = { kind: 'instrument', track: 'Scratch CV', plugin: 'CV Instrument', source: 'dsp',
+    include_nodes: true, node_scope: 'cv_preset_target', expected_instance: instance.object_uid };
+  const result = h.component.pluginInspect(base);
+  assert.deepEqual(Object.keys(result).sort(), ['native', 'plugin']);
+  assert.deepEqual({ ...result.native.node_report }, report);
+  for (const patch of [{ kind: 'note_effect' }, { plugin: 'Other' }, { source: 'controller' },
+    { expected_instance: undefined }, { include_nodes: false }, { include_context: true },
+    { names: ['unchecked'] }, { offset: 0 }, { limit: 1 }]) {
+    assert.equal(typeof h.component.pluginInspect({ ...base, ...patch }).error, 'string');
+  }
+  assert.deepEqual(calls, [{ operation: 'inspect', source: 'dsp', include_nodes: true,
+    node_scope: 'cv_preset_target', expected_instance: instance.object_uid }]);
+
+  const host = bridgeHarness();
+  let dispatches = 0;
+  host.bridge.component = { pluginInspect() { dispatches++; return { observed: true }; } };
+  const { session, document } = host.current();
+  for (const envelope of [{}, { expectedSession: session }, { expectedDocument: document }]) {
+    assert.equal(host.request({ op: 'pluginInspect', args: base, ...envelope }).code, 'context_required');
+  }
+  assert.equal(host.request({ op: 'pluginInspect', args: base,
+    expectedSession: 'stale', expectedDocument: document }).code, 'session_changed');
+  assert.equal(host.request({ op: 'pluginInspect', args: base,
+    expectedSession: session, expectedDocument: 'stale' }).code, 'document_changed');
+  assert.equal(dispatches, 0);
+  assert.equal(host.request({ op: 'pluginInspect', args: base,
+    expectedSession: session, expectedDocument: document }).ok, true);
+  assert.equal(dispatches, 1);
+});
+
+test('cv_preset_target discards native evidence when the document switches before publication', () => {
+  const h = bridgeHarness();
+  const context = h.current();
+  const scope = 'cv_preset_target';
+  let dispatches = 0;
+  h.bridge.component = { pluginInspect() {
+    dispatches++;
+    h.manager.activeDocument = { title: 'Other', path: { url: 'file:///other.song' } };
+    return { native: { ok: true, instance, node_report: { scope, target_istorable: 'present' } } };
+  } };
+  const reply = h.request({ op: 'pluginInspect', args: { node_scope: scope },
+    expectedSession: context.session, expectedDocument: context.document });
+  assert.equal(dispatches, 1);
+  assert.notEqual(reply.document, context.document);
+  assert.equal(reply.ok, false);
+  assert.equal(reply.code, 'native_context_lost');
+  assert.equal(reply.result, undefined);
+  assert.ok(!JSON.stringify(reply).includes('node_report'));
+});

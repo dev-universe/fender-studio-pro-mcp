@@ -1,0 +1,33 @@
+{
+  "host": "Fender Studio Pro 8.1.1 Build 113103 macOS arm64",
+  "exact_code_head": "ac6e37c3483a588b968bb0d7e91787c293d4cb10",
+  "scope": "CV Instrument current preset mediator, component alias and IStorable relationship observation",
+  "r94": {
+    "observed": true,
+    "mediator_to_device": "distinct",
+    "mediator_to_component_alias": "same",
+    "target_istorable": "present",
+    "requests": 14,
+    "seconds": 2.165,
+    "exact_writable": 97,
+    "direct_ports": 7,
+    "mixer_channels": 67
+  },
+  "r94_closure": {
+    "protected_files_match": 20,
+    "restored_managed_files": 18,
+    "owners_clean": 2,
+    "requests": 43,
+    "saved": false
+  },
+  "prior_r93_same_instance_capture": {
+    "alias_capture_bytes": 3900,
+    "host_primary_bytes": 3900,
+    "host_port_bytes": 62,
+    "primary_matches_alias_capture": true,
+    "archive_crc_complete": true
+  },
+  "late_document_independent_regression_pass": true,
+  "settings_load_verified": false,
+  "assigned_port_preservation_verified": false
+}

@@ -616,21 +616,22 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginInspect(args) {
-        if ((args.node_scope === "cv_ports" || args.node_scope === "cv_port_parameters") && (args.include_nodes !== true
+        if (["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(args.node_scope) && (args.include_nodes !== true
             || args.kind !== "instrument" || args.plugin !== "CV Instrument" || args.source !== "dsp"
             || typeof args.track !== "string" || !args.track.trim()
             || typeof args.expected_instance !== "string" || !/^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
             || args.expected_instance === "00000000-0000-0000-0000-000000000000" || args.include_context === true))
-            return { error: "cv_ports requires a bound exact CV Instrument instrument, dsp and include_nodes=true without context" };
-        if (args.node_scope === "cv_port_parameters" && ((args.names && args.names.length)
+            return { error: "CV node inspection requires a bound exact CV Instrument instrument, dsp and include_nodes=true without context" };
+        if (["cv_port_parameters", "cv_preset_target"].includes(args.node_scope) && ((args.names && args.names.length)
             || args.offset !== undefined || args.limit !== undefined))
-            return { error: "cv_port_parameters does not accept names or pagination" };
+            return { error: "this CV node scope does not accept names or pagination" };
         if (args.node_scope === "plugin_controller" && (args.include_nodes !== true
             || typeof args.plugin !== "string" || !args.plugin.trim()
             || typeof args.expected_instance !== "string" || !args.expected_instance))
             return { error: "plugin controller inspection requires an expected plugin, native instance and include_nodes=true" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
+        if (args.node_scope === "cv_preset_target") return this.pluginInspectNative(plug, args, { plugin: plug.name });
         const element = {};
         for (const name of ["getParamCount", "getParamTitle", "getParamTitleWithName", "getParamValue", "setParamValue", "getProperty", "getPlugInClassName", "getPlugInInterface"]) {
             element[name] = plug.element ? typeof plug.element[name] : "undefined";
@@ -659,6 +660,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         }
         const result = { plugin: plug.name, members: memberTypes(plug.device), component: memberTypes(plug.component), element: element, track: plug.track || null };
         if (plug.track) result.focusedTrackState = this.focusedTrackState();
+        return this.pluginInspectNative(plug, args, result);
+    }
+
+    pluginInspectNative(plug, args, result) {
         const native = this.nativePluginRequest(plug.device, { operation: "inspect", source: args.source, expected_instance: args.expected_instance, include_nodes: args.include_nodes, node_scope: args.node_scope });
         if (args.expected_instance !== undefined) {
             if (native === null || native === undefined) return { error: "native plugin inspection unavailable" };

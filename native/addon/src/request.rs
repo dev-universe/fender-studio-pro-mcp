@@ -539,7 +539,8 @@ impl Request {
                     node_inspect::Scope::Graph
                     | node_inspect::Scope::PluginController
                     | node_inspect::Scope::CvPorts
-                    | node_inspect::Scope::CvPortParameters,
+                    | node_inspect::Scope::CvPortParameters
+                    | node_inspect::Scope::CvPresetTarget,
                 ..
             } => Err("this node_scope requires include_nodes=true".into()),
             Self::Inspect {
@@ -548,7 +549,10 @@ impl Request {
                 ..
             } => Err("plugin_controller node_scope requires expected_instance".into()),
             Self::Inspect {
-                node_scope: node_inspect::Scope::CvPorts | node_inspect::Scope::CvPortParameters,
+                node_scope:
+                    node_inspect::Scope::CvPorts
+                    | node_inspect::Scope::CvPortParameters
+                    | node_inspect::Scope::CvPresetTarget,
                 source,
                 expected_instance,
                 ..
@@ -557,7 +561,7 @@ impl Request {
                     .as_deref()
                     .is_none_or(|uid| !valid_uid(uid)) =>
             {
-                Err("cv_ports requires explicit dsp and expected_instance".into())
+                Err("CV node inspection requires explicit dsp and expected_instance".into())
             }
             Self::StateCapture {
                 expected_instance: None,
@@ -2094,7 +2098,9 @@ fn dispatch_device(
     if matches!(
         request,
         Request::Inspect {
-            node_scope: node_inspect::Scope::CvPorts | node_inspect::Scope::CvPortParameters,
+            node_scope: node_inspect::Scope::CvPorts
+                | node_inspect::Scope::CvPortParameters
+                | node_inspect::Scope::CvPresetTarget,
             ..
         }
     ) {
@@ -2103,6 +2109,27 @@ fn dispatch_device(
             reply.context = Some(ctx);
             return reply;
         }
+    }
+    if matches!(
+        request,
+        Request::Inspect {
+            node_scope: node_inspect::Scope::CvPresetTarget,
+            ..
+        }
+    ) {
+        let mut reply = match node_inspect::capture(&ctx, node_inspect::Scope::CvPresetTarget) {
+            Ok(nodes) => {
+                let mut reply = Reply::unbound(json!({
+                    "ok":true,"outcome":"observed","source":"native_slot_preset_mediator",
+                    "instance":ctx.instance,"node_report":nodes.value(),
+                }));
+                reply.nodes = Some(nodes);
+                reply
+            }
+            Err(reason) => Reply::error("node_inspection_failed", &reason, "not_applied"),
+        };
+        reply.context = Some(ctx);
+        return reply;
     }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
@@ -3192,6 +3219,29 @@ mod tests {
         ] {
             let mut invalid = args.clone();
             invalid[field] = value;
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
+    #[test]
+    fn cv_preset_target_native_request_has_only_fixed_read_inputs() {
+        let args = json!({"operation":"inspect","include_nodes":true,"node_scope":"cv_preset_target",
+            "source":"dsp","expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        assert!(matches!(
+            parse(args.clone()).unwrap(),
+            Request::Inspect {
+                node_scope: node_inspect::Scope::CvPresetTarget,
+                ..
+            }
+        ));
+        for field in ["include_nodes", "source", "expected_instance"] {
+            let mut invalid = args.clone();
+            invalid.as_object_mut().unwrap().remove(field);
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+        for field in ["path", "iid", "names", "offset", "limit", "token"] {
+            let mut invalid = args.clone();
+            invalid[field] = json!("unknown");
             assert!(parse(invalid).is_err(), "{field}");
         }
     }
