@@ -609,7 +609,7 @@
   },
   "next_units_in_order": [
     "NOV20 LIVE: R86 Console Groups panel empty. Selecting the CV channel body changed arm/monitor on CV and one peer track without a mute change. Rebind a fresh Native59 scratch with neutral focus and verify exact console Group Assignment and Control Link before any Native60 lifecycle. Do not replay R83 through R86.",
-    "FABFILTER: 23 official VST3 versions inserted and representative-writes passed in real 8.1.1. Host .preset results 22 pass, one Pro-Q 4 mismatch. First qualify Twin 3 manufacturer program selection, precise track-selection MCP tool, and the Pro-Q 4 state gap. All 23 individual-writable sweeps and direct factory qualifications remain. Continue built-in queue independently.",
+    "FABFILTER: 23 official VST3 versions inserted and representative writes passed in real 8.1.1. Host .preset results 22 pass, one Pro-Q 4 mismatch. Track selection PR9 is merged. Twin 3 R9 bank 4 LSB changed and restored the manufacturer preset title with four virtual rows still different. Next verify direct EditTask MIDI import and exact Pro-Q 4 insert routing. Finish all 23 factory and exhaustive writable qualifications. Continue the built-in queue independently.",
     "PAUSEDNov18before06KST. Publicmain15304714/PR4releaseCOMPLETE; mainCLI/Native59installedrestored,metadata46/state7,doctorcurrent,noDAQafterrestore. Native60source921f889/187andcandidate13+manifest2preserved. R83actual7halt;R84GUIread8ACCEPTED;R85actual6GUI0peerFXunmutehalt,Native60lifecycle0,NoSave/wait0/preservation. FirstREADONLYmute/group/link/operatorcontextdiagnosis;doNOTreplayclosedR83/R84/R85. SeeNov18handoff15beforeanyNative60reinstall/build;oldnormalartifactmapcurrentmismatchbyintent.",
     "Native59R81actual27remainlastfullCVqualified. Native60boundedsource/normalmetadata8/SDKreviewcompletebutlifecycleactual0. Reusecompletedstaticbodies/design6/sourceR2/R8andR85Rust31proof/runtimekitreview;newlivecontractrequiresresolvedpreparationandfreshnormal187/13/session/doc/instance. Fixed15/43done28remaining(24software4hardware).",
     "CV exact parameter constructor trace has priority. Legacy Ghidra seed0x1015ef048 after100f0c354+1012a1470 remains parked for later Environment ownership/factory investigation. Reuse completed static bodies and original warmcheckpoint; noHopper/privateABI guesses.",
@@ -21891,7 +21891,7 @@
     "twin3_native_program_R5_rpc": 49,
     "twin3_settings_restored_exact": true,
     "fabfilter_writable_parameter_rows": 12455,
-    "fabfilter_next_live_route": "FRESH_LSB_NONZERO_BANK_TWIN3_AND_EXACT_PROQ4_INSERT_ROUTE",
+    "fabfilter_next_live_route": "FIXED_EDIT_TASK_MIDI_IMPORT_AND_EXACT_PROQ4_INSERT_ROUTE",
     "fabfilter_next_offline_route": "VST3_PUBLIC_COMPONENT_AND_CONTROLLER_STATE_ROUND_TRIP",
     "volt_and_keystation_detected": false,
     "cv_r87_independent_selection_verified": true,
@@ -21915,6 +21915,19 @@
     "twin3_factory_r8_protected_files": 15,
     "twin3_factory_r8_program_option_restored": true,
     "fabfilter_factory_actual_midi_timeline_pass": 1,
-    "graph_registry_references": 273
+    "graph_registry_references": 273,
+    "graph_registry_vtable_calls_read": 2,
+    "twin3_factory_r9_bank_lsb": 4,
+    "twin3_factory_r9_programs": [59, 60],
+    "twin3_factory_r9_preset_names_verified": ["Default Sound", "Clean", "Default Sound"],
+    "twin3_factory_r9_apply_writable_changed": 370,
+    "twin3_factory_r9_restored_writable_match": 1505,
+    "twin3_factory_r9_restored_writable_total": 1509,
+    "twin3_factory_r9_requests": 88,
+    "twin3_factory_r9_playback_verification_seconds": 12.232,
+    "twin3_factory_r9_protected_files": 16,
+    "twin3_factory_r9_program_option_restored": true,
+    "fixed_midi_import_signature_statically_verified": true,
+    "fixed_midi_import_actual_verified": false
   }
 }
