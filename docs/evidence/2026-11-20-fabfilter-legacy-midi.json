@@ -1,0 +1,52 @@
+{
+  "host": "Studio Pro 8.1.1.113103 macOS arm64",
+  "native_bridge": 59,
+  "studio_pro_name": "vstp1073741828",
+  "vst3_parameter_id": 1073741828,
+  "reported_title": "MIDI CC",
+  "actual_host_runs": [
+    {
+      "product": "Pro-G",
+      "version": "1.42",
+      "run": "R54",
+      "individual_writable_values_verified": 170,
+      "writable_values": 171,
+      "independent_read_changed": false
+    },
+    {
+      "product": "Pro-C 2",
+      "version": "2.22",
+      "run": "R57",
+      "individual_writable_values_verified": 181,
+      "writable_values": 182,
+      "independent_read_changed": false
+    },
+    {
+      "product": "Pro-C 3",
+      "version": "3.02",
+      "run": "R59",
+      "individual_writable_values_verified": 235,
+      "writable_values": 236,
+      "independent_read_changed": false
+    },
+    {
+      "product": "Pro-DS",
+      "version": "1.32",
+      "run": "R62",
+      "individual_writable_values_verified": 155,
+      "writable_values": 156,
+      "independent_read_changed": false
+    }
+  ],
+  "isolated_pro_g_sdk_runs": {
+    "controller_only_remained_changed_after_ms": 150,
+    "processor_flush_accepted_input_point": true,
+    "normalized_input_point": 0.035,
+    "output_queue_value_for_same_id": -0.4444444179534912,
+    "changed_processor_state_bytes_after_legacy_input": 0,
+    "changed_processor_state_bytes_after_threshold_input": 1,
+    "controller_read_after_legacy_processor_input": 0,
+    "threshold_and_legacy_returned_to_baseline": true
+  },
+  "scope": "The actual host runs checked parameter readback in stopped scratch songs. The processor observation applies to the isolated signed Pro-G VST3."
+}
