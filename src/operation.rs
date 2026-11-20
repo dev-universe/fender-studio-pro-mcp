@@ -1943,7 +1943,7 @@ impl Operation {
                         && !value.chars().any(char::is_control)
                 };
                 let target_matches = match p.product {
-                    Product::ProQ4 => {
+                    Product::ProQ4 | Product::ProC3 => {
                         p.channel.as_deref().is_some_and(bounded)
                             && p.slot.is_some_and(|slot| slot < 16)
                             && p.track.is_none()
@@ -1955,7 +1955,7 @@ impl Operation {
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Pro-Q 4 and Twin 3 VST3",
+                            "Preset file application supports Pro-Q 4, Pro-C 3, and Twin 3 VST3",
                         ));
                     }
                 };

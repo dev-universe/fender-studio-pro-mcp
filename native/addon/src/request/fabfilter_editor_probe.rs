@@ -33,6 +33,7 @@ const PRO_Q4: Image = Image {
     executable: "FabFilter Pro-Q 4",
     binary_sha256: "1044282fd91649368283553e3a2f3905d7eb051bff40d52888a0907aa53bdb65",
     binary_size: 5_025_104,
+    preset_format: PresetFormat::Text(b"Signature=FQ4p"),
     constructor: 0x39a18,
     loader: 0x9a4d0,
     destructor: 0x4418c,
@@ -52,10 +53,37 @@ const TWIN3: Image = Image {
     executable: "FabFilter Twin 3",
     binary_sha256: "d6ebeb10274eeafef08e2d7c8aba6d920c99ed5ff68c617907213e1ba091f371",
     binary_size: 5_999_776,
+    preset_format: PresetFormat::Binary(b"FT3i"),
     constructor: 0x107cf4,
     loader: 0x96e4c,
     destructor: 0xa5058,
 };
+
+const PRO_C3: Image = Image {
+    uuid: [
+        0x97, 0x32, 0x3f, 0x1e, 0xa0, 0x3e, 0x3e, 0xca, 0xaf, 0xf8, 0x76, 0x31, 0x12, 0x5f, 0x65,
+        0x6a,
+    ],
+    controller_table: 0x1f45e0,
+    state_member: 0xd0,
+    state_table: 0x1fd4e8,
+    state_file_method: 0x6e620,
+    view_table: 0x1f6a90,
+    editor_table: 0x1ef990,
+    product: "pro_c_3",
+    executable: "FabFilter Pro-C 3",
+    binary_sha256: "5b193d2016a240f0fe7cb10f8db92c3bc41cb28316cbcad5b85856efc22f3492",
+    binary_size: 4_612_864,
+    preset_format: PresetFormat::Text(b"Signature=FC3p"),
+    constructor: 0xb5044,
+    loader: 0x70208,
+    destructor: 0x6a4c0,
+};
+
+enum PresetFormat {
+    Text(&'static [u8]),
+    Binary(&'static [u8]),
+}
 
 struct Image {
     uuid: [u8; 16],
@@ -69,6 +97,7 @@ struct Image {
     executable: &'static str,
     binary_sha256: &'static str,
     binary_size: u64,
+    preset_format: PresetFormat,
     constructor: usize,
     loader: usize,
     destructor: usize,
@@ -217,7 +246,7 @@ fn owner(target: *mut c_void) -> Option<Owner> {
     let controller = read_word(instance, 0x1b0)?;
     let table = read_word(controller, 0)?;
     let (image, uuid) = mapped_image(table)?;
-    let product = [&PRO_Q4, &TWIN3]
+    let product = [&PRO_Q4, &TWIN3, &PRO_C3]
         .into_iter()
         .find(|product| product.uuid == uuid)?;
     if table != image + product.controller_table {
@@ -335,18 +364,19 @@ fn preset_bytes(
         .chunks_exact(2)
         .map(|chunk| Some(digit(chunk[0])? * 16 + digit(chunk[1])?))
         .collect::<Option<_>>()?;
-    let correct_format = if product.product == "twin_3" {
-        bytes.len() >= 16 && bytes.starts_with(b"FT3i")
-    } else {
-        let mut header = bytes
-            .split(|byte| *byte == b'\n')
-            .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
-        header.next() == Some(b"[Preset]".as_slice())
-            && header.next() == Some(b"Signature=FQ4p".as_slice())
-            && header
-                .next()
-                .is_some_and(|line| line.starts_with(b"Version="))
-            && header.next().is_some()
+    let correct_format = match product.preset_format {
+        PresetFormat::Binary(magic) => bytes.len() >= 16 && bytes.starts_with(magic),
+        PresetFormat::Text(signature) => {
+            let mut header = bytes
+                .split(|byte| *byte == b'\n')
+                .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
+            header.next() == Some(b"[Preset]".as_slice())
+                && header.next() == Some(signature)
+                && header
+                    .next()
+                    .is_some_and(|line| line.starts_with(b"Version="))
+                && header.next().is_some()
+        }
     };
     if !correct_format || format!("{:x}", Sha256::digest(&bytes)) != expected {
         return None;
@@ -478,5 +508,17 @@ mod tests {
             bytes
         );
         assert!(preset_bytes(&PRO_Q4, "Twin.ffp", &digest, &hex).is_none());
+    }
+
+    #[test]
+    fn pro_c_3_preset_bytes_are_limited_to_its_profile() {
+        let bytes = b"[Preset]\r\nSignature=FC3p\r\nVersion=3\r\nAuthor=Fixture\r\n";
+        let digest = format!("{:x}", Sha256::digest(bytes));
+        let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+        assert_eq!(
+            preset_bytes(&PRO_C3, "Punch.ffp", &digest, &hex).unwrap(),
+            bytes
+        );
+        assert!(preset_bytes(&PRO_Q4, "Punch.ffp", &digest, &hex).is_none());
     }
 }
