@@ -860,6 +860,34 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, result, { native_outcome: result.outcome });
     }
 
+    insertSlotMove(args) {
+        const fail = (outcome, code, message) => ({
+            ok: false, native_outcome: outcome, errors: [{ code, message }]
+        });
+        const refuse = message => fail("not_applied", "insert_slot_move_refused", message);
+        if (typeof NativePluginControls !== "function") return refuse("The matching native extension is required");
+        const controls = new NativePluginControls(this);
+        const fields = ["channel", "slot", "plugin", "expected_instance", "expected_graph", "source_node", "after_node", "following_node"];
+        const validName = value => typeof value === "string" && value.trim() && value.length <= 256
+            && !/[\x00-\x1f\x7f-\x9f]/.test(value);
+        if (!controls.guiExact(args, fields) || !validName(args.channel) || !validName(args.plugin)
+            || !controls.guiInteger(args.slot, 0, 15)) return refuse("Supply an exact insert effect and graph nodes");
+        const request = { operation: "insert_slot_move", expected_instance: args.expected_instance,
+            expected_graph: args.expected_graph, source_node: args.source_node,
+            after_node: args.after_node, following_node: args.following_node };
+        if (!controls.insertSlotMoveRequest(request)) return refuse("Supply distinct graph nodes with canonical UUIDs");
+        const plug = this.pluginOf(args);
+        if (!plug || plug.error || !plug.device) return refuse("The exact source effect is unavailable");
+        const result = controls.request(plug.device, request);
+        if (!result || !result.ok) {
+            const outcome = result && result.outcome === "not_applied" ? "not_applied" : "unknown";
+            const message = result && result.error && typeof result.error.message === "string"
+                ? result.error.message : "The insert slot move outcome could not be established";
+            return fail(outcome, "insert_slot_move_failed", message);
+        }
+        return Object.assign({}, result, { native_outcome: result.outcome });
+    }
+
     pluginState(args) {
         if (args.action === "inspect_cv_port_structure") {
             const controls=new NativePluginControls(this), failure=()=>controls.cvStructureFailure(false,null);

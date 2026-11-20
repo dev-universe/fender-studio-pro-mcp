@@ -1000,6 +1000,26 @@ class NativePluginControls {
             && value !== "00000000-0000-0000-0000-000000000000";
     }
 
+    insertSlotMoveRequest(request) {
+        const ids = ["expected_instance", "expected_graph", "source_node", "after_node", "following_node"];
+        return this.guiExact(request, ["operation"].concat(ids)) && request.operation === "insert_slot_move"
+            && ids.every(key => this.insertChainUid(request[key]))
+            && new Set([request.source_node, request.after_node, request.following_node]).size === 3;
+    }
+
+    insertSlotMoveResult(result, request) {
+        if (!result.ok) {
+            return ["not_applied", "unknown"].includes(result.outcome)
+                && this.guiExact(result.error, ["code", "message"])
+                && typeof result.error.code === "string" && typeof result.error.message === "string"
+                && result.error.code.length <= 64 && result.error.message.length <= 512;
+        }
+        const ids = ["expected_instance", "expected_graph", "source_node", "after_node", "following_node"];
+        return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(ids))
+            && result.operation === "insert_slot_move" && result.outcome === "applied_unverified"
+            && result.verified === false && ids.every(key => result[key] === request[key]);
+    }
+
     insertChainArguments(args) {
         return args && typeof args === "object" && !Array.isArray(args)
             && Object.keys(args).every(key => ["channel", "action", "token", "expected_folder", "include_routing"].indexOf(key) >= 0)
@@ -1242,7 +1262,9 @@ class NativePluginControls {
         const externalMenu = request.operation === "external_port_menu";
         const cvStructure = request.operation === "cv_port_structure_inspect";
         const cvPresetApply = request.operation === "apply_cv_preset_settings";
+        const insertSlotMove = request.operation === "insert_slot_move";
         try {
+            if (insertSlotMove && !this.insertSlotMoveRequest(request)) throw new Error("invalid insert slot move request");
             if (cvPresetApply && !this.cvPresetApplyRequest(request)) throw new Error("invalid fixed CV settings apply request");
             if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
@@ -1264,19 +1286,20 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertSlotMove) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertSlotMove) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
             const capability = this.parse(service.capabilities());
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
+            if (insertSlotMove && capability.insert_slot_move_api !== "same_graph_move_v1") throw new Error("unsupported insert slot move API");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
@@ -1289,6 +1312,7 @@ class NativePluginControls {
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
             if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (insertSlotMove && !this.insertSlotMoveResult(result, request)) throw new Error("invalid insert slot move receipt");
             if (cvStructure) {
                 if (result.ok === false) return this.cvStructureFailure(true,result);
                 if (!this.cvStructureResult(result,request)) throw new Error("invalid CV structure lifecycle result");

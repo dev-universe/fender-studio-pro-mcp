@@ -288,6 +288,13 @@ enum Request {
         expected_folder: Option<String>,
         token: String,
     },
+    InsertSlotMove {
+        expected_instance: String,
+        expected_graph: String,
+        source_node: String,
+        after_node: String,
+        following_node: String,
+    },
 }
 impl Request {
     fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
@@ -335,7 +342,8 @@ impl Request {
             | Self::InspectInsertFolderPresetPreflight { .. }
             | Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
-            | Self::InsertChainRelease { .. } => Source::Auto,
+            | Self::InsertChainRelease { .. }
+            | Self::InsertSlotMove { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -353,6 +361,9 @@ impl Request {
             | Self::ExternalPortMenu {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
+            Self::InsertSlotMove {
+                expected_instance, ..
+            } => Some(expected_instance),
             Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. } => None,
@@ -482,6 +493,33 @@ impl Request {
                 ..
             } if !provenance || !matches!(port, external_menu::Port::Send) => {
                 Err("checkOnly requires provenance and fixed Stereo Send".into())
+            }
+            Self::InsertSlotMove {
+                expected_instance,
+                expected_graph,
+                source_node,
+                after_node,
+                following_node,
+            } => {
+                if ![
+                    expected_instance,
+                    expected_graph,
+                    source_node,
+                    after_node,
+                    following_node,
+                ]
+                .into_iter()
+                .all(|id| valid_uid(id))
+                    || source_node == after_node
+                    || source_node == following_node
+                    || after_node == following_node
+                {
+                    return Err(
+                        "insert move requires distinct source/destination nodes and exact UUIDs"
+                            .into(),
+                    );
+                }
+                Ok(())
             }
             Self::InsertChainCapture {
                 bridge_session,
@@ -1629,7 +1667,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InspectInsertFolderPresetPreflight { .. }
         | Request::InsertChainCapture { .. }
         | Request::InsertChainRestore { .. }
-        | Request::InsertChainRelease { .. } => Err("request requires its own dispatcher".into()),
+        | Request::InsertChainRelease { .. }
+        | Request::InsertSlotMove { .. } => Err("request requires its own dispatcher".into()),
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -2139,6 +2178,7 @@ fn dispatch_device(
         request,
         Request::CvPortStructureInspect { .. }
             | Request::ImpactOutputSet { .. }
+            | Request::InsertSlotMove { .. }
             | Request::ExternalPortMenu { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
@@ -2222,6 +2262,19 @@ fn dispatch_device(
     }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
+    }
+    if let Request::InsertSlotMove {
+        expected_graph,
+        source_node,
+        after_node,
+        following_node,
+        ..
+    } = request
+    {
+        return node_inspect::slot_move::dispatch(
+            ctx,
+            [&expected_graph, &source_node, &after_node, &following_node],
+        );
     }
     if let Request::ExternalPortMenu {
         port,

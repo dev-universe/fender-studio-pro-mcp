@@ -171,6 +171,40 @@ pub(in super::super) struct GraphOwnership {
     value: GraphOwnershipValue,
 }
 impl GraphOwnership {
+    pub(super) fn check_move_targets(
+        &self,
+        graph: &str,
+        source: &str,
+        after: &str,
+        following: &str,
+        effect: &str,
+    ) -> Result<(), String> {
+        if self.value.graph.object_uid.as_deref() != Some(graph) {
+            return Err("insert graph UUID changed".into());
+        }
+        let source_matches = self.value.children.iter().any(|child| {
+            matches!(child, GraphChild::Slot { node, device, .. }
+                if node.object_uid.as_deref() == Some(source)
+                    && device.object_uid.as_deref() == Some(effect))
+        });
+        let destination_matches = self.value.children.iter().any(|child| {
+            matches!(child, GraphChild::Slot { node, .. } if node.object_uid.as_deref() == Some(after))
+        });
+        let following_matches = self.value.children.iter().any(|child| {
+            let node = match child {
+                GraphChild::Slot { node, .. }
+                | GraphChild::Merger { node, .. }
+                | GraphChild::Splitter { node, .. } => node,
+            };
+            node.object_uid.as_deref() == Some(following)
+        });
+        if source_matches && destination_matches && following_matches {
+            Ok(())
+        } else {
+            Err("insert move nodes do not belong to the resolved effect and graph".into())
+        }
+    }
+
     pub(super) fn capture(
         ctx: &Context<'static>,
         route: &GraphRoute,
