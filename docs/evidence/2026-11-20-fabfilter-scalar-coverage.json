@@ -974,5 +974,34 @@
     "protected_files": 211,
     "managed_files": 18,
     "saved": false
+  },
+  "r99_timeless3_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 136,
+    "plugin_verified_writable": 1143,
+    "reported_values": 1144,
+    "virtual_cc_verified": 128,
+    "common_verified": 8,
+    "legacy_cc_independently_verified": true,
+    "requests": 3458,
+    "active_seconds": 286.3,
+    "wall_seconds": 362.4,
+    "protected_files": 215,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r105_twin2_and_r106_one_direct_program": {
+    "status": "verified",
+    "names": ["Twin 2", "One"],
+    "new_distinct_roundtrips": 2,
+    "program_and_readonly_counter": [0, 1, 0],
+    "reported_values_restored": [1020, 168],
+    "plugin_verified_writable": [1018, 165],
+    "plugin_total_writable": [1019, 167],
+    "separate_internal_companion_restored": true,
+    "requests": [101, 71],
+    "wall_seconds": [58.998, 127.156],
+    "managed_files": 18,
+    "saved": false
   }
 }
