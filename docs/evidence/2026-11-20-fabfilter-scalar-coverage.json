@@ -62,10 +62,10 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 4,
-  "distinct_individual_roundtrips_including_representative": 10884,
+  "distinct_individual_roundtrips_including_representative": 10890,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 1620,
-  "high_range_writable_pending": 1571,
+  "high_range_writable_individually_verified": 1626,
+  "high_range_writable_pending": 1565,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -754,5 +754,34 @@
     "protected_files": 139,
     "managed_files": 18,
     "saved": false
+  },
+  "r87_twin_3_common_internal": {
+    "status": "verified",
+    "new_distinct_roundtrips": 6,
+    "distinct_total_verified": 1447,
+    "all_reported_values_restored": 1510,
+    "legacy_cc_independently_observed": true,
+    "requests": 314,
+    "active_seconds": 37.385,
+    "wall_seconds": 141.1,
+    "protected_files": 142,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r88_twin_3_sdk_extended": {
+    "status": "verified_isolated_sdk_only",
+    "fresh_controller_pairs": 61,
+    "all_controller_rows_restored": 1510,
+    "actual_host_filter_peer_reproduced": false,
+    "elapsed_seconds": 21.338,
+    "actual_host_rows_added": 0
+  },
+  "r89_twin_3_processor_gate": {
+    "status": "halted_before_target_write",
+    "positive_change_applied": true,
+    "full_processor_digest_restored": false,
+    "controller_rows_unchanged": 1510,
+    "target_writes": 0,
+    "actual_host_rows_added": 0
   }
 }
