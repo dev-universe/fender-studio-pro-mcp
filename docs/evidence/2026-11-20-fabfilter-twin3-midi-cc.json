@@ -1,0 +1,43 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Twin 3",
+  "version": "3.10",
+  "format": "VST3",
+  "source": "dsp",
+  "reported_parameters": 1510,
+  "writable_parameters": 1509,
+  "individually_verified_writable_parameters_at_this_checkpoint": 1439,
+  "verified_virtual_cc": {
+    "first_cc": 0,
+    "last_cc": 127,
+    "count": 128,
+    "first_id": "vstp1073741831",
+    "last_id": "vstp1073741958"
+  },
+  "verification": {
+    "independent_target_readback": true,
+    "native_typed_digest_parity": true,
+    "exact_restoration_of_all_reported_parameters": true,
+    "transport_stopped": true,
+    "early_cc_roundtrips": 21,
+    "final_batch_cc_roundtrips": 107,
+    "final_batch_rpc_requests": 2362,
+    "final_batch_active_seconds": 205.047,
+    "final_batch_host_seconds": 286.0,
+    "final_batch_protected_files": 136,
+    "managed_runtime_files": 18,
+    "scratch_saved": false
+  },
+  "factory_associations": {
+    "reference": "https://www.fabfilter.com/help/twin/support/midi",
+    "early_observed_named_peers": [
+      "Portamento",
+      "Output Volume",
+      "Osc 1 Scale"
+    ],
+    "final_batch_expected_named_peers": 19,
+    "final_batch_changed_named_peers": 17,
+    "final_batch_separate_named_restorations": 15
+  },
+  "unverified_writable_parameters_at_this_checkpoint": 70
+}
