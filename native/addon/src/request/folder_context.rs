@@ -353,6 +353,32 @@ impl<'a> FolderContext<'a> {
         self.ancestry
             .check(&mut || self.check_document())
             .map_err(|error| error.to_string())?;
+        self.check_identity_and_attachments()
+    }
+    pub(super) fn check_after_restore(&self) -> Result<(), String> {
+        self.check_document()?;
+        self.ancestry
+            .check_after_root_edit(&mut || self.check_document())
+            .map_err(|error| error.to_string())?;
+        self.check_identity_and_attachments()
+    }
+    pub(super) fn rebind_after_restore(&self) -> Result<Self, String> {
+        self.check_after_restore()?;
+        let folder = hold(self.chain[0].node.0).ok_or("retained Inserts unavailable")?;
+        let fresh = Self::capture(
+            self.service,
+            folder,
+            Some(&self.identity().object_uid),
+            self.api,
+        )?;
+        if fresh.key != self.key {
+            return Err("Inserts binding changed after restore".into());
+        }
+        self.check_after_restore()?;
+        fresh.check()?;
+        Ok(fresh)
+    }
+    fn check_identity_and_attachments(&self) -> Result<(), String> {
         if self.chain[0].metadata(&mut || self.check_document())? != self.key.folder_identity
             || self.chain[1].metadata(&mut || self.check_document())? != self.key.channel_identity
         {
