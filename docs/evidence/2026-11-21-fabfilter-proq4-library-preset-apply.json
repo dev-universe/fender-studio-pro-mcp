@@ -1,0 +1,26 @@
+{
+  "date_local": "2026-11-21",
+  "tested_source": "2d6bbfb",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": {"name": "FabFilter Pro-Q 4", "format": "VST3", "version": "4.13", "vendor_signature_verified": true},
+  "tool": "fabfilter_preset_apply",
+  "preset": {"name": "Musical Low Cut Filter", "folder": "Aces", "source": "local library with official factory file bytes", "bytes": 14504},
+  "file_apply_count": 1,
+  "receipt": "applied_unverified",
+  "visible_editor_title_and_eq_curve_updated": true,
+  "provider_rows_compared": 737,
+  "changed_rows_match_previous_ui_load": 110,
+  "before_and_after_full_native_digests_verified": true,
+  "guard_refusals": {
+    "stale_catalog": "preset_catalog_changed",
+    "stale_document": "document_changed",
+    "wrong_instance": "native_rejected",
+    "closed_editor": "native_rejected",
+    "all_provider_values_preserved": true
+  },
+  "restoration": {"state_capsule_restored": true, "values_restored_by_capsule": 736, "additional_restored_value": "vstp1073741826", "all_values_restored": 737, "component_fingerprint_restored": true},
+  "requests": 148,
+  "owner_wall_seconds": 93.837,
+  "host_wall_seconds": 160.715,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "staged_preset_removed": true, "protected_files_verified": 167, "managed_files_restored": 18}
+}
