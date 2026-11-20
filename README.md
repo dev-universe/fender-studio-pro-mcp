@@ -127,7 +127,8 @@ A mismatch or unavailable check returns `applied_unverified` and includes the
 observed parameter or the reason the read could not be confirmed. A match
 describes the value at that observation time. This option applies to ordinary
 scalar writes. Studio Pro 8.1.1 was verified to report both a stable match and a
-transient mismatch from the DSP source on FabFilter Pro-G 1.42.
+transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
+Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
 ### CV Instrument preset settings

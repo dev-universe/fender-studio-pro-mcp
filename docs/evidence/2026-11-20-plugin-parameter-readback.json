@@ -45,5 +45,26 @@
   "mcp_seconds": 7.198,
   "host_seconds": 54.481,
   "protected_files_matched": 249,
-  "managed_files_matched": 18
+  "managed_files_matched": 18,
+  "stock_controller_case": {
+    "plugin": "External Effect Stereo",
+    "source": "controller",
+    "parameter": "phase",
+    "tag": 110,
+    "baseline_raw_value": 0,
+    "immediate_raw_values": [1, 0],
+    "independent_raw_values": [1, 0],
+    "readback_statuses": ["matched", "matched"],
+    "write_outcomes": ["applied_verified", "applied_verified"],
+    "complete_controller_rows_compared": 24,
+    "baseline_restored": true,
+    "port_parameters_unchanged": true,
+    "audio_transport_started": false,
+    "scratch_saved": false,
+    "mcp_requests": 69,
+    "mcp_seconds": 6.190,
+    "host_seconds": 50.541,
+    "protected_files_matched": 249,
+    "managed_files_matched": 18
+  }
 }
