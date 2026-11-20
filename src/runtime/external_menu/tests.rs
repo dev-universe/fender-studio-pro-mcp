@@ -47,6 +47,27 @@ fn complete_external_menu_is_an_observation_with_no_selection_authority() {
     assert!(valid_get(&q, &v));
 }
 #[test]
+fn stereo_menu_accepts_the_observed_numbered_object_name_with_exact_uuid() {
+    let query = query();
+    let mut value = good();
+    value["instance"]["object_id"] = json!("External Effect Stereo 2");
+    assert!(valid_get(&query, &value));
+    for malformed in [
+        "External Effect Stereo 1",
+        "External Effect Stereo 02",
+        "External Effect Stereo +2",
+        "External Effect Stereo 65536",
+        "Different Effect 2",
+    ] {
+        value["instance"]["object_id"] = json!(malformed);
+        assert!(!valid_get(&query, &value), "{malformed}");
+    }
+    value["instance"]["object_id"] = json!("External Effect Stereo 2");
+    value["instance"]["object_uid"] = json!("AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE");
+    assert!(!valid_get(&query, &value));
+}
+
+#[test]
 fn external_menu_refuses_forged_claims_and_nonterminal_cleanup() {
     let q = query();
     for (key, bad) in [

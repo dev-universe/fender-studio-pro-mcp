@@ -1,0 +1,60 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "architecture": "arm64",
+    "interface_language": "ko"
+  },
+  "test": "R219",
+  "verified_code": "79fef5a2d82d1528bfdf31a7eb205616b5725b81",
+  "tool": "external_stereo_send_set",
+  "outcome": "applied_verified",
+  "audio_tracks": 2,
+  "stereo_effect_instances": 2,
+  "target_zero_based_slot": 1,
+  "peer_zero_based_slot": 0,
+  "target_numbered_object_identity": true,
+  "logical_route": [
+    "none",
+    "main",
+    "none"
+  ],
+  "typed_raw_integer": [
+    -1,
+    -1,
+    -1
+  ],
+  "independently_read_assignment": [
+    false,
+    true,
+    false
+  ],
+  "ui_display_confirmed": true,
+  "native_selections": 2,
+  "native_selections_per_request": 1,
+  "unchanged_return": "none",
+  "target_controller_rows_exactly_restored": 24,
+  "target_controller_reads": 8,
+  "independent_target_assignment_reads": 8,
+  "peer_assignment_checks": 4,
+  "peer_assignment_stayed_unassigned": true,
+  "peer_dsp_rows_reported": 0,
+  "pre_dispatch_refusals": {
+    "closed_editor": "controller_baseline",
+    "stale_document": "document_changed",
+    "wrong_instance": "controller_baseline",
+    "missing_slot": "pre_attachment",
+    "wrong_current": "controller_baseline",
+    "unmuted_channel": "pre_fixture"
+  },
+  "requests": 125,
+  "request_owner_wall_seconds": 99.005,
+  "host_wall_seconds": 146.119,
+  "protected_files_verified": 167,
+  "normal_managed_files_restored": 18,
+  "test_song_saved": false,
+  "physical_output_assigned": false,
+  "numeric_port_mapping_verified": false,
+  "persistence_verified": false,
+  "audio_verified": false
+}

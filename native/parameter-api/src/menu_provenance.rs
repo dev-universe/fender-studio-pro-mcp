@@ -163,6 +163,7 @@ pub(super) fn capture<G: FnMut() -> Result<(), String>>(
     builder: *mut c_void,
     selected: *mut c_void,
     rows: &[MenuRow],
+    checked: StereoSendRoute,
     r: &mut Resources,
     g: &mut G,
 ) -> Result<Capture, Error> {
@@ -177,7 +178,7 @@ pub(super) fn capture<G: FnMut() -> Result<(), String>>(
             || row.name.as_deref() != Some(if i == 0 { "0" } else { "1" })
             || row.title.as_deref() != Some(title)
             || row.category.as_deref() != Some("Param")
-            || row.checked != Some(i == 0)
+            || row.checked != Some(i == checked.index())
             || row.enabled != Some(true)
             || row.handler_present != Some(true)
             || row.has_submenu
@@ -339,17 +340,9 @@ fn item_invoker<G: FnMut() -> Result<(), String>>(
     }
     Ok(pointer)
 }
-pub(super) fn query_fixed<G: FnMut() -> Result<(), String>>(
-    menu: *mut c_void,
-    builder: *mut c_void,
-    selected: *mut c_void,
-    rows: &[MenuRow],
-    before: &Capture,
-    r: &mut Resources,
-    g: &mut G,
-) -> Result<Vec<LeafCheckOnly>, Error> {
-    if before.observation.leaves.len() != 2
-        || before.observation.leaves.iter().any(|l| {
+pub(super) fn require_selected_parameter(proof: &MenuProvenance) -> Result<(), Error> {
+    if proof.leaves.len() != 2
+        || proof.leaves.iter().any(|l| {
             !l.handler_matches_builder
                 || !l.data_handler_matches_builder
                 || !l.data_builder_matches_builder
@@ -359,9 +352,22 @@ pub(super) fn query_fixed<G: FnMut() -> Result<(), String>>(
         })
     {
         return Err(Error::InvalidData(
-            "fixed selected-parameter provenance required for query",
+            "fixed selected-parameter provenance required",
         ));
     }
+    Ok(())
+}
+
+pub(super) fn query_fixed<G: FnMut() -> Result<(), String>>(
+    menu: *mut c_void,
+    builder: *mut c_void,
+    selected: *mut c_void,
+    rows: &[MenuRow],
+    before: &Capture,
+    r: &mut Resources,
+    g: &mut G,
+) -> Result<Vec<LeafCheckOnly>, Error> {
+    require_selected_parameter(&before.observation)?;
     let root = r
         .snapshots
         .iter()

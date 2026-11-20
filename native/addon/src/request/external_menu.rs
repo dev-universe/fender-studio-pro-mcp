@@ -27,8 +27,20 @@ const ALLOCATOR: Uid = Uid {
     c: 0x490f,
     d: [0xb6, 0x0a, 0x67, 0x88, 0x64, 0x58, 0xb0, 0xc1],
 };
+enum Binding {
+    Read(parameters::MenuReadLease),
+    Select(parameters::StereoSendSelectionReceipt),
+}
+
+#[derive(Clone, Copy, Debug, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub(super) enum SendDestination {
+    Main,
+    None,
+}
+
 pub(super) struct Receipt {
-    binding: parameters::MenuReadLease,
+    binding: Binding,
     selected: *mut c_void,
     port: Port,
     controller: Controller,
@@ -52,7 +64,11 @@ impl Receipt {
             }
             Ok(())
         };
-        self.binding.check(&mut g).map_err(|e| e.to_string())
+        match &self.binding {
+            Binding::Read(read) => read.check(&mut g),
+            Binding::Select(select) => select.check(&mut g),
+        }
+        .map_err(|e| e.to_string())
     }
 }
 fn check_selected(
@@ -74,9 +90,11 @@ fn check_selected(
         Err("External menu parameter was replaced".into())
     }
 }
+#[cfg(test)]
 pub(super) fn observe(ctx: &Context<'_>, port: Port, provenance: bool) -> (Value, Option<Receipt>) {
     observe_with_query(ctx, port, provenance, false)
 }
+
 pub(super) fn observe_with_query(
     ctx: &Context<'_>,
     port: Port,
@@ -92,9 +110,7 @@ pub(super) fn observe_with_query(
         if include_check_only
             && (!provenance
                 || !matches!(port, Port::Send)
-                || ctx.instance.class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-                || ctx.instance.native_class != "AudioEffect"
-                || ctx.instance.object_id != "External Effect Stereo")
+                || !external_send_route::exact_stereo(ctx))
         {
             return Err("checkOnly requires exact Stereo Send provenance".into());
         }
@@ -170,7 +186,7 @@ pub(super) fn observe_with_query(
         let lease = attempt.lease;
         if let Some(binding) = lease {
             receipt = Some(Receipt {
-                binding,
+                binding: Binding::Read(binding),
                 selected,
                 port,
                 controller,
@@ -223,8 +239,135 @@ pub(super) fn observe_with_query(
         }
     }
 }
+fn selection_provenance(
+    failure_phase: Option<&'static str>,
+    callbacks_began: bool,
+    trace: parameters::StereoSendSelectionTrace,
+) -> Value {
+    json!({
+        "version": "stereo_send_v1",
+        "failure_phase": failure_phase,
+        "dispatch_attempted": true,
+        "menu_callbacks_began": callbacks_began,
+        "select_entered": trace.select_entered,
+        "select_returned": trace.select_returned,
+        "cleanup_proven": trace.cleanup_proven,
+    })
+}
+
+pub(super) fn set_stereo_send(
+    ctx: &Context<'static>,
+    destination: SendDestination,
+) -> (Value, Option<Receipt>) {
+    let mut began = false;
+    let mut trace = parameters::StereoSendSelectionTrace::default();
+    let mut phase = "native_admission";
+    let result = (|| -> Result<(Value, Receipt), String> {
+        let identity = identity::Identity::capture(ctx)?;
+        let controller = external_editor_controller(ctx)?;
+        let parameter = controller.find(Port::Send.native().name(), ctx.api)?;
+        let selected = parameter.as_borrowed_raw().as_ptr();
+        let mut guard = || {
+            identity.check(ctx)?;
+            check_selected(ctx, &controller, Port::Send, selected)?;
+            identity.check(ctx)?;
+            controller.check()?;
+            ctx.check()
+        };
+        guard()?;
+        phase = "native_allocator";
+        let manager =
+            hold(unsafe { (ctx.api.plugin_manager)() }).ok_or("plug-in manager unavailable")?;
+        guard()?;
+        let allocator = query(manager.0, &ALLOCATOR).ok_or("IClassAllocator unavailable")?;
+        guard()?;
+        drop(manager);
+        guard()?;
+        let (route, label) = match destination {
+            SendDestination::Main => (parameters::StereoSendRoute::Main, "main"),
+            SendDestination::None => (parameters::StereoSendRoute::None, "none"),
+        };
+        let source = external_send_route::HeldRoute::from_context(ctx)
+            .ok_or("Retained source route unavailable")?;
+        let destination_assigned = matches!(destination, SendDestination::Main);
+        if source.assigned() == destination_assigned {
+            return Err("Retained source route is already in the destination state".into());
+        }
+        let attempt = unsafe {
+            parameter.external_stereo_send_select(
+                NonNull::new(allocator.0).expect("owned allocator"),
+                &ctx.instance.class_uid,
+                route,
+                &mut guard,
+                &mut || source.check(ctx),
+            )
+        };
+        began = attempt.began;
+        trace = attempt.trace;
+        phase = if attempt.result.is_err() {
+            trace.phase.as_str()
+        } else {
+            "native_post_attachment"
+        };
+        drop(allocator);
+        guard()?;
+        let selection = attempt.result.map_err(|error| error.to_string())?;
+        let held_destination = external_send_route::HeldRoute::from_context(ctx)
+            .ok_or("Retained destination route unavailable")?;
+        if held_destination.assigned() != destination_assigned {
+            return Err("Retained destination route differs".into());
+        }
+        guard()?;
+        phase = "native_publish";
+        let value = json!({
+            "ok": true, "outcome": "applied_unverified",
+            "operation": "external_stereo_send_set", "source": "controller",
+            "instance": ctx.instance, "destination": label, "selection_calls": 1,
+            "checkmark_and_display_confirmed": true, "raw_select_result": selection.raw_select_result,
+            "before": description(selection.before()), "after": description(selection.after()),
+            "phase": "closed_checked",
+            "diagnostic": selection_provenance(None, began, trace),
+        });
+        let receipt = Receipt {
+            binding: Binding::Select(selection),
+            selected,
+            port: Port::Send,
+            controller,
+            identity: Some(identity),
+            route: Some(held_destination),
+        };
+        receipt.check(ctx)?;
+        Ok((value, receipt))
+    })();
+    match result {
+        Ok((value, receipt)) => (value, Some(receipt)),
+        Err(_) => {
+            let mut value = error(
+                "external_stereo_send_set_failed",
+                "The native logical Stereo Send change could not be verified",
+                if began { "unknown" } else { "not_applied" },
+            );
+            value["diagnostic"] = selection_provenance(Some(phase), began, trace);
+            (value, None)
+        }
+    }
+}
+
 pub(super) fn invalidate(value: &mut Value) {
-    if value["operation"] == "external_port_menu" || value.get("menu_phase").is_some() {
+    if value.get("diagnostic").is_some() || value["operation"] == "external_stereo_send_set" {
+        let mut diagnostic = value["diagnostic"].clone();
+        if diagnostic["failure_phase"].is_null() && diagnostic.is_object() {
+            diagnostic["failure_phase"] = json!("native_publish");
+        }
+        *value = json!({
+            "ok": false, "outcome": value["outcome"],
+            "error": {
+                "code": "external_stereo_send_set_failed",
+                "message": "The native logical Stereo Send change could not be verified",
+            },
+            "diagnostic": diagnostic,
+        });
+    } else if value["operation"] == "external_port_menu" || value.get("menu_phase").is_some() {
         let phase = value.get("menu_phase").cloned();
         let outcome = value["outcome"].clone();
         let failure = value["error"].clone();

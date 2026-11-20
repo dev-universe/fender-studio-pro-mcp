@@ -20,10 +20,21 @@ fn snapshot(wrapper: usize, image: usize) -> Option<(usize, usize, usize)> {
     Some((component, holder, read_word(holder, 0x60)?))
 }
 
-fn exact_stereo(ctx: &Context<'_>) -> bool {
-    ctx.instance.class_uid == "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-        && ctx.instance.native_class == "AudioEffect"
-        && ctx.instance.object_id == "External Effect Stereo"
+pub(super) fn exact_stereo(ctx: &Context<'_>) -> bool {
+    if ctx.instance.class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+        || ctx.instance.native_class != "AudioEffect"
+    {
+        return false;
+    }
+    let object_id = ctx.instance.object_id.as_str();
+    object_id == "External Effect Stereo"
+        || object_id
+            .strip_prefix("External Effect Stereo ")
+            .is_some_and(|suffix| {
+                !suffix.starts_with('0')
+                    && suffix.bytes().all(|byte| byte.is_ascii_digit())
+                    && suffix.parse::<u16>().is_ok_and(|ordinal| ordinal >= 2)
+            })
 }
 
 pub(super) struct HeldRoute {
