@@ -907,7 +907,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const keys = ["product", "channel", "slot", "track", "expected_instance", "filename", "sha256", "data_hex"];
         const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });
         const label = value => typeof value === "string" && value.trim() && value.length <= 256 && !/[\x00-\x1f\x7f]/.test(value);
-        const effect = args && args.product === "Pro-Q 4" && label(args.channel) && Number.isInteger(args.slot)
+        const effectClasses = {"Pro-Q 4":"ED57BD72-5C60-467E-A64D-D2F400758B6F", "Pro-C 3":"B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9"};
+        const effectClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(effectClasses, args.product)
+            ? effectClasses[args.product] : null;
+        const effect = effectClass && label(args.channel) && Number.isInteger(args.slot)
             && args.slot >= 0 && args.slot <= 15 && args.track === null;
         const instrument = args && args.product === "Twin 3" && label(args.track) && args.channel === null && args.slot === null;
         if (!(effect || instrument) || Object.keys(args).length !== keys.length || Object.keys(args).some(key => !keys.includes(key))
@@ -921,7 +924,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             : {kind:"instrument", track:args.track, plugin:args.product};
         const plug = this.pluginOf(target);
         if (!plug || plug.error) return invalid("The expected FabFilter target is unavailable");
-        const expectedClass = effect ? "ED57BD72-5C60-467E-A64D-D2F400758B6F" : "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+        const expectedClass = effect ? effectClass : "91AF218E-111A-44CB-ABFE-F7CB065FF157";
         const result = this.nativePluginRequest(plug.device, {operation:"fabfilter_preset_apply", expected_instance:args.expected_instance,
             filename:args.filename, sha256:args.sha256, data_hex:args.data_hex});
         if (!result) return invalid("The matching native FabFilter extension is unavailable");

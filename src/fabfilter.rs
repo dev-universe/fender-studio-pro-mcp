@@ -236,7 +236,7 @@ impl CatalogError {
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
             Self::UnsupportedApplyProduct => {
-                "File application currently supports Pro-Q 4 VST3 4.13 and Twin 3 VST3 3.10."
+                "File application supports Pro-Q 4 4.13, Pro-C 3 3.02, and Twin 3 3.10 VST3."
             }
             Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
             Self::InvalidPreset => {
@@ -262,7 +262,10 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 }
 
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
-    if !matches!(query.product, Product::ProQ4 | Product::Twin3) {
+    if !matches!(
+        query.product,
+        Product::ProQ4 | Product::ProC3 | Product::Twin3
+    ) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
     let (directory, presets, digest) = catalog(library, query.product)?;
@@ -324,15 +327,17 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
 }
 
 fn matches_preset(product: Product, bytes: &[u8]) -> bool {
-    if matches!(product, Product::Twin3) {
-        return bytes.len() >= 16 && bytes.starts_with(b"FT3i");
-    }
-
+    let signature = match product {
+        Product::ProQ4 => b"Signature=FQ4p",
+        Product::ProC3 => b"Signature=FC3p",
+        Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
+        _ => return false,
+    };
     let mut header = bytes
         .split(|byte| *byte == b'\n')
         .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
     header.next() == Some(b"[Preset]".as_slice())
-        && header.next() == Some(b"Signature=FQ4p".as_slice())
+        && header.next() == Some(signature.as_slice())
         && header
             .next()
             .is_some_and(|line| line.starts_with(b"Version="))
@@ -606,5 +611,12 @@ mod tests {
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
         assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));
+    }
+
+    #[test]
+    fn pro_c_3_requires_its_own_text_signature() {
+        let bytes = b"[Preset]\r\nSignature=FC3p\r\nVersion=3\r\nAuthor=Fixture\r\n";
+        assert!(matches_preset(Product::ProC3, bytes));
+        assert!(!matches_preset(Product::ProQ4, bytes));
     }
 }

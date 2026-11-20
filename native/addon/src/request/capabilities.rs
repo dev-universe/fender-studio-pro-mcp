@@ -85,7 +85,9 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
             value["alias"] = object(plugin.0);
             if matches!(
                 ctx.instance.class_uid.as_str(),
-                "ED57BD72-5C60-467E-A64D-D2F400758B6F" | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
+                "ED57BD72-5C60-467E-A64D-D2F400758B6F"
+                    | "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9"
+                    | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
             ) {
                 ctx.check()?;
                 if let Some(editor) = fabfilter_editor_probe::observe(plugin.0) {
@@ -126,7 +128,9 @@ pub(super) fn apply_preset(
 ) -> Value {
     if !matches!(
         ctx.instance.class_uid.as_str(),
-        "ED57BD72-5C60-467E-A64D-D2F400758B6F" | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
+        "ED57BD72-5C60-467E-A64D-D2F400758B6F"
+            | "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9"
+            | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
     ) {
         return error(
             "fabfilter_preset_apply_failed",
