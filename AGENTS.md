@@ -9,13 +9,14 @@
 - Serialize DAW access across processes. A process-local queue is insufficient.
 - Do not expose arbitrary eval, shell execution, or unchecked script requests.
 - Never use codex in branch names or pull request titles.
+- Open a separate pull request as soon as an independently usable unit is verified. Merge the verified head into main as soon as its required checks pass. Close superseded drafts and retain branches still needed for research or handoff.
 - Verify UI outcomes in the actual app before changing settings or assuming a cache issue.
 - Use the installed pstack workflow and Codex adapter. Existing evidence and authorization carry forward.
 
 ## Resuming paused work
 
-- For continuation of the built-in plugin program, including the user's phrase `진행 재개해`, read `docs/RESUME.md`, the latest `resume_document` named in `docs/RESUME_STATE.json` (currently `docs/LOOP_HANDOFF_2026-11-17.md`), and `docs/RESUME_STATE.json` before starting work. Keep the November 10 handoff as historical context; do not replay its completed starting units.
-- The program is paused by explicit user request. Do not resume automatically. A resume instruction authorizes continuing the documented queue within the existing scope.
+- For continuation of the built-in and FabFilter plugin program, including `진행 재개해`, follow `docs/RESUME.md` to the current handoff branch. Read that branch's `docs/RESUME_STATE.json` and its `resume_document` before starting work. Keep dated handoffs as evidence and reuse completed units.
+- An explicit pause stays in effect until the user requests a resume. A resume instruction authorizes continuing the documented queue within the existing scope.
 - Revalidate changeable state and create fresh runtime bindings. Reuse immutable completed evidence instead of restarting completed sweeps.
 - Report a checklist after each completed live unit, including actual elapsed time, completed scope, remaining counts, a rough overall remaining time range and why the estimate changed. Distinguish hardware-dependent checks.
 

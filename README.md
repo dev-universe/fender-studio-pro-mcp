@@ -184,7 +184,7 @@ The detailed notes include run outcomes, remaining gaps, and links to evidence. 
 ## Project docs
 
 - How the Rust server, in-DAW JavaScript bridge, and CoreMIDI connection work. [Architecture](docs/ARCHITECTURE.md)
-- The development queue and latest handoff. [Project status](docs/RESUME.md)
+- Completed checks and the remaining built-in and FabFilter work. [Latest handoff](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [Resume guide](docs/RESUME.md)
 - Development setup, offline checks, and private security reports. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
 ## License
