@@ -116,6 +116,21 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### Verify a parameter through a separate read
+
+Set `readback` to `true` on `plugin_parameter_set` with the canonical name from
+`plugin_parameters`, the current `expected_document` and `expected_instance`,
+and an explicit `dsp` or `controller` source. A verified native write keeps its
+immediate `after` value and triggers one separate read of the same parameter
+after a 150 ms wait. `readback.status` is `matched`, `mismatch`, or `unavailable`.
+A mismatch or unavailable check returns `applied_unverified` and includes the
+observed parameter or the reason the read could not be confirmed. A match
+describes the value at that observation time. This option applies to ordinary
+scalar writes. Studio Pro 8.1.1 was verified to report both a stable match and a
+transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
+Stereo's phase switch matched the controller read after changing and restoring it.
+[Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`

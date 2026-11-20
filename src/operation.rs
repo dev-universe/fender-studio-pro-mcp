@@ -849,6 +849,8 @@ pub struct PluginSet {
     pub float_bits: Option<String>,
     pub source: Option<ParameterSource>,
     pub expected_instance: Option<String>,
+    /// Check the native value through a separate bound read after the write.
+    pub readback: Option<bool>,
     #[serde(
         default,
         deserialize_with = "supplied_edit_lifecycle",
@@ -1302,6 +1304,9 @@ impl Operation {
                 args["change"] =
                     serde_json::to_value(&change.change).expect("closed learning change");
             }
+            Self::SetPluginParam(_) => {
+                args.as_object_mut().unwrap().remove("readback");
+            }
             Self::SetTransport(transport) => {
                 if let Some(position) = &transport.position {
                     args.as_object_mut().unwrap().remove("position");
@@ -1607,6 +1612,23 @@ impl Operation {
             }
             Self::SetPluginParam(p) => {
                 validate_instance_uid(p.expected_instance.as_deref())?;
+                if p.readback == Some(true)
+                    && (!matches!(
+                        p.source,
+                        Some(ParameterSource::Dsp | ParameterSource::Controller)
+                    ) || p
+                        .expected_instance
+                        .as_deref()
+                        .is_none_or(|id| id == "00000000-0000-0000-0000-000000000000")
+                        || p.edit_lifecycle.is_some()
+                        || p.param.trim().is_empty()
+                        || p.param.encode_utf16().count() > 512
+                        || p.param.contains('\0'))
+                {
+                    return Err(invalid(
+                        "Readback requires an explicit dsp or controller source, an expected instance, and a canonical parameter name",
+                    ));
+                }
                 if p.edit_lifecycle.is_some()
                     && (!matches!(p.source, Some(ParameterSource::Dsp))
                         || p.expected_instance.is_none()
