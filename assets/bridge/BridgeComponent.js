@@ -77,25 +77,33 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         try { const v = el.getParamValue(id); return v === undefined ? null : v; } catch (_) { return null; }
     }
 
-    channels() {
+    channels(includeColor = false) {
         const els = this.channelElements();
         if (els.error) return els;
-        return els.map(c => ({
-            index: c.index,
-            label: c.label,
-            type: this.readParam(c.el, PreSonus.ParamID.kChannelType),
-            volume: this.readParam(c.el, PreSonus.ParamID.kVolume),
-            pan: this.readParam(c.el, PreSonus.ParamID.kPan),
-            mute: this.readParam(c.el, "mute"),
-            solo: this.readParam(c.el, "solo"),
-            recordArmed: this.readParam(c.el, PreSonus.ParamID.kRecord),
-            automation: AUTOMATION_MODES[this.readParam(c.el, PreSonus.ParamID.kAutoMode)] || null,
-            monitor: this.readParam(c.el, "monitor"),
-            // Routing is a list index (-1) whose names are only display text, like
-            // sendPort. Read-only: fromString with a name did not change it (5.5.2).
-            input: this.readParam(c.el, "recordPort") === null ? null : this.displayOf(c.el, "recordPort"),
-            output: this.readParam(c.el, "outputPort") === null ? null : this.displayOf(c.el, "outputPort"),
-        }));
+        return els.map(c => {
+            const row = {
+                index: c.index,
+                label: c.label,
+                type: this.readParam(c.el, PreSonus.ParamID.kChannelType),
+                volume: this.readParam(c.el, PreSonus.ParamID.kVolume),
+                pan: this.readParam(c.el, PreSonus.ParamID.kPan),
+                mute: this.readParam(c.el, "mute"),
+                solo: this.readParam(c.el, "solo"),
+                recordArmed: this.readParam(c.el, PreSonus.ParamID.kRecord),
+                automation: AUTOMATION_MODES[this.readParam(c.el, PreSonus.ParamID.kAutoMode)] || null,
+                monitor: this.readParam(c.el, "monitor"),
+                // Routing is a list index (-1) whose names are only display text, like
+                // sendPort. Read-only: fromString with a name did not change it (5.5.2).
+                input: this.readParam(c.el, "recordPort") === null ? null : this.displayOf(c.el, "recordPort"),
+                output: this.readParam(c.el, "outputPort") === null ? null : this.displayOf(c.el, "outputPort"),
+            };
+            if (includeColor) {
+                const color = this.readParam(c.el, PreSonus.ParamID.kColor || "color");
+                row.color_argb = Number.isInteger(color) && color >= -0x80000000 && color <= 0xffffffff
+                    ? color | 0 : null;
+            }
+            return row;
+        });
     }
 
     // Automation mode is a list parameter on the channel: 0 Off .. 4 Write
