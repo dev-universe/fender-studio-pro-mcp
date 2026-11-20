@@ -194,6 +194,10 @@ One and Twin 2 differed from a manual preset selection in the program parameter
 and one internal parameter. In a separate One trial, program 0 created the part
 and playback left **Default Sound** selected. [One and Twin 2 evidence](docs/evidence/2026-11-20-fabfilter-program-parts.json) · [Twin 3 evidence](docs/evidence/2026-11-20-twin3-midi-r25.json)
 
+### External Effect Stereo Send
+
+With the effect editor open, use `plugin_inspect` to identify the current instance and `external_port_menu` with `port: "send"` to read the current menu. The checked row identifies the logical Send choice. In the Studio Pro 8.1.1 test with Main's physical output unassigned, choosing Main in the editor changed the checkmark and controller display while the raw port value stayed `-1`. Selecting None in the editor restored all 24 controller rows. [Live verification](docs/evidence/2026-11-20-external-stereo-send-observation.json)
+
 ## Inspect files offline
 
 These commands run without connecting to Studio Pro.
