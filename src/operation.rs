@@ -75,6 +75,8 @@ pub enum Operation {
     PluginModels(PluginModels),
     #[serde(rename = "pluginInspect", alias = "plugin_inspect")]
     PluginInspect(PluginParams),
+    #[serde(rename = "impactOutputSet", alias = "impact_output_set")]
+    ImpactOutputSet(ImpactOutputSet),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
     PluginEditorOpen(PluginEditor),
     #[serde(rename = "pluginState", alias = "plugin_state")]
@@ -780,6 +782,18 @@ pub struct PluginAction {
     pub plugin: String,
     pub expected_instance: String,
     pub action: PluginButtonAction,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ImpactOutputSet {
+    pub track: String,
+    pub expected_instance: String,
+    #[schemars(range(min = 1, max = 31))]
+    pub output_index: u32,
+    pub output_name: String,
+    pub expected_active: bool,
+    pub active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1669,6 +1683,22 @@ impl Operation {
                 )?;
                 if p.plugin.trim().is_empty() {
                     return Err(invalid("An expected plugin class or instance is required"));
+                }
+            }
+            Self::ImpactOutputSet(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.track.trim().is_empty()
+                    || p.track.encode_utf16().count() > 256
+                    || p.track.chars().any(char::is_control)
+                    || !(1..32).contains(&p.output_index)
+                    || p.output_name.trim().is_empty()
+                    || p.output_name.encode_utf16().count() > 128
+                    || p.output_name.chars().any(char::is_control)
+                    || p.expected_active == p.active
+                {
+                    return Err(invalid(
+                        "Supply an exact Impact track, output, and state change",
+                    ));
                 }
             }
             Self::PluginState(p) => {
@@ -2742,6 +2772,39 @@ mod tests {
             .unwrap()
             .validate()
             .unwrap();
+    }
+
+    #[test]
+    fn impact_output_change_requires_bound_output_and_two_distinct_states() {
+        let base = json!({"track":"Scratch Impact","output_index":1,"output_name":"Impact St 2",
+            "expected_active":false,"active":true,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"});
+        let operation = Operation::from_parts("impact_output_set", base.clone()).unwrap();
+        assert!(operation.validate().is_ok() && !operation.is_read_only());
+        assert_eq!(
+            operation.wire(),
+            ("impactOutputSet".to_string(), base.clone())
+        );
+        for (field, value) in [
+            ("output_index", json!(0)),
+            ("output_index", json!(32)),
+            ("output_name", json!("")),
+            ("track", json!("")),
+            ("active", json!(false)),
+            ("expected_instance", json!("")),
+        ] {
+            let mut invalid = base.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("impact_output_set", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut invalid = base;
+        invalid["address"] = json!(123);
+        assert!(Operation::from_parts("impact_output_set", invalid).is_err());
     }
 
     #[test]

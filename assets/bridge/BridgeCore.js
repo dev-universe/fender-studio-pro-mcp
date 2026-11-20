@@ -134,6 +134,7 @@ class Bridge {
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
+        const impactOutputSet = req.op === "impactOutputSet";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -158,7 +159,11 @@ class Bridge {
                 result = this.handle(req.op, req.args || {});
             }
         } catch (e) {
-            result = cvPresetApply
+            result = impactOutputSet
+                ? { ok: false, native_outcome: "unknown", errors: [{
+                    code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
+                }] }
+                : cvPresetApply
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "cv_preset_settings_apply_failed",
                     message: "The CV preset settings load outcome could not be established",
@@ -167,7 +172,14 @@ class Bridge {
         }
         this.requestContext = null;
         const afterContext = this.context();
-        if (!isFail(result) && cvPresetApply
+        if (!isFail(result) && impactOutputSet
+            && (this.contextError || context.open !== true || afterContext.open !== true
+                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, native_outcome: outcome, errors: [{
+                code: "impact_output_context_changed", message: "The Impact output document changed before publication",
+            }] };
+        } else if (!isFail(result) && cvPresetApply
             && (this.contextError || context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             const outcome = result && result.ok === false && result.native_outcome === "not_applied"
@@ -368,6 +380,7 @@ class Bridge {
                 return this.fromComponent(c => c.pluginPresets(args));
             case "editChorderAutofill": return this.fromComponent(c => c.editChorderAutofill(args));
             case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
+            case "impactOutputSet": return this.fromComponent(c => c.impactOutputSet(args));
             default: return fail("unknown op: " + op);
         }
     }
