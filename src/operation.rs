@@ -91,6 +91,8 @@ pub enum Operation {
     InsertSplitterAdd(InsertSplitterAdd),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
+    #[serde(rename = "fabfilterPresetApply", alias = "fabfilter_preset_apply")]
+    FabfilterPresetApply(crate::fabfilter::PresetApply),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
     PluginAction(PluginAction),
     #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
@@ -1930,6 +1932,28 @@ impl Operation {
                             "Capture forbids a token; restore and release require an issued uppercase 64-hex token",
                         ));
                     }
+                }
+            }
+            Self::FabfilterPresetApply(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.channel.trim().is_empty()
+                    || p.channel.encode_utf16().count() > 256
+                    || p.channel.chars().any(char::is_control)
+                    || p.slot >= 16
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                    || p.index >= 16_384
+                    || p.expected_catalog.len() != 64
+                    || !p
+                        .expected_catalog
+                        .bytes()
+                        .all(|byte| byte.is_ascii_hexdigit())
+                {
+                    return Err(invalid(
+                        "An exact effect slot and catalog index with its 64-digit digest are required",
+                    ));
                 }
             }
             Self::PluginPresets(p) => {

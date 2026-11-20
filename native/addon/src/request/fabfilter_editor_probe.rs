@@ -1,4 +1,18 @@
 use super::*;
+use sha2::{Digest, Sha256};
+use std::{
+    ffi::CStr,
+    fs,
+    io::{Read, Write},
+    os::unix::{
+        ffi::OsStrExt,
+        fs::{DirBuilderExt, OpenOptionsExt},
+    },
+    path::{Path, PathBuf},
+};
+
+#[path = "vendor_preset_abi.rs"]
+mod vendor_preset_abi;
 
 // Identifies Studio Pro 8.1.1 arm64's VST3 host image.
 const HOST_UUID: [u8; 16] = [
@@ -94,15 +108,16 @@ fn count_attached(
     product: &Image,
     image: usize,
     state: usize,
-) -> Option<(usize, usize)> {
+) -> Option<(usize, usize, usize)> {
     // Studio Pro uses this same list to find an editor from its effect object.
     let mut node = read_word(host, 0x16b120)?;
     let mut matched = 0;
+    let mut editor = 0;
     let mut other = 0;
     let mut previous = 0;
     for _ in 0..64 {
         if node == 0 {
-            return Some((matched, other));
+            return Some((matched, other, editor));
         }
         if read_word(node, 16)? != previous {
             return None;
@@ -124,6 +139,7 @@ fn count_attached(
                     return None;
                 }
                 matched += 1;
+                editor = product_editor;
             } else if product_editor != 0 {
                 if read_word(primary, 0x58)? == controller
                     || read_word(product_editor, 0x50)? == state
@@ -141,7 +157,34 @@ fn count_attached(
     None
 }
 
-pub(super) fn observe(target: *mut c_void) -> Option<Value> {
+struct Owner {
+    canonical: Owned,
+    _storable: Owned,
+    host: usize,
+    controller: usize,
+    image: usize,
+    state: usize,
+    product: &'static Image,
+    first: (usize, usize, usize),
+}
+impl Owner {
+    fn check(&self) -> bool {
+        let instance = self.canonical.0 as usize;
+        let controller = self.controller;
+        read_word(instance, 0x1b0) == Some(controller + 0x30)
+            && read_word(controller, self.product.state_member) == Some(self.state)
+            && count_attached(
+                self.host,
+                instance,
+                controller,
+                self.product,
+                self.image,
+                self.state,
+            ) == Some(self.first)
+    }
+}
+
+fn owner(target: *mut c_void) -> Option<Owner> {
     let canonical = query(target, &UNKNOWN)?;
     let instance = canonical.0 as usize;
     let table = read_word(instance, 0)?;
@@ -176,9 +219,218 @@ pub(super) fn observe(target: *mut c_void) -> Option<Value> {
     if first != second || first.0 > 1 || read_word(instance, 0x1b0)? != controller {
         return None;
     }
+    Some(Owner {
+        canonical,
+        _storable: storable,
+        host,
+        controller: controller_primary,
+        image,
+        state,
+        product,
+        first,
+    })
+}
+
+pub(super) fn observe(target: *mut c_void) -> Option<Value> {
+    let owner = owner(target)?;
     Some(
-        json!({"product":product.product,"effect_and_controller_match":true,
-        "matching_attached_editor_count":first.0,"other_same_product_attached_editors":first.1,
+        json!({"product":owner.product.product,"effect_and_controller_match":true,
+        "matching_attached_editor_count":owner.first.0,"other_same_product_attached_editors":owner.first.1,
         "checked_twice":true,"file_loader_calls":0}),
     )
+}
+
+fn image_file(base: usize) -> Option<PathBuf> {
+    let mut info = DlInfo {
+        file: ptr::null(),
+        base: ptr::null_mut(),
+        symbol: ptr::null(),
+        address: ptr::null_mut(),
+    };
+    if unsafe { dladdr(base as *const c_void, &mut info) } == 0
+        || info.base as usize != base
+        || info.file.is_null()
+    {
+        return None;
+    }
+    let file = unsafe { CStr::from_ptr(info.file) };
+    Some(PathBuf::from(std::ffi::OsStr::from_bytes(file.to_bytes())))
+}
+
+fn signed_proq4_image_matches(binding: &Owner) -> bool {
+    const EXPECTED: &str = "1044282fd91649368283553e3a2f3905d7eb051bff40d52888a0907aa53bdb65";
+    const SIZE: u64 = 5_025_104;
+    let Some(binary) = image_file(binding.image) else {
+        return false;
+    };
+    if binary.file_name().and_then(|name| name.to_str()) != Some("FabFilter Pro-Q 4") {
+        return false;
+    }
+    let Ok(file) = fs::File::open(binary) else {
+        return false;
+    };
+    if !file
+        .metadata()
+        .is_ok_and(|metadata| metadata.is_file() && metadata.len() == SIZE)
+    {
+        return false;
+    }
+    let mut contents = Vec::with_capacity(SIZE as usize);
+    file.take(SIZE + 1).read_to_end(&mut contents).is_ok()
+        && contents.len() == SIZE as usize
+        && format!("{:x}", Sha256::digest(contents)) == EXPECTED
+}
+
+const MAX_PRESET_BYTES: usize = 64 * 1024;
+
+fn preset_bytes(filename: &str, expected: &str, data_hex: &str) -> Option<Vec<u8>> {
+    if filename.is_empty()
+        || filename.len() > 255
+        || filename.starts_with('.')
+        || filename.chars().any(char::is_control)
+        || filename.contains('/')
+        || !Path::new(filename)
+            .extension()
+            .and_then(|name| name.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("ffp"))
+        || expected.len() != 64
+        || data_hex.is_empty()
+        || data_hex.len() % 2 != 0
+        || data_hex.len() > 2 * MAX_PRESET_BYTES
+    {
+        return None;
+    }
+    fn digit(byte: u8) -> Option<u8> {
+        match byte {
+            b'0'..=b'9' => Some(byte - b'0'),
+            b'a'..=b'f' => Some(byte - b'a' + 10),
+            _ => None,
+        }
+    }
+    let bytes: Vec<u8> = data_hex
+        .as_bytes()
+        .chunks_exact(2)
+        .map(|chunk| Some(digit(chunk[0])? * 16 + digit(chunk[1])?))
+        .collect::<Option<_>>()?;
+    let mut header = bytes
+        .split(|byte| *byte == b'\n')
+        .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
+    if header.next() != Some(b"[Preset]".as_slice())
+        || header.next() != Some(b"Signature=FQ4p".as_slice())
+        || !header
+            .next()
+            .is_some_and(|line| line.starts_with(b"Version="))
+        || header.next().is_none()
+        || format!("{:x}", Sha256::digest(&bytes)) != expected
+    {
+        return None;
+    }
+    Some(bytes)
+}
+
+#[link(name = "System")]
+unsafe extern "C" {
+    fn arc4random_buf(buffer: *mut c_void, bytes: usize);
+}
+
+struct PresetFile {
+    directory: PathBuf,
+    path: PathBuf,
+}
+impl PresetFile {
+    fn new(filename: &str, bytes: &[u8]) -> std::io::Result<Self> {
+        let mut nonce = [0u8; 16];
+        unsafe {
+            arc4random_buf(nonce.as_mut_ptr().cast(), nonce.len());
+        }
+        let directory =
+            std::env::temp_dir().join(format!("fsp-fabfilter-{:032x}", u128::from_be_bytes(nonce)));
+        fs::DirBuilder::new().mode(0o700).create(&directory)?;
+        let path = directory.join(filename);
+        let staged = Self { directory, path };
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(&staged.path)?;
+        file.write_all(bytes)?;
+        Ok(staged)
+    }
+}
+impl Drop for PresetFile {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.path);
+        let _ = fs::remove_dir(&self.directory);
+    }
+}
+
+pub(super) fn apply_preset(
+    ctx: &Context<'_>,
+    target: *mut c_void,
+    filename: &str,
+    sha256: &str,
+    data_hex: &str,
+) -> Value {
+    let refused = |reason: &str| error("fabfilter_preset_apply_failed", reason, "not_applied");
+    let Some(owner) = owner(target) else {
+        return refused("the exact effect and controller are unavailable");
+    };
+    if owner.product.product != "pro_q_4" || owner.first.0 != 1 {
+        return refused("Open the editor of the expected Pro-Q 4 instance and try again");
+    }
+    if !signed_proq4_image_matches(&owner) {
+        return refused(
+            "the installed Pro-Q 4 executable differs from the verified signed version",
+        );
+    }
+    let Some(bytes) = preset_bytes(filename, sha256, data_hex) else {
+        return refused("the bounded Pro-Q 4 preset bytes or their digest did not match");
+    };
+    let Ok(file) = PresetFile::new(filename, &bytes) else {
+        return refused("the preset could not be staged for the plug-in");
+    };
+    if ctx.check().is_err() || !owner.check() {
+        return refused("the document or exact attached editor changed before apply");
+    }
+    let args = vendor_preset_abi::Apply {
+        receiver: owner.state as *mut c_void,
+        constructor: (owner.image + 0x39a18) as *const c_void,
+        activate: (owner.image + 0x9a4d0) as *const c_void,
+        destructor: (owner.image + 0x4418c) as *const c_void,
+    };
+    let status = unsafe { vendor_preset_abi::apply(args, file.path.as_os_str().as_bytes()) };
+    match status {
+        Err(reason) => refused(reason),
+        Ok(0) if ctx.check().is_ok() && owner.check() => {
+            json!({"ok":true,"outcome":"applied_unverified",
+            "file_sha256":sha256,"filename":filename,"status":0,"source":"fabfilter_vst3_preset_file"})
+        }
+        Ok(_) => error(
+            "fabfilter_preset_apply_failed",
+            "the preset effect or active target could not be confirmed",
+            "unknown",
+        ),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn staged_preset_requires_a_digest_and_a_single_filename() {
+        let bytes = b"[Preset]\nSignature=FQ4p\nVersion=4\nAuthor=Fixture\n";
+        let digest = format!("{:x}", Sha256::digest(bytes));
+        let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+        assert_eq!(
+            preset_bytes("Air & Space.ffp", &digest, &hex).unwrap(),
+            bytes
+        );
+        assert!(preset_bytes("../Air.ffp", &digest, &hex).is_none());
+        assert!(preset_bytes(".Air.ffp", &digest, &hex).is_none());
+        assert!(preset_bytes("Air.vstpreset", &digest, &hex).is_none());
+        assert!(preset_bytes("Air.ffp", &"0".repeat(64), &hex).is_none());
+        assert!(preset_bytes("Air.ffp", &digest, &(hex.clone() + "0")).is_none());
+        assert!(preset_bytes("Air.ffp", &digest, &"00".repeat(MAX_PRESET_BYTES + 1)).is_none());
+    }
 }

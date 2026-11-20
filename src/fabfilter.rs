@@ -1,4 +1,8 @@
-use std::{fs, io, path::Path};
+use std::{
+    fs,
+    io::{self, Read},
+    path::{Path, PathBuf},
+};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -7,6 +11,7 @@ use sha2::{Digest, Sha256};
 const MAX_ENTRIES: usize = 16_384;
 const MAX_DEPTH: usize = 16;
 const MAX_PAGE: usize = 128;
+const MAX_PRESET_BYTES: usize = 64 * 1024;
 
 macro_rules! products {
     ($($variant:ident => ($name:literal, $version:literal)),+ $(,)?) => {
@@ -140,10 +145,44 @@ impl PresetQuery {
     }
 }
 
+#[derive(Clone, Debug, Deserialize, JsonSchema, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PresetApply {
+    pub product: Product,
+    #[schemars(range(max = 16383))]
+    pub index: usize,
+    #[schemars(length(min = 64, max = 64))]
+    pub expected_catalog: String,
+    pub channel: String,
+    #[schemars(range(max = 15))]
+    pub slot: u32,
+    pub expected_instance: String,
+}
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
 struct Preset {
     folders: Vec<String>,
     name: String,
+    #[serde(skip)]
+    filename: String,
+}
+
+pub(crate) struct PresetAsset {
+    pub filename: String,
+    pub contents: Vec<u8>,
+    pub sha256: String,
+}
+
+impl PresetAsset {
+    pub(crate) fn wire_data(&self) -> String {
+        const HEX: &[u8] = b"0123456789abcdef";
+        let mut out = String::with_capacity(self.contents.len() * 2);
+        for byte in &self.contents {
+            out.push(char::from(HEX[usize::from(byte >> 4)]));
+            out.push(char::from(HEX[usize::from(byte & 15)]));
+        }
+        out
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -165,6 +204,9 @@ pub enum CatalogError {
     LimitExceeded,
     CatalogChanged,
     OffsetOutsideCatalog,
+    UnsupportedApplyProduct,
+    AmbiguousPreset,
+    InvalidPreset,
 }
 
 impl CatalogError {
@@ -176,6 +218,9 @@ impl CatalogError {
             Self::LimitExceeded => "preset_library_limit_exceeded",
             Self::CatalogChanged => "preset_catalog_changed",
             Self::OffsetOutsideCatalog => "preset_offset_outside_catalog",
+            Self::UnsupportedApplyProduct => "preset_product_apply_unsupported",
+            Self::AmbiguousPreset => "preset_entry_ambiguous",
+            Self::InvalidPreset => "preset_file_invalid",
         }
     }
 
@@ -189,19 +234,108 @@ impl CatalogError {
             }
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
+            Self::UnsupportedApplyProduct => {
+                "File application currently supports Pro-Q 4 VST3 4.13."
+            }
+            Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
+            Self::InvalidPreset => "The selected file is not a bounded Pro-Q 4 preset.",
         }
     }
 }
 
-pub fn list(query: &PresetQuery) -> Result<PresetPage, CatalogError> {
-    let library = std::env::var_os("FSP_FABFILTER_PRESET_LIBRARY")
-        .map(std::path::PathBuf::from)
+fn library_root() -> Result<PathBuf, CatalogError> {
+    std::env::var_os("FSP_FABFILTER_PRESET_LIBRARY")
+        .map(PathBuf::from)
         .or_else(|| std::env::home_dir().map(|home| home.join("Documents/FabFilter/Presets")))
-        .ok_or(CatalogError::LibraryUnavailable)?;
-    list_from(&library, query)
+        .ok_or(CatalogError::LibraryUnavailable)
 }
 
-fn list_from(library: &Path, query: &PresetQuery) -> Result<PresetPage, CatalogError> {
+pub fn list(query: &PresetQuery) -> Result<PresetPage, CatalogError> {
+    list_from(&library_root()?, query)
+}
+
+pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, CatalogError> {
+    load_from(&library_root()?, query)
+}
+
+fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
+    if !matches!(query.product, Product::ProQ4) {
+        return Err(CatalogError::UnsupportedApplyProduct);
+    }
+    let (directory, presets, digest) = catalog(library, query.product)?;
+    if !query.expected_catalog.eq_ignore_ascii_case(&digest) {
+        return Err(CatalogError::CatalogChanged);
+    }
+    let selected = presets
+        .get(query.index)
+        .ok_or(CatalogError::OffsetOutsideCatalog)?;
+    if presets
+        .iter()
+        .filter(|preset| preset.name == selected.name && preset.folders == selected.folders)
+        .take(2)
+        .count()
+        != 1
+    {
+        return Err(CatalogError::AmbiguousPreset);
+    }
+    if selected.filename.len() > 255 || selected.filename.chars().any(char::is_control) {
+        return Err(CatalogError::InvalidPreset);
+    }
+    let mut file_path = directory;
+    file_path.extend(&selected.folders);
+    file_path.push(&selected.filename);
+    if file_path
+        .canonicalize()
+        .map_err(|_| CatalogError::Unreadable)?
+        != file_path
+    {
+        return Err(CatalogError::Unreadable);
+    }
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
+    }
+    let file = options
+        .open(&file_path)
+        .map_err(|_| CatalogError::Unreadable)?;
+    let metadata = file.metadata().map_err(|_| CatalogError::Unreadable)?;
+    if !metadata.is_file() || metadata.len() > MAX_PRESET_BYTES as u64 {
+        return Err(CatalogError::InvalidPreset);
+    }
+    let mut contents = Vec::with_capacity(metadata.len() as usize);
+    file.take(MAX_PRESET_BYTES as u64 + 1)
+        .read_to_end(&mut contents)
+        .map_err(|_| CatalogError::Unreadable)?;
+    if contents.len() != metadata.len() as usize || !is_proq4_preset(&contents) {
+        return Err(CatalogError::InvalidPreset);
+    }
+    let sha256 = format!("{:x}", Sha256::digest(&contents));
+    Ok(PresetAsset {
+        filename: selected.filename.clone(),
+        contents,
+        sha256,
+    })
+}
+
+fn is_proq4_preset(bytes: &[u8]) -> bool {
+    let mut header = bytes
+        .split(|byte| *byte == b'\n')
+        .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
+    header.next() == Some(b"[Preset]".as_slice())
+        && header.next() == Some(b"Signature=FQ4p".as_slice())
+        && header
+            .next()
+            .is_some_and(|line| line.starts_with(b"Version="))
+        && header.next().is_some()
+}
+
+fn catalog(
+    library: &Path,
+    product: Product,
+) -> Result<(PathBuf, Vec<Preset>, String), CatalogError> {
     if !library.is_absolute() {
         return Err(CatalogError::LibraryUnavailable);
     }
@@ -212,7 +346,7 @@ fn list_from(library: &Path, query: &PresetQuery) -> Result<PresetPage, CatalogE
             CatalogError::Unreadable
         }
     })?;
-    let directory = library.join(query.product.directory());
+    let directory = library.join(product.directory());
     let meta = fs::symlink_metadata(&directory).map_err(|error| {
         if error.kind() == io::ErrorKind::NotFound {
             CatalogError::ProductUnavailable
@@ -228,9 +362,13 @@ fn list_from(library: &Path, query: &PresetQuery) -> Result<PresetPage, CatalogE
     collect(&directory, &mut Vec::new(), &mut remaining, &mut presets)?;
     presets.sort_unstable();
 
-    let digest_input =
-        serde_json::to_vec(&(query.product, &presets)).expect("preset names serialize");
-    let catalog_sha256 = format!("{:x}", Sha256::digest(digest_input));
+    let digest_input = serde_json::to_vec(&(product, &presets)).expect("preset names serialize");
+    let digest = format!("{:x}", Sha256::digest(digest_input));
+    Ok((directory, presets, digest))
+}
+
+fn list_from(library: &Path, query: &PresetQuery) -> Result<PresetPage, CatalogError> {
+    let (_, mut presets, catalog_sha256) = catalog(library, query.product)?;
     if query
         .expected_catalog
         .as_ref()
@@ -295,6 +433,7 @@ fn collect(
                 presets.push(Preset {
                     folders: folders.clone(),
                     name: stem.to_owned(),
+                    filename: name.to_owned(),
                 });
             }
         }
@@ -366,6 +505,54 @@ mod tests {
             list_from(library.path(), &query).unwrap_err(),
             CatalogError::CatalogChanged
         );
+    }
+
+    #[test]
+    fn apply_resolves_one_index_and_refuses_stale_catalog_or_wrong_product_file() {
+        const FFP: &[u8] = b"[Preset]\r\nSignature=FQ4p\r\nVersion=4\r\nAuthor=Fixture\r\n";
+        let library = tempfile::tempdir().unwrap();
+        let product = library.path().join("Pro-Q 4");
+        let nested = product.join("Effects");
+        fs::create_dir_all(&nested).unwrap();
+        fs::write(
+            product.join("Same.ffp"),
+            b"[Preset]\nSignature=FQ3p\nVersion=3\n",
+        )
+        .unwrap();
+        fs::write(nested.join("Same.FFP"), FFP).unwrap();
+        let page = list_from(
+            library.path(),
+            &PresetQuery {
+                product: Product::ProQ4,
+                offset: 0,
+                limit: 64,
+                expected_catalog: None,
+            },
+        )
+        .unwrap();
+        let mut query = PresetApply {
+            product: Product::ProQ4,
+            index: 1,
+            expected_catalog: page.catalog_sha256,
+            channel: "Scratch".to_owned(),
+            slot: 0,
+            expected_instance: "AA50C180-3980-4EE0-A76B-3195182C91E0".to_owned(),
+        };
+        let selected = load_from(library.path(), &query).unwrap();
+        assert_eq!(selected.filename, "Same.FFP");
+        assert_eq!(selected.contents, FFP);
+        assert_eq!(selected.sha256, format!("{:x}", Sha256::digest(FFP)));
+        assert_eq!(selected.wire_data().len(), FFP.len() * 2);
+        query.index = 0;
+        assert!(matches!(
+            load_from(library.path(), &query),
+            Err(CatalogError::InvalidPreset)
+        ));
+        fs::rename(nested.join("Same.FFP"), nested.join("Renamed.ffp")).unwrap();
+        assert!(matches!(
+            load_from(library.path(), &query),
+            Err(CatalogError::CatalogChanged)
+        ));
     }
 
     #[cfg(unix)]

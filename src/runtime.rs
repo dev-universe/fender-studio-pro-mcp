@@ -187,6 +187,24 @@ fn execute(
         });
     }
     let (op, mut args) = operation.wire();
+    if let Operation::FabfilterPresetApply(query) = &operation {
+        let asset = match crate::fabfilter::load_for_apply(query) {
+            Ok(asset) => asset,
+            Err(reason) => {
+                return Ok(rejected(
+                    &operation,
+                    request_id,
+                    started,
+                    OperationError::new(reason.code(), reason.message()),
+                    Some(&context),
+                ));
+            }
+        };
+        let data_hex = asset.wire_data();
+        args = json!({"channel":query.channel,"slot":query.slot,
+            "expected_instance":query.expected_instance,"filename":asset.filename,
+            "sha256":asset.sha256,"data_hex":data_hex});
+    }
     let staged_program = if let Operation::MidiProgramPartAdd(change) = &operation {
         match bridge.stage_midi_program(&midi_program_part::smf(change)) {
             Ok(staged) => {
@@ -1377,6 +1395,7 @@ mod tests {
                 "second_slot_node":"50000000-1234-1234-1234-123456789ABC"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
+            ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
             ("impactOutputSet", json!({"track":"Scratch Impact","expected_instance":"12345678-1234-1234-1234-123456789ABC","output_index":1,"output_name":"Impact St 2","expected_active":false,"active":true})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),

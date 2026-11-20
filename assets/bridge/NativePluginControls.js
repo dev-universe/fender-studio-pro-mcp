@@ -1331,7 +1331,10 @@ class NativePluginControls {
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
             if (!this.sameContext(before)) throw new Error("native request requires the current open document");
             const body = JSON.stringify(request);
-            if (body.length > 16384) throw new Error("native request exceeds the supported size");
+            const vendorApply = request.operation === "fabfilter_preset_apply";
+            if (vendorApply && capability.fabfilter_preset_apply_api !== "pro_q_4_file_v1")
+                throw new Error("unsupported FabFilter preset apply API");
+            if (body.length > (vendorApply ? 163840 : 16384)) throw new Error("native request exceeds the supported size");
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
