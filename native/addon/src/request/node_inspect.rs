@@ -1,6 +1,8 @@
 use super::*;
 #[path = "node_inspect/slot_move.rs"]
 pub(super) mod slot_move;
+#[path = "node_inspect/splitter_remove.rs"]
+pub(super) mod splitter_remove;
 use fender_native_node_api::{
     Diagnostic, Inspection, Limits, MetadataIssue, NodeInspector, Relation, Report, TextApi,
 };
