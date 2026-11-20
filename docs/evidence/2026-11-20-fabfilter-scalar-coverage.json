@@ -61,11 +61,11 @@
     }
   },
   "total_observed_writable": 12455,
-  "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 9395,
+  "fully_exhaustive_products": 1,
+  "distinct_individual_roundtrips_including_representative": 9537,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 131,
-  "high_range_writable_pending": 3060,
+  "high_range_writable_individually_verified": 273,
+  "high_range_writable_pending": 2918,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -350,5 +350,58 @@
     "protected_files_matching": 16,
     "requests": 88,
     "elapsed_seconds": 12.232
+  },
+  "r50_micro_pressure_and_bend": {
+    "new_distinct_roundtrips": 2,
+    "writable_values": 145,
+    "companion_corrections": 2,
+    "requests": 58,
+    "active_seconds": 7.538,
+    "wall_seconds": 144.3,
+    "protected_files": 54,
+    "managed_files": 18
+  },
+  "r51_pro_g_cc": {
+    "new_distinct_roundtrips": 128,
+    "reported_values": 172,
+    "writable_values": 171,
+    "companion_corrections": 128,
+    "requests": 1598,
+    "active_seconds": 111.277,
+    "wall_seconds": 149.3,
+    "protected_files": 54,
+    "managed_files": 18
+  },
+  "r52_micro_extra_internal": {
+    "new_distinct_roundtrips": 4,
+    "returned_prior_to_program_attempt": 145,
+    "program_unverified_in_this_run": true,
+    "program_related_read_only_observation": "vstp1073741960",
+    "requests": 95,
+    "wall_seconds": 141.1,
+    "protected_files": 61,
+    "managed_files": 18
+  },
+  "r53_micro_program": {
+    "new_distinct_roundtrips": 1,
+    "writable_values_restored": 145,
+    "all_values_restored": 146,
+    "fully_individually_verified_product": "Micro",
+    "requests": 47,
+    "active_seconds": 6.852,
+    "wall_seconds": 46.2,
+    "protected_files": 66,
+    "managed_files": 18
+  },
+  "r54_pro_g_non_cc": {
+    "new_distinct_roundtrips": 7,
+    "writable_values": 171,
+    "distinct_total_verified": 170,
+    "failed_independent_read": "vstp1073741828",
+    "requests": 197,
+    "active_seconds": 20.779,
+    "wall_seconds": 165.3,
+    "protected_files": 70,
+    "managed_files": 18
   }
 }
