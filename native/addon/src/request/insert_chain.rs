@@ -1,5 +1,7 @@
 //! Private host-authored whole-Inserts capsules. No caller file authority.
 use super::folder_context::{FolderBindingKey, FolderContext};
+#[path = "insert_chain_routing.rs"]
+mod routing;
 use super::*;
 use fender_native_preset_api::folder::collection::{CollectionFile, PrivateDestination};
 use fender_native_preset_api::folder::{FolderInputs, FolderPresetRoute};
@@ -261,7 +263,7 @@ impl PrivateFile {
             .to_str()
             .ok_or("private capsule path is unavailable")
     }
-    fn fingerprint(&self) -> Result<FileProof, &'static str> {
+    fn checked_open(&self) -> Result<(fs::File, Metadata), &'static str> {
         self.check_directory()?;
         let before =
             fs::symlink_metadata(&self.path).map_err(|_| "private capsule file is unavailable")?;
@@ -277,7 +279,7 @@ impl PrivateFile {
         {
             return Err("private capsule file identity, type or size is invalid");
         }
-        let mut file = OpenOptions::new()
+        let file = OpenOptions::new()
             .read(true)
             .custom_flags(O_NOFOLLOW)
             .open(&self.path)
@@ -288,6 +290,10 @@ impl PrivateFile {
         if !same_file(&before, &opened) || !opened.is_file() {
             return Err("private capsule file changed while opening");
         }
+        Ok((file, before))
+    }
+    fn fingerprint(&self) -> Result<FileProof, &'static str> {
+        let (mut file, before) = self.checked_open()?;
         let mut digest = Sha256::new();
         let mut count = 0_u64;
         let mut buffer = [0_u8; 64 * 1024];
@@ -714,7 +720,7 @@ fn metadata(value: &mut Value, token: &str, capsule: &Capsule) {
     value["part_count"] = json!(capsule.backend.part_count());
 }
 enum Action {
-    Capture,
+    Capture { include_routing: bool },
     Restore(String),
     Release(String),
 }
@@ -730,13 +736,14 @@ pub(super) fn dispatch(
             bridge_session,
             document_epoch,
             expected_folder,
+            include_routing,
         } => (
             Generation {
                 session: bridge_session,
                 document: document_epoch,
             },
             expected_folder,
-            Action::Capture,
+            Action::Capture { include_routing },
         ),
         Request::InsertChainRestore {
             bridge_session,
@@ -798,7 +805,7 @@ pub(super) fn dispatch(
         return reply;
     }
     match action {
-        Action::Capture => {
+        Action::Capture { include_routing } => {
             let token = random_hex();
             if with_registry(service, |registry| {
                 registry.reserve(token.clone(), Instant::now())
@@ -839,6 +846,12 @@ pub(super) fn dispatch(
                     }
                 };
                 let proof = proof.ok_or("private file was not sealed before reopen")?;
+                let routing = include_routing
+                    .then(|| {
+                        let (file, _) = private.checked_open()?;
+                        Ok::<_, &'static str>(routing::inspect(file, backend.part_count()))
+                    })
+                    .transpose()?;
                 private.matches(&proof)?;
                 ctx.check().map_err(|_| "insert-chain context changed")?;
                 let capsule = Rc::new(Capsule {
@@ -857,12 +870,15 @@ pub(super) fn dispatch(
                     drop(owner);
                     return Err(reason);
                 }
-                Ok(capsule)
+                Ok((capsule, routing))
             })();
             match result {
-                Ok(capsule) => {
+                Ok((capsule, routing)) => {
                     let mut value = common(&ctx, "observed");
                     metadata(&mut value, &token, &capsule);
+                    if let Some(routing) = routing {
+                        value["routing"] = routing;
+                    }
                     reply.value = value;
                     reply.capsule = Some(capsule);
                     reply.pending = Some(token);

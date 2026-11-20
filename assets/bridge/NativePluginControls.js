@@ -1002,13 +1002,15 @@ class NativePluginControls {
 
     insertChainArguments(args) {
         return args && typeof args === "object" && !Array.isArray(args)
-            && Object.keys(args).every(key => ["channel", "action", "token", "expected_folder"].indexOf(key) >= 0)
+            && Object.keys(args).every(key => ["channel", "action", "token", "expected_folder", "include_routing"].indexOf(key) >= 0)
             && typeof args.channel === "string" && !!args.channel.trim() && args.channel.length <= 256
             && !/[\x00-\x1f\x7f-\x9f]/.test(args.channel)
             && ["capture", "restore", "release"].indexOf(args.action) >= 0
             && (args.action === "capture" ? !Object.prototype.hasOwnProperty.call(args, "token")
                 : typeof args.token === "string" && /^[0-9A-F]{64}$/.test(args.token))
-            && (args.expected_folder === undefined || this.insertChainUid(args.expected_folder));
+            && (args.expected_folder === undefined || this.insertChainUid(args.expected_folder))
+            && (args.include_routing === undefined
+                || (args.action === "capture" && typeof args.include_routing === "boolean"));
     }
 
     insertChainResult(result, args) {
@@ -1025,6 +1027,35 @@ class NativePluginControls {
         const common = ["ok", "outcome", "scope", "format", "version", "folder", "verified", "effects_verified", "atomic_snapshot", "token"];
         const fields = args.action === "release" ? ["released"] : ["byte_count", "sha256", "part_count"];
         if (args.action === "restore") fields.push("load_accepted");
+        if (args.include_routing === true) {
+            const routing = result.routing;
+            if (!routing || typeof routing !== "object") return false;
+            if (routing.status === "observed") {
+                const uid = value => typeof value === "string" && value === value.toLowerCase()
+                    && this.insertChainUid(value.toUpperCase());
+                if (!exact(routing, ["status", "nodes"]) || !Array.isArray(routing.nodes)
+                    || routing.nodes.length > 1024 || !integer(result.part_count, 0, 128)) return false;
+                const ids = new Set();
+                for (const node of routing.nodes) {
+                    const fields = ["id", "kind", "successors"];
+                    if (!node || !uid(node.id) || ids.has(node.id) || !Array.isArray(node.successors)
+                        || node.successors.length > 32 || !node.successors.every(uid)) return false;
+                    if (node.kind === "splitter") {
+                        fields.push("number");
+                        if (node.number !== null && !integer(node.number, 0, 4294967295)) return false;
+                    } else if (node.kind === "slot") {
+                        fields.push("slot_index", "slot_id", "device_name");
+                        if (!integer(node.slot_index, 0, result.part_count - 1) || !uid(node.slot_id)
+                            || typeof node.device_name !== "string" || !node.device_name
+                            || node.device_name.length > 512 || /[\x00-\x1f\x7f-\x9f]/.test(node.device_name)) return false;
+                    } else if (node.kind !== "merger") return false;
+                    if (!exact(node, fields)) return false;
+                    ids.add(node.id);
+                }
+                if (routing.nodes.some(node => node.successors.some(id => id === node.id || !ids.has(id)))) return false;
+            } else if (!exact(routing, ["status"]) || ["absent", "unavailable"].indexOf(routing.status) < 0) return false;
+            fields.push("routing");
+        }
         return exact(result, common.concat(fields)) && result.ok === true
             && result.outcome === (args.action === "capture" ? "observed" : "applied_unverified")
             && result.scope === "insert_chain_state" && result.format === "host_multipreset_v1" && result.version === 1
@@ -1068,9 +1099,11 @@ class NativePluginControls {
                 || typeof service.request !== "function") return failure("not_applied");
             const capability = this.parse(service.capabilities());
             if (!this.sameContext(before) || !capability.ok || capability.api !== "fender-mcp-native-v1"
-                || capability.insert_chain_api !== "guarded_folder_collection_v1") return failure("not_applied");
+                || capability.insert_chain_api !== "guarded_folder_collection_v1"
+                || (args.include_routing === true && capability.insert_chain_routing_api !== "host_fxgraph_v1")) return failure("not_applied");
             const request = { operation: "insert_chain_" + args.action, bridge_session: before.session, document_epoch: before.document };
             if (args.expected_folder !== undefined) request.expected_folder = args.expected_folder;
+            if (args.include_routing === true) request.include_routing = true;
             if (args.action !== "capture") request.token = args.token;
             let auxiliary;
             if (args.action === "capture") {

@@ -50,6 +50,28 @@ function noClaims(value) {
     assert.equal(value[key], undefined, key);
 }
 
+test('insert-chain routing is opt-in and rejects an unresolved successor', () => {
+  const split = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+  const merge = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
+  const routing = { status: 'observed', nodes: [
+    { kind: 'splitter', id: split, number: 1, successors: [merge] },
+    { kind: 'merger', id: merge, successors: [] },
+  ] };
+  const args = { channel: 'Scratch', action: 'capture', include_routing: true };
+  const unsupported = harness();
+  assert.equal(unsupported.component.insertChainState(args).native_outcome, 'not_applied');
+  assert.equal(unsupported.calls.length, 0);
+  const options = { capabilityFields: { insert_chain_routing_api: 'host_fxgraph_v1' } };
+  const h = harness({ ...options, result: value => { value.routing = routing; } });
+  const result = h.component.insertChainState(args);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.routing)), routing);
+  assert.equal(JSON.parse(h.calls[0][1]).include_routing, true);
+  assert.equal(h.component.insertChainState({ ...args, action: 'release', token }).native_outcome, 'not_applied');
+  assert.equal(h.calls.length, 1);
+  const bad = harness({ ...options, result: value => { value.routing = { ...routing, nodes: [routing.nodes[0]] }; } });
+  assert.equal(bad.component.insertChainState(args).native_outcome, 'unknown');
+});
+
 test('insert-chain lifecycles use actual folder primary, exact3/2/2 arity and trusted context', () => {
   const h = harness();
   for (const action of ['capture', 'restore', 'release']) {

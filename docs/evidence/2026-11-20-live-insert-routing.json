@@ -1,0 +1,46 @@
+{
+  "host": "Studio Pro 8.1.1.113103 macOS arm64",
+  "run": "R151",
+  "tool": "insert_chain_state",
+  "scope": "Host-authored insert-chain routing snapshot",
+  "native_outcomes_and_cleanup": {
+    "requests": 29,
+    "rpc_seconds": 3.588,
+    "results": [
+      {
+        "channel": "nested",
+        "routing": "observed",
+        "parts": 2,
+        "capsule_bytes": 2859
+      },
+      {
+        "channel": "flat",
+        "routing": "absent",
+        "parts": 1,
+        "capsule_bytes": 1500
+      },
+      {
+        "channel": "nested",
+        "routing": "omitted",
+        "parts": 2,
+        "capsule_bytes": 2859
+      }
+    ],
+    "nodes": 6,
+    "edges": 7,
+    "saved_slot_ids_matched": true,
+    "wrong_folder_known_refusal": true,
+    "all_capsules_released": true,
+    "host": {
+      "exit_code": 0,
+      "wall_seconds": 47.5
+    },
+    "owner": {
+      "exit_code": 0,
+      "signal": null
+    },
+    "protected_files": 132,
+    "managed_files_restored": 18,
+    "saved": false
+  }
+}

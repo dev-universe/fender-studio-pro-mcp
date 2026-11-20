@@ -204,6 +204,8 @@ For a supported saved Impact instance, `song_read` and `song-read` include `inst
 
 For saved pre-fader insert racks with supported Splitter routing, `song_read` and `song-read` include `mixer[].insert_routing.nodes`. The ordered `successors` show where each node sends audio. Slot nodes include their saved rack index, slot ID and device name. The file reader reflects the last save. A warning identifies a rack whose links or slots could not be verified. [Studio Pro 8.1.1 verification](docs/evidence/2026-11-20-saved-insert-routing.json)
 
+For the current insert rack, use `insert_chain_state` with `action: "capture"` and `include_routing: true`. Supply the mixer channel and current `expected_document`. Use `expected_folder` to pin the exact folder from `plugin_inspect`. `routing.status` is `observed` when the host capture includes supported directed links, `absent` for a capture without graph metadata, or `unavailable` when the metadata cannot be verified. Slot nodes show the captured plugin class name and slot ID. Release the capture token when finished. [Live 8.1.1 verification](docs/evidence/2026-11-20-live-insert-routing.json)
+
 ## Validation
 
 A live run checked 60 built-in plugin classes. Of those, 59 passed a representative parameter or graph edit with readback and restoration. Phase Meter passed an insert-slot bypass check. [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md)
