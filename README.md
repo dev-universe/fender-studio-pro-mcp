@@ -116,6 +116,21 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### Verify a parameter through a separate read
+
+Set `readback` to `true` on `plugin_parameter_set` with the canonical name from
+`plugin_parameters`, the current `expected_document` and `expected_instance`,
+and an explicit `dsp` or `controller` source. A verified native write keeps its
+immediate `after` value and triggers one separate read of the same parameter
+after a 150 ms wait. `readback.status` is `matched`, `mismatch`, or `unavailable`.
+A mismatch or unavailable check returns `applied_unverified` and includes the
+observed parameter or the reason the read could not be confirmed. A match
+describes the value at that observation time. This option applies to ordinary
+scalar writes. Studio Pro 8.1.1 was verified to report both a stable match and a
+transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
+Stereo's phase switch matched the controller read after changing and restoring it.
+[Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
@@ -184,7 +199,11 @@ Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose
 
 FabFilter Pro-Q 2 2.30 passed individual change, independent readback and restoration of all 327 writable parameters in Studio Pro 8.1.1. The legacy `vstp1073741828` row also passed on this version. [Pro-Q 2 verification details](docs/evidence/2026-11-20-fabfilter-proq2-controls.json)
 
-FabFilter Twin 2 2.41 passed individual change, independent readback and restoration for 1,017 of 1,019 writable parameters in Studio Pro 8.1.1. The verified values include all 883 named controls and all 128 virtual MIDI CC values. During MIDI CC changes, 20 linked named controls moved and 15 needed separate restoration. Direct writes to the program list and legacy CC remain unverified. [Twin 2 verification](docs/evidence/2026-11-20-fabfilter-twin2-controls.json)
+FabFilter Timeless 2 2.41 passed individual change, independent readback and restoration for all 841 writable parameters in Studio Pro 8.1.1. The checks covered 128 virtual MIDI CC values and confirmed that a separate read observed the changed legacy controller value before restoration. [Timeless 2 verification](docs/evidence/2026-11-20-fabfilter-timeless2-controls.json)
+
+FabFilter Twin 2 2.41 passed individual change, independent readback and restoration for 1,018 of 1,019 writable parameters in Studio Pro 8.1.1. The verified values include all 883 named controls and all 128 virtual MIDI CC values. During MIDI CC changes, 20 linked named controls moved and 15 needed separate restoration. With the transport stopped, the program list and its read-only counter changed from 0 to 1 and returned to 0. One companion value needed separate restoration, after which all 1,020 reported values matched. The legacy CC remains pending. [Twin 2 writable controls](docs/evidence/2026-11-20-fabfilter-twin2-controls.json) · [Direct program list verification](docs/evidence/2026-11-20-fabfilter-twin2-direct-program.json)
+
+FabFilter Timeless 3 3.10 passed individual change, independent readback and restoration for all 1,143 writable parameters in Studio Pro 8.1.1. The checks covered 128 virtual MIDI CC values and confirmed that a separate read observed the changed legacy controller value before restoration. [Timeless 3 verification](docs/evidence/2026-11-20-fabfilter-timeless3-controls.json)
 
 FabFilter Twin 3 3.10 passed individual change, independent readback and restoration of all 1,509 writable parameters in Studio Pro 8.1.1, including all 128 virtual MIDI CC values. A CC write can also change a parameter linked by MIDI Learn. Use `plugin_parameters` to check the linked value on the current instance. The verification restored the original values and matched all 1,510 reported parameters. [Full Twin 3 verification](docs/evidence/2026-11-20-fabfilter-twin3-controls.json) · [Virtual CC details](docs/evidence/2026-11-20-fabfilter-twin3-midi-cc.json) · [FabFilter factory MIDI CC table](https://www.fabfilter.com/help/twin/support/midi)
 
