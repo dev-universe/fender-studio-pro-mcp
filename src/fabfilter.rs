@@ -264,7 +264,7 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
     if !matches!(
         query.product,
-        Product::ProQ4 | Product::ProC3 | Product::ProR2 | Product::Twin3
+        Product::ProQ4 | Product::ProC3 | Product::ProR | Product::ProR2 | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
@@ -330,7 +330,7 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::ProQ4 => b"Signature=FQ4p",
         Product::ProC3 => b"Signature=FC3p",
-        Product::ProR2 if bytes.starts_with(b"FPRr") => {
+        Product::ProR | Product::ProR2 if bytes.starts_with(b"FPRr") => {
             return bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0");
         }
         Product::ProR2 => b"Signature=FR2p",
@@ -619,12 +619,14 @@ mod tests {
     }
 
     #[test]
-    fn pro_r_2_accepts_its_text_and_legacy_factory_binary_profiles() {
+    fn pro_r_products_accept_their_observed_factory_formats() {
         let text = b"[Preset]\r\nSignature=FR2p\r\nVersion=6\r\nAuthor=Fixture\r\n";
         let binary = b"FPRr\x04\0\0\0abcdefgh";
         assert!(matches_preset(Product::ProR2, text));
         assert!(matches_preset(Product::ProR2, binary));
-        assert!(!matches_preset(Product::ProR, binary));
+        assert!(matches_preset(Product::ProR, binary));
+        assert!(!matches_preset(Product::ProR, text));
+        assert!(!matches_preset(Product::ProR, b"FPRr\x05\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProR2, b"FPRr\x05\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProR2, b"FPRr\x04\0\0\0"));
         assert!(!matches_preset(

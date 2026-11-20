@@ -915,7 +915,12 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const keys = ["product", "channel", "slot", "track", "expected_instance", "filename", "sha256", "data_hex"];
         const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });
         const label = value => typeof value === "string" && value.trim() && value.length <= 256 && !/[\x00-\x1f\x7f]/.test(value);
-        const effectClasses = {"Pro-Q 4":"ED57BD72-5C60-467E-A64D-D2F400758B6F", "Pro-C 3":"B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9", "Pro-R 2":"6070873C-802A-4B07-8FC0-6AB5459154E9"};
+        const effectClasses = {
+            "Pro-Q 4": "ED57BD72-5C60-467E-A64D-D2F400758B6F",
+            "Pro-C 3": "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9",
+            "Pro-R": "036EB530-2A59-11E2-A281-70076288709B",
+            "Pro-R 2": "6070873C-802A-4B07-8FC0-6AB5459154E9",
+        };
         const effectClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(effectClasses, args.product)
             ? effectClasses[args.product] : null;
         const effect = effectClass && label(args.channel) && Number.isInteger(args.slot)

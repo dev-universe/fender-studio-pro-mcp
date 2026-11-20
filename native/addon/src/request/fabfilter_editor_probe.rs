@@ -83,6 +83,30 @@ const PRO_C3: Image = Image {
     destructor: 0x6a4c0,
 };
 
+const PRO_R_BINARY_HEADER: &[u8] = b"FPRr\x04\0\0\0";
+
+const PRO_R: Image = Image {
+    class_uid: "036EB530-2A59-11E2-A281-70076288709B",
+    uuid: [
+        0x2d, 0x52, 0x4f, 0x19, 0xa7, 0xa0, 0x3d, 0xce, 0x93, 0xf6, 0x1d, 0x17, 0xd8, 0x1b, 0xfa,
+        0x44,
+    ],
+    controller_table: 0x15a398,
+    state_member: 0xd0,
+    state_table: 0x152378,
+    state_file_method: 0x53030,
+    view_table: 0x15af48,
+    editor_table: 0x15d268,
+    product: "pro_r",
+    executable: "FabFilter Pro-R",
+    binary_sha256: "f3eb810af2ed22ed9ec8877ae665ed659d0305c084e632812395026a54b214a6",
+    binary_size: 3_226_192,
+    preset_format: PresetFormat::Binary(PRO_R_BINARY_HEADER),
+    constructor: 0x26d50,
+    loader: 0x6cd80,
+    destructor: 0x2fb44,
+};
+
 const PRO_R2: Image = Image {
     class_uid: "6070873C-802A-4B07-8FC0-6AB5459154E9",
     uuid: [
@@ -131,7 +155,7 @@ struct Image {
 }
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
-    [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R2]
+    [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2]
         .into_iter()
         .find(|product| product.class_uid == class_uid)
 }
@@ -385,7 +409,7 @@ fn preset_bytes(
         PresetFormat::Binary(magic) => bytes.len() >= 16 && bytes.starts_with(magic),
         PresetFormat::Text(signature) => matches_text(signature, None),
         PresetFormat::ProR2 => {
-            (bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0"))
+            (bytes.len() >= 16 && bytes.starts_with(PRO_R_BINARY_HEADER))
                 || matches_text(b"Signature=FR2p", Some(b"Version=6"))
         }
     };
@@ -526,6 +550,7 @@ mod tests {
         for (class_uid, product) in [
             ("ED57BD72-5C60-467E-A64D-D2F400758B6F", "pro_q_4"),
             ("B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9", "pro_c_3"),
+            ("036EB530-2A59-11E2-A281-70076288709B", "pro_r"),
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
@@ -558,6 +583,10 @@ mod tests {
                 valid
             );
             assert!(preset_bytes(&PRO_C3, "Room.ffp", &digest, &hex).is_none());
+            assert_eq!(
+                preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
+                valid && bytes.starts_with(PRO_R_BINARY_HEADER),
+            );
         }
     }
 
