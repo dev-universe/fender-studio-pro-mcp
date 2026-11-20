@@ -1002,6 +1002,7 @@ class NativePluginControls {
 
     insertGraphNodeFields(operation) {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
+        if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") return ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
         return null;
     }
@@ -1308,6 +1309,8 @@ class NativePluginControls {
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
+            if (request.operation === "insert_splitter_add" && capability.insert_splitter_add_api !== "slot_merger_splitter_add_v1")
+                throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")

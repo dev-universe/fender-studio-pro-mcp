@@ -373,3 +373,41 @@ test('nested Splitter removal binds both branches and rejects mismatched native 
   assert.equal(result.splitter_node, undefined);
   assert.equal(stale.calls.length, 1);
 });
+
+test('Splitter insertion anchors one directed connection and rejects mismatched native receipts', () => {
+  const args = { channel: 'Scratch', slot: 0, plugin: 'Mixtool', expected_instance: folderUid,
+    expected_graph: '10000000-1234-1234-1234-123456789ABC',
+    after_node: '20000000-1234-1234-1234-123456789ABC',
+    following_node: '30000000-1234-1234-1234-123456789ABC' };
+  const { channel, slot, plugin, ...ids } = args;
+  const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
+    native_class: 'AudioEffect', object_id: 'Mixtool' };
+  const capabilityFields = { insert_splitter_add_api: 'slot_merger_splitter_add_v1' };
+  const success = body => ({ ...body, instance, ok: true, outcome: 'applied_unverified', verified: false });
+  const device = {};
+  const prepare = options => {
+    const h = harness(options);
+    h.component.pluginOf = target => {
+      assert.equal(target.channel, channel);
+      assert.equal(target.slot, slot);
+      assert.equal(target.plugin, plugin);
+      return { device, name: plugin };
+    };
+    return h;
+  };
+  const good = prepare({ capabilityFields, nativeReply: success });
+  assert.equal(good.component.insertSplitterAdd({ ...args, following_node: args.after_node }).native_outcome, 'not_applied');
+  assert.equal(good.calls.length, 0);
+  assert.equal(good.component.insertSplitterAdd(args).native_outcome, 'applied_unverified');
+  assert.equal(good.calls[0][0], device);
+  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation: 'insert_splitter_add', ...ids });
+  const missing = prepare({ capabilityFields: { insert_splitter_remove_api: 'nested_splitter_remove_v1' } });
+  assert.equal(missing.component.insertSplitterAdd(args).native_outcome, 'not_applied');
+  assert.equal(missing.calls.length, 0);
+  const stale = prepare({ capabilityFields,
+    nativeReply: body => ({ ...success(body), expected_graph: args.following_node }) });
+  const result = stale.component.insertSplitterAdd(args);
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.expected_graph, undefined);
+  assert.equal(stale.calls.length, 1);
+});

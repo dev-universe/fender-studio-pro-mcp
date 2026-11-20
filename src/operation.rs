@@ -87,6 +87,8 @@ pub enum Operation {
     InsertSlotMove(InsertSlotMove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
+    #[serde(rename = "insertSplitterAdd", alias = "insert_splitter_add")]
+    InsertSplitterAdd(InsertSplitterAdd),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
@@ -789,6 +791,20 @@ pub struct InsertSlotMove {
     pub expected_instance: String,
     pub expected_graph: String,
     pub source_node: String,
+    pub after_node: String,
+    pub following_node: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertSplitterAdd {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
     pub after_node: String,
     pub following_node: String,
 }
@@ -1835,6 +1851,16 @@ impl Operation {
                     &p.expected_instance,
                     &p.expected_graph,
                     &[&p.source_node, &p.after_node, &p.following_node],
+                )?;
+            }
+            Self::InsertSplitterAdd(p) => {
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[&p.after_node, &p.following_node],
                 )?;
             }
             Self::InsertSplitterRemove(p) => {

@@ -212,6 +212,35 @@ impl GraphOwnership {
         }
     }
 
+    pub(super) fn check_splitter_add_targets(
+        &self,
+        graph: &str,
+        after: &str,
+        following: &str,
+        effect: &str,
+    ) -> Result<(), String> {
+        if self.value.graph.object_uid.as_deref() != Some(graph) {
+            return Err("insert graph UUID changed".into());
+        }
+        if self.value.children.len() > 30 {
+            return Err("insert graph cannot remain within the supported child bound".into());
+        }
+        let slot = self.value.children.iter().any(|child| {
+            matches!(child, GraphChild::Slot { node, device, .. }
+                if node.object_uid.as_deref() == Some(after)
+                    && device.object_uid.as_deref() == Some(effect))
+        });
+        let merger = self.value.children.iter().any(|child| {
+            matches!(child, GraphChild::Merger { node, .. }
+                if node.object_uid.as_deref() == Some(following))
+        });
+        if slot && merger {
+            Ok(())
+        } else {
+            Err("the requested effect slot and merger are not owned by this graph".into())
+        }
+    }
+
     pub(super) fn check_splitter_remove_targets(
         &self,
         [graph, splitter, merger, first, second]: [&str; 5],
