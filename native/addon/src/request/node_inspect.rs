@@ -195,6 +195,28 @@ pub(super) enum Inventory {
     ImpactOutputs(impact_outputs::OutputInventory),
 }
 
+pub(super) fn set_impact_output(
+    ctx: &Context<'_>,
+    index: u32,
+    name: &str,
+    expected_active: bool,
+    active: bool,
+) -> (Value, Option<Inventory>) {
+    let mut outputs = match impact_outputs::OutputInventory::capture(ctx) {
+        Ok(outputs) => outputs,
+        Err(reason) => {
+            return (
+                error("impact_output_unavailable", &reason, "not_applied"),
+                None,
+            );
+        }
+    };
+    let value = outputs.change(ctx, index, name, expected_active, active);
+    let receipt =
+        (value["outcome"] == "applied_verified").then_some(Inventory::ImpactOutputs(outputs));
+    (value, receipt)
+}
+
 /// Read-only metadata of a bridge-created object. This never authorizes a
 /// subsequent mutation and makes no claim that the auxiliary owns the Device.
 pub(super) enum Auxiliary {

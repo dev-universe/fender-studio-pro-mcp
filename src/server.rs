@@ -212,6 +212,12 @@ impl McpServer {
                 "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
                 true,
             ),
+            named::<ImpactOutputSet>(
+                "impact_output_set",
+                "impactOutputSet",
+                "Enable or disable one secondary output on the exact Impact instrument (indices 1 through 31). Read plugin_inspect with node_scope impact_outputs first. Supply that track, document, instance, zero-based output index, exact name, and expected acknowledged state. Use only when the requested and acknowledged states agree. Disabling removes the corresponding mixer channel. The last active output cannot be disabled. Never retry an unknown outcome.",
+                true,
+            ),
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
@@ -579,7 +585,7 @@ mod tests {
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 50);
+        assert_eq!(specs.len(), 51);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -617,7 +623,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 50);
+        assert_eq!(specs.len(), 51);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -664,7 +670,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 50);
+        assert_eq!(McpServer::specs().len(), 51);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -867,6 +873,7 @@ mod tests {
             "plugin_editor_open",
             "plugin_presets",
             "plugin_action",
+            "impact_output_set",
             "insert_chain_state",
             "panner_set",
             "splitter_set",
@@ -881,7 +888,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 50);
+        assert_eq!(specs.len(), 51);
     }
 
     #[test]
@@ -1179,7 +1186,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 50);
+        assert_eq!(specs.len(), 51);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1262,7 +1269,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 50);
+        assert_eq!(McpServer::specs().len(), 51);
     }
 
     #[test]
@@ -1310,7 +1317,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 50);
+        assert_eq!(specs.len(), 51);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")
