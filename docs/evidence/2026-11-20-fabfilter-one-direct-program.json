@@ -1,0 +1,38 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter One",
+  "version": "3.52",
+  "format": "VST3",
+  "program_list": {
+    "id": "vstp1073741959",
+    "raw_values": [
+      0,
+      1,
+      0
+    ]
+  },
+  "read_only_counter": {
+    "id": "vstp1073741960",
+    "raw_values": [
+      0,
+      1,
+      0
+    ]
+  },
+  "separate_companion_restore": "vstp1073741825",
+  "transport_played": false,
+  "reported_values_restored": 168,
+  "individually_verified_writable_parameters": 165,
+  "remaining_writable_parameters": [
+    "vstp1073741832",
+    "vstp1073741828"
+  ],
+  "verification": {
+    "requests": 71,
+    "active_seconds": 6.35,
+    "host_seconds": 127.156,
+    "protected_files_preserved": 224,
+    "runtime_files_preserved": 18,
+    "scratch_saved": false
+  }
+}
