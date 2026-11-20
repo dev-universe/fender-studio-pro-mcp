@@ -166,6 +166,8 @@ FabFilter Pro-Q 4 4.13 passed individual change, independent readback and restor
 
 FabFilter Pro-R 2 2.06 passed individual change, independent readback and restoration of all 272 writable parameters in Studio Pro 8.1.1. The final readback matched all 273 reported parameters. [Pro-R 2 verification](docs/evidence/2026-11-20-fabfilter-pror2-controls.json)
 
+FabFilter Saturn 1.31 passed individual change, independent readback and restoration of all 1,035 writable parameters in Studio Pro 8.1.1. The full restored snapshot matched all 1,036 reported parameters. [Saturn verification](docs/evidence/2026-11-20-fabfilter-saturn-controls.json)
+
 FabFilter Saturn 2 2.13 passed individual change, independent readback and restoration of all 1,087 writable parameters in Studio Pro 8.1.1. The full restored snapshot matched all 1,088 reported parameters. [Saturn 2 verification](docs/evidence/2026-11-20-fabfilter-saturn2-controls.json)
 
 FabFilter Simplon 1.42 passed individual change, independent readback and restoration of all 155 writable parameters in Studio Pro 8.1.1. Four virtual MIDI CC writes also changed a linked filter control. Restoring those controls and the affected internal value returned all 156 reported parameters to baseline. [Simplon verification](docs/evidence/2026-11-20-fabfilter-simplon-controls.json)
