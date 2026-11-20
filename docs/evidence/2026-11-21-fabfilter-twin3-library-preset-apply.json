@@ -1,0 +1,28 @@
+{
+  "date_local": "2026-11-21",
+  "tested_source": "7a0cd71",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": {"name": "FabFilter Twin 3", "format": "VST3", "version": "3.10", "vendor_signature_verified": true},
+  "tool": "fabfilter_preset_apply",
+  "target": "exclusively selected instrument track with its editor open",
+  "preset": {"name": "Ambient Mover", "folder": "_010 Arp", "source": "local library with official factory file bytes", "bytes": 5758},
+  "file_apply_count": 1,
+  "receipt": "applied_unverified",
+  "visible_editor_title_before_and_after": ["Default Sound", "Ambient Mover"],
+  "provider_rows_compared": 1510,
+  "changed_rows_match_previous_ui_load": 433,
+  "changed_ordinary_named_rows": 432,
+  "before_and_after_full_native_digests_verified": true,
+  "guard_refusals": {
+    "stale_catalog": "preset_catalog_changed",
+    "stale_document": "document_changed",
+    "wrong_instance": "native_rejected",
+    "closed_editor": "native_rejected",
+    "all_provider_values_preserved": true
+  },
+  "restoration": {"visible_editor_title": "Default Sound", "state_capsule_restored": true, "values_restored_by_capsule": 1509, "additional_restored_value": "vstp1073741826", "all_values_restored": 1510, "component_fingerprint_restored": true},
+  "requests": 163,
+  "owner_wall_seconds": 95.153,
+  "host_wall_seconds": 187.963,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "staged_preset_removed": true, "protected_files_verified": 167, "managed_files_restored": 18, "preset_tree_entries_unchanged": 584}
+}
