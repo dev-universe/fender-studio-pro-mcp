@@ -941,5 +941,23 @@
     "protected_files": 188,
     "managed_files": 18,
     "saved": false
+  },
+  "r104_twin2_scoped_writable": {
+    "status": "verified_ready_scope",
+    "new_distinct_roundtrips": 134,
+    "plugin_verified_writable": 1017,
+    "plugin_total_writable": 1019,
+    "reported_values": 1020,
+    "new_virtual_cc_verified": 128,
+    "common_verified": 6,
+    "linked_named_cases": 20,
+    "linked_named_separately_restored": 15,
+    "pending_ids": ["vstp1073741959", "vstp1073741828"],
+    "requests": 3851,
+    "active_seconds": 307.945,
+    "wall_seconds": 348.4,
+    "protected_files": 187,
+    "managed_files": 18,
+    "saved": false
   }
 }
