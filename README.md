@@ -166,6 +166,8 @@ FabFilter Pro-Q 4 4.13 passed individual change, independent readback and restor
 
 FabFilter Pro-R 2 2.06 passed individual change, independent readback and restoration of all 272 writable parameters in Studio Pro 8.1.1. The final readback matched all 273 reported parameters. [Pro-R 2 verification](docs/evidence/2026-11-20-fabfilter-pror2-controls.json)
 
+FabFilter Saturn 2 2.13 passed individual change, independent readback and restoration of all 1,087 writable parameters in Studio Pro 8.1.1. The full restored snapshot matched all 1,088 reported parameters. [Saturn 2 verification](docs/evidence/2026-11-20-fabfilter-saturn2-controls.json)
+
 Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. The legacy row `vstp1073741828` briefly accepted a value in Pro-G, Pro-C 2, Pro-C 3 and Pro-DS, then returned to baseline on an independent `plugin_parameters` call. Treat that row as transient in these versions. In a separate SDK test, the Pro-G processor received the input and emitted its own value under the same ID. [Legacy MIDI parameter verification](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
 
 FabFilter Pro-Q 2 2.30 passed individual change, independent readback and restoration of all 327 writable parameters in Studio Pro 8.1.1. The legacy `vstp1073741828` row also passed on this version. [Pro-Q 2 verification details](docs/evidence/2026-11-20-fabfilter-proq2-controls.json)

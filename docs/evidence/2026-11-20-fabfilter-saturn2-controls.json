@@ -1,0 +1,22 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Saturn 2",
+  "version": "2.13",
+  "format": "VST3",
+  "reported_parameters": 1088,
+  "writable_parameters": 1087,
+  "individually_changed_read_and_restored": 1087,
+  "named_writable_parameters_verified": 951,
+  "virtual_midi_cc_controls_verified": 128,
+  "other_high_range_controls_verified": 8,
+  "verification": {
+    "legacy_cc_independently_verified": true,
+    "complete_restored_values": 1088,
+    "high_range_requests": 3458,
+    "high_range_active_seconds": 285.944,
+    "host_seconds": 320.2,
+    "protected_files": 175,
+    "managed_runtime_files": 18,
+    "scratch_saved": false
+  }
+}
