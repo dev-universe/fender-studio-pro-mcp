@@ -77,7 +77,7 @@ impl McpServer {
             named::<ChannelList>(
                 "channels_list",
                 "channels",
-                "Read mixer channels and their actual state. Track and audio channel names may differ. Set include_color to true to also read each available strip's signed ARGB color.",
+                "Read mixer channels and their actual state. Track and audio channel names may differ. Set include_color to read signed ARGB colors and include_selection to read Console selection when the channel can be identified.",
                 false,
             ),
             named::<PannerQuery>(

@@ -305,3 +305,30 @@ test('mixer channel colors are opt-in and signed ARGB', () => {
   assert.deepEqual(expanded.map(channel => channel.color_argb), [0xffcc1122 | 0, -1, null, null, null]);
   assert.deepEqual(expanded.map(({ color_argb, ...channel }) => channel), legacy);
 });
+
+test('mixer selection identifies unique audio strips and rejects an inconsistent list', () => {
+  const host = bridgeHarness();
+  const left = { label: 'Left', mediaType: 'Audio' };
+  const notes = { label: 'Left', mediaType: 'Music' };
+  const right = { label: 'Right', mediaType: 'Audio' };
+  const repeated = { label: 'Duplicate', mediaType: 'Audio' };
+  const displayed = [left, notes, right, repeated, { ...repeated }];
+  const selection = [left, notes];
+  const list = {
+    numChannels: displayed.length,
+    numSelectedChannels: selection.length,
+    getChannel: index => displayed[index],
+    getSelectedChannel: index => selection[index],
+  };
+  const lookup = host.Host.Objects.getObjectByUrl;
+  host.Host.Objects.getObjectByUrl = url => url.endsWith('/Environment/MixerConsole')
+    ? { getChannelList: kind => kind === 1 ? list : null }
+    : lookup(url);
+  const rows = [{ label: 'Left' }, { label: 'Right' }, { label: 'Duplicate' }, { label: 'Unknown' }];
+  host.bridge.component = { channels: () => rows };
+  const read = (args) => host.writeRequest({ op: 'channels', args }).result;
+  assert.deepEqual(read({}), rows);
+  assert.deepEqual(read({ include_selection: true }).map(row => row.console_selected), [true, false, null, null]);
+  selection[0] = { ...left };
+  assert.deepEqual(read({ include_selection: true }).map(row => row.console_selected), [null, null, null, null]);
+});

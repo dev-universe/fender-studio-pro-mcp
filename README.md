@@ -164,6 +164,12 @@ Set `include_color: true` to also read each strip's signed 32-bit
 `color_argb` value. Studio Pro can link an instrument's primary strip
 color to its arrangement track. [Impact color verification](docs/evidence/2026-11-21-impact-primary-mixer-color.json)
 
+Set `include_selection: true` to read `console_selected` for each uniquely
+identified audio strip. The value is `null` when the Console cannot match
+the strip. Use `tracks_list` to check arrangement selection. In Studio Pro
+8.1.1, selecting an instrument channel in the Console can change arrangement
+selection, record arm, and monitoring. [Impact Console verification](docs/evidence/2026-11-21-impact-console-selection.json)
+
 Use `impact_output_set` to change one of the 31 secondary outputs at indices
 1 through 31. Provide the track, current
 `expected_document` and `expected_instance`, `output_index` and `output_name`
