@@ -50,7 +50,7 @@ R204에서 Twin 3 제조사 파일을 카탈로그로 적용하고 1,510개 값�
 
 R208은 실제 8.1.1에서 Pro-C 3 공식 파일을 적용해 바뀐 35개 값과 237개 전체 원복을 확인했다. 시험 전 환경설정·프리셋 폴더도 확인했다. [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 필수 검사 대기 중이며, Twin 3 [PR #64](https://github.com/dev-universe/fender-studio-pro-mcp/pull/64)는 main에 병합됐다. 제조사 파일 적용은 3/23종이다. 다음 내장 단위는 R166의 External Effect Send 관찰자와 별도 경로 객체다.
 
-R210에서 External Effect Stereo의 실제 Send 할당을 없음·메인·없음으로 확인했다. 편집기를 열기 전을 포함해 7회 조회했고 컨트롤러 24개를 원복했다. [PR #66](https://github.com/dev-universe/fender-studio-pro-mcp/pull/66)은 필수 검사 대기 중이다. 다음은 메뉴 구성·확인·해제 중에 동일한 경로 객체를 독립 확인하는 R211이다. Pro-C 3 [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 main에 병합됐다.
+R210에서 External Effect Stereo의 실제 Send 할당을 없음·메인·없음으로 확인했다. 편집기를 열기 전을 포함해 7회 조회했고 컨트롤러 24개를 원복했다. [PR #66](https://github.com/dev-universe/fender-studio-pro-mcp/pull/66)은 main에 병합됐다. R211은 새 응답 필드 검증에서 멈췄고 시험 곡과 관리 파일을 원복했다. 수정 후보를 새 곡에서 검증하는 R212부터 이어간다. Pro-C 3 [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 main에 병합됐다.
 
 ## 유지할 사용자 결정
 
