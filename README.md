@@ -178,6 +178,10 @@ FabFilter Twin 3 3.10 passed individual change, independent readback and restora
 
 FabFilter Pro-R 1.20 passed individual change, independent readback and restoration of all 221 writable parameters in Studio Pro 8.1.1. Restoration matched all 222 reported parameters, including the independent check of the legacy MIDI CC value. [Pro-R verification](docs/evidence/2026-11-20-fabfilter-pror-controls.json)
 
+### FabFilter Twin 3 factory preset file
+
+Twin 3 3.10 loaded the official `Ambient Mover.ffp` using **Open Other Preset** in the plug-in editor. The reader observed 433 changed parameters in Studio Pro 8.1.1. Restoring the original state with `plugin_state` returned 1,509 of 1,510 values. One verified `plugin_parameter_set` write returned the remaining internal float to zero. The complete typed readback, independent DSP digest and recaptured host component fingerprint all matched the baseline. This verification covers the named file and version. [Verification details](docs/evidence/2026-11-20-fabfilter-twin3-vendor-preset.json) · [FabFilter loading instructions](https://prod.fabfilter.com/help/twin/presets/loadingpresets)
+
 ### FabFilter instrument program changes
 
 Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
