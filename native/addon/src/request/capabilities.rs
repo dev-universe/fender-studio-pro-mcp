@@ -1,5 +1,7 @@
 use super::*;
 
+#[path = "external_send_route.rs"]
+mod external_send_route;
 #[path = "fabfilter_editor_probe.rs"]
 mod fabfilter_editor_probe;
 
@@ -83,6 +85,9 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
         let get: Borrowed = unsafe { method(alias.0, 3) };
         if let Some(plugin) = hold(unsafe { get(alias.0) }) {
             value["alias"] = object(plugin.0);
+            if let Some(assigned) = external_send_route::assigned(ctx, plugin.0) {
+                value["external_stereo_send_route"] = json!({"assigned": assigned});
+            }
             if matches!(
                 ctx.instance.class_uid.as_str(),
                 "ED57BD72-5C60-467E-A64D-D2F400758B6F"

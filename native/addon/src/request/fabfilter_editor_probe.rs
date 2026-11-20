@@ -103,38 +103,6 @@ struct Image {
     destructor: usize,
 }
 
-#[link(name = "System")]
-unsafe extern "C" {
-    static mach_task_self_: u32;
-    fn mach_vm_read_overwrite(
-        task: u32,
-        address: u64,
-        size: u64,
-        data: u64,
-        count: *mut u64,
-    ) -> i32;
-}
-
-// All addresses come from retained host objects or version-checked image metadata.
-fn read_word(base: usize, offset: usize) -> Option<usize> {
-    let address = base.checked_add(offset)?;
-    if base == 0 || address % 8 != 0 {
-        return None;
-    }
-    let mut data = 0usize;
-    let mut count = 0;
-    let status = unsafe {
-        mach_vm_read_overwrite(
-            mach_task_self_,
-            address as u64,
-            8,
-            &mut data as *mut usize as u64,
-            &mut count,
-        )
-    };
-    (status == 0 && count == 8).then_some(data)
-}
-
 fn mapped_image(table: usize) -> Option<(usize, [u8; 16])> {
     let mut info = DlInfo {
         file: ptr::null(),
