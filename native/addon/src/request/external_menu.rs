@@ -33,6 +33,7 @@ pub(super) struct Receipt {
     port: Port,
     controller: Controller,
     identity: Option<identity::Identity>,
+    route: Option<external_send_route::HeldRoute>,
 }
 impl Receipt {
     pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
@@ -45,6 +46,9 @@ impl Receipt {
                 identity.check(ctx)?;
                 self.controller.check()?;
                 ctx.check()?;
+            }
+            if let Some(route) = &self.route {
+                route.check(ctx)?;
             }
             Ok(())
         };
@@ -115,6 +119,11 @@ pub(super) fn observe_with_query(
         check_selected(ctx, &controller, port, selected)?;
         drop(manager);
         check_selected(ctx, &controller, port, selected)?;
+        let route = match port {
+            Port::Send => external_send_route::HeldRoute::from_context(ctx),
+            Port::Return => None,
+        };
+        let mut held_route_observations = 0;
         let mut guard = || {
             if let Some(identity) = &identity {
                 identity.check(ctx)?;
@@ -124,6 +133,10 @@ pub(super) fn observe_with_query(
                 identity.check(ctx)?;
                 controller.check()?;
                 ctx.check()?;
+            }
+            if let Some(route) = &route {
+                route.check(ctx)?;
+                held_route_observations += 1;
             }
             Ok(())
         };
@@ -162,14 +175,15 @@ pub(super) fn observe_with_query(
                 port,
                 controller,
                 identity,
+                route,
             });
         }
         after_allocator?;
         let observed = attempt.result.map_err(|e| e.to_string())?;
-        receipt
+        let receipt = receipt
             .as_ref()
-            .ok_or("missing parameter binding receipt")?
-            .check(ctx)?;
+            .ok_or("missing parameter binding receipt")?;
+        receipt.check(ctx)?;
         let rows:Vec<_>=observed.rows.iter().map(|r|json!({"path":r.path,"name":r.name,"title":r.title,"category":r.category,"checked":r.checked,"enabled":r.enabled,"has_submenu":r.has_submenu,"handler_present":r.handler_present,"kind":if r.has_submenu{"submenu"}else{"opaque"}})).collect();
         let mut result = json!({"ok":true,"outcome":"observed","operation":"external_port_menu","source":"controller","instance":ctx.instance,"port":port.text(),"parameter":{"name":port.native().name(),"tag":port.native().tag()},"menu_class":observed.menu_class,"coverage":{"complete":true,"max_rows":256,"max_depth":4,"max_total_text_bytes":32768,"max_text_bytes_each":1024,"row_count":rows.len()},"rows":rows,"menu_phase":"closed_checked","lifecycle":{"construct_calls":1,"build_calls":1,"owned_menu_references_released":true,"root_menu_final_release_count":observed.root_menu_final_release_count,"builder_final_release_count":observed.builder_final_release_count,"post_cleanup_binding_checked":true,"nested_callbacks":"not counted; prepare/build/extension/cleanup may reenter"},"selection_authority":false,"selection_calls":0,"scope":"exact_external_parameter_menu_read","persistence_verified":false,"audio_verified":false,"value_semantics":"sequential_menu_materialization"});
         if include_check_only {
@@ -185,6 +199,10 @@ pub(super) fn observe_with_query(
         }
         if let Some(provenance) = &observed.provenance {
             result["provenance"] = provenance_value(provenance);
+        }
+        if let Some(route) = &receipt.route {
+            result["held_send_route"] = json!({"assigned":route.assigned(),"stable":true,
+                "guard_observations":held_route_observations});
         }
         Ok(result)
     })();

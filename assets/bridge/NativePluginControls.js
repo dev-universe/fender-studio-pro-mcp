@@ -100,6 +100,8 @@ class NativePluginControls {
             "selection_authority", "selection_calls", "scope", "persistence_verified", "audio_verified", "value_semantics"];
         if (request.provenance === true) fields.push("provenance");
         if (request.include_check_only === true) fields.push("check_only");
+        const hasHeldRoute = result && Object.prototype.hasOwnProperty.call(result, "held_send_route");
+        if (hasHeldRoute) fields.push("held_send_route");
         const classes = { "873281D9-58DE-4B2D-B3BD-528F549B1AD9": "External Effect Mono", "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4": "External Effect Stereo" };
         const uuid = value => typeof value === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(value) && value !== "00000000-0000-0000-0000-000000000000";
         if (!this.guiExact(result, fields) || result.ok !== true || result.outcome !== "observed" || result.operation !== "external_port_menu"
@@ -119,6 +121,13 @@ class NativePluginControls {
             || !this.guiExact(result.coverage, ["complete", "max_rows", "max_depth", "max_total_text_bytes", "max_text_bytes_each", "row_count"])
             || result.coverage.complete !== true || result.coverage.max_rows !== 256 || result.coverage.max_depth !== 4
             || result.coverage.max_total_text_bytes !== 32768 || result.coverage.max_text_bytes_each !== 1024 || result.coverage.row_count !== result.rows.length) return false;
+        if (hasHeldRoute) {
+            const route = result.held_send_route;
+            if (request.port !== "send" || result.instance.object_id !== "External Effect Stereo"
+                || !this.guiExact(route, ["assigned", "stable", "guard_observations"])
+                || typeof route.assigned !== "boolean" || route.stable !== true
+                || !this.guiInteger(route.guard_observations, 1, 1000000)) return false;
+        }
         if (request.provenance === true && (result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
             || request.port !== "send" || !this.externalMenuProvenance(result.provenance, result.rows))) return false;
         if (request.include_check_only === true && (!this.externalMenuCheckOnly(result.check_only, result.provenance) || result.instance.object_id !== "External Effect Stereo" || request.port !== "send")) return false;
@@ -1346,7 +1355,7 @@ class NativePluginControls {
             }
             if (externalMenu) {
                 if (result.ok === false) return this.externalMenuFailure(true, result);
-                if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
+                if (!this.externalMenuResult(result, request)) return this.externalMenuFailure(true, null);
             }
             if (rumbleNamedParameters && !this.rumbleNamedParametersResult(result, request)) return this.rumbleNamedParametersFailure();
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();

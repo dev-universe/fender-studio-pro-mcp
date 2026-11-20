@@ -29,6 +29,8 @@ mod direct_tests;
 pub(super) mod document_context;
 #[path = "request/external_menu.rs"]
 mod external_menu;
+#[path = "request/external_send_route.rs"]
+mod external_send_route;
 #[path = "request/folder_context.rs"]
 mod folder_context;
 #[path = "request/format.rs"]

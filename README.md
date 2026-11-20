@@ -257,6 +257,8 @@ On Studio Pro 8.1.1 for Apple Silicon, `plugin_inspect` can report `native.capab
 
 With the effect editor open, use `plugin_inspect` to identify the current instance and `external_port_menu` with `port: "send"` to read the current menu. The checked row identifies the logical Send choice. In the Studio Pro 8.1.1 test with Main's physical output unassigned, choosing Main in the editor changed the checkmark and controller display while the raw port value stayed `-1`. Selecting None in the editor restored all 24 controller rows. [Live verification](docs/evidence/2026-11-20-external-stereo-send-observation.json)
 
+On the verified Apple Silicon build, the Stereo Send menu can include `held_send_route`. This records the logical assignment observed at the native lifecycle checks and confirms that the route was stable through the checked menu operations and cleanup. [Live menu lifecycle verification](docs/evidence/2026-11-21-external-stereo-send-menu-guard.json)
+
 ## Inspect files offline
 
 These commands run without connecting to Studio Pro.

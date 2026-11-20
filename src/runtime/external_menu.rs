@@ -55,6 +55,20 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
     if query.include_check_only {
         fields.push("check_only");
     }
+    if let Some(held) = value.get("held_send_route") {
+        if query.plugin != "External Effect Stereo"
+            || !matches!(query.port, ExternalPort::Send)
+            || !exact_gui_object(held, &["assigned", "stable", "guard_observations"])
+            || !held["assigned"].is_boolean()
+            || held["stable"] != true
+            || !held["guard_observations"]
+                .as_u64()
+                .is_some_and(|n| (1..=1_000_000).contains(&n))
+        {
+            return false;
+        }
+        fields.push("held_send_route");
+    }
     if !exact_gui_object(value, &fields)
         || value["ok"] != true
         || value["outcome"] != "observed"
