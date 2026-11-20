@@ -1,0 +1,35 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Pro-Q 4",
+  "version": "4.13",
+  "format": "VST3",
+  "preset": "Musical Low Cut Filter.ffp",
+  "preset_source": "factory resource sealed in the official signed VST3",
+  "application": "plugin editor Open Other Preset",
+  "initial_and_restored_editor_title": "Default Setting",
+  "reported_parameters": 737,
+  "changed_reported_parameters": 110,
+  "restore": {
+    "component_serializer": "component_alias_IStorable",
+    "reported_parameters_restored_after_capsule_load": 736,
+    "remaining_parameter": "vstp1073741826",
+    "remaining_parameter_correction": {
+      "normalized": 0,
+      "writes": 1
+    },
+    "complete_typed_match": true,
+    "independent_digest_match": true,
+    "recaptured_component_fingerprint_match": true,
+    "baseline_component_bytes": 3053,
+    "applied_component_bytes": 3183
+  },
+  "verification": {
+    "requests": 138,
+    "active_seconds": 122.997,
+    "host_seconds": 170.404,
+    "runtime_files_preserved": 18,
+    "protected_files_preserved": 197,
+    "preset_tree_entries_preserved": 185,
+    "scratch_saved": false
+  }
+}

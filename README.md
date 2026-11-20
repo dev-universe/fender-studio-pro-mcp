@@ -190,6 +190,10 @@ FabFilter Pro-R 1.20 passed individual change, independent readback and restorat
 
 Twin 3 3.10 loaded the official `Ambient Mover.ffp` using **Open Other Preset** in the plug-in editor. The reader observed 433 changed parameters in Studio Pro 8.1.1. Restoring the original state with `plugin_state` returned 1,509 of 1,510 values. One verified `plugin_parameter_set` write returned the remaining internal float to zero. The complete typed readback, independent DSP digest and recaptured host component fingerprint all matched the baseline. This verification covers the named file and version. [Verification details](docs/evidence/2026-11-20-fabfilter-twin3-vendor-preset.json) · [FabFilter loading instructions](https://prod.fabfilter.com/help/twin/presets/loadingpresets)
 
+### FabFilter Pro-Q 4 factory preset file
+
+Pro-Q 4 4.13 loaded the official `Musical Low Cut Filter.ffp` using **Open Other Preset** in the plug-in editor. Studio Pro 8.1.1 reported 110 changed parameters. Restoring the original state with `plugin_state` returned 736 of 737 values. A single `plugin_parameter_set` write returned the remaining internal value to normalized zero. The complete typed readback, independent DSP digest and recaptured host component fingerprint matched the baseline. This verification covers the named file and version. [Verification details](docs/evidence/2026-11-20-fabfilter-proq4-vendor-preset.json) · [FabFilter loading instructions](https://prod.fabfilter.com/help/pro-q/presets/loadingpresets)
+
 ### FabFilter instrument program changes
 
 Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
