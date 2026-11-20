@@ -1935,11 +1935,31 @@ impl Operation {
                 }
             }
             Self::FabfilterPresetApply(p) => {
+                use crate::fabfilter::Product;
                 validate_instance_uid(Some(&p.expected_instance))?;
-                if p.channel.trim().is_empty()
-                    || p.channel.encode_utf16().count() > 256
-                    || p.channel.chars().any(char::is_control)
-                    || p.slot >= 16
+                let bounded = |value: &str| {
+                    !value.trim().is_empty()
+                        && value.encode_utf16().count() <= 256
+                        && !value.chars().any(char::is_control)
+                };
+                let target_matches = match p.product {
+                    Product::ProQ4 => {
+                        p.channel.as_deref().is_some_and(bounded)
+                            && p.slot.is_some_and(|slot| slot < 16)
+                            && p.track.is_none()
+                    }
+                    Product::Twin3 => {
+                        p.track.as_deref().is_some_and(bounded)
+                            && p.channel.is_none()
+                            && p.slot.is_none()
+                    }
+                    _ => {
+                        return Err(invalid(
+                            "Preset file application supports Pro-Q 4 and Twin 3 VST3",
+                        ));
+                    }
+                };
+                if !target_matches
                     || p.expected_instance == "00000000-0000-0000-0000-000000000000"
                     || p.expected_instance
                         .bytes()
@@ -1952,7 +1972,7 @@ impl Operation {
                         .all(|byte| byte.is_ascii_hexdigit())
                 {
                     return Err(invalid(
-                        "An exact effect slot and catalog index with its 64-digit digest are required",
+                        "An exact FabFilter target and catalog index with its 64-digit digest are required",
                     ));
                 }
             }

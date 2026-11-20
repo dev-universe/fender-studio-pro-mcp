@@ -30,6 +30,12 @@ const PRO_Q4: Image = Image {
     view_table: 0x2276f0,
     editor_table: 0x223a50,
     product: "pro_q_4",
+    executable: "FabFilter Pro-Q 4",
+    binary_sha256: "1044282fd91649368283553e3a2f3905d7eb051bff40d52888a0907aa53bdb65",
+    binary_size: 5_025_104,
+    constructor: 0x39a18,
+    loader: 0x9a4d0,
+    destructor: 0x4418c,
 };
 const TWIN3: Image = Image {
     uuid: [
@@ -43,6 +49,12 @@ const TWIN3: Image = Image {
     view_table: 0x29a778,
     editor_table: 0x2813b8,
     product: "twin_3",
+    executable: "FabFilter Twin 3",
+    binary_sha256: "d6ebeb10274eeafef08e2d7c8aba6d920c99ed5ff68c617907213e1ba091f371",
+    binary_size: 5_999_776,
+    constructor: 0x107cf4,
+    loader: 0x96e4c,
+    destructor: 0xa5058,
 };
 
 struct Image {
@@ -54,6 +66,12 @@ struct Image {
     view_table: usize,
     editor_table: usize,
     product: &'static str,
+    executable: &'static str,
+    binary_sha256: &'static str,
+    binary_size: u64,
+    constructor: usize,
+    loader: usize,
+    destructor: usize,
 }
 
 #[link(name = "System")]
@@ -257,13 +275,11 @@ fn image_file(base: usize) -> Option<PathBuf> {
     Some(PathBuf::from(std::ffi::OsStr::from_bytes(file.to_bytes())))
 }
 
-fn signed_proq4_image_matches(binding: &Owner) -> bool {
-    const EXPECTED: &str = "1044282fd91649368283553e3a2f3905d7eb051bff40d52888a0907aa53bdb65";
-    const SIZE: u64 = 5_025_104;
+fn signed_image_matches(binding: &Owner) -> bool {
     let Some(binary) = image_file(binding.image) else {
         return false;
     };
-    if binary.file_name().and_then(|name| name.to_str()) != Some("FabFilter Pro-Q 4") {
+    if binary.file_name().and_then(|name| name.to_str()) != Some(binding.product.executable) {
         return false;
     }
     let Ok(file) = fs::File::open(binary) else {
@@ -271,19 +287,26 @@ fn signed_proq4_image_matches(binding: &Owner) -> bool {
     };
     if !file
         .metadata()
-        .is_ok_and(|metadata| metadata.is_file() && metadata.len() == SIZE)
+        .is_ok_and(|metadata| metadata.is_file() && metadata.len() == binding.product.binary_size)
     {
         return false;
     }
-    let mut contents = Vec::with_capacity(SIZE as usize);
-    file.take(SIZE + 1).read_to_end(&mut contents).is_ok()
-        && contents.len() == SIZE as usize
-        && format!("{:x}", Sha256::digest(contents)) == EXPECTED
+    let mut contents = Vec::with_capacity(binding.product.binary_size as usize);
+    file.take(binding.product.binary_size + 1)
+        .read_to_end(&mut contents)
+        .is_ok()
+        && contents.len() == binding.product.binary_size as usize
+        && format!("{:x}", Sha256::digest(contents)) == binding.product.binary_sha256
 }
 
 const MAX_PRESET_BYTES: usize = 64 * 1024;
 
-fn preset_bytes(filename: &str, expected: &str, data_hex: &str) -> Option<Vec<u8>> {
+fn preset_bytes(
+    product: &Image,
+    filename: &str,
+    expected: &str,
+    data_hex: &str,
+) -> Option<Vec<u8>> {
     if filename.is_empty()
         || filename.len() > 255
         || filename.starts_with('.')
@@ -312,17 +335,20 @@ fn preset_bytes(filename: &str, expected: &str, data_hex: &str) -> Option<Vec<u8
         .chunks_exact(2)
         .map(|chunk| Some(digit(chunk[0])? * 16 + digit(chunk[1])?))
         .collect::<Option<_>>()?;
-    let mut header = bytes
-        .split(|byte| *byte == b'\n')
-        .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
-    if header.next() != Some(b"[Preset]".as_slice())
-        || header.next() != Some(b"Signature=FQ4p".as_slice())
-        || !header
-            .next()
-            .is_some_and(|line| line.starts_with(b"Version="))
-        || header.next().is_none()
-        || format!("{:x}", Sha256::digest(&bytes)) != expected
-    {
+    let correct_format = if product.product == "twin_3" {
+        bytes.len() >= 16 && bytes.starts_with(b"FT3i")
+    } else {
+        let mut header = bytes
+            .split(|byte| *byte == b'\n')
+            .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
+        header.next() == Some(b"[Preset]".as_slice())
+            && header.next() == Some(b"Signature=FQ4p".as_slice())
+            && header
+                .next()
+                .is_some_and(|line| line.starts_with(b"Version="))
+            && header.next().is_some()
+    };
+    if !correct_format || format!("{:x}", Sha256::digest(&bytes)) != expected {
         return None;
     }
     Some(bytes)
@@ -375,16 +401,16 @@ pub(super) fn apply_preset(
     let Some(owner) = owner(target) else {
         return refused("the exact effect and controller are unavailable");
     };
-    if owner.product.product != "pro_q_4" || owner.first.0 != 1 {
-        return refused("Open the editor of the expected Pro-Q 4 instance and try again");
+    if owner.first.0 != 1 {
+        return refused("Open the editor of the expected FabFilter instance and try again");
     }
-    if !signed_proq4_image_matches(&owner) {
+    if !signed_image_matches(&owner) {
         return refused(
-            "the installed Pro-Q 4 executable differs from the verified signed version",
+            "the installed FabFilter executable differs from the verified signed version",
         );
     }
-    let Some(bytes) = preset_bytes(filename, sha256, data_hex) else {
-        return refused("the bounded Pro-Q 4 preset bytes or their digest did not match");
+    let Some(bytes) = preset_bytes(owner.product, filename, sha256, data_hex) else {
+        return refused("the bounded FabFilter preset bytes or their digest did not match");
     };
     let Ok(file) = PresetFile::new(filename, &bytes) else {
         return refused("the preset could not be staged for the plug-in");
@@ -394,9 +420,9 @@ pub(super) fn apply_preset(
     }
     let args = vendor_preset_abi::Apply {
         receiver: owner.state as *mut c_void,
-        constructor: (owner.image + 0x39a18) as *const c_void,
-        activate: (owner.image + 0x9a4d0) as *const c_void,
-        destructor: (owner.image + 0x4418c) as *const c_void,
+        constructor: (owner.image + owner.product.constructor) as *const c_void,
+        activate: (owner.image + owner.product.loader) as *const c_void,
+        destructor: (owner.image + owner.product.destructor) as *const c_void,
     };
     let status = unsafe { vendor_preset_abi::apply(args, file.path.as_os_str().as_bytes()) };
     match status {
@@ -423,14 +449,34 @@ mod tests {
         let digest = format!("{:x}", Sha256::digest(bytes));
         let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
         assert_eq!(
-            preset_bytes("Air & Space.ffp", &digest, &hex).unwrap(),
+            preset_bytes(&PRO_Q4, "Air & Space.ffp", &digest, &hex).unwrap(),
             bytes
         );
-        assert!(preset_bytes("../Air.ffp", &digest, &hex).is_none());
-        assert!(preset_bytes(".Air.ffp", &digest, &hex).is_none());
-        assert!(preset_bytes("Air.vstpreset", &digest, &hex).is_none());
-        assert!(preset_bytes("Air.ffp", &"0".repeat(64), &hex).is_none());
-        assert!(preset_bytes("Air.ffp", &digest, &(hex.clone() + "0")).is_none());
-        assert!(preset_bytes("Air.ffp", &digest, &"00".repeat(MAX_PRESET_BYTES + 1)).is_none());
+        assert!(preset_bytes(&PRO_Q4, "../Air.ffp", &digest, &hex).is_none());
+        assert!(preset_bytes(&PRO_Q4, ".Air.ffp", &digest, &hex).is_none());
+        assert!(preset_bytes(&PRO_Q4, "Air.vstpreset", &digest, &hex).is_none());
+        assert!(preset_bytes(&PRO_Q4, "Air.ffp", &"0".repeat(64), &hex).is_none());
+        assert!(preset_bytes(&PRO_Q4, "Air.ffp", &digest, &(hex.clone() + "0")).is_none());
+        assert!(
+            preset_bytes(
+                &PRO_Q4,
+                "Air.ffp",
+                &digest,
+                &"00".repeat(MAX_PRESET_BYTES + 1)
+            )
+            .is_none()
+        );
+    }
+
+    #[test]
+    fn twin_preset_bytes_are_limited_to_the_twin_profile() {
+        let bytes = b"FT3i012345678901";
+        let digest = format!("{:x}", Sha256::digest(bytes));
+        let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+        assert_eq!(
+            preset_bytes(&TWIN3, "Twin.ffp", &digest, &hex).unwrap(),
+            bytes
+        );
+        assert!(preset_bytes(&PRO_Q4, "Twin.ffp", &digest, &hex).is_none());
     }
 }

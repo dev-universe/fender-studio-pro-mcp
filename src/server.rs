@@ -257,7 +257,7 @@ impl McpServer {
             named::<PresetApply>(
                 "fabfilter_preset_apply",
                 "fabfilterPresetApply",
-                "Apply a local FabFilter preset selected by the zero-based index and catalog SHA-256 from fabfilter_presets_list. Supports Pro-Q 4 VST3 4.13 on Studio Pro 8.1.1 for Apple Silicon. Open the target editor and supply its exact channel, slot, instance and document. Confirm effects with a separate readback.",
+                "Apply a local FabFilter preset selected by the zero-based index and catalog SHA-256 from fabfilter_presets_list. Supports Pro-Q 4 VST3 4.13 and Twin 3 VST3 3.10 on Studio Pro 8.1.1 for Apple Silicon. Open the target editor and supply the exact instance and document. Supply channel and slot for Pro-Q 4, or the exclusively selected instrument track for Twin 3. Confirm effects with a separate readback.",
                 true,
             ),
             named::<PluginEditor>(

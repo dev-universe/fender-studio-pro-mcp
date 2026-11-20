@@ -124,10 +124,13 @@ pub(super) fn apply_preset(
     sha256: &str,
     data_hex: &str,
 ) -> Value {
-    if ctx.instance.class_uid != "ED57BD72-5C60-467E-A64D-D2F400758B6F" {
+    if !matches!(
+        ctx.instance.class_uid.as_str(),
+        "ED57BD72-5C60-467E-A64D-D2F400758B6F" | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
+    ) {
         return error(
             "fabfilter_preset_apply_failed",
-            "the exact official Pro-Q 4 instance is required",
+            "the exact supported FabFilter instance is required",
             "not_applied",
         );
     }
