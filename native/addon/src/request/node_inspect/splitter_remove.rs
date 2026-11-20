@@ -169,22 +169,49 @@ fn bound_nodes(
     Ok([splitter, merger, first, second])
 }
 
-fn check_shape(image: usize, graph: *mut c_void, nodes: &[Owned; 4]) -> Result<(), String> {
-    let [splitter, merger, first, second] = nodes.each_ref().map(|node| node.0);
-    if table(splitter) != image + SPLITTER_TABLE
-        || [first, second].iter().any(|node| {
-            !SLOT_TABLES
-                .iter()
-                .any(|offset| table(*node) == image + offset)
-        })
+fn matches_identity(object: *mut c_void, identity: &Owned) -> bool {
+    query(object, &UNKNOWN).is_some_and(|observed| observed.0 == identity.0)
+}
+
+fn check_shape(
+    image: usize,
+    route: &GraphRoute,
+    splitter: *mut c_void,
+    nodes: &[Owned; 4],
+) -> Result<(), String> {
+    // IUnknown is the comparison identity. The actual graph receiver is
+    // reached through the primary Splitter object verified by the observer.
+    let graph = unsafe { field::<*mut c_void>(splitter, 0x178) };
+    if graph.is_null()
+        || table(graph) != image + GRAPH_TABLE
+        || !matches_identity(graph, &route.graph._canonical)
+    {
+        return Err("The Splitter is not attached to the verified active graph".into());
+    }
+    let branches = adjacent(splitter, 0x1a8, 0x1b0)?;
+    let [first, second] = branches[..] else {
+        return Err("The exact Splitter no longer has two branches".into());
+    };
+    if [first, second].iter().any(|node| {
+        !SLOT_TABLES
+            .iter()
+            .any(|offset| table(*node) == image + offset)
+    }) || !matches_identity(first, &nodes[2])
+        || !matches_identity(second, &nodes[3])
+    {
+        return Err("The Splitter branches do not lead to the bound effect slots".into());
+    }
+    let first_out = adjacent(first, 0x1a8, 0x1b0)?;
+    let [merger] = first_out[..] else {
+        return Err("The first Splitter branch has no exact merger".into());
+    };
+    if !matches_identity(merger, &nodes[1])
         || class_name(merger) != "AudioFXGraph::MergerNode"
-        || [splitter, merger, first, second]
+        || [merger, first, second]
             .iter()
             .any(|node| unsafe { field::<*mut c_void>(*node, 0x178) } != graph)
-        || adjacent(splitter, 0x1a8, 0x1b0)? != [first, second]
         || adjacent(first, 0x188, 0x190)? != [splitter]
         || adjacent(second, 0x188, 0x190)? != [splitter]
-        || adjacent(first, 0x1a8, 0x1b0)? != [merger]
         || adjacent(second, 0x1a8, 0x1b0)? != [merger]
     {
         return Err("The exact two-branch Splitter and merger shape changed".into());
@@ -230,25 +257,17 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("Graph ownership could not be established".into());
         };
         ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
-        let graph = route.graph._canonical.0;
         let image = image as usize;
-        if table(graph) != image + GRAPH_TABLE {
-            return Err(
-                "The current graph has no verified nested Splitter removal receiver".into(),
-            );
-        }
         let nodes = bound_nodes(&ctx, &route, [splitter_id, merger_id, first_id, second_id])?;
         let mut guard = || {
             ctx.check()?;
             route.check()
         };
         guard()?;
-        check_shape(image, graph, &nodes)?;
-        guard()?;
-        let splitter = nodes[0].0;
         let interpret =
-            query(splitter, &COMMAND_HANDLER).ok_or("Splitter command handler unavailable")?;
-        let observer = query(splitter, &OBSERVER).ok_or("Splitter message receiver unavailable")?;
+            query(nodes[0].0, &COMMAND_HANDLER).ok_or("Splitter command handler unavailable")?;
+        let observer =
+            query(nodes[0].0, &OBSERVER).ok_or("Splitter message receiver unavailable")?;
         let check: unsafe extern "C" fn(*mut c_void, *const CheckCommand) -> u8 =
             unsafe { method(interpret.0, 4) };
         let notify: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) =
@@ -260,6 +279,14 @@ pub(in crate::native_script::request) fn dispatch(
         {
             return Err("The exact Splitter command or observer entry changed".into());
         }
+        // The matched notify thunk subtracts 0x20 from its receiver.
+        let splitter = unsafe { observer.0.cast::<u8>().sub(0x20).cast() };
+        if table(splitter) != image + SPLITTER_TABLE || !matches_identity(splitter, &nodes[0]) {
+            return Err("The primary Splitter receiver changed".into());
+        }
+        guard()?;
+        check_shape(image, &route, splitter, &nodes)?;
+        guard()?;
         let command = CheckCommand {
             category: cstring(ctx.api, c"Splitter")?,
             name: cstring(ctx.api, c"Remove")?,
@@ -278,7 +305,7 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The bound Splitter did not recognize its Remove command".into());
         }
         guard()?;
-        check_shape(image, graph, &nodes)?;
+        check_shape(image, &route, splitter, &nodes)?;
         guard()?;
         // The normal menu schedules this fixed message. Deliver it to the same
         // pinned observer under the current document guard instead of queuing it.
