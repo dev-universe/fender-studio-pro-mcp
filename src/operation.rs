@@ -155,6 +155,9 @@ pub struct ChannelList {
     /// Include the mixer strip's signed 32-bit ARGB value when the surface reports it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub include_color: Option<bool>,
+    /// Include each identifiable audio channel's selection in the mixer console.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_selection: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]

@@ -330,7 +330,7 @@ class Bridge {
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
             case "context": return this.context();
-            case "channels": return this.fromComponent(c => c.channels(args.include_color === true));
+            case "channels": return this.channels(args);
             case "panner": return this.fromComponent(c => c.panner(args));
             case "setPanner": return this.fromComponent(c => c.setPanner(args));
             case "splitters": return this.fromComponent(c => c.splitters(args));
@@ -1059,6 +1059,49 @@ class Bridge {
             plugins.push({ name: String(menu.string), classId: id, category: category });
         }
         return { category: category, plugins: plugins, complete: upper === menu.max, source: "live" };
+    }
+
+    channels(args) {
+        const rows = this.fromComponent(c => c.channels(args.include_color === true));
+        if (args.include_selection !== true || !Array.isArray(rows)) return rows;
+        const selected = this.consoleSelection();
+        const counts = new Map();
+        for (const row of rows) counts.set(row.label, (counts.get(row.label) || 0) + 1);
+        return rows.map(row => Object.assign({}, row, {
+            console_selected: selected && counts.get(row.label) === 1 && selected.has(row.label)
+                ? selected.get(row.label) : null,
+        }));
+    }
+
+    consoleSelection() {
+        try {
+            const consoleObject = docObject("Environment/MixerConsole");
+            if (!has(consoleObject, "getChannelList", "function")) return null;
+            const list = consoleObject.getChannelList(1);
+            if (!has(list, "getChannel", "function") || !has(list, "getSelectedChannel", "function")) return null;
+            const count = list.numChannels;
+            const selectedCount = list.numSelectedChannels;
+            if (!Number.isInteger(count) || count < 0 || count > 4096 ||
+                !Number.isInteger(selectedCount) || selectedCount < 0 || selectedCount > count) return null;
+            const channels = Array.from({ length: count }, (_, index) => list.getChannel(index));
+            const byObject = new Set(channels);
+            const selected = Array.from({ length: selectedCount }, (_, index) => list.getSelectedChannel(index));
+            const selectedObjects = new Set(selected);
+            if (byObject.has(null) || byObject.has(undefined) || byObject.size !== count ||
+                selectedObjects.size !== selectedCount || !selected.every(channel => byObject.has(channel))) return null;
+            const result = new Map();
+            for (const channel of channels) {
+                if (channel.mediaType !== "Audio" || typeof channel.label !== "string" || !channel.label) continue;
+                const label = channel.label;
+                result.set(label, result.has(label) ? null : selectedObjects.has(channel));
+            }
+            if (list.numChannels !== count || list.numSelectedChannels !== selectedCount ||
+                !channels.every((channel, index) => list.getChannel(index) === channel) ||
+                !selected.every((channel, index) => list.getSelectedChannel(index) === channel)) return null;
+            return result;
+        } catch (_) {
+            return null;
+        }
     }
 
     mixerChannel(label) {
