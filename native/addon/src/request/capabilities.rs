@@ -1,5 +1,8 @@
 use super::*;
 
+#[path = "fabfilter_editor_probe.rs"]
+mod fabfilter_editor_probe;
+
 const STORABLE: Uid = Uid {
     a: 0xb131b242,
     b: 0xbff4,
@@ -80,6 +83,15 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
         let get: Borrowed = unsafe { method(alias.0, 3) };
         if let Some(plugin) = hold(unsafe { get(alias.0) }) {
             value["alias"] = object(plugin.0);
+            if matches!(
+                ctx.instance.class_uid.as_str(),
+                "ED57BD72-5C60-467E-A64D-D2F400758B6F" | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
+            ) {
+                ctx.check()?;
+                if let Some(editor) = fabfilter_editor_probe::observe(plugin.0) {
+                    value["fabfilter_editor_owner"] = editor;
+                }
+            }
         }
     }
     ctx.check()?;
