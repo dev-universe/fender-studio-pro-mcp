@@ -48,6 +48,8 @@ Vocal r69/r70의 집계값·동적 접근 예상 실패는 보존했다. 새 r71
 
 R204에서 Twin 3 제조사 파일을 카탈로그로 적용하고 1,510개 값과 컴포넌트 상태를 원복했다. [PR #64](https://github.com/dev-universe/fender-studio-pro-mcp/pull/64)는 필수 검사를 기다린다. Pro-Q 4 [PR #63](https://github.com/dev-universe/fender-studio-pro-mcp/pull/63)은 main에 병합됐다. R205에서 공식 23종의 공장 파일 5,037개와 로컬 라이브러리의 상대 경로·해시가 모두 일치했다. 제조사 파일 적용은 2/23종이며 Pro-C 3 3.02 파일 로더부터 이어간다.
 
+R208은 실제 8.1.1에서 Pro-C 3 공식 파일을 적용해 바뀐 35개 값과 237개 전체 원복을 확인했다. 시험 전 환경설정·프리셋 폴더도 확인했다. [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 필수 검사 대기 중이며, Twin 3 [PR #64](https://github.com/dev-universe/fender-studio-pro-mcp/pull/64)는 main에 병합됐다. 제조사 파일 적용은 3/23종이다. 다음 내장 단위는 R166의 External Effect Send 관찰자와 별도 경로 객체다.
+
 ## 유지할 사용자 결정
 
 - 공식 8.1.1 설치 파일 대조는 사용자가 생략했다. 설치 경로나 MyFender 로그인을 다시 요청하거나 기다리지 않는다.
