@@ -6,7 +6,7 @@
 
 Pro-G를 대상으로 Rust의 `plugin_parameter_set`에 추가한 `readback`을 실제 8.1.1에서 검증했다. 150밀리초 후 같은 세션·문서·플러그인·소스로 따로 읽었다. R113에서 바이패스는 `matched`, 레거시 MIDI 값은 즉시 0.035와 후속 0이 달라 `mismatch`였다. R114는 내장 External Effect Stereo의 위상 스위치를 `0 → 1 → 0`으로 바꾸고 `controller`에서 두 차례 일치를 확인했다. 포트 값과 전체 컨트롤러 24개를 원복했다. [독립 읽기 PR #55](https://github.com/dev-universe/fender-studio-pro-mcp/pull/55)
 
-중첩 Splitter는 R179에서 정확한 이동 허용 판정을 확인했다. R180은 `insert_slot_move`로 오른쪽 Mixtool을 왼쪽 뒤로 이동했다. 실행 취소 한 번으로 병렬 연결·노드 6개·연결 7개·슬롯과 이펙트 ID·각 Mixtool의 72개 값이 일치했다. 화면의 선택은 Mixtool 2에 남았다. 구현과 증거는 PR #56의 필수 검사 두 개를 통과해 공개 main에 병합됐다. 다음은 중첩 Splitter 제거와 실행 취소에 필요한 현재 객체와 호출 경로를 확인한다. One과 Twin 2 전수 검증, 독립 읽기 기능은 모두 `main`에 반영됐다.
+중첩 Splitter는 R179에서 정확한 이동 허용 판정을 확인했다. R180은 `insert_slot_move`로 오른쪽 Mixtool을 왼쪽 뒤로 이동했다. 실행 취소 한 번으로 병렬 연결·노드 6개·연결 7개·슬롯과 이펙트 ID·각 Mixtool의 72개 값이 일치했다. 화면의 선택은 Mixtool 2에 남았다. 구현과 증거는 PR #56의 필수 검사 두 개를 통과해 공개 main에 병합됐다. R182에서 두 Splitter의 확인 전용 제거 명령과 실제 관찰자 정체를 확인했다. 다음은 정확한 안쪽 Splitter만 제거하는 MCP 요청과 실행 취소의 독립 검증이다. One과 Twin 2 전수 검증, 독립 읽기 기능은 모두 `main`에 반영됐다.
 
 2026년 11월 18일 재개 실행은 오전 6시 이동 전에 종료했다. 공개 저장소 보호·검증된 코드의 메인 병합·README 갱신을 완료했다. [당시 전체 대기열](LOOP_HANDOFF_2026-11-18.md)과 [진행 기록](PROGRESS_2026-11-18.md)을 보존했다. 11월 18일의 오전 6시 마감은 그 실행에만 해당했다.
 
