@@ -343,8 +343,10 @@ fn execute(
     let parameter_readback_requested =
         matches!(&operation, Operation::SetPluginParam(change) if change.readback == Some(true));
     if response.document != context.document
-        || (matches!(operation, Operation::ExternalPortMenu(_))
-            || parameter_readback_requested
+        || (matches!(
+            operation,
+            Operation::ExternalPortMenu(_) | Operation::ExternalStereoSendSet(_)
+        ) || parameter_readback_requested
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
             || operation.inspects_impact_outputs()
@@ -465,6 +467,11 @@ fn execute(
             "code":"impact_output_invalid_receipt",
             "message":"The Impact output response did not establish the requested state change"
         }]});
+    }
+    if matches!(operation, Operation::ExternalStereoSendSet(_))
+        && (!response.ok || !verify(&operation, &response.result))
+    {
+        response.result = normalize_stereo_send_set_failure(&response.result);
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -1134,8 +1141,155 @@ fn has_applied_evidence(value: &Value) -> bool {
         })
 }
 
+const STEREO_SEND_CHANGE_PHASES: &[&str] = &[
+    "bridge_precondition",
+    "bridge_dispatch",
+    "request",
+    "pre_fixture",
+    "pre_attachment",
+    "controller_baseline",
+    "native_wiring",
+    "native_reply",
+    "native_admission",
+    "native_allocator",
+    "source_parameter",
+    "builder_factory",
+    "construct",
+    "build",
+    "source_profile",
+    "check_only",
+    "source_rebind",
+    "select",
+    "cleanup",
+    "typed_destination",
+    "fresh_destination_menu",
+    "native_post_attachment",
+    "native_publish",
+    "native_reply_context",
+    "post_native_attachment",
+    "post_native_fixture",
+    "independent_controller",
+    "independent_menu",
+    "independent_attachment",
+    "independent_fixture",
+    "bridge_publish",
+    "receipt",
+];
+
+const STEREO_SEND_CHANGE_FLAGS: [&str; 5] = [
+    "dispatch_attempted",
+    "menu_callbacks_began",
+    "select_entered",
+    "select_returned",
+    "cleanup_proven",
+];
+
+fn stereo_send_set_flags(trace: &Value) -> Option<[Option<bool>; 5]> {
+    if trace.as_object()?.len() != 7 || trace["version"] != "stereo_send_v1" {
+        return None;
+    }
+    let failure = trace.get("failure_phase")?;
+    if !failure.is_null()
+        && !failure
+            .as_str()
+            .is_some_and(|phase| STEREO_SEND_CHANGE_PHASES.contains(&phase))
+    {
+        return None;
+    }
+    let mut flags = [None; 5];
+    for (index, key) in STEREO_SEND_CHANGE_FLAGS.iter().enumerate() {
+        let value = trace.get(key)?;
+        if !value.is_null() {
+            flags[index] = Some(value.as_bool()?);
+        }
+    }
+    let [dispatch, callbacks, entered, returned, cleanup] = flags;
+    let native = [callbacks, entered, returned, cleanup];
+    if match dispatch {
+        Some(false) => !native.iter().all(|flag| *flag == Some(false)),
+        None => !native.iter().all(Option::is_none),
+        Some(true) => !native.iter().all(Option::is_none) && !native.iter().all(Option::is_some),
+    } || (entered == Some(true) && callbacks != Some(true))
+        || (returned == Some(true) && entered != Some(true))
+        || (cleanup == Some(true) && callbacks != Some(true))
+    {
+        return None;
+    }
+    Some(flags)
+}
+
+fn normalize_stereo_send_set_failure(result: &Value) -> Value {
+    let mut diagnostic = result["diagnostic"].clone();
+    let flags = stereo_send_set_flags(&diagnostic);
+    if flags.is_none() {
+        diagnostic = json!({
+            "version":"stereo_send_v1", "failure_phase":"receipt", "dispatch_attempted":null,
+            "menu_callbacks_began":null, "select_entered":null, "select_returned":null, "cleanup_proven":null,
+        });
+    } else if diagnostic["failure_phase"].is_null() {
+        diagnostic["failure_phase"] = json!("receipt");
+    }
+    let not_applied = result["ok"] == false
+        && result["native_outcome"] == "not_applied"
+        && result["diagnostic"]["failure_phase"].is_string()
+        && flags.is_some_and(|[dispatch, callbacks, entered, returned, cleanup]| {
+            dispatch.is_some() && [callbacks, entered, returned, cleanup] == [Some(false); 4]
+        });
+    json!({
+        "ok":false, "native_outcome":if not_applied { "not_applied" } else { "unknown" },
+        "diagnostic":diagnostic,
+        "errors":[{"code":"external_stereo_send_unconfirmed","message":"The logical Stereo Send change could not be verified"}],
+    })
+}
+
 fn verify(operation: &Operation, result: &Value) -> bool {
     match operation {
+        Operation::ExternalStereoSendSet(change) => {
+            let (old, new) = change.destination.display();
+            let before = &result["before"];
+            let after = &result["after"];
+            let mut expected_after = before.clone();
+            let object = match expected_after.as_object_mut() {
+                Some(object) => object,
+                None => return false,
+            };
+            object.insert("text".into(), json!(new));
+            result["ok"] == true
+                && stereo_send_set_flags(&result["diagnostic"]) == Some([Some(true); 5])
+                && result["diagnostic"]["failure_phase"].is_null()
+                && result["operation"] == "external_stereo_send_set"
+                && result["native_outcome"] == "applied_unverified"
+                && result["channel"] == change.channel
+                && result["slot"] == change.slot
+                && result["expected_current"] == change.expected_current.name()
+                && result["destination"] == change.destination.name()
+                && result["assigned"]
+                    == matches!(
+                        change.destination,
+                        crate::operation::ExternalStereoSendDestination::Main
+                    )
+                && result["persistence_verified"] == false
+                && result["audio_verified"] == false
+                && result["selection_calls"] == 1
+                && result["controller_rows"] == 24
+                && result["fixture_after_matches"] == true
+                && result["native_checkmark_verified"] == true
+                && result["atomic_snapshot"] == false
+                && result["instance"]["class_uid"] == "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+                && result["instance"]["object_id"] == "External Effect Stereo"
+                && result["instance"]["native_class"] == "AudioEffect"
+                && result["instance"]["object_uid"] == change.expected_instance
+                && before["name"] == "sendPort"
+                && before["tag"] == 102
+                && before["native_kind"] == "List"
+                && before["value"] == -1
+                && before["native_value"]
+                    == json!({"variant_tag":1,"data":{"kind":"integer","value":-1}})
+                && before["normalized"] == 1
+                && before["native_normalized"] == json!({"kind":"float32","bits_hex":"3F800000"})
+                && before["text"] == old
+                && after == &expected_after
+        }
         Operation::ImpactOutputSet(change) => {
             let row = |active| {
                 json!({"index":change.output_index,"name":change.output_name,
@@ -1380,6 +1534,7 @@ mod tests {
             ("trackState", json!({"track":"Scratch","action":"hide"})),
             ("editEvents", json!({"track":"Scratch","action":"mute"})),
             ("externalPortMenu", json!({"channel":"Scratch","slot":0,"plugin":"External Effect Stereo","expected_instance":"12345678-1234-1234-1234-123456789ABC","port":"send"})),
+            ("externalStereoSendSet", json!({"channel":"Scratch","slot":1,"expected_instance":"12345678-1234-1234-1234-123456789ABC","expected_current":"none","destination":"main"})),
             ("pluginEditorOpen", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter"})),
             ("pluginState", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"capture"})),
             ("insertChainState", json!({"channel":"Scratch","action":"capture"})),
@@ -2015,5 +2170,131 @@ mod tests {
     fn a_failed_task_does_not_prove_that_no_edit_happened() {
         let result = json!({"results":[{"op":"addInstrumentTrack","error":"connection failed after creation"}]});
         assert_eq!(mutation_outcome(&result), Outcome::Unknown);
+    }
+}
+
+#[cfg(test)]
+mod stereo_send_set_contract {
+    use super::*;
+
+    #[test]
+    fn accepts_only_closed_instance_destination_and_exact_independent_proof() {
+        let id = "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE";
+        let make = |args| Operation::from_parts("external_stereo_send_set", args);
+        let request = json!({
+            "expected_instance":id, "expected_current":"none", "destination":"main",
+            "channel":"Audio Track", "slot":1
+        });
+        let operation = make(request.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.requires_explicit_document() && !operation.is_read_only());
+        let mut bad = request.clone();
+        bad["path"] = json!([1]);
+        assert!(make(bad).is_err());
+        let mut bad = request.clone();
+        bad["destination"] = json!("return");
+        assert!(make(bad).is_err());
+        let mut bad = request.clone();
+        bad["expected_current"] = json!("main");
+        assert!(make(bad).unwrap().validate().is_err());
+        let mut bad = request;
+        bad["slot"] = json!(16);
+        assert!(make(bad).unwrap().validate().is_err());
+        let before = json!({
+            "name":"sendPort", "tag":102, "native_kind":"List", "value":-1, "normalized":1,
+            "native_value":{"variant_tag":1,"data":{"kind":"integer","value":-1}},
+            "native_normalized":{"kind":"float32","bits_hex":"3F800000"}, "text":"없음"
+        });
+        let after = before
+            .as_object()
+            .unwrap()
+            .clone()
+            .into_iter()
+            .map(|(k, v)| {
+                let value = if k == "text" { json!("메인") } else { v };
+                (k, value)
+            })
+            .collect::<serde_json::Map<String, Value>>();
+        let result = json!({
+            "ok":true,"operation":"external_stereo_send_set","native_outcome":"applied_unverified",
+            "channel":"Audio Track","slot":1,"expected_current":"none","destination":"main","assigned":true,
+            "selection_calls":1,"controller_rows":24,"fixture_after_matches":true,
+            "native_checkmark_verified":true,"atomic_snapshot":false,"persistence_verified":false,"audio_verified":false,
+            "diagnostic":{"version":"stereo_send_v1","failure_phase":null,"dispatch_attempted":true,
+                          "menu_callbacks_began":true,"select_entered":true,"select_returned":true,"cleanup_proven":true},
+            "instance":{"class_uid":"889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4","object_id":"External Effect Stereo",
+                        "native_class":"AudioEffect","object_uid":id},
+            "before":before,"after":after,
+        });
+        assert!(verify(&operation, &result));
+        let mut wrong = result.clone();
+        wrong["after"]["text"] = json!("없음");
+        assert!(!verify(&operation, &wrong));
+        let mut wrong = result.clone();
+        wrong["native_checkmark_verified"] = json!(false);
+        assert!(!verify(&operation, &wrong));
+        let mut wrong = result.clone();
+        wrong["fixture_after_matches"] = json!(false);
+        assert!(!verify(&operation, &wrong));
+        for (field, value) in [
+            ("assigned", json!(false)),
+            ("audio_verified", json!(true)),
+            ("persistence_verified", json!(true)),
+            ("channel", json!("Other Track")),
+            ("slot", json!(0)),
+            ("expected_current", json!("main")),
+        ] {
+            let mut wrong = result.clone();
+            wrong[field] = value;
+            assert!(!verify(&operation, &wrong), "{field}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod stereo_send_set_failure_contract {
+    use super::*;
+
+    #[test]
+    fn all_fixed_phases_roundtrip_without_raw_host_values() {
+        for phase in STEREO_SEND_CHANGE_PHASES {
+            let trace = json!({"version":"stereo_send_v1", "failure_phase":phase, "dispatch_attempted":true,
+                "menu_callbacks_began":true,"select_entered":true,"select_returned":true,"cleanup_proven":false});
+            let result = json!({"ok":false,"native_outcome":"unknown","raw_path":"/user/private","diagnostic":trace});
+            let outcome = normalize_stereo_send_set_failure(&result);
+            assert_eq!(outcome["native_outcome"], "unknown");
+            assert_eq!(outcome["diagnostic"], trace);
+            assert!(!outcome.to_string().contains("/user/private"));
+        }
+    }
+
+    #[test]
+    fn provenance_cannot_turn_ambiguity_into_known_refusal() {
+        let before = json!({"ok":false,"native_outcome":"not_applied","diagnostic":{
+            "version":"stereo_send_v1","failure_phase":"native_admission","dispatch_attempted":true,"menu_callbacks_began":false,
+            "select_entered":false,"select_returned":false,"cleanup_proven":false}});
+        assert_eq!(
+            normalize_stereo_send_set_failure(&before)["native_outcome"],
+            "not_applied"
+        );
+        for (key, value) in [
+            ("failure_phase", json!("/private/path")),
+            ("select_returned", json!(true)),
+            ("dispatch_attempted", Value::Null),
+        ] {
+            let mut malformed = before.clone();
+            malformed["diagnostic"][key] = value;
+            let sanitized = normalize_stereo_send_set_failure(&malformed);
+            assert_eq!(sanitized["native_outcome"], "unknown");
+            assert_eq!(sanitized["diagnostic"]["failure_phase"], "receipt");
+            assert!(sanitized["diagnostic"]["select_entered"].is_null());
+        }
+        let mut after_callback = before;
+        after_callback["diagnostic"]["failure_phase"] = json!("check_only");
+        after_callback["diagnostic"]["menu_callbacks_began"] = json!(true);
+        let sanitized = normalize_stereo_send_set_failure(&after_callback);
+        assert_eq!(sanitized["native_outcome"], "unknown");
+        assert_eq!(sanitized["diagnostic"]["failure_phase"], "check_only");
+        assert_eq!(sanitized["diagnostic"]["select_entered"], false);
     }
 }

@@ -259,6 +259,23 @@ With the effect editor open, use `plugin_inspect` to identify the current instan
 
 On the verified Apple Silicon build, the Stereo Send menu can include `held_send_route`. This records the logical assignment observed at the native lifecycle checks and confirms that the route was stable through the checked menu operations and cleanup. [Live menu lifecycle verification](docs/evidence/2026-11-21-external-stereo-send-menu-guard.json)
 
+Use `external_stereo_send_set` to change the logical Send between `none` (없음) and `main` (메인). This tool requires the matching native extension on Studio Pro 8.1.1 for Apple Silicon with the Korean interface. Open the exact External Effect Stereo editor, stop transport, and disable click and preroll. Use a muted, disarmed audio track with input monitoring off and a silent Main whose mixer output is unassigned. The target track must route to Main. Return must be unassigned.
+
+Supply the current document from `host_status`, the channel name and zero-based insert slot, and the current `expected_instance` from `plugin_inspect`. Use `external_port_menu` to check the current route before sending the change.
+
+```json
+{
+  "channel": "Scratch Audio",
+  "slot": 1,
+  "expected_document": "<current document from host_status>",
+  "expected_instance": "<exact effect UUID from plugin_inspect>",
+  "expected_current": "none",
+  "destination": "main"
+}
+```
+
+A verified receipt covers one selection, the new menu checkmark and logical assignment, and a complete read of all 24 controller rows. An unknown outcome requires a fresh observation before any further change. Return, physical routing, audible output, and persistence require separate verification.
+
 ## Inspect files offline
 
 These commands run without connecting to Studio Pro.

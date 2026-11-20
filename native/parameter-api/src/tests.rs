@@ -233,6 +233,7 @@ struct FormatBehavior {
     state_after_get: Cell<Option<i32>>,
     precision_after_get: Cell<Option<i32>>,
     normalized_override: Cell<Option<f32>>,
+    display_override: Cell<Option<&'static str>>,
     refuse_output: Cell<bool>,
     default_carrier: Cell<Option<DefaultCarrier>>,
     default_after_get: Cell<Option<DefaultCarrier>>,
@@ -586,12 +587,13 @@ unsafe extern "C" fn p_formatter(p: *mut c_void) -> *mut c_void {
 }
 unsafe extern "C" fn p_display(p: *mut c_void, out: *mut StringRepr) {
     let p = unsafe { fp(p) };
-    let text = match &*p.value.borrow() {
-        FakeValue::Number(Number::Integer(n)) => n.to_string(),
-        FakeValue::Number(Number::Float(n)) => n.to_string(),
-        FakeValue::Text(s) => s.clone(),
-        FakeValue::Object(_) => "opaque".into(),
-        FakeValue::Empty => String::new(),
+    let text = match (p.format.display_override.get(), &*p.value.borrow()) {
+        (Some(text), _) => text.into(),
+        (None, FakeValue::Number(Number::Integer(n))) => n.to_string(),
+        (None, FakeValue::Number(Number::Float(n))) => n.to_string(),
+        (None, FakeValue::Text(s)) => s.clone(),
+        (None, FakeValue::Object(_)) => "opaque".into(),
+        (None, FakeValue::Empty) => String::new(),
     };
     let out = unsafe { &mut *out };
     if !out.object.is_null() {

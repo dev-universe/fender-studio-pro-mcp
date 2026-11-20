@@ -108,6 +108,10 @@ enum Request {
         expected_active: bool,
         active: bool,
     },
+    ExternalStereoSendSet {
+        expected_instance: String,
+        destination: external_menu::SendDestination,
+    },
     ExternalPortMenu {
         port: external_menu::Port,
         expected_instance: String,
@@ -331,7 +335,9 @@ impl Request {
     }
     fn source(&self) -> Source {
         match self {
-            Self::ExternalPortMenu { .. } => Source::Controller,
+            Self::ExternalPortMenu { .. } | Self::ExternalStereoSendSet { .. } => {
+                Source::Controller
+            }
             Self::CvPortStructureInspect { .. }
             | Self::ImpactOutputSet { .. }
             | Self::ParameterAction { .. }
@@ -386,6 +392,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::ExternalPortMenu {
+                expected_instance, ..
+            }
+            | Self::ExternalStereoSendSet {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::InsertSlotMove {
@@ -1734,6 +1743,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         Request::CvPortStructureInspect { .. }
         | Request::ImpactOutputSet { .. }
         | Request::ExternalPortMenu { .. }
+        | Request::ExternalStereoSendSet { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
@@ -2283,6 +2293,7 @@ fn dispatch_device(
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
+            | Request::ExternalStereoSendSet { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
@@ -2413,6 +2424,14 @@ fn dispatch_device(
                 &second_slot_node,
             ],
         );
+    }
+    if let Request::ExternalStereoSendSet { destination, .. } = request {
+        let (value, menu) = external_menu::set_stereo_send(&ctx, destination);
+        let mut reply = Reply::unbound(value);
+        reply.menu = menu;
+        reply.context = Some(ctx);
+        reply.mutation = true;
+        return reply;
     }
     if let Request::ExternalPortMenu {
         port,

@@ -63,6 +63,8 @@ pub enum Operation {
     PluginParams(PluginParams),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
     ExternalPortMenu(ExternalPortMenu),
+    #[serde(rename = "externalStereoSendSet", alias = "external_stereo_send_set")]
+    ExternalStereoSendSet(ExternalStereoSendSet),
     #[serde(rename = "pluginChoices", alias = "plugin_parameter_choices")]
     PluginChoices(PluginChoices),
     #[serde(rename = "pluginParameterDetails", alias = "plugin_parameter_details")]
@@ -526,6 +528,40 @@ pub struct ExternalPortMenu {
     )]
     pub include_check_only: bool,
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ExternalStereoSendDestination {
+    Main,
+    None,
+}
+impl ExternalStereoSendDestination {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Main => "main",
+            Self::None => "none",
+        }
+    }
+    pub fn display(self) -> (&'static str, &'static str) {
+        match self {
+            Self::Main => ("없음", "메인"),
+            Self::None => ("메인", "없음"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ExternalStereoSendSet {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 15))]
+    pub slot: u32,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    pub expected_current: ExternalStereoSendDestination,
+    pub destination: ExternalStereoSendDestination,
+}
+
 fn is_false_provenance(value: &bool) -> bool {
     !*value
 }
@@ -1484,6 +1520,7 @@ impl Operation {
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
                     | Self::ExternalPortMenu(_)
+                    | Self::ExternalStereoSendSet(_)
             )
     }
 
@@ -1615,6 +1652,19 @@ impl Operation {
             }
             Self::ChorderLearningGet(p) => {
                 validate_chorder_target(&p.track, p.slot, &p.expected_instance)?;
+            }
+            Self::ExternalStereoSendSet(p) => {
+                validate_splitter_name(&p.channel, "channel")?;
+                validate_instance_uid(Some(&p.expected_instance))?;
+                if p.slot > 15
+                    || p.expected_current == p.destination
+                    || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || p.expected_instance.bytes().any(|b| b.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "Stereo Send requires slot 0..15, a canonical nonzero instance, and distinct current and destination routes",
+                    ));
+                }
             }
             Self::ExternalPortMenu(p) => {
                 validate_splitter_name(&p.channel, "channel")?;

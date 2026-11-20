@@ -284,6 +284,12 @@ impl McpServer {
                 "Observe one Send or Return menu on an already-open exact External Effect editor. Requires the current document and native instance. Menu prepare/build/cleanup callbacks may reenter; zero selection does not mean callback-free access. Returns bounded opaque row metadata only after positive cleanup. Optional include_check_only=true requires provenance=true and exact Stereo Send; it queries the two fixed Param leaves using public checkOnly flags1, never flags0 execution or selection, and does not check the global command filter. Optional provenance=true is restricted to Stereo Send and its fixed first two Param leaves; it reports sequential public identity relations with current mapped-bank target checks before and after the native call. This read-only bracket does not prove atomicity or continuous active-mixer membership; menuData typed values remain unobserved. No port setter, command, numeric mapping, physical routing, audio or persistence authority is granted. Never retry an unknown outcome.",
                 true,
             ),
+            named::<ExternalStereoSendSet>(
+                "external_stereo_send_set",
+                "externalStereoSendSet",
+                "Set External Effect Stereo Send to main or none on Studio Pro 8.1.1 Apple Silicon with a Korean interface. Requires a current document, exact instance, channel, slot, expected_current and destination. Open the editor, stop transport, disable click and preroll, mute and disarm the target audio channel, and use a silent Main with no physical output. Reads the route, menu checkmark and 24 controller rows after one selection. No Return, physical routing, audio or persistence verification. Never retry an unknown outcome.",
+                true,
+            ),
             named::<ChorderChordsGet>(
                 "chorder_chords_get",
                 "chorderChordsGet",
@@ -609,7 +615,7 @@ mod tests {
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 55);
+        assert_eq!(specs.len(), 56);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -647,7 +653,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 55);
+        assert_eq!(specs.len(), 56);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -693,8 +699,35 @@ mod tests {
     }
 
     #[test]
+    fn stereo_send_schema_needs_exact_document_current_route_and_target() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "external_stereo_send_set")
+            .unwrap();
+        assert_eq!(spec.operation, Some("externalStereoSendSet"));
+        let schema = &spec.tool.input_schema;
+        let required = schema["required"].as_array().unwrap();
+        for field in [
+            "expected_document",
+            "channel",
+            "slot",
+            "expected_instance",
+            "expected_current",
+            "destination",
+        ] {
+            assert!(required.contains(&json!(field)), "{field}");
+        }
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(schema["properties"]["slot"]["maximum"], 15);
+        assert_eq!(
+            schema["$defs"]["ExternalStereoSendDestination"]["enum"],
+            json!(["main", "none"])
+        );
+    }
+
+    #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 55);
+        assert_eq!(McpServer::specs().len(), 56);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -915,7 +948,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 55);
+        assert_eq!(specs.len(), 56);
     }
 
     #[test]
@@ -1213,7 +1246,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 55);
+        assert_eq!(specs.len(), 56);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1296,7 +1329,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 55);
+        assert_eq!(McpServer::specs().len(), 56);
     }
 
     #[test]
@@ -1344,7 +1377,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 55);
+        assert_eq!(specs.len(), 56);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

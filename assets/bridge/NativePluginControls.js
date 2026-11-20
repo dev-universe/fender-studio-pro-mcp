@@ -1285,6 +1285,7 @@ class NativePluginControls {
         const rumbleParameters = request.operation === "rumble_parameters_read";
         const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
+        const stereoSendChange = request.operation === "external_stereo_send_set";
         const cvStructure = request.operation === "cv_port_structure_inspect";
         const cvPresetApply = request.operation === "apply_cv_preset_settings";
         const insertGraphEdit = this.insertGraphNodeFields(request.operation) !== null;
@@ -1297,6 +1298,9 @@ class NativePluginControls {
             if (rumbleState && !this.rumbleStateRequest(request)) throw new Error("invalid fixed Rumble state request");
             if (rumbleSerialization && !this.rumbleSerializationRequest(request)) throw new Error("invalid fixed Rumble serialization request");
             if (externalMenu && !this.externalMenuRequest(request)) throw new Error("invalid fixed External menu request");
+            if (stereoSendChange && (!this.guiExact(request, ["operation", "expected_instance", "destination"])
+                || !this.insertChainUid(request.expected_instance) || !["main", "none"].includes(request.destination)))
+                throw new Error("invalid fixed Stereo Send diagnostic request");
             if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
@@ -1311,14 +1315,14 @@ class NativePluginControls {
             const before = this.component.bridge && this.component.bridge.requestContext;
             if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || stereoSendChange || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (guiLearning || externalMenu || stereoSendChange || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
@@ -1333,6 +1337,8 @@ class NativePluginControls {
                 throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
+            if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
+                throw new Error("unsupported Stereo Send diagnostic API");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
@@ -1347,7 +1353,20 @@ class NativePluginControls {
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
-            if (!this.sameContext(before)) throw new Error("document changed during native request");
+            if (!this.sameContext(before)) {
+                if (stereoSendChange) {
+                    const diagnostic = stereoSendReadTrace(result.diagnostic) || stereoSendChangeTrace("native_reply_context", true);
+                    if (diagnostic.failure_phase === null || !result.diagnostic) diagnostic.failure_phase = "native_reply_context";
+                    return { ok: false, outcome: "unknown", diagnostic };
+                }
+                throw new Error("document changed during native request");
+            }
+            if (stereoSendChange) {
+                if (result.ok === false && result.outcome === "not_applied" && result.diagnostic === undefined)
+                    return { ok: false, outcome: "not_applied", diagnostic: { ...stereoSendChangeTrace("native_admission", false), dispatch_attempted: true } };
+                if (!stereoSendReadTrace(result.diagnostic))
+                    return { ok: false, outcome: "unknown", diagnostic: stereoSendChangeTrace("native_reply", true) };
+            }
             if (insertGraphEdit && !this.insertGraphEditResult(result, request)) throw new Error("invalid insert graph edit receipt");
             if (cvStructure) {
                 if (result.ok === false) return this.cvStructureFailure(true,result);
@@ -1418,6 +1437,12 @@ class NativePluginControls {
             if (rumbleState) return this.rumbleStateFailure();
             if (rumbleSerialization) return this.rumbleSerializationFailure();
             if (externalMenu) return this.externalMenuFailure(dispatched, null);
+            if (stereoSendChange) {
+                const diagnostic = stereoSendReadTrace(parsed && parsed.diagnostic)
+                    || stereoSendChangeTrace(dispatched ? "native_reply" : "native_wiring", dispatched);
+                if (diagnostic.failure_phase === null) diagnostic.failure_phase = "native_reply";
+                return { ok: false, outcome: dispatched ? "unknown" : "not_applied", diagnostic };
+            }
             if (chorderChords) return this.chorderChordsFailure(null);
             if (guiLearning) return this.guiLearningFailure(error, guiLearningSet, dispatched, parsed);
             if (guiComparison) return this.guiComparisonFailure(error);

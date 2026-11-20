@@ -159,7 +159,9 @@ class Bridge {
                 result = this.handle(req.op, req.args || {});
             }
         } catch (e) {
-            result = impactOutputSet
+            result = req.op === "externalStereoSendSet"
+                ? stereoSendChangeFailure("unknown", stereoSendChangeTrace("bridge_dispatch", null))
+                : impactOutputSet
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
                 }] }
@@ -205,6 +207,14 @@ class Bridge {
             result = { ok: false, outcome: outcome, native_outcome: outcome,
                 error: { code: "insert_chain_context_changed", message: "The insert-chain document lease changed before publication" } };
         }
+        if (req.op === "externalStereoSendSet"
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            const prior = stereoSendReadTrace(result && result.diagnostic);
+            result = stereoSendChangeFailure("unknown", {
+                ...(prior || stereoSendChangeTrace("bridge_publish", null)),
+                failure_phase: prior && prior.failure_phase || "bridge_publish",
+            });
+        }
         if (!isFail(result) && req.op === "midiProgramPartAdd"
             && (!sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             result = { native_outcome: "unknown", stage: "publication" };
@@ -238,6 +248,8 @@ class Bridge {
         const reply = isFail(result)
             ? { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: false, error: result.bridgeError, code: code || "host_rejected" }
             : { protocol: kProtocol, id: req.id, session: this.session, document: afterContext.document, ok: true, result: result };
+        if (req.op === "externalStereoSendSet" && isFail(result))
+            reply.result = stereoSendChangeFailure("not_applied", stereoSendChangeTrace("bridge_precondition", false));
         reply.ms = Date.now() - now;
         this.replies.push(reply);
         if (this.replies.length > 32) this.replies.shift();
@@ -312,6 +324,7 @@ class Bridge {
             return fail("context observations apply only to pluginInspect");
         switch (op) {
             case "externalPortMenu": return this.fromComponent(c => c.externalPortMenu(args));
+            case "externalStereoSendSet": return this.externalStereoSendSet(args);
             case "chorderChordsGet": return this.fromComponent(c => c.chorderChordsGet(args));
             case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
@@ -386,6 +399,151 @@ class Bridge {
             case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
             case "impactOutputSet": return this.fromComponent(c => c.impactOutputSet(args));
             default: return fail("unknown op: " + op);
+        }
+    }
+
+    externalStereoSendSet(args) {
+        let trace = stereoSendChangeTrace("request", false);
+        const failure = (outcome) => stereoSendChangeFailure(outcome, trace);
+        const { channel, slot, expected_current: currentRoute, destination: wanted } = args;
+        const plugin = "External Effect Stereo", target = { channel, slot, plugin };
+        const c = this.component;
+        let dispatched = false;
+        try {
+            if (!c || Object.keys(args).length !== 5
+                || typeof channel !== "string" || !channel.trim() || channel.length > 256 || channel.includes("\0")
+                || channel === "메인" || !Number.isInteger(slot) || slot < 0 || slot > 15
+                || !["main", "none"].includes(wanted) || !["main", "none"].includes(currentRoute)
+                || currentRoute === wanted || typeof args.expected_instance !== "string"
+                || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+                || args.expected_instance === "00000000-0000-0000-0000-000000000000")
+                return failure("not_applied");
+            const fixture = () => {
+                const context = this.context();
+                if (this.contextError || !sameFixtureContext(context, this.requestContext)
+                    || context.fileUrl !== this.requestContext.fileUrl)
+                    throw new Error("Stereo Send requires the current native document");
+                const tp = this.transportPanel();
+                const switches = ["start", "record", "loop", "punch", "punchIn"];
+                if (!tp || switches.some(key => {
+                    const parameter = tp.findParameter(key);
+                    return !parameter || (parameter.value !== false && parameter.value !== 0);
+                })) throw new Error("transport switches are not independently stopped");
+                const song = this.song(), tracks = this.tracks({ name: channel, events: false });
+                const click = this.metronome({}), channels = c.channels();
+                if (isFail(song) || !Array.isArray(tracks) || isFail(click)
+                    || click.click !== false || click.precount !== false
+                    || (click.preroll !== false && click.preroll !== null)
+                    || song.transport.precount !== false || song.transport.preroll !== false
+                    || !Array.isArray(channels))
+                    throw new Error("Stereo Send requires stopped transport with click and preroll disabled");
+                const matches = tracks.filter(row => row.name === channel || row.channel === channel);
+                const strips = channels.filter(row => row.label === channel);
+                const mainChannels = channels.filter(row => row.label === "메인");
+                if (matches.length !== 1 || matches[0].mediaType !== "Audio"
+                    || matches[0].name !== channel || matches[0].channel !== channel
+                    || strips.length !== 1 || mainChannels.length !== 1)
+                    throw new Error("Stereo Send requires a unique audio channel and Main");
+                const [strip] = strips, [main] = mainChannels;
+                if (strip.mute !== 1 || strip.monitor !== 0 || strip.recordArmed !== 0 || strip.solo !== 0
+                    || ![null, "없음"].includes(strip.input) || strip.output !== "메인"
+                    || main.volume !== 0 || main.output !== null)
+                    throw new Error("Stereo Send requires a muted channel and a silent Main without a physical output");
+                return JSON.stringify({ song, tracks, click, channels });
+            };
+            const snapshots = () => {
+                const page = c.pluginParams({ ...target, source: "controller", expected_instance: args.expected_instance, offset: 0, limit: 64 });
+                const i = page && page.instance;
+                if (!i || i.object_uid !== args.expected_instance || i.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
+                    || i.native_class !== "AudioEffect" || i.object_id !== plugin
+                    || !page.parameter_discovery || page.parameter_discovery.source !== "controller"
+                    || page.page_complete !== true || page.access_metadata_complete !== true || page.value_read_complete !== true
+                    || page.complete !== true || page.reported_count !== 24 || !Array.isArray(page.params) || page.params.length !== 24
+                    || page.params.some((row, index) => !row || row.index !== index || typeof row.name !== "string"))
+                    throw new Error("exact complete 24-row controller unavailable");
+                return page.params;
+            };
+            const portLabel = (route) => route === "main" ? "메인" : "없음";
+            const port = (parameters, name, tag, label) => {
+                const rows = parameters.filter(p => p.name === name);
+                if (rows.length !== 1) throw new Error("expected unique controller port");
+                const p = rows[0];
+                if (p.native_kind !== "List" || p.tag !== tag || p.writable !== false || p.text !== label || p.value !== -1
+                    || p.normalized !== 1 || !p.native_value || p.native_value.variant_tag !== 1
+                    || !p.native_value.data || p.native_value.data.kind !== "integer" || p.native_value.data.value !== -1
+                    || !p.native_normalized || p.native_normalized.kind !== "float32" || p.native_normalized.bits_hex !== "3F800000")
+                    throw new Error("exact unassigned-output port display/sentinel changed");
+                return p;
+            };
+            trace.failure_phase = "pre_fixture";
+            const beforeFixture = fixture();
+            trace.failure_phase = "pre_attachment";
+            const original = c.pluginOf(target);
+            if (!original || original.error || original.name !== plugin || !original.device)
+                return failure("not_applied");
+            const sameTarget = () => {
+                const now = c.pluginOf(target);
+                return now && !now.error && now.name === original.name && now.device === original.device
+                    && now.component === original.component && now.element === original.element;
+            };
+            trace.failure_phase = "controller_baseline";
+            const before = snapshots();
+            const originalPort = port(before, "sendPort", 102, portLabel(currentRoute));
+            port(before, "receivePort", 103, "없음");
+            if (JSON.stringify(before) !== JSON.stringify(snapshots()) || fixture() !== beforeFixture || !sameTarget())
+                return failure("not_applied");
+            const expected = before.map(row => row.name === "sendPort" ? { ...row, text: portLabel(wanted) } : row);
+            dispatched = true;
+            trace = stereoSendChangeTrace("native_reply", null);
+            const native = c.nativePluginRequest(original.device, {
+                operation: "external_stereo_send_set", expected_instance: args.expected_instance, destination: wanted,
+            });
+            const nativeTrace = stereoSendReadTrace(native && native.diagnostic);
+            if (native && native.ok === false && nativeTrace && nativeTrace.failure_phase !== null
+                && (native.outcome === "unknown" || (native.outcome === "not_applied"
+                    && nativeTrace.menu_callbacks_began === false && nativeTrace.select_entered === false))) {
+                trace = nativeTrace;
+                return failure(native.outcome);
+            }
+            if (nativeTrace) trace = { ...nativeTrace, failure_phase: "native_reply" };
+            if (!native || native.ok !== true || native.outcome !== "applied_unverified"
+                || native.operation !== "external_stereo_send_set" || native.destination !== wanted
+                || native.phase !== "closed_checked" || native.raw_select_result !== 1 || native.selection_calls !== 1
+                || native.checkmark_and_display_confirmed !== true || !stereoSendCompleted(nativeTrace))
+                return failure("unknown");
+            trace.failure_phase = "post_native_attachment";
+            if (!sameTarget()) return failure("unknown");
+            trace.failure_phase = "post_native_fixture";
+            if (fixture() !== beforeFixture) return failure("unknown");
+            trace.failure_phase = "independent_controller";
+            const after = snapshots();
+            trace.failure_phase = "independent_menu";
+            const menu = c.externalPortMenu({ ...target, expected_instance: args.expected_instance, port: "send" });
+            const main = wanted === "main";
+            if (!menu || menu.ok !== true || !Array.isArray(menu.rows) || menu.rows.length !== 4
+                || !menu.held_send_route || menu.held_send_route.assigned !== main
+                || menu.held_send_route.stable !== true
+                || menu.rows[0].title !== "없음" || menu.rows[0].checked !== !main
+                || menu.rows[1].title !== "메인 - 1 + 2" || menu.rows[1].checked !== main)
+                return failure("unknown");
+            trace.failure_phase = "independent_controller";
+            if (JSON.stringify(after) !== JSON.stringify(expected)
+                || JSON.stringify(after) !== JSON.stringify(snapshots())) return failure("unknown");
+            trace.failure_phase = "independent_attachment";
+            if (!sameTarget()) return failure("unknown");
+            trace.failure_phase = "independent_fixture";
+            if (fixture() !== beforeFixture) return failure("unknown");
+            trace.failure_phase = "independent_controller";
+            const observedPort = port(after, "sendPort", 102, portLabel(wanted));
+            trace.failure_phase = null;
+            return { ok: true, native_outcome: "applied_unverified", operation: "external_stereo_send_set",
+                channel, slot, expected_current: currentRoute, destination: wanted,
+                instance: native.instance, selection_calls: 1, controller_rows: 24,
+                fixture_after_matches: true, native_checkmark_verified: true, assigned: main,
+                before: originalPort, after: observedPort, atomic_snapshot: false,
+                persistence_verified: false, audio_verified: false, diagnostic: trace };
+        } catch (_) {
+            return failure(dispatched ? "unknown" : "not_applied");
         }
     }
 
@@ -1409,6 +1567,46 @@ function memberTypes(obj) {
 
 function fail(message) { return { bridgeError: String(message) }; }
 function isFail(value) { return !!value && typeof value === "object" && typeof value.bridgeError === "string"; }
+
+const kStereoSendChangePhases = [
+    "bridge_precondition", "bridge_dispatch", "request", "pre_fixture", "pre_attachment", "controller_baseline",
+    "native_wiring", "native_reply", "native_admission", "native_allocator", "source_parameter", "builder_factory",
+    "construct", "build", "source_profile", "check_only", "source_rebind", "select", "cleanup", "typed_destination",
+    "fresh_destination_menu", "native_post_attachment", "native_publish", "native_reply_context",
+    "post_native_attachment", "post_native_fixture", "independent_controller", "independent_menu",
+    "independent_attachment", "independent_fixture", "bridge_publish",
+];
+const kStereoSendTraceFlags = ["dispatch_attempted", "menu_callbacks_began", "select_entered", "select_returned", "cleanup_proven"];
+
+function stereoSendChangeTrace(phase, attempted) {
+    const evidence = attempted === false ? false : null;
+    return { version: "stereo_send_v1", failure_phase: phase, dispatch_attempted: attempted,
+        menu_callbacks_began: evidence, select_entered: evidence, select_returned: evidence, cleanup_proven: evidence };
+}
+
+function stereoSendReadTrace(trace) {
+    if (!trace || typeof trace !== "object" || Array.isArray(trace) || Object.keys(trace).length !== 7
+        || trace.version !== "stereo_send_v1" || (trace.failure_phase !== null && !kStereoSendChangePhases.includes(trace.failure_phase))
+        || kStereoSendTraceFlags.some(key => trace[key] !== null && typeof trace[key] !== "boolean")) return null;
+    const [dispatch, callbacks, entered, returned, cleanup] = kStereoSendTraceFlags.map(key => trace[key]);
+    const nativeFlags = [callbacks, entered, returned, cleanup];
+    if ((dispatch === false && nativeFlags.some(flag => flag !== false))
+        || (dispatch === null && nativeFlags.some(flag => flag !== null))
+        || (dispatch === true && nativeFlags.some(flag => flag === null) && nativeFlags.some(flag => flag !== null))
+        || (entered === true && callbacks !== true) || (returned === true && entered !== true)
+        || (cleanup === true && callbacks !== true)) return null;
+    return { ...trace };
+}
+
+function stereoSendCompleted(trace) {
+    return !!trace && trace.failure_phase === null && kStereoSendTraceFlags.every(key => trace[key] === true);
+}
+
+function stereoSendChangeFailure(outcome, diagnostic) {
+    return { ok: false, native_outcome: outcome, diagnostic, errors: [{
+        code: "stereo_send_set_unconfirmed", message: "The logical Stereo Send change could not be verified",
+    }] };
+}
 
 function sameFixtureContext(a, b) {
     return !!a && !!b && a.open === true && b.open === true

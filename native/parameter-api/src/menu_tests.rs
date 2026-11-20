@@ -1,9 +1,12 @@
 use super::*;
-use crate::menu::{ExternalPort, MenuPhase};
+use crate::menu::{ExternalPort, MenuPhase, StereoSendRoute, StereoSendSelectionPhase as Stage};
 #[derive(Default)]
 struct MenuStats {
     provenance: Cell<bool>,
     check_only: Cell<bool>,
+    checked_port: Cell<i32>,
+    selection_calls: RefCell<Vec<i32>>,
+    selection_behavior: Cell<u8>,
     category_queries: Cell<usize>,
     check_queries: Cell<usize>,
     raw_query: Cell<u8>,
@@ -90,6 +93,7 @@ fn new(kind: u8, state: Rc<MenuStats>, builder: *mut c_void, ordinal: i32) -> *m
             } else {
                 sub as *const () as usize
             };
+            v[7] = select_item as *const () as usize;
             v[8] = count as *const () as usize;
             v[9] = item as *const () as usize;
             v
@@ -271,6 +275,9 @@ unsafe extern "C" fn create(
             d: [0x87, 0xce, 0x79, 0xab, 0x5f, 0x9c, 0xd3, 0xf1]
         }
     );
+    if o.state.stop.get() == 4 {
+        return -1;
+    }
     let q = new(1, o.state.clone(), std::ptr::null_mut(), 0);
     if o.state.retention.get() == 1 {
         unsafe { retain(q) };
@@ -406,13 +413,38 @@ unsafe extern "C" fn attribute(p: *mut c_void, a: *mut Variant, id: i32) -> u8 {
         }
         4 | 5 => {
             out.tag = if o.state.bad_bool.get() { 2 } else { 1 };
-            out.payload = if id == 5 || o.ordinal == 0 { 1 } else { 0 };
+            out.payload = u64::from(id == 5 || o.ordinal == o.state.checked_port.get());
         }
         12 => {}
         _ => return 0,
     }
     1
 }
+unsafe extern "C" fn select_item(p: *mut c_void) -> u8 {
+    let item = unsafe { n(p) };
+    let menu = unsafe { n(item.builder) };
+    let builder = unsafe { n(menu.builder) };
+    assert!(item.refs.get() > 1 && menu.refs.get() > 1 && builder.refs.get() > 1);
+    assert!(matches!(item.ordinal, 0 | 1));
+    let parameter = unsafe { fp(builder.parameter.get()) };
+    let state = &item.state;
+    state.selection_calls.borrow_mut().push(item.ordinal);
+    state.trace.borrow_mut().push("select");
+    match state.selection_behavior.get() {
+        1 => return 1, // blocked handler may still have a true public acknowledgment
+        2 => parameter.context.set(false),
+        3 => {}
+        _ => state.checked_port.set(item.ordinal),
+    }
+    let text = if item.ordinal == 0 {
+        "없음"
+    } else {
+        "메인"
+    };
+    parameter.format.display_override.set(Some(text));
+    u8::from(state.selection_behavior.get() != 4)
+}
+
 fn make_menu(state: Rc<MenuStats>, builder: *mut c_void, depth: u8) -> *mut c_void {
     unsafe { retain(builder) };
     let q = new(2, state.clone(), builder, 0);
@@ -429,6 +461,9 @@ fn make_menu(state: Rc<MenuStats>, builder: *mut c_void, depth: u8) -> *mut c_vo
 unsafe extern "C" fn build(p: *mut c_void, _: *mut c_void) -> *mut c_void {
     let b = unsafe { n(p) };
     b.state.trace.borrow_mut().push("build");
+    if b.state.stop.get() == 5 {
+        return std::ptr::null_mut();
+    }
     let q = make_menu(b.state.clone(), p, b.state.depth.get());
     if b.state.shared_empty_submenu.get() {
         b.state.count.set(b.state.shared_submenu_rows.get());
@@ -1372,4 +1407,216 @@ fn check_only_wrong_class_never_constructs_or_queries() {
     drop(r);
     unsafe { release(a) };
     assert_eq!(f.p().refs.get(), 1);
+}
+
+fn selection_fixture(
+    env: &TextEnv,
+    current: StereoSendRoute,
+) -> (Fixture, RawParameter, *mut c_void, Rc<MenuStats>) {
+    let (f, p, allocator, state) = check_only_fixture(env);
+    let (index, label) = match current {
+        StereoSendRoute::None => (0, "없음"),
+        StereoSendRoute::Main => (1, "메인"),
+    };
+    f.p().format.display_override.set(Some(label));
+    state.checked_port.set(index);
+    state.raw_query.set(1);
+    (f, p, allocator, state)
+}
+
+#[test]
+fn fixed_stereo_send_selection_requires_two_menu_lifetimes_and_only_changes_display() {
+    for (route, current, row, label, old_label) in [
+        (
+            StereoSendRoute::Main,
+            StereoSendRoute::None,
+            1,
+            "메인",
+            "없음",
+        ),
+        (
+            StereoSendRoute::None,
+            StereoSendRoute::Main,
+            0,
+            "없음",
+            "메인",
+        ),
+    ] {
+        let env = TextEnv::new();
+        let (fixture, parameter, allocator, state) = selection_fixture(&env, current);
+        let attempt = unsafe {
+            parameter.external_stereo_send_select(
+                NonNull::new(allocator).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                route,
+                &mut fixture.guard(),
+                &mut || Ok(()),
+            )
+        };
+        assert!(attempt.began && attempt.selection_dispatched);
+        assert_eq!(attempt.trace.phase, Stage::Complete);
+        assert!(
+            attempt.trace.select_entered
+                && attempt.trace.select_returned
+                && attempt.trace.cleanup_proven
+        );
+        let receipt = attempt.result.unwrap();
+        assert_eq!(receipt.route, route);
+        assert_eq!(receipt.raw_select_result, 1);
+        let mut expected = receipt.before().clone();
+        expected.display = label.into();
+        assert_eq!(receipt.after(), &expected);
+        assert_eq!(&*state.selection_calls.borrow(), &[row]);
+        assert_eq!(&*state.query_flags.borrow(), &[1, 1]);
+        assert_eq!(
+            state
+                .trace
+                .borrow()
+                .iter()
+                .filter(|&&t| t == "builder-cleanup")
+                .count(),
+            2
+        );
+        assert_eq!(fixture.p().writes.get(), 0);
+        receipt.check(&mut fixture.guard()).unwrap();
+        fixture.p().format.display_override.set(Some(old_label));
+        assert!(receipt.check(&mut fixture.guard()).is_err());
+        drop(receipt);
+        unsafe { release(allocator) };
+        assert_eq!(fixture.p().refs.get(), 1);
+    }
+}
+
+#[test]
+fn fixed_stereo_send_selection_refuses_missing_opposite_profile_or_check_only() {
+    for fault in [0, 1, 2, 3] {
+        let env = TextEnv::new();
+        let (fixture, parameter, allocator, state) = selection_fixture(&env, StereoSendRoute::None);
+        let mut class = "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4";
+        match fault {
+            0 => state.raw_query.set(0),
+            1 => state.checked_port.set(1),
+            2 => fixture.p().format.normalized_override.set(Some(0.0)),
+            3 => class = "other",
+            _ => unreachable!(),
+        }
+        let attempt = unsafe {
+            parameter.external_stereo_send_select(
+                NonNull::new(allocator).unwrap(),
+                class,
+                StereoSendRoute::Main,
+                &mut fixture.guard(),
+                &mut || Ok(()),
+            )
+        };
+        assert!(attempt.result.is_err() && !attempt.selection_dispatched);
+        assert!(state.selection_calls.borrow().is_empty());
+        assert_eq!(attempt.began, fault < 2);
+        assert_eq!(
+            attempt.trace.phase,
+            [
+                Stage::CheckOnly,
+                Stage::SourceProfile,
+                Stage::SourceParameter,
+                Stage::SourceParameter
+            ][fault]
+        );
+        assert!(!attempt.trace.select_entered && !attempt.trace.select_returned);
+        assert_eq!(attempt.trace.cleanup_proven, fault < 2);
+        unsafe { release(allocator) };
+        assert_eq!(fixture.p().refs.get(), 1);
+    }
+}
+
+#[test]
+fn fixed_stereo_send_checks_retained_route_before_dispatch() {
+    let env = TextEnv::new();
+    let (fixture, parameter, allocator, state) = selection_fixture(&env, StereoSendRoute::None);
+    let attempt = unsafe {
+        parameter.external_stereo_send_select(
+            NonNull::new(allocator).unwrap(),
+            "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+            StereoSendRoute::Main,
+            &mut fixture.guard(),
+            &mut || {
+                assert_eq!(&*state.query_flags.borrow(), &[1, 1]);
+                assert!(state.selection_calls.borrow().is_empty());
+                Err("retained source changed".into())
+            },
+        )
+    };
+    assert!(matches!(attempt.result, Err(Error::Guard(_))));
+    assert_eq!(attempt.trace.phase, Stage::SourceRebind);
+    assert!(attempt.trace.cleanup_proven);
+    assert!(!attempt.trace.select_entered && !attempt.trace.select_returned);
+    assert!(state.selection_calls.borrow().is_empty());
+    unsafe { release(allocator) };
+    assert_eq!(fixture.p().refs.get(), 1);
+}
+
+#[test]
+fn fixed_stereo_send_ack_alone_stale_checkmark_and_context_loss_are_unknown() {
+    for (behavior, phase, cleanup) in [
+        (1, Stage::TypedDestination, true),
+        (2, Stage::Select, false),
+        (3, Stage::FreshDestinationMenu, true),
+        (4, Stage::Select, true),
+        (5, Stage::TypedDestination, true),
+        (6, Stage::Cleanup, false),
+    ] {
+        let env = TextEnv::new();
+        let (fixture, parameter, allocator, state) = selection_fixture(&env, StereoSendRoute::None);
+        state.selection_behavior.set(behavior);
+        state.change_default.set(behavior == 5);
+        if behavior == 6 {
+            state.stop.set(3);
+            *state.context.borrow_mut() = Some(fixture.p().context.clone());
+        }
+        let attempt = unsafe {
+            parameter.external_stereo_send_select(
+                NonNull::new(allocator).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                StereoSendRoute::Main,
+                &mut fixture.guard(),
+                &mut || Ok(()),
+            )
+        };
+        assert!(attempt.began && attempt.selection_dispatched && attempt.result.is_err());
+        assert_eq!(attempt.trace.phase, phase, "behavior {behavior}");
+        assert!(attempt.trace.select_entered && attempt.trace.select_returned);
+        assert_eq!(attempt.trace.cleanup_proven, cleanup);
+        assert_eq!(&*state.selection_calls.borrow(), &[1]);
+        assert_eq!(fixture.p().writes.get(), 0);
+        unsafe { release(allocator) };
+        assert_eq!(fixture.p().refs.get(), 1);
+    }
+}
+
+#[test]
+fn stereo_send_trace_preserves_first_builder_phase_through_cleanup() {
+    for (fault, phase, cleanup) in [
+        (4, Stage::BuilderFactory, false),
+        (1, Stage::Construct, false),
+        (5, Stage::Build, true),
+    ] {
+        let env = TextEnv::new();
+        let (fixture, parameter, allocator, state) = selection_fixture(&env, StereoSendRoute::None);
+        state.stop.set(fault);
+        *state.context.borrow_mut() = Some(fixture.p().context.clone());
+        let attempt = unsafe {
+            parameter.external_stereo_send_select(
+                NonNull::new(allocator).unwrap(),
+                "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4",
+                StereoSendRoute::Main,
+                &mut fixture.guard(),
+                &mut || Ok(()),
+            )
+        };
+        assert!(attempt.began && attempt.result.is_err());
+        assert_eq!(attempt.trace.phase, phase);
+        assert!(!attempt.trace.select_entered && !attempt.trace.select_returned);
+        assert_eq!(attempt.trace.cleanup_proven, cleanup);
+        assert!(state.selection_calls.borrow().is_empty());
+        unsafe { release(allocator) };
+    }
 }

@@ -15,3 +15,7 @@ extern "C" CCL::IMenuItem* menu_item(CCL::IMenu*p,int i){return p->getItem(i);}
 extern "C" CCL::tbool menu_attr(CCL::IMenuItem*p,CCL::Variant*v,int i){return p->getItemAttribute(*v,i);}
 extern "C" CCL::IMenu* menu_sub(CCL::IMenuItem*p){return p->getItemMenu();}
 extern "C" CCL::tresult menu_create(CCL::IClassAllocator*p,const CCL::UIDBytes*c,const CCL::UIDBytes*i,void**o){return p->createInstance(*c,*i,o);}
+
+using MenuItemSelect = CCL::tbool (CCL::IMenuItem::*)();
+static_assert(std::is_same_v<decltype(&CCL::IMenuItem::selectItem), MenuItemSelect>);
+extern "C" CCL::tbool menu_select(CCL::IMenuItem* p) { return p->selectItem(); }
