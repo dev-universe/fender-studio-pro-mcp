@@ -959,5 +959,20 @@
     "protected_files": 187,
     "managed_files": 18,
     "saved": false
+  },
+  "r98_timeless2_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 136,
+    "plugin_verified_writable": 841,
+    "reported_values": 842,
+    "virtual_cc_verified": 128,
+    "common_verified": 8,
+    "legacy_cc_independently_verified": true,
+    "requests": 3356,
+    "active_seconds": 265.947,
+    "wall_seconds": 308.7,
+    "protected_files": 211,
+    "managed_files": 18,
+    "saved": false
   }
 }
