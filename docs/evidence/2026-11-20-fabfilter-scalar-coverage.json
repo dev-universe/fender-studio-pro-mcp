@@ -887,5 +887,22 @@
     "protected_files": 175,
     "managed_files": 18,
     "saved": false
+  },
+  "r102_simplon_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 110,
+    "plugin_verified_writable": 155,
+    "reported_values_restored_each_case": 156,
+    "new_virtual_cc_verified": 102,
+    "virtual_cc_verified_total": 128,
+    "common_verified": 8,
+    "linked_named_cases": 4,
+    "legacy_cc_independently_verified": true,
+    "requests": 6642,
+    "active_seconds": 483.094,
+    "wall_seconds": 540.7,
+    "protected_files": 175,
+    "managed_files": 18,
+    "saved": false
   }
 }
