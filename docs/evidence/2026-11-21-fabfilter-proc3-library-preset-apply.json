@@ -1,0 +1,27 @@
+{
+  "date_local": "2026-11-21",
+  "tested_source": "74e1837",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": {"name": "FabFilter Pro-C 3", "format": "VST3", "version": "3.02", "vendor_signature_verified": true},
+  "tool": "fabfilter_preset_apply",
+  "preset": {"name": "Kick Punch 01", "folder": "Drums", "source": "local library with official factory file bytes", "bytes": 2912},
+  "file_apply_count": 1,
+  "receipt": "applied_unverified",
+  "visible_editor_title_before_and_after": ["Default Setting", "Kick Punch 01"],
+  "visible_compression_style_before_and_after": ["Clean", "Versatile"],
+  "provider_rows_compared": 237,
+  "changed_rows": 35,
+  "before_and_after_full_native_digests_verified": true,
+  "guard_refusals": {
+    "stale_catalog": "preset_catalog_changed",
+    "stale_document": "document_changed",
+    "wrong_instance": "native_rejected",
+    "closed_editor": "native_rejected",
+    "all_provider_values_preserved": true
+  },
+  "restoration": {"visible_editor_title": "Default Setting", "state_capsule_restored": true, "values_restored_by_capsule": 236, "additional_restored_value": "vstp1073741826", "all_values_restored": 237, "component_fingerprint_restored": true},
+  "requests": 130,
+  "owner_wall_seconds": 98.065,
+  "host_wall_seconds": 169.607,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "welcome_hint_preference_restored_to_original_bytes": true, "staged_preset_removed": true, "protected_files_verified": 168, "managed_files_restored": 18, "preset_tree_entries_unchanged": 137}
+}
