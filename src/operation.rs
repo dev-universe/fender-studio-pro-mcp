@@ -85,6 +85,8 @@ pub enum Operation {
     InsertChainState(InsertChainState),
     #[serde(rename = "insertSlotMove", alias = "insert_slot_move")]
     InsertSlotMove(InsertSlotMove),
+    #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
+    InsertSplitterRemove(InsertSplitterRemove),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
@@ -789,6 +791,22 @@ pub struct InsertSlotMove {
     pub source_node: String,
     pub after_node: String,
     pub following_node: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertSplitterRemove {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub splitter_node: String,
+    pub merger_node: String,
+    pub first_slot_node: String,
+    pub second_slot_node: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1810,37 +1828,29 @@ impl Operation {
                 }
             }
             Self::InsertSlotMove(p) => {
-                validate_plugin_target(Some(&p.channel), Some(p.slot), None, None)?;
-                for name in [&p.channel, &p.plugin] {
-                    if name.trim().is_empty()
-                        || name.encode_utf16().count() > 256
-                        || name.chars().any(char::is_control)
-                    {
-                        return Err(invalid("An exact channel and effect name are required"));
-                    }
-                }
-                for uuid in [
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
                     &p.expected_instance,
                     &p.expected_graph,
-                    &p.source_node,
-                    &p.after_node,
-                    &p.following_node,
-                ] {
-                    validate_instance_uid(Some(uuid))?;
-                    if uuid == "00000000-0000-0000-0000-000000000000"
-                        || uuid.bytes().any(|byte| byte.is_ascii_lowercase())
-                    {
-                        return Err(invalid("Insert slot moves require canonical nonzero UUIDs"));
-                    }
-                }
-                if p.source_node == p.after_node
-                    || p.source_node == p.following_node
-                    || p.after_node == p.following_node
-                {
-                    return Err(invalid(
-                        "Source, destination and following node must differ",
-                    ));
-                }
+                    &[&p.source_node, &p.after_node, &p.following_node],
+                )?;
+            }
+            Self::InsertSplitterRemove(p) => {
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.splitter_node,
+                        &p.merger_node,
+                        &p.first_slot_node,
+                        &p.second_slot_node,
+                    ],
+                )?;
             }
             Self::InsertChainState(p) => {
                 if p.include_routing.is_some()
@@ -2355,6 +2365,42 @@ fn validate_instance_uid(uid: Option<&str>) -> Result<(), OperationError> {
             }))
     {
         return Err(invalid("expected_instance must be a native instance UUID"));
+    }
+    Ok(())
+}
+
+fn validate_insert_graph_target(
+    channel: &str,
+    slot: u32,
+    effect: &str,
+    instance: &str,
+    graph: &str,
+    nodes: &[&str],
+) -> Result<(), OperationError> {
+    validate_plugin_target(Some(channel), Some(slot), None, None)?;
+    if [channel, effect].into_iter().any(|name| {
+        name.trim().is_empty()
+            || name.encode_utf16().count() > 256
+            || name.chars().any(char::is_control)
+    }) {
+        return Err(invalid("An exact channel and effect name are required"));
+    }
+    for uuid in [instance, graph].into_iter().chain(nodes.iter().copied()) {
+        validate_instance_uid(Some(uuid))?;
+        if uuid == "00000000-0000-0000-0000-000000000000"
+            || uuid.bytes().any(|byte| byte.is_ascii_lowercase())
+        {
+            return Err(invalid(
+                "Insert graph edits require canonical nonzero UUIDs",
+            ));
+        }
+    }
+    if nodes
+        .iter()
+        .enumerate()
+        .any(|(index, node)| nodes[..index].contains(node))
+    {
+        return Err(invalid("Insert graph nodes must differ"));
     }
     Ok(())
 }

@@ -295,6 +295,14 @@ enum Request {
         after_node: String,
         following_node: String,
     },
+    InsertSplitterRemove {
+        expected_instance: String,
+        expected_graph: String,
+        splitter_node: String,
+        merger_node: String,
+        first_slot_node: String,
+        second_slot_node: String,
+    },
 }
 impl Request {
     fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
@@ -343,7 +351,8 @@ impl Request {
             | Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. }
-            | Self::InsertSlotMove { .. } => Source::Auto,
+            | Self::InsertSlotMove { .. }
+            | Self::InsertSplitterRemove { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -362,6 +371,9 @@ impl Request {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::InsertSlotMove {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterRemove {
                 expected_instance, ..
             } => Some(expected_instance),
             Self::InsertChainCapture { .. }
@@ -518,6 +530,33 @@ impl Request {
                         "insert move requires distinct source/destination nodes and exact UUIDs"
                             .into(),
                     );
+                }
+                Ok(())
+            }
+            Self::InsertSplitterRemove {
+                expected_instance,
+                expected_graph,
+                splitter_node,
+                merger_node,
+                first_slot_node,
+                second_slot_node,
+            } => {
+                let nodes = [
+                    splitter_node,
+                    merger_node,
+                    first_slot_node,
+                    second_slot_node,
+                ];
+                if ![expected_instance, expected_graph]
+                    .into_iter()
+                    .chain(nodes)
+                    .all(|id| valid_uid(id))
+                    || nodes
+                        .iter()
+                        .enumerate()
+                        .any(|(index, id)| nodes[..index].contains(id))
+                {
+                    return Err("Splitter removal requires distinct, exact graph node UUIDs".into());
                 }
                 Ok(())
             }
@@ -1668,7 +1707,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainCapture { .. }
         | Request::InsertChainRestore { .. }
         | Request::InsertChainRelease { .. }
-        | Request::InsertSlotMove { .. } => Err("request requires its own dispatcher".into()),
+        | Request::InsertSlotMove { .. }
+        | Request::InsertSplitterRemove { .. } => Err("request requires its own dispatcher".into()),
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -2179,6 +2219,7 @@ fn dispatch_device(
         Request::CvPortStructureInspect { .. }
             | Request::ImpactOutputSet { .. }
             | Request::InsertSlotMove { .. }
+            | Request::InsertSplitterRemove { .. }
             | Request::ExternalPortMenu { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
@@ -2274,6 +2315,26 @@ fn dispatch_device(
         return node_inspect::slot_move::dispatch(
             ctx,
             [&expected_graph, &source_node, &after_node, &following_node],
+        );
+    }
+    if let Request::InsertSplitterRemove {
+        expected_graph,
+        splitter_node,
+        merger_node,
+        first_slot_node,
+        second_slot_node,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::dispatch(
+            ctx,
+            [
+                &expected_graph,
+                &splitter_node,
+                &merger_node,
+                &first_slot_node,
+                &second_slot_node,
+            ],
         );
     }
     if let Request::ExternalPortMenu {

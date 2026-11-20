@@ -55,6 +55,16 @@ enum GraphChild {
     },
 }
 
+impl GraphChild {
+    fn node(&self) -> &CopiedIdentity {
+        match self {
+            Self::Splitter { node, .. } | Self::Merger { node, .. } | Self::Slot { node, .. } => {
+                node
+            }
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 struct GraphOwnershipValue {
     folder: folder_context::FolderIdentity,
@@ -190,19 +200,49 @@ impl GraphOwnership {
         let destination_matches = self.value.children.iter().any(|child| {
             matches!(child, GraphChild::Slot { node, .. } if node.object_uid.as_deref() == Some(after))
         });
-        let following_matches = self.value.children.iter().any(|child| {
-            let node = match child {
-                GraphChild::Slot { node, .. }
-                | GraphChild::Merger { node, .. }
-                | GraphChild::Splitter { node, .. } => node,
-            };
-            node.object_uid.as_deref() == Some(following)
-        });
+        let following_matches = self
+            .value
+            .children
+            .iter()
+            .any(|child| child.node().object_uid.as_deref() == Some(following));
         if source_matches && destination_matches && following_matches {
             Ok(())
         } else {
             Err("insert move nodes do not belong to the resolved effect and graph".into())
         }
+    }
+
+    pub(super) fn check_splitter_remove_targets(
+        &self,
+        [graph, splitter, merger, first, second]: [&str; 5],
+        effect: &str,
+    ) -> Result<(), String> {
+        if self.value.graph.object_uid.as_deref() != Some(graph) {
+            return Err("insert graph UUID changed".into());
+        }
+        let find = |identity: &str| {
+            self.value
+                .children
+                .iter()
+                .find(|child| child.node().object_uid.as_deref() == Some(identity))
+        };
+        let (
+            Some(GraphChild::Splitter { .. }),
+            Some(GraphChild::Merger { .. }),
+            Some(GraphChild::Slot { device: a, .. }),
+            Some(GraphChild::Slot { device: b, .. }),
+        ) = (find(splitter), find(merger), find(first), find(second))
+        else {
+            return Err(
+                "Expected Splitter, merger and two exact slot nodes in the same graph".into(),
+            );
+        };
+        if a.object_uid.as_deref() != Some(effect) && b.object_uid.as_deref() != Some(effect) {
+            return Err(
+                "The resolved effect does not belong to either bound Splitter branch".into(),
+            );
+        }
+        Ok(())
     }
 
     pub(super) fn capture(

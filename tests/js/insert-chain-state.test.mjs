@@ -328,3 +328,48 @@ test('insert slot move validates the exact target, capability and returned ident
   assert.equal(stale.component.insertSlotMove(args).native_outcome, 'unknown');
   assert.equal(stale.calls.length, 1);
 });
+
+test('nested Splitter removal binds both branches and rejects mismatched native receipts', () => {
+  const args = {
+    channel: 'Scratch', slot: 0, plugin: 'Mixtool', expected_instance: folderUid,
+    expected_graph: '10000000-1234-1234-1234-123456789ABC',
+    splitter_node: '20000000-1234-1234-1234-123456789ABC',
+    merger_node: '30000000-1234-1234-1234-123456789ABC',
+    first_slot_node: '40000000-1234-1234-1234-123456789ABC',
+    second_slot_node: '50000000-1234-1234-1234-123456789ABC',
+  };
+  const { channel, slot, plugin, ...ids } = args;
+  const device = {};
+  const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
+    native_class: 'AudioEffect', object_id: 'Mixtool' };
+  const capabilityFields = { insert_splitter_remove_api: 'nested_splitter_remove_v1' };
+  const success = body => ({ ...body, instance, ok: true, outcome: 'applied_unverified', verified: false });
+  const good = harness({ capabilityFields, nativeReply: success });
+  good.component.pluginOf = target => {
+    assert.equal(target.channel, channel);
+    assert.equal(target.slot, slot);
+    assert.equal(target.plugin, plugin);
+    return { device, name: plugin };
+  };
+  assert.equal(good.component.insertSplitterRemove({ ...args, second_slot_node: args.first_slot_node }).native_outcome, 'not_applied');
+  assert.equal(good.calls.length, 0);
+  assert.equal(good.component.insertSplitterRemove(args).native_outcome, 'applied_unverified');
+  assert.equal(good.calls.length, 1);
+  assert.equal(good.calls[0][0], device);
+  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation: 'insert_splitter_remove', ...ids });
+
+  const missing = harness({ capabilityFields: { insert_slot_move_api: 'same_graph_move_v1' } });
+  missing.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(missing.component.insertSplitterRemove(args).native_outcome, 'not_applied');
+  assert.equal(missing.calls.length, 0);
+
+  const stale = harness({
+    capabilityFields,
+    nativeReply: body => ({ ...success(body), splitter_node: body.merger_node }),
+  });
+  stale.component.pluginOf = () => ({ device, name: plugin });
+  const result = stale.component.insertSplitterRemove(args);
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.splitter_node, undefined);
+  assert.equal(stale.calls.length, 1);
+});
