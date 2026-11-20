@@ -274,7 +274,7 @@ Supply the current document from `host_status`, the channel name and zero-based 
 }
 ```
 
-A verified receipt covers one selection, the new menu checkmark and logical assignment, and a complete read of all 24 controller rows. An unknown outcome requires a fresh observation before any further change. Return, physical routing, audible output, and persistence require separate verification.
+A verified receipt covers one selection, the new menu checkmark and logical assignment, and a complete read of all 24 controller rows. An unknown outcome requires a fresh observation before any further change. Return, physical routing, audible output, and persistence require separate verification. [Live change and restore verification](docs/evidence/2026-11-21-external-stereo-send-set.json)
 
 ## Inspect files offline
 
