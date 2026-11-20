@@ -160,6 +160,9 @@ track name, `source: "dsp"`, `include_nodes: true`, and
 The 8.1.1 macOS arm64 native add-on reports all 32 output names and whether
 each activation is requested and acknowledged. You can use it with the Impact
 editor closed. Use `channels_list` to see the associated mixer channels.
+Set `include_color: true` to also read each strip's signed 32-bit
+`color_argb` value. Studio Pro can link an instrument's primary strip
+color to its arrangement track. [Impact color verification](docs/evidence/2026-11-21-impact-primary-mixer-color.json)
 
 Use `impact_output_set` to change one of the 31 secondary outputs at indices
 1 through 31. Provide the track, current
