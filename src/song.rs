@@ -10,6 +10,9 @@ use std::{
 };
 use zip::ZipArchive;
 
+mod instrument_outputs;
+use instrument_outputs::SavedInstrumentOutputs;
+
 const MAX_ARCHIVE_BYTES: u64 = 128 * 1024 * 1024;
 const MAX_ENTRY_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_TOTAL_BYTES: u64 = 512 * 1024 * 1024;
@@ -95,6 +98,8 @@ pub struct SavedChannel {
     pub group: String,
     pub label: String,
     pub unique_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub synth_port_index: Option<u32>,
     pub linear_gain: Option<f64>,
     pub volume_db: Option<f64>,
     pub pan_normalized: Option<f64>,
@@ -114,6 +119,8 @@ pub struct SavedPlugin {
     pub class_id: Option<String>,
     pub instance_id: Option<String>,
     pub slot_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub instrument_outputs: Option<SavedInstrumentOutputs>,
     pub source_entry: String,
     pub preset_path: Option<String>,
     pub preset_format: Option<String>,
@@ -281,6 +288,7 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
         .map_err(|_| "notes.txt is not UTF-8")?;
     let mut mixer = Vec::new();
     let mut plugins = Vec::new();
+    let mut synth_folder = None;
     let device_entries: Vec<_> = archive
         .names
         .iter()
@@ -293,7 +301,13 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
                 read_channels(&doc, "", &mut mixer);
             }
             scan_plugins(&doc, &entry, None, "", &mut plugins);
+            if entry == "Devices/audiosynthfolder.xml" {
+                synth_folder = Some(doc);
+            }
         }
+    }
+    if let Some(folder) = &synth_folder {
+        instrument_outputs::attach_impact_outputs(folder, &mixer, &mut plugins, &mut warnings);
     }
     for plugin in &mut plugins {
         if let Some(preset_path) = plugin.preset_path.clone() {
@@ -578,6 +592,9 @@ fn read_channels(node: &XmlNode, inherited_group: &str, output: &mut Vec<SavedCh
                 .unwrap_or("")
                 .into(),
             unique_id: node.uid("uniqueID"),
+            synth_port_index: (node.name == "AudioSynthChannel")
+                .then(|| unsigned(node, "synthPort"))
+                .flatten(),
             linear_gain: gain,
             volume_db: gain.filter(|g| *g > 0.0).map(|g| 20.0 * g.log10()),
             pan_normalized: number(node, "pan"),
@@ -666,6 +683,7 @@ fn scan_plugins(
             class_id,
             instance_id: device.and_then(|n| n.uid("uniqueID")),
             slot_id: node.uid("uniqueID"),
+            instrument_outputs: None,
             source_entry: entry.into(),
             preset_path: preset_path.map(str::to_owned),
             preset_format: None,
@@ -823,6 +841,65 @@ mod tests {
         assert_eq!(plugin.parameters.len(), 2);
         assert_eq!(plugin.parameter_completeness, "persisted_subset");
         assert_eq!(song.mixer[0].linear_gain, Some(0.5));
+    }
+
+    #[test]
+    fn saved_impact_output_bindings_require_port_flags_and_mixer_ids_to_agree() {
+        let channel_id = "{B174BB2B-5BAA-447A-A842-4CD70390D1E8}";
+        let ports = (0..32)
+            .map(|index| {
+                let flags = if index == 1 { 1 } else { 0 };
+                let subtype = if index < 16 { 3 } else { 1 };
+                format!(r#"<PortDescription label="Output {index}" flags="{flags}" subType="{subtype}"/>"#)
+            })
+            .collect::<String>();
+        let synth = format!(
+            r#"<AudioSynthFolder><Attributes name="Inst01">
+            <UID x:id="uniqueID" uid="slot-a"/>
+            <UID x:id="deviceClassID" uid="{{3713E26C-2FCA-4024-9F25-17E9D2BE2B9B}}"/>
+            <Attributes x:id="deviceData" name="Impact"/>
+            <Attributes x:id="ghostData"><Attributes x:id="IO"><List x:id="audioOutputs">{ports}</List></Attributes></Attributes>
+            <List x:id="synthChannels"><UID uid="{channel_id}"/></List>
+            </Attributes></AudioSynthFolder>"#
+        );
+        let mixer = format!(
+            r#"<AudioMixer><ChannelGroup name="AudioSynth">
+            <AudioSynthChannel label="Renamed mixer channel" synthPort="1"><UID x:id="uniqueID" uid="{channel_id}"/></AudioSynthChannel>
+            </ChannelGroup></AudioMixer>"#
+        );
+        let file = write_archive(&[
+            ("Song/song.xml", SONG),
+            ("Devices/audiosynthfolder.xml", &synth),
+            ("Devices/audiomixer.xml", &mixer),
+        ]);
+        let song = read_song(file.path()).unwrap();
+        let output = song.plugins[0].instrument_outputs.as_ref().unwrap();
+        assert_eq!(output.ports.len(), 32);
+        assert_eq!(
+            output.ports[1].mixer_channel_id.as_deref(),
+            Some(channel_id)
+        );
+        assert_eq!(
+            output.ports[1].mixer_channel_label.as_deref(),
+            Some("Renamed mixer channel")
+        );
+        assert!(output.ports[1].enabled);
+        assert!(!output.ports[0].enabled);
+        assert_eq!(output.ports[16].speaker_layout, "mono");
+
+        let wrong = mixer.replace("synthPort=\"1\"", "synthPort=\"2\"");
+        let file = write_archive(&[
+            ("Song/song.xml", SONG),
+            ("Devices/audiosynthfolder.xml", &synth),
+            ("Devices/audiomixer.xml", &wrong),
+        ]);
+        let song = read_song(file.path()).unwrap();
+        assert!(song.plugins[0].instrument_outputs.is_none());
+        assert!(
+            song.warnings
+                .iter()
+                .any(|warning| warning.contains("disagree with mixer membership"))
+        );
     }
 
     #[test]
