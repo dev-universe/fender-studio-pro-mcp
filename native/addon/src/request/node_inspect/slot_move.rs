@@ -21,6 +21,7 @@ const ITEM_MODEL_TABLE: usize = 0x1beaa80;
 const MODEL_TABLE: usize = 0x1bea798;
 const INSERT_GRAPH_TABLE: usize = 0x1b7abb8;
 const SLOT_TABLES: [usize; 2] = [0x1be18d8, 0x1bccdb8];
+const SPLITTER_TABLE: usize = 0x1b7b110;
 const PROJECT_DROP_OFFSET: usize = 0x113dc8c;
 const PREVIEW_MOVE_OFFSET: usize = 0xbb4e60;
 const COMMIT_MOVE_OFFSET: usize = 0xdd29c4;
@@ -327,15 +328,17 @@ fn project_branch(
     cells: &[DropCell],
     after: *mut c_void,
     following: *mut c_void,
+    required_branch: Option<i32>,
     guard: &mut impl FnMut() -> Result<(), String>,
 ) -> Result<i32, String> {
     let project: unsafe extern "C" fn(*mut c_void, *const DropCell) -> *mut c_void =
         unsafe { std::mem::transmute(model.image + PROJECT_DROP_OFFSET) };
     let mut branch = None;
-    for cell in cells
-        .iter()
-        .filter(|cell| cell.node == following && cell.kind != 1)
-    {
+    for cell in cells.iter().filter(|cell| {
+        cell.node == following
+            && cell.kind != 1
+            && required_branch.is_none_or(|branch| cell.branch == branch)
+    }) {
         if !(0..32).contains(&cell.branch) {
             continue;
         }
@@ -350,9 +353,53 @@ fn project_branch(
     branch.ok_or("Routing cannot project that destination edge".into())
 }
 
+fn check_destination(
+    model: &Model,
+    cells: &[DropCell],
+    after: *mut c_void,
+    following: *mut c_void,
+    requested_branch: Option<u8>,
+) -> Result<*const *mut c_void, String> {
+    if unsafe { field::<*mut c_void>(after, 0x178) } != model.graph {
+        return Err("The destination does not belong to the bound graph".into());
+    }
+    let successors = unsafe { field::<*const *mut c_void>(after, 0x1a8) };
+    let count = unsafe { field::<i32>(after, 0x1b0) };
+    if successors.is_null() {
+        return Err("The destination has no current successor".into());
+    }
+    match requested_branch {
+        Some(branch) => {
+            if branch > 1
+                || table(after) != model.image + SPLITTER_TABLE
+                || count != 2
+                || unsafe { field::<*mut c_void>(after, 0x1e0) } != following
+                || unsafe { *successors.add(usize::from(branch)) } != following
+            {
+                return Err("The requested two-way Splitter branch is no longer empty".into());
+            }
+        }
+        None => {
+            if !SLOT_TABLES
+                .iter()
+                .any(|offset| table(after) == model.image + offset)
+                || !cells
+                    .iter()
+                    .any(|cell| cell.kind == 1 && cell.node == after)
+                || count != 1
+                || unsafe { *successors } != following
+            {
+                return Err("The destination effect's exact successor changed".into());
+            }
+        }
+    }
+    Ok(successors)
+}
+
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     [graph_id, source_id, after_id, following_id]: [&str; 4],
+    requested_branch: Option<u8>,
 ) -> Reply {
     let mut dispatched = false;
     let result = (|| -> Result<(), String> {
@@ -372,6 +419,7 @@ pub(in crate::native_script::request) fn dispatch(
             after_id,
             following_id,
             &ctx.instance.object_uid,
+            requested_branch.is_some(),
         )?;
         let model = Model::capture(&ctx, &route, image as usize)?;
         let image = image as usize;
@@ -388,26 +436,25 @@ pub(in crate::native_script::request) fn dispatch(
         let source = resolve_node(&nodes, source_id)?;
         let after = resolve_node(&nodes, after_id)?;
         let following = resolve_node(&nodes, following_id)?;
-        for slot in [source, after] {
-            if !SLOT_TABLES
+        if !SLOT_TABLES
+            .iter()
+            .any(|offset| table(source) == image + offset)
+            || unsafe { field::<*mut c_void>(source, 0x178) } != graph
+            || !cells
                 .iter()
-                .any(|offset| table(slot) == image + offset)
-                || unsafe { field::<*mut c_void>(slot, 0x178) } != graph
-                || !cells.iter().any(|cell| cell.kind == 1 && cell.node == slot)
-            {
-                return Err(
-                    "Source and destination must be exact effect slots of this graph".into(),
-                );
-            }
-        }
-        let successors = unsafe { field::<*const *mut c_void>(after, 0x1a8) };
-        if unsafe { field::<i32>(after, 0x1b0) } != 1
-            || successors.is_null()
-            || unsafe { *successors } != following
+                .any(|cell| cell.kind == 1 && cell.node == source)
         {
-            return Err("Requested destination edge has changed".into());
+            return Err("The source must be an exact effect slot of this graph".into());
         }
-        let branch = project_branch(&model, &cells, after, following, &mut guard)?;
+        let successors = check_destination(&model, &cells, after, following, requested_branch)?;
+        let branch = project_branch(
+            &model,
+            &cells,
+            after,
+            following,
+            requested_branch.map(i32::from),
+            &mut guard,
+        )?;
         let input = MoveDescriptor {
             source,
             component: source, // Verified SlotNode variants use no replacement component.
@@ -434,12 +481,11 @@ pub(in crate::native_script::request) fn dispatch(
         }
         guard()?;
         if model.cells()? != cells
-            || unsafe { field::<i32>(after, 0x1b0) } != 1
-            || unsafe { field::<*const *mut c_void>(after, 0x1a8) } != successors
-            || unsafe { *successors } != following
+            || check_destination(&model, &cells, after, following, requested_branch)? != successors
         {
             return Err("Routing destination changed after the host preview".into());
         }
+        guard()?;
         dispatched = true;
         if unsafe { commit(model.base(), &input) } & 1 == 0 {
             return Err("The native move returned without an acceptance receipt".into());
@@ -449,12 +495,18 @@ pub(in crate::native_script::request) fn dispatch(
         Ok(())
     })();
     let mut reply = match result {
-        Ok(()) => Reply::unbound(json!({
-            "ok":true,"outcome":"applied_unverified","operation":"insert_slot_move","verified":false,
-            "instance":ctx.instance,
-            "expected_instance":ctx.instance.object_uid,"expected_graph":graph_id,"source_node":source_id,
-            "after_node":after_id,"following_node":following_id
-        })),
+        Ok(()) => {
+            let mut value = json!({
+                "ok":true,"outcome":"applied_unverified","operation":"insert_slot_move","verified":false,
+                "instance":ctx.instance,
+                "expected_instance":ctx.instance.object_uid,"expected_graph":graph_id,"source_node":source_id,
+                "after_node":after_id,"following_node":following_id
+            });
+            if let Some(branch) = requested_branch {
+                value["branch"] = json!(branch);
+            }
+            Reply::unbound(value)
+        }
         Err(reason) => Reply::error(
             "insert_slot_move_rejected",
             &reason,

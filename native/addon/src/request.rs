@@ -294,6 +294,7 @@ enum Request {
         source_node: String,
         after_node: String,
         following_node: String,
+        branch: Option<u8>,
     },
     InsertSplitterAdd {
         expected_instance: String,
@@ -522,6 +523,7 @@ impl Request {
                 source_node,
                 after_node,
                 following_node,
+                branch,
             } => {
                 if ![
                     expected_instance,
@@ -535,6 +537,7 @@ impl Request {
                     || source_node == after_node
                     || source_node == following_node
                     || after_node == following_node
+                    || branch.is_some_and(|index| index > 1)
                 {
                     return Err(
                         "insert move requires distinct source/destination nodes and exact UUIDs"
@@ -2343,12 +2346,14 @@ fn dispatch_device(
         source_node,
         after_node,
         following_node,
+        branch,
         ..
     } = request
     {
         return node_inspect::slot_move::dispatch(
             ctx,
             [&expected_graph, &source_node, &after_node, &following_node],
+            branch,
         );
     }
     if let Request::InsertSplitterAdd {

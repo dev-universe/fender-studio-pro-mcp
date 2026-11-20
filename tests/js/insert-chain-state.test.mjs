@@ -329,6 +329,44 @@ test('insert slot move validates the exact target, capability and returned ident
   assert.equal(stale.calls.length, 1);
 });
 
+test('moving a slot into an empty Splitter branch requires its own capability and exact branch receipt', () => {
+  const args = { channel: 'Scratch', slot: 1, plugin: 'Mixtool', expected_instance: folderUid,
+    expected_graph: '10000000-1234-1234-1234-123456789ABC', source_node: '20000000-1234-1234-1234-123456789ABC',
+    after_node: '30000000-1234-1234-1234-123456789ABC', following_node: '40000000-1234-1234-1234-123456789ABC',
+    branch: 1 };
+  const { channel, slot, plugin, ...request } = args;
+  const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
+    native_class: 'AudioEffect', object_id: 'Mixtool 2' };
+  const base = { insert_slot_move_api: 'same_graph_move_v1' };
+  const supported = { ...base, insert_slot_empty_branch_api: 'same_graph_empty_branch_v1' };
+  const reply = body => ({ ...body, instance, ok: true, outcome: 'applied_unverified', verified: false });
+  const testBridge = (capabilityFields, nativeReply = reply) => {
+    const h = harness({ capabilityFields, nativeReply });
+    h.component.pluginOf = ({ channel: actualChannel, slot: actualSlot, plugin: actualPlugin }) => {
+      assert.deepEqual([actualChannel, actualSlot, actualPlugin], [channel, slot, plugin]);
+      return { device: {}, name: plugin };
+    };
+    return h;
+  };
+  const good = testBridge(supported);
+  for (const index of [-1, 2, '1', null, false]) {
+    assert.equal(good.component.insertSlotMove({ ...args, branch: index }).native_outcome, 'not_applied');
+  }
+  assert.equal(good.calls.length, 0);
+  assert.equal(good.component.insertSlotMove(args).branch, 1);
+  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation: 'insert_slot_move', ...request });
+
+  const old = testBridge(base);
+  assert.equal(old.component.insertSlotMove(args).native_outcome, 'not_applied');
+  assert.equal(old.calls.length, 0);
+
+  const wrong = testBridge(supported, body => ({ ...reply(body), branch: 0 }));
+  const result = wrong.component.insertSlotMove(args);
+  assert.equal(result.native_outcome, 'unknown');
+  assert.equal(result.branch, undefined);
+  assert.equal(wrong.calls.length, 1);
+});
+
 test('nested Splitter removal binds both branches and rejects mismatched native receipts', () => {
   const args = {
     channel: 'Scratch', slot: 0, plugin: 'Mixtool', expected_instance: folderUid,

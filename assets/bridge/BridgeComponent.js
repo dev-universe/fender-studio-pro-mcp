@@ -881,14 +881,15 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const controls = new NativePluginControls(this);
         const nodeFields = controls.insertGraphNodeFields(operation);
         if (!nodeFields) return refuse("Unsupported insert graph operation");
-        const identifiers = ["expected_instance", "expected_graph"].concat(nodeFields);
-        const fields = ["channel", "slot", "plugin"].concat(identifiers);
+        const requestFields = ["expected_instance", "expected_graph"].concat(nodeFields,
+            controls.insertGraphBranchFields(operation, args));
+        const fields = ["channel", "slot", "plugin"].concat(requestFields);
         const validName = value => typeof value === "string" && value.trim() && value.length <= 256
             && !/[\x00-\x1f\x7f-\x9f]/.test(value);
         if (!controls.guiExact(args, fields) || !validName(args.channel) || !validName(args.plugin)
             || !controls.guiInteger(args.slot, 0, 15)) return refuse("Supply an exact insert effect and graph nodes");
         const request = { operation };
-        for (const key of identifiers) request[key] = args[key];
+        for (const key of requestFields) request[key] = args[key];
         if (!controls.insertGraphEditRequest(request)) return refuse("Supply distinct graph nodes with canonical UUIDs");
         const plug = this.pluginOf(args);
         if (!plug || plug.error || !plug.device) return refuse("The exact source effect is unavailable");

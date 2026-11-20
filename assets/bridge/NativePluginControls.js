@@ -1007,11 +1007,18 @@ class NativePluginControls {
         return null;
     }
 
+    insertGraphBranchFields(operation, value) {
+        return operation === "insert_slot_move" && value && Object.prototype.hasOwnProperty.call(value, "branch")
+            ? ["branch"] : [];
+    }
+
     insertGraphEditRequest(request) {
         const nodes = request && this.insertGraphNodeFields(request.operation);
         if (!nodes) return false;
         const ids = ["expected_instance", "expected_graph"].concat(nodes);
-        return this.guiExact(request, ["operation"].concat(ids)) && ids.every(key => this.insertChainUid(request[key]))
+        const branch = this.insertGraphBranchFields(request.operation, request);
+        return this.guiExact(request, ["operation"].concat(ids, branch))
+            && (!branch.length || this.guiInteger(request.branch, 0, 1)) && ids.every(key => this.insertChainUid(request[key]))
             && new Set(nodes.map(key => request[key])).size === nodes.length;
     }
 
@@ -1022,10 +1029,11 @@ class NativePluginControls {
                 && typeof result.error.code === "string" && typeof result.error.message === "string"
                 && result.error.code.length <= 64 && result.error.message.length <= 512;
         }
-        const ids = ["expected_instance", "expected_graph"].concat(this.insertGraphNodeFields(request.operation));
-        return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(ids))
+        const fields = ["expected_instance", "expected_graph"].concat(this.insertGraphNodeFields(request.operation),
+            this.insertGraphBranchFields(request.operation, request));
+        return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(fields))
             && result.operation === request.operation && result.outcome === "applied_unverified"
-            && result.verified === false && ids.every(key => result[key] === request[key]);
+            && result.verified === false && fields.every(key => result[key] === request[key]);
     }
 
     insertChainArguments(args) {
@@ -1309,6 +1317,9 @@ class NativePluginControls {
             if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
+            if (request.operation === "insert_slot_move" && request.branch !== undefined
+                && capability.insert_slot_empty_branch_api !== "same_graph_empty_branch_v1")
+                throw new Error("unsupported empty Splitter branch move API");
             if (request.operation === "insert_splitter_add" && capability.insert_splitter_add_api !== "slot_merger_splitter_add_v1")
                 throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
