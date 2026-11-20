@@ -264,7 +264,7 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
     if !matches!(
         query.product,
-        Product::ProQ4 | Product::ProC3 | Product::Twin3
+        Product::ProQ4 | Product::ProC3 | Product::ProR2 | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
@@ -330,6 +330,10 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::ProQ4 => b"Signature=FQ4p",
         Product::ProC3 => b"Signature=FC3p",
+        Product::ProR2 if bytes.starts_with(b"FPRr") => {
+            return bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0");
+        }
+        Product::ProR2 => b"Signature=FR2p",
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
         _ => return false,
     };
@@ -338,9 +342,10 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
         .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
     header.next() == Some(b"[Preset]".as_slice())
         && header.next() == Some(signature.as_slice())
-        && header
-            .next()
-            .is_some_and(|line| line.starts_with(b"Version="))
+        && header.next().is_some_and(|line| match product {
+            Product::ProR2 => line == b"Version=6",
+            _ => line.starts_with(b"Version="),
+        })
         && header.next().is_some()
 }
 
@@ -611,6 +616,21 @@ mod tests {
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
         assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));
+    }
+
+    #[test]
+    fn pro_r_2_accepts_its_text_and_legacy_factory_binary_profiles() {
+        let text = b"[Preset]\r\nSignature=FR2p\r\nVersion=6\r\nAuthor=Fixture\r\n";
+        let binary = b"FPRr\x04\0\0\0abcdefgh";
+        assert!(matches_preset(Product::ProR2, text));
+        assert!(matches_preset(Product::ProR2, binary));
+        assert!(!matches_preset(Product::ProR, binary));
+        assert!(!matches_preset(Product::ProR2, b"FPRr\x05\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProR2, b"FPRr\x04\0\0\0"));
+        assert!(!matches_preset(
+            Product::ProR2,
+            b"[Preset]\nSignature=FR2p\nVersion=5\nAuthor=Fixture"
+        ));
     }
 
     #[test]

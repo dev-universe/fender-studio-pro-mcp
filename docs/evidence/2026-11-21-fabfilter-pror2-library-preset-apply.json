@@ -1,0 +1,80 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-R 2",
+  "vst3_version": "2.06",
+  "verified_code": "077230fafac028b3deb7d9d78ffd331f68e44ec5",
+  "factory_files": 274,
+  "matching_factory_format_counts": {
+    "FPRr_v4": 162,
+    "FR2p_v6": 112
+  },
+  "isolated_sdk": {
+    "text_changed": 58,
+    "binary_changed": 52,
+    "full_controller_and_two_states_restored": true
+  },
+  "actual_host_trials": [
+    {
+      "test": "R221",
+      "format": "binary",
+      "signature": "FPRr",
+      "version": 4,
+      "verified_ui_preset": "8th Note Fat Slap",
+      "native_apply_calls": 1,
+      "changed_reported_values": 53,
+      "reported_values_exactly_restored": 273,
+      "automatically_restored_values": 272,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 142,
+      "owner_wall_seconds": 123.847,
+      "actual_host_wall_seconds": 191.155,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 282,
+      "protected_files_verified": 168,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R222",
+      "format": "text",
+      "signature": "FR2p",
+      "version": 6,
+      "verified_ui_preset": "3D Vintage Ambience",
+      "native_apply_calls": 1,
+      "changed_reported_values": 64,
+      "reported_values_exactly_restored": 273,
+      "automatically_restored_values": 272,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 142,
+      "owner_wall_seconds": 114.14,
+      "actual_host_wall_seconds": 192.585,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 282,
+      "protected_files_verified": 168,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
