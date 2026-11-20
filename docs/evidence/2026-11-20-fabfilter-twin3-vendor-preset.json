@@ -1,0 +1,35 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Twin 3",
+  "version": "3.10",
+  "format": "VST3",
+  "preset": "Ambient Mover.ffp",
+  "preset_source": "factory resource sealed in the official signed VST3",
+  "application": "plugin editor Open Other Preset",
+  "initial_and_restored_editor_title": "Default Sound",
+  "reported_parameters": 1510,
+  "changed_reported_parameters": 433,
+  "changed_ordinary_named_parameters": 432,
+  "restore": {
+    "component_serializer": "component_alias_IStorable",
+    "reported_parameters_restored_after_capsule_load": 1509,
+    "remaining_parameter": "vstp1073741826",
+    "remaining_parameter_correction": {
+      "normalized": 0,
+      "writes": 1
+    },
+    "complete_typed_match": true,
+    "independent_digest_match": true,
+    "recaptured_component_fingerprint_match": true,
+    "baseline_component_bytes": 6720,
+    "applied_component_bytes": 6647
+  },
+  "verification": {
+    "requests": 149,
+    "active_seconds": 116.176,
+    "host_seconds": 227.514,
+    "runtime_files_preserved": 18,
+    "preset_tree_entries_preserved": 584,
+    "scratch_saved": false
+  }
+}
