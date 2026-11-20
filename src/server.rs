@@ -275,7 +275,7 @@ impl McpServer {
             named::<PluginSet>(
                 "plugin_parameter_set",
                 "setPluginParam",
-                "Set exactly one raw, normalized, display-text or exact finite f64 float_bits value on the expected plugin instance. An explicit source uses native access and type checks; float_bits requires it and preserves the 16 hexadecimal digits from native_value.data.bits_hex. Readback determines verification. Optional edit_lifecycle=native_user invokes a finite Chorder Auto Fill raw 0/1 pilot with explicit dsp and expected_instance. Editing phase and live readback do not prove persistence.",
+                "Set exactly one raw, normalized, display-text or exact finite f64 float_bits value on the expected plugin instance. An explicit source uses native access and type checks; float_bits requires it and preserves the 16 hexadecimal digits from native_value.data.bits_hex. Set readback=true with an explicit dsp or controller source, expected_instance and a canonical parameter name to request a separate read of the same instance. The result reports matched, mismatch or unavailable. Optional edit_lifecycle=native_user invokes a finite Chorder Auto Fill raw 0/1 pilot with explicit dsp and expected_instance. Live readback measures current value at the observation time.",
                 true,
             ),
             named::<InsertBypass>(
