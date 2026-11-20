@@ -833,6 +833,7 @@ fn retained_ancestor_profile_rejects_parent_replacement_and_predicate_reentry() 
     let mut root = tables.object("Inserts");
     let mut parent = tables.object("Channel");
     let mut replacement = tables.object("Channel");
+    let mut child = tables.object("Device");
     root.parent.set(&mut *parent);
     let canonical = NonNull::from(&mut parent.interfaces[0]).cast();
     let api = inspector(&mut root);
@@ -846,10 +847,23 @@ fn retained_ancestor_profile_rejects_parent_replacement_and_predicate_reentry() 
             Ok(())
         })
         .unwrap();
+    root.children.borrow_mut().push(&mut *child);
+    assert_eq!(lease.check(&mut || Ok(())), Err(Error::AttachmentChanged));
+    lease.check_after_root_edit(&mut || Ok(())).unwrap();
+    parent.children.borrow_mut().push(&mut *child);
+    assert_eq!(
+        lease.check_after_root_edit(&mut || Ok(())),
+        Err(Error::AttachmentChanged)
+    );
+    parent.children.borrow_mut().pop();
     root.parent.set(&mut *replacement);
     assert_eq!(
         lease.check(&mut || Ok(())).unwrap_err(),
         Error::AttachmentChanged
+    );
+    assert_eq!(
+        lease.check_after_root_edit(&mut || Ok(())),
+        Err(Error::AttachmentChanged)
     );
     drop(lease);
     assert_eq!(parent.refs.get(), 1);

@@ -345,6 +345,28 @@ impl Inspection {
 
     /// Revalidate the retained witnesses immediately before publication.
     pub fn check<G: FnMut() -> Result<(), String>>(&self, guard: &mut G) -> Result<(), Error> {
+        self.revalidate(guard, false)
+    }
+
+    /// Revalidate the same root identity and ancestor path after an edit that
+    /// may change the root's children. Ancestor counts remain part of the proof.
+    pub fn check_after_root_edit<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+    ) -> Result<(), Error> {
+        if !matches!(self.traversal, Traversal::AncestorsOnly) {
+            return Err(Error::InvalidData(
+                "ancestor inspection required after a root edit",
+            ));
+        }
+        self.revalidate(guard, true)
+    }
+
+    fn revalidate<G: FnMut() -> Result<(), String>>(
+        &self,
+        guard: &mut G,
+        root_children_may_change: bool,
+    ) -> Result<(), Error> {
         if thread::current().id() != self.thread {
             return Err(Error::WrongThread);
         }
@@ -367,7 +389,7 @@ impl Inspection {
             absent: self.absent.clone(),
             witnesses: self.witnesses.clone(),
         };
-        let result = session.validate();
+        let result = session.validate(root_children_may_change);
         let pins = std::mem::take(&mut session.pins);
         drop(session);
         let final_guard = guard().map_err(Error::Guard);
@@ -1037,12 +1059,14 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         path.pop();
         Ok(())
     }
-    fn validate(&mut self) -> Result<(), Error> {
+    fn validate(&mut self, root_children_may_change: bool) -> Result<(), Error> {
         self.budget.types = 0;
         for index in 0..self.pins.len() {
             if let Some(node) = self.pins[index].node.as_ref() {
                 let raw = node.raw();
-                if Some(self.child_count(raw)?) != self.report.nodes[index].child_count
+                let child_count = Some(self.child_count(raw)?);
+                if ((index != 0 || !root_children_may_change)
+                    && child_count != self.report.nodes[index].child_count)
                     || Some(self.identity(raw)?) != self.report.nodes[index].identity
                 {
                     return Err(Error::AttachmentChanged);
@@ -1119,7 +1143,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
         let root = self.intern(owner)?.ok_or(Error::InvalidLimits)?;
         if matches!(self.traversal, Traversal::ChildrenWithSlots) {
             self.children_with_slots(root)?;
-            self.validate()?;
+            self.validate(false)?;
             self.report.complete = self.report.diagnostics.is_empty()
                 && self.report.nodes.iter().all(|node| {
                     node.identity.is_some()
@@ -1161,7 +1185,7 @@ impl<G: FnMut() -> Result<(), String>> Session<'_, G> {
                 self.walk(index, self.limits.depth, &mut vec![])?;
             }
         }
-        self.validate()?;
+        self.validate(false)?;
         self.report.complete = self.report.diagnostics.is_empty()
             && self
                 .report
