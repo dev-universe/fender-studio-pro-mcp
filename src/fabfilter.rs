@@ -153,9 +153,10 @@ pub struct PresetApply {
     pub index: usize,
     #[schemars(length(min = 64, max = 64))]
     pub expected_catalog: String,
-    pub channel: String,
+    pub channel: Option<String>,
     #[schemars(range(max = 15))]
-    pub slot: u32,
+    pub slot: Option<u32>,
+    pub track: Option<String>,
     pub expected_instance: String,
 }
 
@@ -235,10 +236,12 @@ impl CatalogError {
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
             Self::UnsupportedApplyProduct => {
-                "File application currently supports Pro-Q 4 VST3 4.13."
+                "File application currently supports Pro-Q 4 VST3 4.13 and Twin 3 VST3 3.10."
             }
             Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
-            Self::InvalidPreset => "The selected file is not a bounded Pro-Q 4 preset.",
+            Self::InvalidPreset => {
+                "The selected file does not match the requested FabFilter preset format."
+            }
         }
     }
 }
@@ -259,7 +262,7 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 }
 
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
-    if !matches!(query.product, Product::ProQ4) {
+    if !matches!(query.product, Product::ProQ4 | Product::Twin3) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
     let (directory, presets, digest) = catalog(library, query.product)?;
@@ -309,7 +312,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
     file.take(MAX_PRESET_BYTES as u64 + 1)
         .read_to_end(&mut contents)
         .map_err(|_| CatalogError::Unreadable)?;
-    if contents.len() != metadata.len() as usize || !is_proq4_preset(&contents) {
+    if contents.len() != metadata.len() as usize || !matches_preset(query.product, &contents) {
         return Err(CatalogError::InvalidPreset);
     }
     let sha256 = format!("{:x}", Sha256::digest(&contents));
@@ -320,7 +323,11 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
     })
 }
 
-fn is_proq4_preset(bytes: &[u8]) -> bool {
+fn matches_preset(product: Product, bytes: &[u8]) -> bool {
+    if matches!(product, Product::Twin3) {
+        return bytes.len() >= 16 && bytes.starts_with(b"FT3i");
+    }
+
     let mut header = bytes
         .split(|byte| *byte == b'\n')
         .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
@@ -534,8 +541,9 @@ mod tests {
             product: Product::ProQ4,
             index: 1,
             expected_catalog: page.catalog_sha256,
-            channel: "Scratch".to_owned(),
-            slot: 0,
+            channel: Some("Scratch".to_owned()),
+            slot: Some(0),
+            track: None,
             expected_instance: "AA50C180-3980-4EE0-A76B-3195182C91E0".to_owned(),
         };
         let selected = load_from(library.path(), &query).unwrap();
@@ -591,5 +599,12 @@ mod tests {
         )
         .unwrap();
         assert_eq!(page.total, 0);
+    }
+
+    #[test]
+    fn twin_preset_format_requires_a_bounded_binary_header() {
+        assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
+        assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
+        assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));
     }
 }

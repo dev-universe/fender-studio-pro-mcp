@@ -201,7 +201,7 @@ fn execute(
             }
         };
         let data_hex = asset.wire_data();
-        args = json!({"channel":query.channel,"slot":query.slot,
+        args = json!({"product":query.product,"channel":query.channel,"slot":query.slot,"track":query.track,
             "expected_instance":query.expected_instance,"filename":asset.filename,
             "sha256":asset.sha256,"data_hex":data_hex});
     }
