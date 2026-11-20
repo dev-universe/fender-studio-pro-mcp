@@ -160,6 +160,8 @@ Call `fabfilter_midi_mapping` with `{"product":"Micro","controller":7}` to look 
 
 FabFilter Micro 1.32 was verified in Studio Pro 8.1.1 on macOS arm64. Use `plugin_parameters` to read the bound instance and `plugin_parameter_set` to change a writable value. All 145 writable values were changed, read back, and restored individually. The separate program value `vstp1073741959` was verified as `0 → 1 → 0`. That round trip also required restoring a companion value and ended with all 146 reported values at baseline. [Micro verification details](docs/evidence/2026-11-20-fabfilter-micro-controls.json)
 
+FabFilter Pro-Q 3 3.29 passed individual change, independent readback and restoration of all 518 writable parameters in Studio Pro 8.1.1. The final readback matched all 519 reported parameters. [Pro-Q 3 verification details](docs/evidence/2026-11-20-fabfilter-proq3-controls.json)
+
 Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. The legacy row `vstp1073741828` briefly accepted a value in Pro-G, Pro-C 2, Pro-C 3 and Pro-DS, then returned to baseline on an independent `plugin_parameters` call. Treat that row as transient in these versions. In a separate SDK test, the Pro-G processor received the input and emitted its own value under the same ID. [Legacy MIDI parameter verification](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
 
 ### FabFilter instrument program changes

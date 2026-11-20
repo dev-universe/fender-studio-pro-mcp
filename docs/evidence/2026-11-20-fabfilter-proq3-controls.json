@@ -1,0 +1,39 @@
+{
+  "host": "Studio Pro 8.1.1.113103 macOS arm64",
+  "plugin": "FabFilter Pro-Q 3 3.29 official VST3",
+  "native_bridge": 59,
+  "individual_write_read_restore": {
+    "named_controls": 382,
+    "midi_cc_mapping": 128,
+    "additional_internal_values": 8,
+    "writable_total": 518
+  },
+  "independent_legacy_cc_roundtrip": {
+    "parameter": "vstp1073741828",
+    "normalized_before": 0,
+    "normalized_observed": 0.03500000014901161,
+    "normalized_restored": 0,
+    "other_changed_reported_values": 0,
+    "reported_values_restored": 519
+  },
+  "runs": {
+    "named": {
+      "run": "R21",
+      "requests": 5374,
+      "rpc_elapsed_seconds": 505.302
+    },
+    "midi_mapping": {
+      "run": "R73",
+      "requests": 1655,
+      "rpc_elapsed_seconds": 126.584,
+      "wall_elapsed_seconds": 211.0
+    },
+    "remaining_internal": {
+      "run": "R74",
+      "requests": 331,
+      "rpc_elapsed_seconds": 34.594,
+      "wall_elapsed_seconds": 103.3
+    }
+  },
+  "scope": "Individual parameter readback in stopped scratch songs. MIDI delivery, preset recall and audio processing use separate tests."
+}
