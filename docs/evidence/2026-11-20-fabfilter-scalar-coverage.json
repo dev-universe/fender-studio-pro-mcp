@@ -62,10 +62,10 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 1,
-  "distinct_individual_roundtrips_including_representative": 9537,
+  "distinct_individual_roundtrips_including_representative": 9672,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 273,
-  "high_range_writable_pending": 2918,
+  "high_range_writable_individually_verified": 408,
+  "high_range_writable_pending": 2783,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -402,6 +402,34 @@
     "active_seconds": 20.779,
     "wall_seconds": 165.3,
     "protected_files": 70,
+    "managed_files": 18
+  },
+  "r55_pro_c_2_cc": {
+    "new_distinct_roundtrips": 128,
+    "writable_values": 182,
+    "reported_values": 183,
+    "requests": 1598,
+    "active_seconds": 112.598,
+    "wall_seconds": 177.1,
+    "protected_files": 60,
+    "managed_files": 18
+  },
+  "r56_pro_g_hidden_sdk": {
+    "parameter": "vstp1073741828",
+    "sdk_changed_and_restored_all": true,
+    "sdk_value_stable_after_ms": 150,
+    "actual_host_count_increment": 0,
+    "wall_seconds": 0.577
+  },
+  "r57_pro_c_2_non_cc": {
+    "new_distinct_roundtrips": 7,
+    "distinct_total_verified": 181,
+    "writable_values": 182,
+    "unverified_transient_parameter": "vstp1073741828",
+    "requests": 170,
+    "active_seconds": 16.559,
+    "wall_seconds": 202.2,
+    "protected_files": 64,
     "managed_files": 18
   }
 }
