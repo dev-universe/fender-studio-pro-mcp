@@ -129,10 +129,33 @@ const PRO_R2: Image = Image {
     destructor: 0x48630,
 };
 
+const SATURN2: Image = Image {
+    class_uid: "8D067533-D8A0-491D-BAA3-6C064C6ABBFB",
+    uuid: [
+        0x9a, 0xad, 0xca, 0xa0, 0x8c, 0xc5, 0x3a, 0xe2, 0x99, 0xe1, 0xfd, 0x1b, 0x6e, 0x06, 0x35,
+        0xfc,
+    ],
+    controller_table: 0x1f0110,
+    state_member: 0xd0,
+    state_table: 0x1f9480,
+    state_file_method: 0x6eaf4,
+    view_table: 0x1f7970,
+    editor_table: 0x1f8540,
+    product: "saturn_2",
+    executable: "FabFilter Saturn 2",
+    binary_sha256: "0f1e34b7a09a5db3e4df6236ba830fc0463825011e498b0dc3095d28ef9b0cc7",
+    binary_size: 4_597_872,
+    preset_format: PresetFormat::Saturn2,
+    constructor: 0xd1660,
+    loader: 0x70644,
+    destructor: 0x7db58,
+};
+
 enum PresetFormat {
     Text(&'static [u8]),
     Binary(&'static [u8]),
     ProR2,
+    Saturn2,
 }
 
 struct Image {
@@ -155,7 +178,7 @@ struct Image {
 }
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
-    [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2]
+    [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN2]
         .into_iter()
         .find(|product| product.class_uid == class_uid)
 }
@@ -412,6 +435,13 @@ fn preset_bytes(
             (bytes.len() >= 16 && bytes.starts_with(PRO_R_BINARY_HEADER))
                 || matches_text(b"Signature=FR2p", Some(b"Version=6"))
         }
+        PresetFormat::Saturn2 => {
+            bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FS2a\x02\0\0\0" | b"FS2a\x03\0\0\0" | b"FS2a\x04\0\0\0" | b"FSat\x04\0\0\0"
+                )
+        }
     };
     if !correct_format || format!("{:x}", Sha256::digest(&bytes)) != expected {
         return None;
@@ -552,6 +582,7 @@ mod tests {
             ("B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9", "pro_c_3"),
             ("036EB530-2A59-11E2-A281-70076288709B", "pro_r"),
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
+            ("8D067533-D8A0-491D-BAA3-6C064C6ABBFB", "saturn_2"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
             assert!(supports_class(class_uid));
@@ -587,6 +618,26 @@ mod tests {
                 preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
                 valid && bytes.starts_with(PRO_R_BINARY_HEADER),
             );
+        }
+    }
+
+    #[test]
+    fn saturn_2_preset_bytes_admit_only_observed_factory_versions() {
+        for (bytes, valid) in [
+            (b"FS2a\x02\0\0\0abcdefgh", true),
+            (b"FS2a\x03\0\0\0abcdefgh", true),
+            (b"FS2a\x04\0\0\0abcdefgh", true),
+            (b"FSat\x04\0\0\0abcdefgh", true),
+            (b"FSat\x03\0\0\0abcdefgh", false),
+            (b"FS2a\x05\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&SATURN2, "Drive.ffp", &digest, &hex).is_some(),
+                valid
+            );
+            assert!(preset_bytes(&PRO_R, "Drive.ffp", &digest, &hex).is_none());
         }
     }
 
