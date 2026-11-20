@@ -433,6 +433,7 @@ pub enum NodeScope {
     CvPorts,
     CvPortParameters,
     CvPresetTarget,
+    ImpactOutputs,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1380,6 +1381,10 @@ impl Operation {
         matches!(self, Self::PluginPresets(args) if matches!(args.action, PluginPresetAction::ApplyCvPresetSettings))
     }
 
+    pub(crate) fn inspects_impact_outputs(&self) -> bool {
+        matches!(self, Self::PluginInspect(args) if matches!(args.node_scope, Some(NodeScope::ImpactOutputs)))
+    }
+
     pub fn requires_explicit_document(&self) -> bool {
         let level = match self {
             Self::PluginParams(p) => matches!(p.source, Some(ParameterSource::LevelMeter)),
@@ -1391,6 +1396,7 @@ impl Operation {
         level
             || self.inspects_cv_preset_settings()
             || self.applies_cv_preset_settings()
+            || self.inspects_impact_outputs()
             || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
@@ -1915,6 +1921,28 @@ impl Operation {
                 {
                     return Err(invalid(
                         "this CV node scope does not accept names or pagination",
+                    ));
+                }
+                if matches!(p.node_scope, Some(NodeScope::ImpactOutputs))
+                    && (!matches!(p.kind, Some(PluginKind::Instrument))
+                        || p.plugin.as_deref() != Some("Impact")
+                        || p.track.as_ref().is_none_or(|name| {
+                            name.trim().is_empty()
+                                || name.len() > 512
+                                || name.chars().any(char::is_control)
+                        })
+                        || !matches!(p.source, Some(ParameterSource::Dsp))
+                        || p.expected_instance
+                            .as_deref()
+                            .is_none_or(|uid| uid == "00000000-0000-0000-0000-000000000000")
+                        || p.channel.is_some()
+                        || p.include_context == Some(true)
+                        || !p.names.is_empty()
+                        || p.offset.is_some()
+                        || p.limit.is_some())
+                {
+                    return Err(invalid(
+                        "Impact output inspection requires exact Impact, instrument kind, track, dsp source and expected_instance without names, paging or fixture context",
                     ));
                 }
                 validate_instance_uid(p.expected_instance.as_deref())?;

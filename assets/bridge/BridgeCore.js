@@ -132,7 +132,8 @@ class Bridge {
         const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
-        const cvNodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
+        const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
+        const impactOutputs = nodeScope === "impact_outputs";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -150,7 +151,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(cvNodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
@@ -179,7 +180,7 @@ class Bridge {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || cvNodeScope === "cv_preset_target")
+        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || nodeScope === "cv_preset_target")
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             code = "native_context_lost";

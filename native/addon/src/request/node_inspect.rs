@@ -8,6 +8,8 @@ mod ownership;
 use ownership::GraphOwnership;
 #[path = "node_inspect/cv_ports.rs"]
 pub(super) mod cv_ports;
+#[path = "node_inspect/impact_outputs.rs"]
+mod impact_outputs;
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -19,6 +21,7 @@ pub(super) enum Scope {
     CvPorts,
     CvPortParameters,
     CvPresetTarget,
+    ImpactOutputs,
 }
 
 pub(super) fn limits(scope: Scope) -> Limits {
@@ -189,6 +192,7 @@ pub(super) enum Inventory {
     CvPorts(cv_ports::CvPortsInventory),
     CvPortParameters(cv_ports::parameters::CvPortParametersInventory),
     CvPresetTarget(presets::target_proof::TargetProof),
+    ImpactOutputs(impact_outputs::OutputInventory),
 }
 
 /// Read-only metadata of a bridge-created object. This never authorizes a
@@ -589,7 +593,7 @@ impl Inventory {
         match self {
             Self::Target(inspection) | Self::Graph { inspection, .. } => inspection.report(),
             Self::CvPorts(inventory) => inventory.report().expect("present CV ports"),
-            Self::CvPortParameters(_) | Self::CvPresetTarget(_) => {
+            Self::CvPortParameters(_) | Self::CvPresetTarget(_) | Self::ImpactOutputs(_) => {
                 panic!("inventory has no reflection report")
             }
             Self::PluginController(inventory) => {
@@ -613,6 +617,7 @@ impl Inventory {
             Self::CvPorts(inventory) => inventory.value(),
             Self::CvPortParameters(inventory) => inventory.value(),
             Self::CvPresetTarget(proof) => proof.value(),
+            Self::ImpactOutputs(outputs) => outputs.value(),
         }
     }
     pub(super) fn requires_report_invalidation(&self) -> bool {
@@ -623,6 +628,7 @@ impl Inventory {
                 | Self::CvPorts(_)
                 | Self::CvPortParameters(_)
                 | Self::CvPresetTarget(_)
+                | Self::ImpactOutputs(_)
         )
     }
     pub(super) fn check<G, B>(&self, guard: &mut G, borrowed_guard: &mut B) -> Result<(), String>
@@ -635,6 +641,7 @@ impl Inventory {
             Self::CvPorts(inventory) => inventory.check(guard, borrowed_guard),
             Self::CvPortParameters(inventory) => inventory.check(guard, borrowed_guard),
             Self::CvPresetTarget(proof) => proof.check(borrowed_guard),
+            Self::ImpactOutputs(outputs) => outputs.check(borrowed_guard),
             Self::Target(inspection) => {
                 inspection.check(guard).map_err(|error| error.to_string())?;
                 guard()
@@ -672,7 +679,8 @@ impl Inventory {
             Self::PluginController(_)
             | Self::CvPorts(_)
             | Self::CvPortParameters(_)
-            | Self::CvPresetTarget(_) => {
+            | Self::CvPresetTarget(_)
+            | Self::ImpactOutputs(_) => {
                 panic!("synthetic target inventory required")
             }
         }
@@ -687,6 +695,9 @@ pub(super) fn capture(ctx: &Context<'static>, scope: Scope) -> Result<Inventory,
     ctx.check()?;
     if scope == Scope::CvPresetTarget {
         return presets::target_proof::TargetProof::capture(ctx).map(Inventory::CvPresetTarget);
+    }
+    if scope == Scope::ImpactOutputs {
+        return impact_outputs::OutputInventory::capture(ctx).map(Inventory::ImpactOutputs);
     }
     let get_string = constant_string().ok_or("native string constants unavailable")?;
     let text = TextApi {
@@ -766,7 +777,7 @@ pub(super) fn report(report: &Report, scope: Scope) -> Value {
     let limits = limits(scope);
     json!({
         "coverage":"bounded_native_nodes_and_reflection",
-        "scope":match scope { Scope::Target=>"target", Scope::Graph=>"graph", Scope::PluginController=>"alias_declared_controller_observation", Scope::CvPorts=>"cv_ports", Scope::CvPortParameters=>"cv_port_parameters", Scope::CvPresetTarget=>"cv_preset_target" },
+        "scope":match scope { Scope::Target=>"target", Scope::Graph=>"graph", Scope::PluginController=>"alias_declared_controller_observation", Scope::CvPorts=>"cv_ports", Scope::CvPortParameters=>"cv_port_parameters", Scope::CvPresetTarget=>"cv_preset_target", Scope::ImpactOutputs=>"impact_outputs" },
         "complete":report.complete,
         "limits":{"nodes":limits.nodes,"depth":limits.depth,"ancestors":limits.ancestors,"children_per_node":limits.children_per_node},
         "nodes":report.nodes.iter().map(|node| json!({

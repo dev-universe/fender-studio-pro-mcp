@@ -173,7 +173,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, cv_ports, cv_port_parameters, or cv_preset_target. CV scopes require exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. cv_ports observes bounded host PortSetup metadata. cv_port_parameters discovers bounded direct indexed host parameters. cv_preset_target observes the slot mediator target identity relationship and IStorable availability. The latter two scopes accept no names or pagination. The CV scopes establish no routing or mutation capability. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, cv_ports, cv_port_parameters, or cv_preset_target. CV scopes require exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. cv_ports observes bounded host PortSetup metadata. cv_port_parameters discovers bounded direct indexed host parameters. cv_preset_target observes the slot mediator target identity relationship and IStorable availability. The latter two scopes accept no names or pagination. The CV scopes establish no routing or mutation capability. impact_outputs reads the 32 live Impact output names and requested and acknowledged activation states. It uses the exact instrument track, dsp source, expected document and native instance. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -382,7 +382,15 @@ fn named<T: JsonSchema>(
                     "kind":{"const":"instrument"},"plugin":{"const":"CV Instrument"},"source":{"const":"dsp"},
                     "include_nodes":{"const":true},"include_context":{"const":false}}}
         }, {"if":{"properties":{"node_scope":{"enum":["cv_port_parameters","cv_preset_target"]}},"required":["node_scope"]},
-            "then":{"properties":{"names":{"maxItems":0}},"not":{"anyOf":[{"required":["offset"]},{"required":["limit"]}]}}}]);
+            "then":{"properties":{"names":{"maxItems":0}},"not":{"anyOf":[{"required":["offset"]},{"required":["limit"]}]}}
+        }, {"if":{"properties":{"node_scope":{"const":"impact_outputs"}},"required":["node_scope"]},
+            "then":{"required":["expected_document","expected_instance","kind","track","plugin","source","include_nodes"],
+                "properties":{"expected_document":{"type":"string","minLength":1},"expected_instance":{"type":"string","minLength":36},
+                    "kind":{"const":"instrument"},"plugin":{"const":"Impact"},"source":{"const":"dsp"},
+                    "track":{"type":"string","minLength":1,"maxLength":512},
+                    "include_nodes":{"const":true},"include_context":{"const":false},"names":{"maxItems":0}},
+                "not":{"anyOf":[{"required":["channel"]},{"required":["offset"]},{"required":["limit"]}]}}
+        }]);
     }
     if operation == "pluginPresets" {
         schema["allOf"] = json!([{
@@ -1199,7 +1207,8 @@ mod tests {
                 "plugin_controller",
                 "cv_ports",
                 "cv_port_parameters",
-                "cv_preset_target"
+                "cv_preset_target",
+                "impact_outputs"
             ])
         );
         for field in [

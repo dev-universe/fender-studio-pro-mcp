@@ -558,7 +558,8 @@ impl Request {
                     | node_inspect::Scope::PluginController
                     | node_inspect::Scope::CvPorts
                     | node_inspect::Scope::CvPortParameters
-                    | node_inspect::Scope::CvPresetTarget,
+                    | node_inspect::Scope::CvPresetTarget
+                    | node_inspect::Scope::ImpactOutputs,
                 ..
             } => Err("this node_scope requires include_nodes=true".into()),
             Self::Inspect {
@@ -580,6 +581,18 @@ impl Request {
                     .is_none_or(|uid| !valid_uid(uid)) =>
             {
                 Err("CV node inspection requires explicit dsp and expected_instance".into())
+            }
+            Self::Inspect {
+                node_scope: node_inspect::Scope::ImpactOutputs,
+                source,
+                expected_instance,
+                ..
+            } if *source != Source::Dsp
+                || expected_instance
+                    .as_deref()
+                    .is_none_or(|uid| !valid_uid(uid)) =>
+            {
+                Err("Impact output inspection requires explicit dsp and expected_instance".into())
             }
             Self::StateCapture {
                 expected_instance: None,
@@ -2146,17 +2159,21 @@ fn dispatch_device(
             return reply;
         }
     }
-    if matches!(
-        request,
-        Request::Inspect {
-            node_scope: node_inspect::Scope::CvPresetTarget,
-            ..
-        }
-    ) {
-        let mut reply = match node_inspect::capture(&ctx, node_inspect::Scope::CvPresetTarget) {
+    if let Request::Inspect {
+        node_scope:
+            scope @ (node_inspect::Scope::CvPresetTarget | node_inspect::Scope::ImpactOutputs),
+        ..
+    } = request
+    {
+        let source = if scope == node_inspect::Scope::ImpactOutputs {
+            "dsp"
+        } else {
+            "native_slot_preset_mediator"
+        };
+        let mut reply = match node_inspect::capture(&ctx, scope) {
             Ok(nodes) => {
                 let mut reply = Reply::unbound(json!({
-                    "ok":true,"outcome":"observed","source":"native_slot_preset_mediator",
+                    "ok":true,"outcome":"observed","source":source,
                     "instance":ctx.instance,"node_report":nodes.value(),
                 }));
                 reply.nodes = Some(nodes);

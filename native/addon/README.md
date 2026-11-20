@@ -71,6 +71,12 @@ Catalog continuation, apply/release and all other operations require the
 existing two arguments. The optional scripting metadata does not relax these
 operation-specific arity checks.
 
+The `impact_outputs` inspect scope reads the exact Impact instrument's already
+owned main output list on the supported Studio Pro 8.1.1 arm64 image. It requires
+`include_nodes`, the `dsp` source, and an explicit instance. Each of its 32 rows
+reports the output index, name, requested state, and acknowledged state. The
+read works with the editor closed.
+
 `presets` is restricted to the observed Device -> owning slot -> Presets route.
 The slot's exact class must be `AudioInsertSlot`, `AudioSynthSlot`, `MusicFXSlot`
 or `AudioFXSlot`, and its Presets child must be `PresetComponent`. The class names
