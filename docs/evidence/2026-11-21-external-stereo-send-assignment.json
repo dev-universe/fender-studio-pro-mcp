@@ -1,0 +1,23 @@
+{
+  "date_local": "2026-11-21",
+  "tested_source": "51353fc",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": "External Effect Stereo",
+  "tool": "plugin_inspect",
+  "field": "native.capabilities.external_stereo_send_route.assigned",
+  "verified_logical_choices": ["None", "Main", "None"],
+  "assignment_by_stage": [false, true, false],
+  "provider_raw_integer_by_stage": [-1, -1, -1],
+  "initial_editor_closed_observation": true,
+  "holder_observations": 7,
+  "independent_controller_reads": 6,
+  "controller_rows_restored": 24,
+  "ui_selection_count": 2,
+  "mcp_selection_count": 0,
+  "main_physical_output_unassigned": true,
+  "physical_signal_and_latency_tested": false,
+  "requests": 84,
+  "owner_wall_seconds": 106.275,
+  "host_wall_seconds": 183.043,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "protected_files_verified": 167, "managed_files_restored": 18}
+}

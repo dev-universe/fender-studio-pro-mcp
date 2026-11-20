@@ -102,6 +102,38 @@ fn image_uuid(base: *const c_void) -> Option<[u8; 16]> {
     None
 }
 
+#[link(name = "System")]
+unsafe extern "C" {
+    static mach_task_self_: u32;
+    fn mach_vm_read_overwrite(
+        task: u32,
+        address: u64,
+        size: u64,
+        data: u64,
+        count: *mut u64,
+    ) -> i32;
+}
+
+// Callers derive addresses from retained objects and identified host images.
+fn read_word(base: usize, offset: usize) -> Option<usize> {
+    let address = base.checked_add(offset)?;
+    if base == 0 || address % 8 != 0 {
+        return None;
+    }
+    let mut data = 0usize;
+    let mut count = 0;
+    let status = unsafe {
+        mach_vm_read_overwrite(
+            mach_task_self_,
+            address as u64,
+            8,
+            &mut data as *mut usize as u64,
+            &mut count,
+        )
+    };
+    (status == 0 && count == 8).then_some(data)
+}
+
 // Read loader-owned Mach-O metadata only; no version-sensitive interface calls.
 pub(super) fn runtime_supported() -> bool {
     let Some(a) = api() else {
