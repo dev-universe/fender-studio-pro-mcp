@@ -135,6 +135,10 @@ Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names a
 
 For another page, send `offset` set to `next_offset` and `expected_catalog` set to the first page's `catalog_sha256`. The digest covers the listed names and folders. FabFilter assigns its own MIDI program numbers, and those can change as its library changes. Use `plugin_presets` for presets issued by Studio Pro. [FabFilter program numbering](https://www.fabfilter.com/help/pro-q/presets/loadingpresets)
 
+### FabFilter MIDI controller mapping
+
+Call `fabfilter_midi_mapping` with `{"product":"Micro","controller":7}` to look up the VST3 SDK mapping for CC 7. Values 128 and 129 select channel pressure and pitch bend. Program change (130) has no parameter in this SDK mapping. The result includes the tested VST3 version and the corresponding `studio_pro_name`. Compare the version and confirm the name with `plugin_parameters` on the current instance. The lookup itself sends no MIDI. [VST3 MIDI mapping interface](https://steinbergmedia.github.io/vst3_doc/vstinterfaces/classSteinberg_1_1Vst_1_1IMidiMapping.html)
+
 ### FabFilter instrument program changes
 
 Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
