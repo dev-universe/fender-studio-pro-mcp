@@ -53,7 +53,9 @@
   "protected_files_verified": 167,
   "normal_managed_files_restored": 18,
   "test_song_saved": false,
-  "physical_output_assigned": false,
+  "main_mixer_output_reported": null,
+  "main_gain_zero": true,
+  "physical_output_assignment_verified": false,
   "numeric_port_mapping_verified": false,
   "persistence_verified": false,
   "audio_verified": false

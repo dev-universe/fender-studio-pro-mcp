@@ -287,7 +287,7 @@ impl McpServer {
             named::<ExternalStereoSendSet>(
                 "external_stereo_send_set",
                 "externalStereoSendSet",
-                "Set External Effect Stereo Send to main or none on Studio Pro 8.1.1 Apple Silicon with a Korean interface. Requires a current document, exact instance, channel, slot, expected_current and destination. Open the editor, stop transport, disable click and preroll, mute and disarm the target audio channel, and use a silent Main with no physical output. Reads the route, menu checkmark and 24 controller rows after one selection. No Return, physical routing, audio or persistence verification. Never retry an unknown outcome.",
+                "Set External Effect Stereo Send to main or none on Studio Pro 8.1.1 Apple Silicon with a Korean interface. Requires a current document, exact instance, channel, slot, expected_current and destination. Open the editor, stop transport, disable click and preroll, mute and disarm the target audio channel, and use Main at zero gain with the mixer reporting a null Main output. Reads the logical route, menu checkmark and 24 controller rows after one selection. Return, physical routing, audio and persistence require separate verification. Never retry an unknown outcome.",
                 true,
             ),
             named::<ChorderChordsGet>(
