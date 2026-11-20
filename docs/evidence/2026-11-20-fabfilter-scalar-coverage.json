@@ -62,7 +62,10 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 8086,
+  "distinct_individual_roundtrips_including_representative": 9395,
+  "all_named_normal_range_writable_verified": 9264,
+  "high_range_writable_individually_verified": 131,
+  "high_range_writable_pending": 3060,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -225,6 +228,21 @@
     "wall_seconds": 712.2,
     "median_case_seconds": 0.6615,
     "internal_writable_not_qualified": 136
+  },
+  "r49_twin_3_named": {
+    "protected_files": 55,
+    "managed_files": 18,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 1309,
+    "named_controls_verified_total": 1310,
+    "types": {"Float": 506, "Integer": 425, "Toggle": 378},
+    "typed_snapshot_size": 1509,
+    "requests": 11514,
+    "elapsed_seconds": 1063.606,
+    "wall_seconds": 1195.5,
+    "median_case_seconds": 0.709,
+    "internal_writable_rows_total": 199
   },
   "r20_pro_q_2": {
     "protected_files": 23,
