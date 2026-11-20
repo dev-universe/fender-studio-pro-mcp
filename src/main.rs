@@ -1,6 +1,7 @@
 mod audio;
 mod bridge;
 mod config;
+mod fabfilter;
 mod hardware;
 mod install;
 mod midi;

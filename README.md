@@ -129,6 +129,12 @@ port assignments to check the result. The 8.1.1 trial verified 97 writable
 values, seven unassigned ports, and restoration. Testing with assigned
 physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r106.json)
 
+### FabFilter preset library
+
+Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)
+
+For another page, send `offset` set to `next_offset` and `expected_catalog` set to the first page's `catalog_sha256`. The digest covers the listed names and folders. FabFilter assigns its own MIDI program numbers, and those can change as its library changes. Use `plugin_presets` for presets issued by Studio Pro. [FabFilter program numbering](https://www.fabfilter.com/help/pro-q/presets/loadingpresets)
+
 ### FabFilter instrument program changes
 
 Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
