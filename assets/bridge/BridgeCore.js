@@ -330,7 +330,7 @@ class Bridge {
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
             case "context": return this.context();
-            case "channels": return this.fromComponent(c => c.channels());
+            case "channels": return this.fromComponent(c => c.channels(args.include_color === true));
             case "panner": return this.fromComponent(c => c.panner(args));
             case "setPanner": return this.fromComponent(c => c.setPanner(args));
             case "splitters": return this.fromComponent(c => c.splitters(args));

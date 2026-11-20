@@ -1,0 +1,43 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64",
+    "ui_language": "Korean",
+    "scratch_song": "MCP Impact Primary Color R223"
+  },
+  "tested_commit": "ae72918a6cba16462b9e237f49a734efe5d9302c",
+  "result": "verified",
+  "preconditions": {
+    "transport_stopped": true,
+    "main_mute": true,
+    "main_gain_linear": 0,
+    "record_armed": false
+  },
+  "tool": "channels_list",
+  "include_color": true,
+  "unchanged_default_shape": true,
+  "color_cycle": {
+    "strip": "Impact St 1",
+    "signed_argb": [-14013697, -14967177, -14013697],
+    "console_color_change_and_restore_observed": true,
+    "arrangement_track_color_changed_and_restored_with_strip": true,
+    "existing_color_writes": 2
+  },
+  "complete_baseline_comparison": {
+    "mixer_rows": 3,
+    "impact_output_rows": 32,
+    "impact_dsp_values": 4262,
+    "track_state_exactly_restored": true
+  },
+  "scope": {
+    "output_activation_exercised": false,
+    "selection_mutations_exercised": false,
+    "persistence_exercised": false
+  },
+  "requests": 195,
+  "owner_elapsed_seconds": 244.664,
+  "app_elapsed_seconds": 317.412,
+  "scratch_saved": false,
+  "normal_installation_files_restored": 18
+}

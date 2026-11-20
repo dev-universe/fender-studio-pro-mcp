@@ -74,10 +74,10 @@ impl McpServer {
                 "Select a track by its exact name in the current document. Selection is exclusive by default. For duplicate names, use mediaType from tracks_list to identify one track. Read tracks_list again to verify selection before controlling an instrument.",
                 true,
             ),
-            named::<Empty>(
+            named::<ChannelList>(
                 "channels_list",
                 "channels",
-                "Read mixer channels and their actual state. Track and audio channel names may differ.",
+                "Read mixer channels and their actual state. Track and audio channel names may differ. Set include_color to true to also read each available strip's signed ARGB color.",
                 false,
             ),
             named::<PannerQuery>(
