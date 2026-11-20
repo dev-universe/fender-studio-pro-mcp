@@ -1,0 +1,246 @@
+{
+  "elapsed_seconds": 1.022,
+  "factory_count": 5037,
+  "identical_local_count": 5037,
+  "multi_format_product_count": 6,
+  "product_count": 23,
+  "products": {
+    "Micro": {
+      "factory": 16,
+      "factory_format_counts": {
+        "binary:FMic": 16
+      },
+      "largest_factory_file": 44,
+      "local": 16,
+      "matched_relative_path_and_sha256": 16,
+      "version": "1.32"
+    },
+    "One": {
+      "factory": 109,
+      "factory_format_counts": {
+        "binary:FFPr": 109
+      },
+      "largest_factory_file": 132,
+      "local": 109,
+      "matched_relative_path_and_sha256": 109,
+      "version": "3.52"
+    },
+    "Pro-C 2": {
+      "factory": 109,
+      "factory_format_counts": {
+        "binary:FC2p": 108,
+        "binary:FPrC": 1
+      },
+      "largest_factory_file": 196,
+      "local": 109,
+      "matched_relative_path_and_sha256": 109,
+      "version": "2.22"
+    },
+    "Pro-C 3": {
+      "factory": 122,
+      "factory_format_counts": {
+        "text:FC3p": 122
+      },
+      "largest_factory_file": 3233,
+      "local": 122,
+      "matched_relative_path_and_sha256": 122,
+      "version": "3.02"
+    },
+    "Pro-DS": {
+      "factory": 9,
+      "factory_format_counts": {
+        "binary:FPSr": 9
+      },
+      "largest_factory_file": 92,
+      "local": 9,
+      "matched_relative_path_and_sha256": 9,
+      "version": "1.32"
+    },
+    "Pro-G": {
+      "factory": 57,
+      "factory_format_counts": {
+        "binary:FPGr": 57
+      },
+      "largest_factory_file": 148,
+      "local": 57,
+      "matched_relative_path_and_sha256": 57,
+      "version": "1.42"
+    },
+    "Pro-L": {
+      "factory": 52,
+      "factory_format_counts": {
+        "binary:FPLr": 52
+      },
+      "largest_factory_file": 88,
+      "local": 52,
+      "matched_relative_path_and_sha256": 52,
+      "version": "1.37"
+    },
+    "Pro-L 2": {
+      "factory": 58,
+      "factory_format_counts": {
+        "binary:FL2p": 58
+      },
+      "largest_factory_file": 136,
+      "local": 58,
+      "matched_relative_path_and_sha256": 58,
+      "version": "2.26"
+    },
+    "Pro-MB": {
+      "factory": 55,
+      "factory_format_counts": {
+        "binary:FPMb": 55
+      },
+      "largest_factory_file": 612,
+      "local": 55,
+      "matched_relative_path_and_sha256": 55,
+      "version": "1.33"
+    },
+    "Pro-Q 2": {
+      "factory": 27,
+      "factory_format_counts": {
+        "binary:FQ2p": 27
+      },
+      "largest_factory_file": 768,
+      "local": 27,
+      "matched_relative_path_and_sha256": 27,
+      "version": "2.30"
+    },
+    "Pro-Q 3": {
+      "factory": 87,
+      "factory_format_counts": {
+        "binary:FQ3p": 87
+      },
+      "largest_factory_file": 1348,
+      "local": 87,
+      "matched_relative_path_and_sha256": 87,
+      "version": "3.29"
+    },
+    "Pro-Q 4": {
+      "factory": 171,
+      "factory_format_counts": {
+        "text:FQ4p": 171
+      },
+      "largest_factory_file": 15683,
+      "local": 171,
+      "matched_relative_path_and_sha256": 171,
+      "version": "4.13"
+    },
+    "Pro-R": {
+      "factory": 163,
+      "factory_format_counts": {
+        "binary:FPRr": 163
+      },
+      "largest_factory_file": 352,
+      "local": 163,
+      "matched_relative_path_and_sha256": 163,
+      "version": "1.20"
+    },
+    "Pro-R 2": {
+      "factory": 274,
+      "factory_format_counts": {
+        "binary:FPRr": 162,
+        "text:FR2p": 112
+      },
+      "largest_factory_file": 4033,
+      "local": 274,
+      "matched_relative_path_and_sha256": 274,
+      "version": "2.06"
+    },
+    "Saturn": {
+      "factory": 260,
+      "factory_format_counts": {
+        "binary:FSat": 260
+      },
+      "largest_factory_file": 3584,
+      "local": 260,
+      "matched_relative_path_and_sha256": 260,
+      "version": "1.31"
+    },
+    "Saturn 2": {
+      "factory": 77,
+      "factory_format_counts": {
+        "binary:FS2a": 71,
+        "binary:FSat": 6
+      },
+      "largest_factory_file": 3951,
+      "local": 77,
+      "matched_relative_path_and_sha256": 77,
+      "version": "2.13"
+    },
+    "Simplon": {
+      "factory": 22,
+      "factory_format_counts": {
+        "binary:FSim": 22
+      },
+      "largest_factory_file": 88,
+      "local": 22,
+      "matched_relative_path_and_sha256": 22,
+      "version": "1.42"
+    },
+    "Timeless 2": {
+      "factory": 482,
+      "factory_format_counts": {
+        "binary:FDel": 23,
+        "binary:FTim": 49,
+        "binary:FTms": 410
+      },
+      "largest_factory_file": 2832,
+      "local": 482,
+      "matched_relative_path_and_sha256": 482,
+      "version": "2.41"
+    },
+    "Timeless 3": {
+      "factory": 118,
+      "factory_format_counts": {
+        "binary:F3Ts": 118
+      },
+      "largest_factory_file": 4246,
+      "local": 118,
+      "matched_relative_path_and_sha256": 118,
+      "version": "3.10"
+    },
+    "Twin 2": {
+      "factory": 1667,
+      "factory_format_counts": {
+        "binary:FT2i": 1104,
+        "binary:FTwi": 563
+      },
+      "largest_factory_file": 3544,
+      "local": 1667,
+      "matched_relative_path_and_sha256": 1667,
+      "version": "2.41"
+    },
+    "Twin 3": {
+      "factory": 573,
+      "factory_format_counts": {
+        "binary:FT3i": 573
+      },
+      "largest_factory_file": 6234,
+      "local": 573,
+      "matched_relative_path_and_sha256": 573,
+      "version": "3.10"
+    },
+    "Volcano 2": {
+      "factory": 421,
+      "factory_format_counts": {
+        "binary:FV2l": 295,
+        "binary:FVol": 126
+      },
+      "largest_factory_file": 2848,
+      "local": 421,
+      "matched_relative_path_and_sha256": 421,
+      "version": "2.41"
+    },
+    "Volcano 3": {
+      "factory": 108,
+      "factory_format_counts": {
+        "binary:FV3l": 108
+      },
+      "largest_factory_file": 3821,
+      "local": 108,
+      "matched_relative_path_and_sha256": 108,
+      "version": "3.09"
+    }
+  }
+}
