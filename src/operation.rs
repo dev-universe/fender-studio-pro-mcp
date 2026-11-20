@@ -24,7 +24,7 @@ pub enum Operation {
     #[serde(rename = "trackFormats", alias = "track_formats")]
     TrackFormats(Empty),
     #[serde(rename = "channels", alias = "channels_list")]
-    Channels(Empty),
+    Channels(ChannelList),
     #[serde(rename = "panner", alias = "panner_get")]
     Panner(PannerQuery),
     #[serde(rename = "setPanner", alias = "panner_set")]
@@ -147,6 +147,14 @@ pub enum Operation {
     Undo(Steps),
     #[serde(rename = "redo")]
     Redo(Steps),
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChannelList {
+    /// Include the mixer strip's signed 32-bit ARGB value when the surface reports it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_color: Option<bool>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]

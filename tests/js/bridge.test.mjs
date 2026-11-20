@@ -284,3 +284,24 @@ test('all shipped host scripts parse and contain no arbitrary script compiler', 
     }
   }
 });
+
+test('mixer channel colors are opt-in and signed ARGB', () => {
+  const context = vm.createContext({
+    include_file() {},
+    memberTypes() { return {}; },
+    PreSonus: { ControlSurfaceComponent: class {}, ParamID: { kColor: 'color' } },
+  });
+  vm.runInContext(asset('bridge/BridgeComponent.js'), context);
+  const component = vm.runInContext('createBridgeComponent()', context);
+  const values = [0xffcc1122, -1, null, 0x100000000, 0.5];
+  component.channelElements = () => values.map((value, index) => ({
+    index, label: `Strip ${index}`, el: { getParamValue: id => id === 'color' ? value : null },
+  }));
+  const host = bridgeHarness();
+  host.bridge.component = component;
+  const legacy = host.writeRequest({ op: 'channels', args: {} }).result;
+  assert.ok(legacy.every(channel => !Object.hasOwn(channel, 'color_argb')));
+  const expanded = host.writeRequest({ op: 'channels', args: { include_color: true } }).result;
+  assert.deepEqual(expanded.map(channel => channel.color_argb), [0xffcc1122 | 0, -1, null, null, null]);
+  assert.deepEqual(expanded.map(({ color_argb, ...channel }) => channel), legacy);
+});
