@@ -1,6 +1,6 @@
 <h1 align="center">Fender Studio Pro MCP</h1>
 
-**그래서 이게 뭔가요?**<br>
+**그래서 이게 뭔가요?**\
 Fender Studio Pro에서 하는 대부분(이 되도록 열심히 노력 중)의 작업들을 채팅으로 AI에게 부탁할 수 있게 해주는 도구입니다.
 
 <p align="center">
