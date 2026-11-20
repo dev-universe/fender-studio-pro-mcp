@@ -62,10 +62,10 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 4,
-  "distinct_individual_roundtrips_including_representative": 10774,
+  "distinct_individual_roundtrips_including_representative": 10775,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 1510,
-  "high_range_writable_pending": 1681,
+  "high_range_writable_individually_verified": 1511,
+  "high_range_writable_pending": 1680,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -701,6 +701,28 @@
     "active_seconds": 23.422,
     "wall_seconds": 97.7,
     "protected_files": 127,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r83_twin_3_setup_error": {
+    "status": "halted_without_parameter_write",
+    "requests": 12,
+    "active_seconds": 4.215,
+    "wall_seconds": 75.4,
+    "protected_files": 130,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r84_twin_3_cc_scale_restore": {
+    "status": "verified",
+    "new_distinct_roundtrips": 1,
+    "distinct_total_verified": 1332,
+    "reported_values_restored": 1510,
+    "named_and_internal_peers_corrected": true,
+    "requests": 96,
+    "active_seconds": 13.599,
+    "wall_seconds": 106.1,
+    "protected_files": 133,
     "managed_files": 18,
     "saved": false
   }
