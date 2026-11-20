@@ -749,6 +749,8 @@ pub struct InsertChainState {
     #[schemars(length(min = 1, max = 256))]
     pub channel: String,
     pub action: InsertChainStateAction,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub include_routing: Option<bool>,
     #[serde(default, deserialize_with = "supplied_optional_string")]
     #[schemars(with = "String")]
     pub token: Option<String>,
@@ -1769,6 +1771,13 @@ impl Operation {
                 }
             }
             Self::InsertChainState(p) => {
+                if p.include_routing.is_some()
+                    && !matches!(p.action, InsertChainStateAction::Capture)
+                {
+                    return Err(invalid(
+                        "include_routing applies only to insert-chain capture",
+                    ));
+                }
                 if p.channel.trim().is_empty()
                     || p.channel.encode_utf16().count() > 256
                     || p.channel.chars().any(char::is_control)
