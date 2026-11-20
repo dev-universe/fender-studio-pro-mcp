@@ -1,0 +1,23 @@
+{
+  "date_local": "2026-11-21",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": {"name": "FabFilter Pro-Q 4", "format": "VST3", "version": "4.13", "vendor_signature_verified": true},
+  "tested_candidate": "e244603",
+  "published_scope": "The Pro-Q 4 observation from the tested candidate, limited to the actual verified product and host builds.",
+  "method": "The exact Studio Pro component alias, current effect and plug-in controller were identified. The actual attached view was compared to that effect and controller in the same live document. Two Pro-Q 4 instances on separate silent audio tracks served as controls for each other.",
+  "observations": [
+    {"phase": "both_closed", "instance_1": [0, 0], "instance_2": [0, 0]},
+    {"phase": "first_open", "instance_1": [1, 0], "instance_2": [0, 1]},
+    {"phase": "first_closed", "instance_1": [0, 0], "instance_2": [0, 0]},
+    {"phase": "second_open", "instance_1": [0, 1], "instance_2": [1, 0]},
+    {"phase": "second_closed", "instance_1": [0, 0], "instance_2": [0, 0]}
+  ],
+  "observation_count_order": ["matching_attached_editor_count", "other_same_product_attached_editors"],
+  "independent_owner_observations": 20,
+  "parameter_rows_unchanged": [737, 737],
+  "requests_total_including_rebinding": 99,
+  "final_owner_seconds": 84.155,
+  "host_wall_seconds": 203.203,
+  "preset_file_loads": 0,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "protected_files_verified": 165, "managed_files_restored": 18}
+}

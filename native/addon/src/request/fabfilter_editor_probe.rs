@@ -1,5 +1,6 @@
 use super::*;
 
+// Identifies Studio Pro 8.1.1 arm64's VST3 host image.
 const HOST_UUID: [u8; 16] = [
     0x20, 0xd9, 0xad, 0xcb, 0xd6, 0x23, 0x32, 0xa7, 0x91, 0x56, 0xa1, 0x1c, 0xb7, 0x05, 0xff, 0x75,
 ];
@@ -16,20 +17,6 @@ const PRO_Q4: Image = Image {
     editor_table: 0x223a50,
     product: "pro_q_4",
 };
-const TWIN3: Image = Image {
-    uuid: [
-        0xbd, 0x81, 0xb8, 0x7c, 0xa2, 0x84, 0x3c, 0x20, 0x85, 0xaf, 0xd6, 0x32, 0xf4, 0xbb, 0x5c,
-        0x86,
-    ],
-    controller_table: 0x28fe08,
-    state_member: 0xd8,
-    state_table: 0x281cf8,
-    state_file_method: 0xd6f5c,
-    view_table: 0x29a778,
-    editor_table: 0x2813b8,
-    product: "twin_3",
-};
-
 struct Image {
     uuid: [u8; 16],
     controller_table: usize,
@@ -53,6 +40,7 @@ unsafe extern "C" {
     ) -> i32;
 }
 
+// All addresses come from retained host objects or version-checked image metadata.
 fn read_word(base: usize, offset: usize) -> Option<usize> {
     let address = base.checked_add(offset)?;
     if base == 0 || address % 8 != 0 {
@@ -93,6 +81,7 @@ fn count_attached(
     image: usize,
     state: usize,
 ) -> Option<(usize, usize)> {
+    // Studio Pro uses this same list to find an editor from its effect object.
     let mut node = read_word(host, 0x16b120)?;
     let mut matched = 0;
     let mut other = 0;
@@ -153,12 +142,11 @@ pub(super) fn observe(target: *mut c_void) -> Option<Value> {
     let controller = read_word(instance, 0x1b0)?;
     let table = read_word(controller, 0)?;
     let (image, uuid) = mapped_image(table)?;
-    let product = [&PRO_Q4, &TWIN3]
-        .into_iter()
-        .find(|product| product.uuid == uuid)?;
-    if table != image + product.controller_table {
+    let product = &PRO_Q4;
+    if uuid != product.uuid || table != image + product.controller_table {
         return None;
     }
+    // The public controller interface lies inside the FabFilter controller object.
     let controller_primary = controller.checked_sub(0x30)?;
     let state = read_word(controller_primary, product.state_member)?;
     let state_table = read_word(state, 0)?;
