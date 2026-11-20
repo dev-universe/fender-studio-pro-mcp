@@ -793,6 +793,9 @@ pub struct InsertSlotMove {
     pub source_node: String,
     pub after_node: String,
     pub following_node: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(range(min = 0, max = 1))]
+    pub branch: Option<u8>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1844,6 +1847,9 @@ impl Operation {
                 }
             }
             Self::InsertSlotMove(p) => {
+                if p.branch.is_some_and(|branch| branch > 1) {
+                    return Err(invalid("The empty Splitter branch must be 0 or 1"));
+                }
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,

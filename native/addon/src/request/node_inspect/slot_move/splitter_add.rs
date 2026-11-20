@@ -2,7 +2,6 @@
 use super::*;
 use std::mem::MaybeUninit;
 
-const SPLITTER_TABLE: usize = 0x1b7b110;
 const SCOPE_TABLE: usize = 0x1b7c888;
 const ADD_ACTION_TABLE: usize = 0x1b7cc20;
 
@@ -119,7 +118,7 @@ pub(in crate::native_script::request) fn dispatch(
         let after = resolve_node(&nodes, after_id)?;
         let following = resolve_node(&nodes, following_id)?;
         check_wire(&model, after, following)?;
-        let branch = project_branch(&model, &cells, after, following, &mut guard)?;
+        let branch = project_branch(&model, &cells, after, following, None, &mut guard)?;
         if branch != 0 {
             return Err("The supported insertion is on the effect slot's single outlet".into());
         }

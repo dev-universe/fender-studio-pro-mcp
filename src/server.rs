@@ -233,7 +233,7 @@ impl McpServer {
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
-                "Move one bound effect slot immediately after another slot in the same open Inserts routing graph. Supply the source effect, graph UUID, source node UUID, destination node UUID and the destination's current successor UUID from a fresh graph and ownership read. Use independent graph and parameter readback after the request.",
+                "Move one bound effect slot in the current Inserts graph with its Routing tab open. For a move after an effect, supply the destination slot as after_node and its current successor as following_node. For an empty two-way Splitter branch, supply the Splitter as after_node, its merger as following_node, and the branch index (0 or 1). Read the new graph and parameters independently.",
                 true,
             ),
             named::<InsertSplitterAdd>(

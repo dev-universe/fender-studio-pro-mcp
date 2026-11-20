@@ -188,6 +188,7 @@ impl GraphOwnership {
         after: &str,
         following: &str,
         effect: &str,
+        empty_branch: bool,
     ) -> Result<(), String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) {
             return Err("insert graph UUID changed".into());
@@ -198,13 +199,17 @@ impl GraphOwnership {
                     && device.object_uid.as_deref() == Some(effect))
         });
         let destination_matches = self.value.children.iter().any(|child| {
-            matches!(child, GraphChild::Slot { node, .. } if node.object_uid.as_deref() == Some(after))
+            child.node().object_uid.as_deref() == Some(after)
+                && if empty_branch {
+                    matches!(child, GraphChild::Splitter { .. })
+                } else {
+                    matches!(child, GraphChild::Slot { .. })
+                }
         });
-        let following_matches = self
-            .value
-            .children
-            .iter()
-            .any(|child| child.node().object_uid.as_deref() == Some(following));
+        let following_matches = self.value.children.iter().any(|child| {
+            child.node().object_uid.as_deref() == Some(following)
+                && (!empty_branch || matches!(child, GraphChild::Merger { .. }))
+        });
         if source_matches && destination_matches && following_matches {
             Ok(())
         } else {
