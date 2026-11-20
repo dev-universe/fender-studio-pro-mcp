@@ -61,11 +61,11 @@
     }
   },
   "total_observed_writable": 12455,
-  "fully_exhaustive_products": 3,
-  "distinct_individual_roundtrips_including_representative": 10747,
+  "fully_exhaustive_products": 4,
+  "distinct_individual_roundtrips_including_representative": 10760,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 1483,
-  "high_range_writable_pending": 1708,
+  "high_range_writable_individually_verified": 1496,
+  "high_range_writable_pending": 1695,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -608,5 +608,59 @@
     "active_seconds": 146.086,
     "wall_seconds": 215.7,
     "protected_files": 105
+  },
+  "r76_pro_q_4_non_cc": {
+    "new_distinct_roundtrips": 7,
+    "distinct_total_verified": 736,
+    "all_reported_values_restored": 737,
+    "legacy_cc_independently_read": true,
+    "legacy_cc_normalized_observation": 0.03500000014901161,
+    "requests": 337,
+    "active_seconds": 39.132,
+    "wall_seconds": 174.3,
+    "protected_files": 109,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r77_twin_3_cc": {
+    "new_distinct_roundtrips": 5,
+    "writable_values": 1509,
+    "reported_values": 1510,
+    "distinct_total_verified": 1316,
+    "status": "halted_on_sixth",
+    "last_target": "vstp1073741836",
+    "last_target_change_independently_read": true,
+    "changed_state_digest_matched": false,
+    "last_target_restored_in_memory": false,
+    "requests": 108,
+    "active_seconds": 13.91,
+    "wall_seconds": 186.5,
+    "protected_files": 112,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r78_twin_3_cc_deltas": {
+    "changed_rows": ["vstp44", "vstp1073741825", "vstp1073741836"],
+    "named_peer": "Portamento",
+    "reported_values_compared": 1510,
+    "requests": 50,
+    "active_seconds": 8.382,
+    "protected_files": 115,
+    "managed_files": 18,
+    "host_exit_observed": true,
+    "saved": false
+  },
+  "r79_twin_3_cc_restore": {
+    "new_distinct_roundtrips": 1,
+    "distinct_total_verified": 1317,
+    "reported_values_restored": 1510,
+    "portamento_restored_with_target": true,
+    "internal_peer_correction": true,
+    "requests": 81,
+    "active_seconds": 11.421,
+    "wall_seconds": 81.4,
+    "protected_files": 118,
+    "managed_files": 18,
+    "saved": false
   }
 }
