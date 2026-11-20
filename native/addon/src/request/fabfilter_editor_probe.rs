@@ -19,6 +19,7 @@ const HOST_UUID: [u8; 16] = [
     0x20, 0xd9, 0xad, 0xcb, 0xd6, 0x23, 0x32, 0xa7, 0x91, 0x56, 0xa1, 0x1c, 0xb7, 0x05, 0xff, 0x75,
 ];
 const PRO_Q4: Image = Image {
+    class_uid: "ED57BD72-5C60-467E-A64D-D2F400758B6F",
     uuid: [
         0xc9, 0x95, 0x75, 0x92, 0x31, 0xc6, 0x3c, 0x10, 0x82, 0xc6, 0xba, 0xc4, 0x7f, 0xae, 0xa4,
         0xa8,
@@ -39,6 +40,7 @@ const PRO_Q4: Image = Image {
     destructor: 0x4418c,
 };
 const TWIN3: Image = Image {
+    class_uid: "91AF218E-111A-44CB-ABFE-F7CB065FF157",
     uuid: [
         0xbd, 0x81, 0xb8, 0x7c, 0xa2, 0x84, 0x3c, 0x20, 0x85, 0xaf, 0xd6, 0x32, 0xf4, 0xbb, 0x5c,
         0x86,
@@ -60,6 +62,7 @@ const TWIN3: Image = Image {
 };
 
 const PRO_C3: Image = Image {
+    class_uid: "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9",
     uuid: [
         0x97, 0x32, 0x3f, 0x1e, 0xa0, 0x3e, 0x3e, 0xca, 0xaf, 0xf8, 0x76, 0x31, 0x12, 0x5f, 0x65,
         0x6a,
@@ -81,6 +84,7 @@ const PRO_C3: Image = Image {
 };
 
 const PRO_R2: Image = Image {
+    class_uid: "6070873C-802A-4B07-8FC0-6AB5459154E9",
     uuid: [
         0x3e, 0xb0, 0x6c, 0x9c, 0x10, 0xc4, 0x39, 0x22, 0x88, 0x81, 0x1a, 0x6a, 0x63, 0xa6, 0x5d,
         0x46,
@@ -108,6 +112,7 @@ enum PresetFormat {
 }
 
 struct Image {
+    class_uid: &'static str,
     uuid: [u8; 16],
     controller_table: usize,
     state_member: usize,
@@ -123,6 +128,16 @@ struct Image {
     constructor: usize,
     loader: usize,
     destructor: usize,
+}
+
+fn image_for_class(class_uid: &str) -> Option<&'static Image> {
+    [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R2]
+        .into_iter()
+        .find(|product| product.class_uid == class_uid)
+}
+
+pub(super) fn supports_class(class_uid: &str) -> bool {
+    image_for_class(class_uid).is_some()
 }
 
 fn mapped_image(table: usize) -> Option<(usize, [u8; 16])> {
@@ -221,7 +236,8 @@ impl Owner {
     }
 }
 
-fn owner(target: *mut c_void) -> Option<Owner> {
+fn owner(target: *mut c_void, class_uid: &str) -> Option<Owner> {
+    let product = image_for_class(class_uid)?;
     let canonical = query(target, &UNKNOWN)?;
     let instance = canonical.0 as usize;
     let table = read_word(instance, 0)?;
@@ -236,10 +252,7 @@ fn owner(target: *mut c_void) -> Option<Owner> {
     let controller = read_word(instance, 0x1b0)?;
     let table = read_word(controller, 0)?;
     let (image, uuid) = mapped_image(table)?;
-    let product = [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R2]
-        .into_iter()
-        .find(|product| product.uuid == uuid)?;
-    if table != image + product.controller_table {
+    if uuid != product.uuid || table != image + product.controller_table {
         return None;
     }
     // The public controller interface lies inside the FabFilter controller object.
@@ -268,8 +281,8 @@ fn owner(target: *mut c_void) -> Option<Owner> {
     })
 }
 
-pub(super) fn observe(target: *mut c_void) -> Option<Value> {
-    let owner = owner(target)?;
+pub(super) fn observe(target: *mut c_void, class_uid: &str) -> Option<Value> {
+    let owner = owner(target, class_uid)?;
     Some(
         json!({"product":owner.product.product,"effect_and_controller_match":true,
         "matching_attached_editor_count":owner.first.0,"other_same_product_attached_editors":owner.first.1,
@@ -426,7 +439,7 @@ pub(super) fn apply_preset(
     data_hex: &str,
 ) -> Value {
     let refused = |reason: &str| error("fabfilter_preset_apply_failed", reason, "not_applied");
-    let Some(owner) = owner(target) else {
+    let Some(owner) = owner(target, &ctx.instance.class_uid) else {
         return refused("the exact effect and controller are unavailable");
     };
     if owner.first.0 != 1 {
@@ -506,6 +519,20 @@ mod tests {
             bytes
         );
         assert!(preset_bytes(&PRO_Q4, "Twin.ffp", &digest, &hex).is_none());
+    }
+
+    #[test]
+    fn fabfilter_admission_maps_each_exact_class_to_its_verified_image() {
+        for (class_uid, product) in [
+            ("ED57BD72-5C60-467E-A64D-D2F400758B6F", "pro_q_4"),
+            ("B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9", "pro_c_3"),
+            ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
+            ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
+        ] {
+            assert!(supports_class(class_uid));
+            assert_eq!(image_for_class(class_uid).unwrap().product, product);
+        }
+        assert!(!supports_class("6070873C-802A-4B07-8FC0-6AB5459154E8"));
     }
 
     #[test]

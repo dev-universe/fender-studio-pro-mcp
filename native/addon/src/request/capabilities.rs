@@ -86,14 +86,11 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
             if let Some(assigned) = external_send_route::assigned(ctx, plugin.0) {
                 value["external_stereo_send_route"] = json!({"assigned": assigned});
             }
-            if matches!(
-                ctx.instance.class_uid.as_str(),
-                "ED57BD72-5C60-467E-A64D-D2F400758B6F"
-                    | "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9"
-                    | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
-            ) {
+            if fabfilter_editor_probe::supports_class(&ctx.instance.class_uid) {
                 ctx.check()?;
-                if let Some(editor) = fabfilter_editor_probe::observe(plugin.0) {
+                if let Some(editor) =
+                    fabfilter_editor_probe::observe(plugin.0, &ctx.instance.class_uid)
+                {
                     value["fabfilter_editor_owner"] = editor;
                 }
             }
@@ -129,12 +126,7 @@ pub(super) fn apply_preset(
     sha256: &str,
     data_hex: &str,
 ) -> Value {
-    if !matches!(
-        ctx.instance.class_uid.as_str(),
-        "ED57BD72-5C60-467E-A64D-D2F400758B6F"
-            | "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9"
-            | "91AF218E-111A-44CB-ABFE-F7CB065FF157"
-    ) {
+    if !fabfilter_editor_probe::supports_class(&ctx.instance.class_uid) {
         return error(
             "fabfilter_preset_apply_failed",
             "the exact supported FabFilter instance is required",
