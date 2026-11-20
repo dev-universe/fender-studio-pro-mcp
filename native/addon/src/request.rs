@@ -53,6 +53,7 @@ pub(super) mod presets;
 pub(super) mod state;
 
 pub(super) const MAX_REQUEST_BYTES: usize = 16 * 1024;
+pub(super) const MAX_VENDOR_REQUEST_BYTES: usize = 160 * 1024;
 pub(super) fn gui_model_api() -> &'static str {
     gui_model::API
 }
@@ -219,6 +220,12 @@ enum Request {
     RumbleSerializationInspect {
         expected_instance: String,
     },
+    FabfilterPresetApply {
+        expected_instance: Option<String>,
+        filename: String,
+        sha256: String,
+        data_hex: String,
+    },
     StateCapture {
         expected_instance: Option<String>,
     },
@@ -339,7 +346,8 @@ impl Request {
             | Self::ParameterDigest { source, .. }
             | Self::FormatValues { source, .. }
             | Self::SetParameter { source, .. } => *source,
-            Self::StateCapture { .. }
+            Self::FabfilterPresetApply { .. }
+            | Self::StateCapture { .. }
             | Self::ChorderChordsGet { .. }
             | Self::RumbleParametersRead { .. }
             | Self::RumbleNamedParametersRead { .. }
@@ -437,6 +445,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::SetParameter {
+                expected_instance, ..
+            }
+            | Self::FabfilterPresetApply {
                 expected_instance, ..
             }
             | Self::StateCapture { expected_instance }
@@ -734,7 +745,11 @@ impl Request {
             {
                 Err("Impact output inspection requires explicit dsp and expected_instance".into())
             }
-            Self::StateCapture {
+            Self::FabfilterPresetApply {
+                expected_instance: None,
+                ..
+            }
+            | Self::StateCapture {
                 expected_instance: None,
             }
             | Self::StateRestore {
@@ -1728,6 +1743,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::RumbleStateRead { .. }
         | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
+        | Request::FabfilterPresetApply { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
         | Request::StateRelease { .. }
@@ -2200,6 +2216,13 @@ pub(super) fn dispatch(
             );
         }
     };
+    if text.len() > MAX_REQUEST_BYTES && !matches!(request, Request::FabfilterPresetApply { .. }) {
+        return NativeReply::error(
+            "invalid_request",
+            "native request exceeds the supported size",
+            "not_applied",
+        );
+    }
     if let Err(e) = request.validate() {
         return if let Some(retrieval) = request.rumble_retrieval() {
             NativeReply::unbound(retrieval.failure())
@@ -2263,6 +2286,7 @@ fn dispatch_device(
             | Request::EditChorderAutofill { .. }
             | Request::EditChorderModel { .. }
             | Request::ParameterAction { .. }
+            | Request::FabfilterPresetApply { .. }
             | Request::StateRestore { .. }
             | Request::PresetApply { .. }
             | Request::ApplyCvPresetSettings { .. }
@@ -2839,6 +2863,15 @@ fn dispatch_device(
         };
     }
     let state_result = match &request {
+        Request::FabfilterPresetApply {
+            filename,
+            sha256,
+            data_hex,
+            ..
+        } => Some((
+            capabilities::apply_preset(&ctx, filename, sha256, data_hex),
+            None,
+        )),
         Request::StateCapture { .. } => Some(match state::capture(&ctx) {
             Ok((value, alias)) => (value, Some(Provider::State(alias))),
             Err(reason) => (error("state_capture_failed", &reason, "not_applied"), None),
@@ -2856,7 +2889,9 @@ fn dispatch_device(
     };
     if let Some((mut value, provider)) = state_result {
         value["instance"] = json!(ctx.instance);
-        value["source"] = json!("component_alias_storable");
+        if !matches!(request, Request::FabfilterPresetApply { .. }) {
+            value["source"] = json!("component_alias_storable");
+        }
         return Reply {
             value,
             menu: None,

@@ -118,6 +118,44 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
     Ok(value)
 }
 
+pub(super) fn apply_preset(
+    ctx: &Context<'_>,
+    filename: &str,
+    sha256: &str,
+    data_hex: &str,
+) -> Value {
+    if ctx.instance.class_uid != "ED57BD72-5C60-467E-A64D-D2F400758B6F" {
+        return error(
+            "fabfilter_preset_apply_failed",
+            "the exact official Pro-Q 4 instance is required",
+            "not_applied",
+        );
+    }
+    let Some(alias) = query(ctx.target.0, &ALIAS) else {
+        return error(
+            "fabfilter_preset_apply_failed",
+            "effect component alias unavailable",
+            "not_applied",
+        );
+    };
+    let get: Borrowed = unsafe { method(alias.0, 3) };
+    let Some(plugin) = hold(unsafe { get(alias.0) }) else {
+        return error(
+            "fabfilter_preset_apply_failed",
+            "effect component unavailable",
+            "not_applied",
+        );
+    };
+    if ctx.check().is_err() || unsafe { get(alias.0) } != plugin.0 {
+        return error(
+            "fabfilter_preset_apply_failed",
+            "effect component changed",
+            "not_applied",
+        );
+    }
+    fabfilter_editor_probe::apply_preset(ctx, plugin.0, filename, sha256, data_hex)
+}
+
 pub(super) fn inspect(ctx: &Context<'_>) -> Result<Value, String> {
     ctx.check()?;
     let value = related(ctx);

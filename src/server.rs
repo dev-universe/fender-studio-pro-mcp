@@ -11,7 +11,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::{
-    fabfilter::{MidiMappingQuery, PresetQuery},
+    fabfilter::{MidiMappingQuery, PresetApply, PresetQuery},
     operation::{self, Operation, Request, schema},
     runtime::RuntimeHandle,
 };
@@ -254,6 +254,12 @@ impl McpServer {
                 "List, apply or release presets from the expected native plugin slot. List issues a bounded catalog token; follow next with the same token, document and instance. Apply accepts only an index returned by that catalog and remains applied_unverified until independent parameter/model readback. Capture plugin_state before applying when restoration is needed. For the exact CV Instrument, inspect_cv_preset_settings reads the primary settings byte count and SHA-256 from an issued index without loading the preset. apply_cv_preset_settings loads those primary settings once on the bound CV component and reports applied_unverified on acceptance. No caller-supplied preset path, URL or state data is accepted; excluded preset sources remain explicit.",
                 true,
             ),
+            named::<PresetApply>(
+                "fabfilter_preset_apply",
+                "fabfilterPresetApply",
+                "Apply a local FabFilter preset selected by the zero-based index and catalog SHA-256 from fabfilter_presets_list. Supports Pro-Q 4 VST3 4.13 on Studio Pro 8.1.1 for Apple Silicon. Open the target editor and supply its exact channel, slot, instance and document. Confirm effects with a separate readback.",
+                true,
+            ),
             named::<PluginEditor>(
                 "plugin_editor_open",
                 "pluginEditorOpen",
@@ -345,7 +351,7 @@ impl McpServer {
         let fabfilter_schema = serde_json::to_value(schemars::schema_for!(PresetQuery)).unwrap();
         specs.push(ToolSpec {
             operation: None,
-            tool: Tool::new("fabfilter_presets_list", "List .ffp names and relative folders for one FabFilter product in the local preset library. Follow next_offset with expected_catalog set to the first page's catalog_sha256. The result lists files on disk and grants no load permission or MIDI program mapping.", fabfilter_schema.as_object().unwrap().clone())
+            tool: Tool::new("fabfilter_presets_list", "List .ffp names and relative folders for one FabFilter product in the local preset library. Follow next_offset with expected_catalog set to the first page's catalog_sha256. The result lists files on disk. For eligible products, use the catalog digest and zero-based entry index with fabfilter_preset_apply.", fabfilter_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
         let mapping_schema = serde_json::to_value(schemars::schema_for!(MidiMappingQuery)).unwrap();
@@ -603,7 +609,7 @@ mod tests {
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 54);
+        assert_eq!(specs.len(), 55);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -641,7 +647,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 54);
+        assert_eq!(specs.len(), 55);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -688,7 +694,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 54);
+        assert_eq!(McpServer::specs().len(), 55);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -909,7 +915,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 54);
+        assert_eq!(specs.len(), 55);
     }
 
     #[test]
@@ -1207,7 +1213,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 54);
+        assert_eq!(specs.len(), 55);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1290,7 +1296,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 54);
+        assert_eq!(McpServer::specs().len(), 55);
     }
 
     #[test]
@@ -1338,7 +1344,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 54);
+        assert_eq!(specs.len(), 55);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

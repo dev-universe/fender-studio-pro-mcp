@@ -903,6 +903,30 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, result, { native_outcome: result.outcome });
     }
 
+    fabfilterPresetApply(args) {
+        const keys = ["channel", "slot", "expected_instance", "filename", "sha256", "data_hex"];
+        const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });
+        if (!args || Object.keys(args).length !== keys.length || Object.keys(args).some(key => !keys.includes(key))
+            || typeof args.channel !== "string" || !args.channel.trim() || args.channel.length > 256 || /[\x00-\x1f\x7f]/.test(args.channel)
+            || !Number.isInteger(args.slot) || args.slot < 0 || args.slot > 15
+            || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || typeof args.filename !== "string" || args.filename.length > 255 || args.filename[0] === "." || /[\x00-\x1f\x7f/]/.test(args.filename) || !/\.ffp$/i.test(args.filename)
+            || typeof args.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.sha256)
+            || typeof args.data_hex !== "string" || !args.data_hex || args.data_hex.length > 131072 || args.data_hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(args.data_hex))
+            return invalid("The FabFilter preset and exact effect target are invalid");
+        const plug = this.pluginOf({channel: args.channel, slot: args.slot, plugin: "Pro-Q 4"});
+        if (!plug || plug.error) return invalid("The expected Pro-Q 4 effect is not in that slot");
+        const result = this.nativePluginRequest(plug.device, {operation:"fabfilter_preset_apply", expected_instance:args.expected_instance,
+            filename:args.filename, sha256:args.sha256, data_hex:args.data_hex});
+        if (!result) return invalid("The matching native FabFilter extension is unavailable");
+        if (!result.ok) return {plugin:plug.name,native_outcome:result.outcome,errors:[result.error]};
+        if (result.outcome !== "applied_unverified" || result.file_sha256 !== args.sha256 || !result.instance
+            || result.instance.object_uid !== args.expected_instance || result.instance.class_uid !== "ED57BD72-5C60-467E-A64D-D2F400758B6F")
+            return invalid("The native receipt did not confirm the exact target and preset", "unknown");
+        return Object.assign({},result,{plugin:plug.name,native_outcome:result.outcome});
+    }
+
     pluginState(args) {
         if (args.action === "inspect_cv_port_structure") {
             const controls=new NativePluginControls(this), failure=()=>controls.cvStructureFailure(false,null);

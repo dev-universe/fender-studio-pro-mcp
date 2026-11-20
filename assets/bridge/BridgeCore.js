@@ -374,6 +374,7 @@ class Bridge {
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
+            case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
             case "pluginPresets":
                 if (args.action === "apply_cv_preset_settings" && (!this.component || typeof this.component.pluginPresets !== "function"))
