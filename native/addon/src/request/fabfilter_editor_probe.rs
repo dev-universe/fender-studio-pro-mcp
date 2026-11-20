@@ -80,9 +80,31 @@ const PRO_C3: Image = Image {
     destructor: 0x6a4c0,
 };
 
+const PRO_R2: Image = Image {
+    uuid: [
+        0x3e, 0xb0, 0x6c, 0x9c, 0x10, 0xc4, 0x39, 0x22, 0x88, 0x81, 0x1a, 0x6a, 0x63, 0xa6, 0x5d,
+        0x46,
+    ],
+    controller_table: 0x1e2f98,
+    state_member: 0xd0,
+    state_table: 0x1d7ba8,
+    state_file_method: 0x956ac,
+    view_table: 0x1e5f10,
+    editor_table: 0x1e9710,
+    product: "pro_r_2",
+    executable: "FabFilter Pro-R 2",
+    binary_sha256: "3d152617f492a85f8cb5dea592ca87e83850909ad327f1d0e46e0ae82a11cab0",
+    binary_size: 4_447_632,
+    preset_format: PresetFormat::ProR2,
+    constructor: 0x3dc84,
+    loader: 0x97294,
+    destructor: 0x48630,
+};
+
 enum PresetFormat {
     Text(&'static [u8]),
     Binary(&'static [u8]),
+    ProR2,
 }
 
 struct Image {
@@ -214,7 +236,7 @@ fn owner(target: *mut c_void) -> Option<Owner> {
     let controller = read_word(instance, 0x1b0)?;
     let table = read_word(controller, 0)?;
     let (image, uuid) = mapped_image(table)?;
-    let product = [&PRO_Q4, &TWIN3, &PRO_C3]
+    let product = [&PRO_Q4, &TWIN3, &PRO_C3, &PRO_R2]
         .into_iter()
         .find(|product| product.uuid == uuid)?;
     if table != image + product.controller_table {
@@ -332,18 +354,26 @@ fn preset_bytes(
         .chunks_exact(2)
         .map(|chunk| Some(digit(chunk[0])? * 16 + digit(chunk[1])?))
         .collect::<Option<_>>()?;
+    let matches_text = |signature: &[u8], version: Option<&[u8]>| {
+        let mut header = bytes
+            .split(|byte| *byte == b'\n')
+            .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
+        header.next() == Some(b"[Preset]".as_slice())
+            && header.next() == Some(signature)
+            && header.next().is_some_and(|line| {
+                version.map_or_else(
+                    || line.starts_with(b"Version="),
+                    |expected| line == expected,
+                )
+            })
+            && header.next().is_some()
+    };
     let correct_format = match product.preset_format {
         PresetFormat::Binary(magic) => bytes.len() >= 16 && bytes.starts_with(magic),
-        PresetFormat::Text(signature) => {
-            let mut header = bytes
-                .split(|byte| *byte == b'\n')
-                .map(|line| line.strip_suffix(b"\r").unwrap_or(line));
-            header.next() == Some(b"[Preset]".as_slice())
-                && header.next() == Some(signature)
-                && header
-                    .next()
-                    .is_some_and(|line| line.starts_with(b"Version="))
-                && header.next().is_some()
+        PresetFormat::Text(signature) => matches_text(signature, None),
+        PresetFormat::ProR2 => {
+            (bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0"))
+                || matches_text(b"Signature=FR2p", Some(b"Version=6"))
         }
     };
     if !correct_format || format!("{:x}", Sha256::digest(&bytes)) != expected {
@@ -476,6 +506,32 @@ mod tests {
             bytes
         );
         assert!(preset_bytes(&PRO_Q4, "Twin.ffp", &digest, &hex).is_none());
+    }
+
+    #[test]
+    fn pro_r_2_preset_bytes_accept_both_observed_factory_headers() {
+        let cases: [(&[u8], bool); 5] = [
+            (
+                b"[Preset]\r\nSignature=FR2p\r\nVersion=6\r\nAuthor=Fixture\r\n",
+                true,
+            ),
+            (b"FPRr\x04\0\0\0abcdefgh", true),
+            (b"FPRr\x05\0\0\0abcdefgh", false),
+            (b"FPRr\x04\0\0\0", false),
+            (
+                b"[Preset]\nSignature=FR2p\nVersion=5\nAuthor=Fixture",
+                false,
+            ),
+        ];
+        for (bytes, valid) in cases {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_R2, "Room.ffp", &digest, &hex).is_some(),
+                valid
+            );
+            assert!(preset_bytes(&PRO_C3, "Room.ffp", &digest, &hex).is_none());
+        }
     }
 
     #[test]
