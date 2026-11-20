@@ -82,6 +82,20 @@ fn external_menu_refuses_forged_claims_and_nonterminal_cleanup() {
     assert!(!valid_get(&q, &v));
 }
 #[test]
+fn held_route_is_bounded_and_specific_to_stereo_send() {
+    let mut q = query();
+    let mut v = good();
+    v["held_send_route"] = json!({"assigned":false,"stable":true,"guard_observations":40});
+    assert!(valid_get(&q, &v));
+    v["held_send_route"]["stable"] = json!(false);
+    assert!(!valid_get(&q, &v));
+    v["held_send_route"]["stable"] = json!(true);
+    q.port = ExternalPort::Return;
+    v["port"] = json!("return");
+    v["parameter"] = json!({"name":"receivePort","tag":103});
+    assert!(!valid_get(&q, &v));
+}
+#[test]
 fn external_menu_bounds_typed_paths_and_utf8_without_value_row_inference() {
     let q = query();
     for path in [
