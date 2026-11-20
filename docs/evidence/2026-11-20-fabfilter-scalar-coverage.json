@@ -1003,5 +1003,20 @@
     "wall_seconds": [58.998, 127.156],
     "managed_files": 18,
     "saved": false
+  },
+  "r100_volcano2_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 136,
+    "plugin_verified_writable": 893,
+    "reported_values": 894,
+    "virtual_cc_verified": 128,
+    "common_verified": 8,
+    "legacy_cc_independently_verified": true,
+    "requests": 3356,
+    "active_seconds": 274.749,
+    "wall_seconds": 366.6,
+    "protected_files": 227,
+    "managed_files": 18,
+    "saved": false
   }
 }
