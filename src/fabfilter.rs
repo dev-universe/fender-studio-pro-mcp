@@ -9,7 +9,7 @@ const MAX_DEPTH: usize = 16;
 const MAX_PAGE: usize = 128;
 
 macro_rules! products {
-    ($($variant:ident => $name:literal),+ $(,)?) => {
+    ($($variant:ident => ($name:literal, $version:literal)),+ $(,)?) => {
         #[derive(Clone, Copy, Debug, Deserialize, JsonSchema, Serialize)]
         pub enum Product {
             $(#[serde(rename = $name)] $variant),+
@@ -19,17 +19,91 @@ macro_rules! products {
             fn directory(self) -> &'static str {
                 match self { $(Self::$variant => $name),+ }
             }
+
+            fn vst3_reference_version(self) -> &'static str {
+                match self { $(Self::$variant => $version),+ }
+            }
         }
     };
 }
 
 products! {
-    Micro => "Micro", One => "One", ProC2 => "Pro-C 2", ProC3 => "Pro-C 3",
-    ProDS => "Pro-DS", ProG => "Pro-G", ProL => "Pro-L", ProL2 => "Pro-L 2",
-    ProMB => "Pro-MB", ProQ2 => "Pro-Q 2", ProQ3 => "Pro-Q 3", ProQ4 => "Pro-Q 4",
-    ProR => "Pro-R", ProR2 => "Pro-R 2", Saturn => "Saturn", Saturn2 => "Saturn 2",
-    Simplon => "Simplon", Timeless2 => "Timeless 2", Timeless3 => "Timeless 3",
-    Twin2 => "Twin 2", Twin3 => "Twin 3", Volcano2 => "Volcano 2", Volcano3 => "Volcano 3",
+    Micro => ("Micro", "1.32"), One => ("One", "3.52"),
+    ProC2 => ("Pro-C 2", "2.22"), ProC3 => ("Pro-C 3", "3.02"),
+    ProDS => ("Pro-DS", "1.32"), ProG => ("Pro-G", "1.42"),
+    ProL => ("Pro-L", "1.37"), ProL2 => ("Pro-L 2", "2.26"),
+    ProMB => ("Pro-MB", "1.33"), ProQ2 => ("Pro-Q 2", "2.30"),
+    ProQ3 => ("Pro-Q 3", "3.29"), ProQ4 => ("Pro-Q 4", "4.13"),
+    ProR => ("Pro-R", "1.20"), ProR2 => ("Pro-R 2", "2.06"),
+    Saturn => ("Saturn", "1.31"), Saturn2 => ("Saturn 2", "2.13"),
+    Simplon => ("Simplon", "1.42"), Timeless2 => ("Timeless 2", "2.41"),
+    Timeless3 => ("Timeless 3", "3.10"), Twin2 => ("Twin 2", "2.41"),
+    Twin3 => ("Twin 3", "3.10"), Volcano2 => ("Volcano 2", "2.41"),
+    Volcano3 => ("Volcano 3", "3.09"),
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct MidiMappingQuery {
+    product: Product,
+    /// VST3 controller number. CC 0–127, channel pressure 128, pitch bend 129, program change 130.
+    #[schemars(range(max = 130))]
+    controller: u8,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "snake_case")]
+enum MidiControl {
+    ControlChange,
+    ChannelPressure,
+    PitchBend,
+    ProgramChange,
+}
+
+#[derive(Serialize)]
+struct MidiParameter {
+    vst3_id: u32,
+    studio_pro_name: String,
+}
+
+#[derive(Serialize)]
+pub struct MidiMapping {
+    scope: &'static str,
+    product: Product,
+    reference_version: &'static str,
+    bus: u8,
+    channel: u8,
+    controller: u8,
+    control: MidiControl,
+    parameter: Option<MidiParameter>,
+}
+
+impl MidiMappingQuery {
+    pub fn lookup(self) -> Result<MidiMapping, &'static str> {
+        let (control, id) = match self.controller {
+            0..=127 => (
+                MidiControl::ControlChange,
+                Some(0x4000_0007 + u32::from(self.controller)),
+            ),
+            128 => (MidiControl::ChannelPressure, Some(0x4000_0006)),
+            129 => (MidiControl::PitchBend, Some(0x4000_0005)),
+            130 => (MidiControl::ProgramChange, None),
+            _ => return Err("controller must be in the VST3 range 0..130"),
+        };
+        Ok(MidiMapping {
+            scope: "reference_vst3_sdk_midi_mapping",
+            product: self.product,
+            reference_version: self.product.vst3_reference_version(),
+            bus: 0,
+            channel: 0,
+            controller: self.controller,
+            control,
+            parameter: id.map(|vst3_id| MidiParameter {
+                vst3_id,
+                studio_pro_name: format!("vstp{vst3_id}"),
+            }),
+        })
+    }
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -231,6 +305,34 @@ fn collect(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sdk_controller_numbers_distinguish_program_change_from_named_parameters() {
+        let lookup = |controller| {
+            MidiMappingQuery {
+                product: Product::ProQ4,
+                controller,
+            }
+            .lookup()
+        };
+        for (controller, id) in [
+            (0, 1073741831),
+            (127, 1073741958),
+            (128, 1073741830),
+            (129, 1073741829),
+        ] {
+            let mapping = lookup(controller).unwrap();
+            assert_eq!((mapping.bus, mapping.channel), (0, 0));
+            assert_eq!(mapping.reference_version, "4.13");
+            let parameter = mapping.parameter.unwrap();
+            assert_eq!(parameter.vst3_id, id);
+            assert_eq!(parameter.studio_pro_name, format!("vstp{id}"));
+        }
+        let program = lookup(130).unwrap();
+        assert!(matches!(program.control, MidiControl::ProgramChange));
+        assert!(program.parameter.is_none());
+        assert!(lookup(131).is_err());
+    }
 
     #[test]
     fn pages_keep_relative_folders_and_reject_changed_names() {
