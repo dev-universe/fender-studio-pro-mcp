@@ -451,16 +451,20 @@ class Bridge {
                     throw new Error("Stereo Send requires a muted channel and a silent Main without a physical output");
                 return JSON.stringify({ song, tracks, click, channels });
             };
+            let objectId = null;
+            const matchesInstance = i => i && i.object_uid === args.expected_instance
+                && i.class_uid === "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4" && i.native_class === "AudioEffect"
+                && typeof i.object_id === "string" && i.object_id.length > 0 && i.object_id.length <= 512
+                && (objectId === null || objectId === i.object_id);
             const snapshots = () => {
                 const page = c.pluginParams({ ...target, source: "controller", expected_instance: args.expected_instance, offset: 0, limit: 64 });
                 const i = page && page.instance;
-                if (!i || i.object_uid !== args.expected_instance || i.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-                    || i.native_class !== "AudioEffect" || i.object_id !== plugin
-                    || !page.parameter_discovery || page.parameter_discovery.source !== "controller"
+                if (!matchesInstance(i) || !page.parameter_discovery || page.parameter_discovery.source !== "controller"
                     || page.page_complete !== true || page.access_metadata_complete !== true || page.value_read_complete !== true
                     || page.complete !== true || page.reported_count !== 24 || !Array.isArray(page.params) || page.params.length !== 24
                     || page.params.some((row, index) => !row || row.index !== index || typeof row.name !== "string"))
                     throw new Error("exact complete 24-row controller unavailable");
+                objectId = i.object_id;
                 return page.params;
             };
             const portLabel = (route) => route === "main" ? "메인" : "없음";
@@ -508,6 +512,7 @@ class Bridge {
             if (nativeTrace) trace = { ...nativeTrace, failure_phase: "native_reply" };
             if (!native || native.ok !== true || native.outcome !== "applied_unverified"
                 || native.operation !== "external_stereo_send_set" || native.destination !== wanted
+                || !matchesInstance(native.instance)
                 || native.phase !== "closed_checked" || native.raw_select_result !== 1 || native.selection_calls !== 1
                 || native.checkmark_and_display_confirmed !== true || !stereoSendCompleted(nativeTrace))
                 return failure("unknown");
@@ -520,8 +525,8 @@ class Bridge {
             trace.failure_phase = "independent_menu";
             const menu = c.externalPortMenu({ ...target, expected_instance: args.expected_instance, port: "send" });
             const main = wanted === "main";
-            if (!menu || menu.ok !== true || !Array.isArray(menu.rows) || menu.rows.length !== 4
-                || !menu.held_send_route || menu.held_send_route.assigned !== main
+            if (!menu || menu.ok !== true || !matchesInstance(menu.instance)
+                || !Array.isArray(menu.rows) || menu.rows.length !== 4 || !menu.held_send_route || menu.held_send_route.assigned !== main
                 || menu.held_send_route.stable !== true
                 || menu.rows[0].title !== "없음" || menu.rows[0].checked !== !main
                 || menu.rows[1].title !== "메인 - 1 + 2" || menu.rows[1].checked !== main)

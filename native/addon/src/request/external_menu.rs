@@ -110,9 +110,7 @@ pub(super) fn observe_with_query(
         if include_check_only
             && (!provenance
                 || !matches!(port, Port::Send)
-                || ctx.instance.class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-                || ctx.instance.native_class != "AudioEffect"
-                || ctx.instance.object_id != "External Effect Stereo")
+                || !external_send_route::exact_stereo(ctx))
         {
             return Err("checkOnly requires exact Stereo Send provenance".into());
         }

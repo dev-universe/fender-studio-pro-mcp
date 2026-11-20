@@ -753,7 +753,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (!plug || plug.error || plug.name !== args.plugin) return failure();
         const native = this.nativePluginRequest(plug.device, request);
         if (!native) return failure();
-        if (native.ok === true && native.instance.object_id !== args.plugin) return controls.externalMenuFailure(true, null);
+        if (native.ok === true && !controls.externalMenuObjectId(native.instance.object_id, args.plugin)) return controls.externalMenuFailure(true, null);
         if (args.provenance === true) {
             const current = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: args.plugin });
             if (!current || current.error || current.name !== plug.name || current.device !== plug.device

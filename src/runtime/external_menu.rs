@@ -17,6 +17,19 @@ fn uid(value: &Value) -> bool {
     })
 }
 
+pub(super) fn matches_object_id(object_id: &Value, plugin: &str) -> bool {
+    object_id == plugin
+        || (plugin == "External Effect Stereo"
+            && object_id
+                .as_str()
+                .and_then(|id| id.strip_prefix("External Effect Stereo "))
+                .is_some_and(|suffix| {
+                    !suffix.starts_with('0')
+                        && suffix.bytes().all(|byte| byte.is_ascii_digit())
+                        && suffix.parse::<u16>().is_ok_and(|ordinal| ordinal >= 2)
+                }))
+}
+
 pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
     let (name, tag, port) = match query.port {
         ExternalPort::Send => ("sendPort", 102, "send"),
@@ -93,7 +106,7 @@ pub(super) fn valid_get(query: &ExternalPortMenu, value: &Value) -> bool {
         || !uid(&value["instance"]["object_uid"])
         || value["instance"]["class_uid"] != class
         || value["instance"]["native_class"] != "AudioEffect"
-        || value["instance"]["object_id"] != query.plugin
+        || !matches_object_id(&value["instance"]["object_id"], &query.plugin)
         || value["parameter"] != json!({"name":name,"tag":tag})
         || value["lifecycle"]
             != json!({"construct_calls":1,"build_calls":1,"owned_menu_references_released":true,"root_menu_final_release_count":0,"builder_final_release_count":0,"post_cleanup_binding_checked":true,"nested_callbacks":NESTED_CALLBACKS})

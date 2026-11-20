@@ -7,7 +7,7 @@ const instance = {
     object_uid: '12345678-1234-1234-1234-123456789ABC',
     class_uid: '889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4',
     native_class: 'AudioEffect',
-    object_id: plugin,
+    object_id: plugin + " 2",
 };
 const target = { channel: 'Audio B', slot: 1, plugin };
 const args = {
@@ -64,7 +64,7 @@ function harness() {
             };
         },
         externalPortMenu: () => ({
-            ok: true, held_send_route: { assigned: state.current === 'main', stable: state.stable },
+            ok: true, instance, held_send_route: { assigned: state.current === 'main', stable: state.stable },
             rows: [
                 { title: '없음', checked: state.current === 'none' },
                 { title: '메인 - 1 + 2', checked: state.current === 'main' },

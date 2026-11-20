@@ -60,10 +60,7 @@ fn text(owner: &Owned, ctx: &Context<'_>) -> Result<String, String> {
 impl Identity {
     pub(super) fn capture(ctx: &Context<'_>) -> Result<Self, String> {
         ctx.check()?;
-        if ctx.instance.class_uid != "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-            || ctx.instance.native_class != "AudioEffect"
-            || ctx.instance.object_id != "External Effect Stereo"
-        {
+        if !external_send_route::exact_stereo(ctx) {
             return Err("External provenance requires the held Stereo AudioEffect identity".into());
         }
         let object = query(ctx.target.0, &OBJECT).ok_or("External target IObject unavailable")?;

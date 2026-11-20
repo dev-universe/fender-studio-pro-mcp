@@ -95,6 +95,14 @@ class NativePluginControls {
         return size;
     }
 
+    externalMenuObjectId(id, plugin) {
+        if (id === plugin) return true;
+        const prefix = "External Effect Stereo ";
+        if (plugin !== "External Effect Stereo" || typeof id !== "string" || !id.startsWith(prefix)) return false;
+        const suffix = id.slice(prefix.length);
+        return /^(?:[2-9]|[1-9][0-9]{1,4})$/.test(suffix) && Number(suffix) <= 65535;
+    }
+
     externalMenuResult(result, request) {
         const fields = ["ok", "outcome", "operation", "instance", "source", "port", "parameter", "menu_class", "rows", "coverage", "menu_phase", "lifecycle",
             "selection_authority", "selection_calls", "scope", "persistence_verified", "audio_verified", "value_semantics"];
@@ -110,7 +118,7 @@ class NativePluginControls {
             || result.persistence_verified !== false || result.audio_verified !== false || result.value_semantics !== "sequential_menu_materialization"
             || !uuid(result.menu_class) || !this.guiExact(result.instance, ["object_uid", "class_uid", "native_class", "object_id"])
             || result.instance.object_uid !== request.expected_instance || !uuid(result.instance.object_uid) || !classes[result.instance.class_uid]
-            || result.instance.native_class !== "AudioEffect" || result.instance.object_id !== classes[result.instance.class_uid]
+            || result.instance.native_class !== "AudioEffect" || !this.externalMenuObjectId(result.instance.object_id, classes[result.instance.class_uid])
             || !this.guiExact(result.parameter, ["name", "tag"]) || result.parameter.name !== (request.port === "send" ? "sendPort" : "receivePort")
             || result.parameter.tag !== (request.port === "send" ? 102 : 103)
             || !this.guiExact(result.lifecycle, ["construct_calls", "build_calls", "owned_menu_references_released", "root_menu_final_release_count", "builder_final_release_count", "post_cleanup_binding_checked", "nested_callbacks"])
@@ -123,14 +131,14 @@ class NativePluginControls {
             || result.coverage.max_total_text_bytes !== 32768 || result.coverage.max_text_bytes_each !== 1024 || result.coverage.row_count !== result.rows.length) return false;
         if (hasHeldRoute) {
             const route = result.held_send_route;
-            if (request.port !== "send" || result.instance.object_id !== "External Effect Stereo"
+            if (request.port !== "send" || result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
                 || !this.guiExact(route, ["assigned", "stable", "guard_observations"])
                 || typeof route.assigned !== "boolean" || route.stable !== true
                 || !this.guiInteger(route.guard_observations, 1, 1000000)) return false;
         }
         if (request.provenance === true && (result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
             || request.port !== "send" || !this.externalMenuProvenance(result.provenance, result.rows))) return false;
-        if (request.include_check_only === true && (!this.externalMenuCheckOnly(result.check_only, result.provenance) || result.instance.object_id !== "External Effect Stereo" || request.port !== "send")) return false;
+        if (request.include_check_only === true && (!this.externalMenuCheckOnly(result.check_only, result.provenance) || result.instance.class_uid !== "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4" || request.port !== "send")) return false;
         const parents = { "": { next: 0, submenu: true } };
         let previous = [], textBytes = 0;
         for (const row of result.rows) {

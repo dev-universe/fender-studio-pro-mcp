@@ -1276,7 +1276,10 @@ fn verify(operation: &Operation, result: &Value) -> bool {
                 && result["native_checkmark_verified"] == true
                 && result["atomic_snapshot"] == false
                 && result["instance"]["class_uid"] == "889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4"
-                && result["instance"]["object_id"] == "External Effect Stereo"
+                && external_menu::matches_object_id(
+                    &result["instance"]["object_id"],
+                    "External Effect Stereo",
+                )
                 && result["instance"]["native_class"] == "AudioEffect"
                 && result["instance"]["object_uid"] == change.expected_instance
                 && before["name"] == "sendPort"
@@ -2222,7 +2225,7 @@ mod stereo_send_set_contract {
             "native_checkmark_verified":true,"atomic_snapshot":false,"persistence_verified":false,"audio_verified":false,
             "diagnostic":{"version":"stereo_send_v1","failure_phase":null,"dispatch_attempted":true,
                           "menu_callbacks_began":true,"select_entered":true,"select_returned":true,"cleanup_proven":true},
-            "instance":{"class_uid":"889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4","object_id":"External Effect Stereo",
+            "instance":{"class_uid":"889DD9F8-14F0-44A5-BCEE-0F2B157FC5D4","object_id":"External Effect Stereo 2",
                         "native_class":"AudioEffect","object_uid":id},
             "before":before,"after":after,
         });
