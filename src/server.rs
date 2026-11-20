@@ -11,6 +11,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use crate::{
+    fabfilter::PresetQuery,
     operation::{self, Operation, Request, schema},
     runtime::RuntimeHandle,
 };
@@ -317,6 +318,12 @@ impl McpServer {
         });
         specs.push(ToolSpec { operation: None, tool: Tool::new("operations_list", "Get the finite operation schema, including less common operations. No arbitrary eval or raw bridge escape hatch is available.", empty.as_object().unwrap().clone()) });
         specs.push(ToolSpec { operation: None, tool: Tool::new("operation_run", "Run a typed operation from operations_list. Supply expected_document for mutations. Receipts distinguish observed, verified, unverified, partial and unknown outcomes.", schema().as_object().unwrap().clone()) });
+        let fabfilter_schema = serde_json::to_value(schemars::schema_for!(PresetQuery)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("fabfilter_presets_list", "List .ffp names and relative folders for one FabFilter product in the local preset library. Follow next_offset with expected_catalog set to the first page's catalog_sha256. The result lists files on disk and grants no load permission or MIDI program mapping.", fabfilter_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
         specs.push(ToolSpec {
             operation: None,
@@ -463,6 +470,20 @@ impl ServerHandler for McpServer {
             }
             .into());
         }
+        if request.name == "fabfilter_presets_list" {
+            let query: PresetQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            query
+                .validate()
+                .map_err(|error| ErrorData::invalid_params(error, None))?;
+            let result = tokio::task::spawn_blocking(move || crate::fabfilter::list(&query))
+                .await
+                .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(page) => CallToolResult::structured(serde_json::to_value(page).unwrap()),
+                Err(error) => CallToolResult::structured_error(json!({"scope":"local_fabfilter_preset_library","error":{"code":error.code(),"message":error.message()}})),
+            }.into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -536,7 +557,7 @@ mod tests {
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 48);
+        assert_eq!(specs.len(), 49);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -574,7 +595,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 48);
+        assert_eq!(specs.len(), 49);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -621,7 +642,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 48);
+        assert_eq!(McpServer::specs().len(), 49);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -838,7 +859,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 48);
+        assert_eq!(specs.len(), 49);
     }
 
     #[test]
@@ -1136,7 +1157,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 48);
+        assert_eq!(specs.len(), 49);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1218,7 +1239,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 48);
+        assert_eq!(McpServer::specs().len(), 49);
     }
 
     #[test]
@@ -1266,7 +1287,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 48);
+        assert_eq!(specs.len(), 49);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")
