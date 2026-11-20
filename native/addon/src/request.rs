@@ -269,6 +269,8 @@ enum Request {
     InsertChainCapture {
         bridge_session: String,
         document_epoch: String,
+        #[serde(default)]
+        include_routing: bool,
         #[serde(default, deserialize_with = "supplied_folder")]
         expected_folder: Option<String>,
     },
@@ -485,6 +487,7 @@ impl Request {
                 bridge_session,
                 document_epoch,
                 expected_folder,
+                ..
             }
             | Self::InsertChainRestore {
                 bridge_session,
