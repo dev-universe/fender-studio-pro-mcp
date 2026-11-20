@@ -1,0 +1,49 @@
+{
+  "studio_pro": "8.1.1",
+  "platform": "macOS arm64",
+  "vst3": "FabFilter Pro-G 1.42",
+  "vendor_signature_verified": true,
+  "tool": "plugin_parameter_set",
+  "candidate_commit": "a1a9af70cfabd390f77d0db0273487566ca76b54",
+  "client_sha256": "2eff2f32f1099a548e9857c21d777ffc75370a4d85df7f5a361ac0d58548c90a",
+  "parameter_source": "dsp",
+  "settle_millis": 150,
+  "cases": [
+    {
+      "parameter": "vstp1073741824",
+      "description": "Host Bypass",
+      "readback_requested": true,
+      "outcome": "applied_verified",
+      "readback_status": "matched",
+      "immediate_normalized_bits": "3F800000",
+      "independent_normalized_bits": "3F800000"
+    },
+    {
+      "parameter": "vstp1073741824",
+      "description": "Host Bypass restoration",
+      "readback_requested": false,
+      "outcome": "applied_verified",
+      "readback_field_present": false,
+      "immediate_normalized_bits": "00000000"
+    },
+    {
+      "parameter": "vstp1073741828",
+      "description": "Legacy MIDI CC",
+      "readback_requested": true,
+      "outcome": "applied_unverified",
+      "readback_status": "mismatch",
+      "immediate_normalized_bits": "3D0F5C29",
+      "independent_normalized_bits": "00000000"
+    }
+  ],
+  "independent_complete_parameter_comparison": 172,
+  "full_baseline_restored": true,
+  "native_digest_restored": true,
+  "scratch_saved": false,
+  "audio_transport_started": false,
+  "mcp_requests": 69,
+  "mcp_seconds": 7.198,
+  "host_seconds": 54.481,
+  "protected_files_matched": 249,
+  "managed_files_matched": 18
+}
