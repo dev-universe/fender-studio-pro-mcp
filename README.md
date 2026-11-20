@@ -172,6 +172,8 @@ FabFilter Saturn 2 2.13 passed individual change, independent readback and resto
 
 FabFilter Simplon 1.42 passed individual change, independent readback and restoration of all 155 writable parameters in Studio Pro 8.1.1. Four virtual MIDI CC writes also changed a linked filter control. Restoring those controls and the affected internal value returned all 156 reported parameters to baseline. [Simplon verification](docs/evidence/2026-11-20-fabfilter-simplon-controls.json)
 
+FabFilter One 3.52 passed individual change, independent readback and restoration for 164 of 167 writable parameters in Studio Pro 8.1.1. The verified values include all 31 named controls and 127 of 128 virtual MIDI CC values. Direct writes to the modulation wheel row, program list and legacy CC remain unverified. [One verification](docs/evidence/2026-11-20-fabfilter-one-controls.json)
+
 Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. The legacy row `vstp1073741828` briefly accepted a value in Pro-G, Pro-C 2, Pro-C 3 and Pro-DS, then returned to baseline on an independent `plugin_parameters` call. Treat that row as transient in these versions. In a separate SDK test, the Pro-G processor received the input and emitted its own value under the same ID. [Legacy MIDI parameter verification](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
 
 FabFilter Pro-Q 2 2.30 passed individual change, independent readback and restoration of all 327 writable parameters in Studio Pro 8.1.1. The legacy `vstp1073741828` row also passed on this version. [Pro-Q 2 verification details](docs/evidence/2026-11-20-fabfilter-proq2-controls.json)
