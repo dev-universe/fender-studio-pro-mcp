@@ -62,7 +62,7 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 0,
-  "distinct_individual_roundtrips_including_representative": 4277,
+  "distinct_individual_roundtrips_including_representative": 5300,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -137,6 +137,49 @@
     "median_case_seconds": 0.637,
     "named_controls_verified_total": 951,
     "internal_writable_not_qualified": 136
+  },
+  "r42_volcano_3": {
+    "protected_files": 43,
+    "managed_files": 18,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 895,
+    "types": {"Float": 384, "Integer": 270, "Toggle": 241},
+    "typed_snapshot_size": 1032,
+    "periodic_full_page_and_native_digest_parity": true,
+    "requests": 7715,
+    "elapsed_seconds": 648.568,
+    "median_case_seconds": 0.661,
+    "named_controls_verified_total": 896,
+    "internal_writable_not_qualified": 136
+  },
+  "r44_micro_cc1": {
+    "protected_files": 49,
+    "managed_files": 18,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 1,
+    "primary": "vstp1073741832",
+    "companion": "vstp1073741825",
+    "companion_separate_restore": true,
+    "typed_snapshot_size": 145,
+    "requests": 37,
+    "elapsed_seconds": 3.689
+  },
+  "r45_micro_remaining_virtual_cc": {
+    "protected_files": 50,
+    "managed_files": 18,
+    "clean_owner_exit": true,
+    "saved": false,
+    "new_distinct_roundtrips": 127,
+    "virtual_cc_verified_total": 128,
+    "types": {"Float": 122, "Integer": 5},
+    "companion": "vstp1073741825",
+    "companion_separate_restore_count": 127,
+    "typed_snapshot_size": 145,
+    "requests": 1586,
+    "elapsed_seconds": 109.568,
+    "wall_seconds": 177.5
   },
   "r20_pro_q_2": {
     "protected_files": 23,
