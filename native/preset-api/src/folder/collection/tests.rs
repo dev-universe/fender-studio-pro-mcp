@@ -558,7 +558,24 @@ fn exact_handler_capture_reopens_and_restores_exact_folder_once() {
     assert_eq!(f.calls("create"), 1);
     assert_eq!(f.calls("store"), 1);
     assert_eq!(f.calls("open"), 1);
-    let restored = file.restore(&mut f.guard()).unwrap();
+    let mut guard = f.guard();
+    let mut after_seen = false;
+    let restored = file
+        .restore_with_phase_guard(&mut |phase| {
+            match phase {
+                RestorePhase::BeforeLoad => {
+                    assert!(!after_seen);
+                    assert_eq!(f.calls("restore"), 0);
+                }
+                RestorePhase::AfterLoad => {
+                    assert_eq!(f.calls("restore"), 1);
+                    after_seen = true;
+                }
+            }
+            guard()
+        })
+        .unwrap();
+    assert!(after_seen);
     assert_eq!(
         restored,
         CollectionRestore {

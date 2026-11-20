@@ -3,7 +3,9 @@ use super::folder_context::{FolderBindingKey, FolderContext};
 #[path = "insert_chain_routing.rs"]
 mod routing;
 use super::*;
-use fender_native_preset_api::folder::collection::{CollectionFile, PrivateDestination};
+use fender_native_preset_api::folder::collection::{
+    CollectionFile, PrivateDestination, RestorePhase,
+};
 use fender_native_preset_api::folder::{FolderInputs, FolderPresetRoute};
 use sha2::{Digest, Sha256};
 use std::{
@@ -920,13 +922,16 @@ pub(super) fn dispatch(
             }
             let result = (|| {
                 capsule.check(&ctx, &reply.generation)?;
-                match capsule.backend.restore(&mut || {
+                match capsule.backend.restore_with_phase_guard(&mut |phase| {
                     if !with_registry(service, |registry| {
                         registry.in_flight(&token, Instant::now())
                     }) {
                         return Err("insert-chain token expired during load".into());
                     }
-                    ctx.check()
+                    match phase {
+                        RestorePhase::BeforeLoad => ctx.check(),
+                        RestorePhase::AfterLoad => ctx.check_after_restore(),
+                    }
                 }) {
                     Ok(result) if result.accepted => {
                         reply.dispatched = true;
@@ -940,7 +945,12 @@ pub(super) fn dispatch(
                         return Err("collection load failed");
                     }
                 }
-                capsule.check(&ctx, &reply.generation)
+                let current = Rc::new(
+                    ctx.rebind_after_restore()
+                        .map_err(|_| "restored folder binding unavailable")?,
+                );
+                capsule.check(&current, &reply.generation)?;
+                Ok(current)
             })();
             let phase = if result.is_ok() {
                 Phase::StoredUnpublished
@@ -952,11 +962,14 @@ pub(super) fn dispatch(
             });
             let retained = returned.is_ok();
             drop(returned);
-            if result.is_ok() && retained {
-                let mut value = common(&ctx, "applied_unverified");
+            if let Ok(current) = result
+                && retained
+            {
+                let mut value = common(&current, "applied_unverified");
                 metadata(&mut value, &token, &capsule);
                 value["load_accepted"] = json!(true);
                 reply.value = value;
+                reply.context = Some(current);
                 reply.capsule = Some(capsule);
                 reply.pending = Some(token);
             } else {

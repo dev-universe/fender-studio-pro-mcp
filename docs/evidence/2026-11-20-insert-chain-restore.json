@@ -1,0 +1,43 @@
+{
+  "host": {
+    "exit_code": 0,
+    "wall_seconds": 196.2
+  },
+  "run": "R155",
+  "scope": "Restore the captured chain after removing the inner Splitter in Studio Pro",
+  "total_requests": 64,
+  "native_restore_accepted": true,
+  "mcp_restore_outcome": "applied_unverified",
+  "values_per_part_restored": [
+    72,
+    72
+  ],
+  "original_graph_nodes": 6,
+  "reduced_graph_nodes": 4,
+  "restored_graph_nodes": 6,
+  "directed_edges": [
+    7,
+    4,
+    7
+  ],
+  "rebound_slot_ids_match_live": true,
+  "slot_ids_replaced": [
+    true,
+    true
+  ],
+  "released_capsules": 3,
+  "owners": [
+    {
+      "exit_code": 0,
+      "signal": null
+    },
+    {
+      "exit_code": 0,
+      "signal": null
+    }
+  ],
+  "protected_files": 162,
+  "managed_files_restored": 18,
+  "saved": false,
+  "restored_both_ui_branches_and_mergers": true
+}

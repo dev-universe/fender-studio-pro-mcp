@@ -40,6 +40,12 @@ pub struct CollectionRestore {
     pub part_count: u32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum RestorePhase {
+    BeforeLoad,
+    AfterLoad,
+}
+
 /// Native URL only. The integrating owner retains filesystem authority.
 pub struct PrivateDestination {
     url: Owned,
@@ -256,8 +262,18 @@ impl CollectionFile {
         &self,
         g: &mut G,
     ) -> Result<CollectionRestore, CollectionCallError> {
+        self.restore_with_phase_guard(&mut |_| g())
+    }
+
+    /// Uses a post-load guard that can account for the requested edit while
+    /// maintaining the same folder, document and collection binding.
+    pub fn restore_with_phase_guard<G: FnMut(RestorePhase) -> Result<(), String>>(
+        &self,
+        guard_for: &mut G,
+    ) -> Result<CollectionRestore, CollectionCallError> {
         let mut dispatched = false;
         let result = (|| {
+            let g = &mut || guard_for(RestorePhase::BeforeLoad);
             self.check(g)?;
             let fresh = open_preset(&self.route, &self.destination, g)?;
             if fresh.part_count != self.part_count {
@@ -270,6 +286,7 @@ impl CollectionFile {
                 unsafe { ffi::method(fresh.preset.raw(), 10) };
             dispatched = true;
             let accepted = unsafe { restore(fresh.preset.raw(), self.route.folder.raw()) };
+            let g = &mut || guard_for(RestorePhase::AfterLoad);
             guard(g)?;
             if accepted != 1 {
                 return Err(Error::Unavailable("collection restore did not succeed"));
@@ -284,7 +301,13 @@ impl CollectionFile {
                 part_count: self.part_count,
             })
         })();
-        finish(result, g).map_err(|error| CollectionCallError { error, dispatched })
+        let phase = if dispatched {
+            RestorePhase::AfterLoad
+        } else {
+            RestorePhase::BeforeLoad
+        };
+        finish(result, &mut || guard_for(phase))
+            .map_err(|error| CollectionCallError { error, dispatched })
     }
 }
 fn finish<T, G: FnMut() -> Result<(), String>>(
