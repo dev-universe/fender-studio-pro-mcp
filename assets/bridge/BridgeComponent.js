@@ -616,6 +616,17 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginInspect(args) {
+        if (args.node_scope === "impact_outputs" && (args.include_nodes !== true
+            || args.kind !== "instrument" || args.plugin !== "Impact" || args.source !== "dsp"
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512
+            || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || args.channel !== undefined || args.include_context === true
+            || (args.names !== undefined && (!Array.isArray(args.names) || args.names.length !== 0))
+            || args.offset !== undefined || args.limit !== undefined))
+            return { error: "Impact output inspection requires exact bound Impact and dsp source without context, names or paging" };
         if (["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(args.node_scope) && (args.include_nodes !== true
             || args.kind !== "instrument" || args.plugin !== "CV Instrument" || args.source !== "dsp"
             || typeof args.track !== "string" || !args.track.trim()
@@ -631,7 +642,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             return { error: "plugin controller inspection requires an expected plugin, native instance and include_nodes=true" };
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
-        if (args.node_scope === "cv_preset_target") return this.pluginInspectNative(plug, args, { plugin: plug.name });
+        if (args.node_scope === "cv_preset_target" || args.node_scope === "impact_outputs")
+            return this.pluginInspectNative(plug, args, { plugin: plug.name });
         const element = {};
         for (const name of ["getParamCount", "getParamTitle", "getParamTitleWithName", "getParamValue", "setParamValue", "getProperty", "getPlugInClassName", "getPlugInInterface"]) {
             element[name] = plug.element ? typeof plug.element[name] : "undefined";

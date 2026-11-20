@@ -13,7 +13,7 @@ use crate::{
     config::Config,
     midi::MidiWakeup,
     model::{HostContext, OperationError, Outcome, Receipt},
-    operation::{NodeScope, Operation, Request},
+    operation::{NodeScope, Operation, PluginParams, Request},
 };
 
 mod chorder_chords;
@@ -325,6 +325,7 @@ fn execute(
         || (matches!(operation, Operation::ExternalPortMenu(_))
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
+            || operation.inspects_impact_outputs()
             || operation.inspects_cv_preset_settings()
             || operation.applies_cv_preset_settings()
             || rumble_serialization::requested(&operation)
@@ -422,6 +423,15 @@ fn execute(
         && operation.applies_cv_preset_settings()
     {
         cv_preset_apply::normalize_result(&mut response, args.index);
+    }
+    if let Operation::PluginInspect(query) = &operation
+        && operation.inspects_impact_outputs()
+    {
+        if !response.ok {
+            response.result = Value::Null;
+        } else if !valid_impact_outputs(query, &response.result) {
+            response.result = json!({"error":"Impact output inspection did not establish the bound 32 output ports"});
+        }
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -907,8 +917,46 @@ fn invalidate_gui_edit(value: &mut Value, preserve_refusal: bool) {
 fn cv_preset_target_requested(operation: &Operation) -> bool {
     matches!(operation, Operation::PluginInspect(query) if matches!(query.node_scope, Some(NodeScope::CvPresetTarget)))
 }
+
+fn valid_impact_outputs(query: &PluginParams, result: &Value) -> bool {
+    let native = &result["native"];
+    let instance = &native["instance"];
+    let report = &native["node_report"];
+    result["plugin"] == "Impact"
+        && native["ok"] == true
+        && native["outcome"] == "observed"
+        && native["source"] == "dsp"
+        && instance["object_id"] == "Impact"
+        && instance["native_class"] == "AudioSynth"
+        && instance["class_uid"] == "3713E26C-2FCA-4024-9F25-17E9D2BE2B9B"
+        && query
+            .expected_instance
+            .as_deref()
+            .is_some_and(|expected| instance["object_uid"] == expected)
+        && report["scope"] == "impact_outputs"
+        && report["value_semantics"] == "sequential_snapshot"
+        && report["complete"] == true
+        && report["output_count"] == 32
+        && report["outputs"].as_array().is_some_and(|rows| {
+            rows.len() == 32
+                && rows.iter().enumerate().all(|(index, row)| {
+                    row.as_object().is_some_and(|fields| fields.len() == 4)
+                        && row["index"].as_u64() == Some(index as u64)
+                        && row["name"].as_str().is_some_and(|name| {
+                            !name.trim().is_empty()
+                                && name.encode_utf16().count() <= 128
+                                && !name.chars().any(char::is_control)
+                        })
+                        && row["requested"].is_boolean()
+                        && row["acknowledged"].is_boolean()
+                })
+        })
+}
 fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
-    if cv_preset_target_requested(operation) || operation.inspects_cv_preset_settings() {
+    if cv_preset_target_requested(operation)
+        || operation.inspects_cv_preset_settings()
+        || operation.inspects_impact_outputs()
+    {
         *result = Value::Null;
         return;
     }
@@ -1147,6 +1195,60 @@ fn host_error(response: &WireResponse) -> OperationError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn impact_outputs_require_a_bound_instrument_and_ordered_complete_observation() {
+        let uid = "12345678-1234-1234-1234-123456789ABC";
+        let args = json!({"kind":"instrument","track":"Scratch Impact","plugin":"Impact",
+            "source":"dsp","include_nodes":true,"node_scope":"impact_outputs","expected_instance":uid});
+        let operation = Operation::from_parts("pluginInspect", args.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.requires_explicit_document() && operation.is_read_only());
+        for (field, wrong) in [
+            ("plugin", json!("Presence")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("channel", json!("Impact St 1")),
+            ("include_context", json!(true)),
+            ("offset", json!(0)),
+        ] {
+            let mut misplaced = args.clone();
+            misplaced[field] = wrong;
+            assert!(
+                Operation::from_parts("pluginInspect", misplaced)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{field}"
+            );
+        }
+        let Operation::PluginInspect(query) = operation else {
+            panic!("expected plugin inspection");
+        };
+        let outputs: Vec<_> = (0..32)
+            .map(|index| {
+                json!({"index":index,"name":format!("Output {index}"),
+                "requested":index==0,"acknowledged":index==0})
+            })
+            .collect();
+        let observed = json!({"plugin":"Impact","native":{"ok":true,"outcome":"observed","source":"dsp",
+            "instance":{"object_uid":uid,"class_uid":"3713E26C-2FCA-4024-9F25-17E9D2BE2B9B",
+                "native_class":"AudioSynth","object_id":"Impact"},
+            "node_report":{"scope":"impact_outputs","value_semantics":"sequential_snapshot",
+                "complete":true,"output_count":32,"outputs":outputs}}});
+        assert!(valid_impact_outputs(&query, &observed));
+        for (index, field, wrong) in [
+            (1, "index", json!(0)),
+            (31, "name", json!("")),
+            (0, "acknowledged", json!(1)),
+        ] {
+            let mut malformed = observed.clone();
+            malformed["native"]["node_report"]["outputs"][index][field] = wrong;
+            assert!(!valid_impact_outputs(&query, &malformed), "{field}");
+        }
+    }
 
     fn mutating_operations() -> Vec<Operation> {
         [
