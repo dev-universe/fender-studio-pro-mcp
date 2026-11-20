@@ -594,3 +594,13 @@ R69는 official Twin 3 VST3 패키지와 일치하는 `Ambient Mover`를 공개 
 전용 곡에서 편집기 닫힘, 이펙트 편집기, Routing 화면을 순서대로 확인했다. `ApplicationWindow`의 `Workspace`는 유지됐다. 팝업 컨트롤러는 일반 편집기에서 `DeviceEditor`, Routing에서 `AudioFXCombinator`였고 두 경우 모두 선언된 노드 인터페이스가 있었다. 동일 세션·곡·인스턴스의 믹서 67행과 그래프 35행의 소유 관계를 대조했다. 29회·5.824초, 앱 121.3초, 보호 파일 108개와 관리 파일 18개 원복이었다. 곡을 저장하지 않았다. 다음에는 현재 인서트 폴더에서 이미 확보한 Combinator와 라우팅 컨트롤러의 정체가 일치하는지 확인한다.
 
 요청한 한국어 소개와 줄바꿈은 별도 [README PR #27](https://github.com/dev-universe/fender-studio-pro-mcp/pull/27)에 올렸다. 최신 main 기준 필수 검사를 진행한다.
+
+## R149·R150 실제 라우팅 객체와 체인 캡처
+
+R149는 Routing 팝업의 `AudioFXCombinator` 정체를 정확한 `AudioInsertFolder` 아래에서 확보한 `Combinator`와 일치시켰다. 그 객체에서 `RoutingModel`이라는 직접 자식은 보이지 않았고, 발견한 뷰 인터페이스의 정체가 부모 화면에 연결된 뷰와 다르게 나왔다. 모델 추측 없이 중단했다. 앱 90.0초, 29회·5.835초, 보호 117개, 관리 파일 18개 원복이었다.
+
+R150은 현재 폴더의 체인을 정상 `insert_chain_state`로 한 번 캡처했다. MCP 발급 해시와 파일 정체를 대조한 2,859바이트의 임시 파일 안에서 `fxgraph.xml`의 노드 여섯 개와 방향 연결 일곱 개를 확인했다. `presetparts.xml`의 파트 두 개를 각각 노드의 슬롯 ID·인덱스에 연결했고 R147의 두 Splitter, Mixtool 두 갈래와 합류점 두 곳이 일치했다. 캡처를 해제했고 파일이 사라졌다. 13회·2.045초, 앱 62.4초, 보호 121개와 관리 18개였다. 두 곡 다 저장하지 않았다. 다음 후보는 `include_routing`을 지정한 캡처에만 이 정보를 넣고, 일반 캡처와 복원·해제는 현재 형식을 유지한다.
+
+R70은 실제 Pro-MB 내부값 일곱 개를 검증했다. 마지막 `vstp1073741828`은 독립 조회에서 원래 값이었다. 215회·20.408초, 앱 177.1초, 보호 91개·관리 18개였다. Pro-MB는 286/287이고 FabFilter 전체는 10,347/12,455개, 2,108개 남았다. 다음은 Pro-Q 2다.
+
+R147 저장곡 조회 [PR #26](https://github.com/dev-universe/fender-studio-pro-mcp/pull/26)와 한국어 소개 [PR #27](https://github.com/dev-universe/fender-studio-pro-mcp/pull/27)은 둘 다 필수 검사 두 개를 통과해 병합됐다. `main`은 `0b5434a`이며 README 실제 GitHub 렌더링에서 요청 문구와 줄바꿈 한 번을 확인했다.
