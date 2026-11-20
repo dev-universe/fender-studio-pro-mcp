@@ -1018,5 +1018,46 @@
     "protected_files": 227,
     "managed_files": 18,
     "saved": false
+  },
+  "r101_volcano3_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 136,
+    "plugin_verified_writable": 1032,
+    "reported_values": 1033,
+    "virtual_cc_verified": 128,
+    "common_verified": 8,
+    "legacy_cc_independently_verified": true,
+    "requests": 3458,
+    "active_seconds": 281.562,
+    "wall_seconds": 343.8,
+    "protected_files": 230,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r107_twin2_legacy_complete": {
+    "status": "verified",
+    "new_distinct_roundtrips": 1,
+    "plugin_verified_writable": 1019,
+    "reported_values_restored": 1020,
+    "legacy_cc_independently_verified": true,
+    "requests": 85,
+    "active_seconds": 9.184,
+    "wall_seconds": 110.827,
+    "protected_files": 237,
+    "managed_files": 18,
+    "saved": false
+  },
+  "r108_one_legacy_and_r109_modulation_wheel": {
+    "status": "verified",
+    "new_distinct_roundtrips": 2,
+    "plugin_verified_writable": 167,
+    "reported_values_restored": 168,
+    "legacy_cc_independently_verified": true,
+    "virtual_cc_verified_total": 128,
+    "modulation_wheel_companion_restored": true,
+    "requests": [61, 73],
+    "wall_seconds": [118.747, 91.935],
+    "managed_files": 18,
+    "saved": false
   }
 }
