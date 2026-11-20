@@ -1,0 +1,40 @@
+{
+  "run": "R147",
+  "host": "Studio Pro 8.1.1.113103 macOS arm64",
+  "scope": "Saved pre-fader insert graph compared with the Routing view after opening the same scratch document",
+  "mixer_rows": 67,
+  "graph_nodes": 6,
+  "edges": 7,
+  "splitters": 2,
+  "mergers": 2,
+  "slot_nodes": 2,
+  "protected_files": 102,
+  "requests": 20,
+  "rpc_seconds": 3.94,
+  "host_wall_seconds": 107.5,
+  "cli_and_mcp_graph_equal": true,
+  "both_splitter_branches_matched_routing_ui": true,
+  "both_merge_junctions_matched_routing_ui": true,
+  "managed_files": 18,
+  "saved": false,
+  "successors": {
+    "Splitter 1": [
+      "Splitter 2",
+      "outer merger"
+    ],
+    "Splitter 2": [
+      "Mixtool",
+      "Mixtool 2"
+    ],
+    "Mixtool": [
+      "inner merger"
+    ],
+    "Mixtool 2": [
+      "inner merger"
+    ],
+    "inner merger": [
+      "outer merger"
+    ],
+    "outer merger": []
+  }
+}
