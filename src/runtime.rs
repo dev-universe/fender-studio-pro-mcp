@@ -22,6 +22,7 @@ mod cv_port_structure;
 mod cv_preset_apply;
 mod external_menu;
 mod midi_program_part;
+mod plugin_parameter_readback;
 mod rumble_named_parameters;
 mod rumble_parameters;
 mod rumble_processor_state;
@@ -321,8 +322,11 @@ fn execute(
                 json!({"source":"metadata_unavailable","completeness":"unknown"});
         }
     }
+    let parameter_readback_requested =
+        matches!(&operation, Operation::SetPluginParam(change) if change.readback == Some(true));
     if response.document != context.document
         || (matches!(operation, Operation::ExternalPortMenu(_))
+            || parameter_readback_requested
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
             || operation.inspects_impact_outputs()
@@ -336,7 +340,7 @@ fn execute(
     {
         let cv_apply_refused =
             operation.applies_cv_preset_settings() && cv_preset_apply::refused(&response);
-        if operation.applies_cv_preset_settings() {
+        if operation.applies_cv_preset_settings() || parameter_readback_requested {
             response.result = Value::Null;
         } else {
             invalidate_gui_evidence(&operation, &mut response.result);
@@ -450,7 +454,7 @@ fn execute(
     } else {
         soft_error.map(|error| OperationError::new("host_rejected", error.to_string()))
     };
-    let outcome = if let Some(error) = &error {
+    let mut outcome = if let Some(error) = &error {
         if cv_port_structure::requested(&operation) {
             cv_port_structure::failure_outcome(&response.result)
         } else if matches!(operation, Operation::ExternalPortMenu(_)) {
@@ -485,6 +489,32 @@ fn execute(
             outcome
         }
     };
+    if parameter_readback_requested && error.is_none() && response.result.is_object() {
+        if outcome == Outcome::AppliedVerified {
+            let readback =
+                plugin_parameter_readback::observe(&args, &context, &response.result, |query| {
+                    thread::sleep(std::time::Duration::from_millis(
+                        plugin_parameter_readback::SETTLE_MILLIS,
+                    ));
+                    bridge
+                        .transact(
+                            "pluginParameterDetails",
+                            &query,
+                            Some(&context.session),
+                            Some(&context.document),
+                            midi,
+                        )
+                        .ok()
+                });
+            if readback["status"] != "matched" {
+                outcome = Outcome::AppliedUnverified;
+            }
+            response.result["readback"] = readback;
+        } else if outcome == Outcome::AppliedUnverified {
+            response.result["readback"] =
+                plugin_parameter_readback::unavailable("write_unverified");
+        }
+    }
     if error.is_none() {
         error = match outcome {
             Outcome::PartiallyApplied => Some(OperationError::new(
