@@ -10,7 +10,9 @@ use std::{
 };
 use zip::ZipArchive;
 
+mod insert_routing;
 mod instrument_outputs;
+use insert_routing::SavedInsertRouting;
 use instrument_outputs::SavedInstrumentOutputs;
 
 const MAX_ARCHIVE_BYTES: u64 = 128 * 1024 * 1024;
@@ -98,6 +100,8 @@ pub struct SavedChannel {
     pub group: String,
     pub label: String,
     pub unique_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub insert_routing: Option<SavedInsertRouting>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub synth_port_index: Option<u32>,
     pub linear_gain: Option<f64>,
@@ -298,7 +302,7 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
     for entry in device_entries {
         if let Some(doc) = archive.xml(&entry)? {
             if entry == "Devices/audiomixer.xml" {
-                read_channels(&doc, "", &mut mixer);
+                read_channels(&doc, "", &mut mixer, &mut warnings);
             }
             scan_plugins(&doc, &entry, None, "", &mut plugins);
             if entry == "Devices/audiosynthfolder.xml" {
@@ -575,7 +579,12 @@ fn time_unit(format: &str) -> &str {
     }
 }
 
-fn read_channels(node: &XmlNode, inherited_group: &str, output: &mut Vec<SavedChannel>) {
+fn read_channels(
+    node: &XmlNode,
+    inherited_group: &str,
+    output: &mut Vec<SavedChannel>,
+    warnings: &mut Vec<String>,
+) {
     let group = if node.name == "ChannelGroup" {
         node.attr("name").unwrap_or(inherited_group)
     } else {
@@ -583,15 +592,25 @@ fn read_channels(node: &XmlNode, inherited_group: &str, output: &mut Vec<SavedCh
     };
     if node.name.ends_with("Channel") {
         let gain = number(node, "gain");
+        let label = node
+            .attr("label")
+            .or_else(|| node.attr("name"))
+            .unwrap_or("");
+        let insert_routing = match insert_routing::read(node) {
+            Ok(routing) => routing,
+            Err(reason) => {
+                warnings.push(format!(
+                    "Saved insert routing for {label} is incomplete: {reason}"
+                ));
+                None
+            }
+        };
         output.push(SavedChannel {
             kind: node.name.clone(),
             group: group.into(),
-            label: node
-                .attr("label")
-                .or_else(|| node.attr("name"))
-                .unwrap_or("")
-                .into(),
+            label: label.into(),
             unique_id: node.uid("uniqueID"),
+            insert_routing,
             synth_port_index: (node.name == "AudioSynthChannel")
                 .then(|| unsigned(node, "synthPort"))
                 .flatten(),
@@ -610,7 +629,7 @@ fn read_channels(node: &XmlNode, inherited_group: &str, output: &mut Vec<SavedCh
         });
     }
     for child in &node.children {
-        read_channels(child, group, output);
+        read_channels(child, group, output, warnings);
     }
 }
 
@@ -799,6 +818,63 @@ mod tests {
     }
 
     const SONG: &str = r#"<Song><Attributes x:id="Root" length="10"><Attributes x:id="timeContext"><TempoMap x:id="tempoMap"><TempoMapSegment start="0" tempo="0.5" curveType="0"/><TempoMapSegment start="8" tempo="0.6" curveType="1"/></TempoMap><TimeSignatureMap x:id="timeSignatureMap"><TimeSignatureMapSegment start="0" numerator="7" denominator="8"/></TimeSignatureMap></Attributes><List x:id="Tracks"><MediaTrack name="Keys" mediaType="Music" trackID="track-a" timeFormat="2"><UID x:id="channelID" uid="channel-a"/><List x:id="Events"><MusicPart name="Part" start="4" length="8" clipID="clip-a"/></List></MediaTrack></List></Attributes></Song>"#;
+
+    #[test]
+    fn reads_saved_splitter_successors_and_binds_the_device_by_slot_id() {
+        let uid = |n| uuid::Uuid::from_u128(n).to_string();
+        let (outer, inner, merge, device, slot) = (uid(1), uid(2), uid(3), uid(4), uid(5));
+        let mixer = format!(
+            r#"<AudioMixer><AudioTrackChannel label="Parallel">
+              <Attributes x:id="Inserts">
+                <Attributes name="FX03"><UID x:id="uniqueID" uid="{slot}"/>
+                  <Attributes x:id="deviceData" name="Utility"/></Attributes>
+                <Attributes x:id="Combinator">
+                  <Attributes><AudioFXGraph::SplitterNode x:id="node" number="1"><UID x:id="nodeID" uid="{outer}"/></AudioFXGraph::SplitterNode>
+                    <List x:id="successors"><UID uid="{inner}"/><UID uid="{merge}"/></List></Attributes>
+                  <Attributes><AudioFXGraph::SplitterNode x:id="node" number="2"><UID x:id="nodeID" uid="{inner}"/></AudioFXGraph::SplitterNode>
+                    <List x:id="successors"><UID uid="{device}"/><UID uid="{merge}"/></List></Attributes>
+                  <Attributes><AudioFXGraph::MergerNode x:id="node"><UID x:id="nodeID" uid="{merge}"/></AudioFXGraph::MergerNode></Attributes>
+                  <Attributes><ProcessGraph::SlotNode x:id="node" slotIndex="0"><UID x:id="nodeID" uid="{device}"/><UID x:id="slotID" uid="{slot}"/></ProcessGraph::SlotNode>
+                    <List x:id="successors"><UID uid="{merge}"/></List></Attributes>
+                </Attributes>
+              </Attributes></AudioTrackChannel><AudioTrackChannel label="Dry"/></AudioMixer>"#
+        );
+        let read = |mixer: &str| {
+            let file = write_archive(&[("Song/song.xml", SONG), ("Devices/audiomixer.xml", mixer)]);
+            serde_json::to_value(read_song(file.path()).unwrap()).unwrap()
+        };
+        let song = read(&mixer);
+        assert_eq!(song["warnings"], json!([]));
+        let parallel = &song["mixer"][0]["insert_routing"]["nodes"];
+        assert_eq!(parallel[0]["successors"], json!([inner, merge]));
+        assert_eq!(parallel[1]["successors"], json!([device, merge]));
+        assert_eq!(parallel[2]["kind"], "merger");
+        assert_eq!(
+            parallel[3],
+            json!({
+                "id": device, "kind": "slot", "successors": [merge],
+                "slot_index": 0, "slot_id": slot, "device_name": "Utility",
+            })
+        );
+        assert!(song["mixer"][1].get("insert_routing").is_none());
+
+        let stale = read(&mixer.replace("slotIndex=\"0\"", "slotIndex=\"1\""));
+        assert!(stale["mixer"][0].get("insert_routing").is_none());
+        assert!(
+            stale["warnings"][0]
+                .as_str()
+                .unwrap()
+                .contains("rack order")
+        );
+        let missing = read(&mixer.replacen(&inner, &uid(6), 1));
+        assert!(missing["mixer"][0].get("insert_routing").is_none());
+        assert!(
+            missing["warnings"][0]
+                .as_str()
+                .unwrap()
+                .contains("successor")
+        );
+    }
 
     #[test]
     fn reads_saved_units_and_marks_binary_notes_unsupported() {
