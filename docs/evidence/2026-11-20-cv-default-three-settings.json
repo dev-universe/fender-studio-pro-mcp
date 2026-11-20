@@ -1,0 +1,42 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "source_commit": "051a95aac87a759305785960833a8fa3b9a9f36a",
+  "plugin": "CV Instrument",
+  "preset": "default",
+  "action": "apply_cv_preset_settings",
+  "changed_parameters": {
+    "cvGate.gatemode": {
+      "type": "Toggle",
+      "test_raw_value": 1
+    },
+    "modulation1.lfo.type": {
+      "type": "List",
+      "test_raw_value": 4
+    },
+    "modulation1.adsr.attack": {
+      "type": "Float",
+      "test_raw_value": 2500
+    }
+  },
+  "verified_writable_parameters": 97,
+  "verified_unassigned_cv_ports": 7,
+  "verified_mixer_channels": 67,
+  "reads": {
+    "factory_after_apply": 2,
+    "test_state_after_capsule_restore": 2,
+    "original_after_scalar_restore": 2
+  },
+  "accepted_load_requires_independent_verification": true,
+  "state_tokens_released": true,
+  "physical_cv_assignments_verified": false,
+  "verification": {
+    "prepare_requests": 47,
+    "editor_open_and_observation_requests": 15,
+    "test_requests": 91,
+    "test_active_seconds": 8.087,
+    "host_seconds": 340.056,
+    "protected_files_preserved": 208,
+    "runtime_files_restored": 18,
+    "scratch_saved": false
+  }
+}
