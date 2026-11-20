@@ -2,7 +2,7 @@
 
 먼저 [11월 20일 실제 검증 인수인계](LOOP_HANDOFF_2026-11-20_LIVE.md)와 `RESUME_STATE.json`을 확인한다. CV 콘솔 그룹, 뮤트 왕복, Output01 구조 조회, Output03 컨트롤러 정체를 실제 8.1.1에서 확인했다. R106에서는 MCP로 공장 프리셋의 설정만 직접 적용하고 설정 97개와 미할당 포트 일곱 개를 확인한 뒤 원복했다. 해당 코드가 공개 main에 병합됐고 실제 배정된 포트의 보존 검증이 남았다. Pedalboard는 R102의 별칭·직접 슬롯 토글과 R107의 호스트 바이패스 왕복을 확인했다. 남은 별칭과 랙 편집을 이어간다. Impact R118의 편집기 `St 2` 활성·원복 뒤 믹서와 값 4,262개를 확인했고 출력의 저장 지속성과 MCP 제어를 이어간다.
 
-공식 FabFilter VST3 23종에서 실제 삽입과 열거를 마쳤다. R40까지 쓰기 가능 값 12,455개 중 3,327개를 개별 왕복 검증했다. Timeless 2의 이름 있는 값 705개와 Volcano 2의 이름 있는 값 757개를 모두 검증했다. 두 제품에 각 136개의 내부 값이 남았다. 자동 Studio Pro 프리셋은 22종이 통과했다. Pro-Q 4는 R19의 별도 내부값 쓰기를 포함할 때 736개가 정확히 일치한다. Twin 3는 R28에서 `Ambient Mover`와 1,509개 일치를 확인했다. One과 Twin 2도 각각 프로그램 1과 5의 프리셋이 재생 후 표시됐다. 두 경우의 내부값 한 개와 프로그램 0 동작, Pro-Q 4 효과 MIDI 라우팅, 각 제품의 전체 쓰기와 프리셋, 그리고 [11월 18일의 내장 대기열](LOOP_HANDOFF_2026-11-18.md#11-빠짐없이-이어갈-28개-완료물)을 이어간다.
+공식 FabFilter VST3 23종에서 실제 삽입과 열거를 마쳤다. R41까지 쓰기 가능 값 12,455개 중 4,277개를 개별 왕복 검증했다. Timeless 2의 이름 있는 값 705개, Volcano 2의 757개, Saturn 2의 951개를 모두 검증했다. 세 제품에 각 136개의 내부 값이 남았다. 자동 Studio Pro 프리셋은 22종이 통과했다. Pro-Q 4는 R19의 별도 내부값 쓰기를 포함할 때 736개가 정확히 일치한다. Twin 3는 R28에서 `Ambient Mover`와 1,509개 일치를 확인했다. One과 Twin 2도 각각 프로그램 1과 5의 프리셋이 재생 후 표시됐다. 두 경우의 내부값 한 개와 프로그램 0 동작, Pro-Q 4 효과 MIDI 라우팅, 각 제품의 전체 쓰기와 프리셋, 그리고 [11월 18일의 내장 대기열](LOOP_HANDOFF_2026-11-18.md#11-빠짐없이-이어갈-28개-완료물)을 이어간다.
 
 2026년 11월 18일 재개 실행은 오전 6시 이동 전에 종료했다. 공개 저장소 보호·검증된 코드의 메인 병합·README 갱신을 완료했다. [당시 전체 대기열](LOOP_HANDOFF_2026-11-18.md)과 [진행 기록](PROGRESS_2026-11-18.md)을 보존했다. 11월 18일의 오전 6시 마감은 그 실행에만 해당했다.
 
@@ -26,14 +26,14 @@
 
 ## 현재 제품과 범위
 
-공개 main `ef28ff033c33e4d8438a73e1c6c411cd9a02ded3`에 [PR #17](https://github.com/dev-universe/fender-studio-pro-mcp/pull/17)의 FabFilter 23종 프리셋 목록 조회가 병합됐다. [PR #16](https://github.com/dev-universe/fender-studio-pro-mcp/pull/16)의 One·Twin 2 프로그램 파트, [PR #15](https://github.com/dev-universe/fender-studio-pro-mcp/pull/15)의 CV 설정 적용, [PR #14](https://github.com/dev-universe/fender-studio-pro-mcp/pull/14)의 조회도 공개됐다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트는 R28에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호, [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회도 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R39 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59로 원복했다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
+공개 main `625c989a35b3ebf4caaa5906fac26c30341a7757`에 [PR #18](https://github.com/dev-universe/fender-studio-pro-mcp/pull/18)의 저장된 Impact 출력 조회가 병합됐다. [PR #17](https://github.com/dev-universe/fender-studio-pro-mcp/pull/17)의 FabFilter 23종 프리셋 목록 조회, [PR #16](https://github.com/dev-universe/fender-studio-pro-mcp/pull/16)의 One·Twin 2 프로그램 파트, [PR #15](https://github.com/dev-universe/fender-studio-pro-mcp/pull/15)의 CV 설정 적용, [PR #14](https://github.com/dev-universe/fender-studio-pro-mcp/pull/14)의 조회도 공개됐다. [PR #13](https://github.com/dev-universe/fender-studio-pro-mcp/pull/13)의 Twin 3 프로그램 파트는 R28에서 노트 없는 파트와 `Ambient Mover` 재생을 확인했다. [PR #12](https://github.com/dev-universe/fender-studio-pro-mcp/pull/12)의 CV 프리셋 대상 조회와 문서 전환 보호, [PR #10](https://github.com/dev-universe/fender-studio-pro-mcp/pull/10)의 첫 오디오 트랙 생성과 [PR #11](https://github.com/dev-universe/fender-studio-pro-mcp/pull/11)의 CV Output01 구조 조회도 필수 검사와 실제 8.1.1 근거를 거쳐 병합됐다. R39 종료 시 로컬 평소 EditTask·CLI는 PR #10 소스, 네이티브 확장은 Native59로 원복했다. 다시 시작할 때 설치 파일과 앱 상태를 확인한다.
 
 R83·R84·R85는 종료한 예비 실험이다. 당시 후보의 설치 증거는 [11월 18일 인수인계 15절](LOOP_HANDOFF_2026-11-18.md)에 보존했다. 실제로 준비와 정리를 한 번 왕복한 Native60 R89의 새 증거와 함께 보되, 과거 후보 파일을 현재 설치 증거로 재사용하지 않는다.
 문서만 바뀌면 같은 제품을 다시 빌드하거나 설치하지 않는다.
 
 고정 43개 중 17개 완료, 26개 잔여다. 소프트웨어 22개와 하드웨어 4개를 구분한다.
 프리셋은 42/46종과 81사례, 이름은 6866/7112개다. 이 분모를 서로 환산하지 않는다.
-R37에서 이름 있는 값의 검증 중앙값은 0.612초였다. 이 속도가 일반 값에 유지되면 FabFilter 개별값 검증은 약 2~3시간으로 추정한다. 전체 제품 지원은 내부 값의 의미, 프리셋·라우팅·그래프, 하드웨어 의존 검증을 포함해 며칠 단위로 본다. 단위별 실제 시간과 다음 단위 예상, 전체 잔여 시간을 함께 보고한다.
+R41에서 이름 있는 값의 검증 중앙값은 0.637초였다. 비슷한 속도를 유지하면 남은 이름 있는 일반값 약 5,000개의 검사는 1~1.5시간으로 추정한다. 전체 제품 지원은 내부 값의 의미, 프리셋·라우팅·그래프, 하드웨어 의존 검증을 포함해 며칠 단위로 본다. 단위별 실제 시간과 다음 단위 예상, 전체 잔여 시간을 함께 보고한다.
 
 Scope r68의 실제 81요청과 원본 12장으로 기본 A의 단발 캡처 유지, 한 번의 재트리거 갱신, 전체 41개 설정 복원을 독립 수용했다.
 직접 armed 상태·완료 시각, 숨은 파형 메모리 복원, 비활성 C 표시 차이는 남으므로 전체 CONTROL-SCOPE 완료 수는 올리지 않았다.
