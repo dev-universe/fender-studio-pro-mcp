@@ -422,33 +422,33 @@ class Bridge {
                 const context = this.context();
                 if (this.contextError || !sameFixtureContext(context, this.requestContext)
                     || context.fileUrl !== this.requestContext.fileUrl)
-                    throw new Error("Stereo Send requires the current native document");
+                    return null;
                 const tp = this.transportPanel();
                 const switches = ["start", "record", "loop", "punch", "punchIn"];
-                if (!tp || switches.some(key => {
+                if (!tp || typeof tp.findParameter !== "function" || switches.some(key => {
                     const parameter = tp.findParameter(key);
                     return !parameter || (parameter.value !== false && parameter.value !== 0);
-                })) throw new Error("transport switches are not independently stopped");
+                })) return null;
                 const song = this.song(), tracks = this.tracks({ name: channel, events: false });
                 const click = this.metronome({}), channels = c.channels();
-                if (isFail(song) || !Array.isArray(tracks) || isFail(click)
+                if (!song || !song.transport || isFail(song) || !Array.isArray(tracks) || !click || isFail(click)
                     || click.click !== false || click.precount !== false
                     || (click.preroll !== false && click.preroll !== null)
                     || song.transport.precount !== false || song.transport.preroll !== false
                     || !Array.isArray(channels))
-                    throw new Error("Stereo Send requires stopped transport with click and preroll disabled");
+                    return null;
                 const matches = tracks.filter(row => row.name === channel || row.channel === channel);
                 const strips = channels.filter(row => row.label === channel);
                 const mainChannels = channels.filter(row => row.label === "메인");
                 if (matches.length !== 1 || matches[0].mediaType !== "Audio"
                     || matches[0].name !== channel || matches[0].channel !== channel
                     || strips.length !== 1 || mainChannels.length !== 1)
-                    throw new Error("Stereo Send requires a unique audio channel and Main");
+                    return null;
                 const [strip] = strips, [main] = mainChannels;
                 if (strip.mute !== 1 || strip.monitor !== 0 || strip.recordArmed !== 0 || strip.solo !== 0
                     || ![null, "없음"].includes(strip.input) || strip.output !== "메인"
                     || main.volume !== 0 || main.output !== null)
-                    throw new Error("Stereo Send requires a muted channel and a silent Main without a physical output");
+                    return null;
                 return JSON.stringify({ song, tracks, click, channels });
             };
             let objectId = null;
@@ -463,24 +463,26 @@ class Bridge {
                     || page.page_complete !== true || page.access_metadata_complete !== true || page.value_read_complete !== true
                     || page.complete !== true || page.reported_count !== 24 || !Array.isArray(page.params) || page.params.length !== 24
                     || page.params.some((row, index) => !row || row.index !== index || typeof row.name !== "string"))
-                    throw new Error("exact complete 24-row controller unavailable");
+                    return null;
                 objectId = i.object_id;
                 return page.params;
             };
             const portLabel = (route) => route === "main" ? "메인" : "없음";
             const port = (parameters, name, tag, label) => {
+                if (!parameters) return null;
                 const rows = parameters.filter(p => p.name === name);
-                if (rows.length !== 1) throw new Error("expected unique controller port");
+                if (rows.length !== 1) return null;
                 const p = rows[0];
                 if (p.native_kind !== "List" || p.tag !== tag || p.writable !== false || p.text !== label || p.value !== -1
                     || p.normalized !== 1 || !p.native_value || p.native_value.variant_tag !== 1
                     || !p.native_value.data || p.native_value.data.kind !== "integer" || p.native_value.data.value !== -1
                     || !p.native_normalized || p.native_normalized.kind !== "float32" || p.native_normalized.bits_hex !== "3F800000")
-                    throw new Error("exact unassigned-output port display/sentinel changed");
+                    return null;
                 return p;
             };
             trace.failure_phase = "pre_fixture";
             const beforeFixture = fixture();
+            if (beforeFixture === null) return failure("not_applied");
             trace.failure_phase = "pre_attachment";
             const original = c.pluginOf(target);
             if (!original || original.error || original.name !== plugin || !original.device)
@@ -493,8 +495,8 @@ class Bridge {
             trace.failure_phase = "controller_baseline";
             const before = snapshots();
             const originalPort = port(before, "sendPort", 102, portLabel(currentRoute));
-            port(before, "receivePort", 103, "없음");
-            if (JSON.stringify(before) !== JSON.stringify(snapshots()) || fixture() !== beforeFixture || !sameTarget())
+            const originalReturn = port(before, "receivePort", 103, "없음");
+            if (!originalPort || !originalReturn || JSON.stringify(before) !== JSON.stringify(snapshots()) || fixture() !== beforeFixture || !sameTarget())
                 return failure("not_applied");
             const expected = before.map(row => row.name === "sendPort" ? { ...row, text: portLabel(wanted) } : row);
             dispatched = true;
@@ -522,6 +524,7 @@ class Bridge {
             if (fixture() !== beforeFixture) return failure("unknown");
             trace.failure_phase = "independent_controller";
             const after = snapshots();
+            if (after === null) return failure("unknown");
             trace.failure_phase = "independent_menu";
             const menu = c.externalPortMenu({ ...target, expected_instance: args.expected_instance, port: "send" });
             const main = wanted === "main";
@@ -540,6 +543,7 @@ class Bridge {
             if (fixture() !== beforeFixture) return failure("unknown");
             trace.failure_phase = "independent_controller";
             const observedPort = port(after, "sendPort", 102, portLabel(wanted));
+            if (!observedPort) return failure("unknown");
             trace.failure_phase = null;
             return { ok: true, native_outcome: "applied_unverified", operation: "external_stereo_send_set",
                 channel, slot, expected_current: currentRoute, destination: wanted,

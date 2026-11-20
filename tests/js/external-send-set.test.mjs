@@ -22,7 +22,7 @@ function harness() {
     const main = { label: '메인', volume: 0, output: null };
     const tracks = [{ name: target.channel, channel: target.channel, mediaType: 'Audio' }];
     const channels = [{ label: 'Audio A' }, strip, main];
-    const state = { current: 'none', transport: {}, stable: true };
+    const state = { current: 'none', transport: {}, stable: true, editorOpen: true };
     const device = {};
     const targetPlugin = { name: plugin, device, component: {}, element: {} };
     const port = (name, tag, text) => ({
@@ -39,7 +39,7 @@ function harness() {
         channels: () => channels,
         pluginOf: query => matches(query) ? targetPlugin : null,
         pluginParams: query => ({
-            instance: matches(query) ? instance : null,
+            instance: matches(query) && state.editorOpen ? instance : null,
             parameter_discovery: { source: 'controller' },
             page_complete: true, access_metadata_complete: true, value_read_complete: true,
             complete: true, reported_count: 24,
@@ -74,7 +74,7 @@ function harness() {
     };
     const set = (request = args, fields = {}) =>
         host.writeRequest({ op: 'externalStereoSendSet', args: request, ...fields });
-    return { calls, strip, main, tracks, state, set };
+    return { calls, strip, main, tracks, state, set, bridge: host.bridge };
 }
 
 test('Stereo Send binds the selected channel, slot and current route with one callback per transition', () => {
@@ -97,6 +97,7 @@ test('Stereo Send binds the selected channel, slot and current route with one ca
 test('Stereo Send refuses stale, ambiguous and unsafe targets before native dispatch', () => {
     for (const change of [
         host => { host.state.transport.start = true; },
+        host => { host.state.editorOpen = false; },
         host => { host.strip.mute = 0; },
         host => { host.main.volume = 1; },
         host => { host.main.output = 'Out 1 + 2'; },
@@ -112,6 +113,17 @@ test('Stereo Send refuses stale, ambiguous and unsafe targets before native disp
     assert.equal(host.set({ ...args, slot: 0 }).result.native_outcome, 'not_applied');
     assert.equal(host.set(args, { expectedDocument: 'expired' }).result.native_outcome, 'not_applied');
     assert.equal(host.calls.length, 0);
+});
+
+test('Studio Pro refuses an unavailable editor through a return value without throwing', () => {
+    const host = harness();
+    host.state.editorOpen = false;
+    const result = host.set().result;
+    assert.equal(result.native_outcome, 'not_applied');
+    assert.equal(result.diagnostic.failure_phase, 'controller_baseline');
+    assert.equal(result.diagnostic.dispatch_attempted, false);
+    assert.equal(host.calls.length, 0);
+    assert.doesNotMatch(host.bridge.externalStereoSendSet.toString(), /\bthrow\b/);
 });
 
 test('Stereo Send with missing post-selection route proof returns unknown without retry', () => {

@@ -1294,6 +1294,9 @@ class NativePluginControls {
         const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
         const stereoSendChange = request.operation === "external_stereo_send_set";
+        const stereoSendUnavailable = () => ({
+            ok: false, outcome: "not_applied", diagnostic: stereoSendChangeTrace("native_wiring", false),
+        });
         const cvStructure = request.operation === "cv_port_structure_inspect";
         const cvPresetApply = request.operation === "apply_cv_preset_settings";
         const insertGraphEdit = this.insertGraphNodeFields(request.operation) !== null;
@@ -1308,7 +1311,7 @@ class NativePluginControls {
             if (externalMenu && !this.externalMenuRequest(request)) throw new Error("invalid fixed External menu request");
             if (stereoSendChange && (!this.guiExact(request, ["operation", "expected_instance", "destination"])
                 || !this.insertChainUid(request.expected_instance) || !["main", "none"].includes(request.destination)))
-                throw new Error("invalid fixed Stereo Send diagnostic request");
+                return stereoSendUnavailable();
             if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
@@ -1321,21 +1324,32 @@ class NativePluginControls {
             if (needsAuxiliary ? !auxiliary || typeof auxiliary !== "object" : auxiliary !== undefined)
                 throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
             const before = this.component.bridge && this.component.bridge.requestContext;
-            if (!this.sameContext(before)) throw new Error("native request requires the current bridge document lease");
+            if (!this.sameContext(before)) {
+                if (stereoSendChange) return stereoSendUnavailable();
+                throw new Error("native request requires the current bridge document lease");
+            }
             if (typeof Host === "undefined" || !Host.Objects) {
-                if (guiLearning || externalMenu || stereoSendChange || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (stereoSendChange) return stereoSendUnavailable();
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
             let service = typeof objects.getObjectByName === "function" ? objects.getObjectByName("FenderMcpNative") : null;
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
-                if (guiLearning || externalMenu || stereoSendChange || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (stereoSendChange) return stereoSendUnavailable();
+                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
-            if (typeof service.capabilities !== "function" || typeof service.request !== "function") throw new Error("native methods unavailable");
+            if (typeof service.capabilities !== "function" || typeof service.request !== "function") {
+                if (stereoSendChange) return stereoSendUnavailable();
+                throw new Error("native methods unavailable");
+            }
             const capability = this.parse(service.capabilities());
-            if (!capability.ok || capability.api !== "fender-mcp-native-v1") throw new Error("unsupported native API");
+            if (!capability || !capability.ok || capability.api !== "fender-mcp-native-v1") {
+                if (stereoSendChange) return stereoSendUnavailable();
+                throw new Error("unsupported native API");
+            }
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
             if (request.operation === "insert_slot_move" && request.branch !== undefined
@@ -1346,13 +1360,16 @@ class NativePluginControls {
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
-                throw new Error("unsupported Stereo Send diagnostic API");
+                return stereoSendUnavailable();
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
             if (guiLearning && capability.gui_model_edit_api !== "chorder_learning_controls_v1") throw new Error("unsupported native Chorder learning API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
-            if (!this.sameContext(before)) throw new Error("native request requires the current open document");
+            if (!this.sameContext(before)) {
+                if (stereoSendChange) return stereoSendUnavailable();
+                throw new Error("native request requires the current open document");
+            }
             const body = JSON.stringify(request);
             const vendorApply = request.operation === "fabfilter_preset_apply";
             if (vendorApply && capability.fabfilter_preset_apply_api !== "pro_q_4_file_v1")
