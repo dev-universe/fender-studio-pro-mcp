@@ -50,7 +50,7 @@ R204에서 Twin 3 제조사 파일을 카탈로그로 적용하고 1,510개 값�
 
 R208은 실제 8.1.1에서 Pro-C 3 공식 파일을 적용해 바뀐 35개 값과 237개 전체 원복을 확인했다. 시험 전 환경설정·프리셋 폴더도 확인했다. [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 필수 검사 대기 중이며, Twin 3 [PR #64](https://github.com/dev-universe/fender-studio-pro-mcp/pull/64)는 main에 병합됐다. 제조사 파일 적용은 3/23종이다. 다음 내장 단위는 R166의 External Effect Send 관찰자와 별도 경로 객체다.
 
-R210에서 External Effect Stereo의 실제 Send 할당을 없음·메인·없음으로 확인했다. 편집기를 열기 전을 포함해 7회 조회했고 컨트롤러 24개를 원복했다. [PR #66](https://github.com/dev-universe/fender-studio-pro-mcp/pull/66)은 main에 병합됐다. R211은 새 응답 필드 검증에서 멈췄고 시험 곡과 관리 파일을 원복했다. R212에서 수정한 후보로 없음·메인·없음과 확인 전용 호출 4회를 검증했고 [PR #67](https://github.com/dev-universe/fender-studio-pro-mcp/pull/67)을 열었다. R213에서 MCP가 실제로 Send를 없음·메인·없음으로 바꾸고 컨트롤러 24개를 원복했다. 87회 요청에 62.745초가 걸렸다. 시험 곡 전용 후보의 성공을 확인했으며, 다음은 일반 세션 대상 선택과 문서·인스턴스·출력 조건을 적용한 공개 후보 R214다. Pro-C 3 [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 main에 병합됐다.
+R210에서 External Effect Stereo의 실제 Send 할당을 없음·메인·없음으로 확인했다. 편집기를 열기 전을 포함해 7회 조회했고 컨트롤러 24개를 원복했다. [PR #66](https://github.com/dev-universe/fender-studio-pro-mcp/pull/66)은 main에 병합됐다. R211은 새 응답 필드 검증에서 멈췄고 시험 곡과 관리 파일을 원복했다. R212에서 수정한 후보로 없음·메인·없음과 확인 전용 호출 4회를 검증했고 [PR #67](https://github.com/dev-universe/fender-studio-pro-mcp/pull/67)을 공개 main에 병합했다. R213에서 MCP가 실제로 Send를 없음·메인·없음으로 바꾸고 컨트롤러 24개를 원복했다. 87회 요청에 62.745초가 걸렸다. 시험 곡 전용 후보의 성공을 확인했으며, 다음은 일반 세션 대상 선택과 문서·인스턴스·출력 조건을 적용한 공개 후보 R214다. Pro-C 3 [PR #65](https://github.com/dev-universe/fender-studio-pro-mcp/pull/65)는 main에 병합됐다.
 
 ## 유지할 사용자 결정
 
