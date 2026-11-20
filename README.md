@@ -149,6 +149,8 @@ For another page, send `offset` set to `next_offset` and `expected_catalog` set 
 
 Call `fabfilter_midi_mapping` with `{"product":"Micro","controller":7}` to look up the VST3 SDK mapping for CC 7. Values 128 and 129 select channel pressure and pitch bend. Program change (130) has no parameter in this SDK mapping. The result includes the tested VST3 version and the corresponding `studio_pro_name`. Compare the version and confirm the name with `plugin_parameters` on the current instance. The lookup itself sends no MIDI. [VST3 MIDI mapping interface](https://steinbergmedia.github.io/vst3_doc/vstinterfaces/classSteinberg_1_1Vst_1_1IMidiMapping.html)
 
+FabFilter Micro 1.32 was verified in Studio Pro 8.1.1 on macOS arm64. Use `plugin_parameters` to read the bound instance and `plugin_parameter_set` to change a writable value. All 145 writable values were changed, read back, and restored individually. The separate program value `vstp1073741959` was verified as `0 → 1 → 0`. That round trip also required restoring a companion value and ended with all 146 reported values at baseline. [Micro verification details](docs/evidence/2026-11-20-fabfilter-micro-controls.json)
+
 ### FabFilter instrument program changes
 
 Use `midi_program_part_add` with an exact FabFilter VST3 track, its current
