@@ -904,5 +904,20 @@
     "protected_files": 175,
     "managed_files": 18,
     "saved": false
+  },
+  "r97_saturn_all_writable": {
+    "status": "verified",
+    "new_distinct_roundtrips": 136,
+    "plugin_verified_writable": 1035,
+    "reported_values_restored": 1036,
+    "virtual_cc_verified": 128,
+    "common_verified": 8,
+    "legacy_cc_independently_verified": true,
+    "requests": 3458,
+    "active_seconds": 277.664,
+    "wall_seconds": 373.9,
+    "protected_files": 182,
+    "managed_files": 18,
+    "saved": false
   }
 }
