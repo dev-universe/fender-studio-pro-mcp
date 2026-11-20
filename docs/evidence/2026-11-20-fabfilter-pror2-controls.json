@@ -1,0 +1,22 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Pro-R 2",
+  "version": "2.06",
+  "format": "VST3",
+  "reported_parameters": 273,
+  "writable_parameters": 272,
+  "individually_changed_read_and_restored": 272,
+  "named_writable_parameters_verified": 136,
+  "virtual_midi_cc_controls_verified": 128,
+  "other_high_range_controls_verified": 8,
+  "verification": {
+    "legacy_cc_independently_verified": true,
+    "complete_restored_values": 273,
+    "high_range_requests": 3152,
+    "high_range_active_seconds": 221.479,
+    "host_seconds": 260.9,
+    "protected_files": 160,
+    "managed_runtime_files": 18,
+    "scratch_saved": false
+  }
+}
