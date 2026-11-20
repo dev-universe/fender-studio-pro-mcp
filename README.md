@@ -130,6 +130,12 @@ port assignments to check the result. The 8.1.1 trial verified 97 writable
 values, seven unassigned ports, and restoration. Testing with assigned
 physical ports is pending. [Live evidence](docs/evidence/2026-11-20-cv-settings-apply-r106.json)
 
+A second 8.1.1 trial changed Gate mode, the first LFO waveform and the first
+ADSR attack before applying `default`. Two independent reads confirmed that
+the settings-only apply reset all three and matched all 97 writable values.
+The trial restored the prior values and checked all 67 mixer channels and
+seven unassigned CV ports throughout. [Three-setting verification](docs/evidence/2026-11-20-cv-default-three-settings.json)
+
 ### Live Impact outputs
 
 Call `plugin_inspect` with `kind: "instrument"`, `plugin: "Impact"`, the
