@@ -1,6 +1,8 @@
 # 작업 재개 안내
 
-2026년 11월 18일 사용자가 다시 재개했다. 이번 실행의 우선순위는 공개 저장소 보호·검증된 코드의 메인 병합·README 갱신이며, 이전 Draft 유지 제한은 이 검토·출시 범위에서 해제되었다. 현재 [진행 기록](PROGRESS_2026-11-18.md)과 `RESUME_STATE.json`을 먼저 확인한다. Volt 276과 Keystation88 MK3는 이전과 같은 USB 연결로 재연결되었으며 **11월 18일 오전 6시 한국 시간**에 분리·이동 예정이다. 이는 지난 실행의 오후 6시 마감과 별개다.
+**진행 재개해**라는 요청을 받으면 최신 인수인계와 상태 파일을 먼저 읽는다. 두 파일은 `feature/cv-structured-lifecycle` 브랜치에서 갱신한다. 상태 파일의 `resume_document`와 `next_units_in_order`에서 최신 순서와 완료 근거를 확인한다. [11월 20일 인수인계](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [현재 상태 파일](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/RESUME_STATE.json)
+
+11월 18일 실행에서는 공개 저장소를 보호하고 검증된 코드를 main에 병합했다. 당시 오전 6시 이동 마감과 USB 연결은 그날의 기록이다. [11월 18일 전체 대기열](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-18.md) · [11월 18일 진행 기록](PROGRESS_2026-11-18.md)
 
 2026년 11월 17일 재개 작업은 사용자가 지정한 오후6시 마감에 맞춰 안전한 경계에서 중단했다. Native59 R81 실제27요청과 마지막 정적 조사를 완료했고 앱·MCP owner·분석 엔진을 모두 닫았다. 최신 재개 기준은 [11월 17일 인수인계](LOOP_HANDOFF_2026-11-17.md), [진행 기록](PROGRESS_2026-11-17.md), `RESUME_STATE.json`이다. 자동 재개는 없다. **진행 재개해** 한마디로 남은 대기열을 이어간다.
 
@@ -11,8 +13,8 @@
 사용자가 **진행 재개해**라고 하면 다음 순서로 읽고 미완료 대기열을 이어간다.
 
 1. 저장소 `AGENTS.md`와 사용자의 최신 지시를 읽는다.
-2. `RESUME_STATE.json`의 `resume_document`, `current_execution`, `next_units_in_order`를 읽는다.
-3. [최신 인수인계](LOOP_HANDOFF_2026-11-17.md)와 [11월 17일 진행 기록](PROGRESS_2026-11-17.md)을 읽는다.
+2. 위 상태 파일과 그 안에 있는 `resume_document`, `current_execution`, `next_units_in_order`를 읽는다.
+3. 최신 인수인계에서 끝난 단위와 다음 단위의 근거를 확인한다.
 4. Git, 현재 설치 파일, 프로세스, 두 잠금, 저장본과 장치 상태를 새로 확인한다.
 5. 필요한 다음 유한 단위에 새 문서·세션·인스턴스 바인딩을 만든다.
 
@@ -20,7 +22,7 @@
 과거 runtime token을 새 연결에 재사용하지 않는다. 이번 이동 마감은 해당 날짜의 이력이며, 재개할 때 새 세션의 현재 마감으로 재사용하지 않는다.
 앱 초기화를 마친 뒤 MCP owner를 시작하는 순서는 실제로 동작했지만, 시작 정체의 인과적 해결로 확정하지 않는다.
 
-## 현재 제품과 범위
+## 이전 실행의 제품과 범위
 
 제품 소스는 `7f0cd1da13b18a0097344d1ad7a84c550d764b77`, 정상 설치와 마지막 실제 수용은 Native59다. R81의 실제27요청·7행·상세56필드에서 구조형 인터페이스 지원7/7을 독립 수용했다. 실제620.268초와 독립검토273.821초에 원본CV/Main4쌍·NoSave·owner의 명시적exit0·소스181/설치13/저장10/Main보존을 확인했다. R78·R79의 Root 기록 오류17요청은 미수용으로 남긴다. 준비·정리·선택지·포트쓰기·프리셋경로보존은 미검증이다. 다음은 공개 구조형 인터페이스의 cleanup/count/get과 owner계약이며 존재조회는 반복하지 않는다.
 도구 46개, 고정 버튼 동작 5개, 상태 동작 7개이며 소스 181개와 설치 파일 13개를 대조한다.
