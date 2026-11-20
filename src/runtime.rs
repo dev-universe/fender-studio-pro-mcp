@@ -433,6 +433,17 @@ fn execute(
             response.result = json!({"error":"Impact output inspection did not establish the bound 32 output ports"});
         }
     }
+    if matches!(operation, Operation::ImpactOutputSet(_))
+        && response.ok
+        && response.result["native_outcome"] != "unknown"
+        && !impact_output_refused(&response.result)
+        && !verify(&operation, &response.result)
+    {
+        response.result = json!({"ok":false,"native_outcome":"unknown", "errors":[{
+            "code":"impact_output_invalid_receipt",
+            "message":"The Impact output response did not establish the requested state change"
+        }]});
+    }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
         Some(host_error(&response))
@@ -445,6 +456,9 @@ fn execute(
         } else if matches!(operation, Operation::ExternalPortMenu(_)) {
             external_menu::failure_outcome(&response.result)
         } else if read_only
+            || (matches!(operation, Operation::ImpactOutputSet(_))
+                && response.ok
+                && impact_output_refused(&response.result))
             || [
                 "session_changed",
                 "document_changed",
@@ -1074,6 +1088,23 @@ fn has_applied_evidence(value: &Value) -> bool {
 
 fn verify(operation: &Operation, result: &Value) -> bool {
     match operation {
+        Operation::ImpactOutputSet(change) => {
+            let row = |active| {
+                json!({"index":change.output_index,"name":change.output_name,
+                "requested":active,"acknowledged":active})
+            };
+            result["ok"] == true
+                && result["operation"] == "impact_output_set"
+                && result["outcome"] == "applied_verified"
+                && result["native_outcome"] == "applied_verified"
+                && result["plugin"] == "Impact"
+                && result["instance"]["object_uid"] == change.expected_instance
+                && result["instance"]["class_uid"] == "3713E26C-2FCA-4024-9F25-17E9D2BE2B9B"
+                && result["instance"]["native_class"] == "AudioSynth"
+                && result["output_count"] == 32
+                && result["before"] == row(change.expected_active)
+                && result["after"] == row(change.active)
+        }
         Operation::SetChannel(change) => equivalent(&change.value, &result["after"]),
         Operation::SetPanner(change) => equivalent(&json!(change.value), &result["after"]["value"]),
         Operation::SetSplitter(change) => {
@@ -1105,6 +1136,45 @@ fn verify(operation: &Operation, result: &Value) -> bool {
         }
         _ => false,
     }
+}
+
+fn impact_output_refused(value: &Value) -> bool {
+    value["ok"] == false
+        && value["native_outcome"] == "not_applied"
+        && value.get("before").is_none()
+        && value.get("after").is_none()
+        && has_failure(value)
+}
+
+#[cfg(test)]
+#[test]
+fn impact_output_receipts_require_the_bound_reported_change() {
+    let uid = "12345678-1234-1234-1234-123456789ABC";
+    let operation = Operation::from_parts(
+        "impact_output_set",
+        json!({
+            "track":"Scratch Impact","expected_instance":uid,"output_index":1,
+            "output_name":"Impact St 2","expected_active":false,"active":true
+        }),
+    )
+    .unwrap();
+    let result = json!({"ok":true,"operation":"impact_output_set","native_outcome":"applied_verified",
+        "outcome":"applied_verified","plugin":"Impact","output_count":32,
+        "instance":{"object_uid":uid,"class_uid":"3713E26C-2FCA-4024-9F25-17E9D2BE2B9B","native_class":"AudioSynth"},
+        "before":{"index":1,"name":"Impact St 2","requested":false,"acknowledged":false},
+        "after":{"index":1,"name":"Impact St 2","requested":true,"acknowledged":true}});
+    assert!(verify(&operation, &result));
+    let mut pending = result.clone();
+    pending["after"]["acknowledged"] = json!(false);
+    assert!(!verify(&operation, &pending));
+    let mut wrong_instance = result.clone();
+    wrong_instance["instance"]["object_uid"] = json!("wrong");
+    assert!(!verify(&operation, &wrong_instance));
+    let mut refusal =
+        json!({"ok":false,"native_outcome":"not_applied","error":{"code":"context_guard_failed"}});
+    assert!(impact_output_refused(&refusal));
+    refusal["after"] = result["after"].clone();
+    assert!(!impact_output_refused(&refusal));
 }
 
 fn equivalent(expected: &Value, actual: &Value) -> bool {
@@ -1267,6 +1337,7 @@ mod tests {
             ("insertChainState", json!({"channel":"Scratch","action":"capture"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
+            ("impactOutputSet", json!({"track":"Scratch Impact","expected_instance":"12345678-1234-1234-1234-123456789ABC","output_index":1,"output_name":"Impact St 2","expected_active":false,"active":true})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
             ("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","param":"gain","value":0})),

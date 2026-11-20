@@ -139,6 +139,14 @@ The 8.1.1 macOS arm64 native add-on reports all 32 output names and whether
 each activation is requested and acknowledged. You can use it with the Impact
 editor closed. Use `channels_list` to see the associated mixer channels.
 
+Use `impact_output_set` to change one of the 31 secondary outputs at indices
+1 through 31. Provide the track, current
+`expected_document` and `expected_instance`, `output_index` and `output_name`
+from the inspected row, its current `expected_active` state, and the desired
+`active` state. The tool checks both reported activation flags and preserves
+the last active output. Disabling an output removes its mixer channel. Verify
+your mixer routing with `channels_list` after a change.
+
 ### FabFilter preset library
 
 Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)

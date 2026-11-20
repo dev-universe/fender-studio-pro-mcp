@@ -829,6 +829,30 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
     }
 
+    impactOutputSet(args) {
+        const fields = ["track", "expected_instance", "output_index", "output_name", "expected_active", "active"];
+        const refusal = message => ({ ok: false, native_outcome: "not_applied",
+            errors: [{ code: "impact_output_unavailable", message: message }] });
+        if (!args || Object.keys(args).length !== fields.length || Object.keys(args).some(key => fields.indexOf(key) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || !Number.isInteger(args.output_index) || args.output_index < 1 || args.output_index >= 32
+            || typeof args.output_name !== "string" || !args.output_name.trim() || args.output_name.length > 128 || /[\x00-\x1f\x7f-\x9f]/.test(args.output_name)
+            || typeof args.expected_active !== "boolean" || typeof args.active !== "boolean" || args.expected_active === args.active)
+            return refusal("Supply an exact Impact track, output, and state change");
+        const plug = this.pluginOf({ kind: "instrument", track: args.track, plugin: "Impact" });
+        if (!plug || plug.error || plug.name !== "Impact") return refusal("The exact Impact instrument is unavailable");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "impact_output_set", expected_instance: args.expected_instance,
+            output_index: args.output_index, output_name: args.output_name,
+            expected_active: args.expected_active, active: args.active
+        });
+        if (!native) return { ok: false, native_outcome: "unknown",
+            errors: [{ code: "impact_output_no_receipt", message: "Native output dispatch returned no valid receipt" }] };
+        return Object.assign({}, native, { plugin: "Impact", native_outcome: native.outcome });
+    }
+
     insertChainState(args) {
         const result = typeof NativePluginControls === "function" ? new NativePluginControls(this).insertChainRequest(args)
             : { ok: false, outcome: "not_applied", error: { code: "native_required", message: "The matching native insert-chain extension is required" } };

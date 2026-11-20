@@ -98,6 +98,13 @@ enum Request {
     CvPortStructureInspect {
         expected_instance: String,
     },
+    ImpactOutputSet {
+        expected_instance: String,
+        output_index: u32,
+        output_name: String,
+        expected_active: bool,
+        active: bool,
+    },
     ExternalPortMenu {
         port: external_menu::Port,
         expected_instance: String,
@@ -293,6 +300,7 @@ impl Request {
         match self {
             Self::ExternalPortMenu { .. } => Source::Controller,
             Self::CvPortStructureInspect { .. }
+            | Self::ImpactOutputSet { .. }
             | Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
@@ -331,6 +339,9 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::ImpactOutputSet {
+                expected_instance, ..
+            }
             | Self::InspectCvPresetSettings {
                 expected_instance, ..
             }
@@ -448,6 +459,20 @@ impl Request {
             }
         }
         match self {
+            Self::ImpactOutputSet {
+                output_index,
+                output_name,
+                expected_active,
+                active,
+                ..
+            } if !(1..32).contains(output_index)
+                || output_name.trim().is_empty()
+                || output_name.encode_utf16().count() > 128
+                || output_name.chars().any(char::is_control)
+                || expected_active == active =>
+            {
+                Err("Impact requires a bounded output and an explicit state change".into())
+            }
             Self::ExternalPortMenu {
                 port,
                 provenance,
@@ -1575,6 +1600,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
             };
         }
         Request::CvPortStructureInspect { .. }
+        | Request::ImpactOutputSet { .. }
         | Request::ExternalPortMenu { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
@@ -1817,6 +1843,12 @@ impl Reply {
             .as_object_mut()
             .expect("object response")
             .remove("verified");
+        if self.value["operation"] == "impact_output_set" {
+            let object = self.value.as_object_mut().expect("object response");
+            object.remove("before");
+            object.remove("after");
+            object.remove("output_count");
+        }
         external_menu::invalidate(&mut self.value);
         node_inspect::cv_ports::structure::invalidate(&mut self.value);
         digest::invalidate(&mut self.value);
@@ -2103,6 +2135,7 @@ fn dispatch_device(
     let mutation = matches!(
         request,
         Request::CvPortStructureInspect { .. }
+            | Request::ImpactOutputSet { .. }
             | Request::ExternalPortMenu { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
@@ -2255,6 +2288,38 @@ fn dispatch_device(
             owner: None,
             gui: None,
             nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
+    if let Request::ImpactOutputSet {
+        output_index,
+        ref output_name,
+        expected_active,
+        active,
+        ..
+    } = request
+    {
+        let (value, nodes) = node_inspect::set_impact_output(
+            &ctx,
+            output_index,
+            output_name,
+            expected_active,
+            active,
+        );
+        return Reply {
+            value,
+            menu: None,
+            catalog: None,
+            edit: None,
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes,
             provider: None,
             context: Some(ctx),
             mutation: true,

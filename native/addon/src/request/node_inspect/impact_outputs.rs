@@ -3,6 +3,11 @@ use super::*;
 // Studio Pro 8.1.1.113103 arm64 entries, relative to the pinned main image.
 const PORT_SETUP_GET_OBJECT: usize = 0xc27db4;
 const PORT_SETUP_GET_SYNTH: usize = 0xc26fac;
+const PORT_SETUP_CONTEXT: usize = 0x58;
+const OUTPUT_DISPATCH_TABLE: usize = 0x1bc06a0;
+const OUTPUT_DISPATCH_SLOT: usize = 0x3d8;
+const OUTPUT_DISPATCH_METHOD: usize = 0xd01048;
+const OUTPUT_SET_REQUESTED: usize = 0xda09c4;
 const OUTPUT_LIST_TABLE: usize = 0x1be1118;
 const CONTROLLER_FACET: usize = 0x78;
 const OUTPUT_LIST_HEAD: usize = 0x338;
@@ -12,7 +17,7 @@ const MAIN_OUTPUT_GROUP: [u8; 16] = [
     0xa1, 0x6a, 0xdf, 0xa9, 0x4f, 0xd1, 0xb5, 0x40, 0x8b, 0x90, 0x8d, 0xc6, 0x88, 0xe7, 0xbc, 0x75,
 ];
 
-#[derive(PartialEq, Eq, Serialize)]
+#[derive(Clone, PartialEq, Eq, Serialize)]
 struct Output {
     index: i32,
     name: String,
@@ -20,13 +25,23 @@ struct Output {
     acknowledged: bool,
 }
 
-pub(super) struct OutputInventory {
+pub(in crate::native_script::request) struct OutputInventory {
     outputs: Vec<Output>,
     controller: Owned,
     setup: NodePin,
     slot: NodePin,
     device: NodePin,
     setup_name: *const PlainString,
+}
+
+#[derive(PartialEq, Eq)]
+struct OutputList {
+    base: usize,
+    setup: *mut c_void,
+    synth: *mut c_void,
+    head: *mut c_void,
+    list: *mut c_void,
+    entries: *mut c_void,
 }
 
 impl OutputInventory {
@@ -77,7 +92,7 @@ impl OutputInventory {
         Ok(inventory)
     }
 
-    fn read(&self, guard: &mut impl FnMut() -> Result<(), String>) -> Result<Vec<Output>, String> {
+    fn locate(&self, guard: &mut impl FnMut() -> Result<(), String>) -> Result<OutputList, String> {
         self.check_attachment()?;
         guard()?;
         let image = unsafe { _dyld_get_image_header(0) };
@@ -110,21 +125,34 @@ impl OutputInventory {
         if entries.is_null() {
             return Err("Impact main output entry storage unavailable".into());
         }
-        let outputs = (0..OUTPUT_COUNT)
-            .map(|index| read_output(entries, index))
-            .collect::<Result<Vec<_>, _>>()?;
-        guard()?;
         self.check_attachment()?;
-        if unsafe { resolve(setup) } != synth
-            || unsafe { field::<*mut c_void>(synth, OUTPUT_LIST_HEAD) } != head
-            || existing_main_list(synth, head, table)? != list
-            || unsafe { field::<*mut c_void>(list, 0x98) } != entries
-        {
+        guard()?;
+        Ok(OutputList {
+            base,
+            setup,
+            synth,
+            head,
+            list,
+            entries,
+        })
+    }
+
+    fn read(&self, guard: &mut impl FnMut() -> Result<(), String>) -> Result<Vec<Output>, String> {
+        self.read_bound(guard).map(|(_, outputs)| outputs)
+    }
+
+    fn read_bound(
+        &self,
+        guard: &mut impl FnMut() -> Result<(), String>,
+    ) -> Result<(OutputList, Vec<Output>), String> {
+        let layout = self.locate(guard)?;
+        let outputs = (0..OUTPUT_COUNT)
+            .map(|index| read_output(layout.entries, index))
+            .collect::<Result<Vec<_>, _>>()?;
+        if layout != self.locate(guard)? {
             return Err("Impact main output list changed during inspection".into());
         }
-        self.check_attachment()?;
-        guard()?;
-        Ok(outputs)
+        Ok((layout, outputs))
     }
 
     fn check_attachment(&self) -> Result<(), String> {
@@ -159,6 +187,117 @@ impl OutputInventory {
             "output_count":self.outputs.len(),
             "outputs":self.outputs
         })
+    }
+
+    pub(super) fn change(
+        &mut self,
+        ctx: &Context<'_>,
+        index: u32,
+        name: &str,
+        expected_active: bool,
+        active: bool,
+    ) -> Value {
+        let refuse = |message| error("impact_output_unavailable", message, "not_applied");
+        let unknown = |message| error("impact_output_unknown", message, "unknown");
+        let guard = &mut || ctx.check();
+        let Ok((layout, original)) = self.read_bound(guard) else {
+            return refuse("Impact output list was not stable before activation");
+        };
+        let Some(before) = original.get(index as usize) else {
+            return refuse("Impact output index is unavailable");
+        };
+        if self.outputs != original
+            || before.name != name
+            || before.requested != expected_active
+            || original
+                .iter()
+                .any(|output| output.requested != output.acknowledged)
+            || active == expected_active
+        {
+            return refuse("Impact output does not match the expected name and activation state");
+        }
+        if !active && original.iter().filter(|output| output.requested).count() <= 1 {
+            return refuse("Impact requires at least one active output");
+        }
+        let Some((receiver, dispatch)) = layout.dispatch() else {
+            return refuse("Impact output action owner is unavailable");
+        };
+        if guard().is_err()
+            || self.locate(guard).as_ref() != Ok(&layout)
+            || !layout.has_receiver(receiver)
+        {
+            return refuse("Impact output action owner changed before dispatch");
+        }
+
+        // Follow the checked checkbox path: stage the requested bit and let the
+        // slot's regular undoable action reconcile the corresponding channel.
+        layout.stage_requested(index, active);
+        let accepted = unsafe { dispatch(receiver, layout.list, index) } & 1 != 0;
+        let Ok((current_layout, mut updated)) = self.read_bound(guard) else {
+            return unknown("Impact output state became unavailable after dispatch");
+        };
+        if current_layout != layout || !layout.has_receiver(receiver) {
+            return unknown("Impact output action owner changed after dispatch");
+        }
+        let mut expected = original.clone();
+        expected[index as usize].requested = active;
+        if !accepted {
+            if updated == expected {
+                layout.stage_requested(index, expected_active);
+                let Ok((recovery_layout, restored)) = self.read_bound(guard) else {
+                    return unknown(
+                        "Impact rejected activation and recovery could not be observed",
+                    );
+                };
+                if recovery_layout != layout || !layout.has_receiver(receiver) {
+                    return unknown(
+                        "Impact output owner changed during rejected activation recovery",
+                    );
+                }
+                updated = restored;
+            }
+            if updated == original {
+                return refuse("Impact rejected activation and the output state is unchanged");
+            }
+            return unknown("Impact rejected activation with an unexpected state change");
+        }
+        expected[index as usize].acknowledged = active;
+        if updated != expected {
+            return unknown("Impact accepted activation without the expected acknowledged state");
+        }
+        let after = updated[index as usize].clone();
+        self.outputs = updated;
+        json!({"ok":true,"operation":"impact_output_set","outcome":"applied_verified",
+            "instance":ctx.instance,"output_count":self.outputs.len(),"before":before,"after":after})
+    }
+}
+
+type DispatchOutput = unsafe extern "C" fn(*mut c_void, *mut c_void, u32) -> u64;
+
+impl OutputList {
+    fn dispatch(&self) -> Option<(*mut c_void, DispatchOutput)> {
+        let receiver: *mut c_void = unsafe { field(self.setup, PORT_SETUP_CONTEXT) };
+        if receiver.is_null() {
+            return None;
+        }
+        let table: *mut c_void = unsafe { field(receiver, 0) };
+        if table as usize != self.base + OUTPUT_DISPATCH_TABLE {
+            return None;
+        }
+        let method: *const c_void = unsafe { field(table, OUTPUT_DISPATCH_SLOT) };
+        (method as usize == self.base + OUTPUT_DISPATCH_METHOD)
+            .then(|| (receiver, unsafe { std::mem::transmute(method) }))
+    }
+
+    fn has_receiver(&self, expected: *mut c_void) -> bool {
+        self.dispatch()
+            .is_some_and(|(receiver, _)| receiver == expected)
+    }
+
+    fn stage_requested(&self, index: u32, active: bool) {
+        let stage: unsafe extern "C" fn(*mut c_void, u32, u32) =
+            unsafe { std::mem::transmute(self.base + OUTPUT_SET_REQUESTED) };
+        unsafe { stage(self.list, index, u32::from(active)) };
     }
 }
 
