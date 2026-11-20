@@ -1,5 +1,13 @@
 # 중첩 그래프 소유 관계 조회 구현 계획
 
+## Studio Pro 8.1.1에서 확인한 편집 범위
+
+공개 MCP는 같은 Inserts 그래프에서 효과 슬롯을 다른 슬롯 뒤나 빈 Splitter 가지로 옮기고, 정해진 연결에 두 가지가 빈 Splitter를 추가하며, 보존 조건이 맞는 안쪽 Splitter를 제거한다. 각각 실제 8.1.1 시험 곡에서 실행 취소와 파라미터 읽기를 검증했다. Multi Instrument와 다른 랙 구조의 편집은 별도로 검증해야 한다. [슬롯 이동](evidence/2026-11-20-insert-slot-move.json), [빈 가지 이동](evidence/2026-11-20-insert-slot-empty-branch.json), [Splitter 추가](evidence/2026-11-20-insert-splitter-add.json), [Splitter 제거](evidence/2026-11-20-insert-splitter-remove.json)
+
+빈 가지로 옮긴 복제 곡을 저장하고 Studio Pro를 완전히 다시 시작했다. 파일과 실제 랙에서 같은 연결 7개와 노드·슬롯·효과 ID를 확인했으며, 두 Mixtool의 보고값 144개도 일치했다. 앱을 다시 열면 문서 문맥과 Inserts 폴더 및 그래프 UUID를 새로 읽는다. 이전 문서와 이전 그래프를 각각 요청에 넣은 시험은 둘 다 변경 전에 거부됐다. [저장·재개·이전 요청 거부](evidence/2026-11-20-insert-routing-reopen.json)
+
+## 초기 조회 구현 기록
+
 상태는 소스 구현·독립 검토·정상 설치와 실제8.1.1의 제한된 직접 소유 관계 R3 검증 완료다. 일반 그래프 편집 완료를 뜻하지 않는다. 현재 설치 제품은 Native48 /2db35b2 /MCP46개다. 준비 오류 R1/R2를 실패로 보존하며 그 두 단위의 graph 조회는0이다. 새 문맥의 R3는32요청·348.714초로 통과했다.
 
 ## 이번 변경의 결과
