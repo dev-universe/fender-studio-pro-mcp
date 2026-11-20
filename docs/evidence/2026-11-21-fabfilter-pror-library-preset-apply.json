@@ -1,0 +1,44 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-R",
+  "vst3_version": "1.20",
+  "verified_code": "b6ca3e74fad728cd42645fd90ea7f8e2db12221f",
+  "factory_files": 163,
+  "factory_format": "FPRr v4",
+  "isolated_sdk": {
+    "changed_reported_values": 31,
+    "reported_values_restored": 222,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R227",
+    "verified_ui_preset": "Pure Plate",
+    "visible_space_seconds_before_apply_restore": [2.50, 2.10, 2.50],
+    "native_apply_calls": 1,
+    "changed_reported_values": 31,
+    "reported_values_exactly_restored": 222,
+    "automatically_restored_values": 221,
+    "corrected_parameters": ["vstp1073741826"],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 134,
+    "owner_wall_seconds": 188.107,
+    "actual_host_wall_seconds": 258.173,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 169,
+    "protected_files_verified": 168,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false
+  }
+}
