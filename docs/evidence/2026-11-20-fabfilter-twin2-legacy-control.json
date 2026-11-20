@@ -1,0 +1,23 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Twin 2",
+  "version": "2.41",
+  "format": "VST3",
+  "legacy_controller": {
+    "id": "vstp1073741828",
+    "normalized_test_value": 0.035,
+    "independently_retained": true,
+    "separate_companion_restore": false
+  },
+  "reported_values_restored": 1020,
+  "individually_verified_writable_parameters": 1019,
+  "previously_verified_writable_parameters": 1018,
+  "verification": {
+    "requests": 85,
+    "active_seconds": 9.184,
+    "host_seconds": 110.827,
+    "protected_files_preserved": 237,
+    "runtime_files_preserved": 18,
+    "scratch_saved": false
+  }
+}
