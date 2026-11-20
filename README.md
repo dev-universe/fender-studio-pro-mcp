@@ -253,6 +253,8 @@ and playback left **Default Sound** selected. [One and Twin 2 evidence](docs/evi
 
 ### External Effect Stereo Send
 
+On Studio Pro 8.1.1 for Apple Silicon, `plugin_inspect` can report `native.capabilities.external_stereo_send_route.assigned` for the exact External Effect Stereo instance. `true` means the effect holds a logical Send route. `false` means Send is unassigned. A missing field means the native check was unavailable. The result covers routing assignment. Audio output and latency require a separate loopback test. [Live assignment verification](docs/evidence/2026-11-21-external-stereo-send-assignment.json)
+
 With the effect editor open, use `plugin_inspect` to identify the current instance and `external_port_menu` with `port: "send"` to read the current menu. The checked row identifies the logical Send choice. In the Studio Pro 8.1.1 test with Main's physical output unassigned, choosing Main in the editor changed the checkmark and controller display while the raw port value stayed `-1`. Selecting None in the editor restored all 24 controller rows. [Live verification](docs/evidence/2026-11-20-external-stereo-send-observation.json)
 
 ## Inspect files offline
