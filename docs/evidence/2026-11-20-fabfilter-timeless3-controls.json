@@ -1,0 +1,24 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Timeless 3",
+  "version": "3.10",
+  "format": "VST3",
+  "source": "official signed VST3",
+  "reported_parameters": 1144,
+  "individually_verified_writable_parameters": 1143,
+  "previously_verified_named_parameters": 1007,
+  "new_roundtrips": {
+    "virtual_midi_cc": 128,
+    "common_internal": 8,
+    "writable_values_compared_each_case": 1143,
+    "legacy_controller_independent_readback": true
+  },
+  "verification": {
+    "requests": 3458,
+    "active_seconds": 286.3,
+    "host_seconds": 362.4,
+    "protected_files_preserved": 215,
+    "runtime_files_preserved": 18,
+    "scratch_saved": false
+  }
+}
