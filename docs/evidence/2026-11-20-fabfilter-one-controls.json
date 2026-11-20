@@ -1,0 +1,27 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter One",
+  "version": "3.52",
+  "format": "VST3",
+  "reported_parameters": 168,
+  "writable_parameters": 167,
+  "individually_changed_read_and_restored": 164,
+  "named_writable_parameters_verified": 31,
+  "virtual_midi_cc_controls_verified": 127,
+  "other_high_range_controls_verified": 6,
+  "remaining_parameters": {
+    "vstp1073741832": "Factory CC1 modulation has no exact named destination in the archived provider",
+    "vstp1073741959": "Prior program playback does not bound the direct setter and its observed counter",
+    "vstp1073741828": "No method-matched retained legacy value and peer scope for this product"
+  },
+  "verification": {
+    "observed_named_midi_link_cases": 24,
+    "separately_restored_named_midi_links": 17,
+    "requests": 3556,
+    "active_seconds": 239.085,
+    "host_seconds": 375.6,
+    "protected_files": 188,
+    "managed_runtime_files": 18,
+    "scratch_saved": false
+  }
+}
