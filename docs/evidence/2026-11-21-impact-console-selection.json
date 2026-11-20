@@ -1,0 +1,33 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64",
+    "ui_language": "Korean"
+  },
+  "tested_commit": "8a90076c1e3200d1e79d7704b03424da53c3e1ec",
+  "tool": "channels_list",
+  "include_selection": true,
+  "unchanged_default_shape": true,
+  "console_selection_matches_visible_channel_list": [
+    "Impact St 1",
+    "Impact St 2",
+    "Impact St 1"
+  ],
+  "arrangement_track_selected_by_phase": [true, false, true],
+  "stable_selection_reads": 6,
+  "main_selection_unavailable": true,
+  "st_1_record_arm_and_monitor": {
+    "baseline_both": 0,
+    "st_2_selected_both": 0,
+    "st_1_reselected_both": 1,
+    "cause": "manual Console selection of the already-existing St 1 strip"
+  },
+  "main_muted_with_zero_gain": true,
+  "output_activation_exercised": false,
+  "requests": 111,
+  "owner_elapsed_seconds": 80.795,
+  "app_elapsed_seconds": 138.186,
+  "scratch_saved": false,
+  "normal_installation_files_restored": 18
+}
