@@ -1,7 +1,5 @@
 use super::*;
 
-#[path = "external_send_route.rs"]
-mod external_send_route;
 #[path = "fabfilter_editor_probe.rs"]
 mod fabfilter_editor_probe;
 
