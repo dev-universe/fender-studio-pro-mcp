@@ -295,6 +295,12 @@ enum Request {
         after_node: String,
         following_node: String,
     },
+    InsertSplitterAdd {
+        expected_instance: String,
+        expected_graph: String,
+        after_node: String,
+        following_node: String,
+    },
     InsertSplitterRemove {
         expected_instance: String,
         expected_graph: String,
@@ -352,6 +358,7 @@ impl Request {
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
+            | Self::InsertSplitterAdd { .. }
             | Self::InsertSplitterRemove { .. } => Source::Auto,
         }
     }
@@ -371,6 +378,9 @@ impl Request {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::InsertSlotMove {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterAdd {
                 expected_instance, ..
             }
             | Self::InsertSplitterRemove {
@@ -529,6 +539,28 @@ impl Request {
                     return Err(
                         "insert move requires distinct source/destination nodes and exact UUIDs"
                             .into(),
+                    );
+                }
+                Ok(())
+            }
+            Self::InsertSplitterAdd {
+                expected_instance,
+                expected_graph,
+                after_node,
+                following_node,
+            } => {
+                if ![
+                    expected_instance,
+                    expected_graph,
+                    after_node,
+                    following_node,
+                ]
+                .into_iter()
+                .all(|id| valid_uid(id))
+                    || after_node == following_node
+                {
+                    return Err(
+                        "Splitter insertion requires distinct, exact graph node UUIDs".into(),
                     );
                 }
                 Ok(())
@@ -1708,6 +1740,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainRestore { .. }
         | Request::InsertChainRelease { .. }
         | Request::InsertSlotMove { .. }
+        | Request::InsertSplitterAdd { .. }
         | Request::InsertSplitterRemove { .. } => Err("request requires its own dispatcher".into()),
     };
     match result.and_then(|value| {
@@ -2220,6 +2253,7 @@ fn dispatch_device(
             | Request::ImpactOutputSet { .. }
             | Request::InsertSlotMove { .. }
             | Request::InsertSplitterRemove { .. }
+            | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
             | Request::SetParameter { .. }
             | Request::EditNumericParameter { .. }
@@ -2315,6 +2349,18 @@ fn dispatch_device(
         return node_inspect::slot_move::dispatch(
             ctx,
             [&expected_graph, &source_node, &after_node, &following_node],
+        );
+    }
+    if let Request::InsertSplitterAdd {
+        expected_graph,
+        after_node,
+        following_node,
+        ..
+    } = request
+    {
+        return node_inspect::slot_move::splitter_add::dispatch(
+            ctx,
+            [&expected_graph, &after_node, &following_node],
         );
     }
     if let Request::InsertSplitterRemove {

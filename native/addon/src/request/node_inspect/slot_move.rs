@@ -2,6 +2,9 @@
 use super::*;
 use std::collections::{HashMap, HashSet};
 
+#[path = "slot_move/splitter_add.rs"]
+pub(in crate::native_script::request) mod splitter_add;
+
 const VIEW: Uid = Uid {
     a: 0xf5b09f71,
     b: 0x6f3f,
@@ -279,6 +282,74 @@ impl Model {
     }
 }
 
+type BoundNodes = HashMap<*mut c_void, (String, Owned)>;
+
+fn bind_nodes(
+    cells: &[DropCell],
+    route: &GraphRoute,
+    guard: &mut impl FnMut() -> Result<(), String>,
+) -> Result<BoundNodes, String> {
+    let mut nodes = HashMap::new();
+    for cell in cells {
+        if let std::collections::hash_map::Entry::Vacant(entry) = nodes.entry(cell.node) {
+            guard()?;
+            let held = hold(cell.node).ok_or("Routing node detached")?;
+            let node = query(held.0, &NODE).ok_or("Routing node identity unavailable")?;
+            if borrowed(node.0, 6) != route.graph.node.0 {
+                return Err("Routing node belongs to another graph".into());
+            }
+            let read: unsafe extern "C" fn(*mut c_void) -> *const Uid =
+                unsafe { method(node.0, 4) };
+            let id = uid(unsafe { read(node.0) });
+            if !valid_uid(&id) {
+                return Err("Routing node UUID unavailable".into());
+            }
+            entry.insert((id, held));
+            guard()?;
+        }
+    }
+    Ok(nodes)
+}
+
+fn resolve_node(nodes: &BoundNodes, id: &str) -> Result<*mut c_void, String> {
+    let mut found = nodes.iter().filter(|(_, (uid, _))| uid == id);
+    let (&pointer, _) = found
+        .next()
+        .ok_or("Requested insert graph node is absent from Routing")?;
+    if found.next().is_some() {
+        return Err("Insert graph node UUID is ambiguous".into());
+    }
+    Ok(pointer)
+}
+
+fn project_branch(
+    model: &Model,
+    cells: &[DropCell],
+    after: *mut c_void,
+    following: *mut c_void,
+    guard: &mut impl FnMut() -> Result<(), String>,
+) -> Result<i32, String> {
+    let project: unsafe extern "C" fn(*mut c_void, *const DropCell) -> *mut c_void =
+        unsafe { std::mem::transmute(model.image + PROJECT_DROP_OFFSET) };
+    let mut branch = None;
+    for cell in cells
+        .iter()
+        .filter(|cell| cell.node == following && cell.kind != 1)
+    {
+        if !(0..32).contains(&cell.branch) {
+            continue;
+        }
+        guard()?;
+        if unsafe { project(model.base(), cell) } == after {
+            if branch.is_some_and(|value| value != cell.branch) {
+                return Err("Destination edge has multiple native branch positions".into());
+            }
+            branch = Some(cell.branch);
+        }
+    }
+    branch.ok_or("Routing cannot project that destination edge".into())
+}
+
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     [graph_id, source_id, after_id, following_id]: [&str; 4],
@@ -313,38 +384,10 @@ pub(in crate::native_script::request) fn dispatch(
         let mut guard = || model.check(&ctx, &route);
         guard()?;
         let cells = model.cells()?;
-        let mut nodes = HashMap::new();
-        for cell in &cells {
-            if let std::collections::hash_map::Entry::Vacant(entry) = nodes.entry(cell.node) {
-                guard()?;
-                let held = hold(cell.node).ok_or("Routing node detached")?;
-                let node = query(held.0, &NODE).ok_or("Routing node identity unavailable")?;
-                if borrowed(node.0, 6) != route.graph.node.0 {
-                    return Err("Routing node belongs to another graph".into());
-                }
-                let read: unsafe extern "C" fn(*mut c_void) -> *const Uid =
-                    unsafe { method(node.0, 4) };
-                let id = uid(unsafe { read(node.0) });
-                if !valid_uid(&id) {
-                    return Err("Routing node UUID unavailable".into());
-                }
-                entry.insert((id, held));
-                guard()?;
-            }
-        }
-        let resolve = |id: &str| -> Result<*mut c_void, String> {
-            let mut found = nodes.iter().filter(|(_, (uid, _))| uid == id);
-            let (&pointer, _) = found
-                .next()
-                .ok_or("Requested insert graph node is absent from Routing")?;
-            if found.next().is_some() {
-                return Err("Insert graph node UUID is ambiguous".into());
-            }
-            Ok(pointer)
-        };
-        let source = resolve(source_id)?;
-        let after = resolve(after_id)?;
-        let following = resolve(following_id)?;
+        let nodes = bind_nodes(&cells, &route, &mut guard)?;
+        let source = resolve_node(&nodes, source_id)?;
+        let after = resolve_node(&nodes, after_id)?;
+        let following = resolve_node(&nodes, following_id)?;
         for slot in [source, after] {
             if !SLOT_TABLES
                 .iter()
@@ -364,31 +407,14 @@ pub(in crate::native_script::request) fn dispatch(
         {
             return Err("Requested destination edge has changed".into());
         }
-        let project: unsafe extern "C" fn(*mut c_void, *const DropCell) -> *mut c_void =
-            unsafe { std::mem::transmute(image + PROJECT_DROP_OFFSET) };
-        let mut branch = None;
-        for cell in cells
-            .iter()
-            .filter(|cell| cell.node == following && cell.kind != 1)
-        {
-            if !(0..32).contains(&cell.branch) {
-                continue;
-            }
-            guard()?;
-            if unsafe { project(model.base(), cell) } == after {
-                if branch.is_some_and(|value| value != cell.branch) {
-                    return Err("Destination edge has multiple native branch positions".into());
-                }
-                branch = Some(cell.branch);
-            }
-        }
+        let branch = project_branch(&model, &cells, after, following, &mut guard)?;
         let input = MoveDescriptor {
             source,
             component: source, // Verified SlotNode variants use no replacement component.
             reserved: std::ptr::null_mut(),
             previous: after,
             following,
-            branch: branch.ok_or("Routing cannot project that destination edge")?,
+            branch,
             padding: 0,
         };
         let preview: unsafe extern "C" fn(*mut c_void, *const MoveDescriptor) -> u8 =
