@@ -177,6 +177,8 @@ For another page, send `offset` set to `next_offset` and `expected_catalog` set 
 
 For Pro-Q 4 VST3 4.13 on Apple Silicon, `plugin_inspect` with the expected instance can report `native.capabilities.fabfilter_editor_owner`. A `matching_attached_editor_count` of 1 means Studio Pro attached the editor to that instance. A count of 0 means that instance currently has no attached editor. `other_same_product_attached_editors` counts attached editors for other Pro-Q 4 instances in the host. [Actual editor ownership verification](docs/evidence/2026-11-21-fabfilter-proq4-editor-ownership.json)
 
+The same observation covers FabFilter Twin 3 VST3 3.10. Select only the intended instrument track before using `plugin_inspect` with its expected instance. `other_same_product_attached_editors` then counts other Twin 3 editors. [Twin 3 editor ownership verification](docs/evidence/2026-11-21-fabfilter-twin3-editor-ownership.json)
+
 ### FabFilter MIDI controller mapping
 
 Call `fabfilter_midi_mapping` with `{"product":"Micro","controller":7}` to look up the VST3 SDK mapping for CC 7. Values 128 and 129 select channel pressure and pitch bend. Program change (130) has no parameter in this SDK mapping. The result includes the tested VST3 version and the corresponding `studio_pro_name`. Compare the version and confirm the name with `plugin_parameters` on the current instance. The lookup itself sends no MIDI. [VST3 MIDI mapping interface](https://steinbergmedia.github.io/vst3_doc/vstinterfaces/classSteinberg_1_1Vst_1_1IMidiMapping.html)

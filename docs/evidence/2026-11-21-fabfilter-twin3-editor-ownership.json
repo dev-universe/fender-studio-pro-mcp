@@ -1,0 +1,19 @@
+{
+  "date_local": "2026-11-21",
+  "host": {"studio_pro_version": "8.1.1", "build": "113103", "platform": "macOS arm64"},
+  "product": {"name": "FabFilter Twin 3", "format": "VST3", "version": "3.10", "vendor_signature_verified": true},
+  "tested_candidate": "e244603",
+  "method": "Two same-class instruments were added to separate silent tracks in one scratch document. Each intended track was exclusively selected in turn. The exact device and native editor ownership were read independently before opening, while attached, and after closing its editor.",
+  "selected_instance_1_editor_counts": [0, 1, 0],
+  "selected_instance_2_editor_counts": [0, 1, 0],
+  "other_same_product_attached_editors_each_observation": 0,
+  "inactive_instrument_request_rejected": true,
+  "host_instrument_ids_distinct": true,
+  "independent_owner_observations": 12,
+  "parameter_rows_unchanged": [1510, 1510],
+  "requests_total_including_rebinding": 112,
+  "final_owner_seconds": 82.992,
+  "host_wall_seconds": 245.174,
+  "preset_file_loads": 0,
+  "cleanup": {"saved_song": false, "scratch_hash_unchanged": true, "protected_files_verified": 165, "managed_files_restored": 18}
+}
