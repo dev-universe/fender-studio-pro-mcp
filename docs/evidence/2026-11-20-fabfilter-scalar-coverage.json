@@ -62,10 +62,10 @@
   },
   "total_observed_writable": 12455,
   "fully_exhaustive_products": 4,
-  "distinct_individual_roundtrips_including_representative": 10890,
+  "distinct_individual_roundtrips_including_representative": 10891,
   "all_named_normal_range_writable_verified": 9264,
-  "high_range_writable_individually_verified": 1626,
-  "high_range_writable_pending": 1565,
+  "high_range_writable_individually_verified": 1627,
+  "high_range_writable_pending": 1564,
   "r34_timeless_2": {
     "protected_files": 28,
     "clean_owner_exit": true,
@@ -783,5 +783,24 @@
     "controller_rows_unchanged": 1510,
     "target_writes": 0,
     "actual_host_rows_added": 0
+  },
+  "r91_twin_3_program_list": {
+    "status": "verified",
+    "new_distinct_roundtrips": 1,
+    "distinct_total_verified": 1448,
+    "all_reported_values_restored": 1510,
+    "program_raw_values": [
+      0,
+      1,
+      0
+    ],
+    "read_only_counter_observed": true,
+    "read_only_counter_written": false,
+    "requests": 114,
+    "active_seconds": 14.889,
+    "wall_seconds": 95.3,
+    "protected_files": 146,
+    "managed_files": 18,
+    "saved": false
   }
 }
