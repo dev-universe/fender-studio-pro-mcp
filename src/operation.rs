@@ -83,6 +83,8 @@ pub enum Operation {
     PluginState(PluginState),
     #[serde(rename = "insertChainState", alias = "insert_chain_state")]
     InsertChainState(InsertChainState),
+    #[serde(rename = "insertSlotMove", alias = "insert_slot_move")]
+    InsertSlotMove(InsertSlotMove),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
     PluginPresets(PluginPresets),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
@@ -772,6 +774,21 @@ pub enum InsertChainStateAction {
     Capture,
     Restore,
     Release,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertSlotMove {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub source_node: String,
+    pub after_node: String,
+    pub following_node: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1790,6 +1807,39 @@ impl Operation {
                             "Capture takes no token; restore and release require an issued state token",
                         ));
                     }
+                }
+            }
+            Self::InsertSlotMove(p) => {
+                validate_plugin_target(Some(&p.channel), Some(p.slot), None, None)?;
+                for name in [&p.channel, &p.plugin] {
+                    if name.trim().is_empty()
+                        || name.encode_utf16().count() > 256
+                        || name.chars().any(char::is_control)
+                    {
+                        return Err(invalid("An exact channel and effect name are required"));
+                    }
+                }
+                for uuid in [
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &p.source_node,
+                    &p.after_node,
+                    &p.following_node,
+                ] {
+                    validate_instance_uid(Some(uuid))?;
+                    if uuid == "00000000-0000-0000-0000-000000000000"
+                        || uuid.bytes().any(|byte| byte.is_ascii_lowercase())
+                    {
+                        return Err(invalid("Insert slot moves require canonical nonzero UUIDs"));
+                    }
+                }
+                if p.source_node == p.after_node
+                    || p.source_node == p.following_node
+                    || p.after_node == p.following_node
+                {
+                    return Err(invalid(
+                        "Source, destination and following node must differ",
+                    ));
                 }
             }
             Self::InsertChainState(p) => {

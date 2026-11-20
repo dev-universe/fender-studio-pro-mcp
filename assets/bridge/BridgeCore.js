@@ -198,7 +198,7 @@ class Bridge {
             code = "native_context_lost";
             result = fail("the native editor document lease changed before publication");
         }
-        if (!isFail(result) && req.op === "insertChainState"
+        if (!isFail(result) && ["insertChainState", "insertSlotMove"].includes(req.op)
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -368,6 +368,7 @@ class Bridge {
             case "pluginEditorOpen": return this.fromComponent(c => c.pluginEditorOpen(args));
             case "pluginState": return this.fromComponent(c => c.pluginState(args));
             case "insertChainState": return this.fromComponent(c => c.insertChainState(args));
+            case "insertSlotMove": return this.fromComponent(c => c.insertSlotMove(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));

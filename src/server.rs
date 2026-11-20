@@ -230,6 +230,12 @@ impl McpServer {
                 "Capture, restore or release the whole Inserts folder of one exact mixer channel with the matching native extension. Every action requires expected_document. Capture issues a private opaque token; restore and release require that same token. Optional expected_folder pins its native folder UUID. Set include_routing=true on capture to read the host-authored Splitter, merger and slot links when present. A successful load remains applied_unverified and requires independent graph and per-part parameter/model readback. No caller file path, URL, bytes or plugin slot is accepted.",
                 true,
             ),
+            named::<InsertSlotMove>(
+                "insert_slot_move",
+                "insertSlotMove",
+                "Move one bound effect slot immediately after another slot in the same open Inserts routing graph. Supply the source effect, graph UUID, source node UUID, destination node UUID and the destination's current successor UUID from a fresh graph and ownership read. Use independent graph and parameter readback after the request.",
+                true,
+            ),
             named::<PluginPresets>(
                 "plugin_presets",
                 "pluginPresets",
@@ -585,7 +591,7 @@ mod tests {
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 51);
+        assert_eq!(specs.len(), 52);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -623,7 +629,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 51);
+        assert_eq!(specs.len(), 52);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -670,7 +676,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 51);
+        assert_eq!(McpServer::specs().len(), 52);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -875,6 +881,7 @@ mod tests {
             "plugin_action",
             "impact_output_set",
             "insert_chain_state",
+            "insert_slot_move",
             "panner_set",
             "splitter_set",
         ] {
@@ -888,7 +895,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 51);
+        assert_eq!(specs.len(), 52);
     }
 
     #[test]
@@ -1186,7 +1193,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 51);
+        assert_eq!(specs.len(), 52);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1269,7 +1276,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 51);
+        assert_eq!(McpServer::specs().len(), 52);
     }
 
     #[test]
@@ -1317,7 +1324,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 51);
+        assert_eq!(specs.len(), 52);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

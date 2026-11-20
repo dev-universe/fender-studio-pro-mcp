@@ -27,7 +27,7 @@ function harness(options = {}) {
       calls.push(args);
       const body = JSON.parse(args[1]);
       options.dispatch?.(current);
-      const value = reply(body.operation.slice('insert_chain_'.length));
+      const value = options.nativeReply ? options.nativeReply(body) : reply(body.operation.slice('insert_chain_'.length));
       options.result?.(value);
       return options.rawResult === undefined ? JSON.stringify(value) : options.rawResult;
     },
@@ -284,4 +284,47 @@ test('BridgeCore strips a previously valid capsule if the document changes befor
   } };
   const result = host.writeRequest({ op: 'insertChainState', args: { channel: 'Scratch', action: 'capture' } }).result;
   assert.equal(result.native_outcome, 'unknown'); noClaims(result);
+});
+
+test('insert slot move validates the exact target, capability and returned identities', () => {
+  const args = {
+    channel: 'Scratch', slot: 1, plugin: 'Mixtool', expected_instance: folderUid,
+    expected_graph: '10000000-1234-1234-1234-123456789ABC',
+    source_node: '20000000-1234-1234-1234-123456789ABC',
+    after_node: '30000000-1234-1234-1234-123456789ABC',
+    following_node: '40000000-1234-1234-1234-123456789ABC',
+  };
+  const { channel, slot, plugin, ...ids } = args;
+  const device = {};
+  const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
+    native_class: 'AudioEffect', object_id: 'Mixtool 2' };
+  const good = harness({
+    capabilityFields: { insert_slot_move_api: 'same_graph_move_v1' },
+    nativeReply: body => ({ ...body, instance, ok: true, outcome: 'applied_unverified', verified: false }),
+  });
+  good.component.pluginOf = target => {
+    assert.equal(target.channel, channel);
+    assert.equal(target.slot, slot);
+    assert.equal(target.plugin, plugin);
+    return { device, name: plugin };
+  };
+  assert.equal(good.component.insertSlotMove({ ...args, after_node: args.source_node }).native_outcome, 'not_applied');
+  assert.equal(good.calls.length, 0);
+  assert.equal(good.component.insertSlotMove(args).native_outcome, 'applied_unverified');
+  assert.equal(good.calls[0][0], device);
+  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation: 'insert_slot_move', ...ids });
+  assert.equal(good.urls.length, 0);
+
+  const missing = harness();
+  missing.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(missing.component.insertSlotMove(args).native_outcome, 'not_applied');
+  assert.equal(missing.calls.length, 0);
+
+  const stale = harness({
+    capabilityFields: { insert_slot_move_api: 'same_graph_move_v1' },
+    nativeReply: body => ({ ...body, instance, after_node: body.source_node, ok: true, outcome: 'applied_unverified', verified: false }),
+  });
+  stale.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(stale.component.insertSlotMove(args).native_outcome, 'unknown');
+  assert.equal(stale.calls.length, 1);
 });
