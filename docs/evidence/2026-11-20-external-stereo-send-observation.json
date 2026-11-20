@@ -1,0 +1,35 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "External Effect Stereo",
+  "scope": "Logical Send observation and editor selection while Main has no assigned physical output",
+  "send_display_by_stage": [
+    "없음",
+    "메인",
+    "없음"
+  ],
+  "checked_send_menu_title_by_stage": [
+    "없음",
+    "메인 - 1 + 2",
+    "없음"
+  ],
+  "send_raw_integer_by_stage": [
+    -1,
+    -1,
+    -1
+  ],
+  "send_normalized_by_stage": [
+    1,
+    1,
+    1
+  ],
+  "native_editor_selections": 2,
+  "independent_controller_reads": 6,
+  "restored_controller_rows": 24,
+  "mixer_and_timeline_stable": true,
+  "transport_stopped": true,
+  "requests": 77,
+  "active_seconds": 94.101,
+  "host_seconds": 138.014,
+  "managed_runtime_files_preserved": 18,
+  "scratch_saved": false
+}
