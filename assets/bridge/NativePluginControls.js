@@ -1355,7 +1355,7 @@ class NativePluginControls {
             }
             if (externalMenu) {
                 if (result.ok === false) return this.externalMenuFailure(true, result);
-                if (!this.externalMenuResult(result, request)) throw new Error("invalid External menu lifecycle result");
+                if (!this.externalMenuResult(result, request)) return this.externalMenuFailure(true, null);
             }
             if (rumbleNamedParameters && !this.rumbleNamedParametersResult(result, request)) return this.rumbleNamedParametersFailure();
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();
