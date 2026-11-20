@@ -1,0 +1,29 @@
+{
+  "host": "Studio Pro 8.1.1.113103 macOS arm64",
+  "plugin": "FabFilter Micro 1.32 official VST3",
+  "native_bridge": 59,
+  "individual_write_read_restore": {
+    "named_controls": 9,
+    "host_bypass": 1,
+    "midi_cc": 128,
+    "pitch_bend_and_channel_pressure": 2,
+    "additional_internal_values": 4,
+    "program_value": 1,
+    "writable_total": 145
+  },
+  "program_value_roundtrip": {
+    "run": "R53",
+    "parameter": "vstp1073741959",
+    "plain_values": [0, 1, 0],
+    "companion_restored_to_baseline": "vstp1073741825",
+    "read_only_observation_at_baseline_after_restore": "vstp1073741960",
+    "reported_values_at_baseline_after_restore": 146,
+    "requests": 47,
+    "rpc_elapsed_seconds": 6.852,
+    "wall_elapsed_seconds": 46.2,
+    "protected_files_matching": 66,
+    "managed_files_matching": 18,
+    "scratch_saved": false
+  },
+  "scope": "Tests exercised the parameter provider in stopped scratch songs. MIDI delivery, preset recall by name and audible output are separate checks."
+}
