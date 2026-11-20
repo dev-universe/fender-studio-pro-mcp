@@ -1,0 +1,41 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Simplon",
+  "version": "1.42",
+  "format": "VST3",
+  "reported_parameters": 156,
+  "writable_parameters": 155,
+  "individually_changed_read_and_restored": 155,
+  "named_writable_parameters_verified": 19,
+  "virtual_midi_cc_controls_verified": 128,
+  "other_high_range_controls_verified": 8,
+  "verification": {
+    "legacy_cc_independently_verified": true,
+    "complete_restored_values": 156,
+    "linked_named_control_cases": 4,
+    "linked_control_ids": [
+      "vstp1",
+      "vstp2",
+      "vstp7",
+      "vstp8"
+    ],
+    "high_range_trials": [
+      {
+        "controls_verified": 26,
+        "requests": 628,
+        "active_seconds": 45.595,
+        "host_seconds": 192.0,
+        "protected_files": 165
+      },
+      {
+        "controls_verified": 110,
+        "requests": 6642,
+        "active_seconds": 483.094,
+        "host_seconds": 540.7,
+        "protected_files": 175
+      }
+    ],
+    "managed_runtime_files": 18,
+    "scratch_saved": false
+  }
+}
