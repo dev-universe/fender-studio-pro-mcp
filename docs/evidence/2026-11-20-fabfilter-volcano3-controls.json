@@ -1,0 +1,24 @@
+{
+  "host": "Studio Pro 8.1.1 Build 113103 on macOS arm64",
+  "plugin": "FabFilter Volcano 3",
+  "version": "3.09",
+  "format": "VST3",
+  "source": "official signed VST3",
+  "reported_parameters": 1033,
+  "individually_verified_writable_parameters": 1032,
+  "previously_verified_named_parameters": 896,
+  "new_roundtrips": {
+    "virtual_midi_cc": 128,
+    "common_internal": 8,
+    "writable_values_compared_each_case": 1032,
+    "legacy_controller_independent_readback": true
+  },
+  "verification": {
+    "requests": 3458,
+    "active_seconds": 281.562,
+    "host_seconds": 343.8,
+    "protected_files_preserved": 230,
+    "runtime_files_preserved": 18,
+    "scratch_saved": false
+  }
+}
