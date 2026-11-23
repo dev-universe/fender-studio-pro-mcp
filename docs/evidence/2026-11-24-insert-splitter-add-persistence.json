@@ -1,0 +1,46 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "trial": "R251",
+  "verified_code": "7d2984984ee8b1af393ce250a2c65109b4dc0237",
+  "operation": "insert_splitter_add",
+  "rack_scope": "pre_fader_nested_splitter",
+  "nodes_before": 6,
+  "directed_links_before": 7,
+  "nodes_after": 8,
+  "directed_links_after": 10,
+  "new_branches": 2,
+  "existing_mixtool_values_verified": [
+    72,
+    72
+  ],
+  "save_requests": 1,
+  "native_insertions": 1,
+  "serialized_graph_matches_live_graph": true,
+  "fresh_session_and_document": true,
+  "fresh_insert_folder_and_graph_ids": true,
+  "persisted_node_slot_and_effect_ids": true,
+  "editor_confirmed_reopened_layout": true,
+  "stale_document_refused_before_mutation": true,
+  "stale_graph_refused_before_mutation": true,
+  "reopened_values_and_graph_unchanged_after_refusals": true,
+  "requests": [
+    61,
+    47
+  ],
+  "owner_wall_seconds": [
+    111.075,
+    5.538
+  ],
+  "app_wall_seconds": [
+    170.894,
+    83.269
+  ],
+  "released_captures": 8,
+  "reopened_scratch_closed_without_resaving": true,
+  "saved_file_hash_preserved": true,
+  "normal_managed_files_restored": 18
+}
