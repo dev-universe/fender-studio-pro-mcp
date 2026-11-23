@@ -534,6 +534,34 @@ fn actual_context_instance_guard_still_precedes_alias_capture() {
     drop(context);
 }
 
+#[test]
+fn exact_pedalboard_identity_admits_only_read_only_controller_inspection() {
+    let exact = Instance {
+        object_uid: "12345678-1234-1234-1234-123456789ABC".into(),
+        class_uid: "BC9129B4-EC67-41B8-96DE-EC128D5FE54D".into(),
+        native_class: "AudioEffect".into(),
+        object_id: "Pedalboard".into(),
+    };
+    assert!(inspection_supported(&exact));
+    assert!(!supported(&exact.class_uid));
+
+    let wrong_effect = Instance {
+        object_id: "Ampire".into(),
+        ..exact.clone()
+    };
+    let wrong_class = Instance {
+        native_class: "AudioSynth".into(),
+        ..exact.clone()
+    };
+    let wrong_uid = Instance {
+        object_uid: ZERO_UID.into(),
+        ..exact
+    };
+    for bad in [wrong_effect, wrong_class, wrong_uid] {
+        assert!(!inspection_supported(&bad));
+    }
+}
+
 fn level_instance() -> Instance {
     Instance {
         object_uid: "12345678-1234-1234-1234-123456789ABC".into(),
