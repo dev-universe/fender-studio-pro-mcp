@@ -2008,6 +2008,7 @@ impl Operation {
                     | Product::ProC3
                     | Product::ProR
                     | Product::ProR2
+                    | Product::Saturn
                     | Product::Saturn2 => {
                         p.channel.as_deref().is_some_and(bounded)
                             && p.slot.is_some_and(|slot| slot < 16)
@@ -2020,7 +2021,7 @@ impl Operation {
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn 2, and Twin 3 VST3",
+                            "Preset file application supports Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, and Twin 3 VST3",
                         ));
                     }
                 };
