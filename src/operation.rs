@@ -2022,7 +2022,8 @@ impl Operation {
                     | Product::Simplon
                     | Product::Timeless2
                     | Product::Timeless3
-                    | Product::Volcano2 => {
+                    | Product::Volcano2
+                    | Product::Volcano3 => {
                         p.channel.as_deref().is_some_and(bounded)
                             && p.slot.is_some_and(|slot| slot < 16)
                             && p.track.is_none()
@@ -2031,11 +2032,6 @@ impl Operation {
                         p.track.as_deref().is_some_and(bounded)
                             && p.channel.is_none()
                             && p.slot.is_none()
-                    }
-                    _ => {
-                        return Err(invalid(
-                            "Preset file application supports Micro, One, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, Timeless 2, Timeless 3, Twin 2, Twin 3, and Volcano 2 VST3",
-                        ));
                     }
                 };
                 if !target_matches

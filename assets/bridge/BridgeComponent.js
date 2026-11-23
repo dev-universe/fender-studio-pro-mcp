@@ -935,6 +935,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             "Saturn": "5460882A-C2AA-4861-88CC-F15B4ACC25C6",
             "Saturn 2": "8D067533-D8A0-491D-BAA3-6C064C6ABBFB",
             "Volcano 2": "5D923348-ADF7-43B5-9F86-EC29572B103E",
+            "Volcano 3": "299B276C-E27B-4F51-9596-8A0F8600E9D1",
         };
         const effectClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(effectClasses, args.product)
             ? effectClasses[args.product] : null;

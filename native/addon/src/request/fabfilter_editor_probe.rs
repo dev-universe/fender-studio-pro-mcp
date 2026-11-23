@@ -528,6 +528,31 @@ const VOLCANO2: Image = Image {
     destructor: 0x26620,
 };
 
+static VOLCANO3_HEADERS: [[u8; 8]; 3] =
+    [*b"FV3l\x03\0\0\0", *b"FV3l\x04\0\0\0", *b"FV3l\x05\0\0\0"];
+
+const VOLCANO3: Image = Image {
+    class_uid: "299B276C-E27B-4F51-9596-8A0F8600E9D1",
+    uuid: [
+        0x1c, 0xed, 0x58, 0x9d, 0x24, 0x2c, 0x3b, 0x57, 0xa1, 0x9b, 0x58, 0x46, 0x90, 0xe8, 0x0b,
+        0x81,
+    ],
+    controller_table: 0x1f8c18,
+    state_member: 0xd0,
+    state_table: 0x1ec4c0,
+    state_file_method: 0x9b0dc,
+    view_table: 0x1fae58,
+    editor_table: 0x1f6fb8,
+    product: "volcano_3",
+    executable: "FabFilter Volcano 3",
+    binary_sha256: "05df3f3ab23aef101f73d13775acb4df6410af792d6ac845185a8b0cd2817e79",
+    binary_size: 4_580_320,
+    preset_format: PresetFormat::BinaryHeaders(&VOLCANO3_HEADERS),
+    constructor: 0x1c318,
+    loader: 0x9cbf4,
+    destructor: 0x25244,
+};
+
 enum PresetFormat {
     Text(&'static [u8]),
     Binary(&'static [u8]),
@@ -560,7 +585,7 @@ fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
         &TIMELESS2, &TIMELESS3, &ONE, &TWIN2, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
-        &SIMPLON, &VOLCANO2,
+        &SIMPLON, &VOLCANO2, &VOLCANO3,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -1067,6 +1092,25 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&TIMELESS3, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn volcano_3_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FV3l\x03\0\0\0abcdefgh", true),
+            (b"FV3l\x04\0\0\0abcdefgh", true),
+            (b"FV3l\x05\0\0\0abcdefgh", true),
+            (b"FV3l\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x06\0\0\0abcdefgh", false),
+            (b"FV2l\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&VOLCANO3, "Filter.ffp", &digest, &hex).is_some(),
                 valid
             );
         }

@@ -205,7 +205,6 @@ pub enum CatalogError {
     LimitExceeded,
     CatalogChanged,
     OffsetOutsideCatalog,
-    UnsupportedApplyProduct,
     AmbiguousPreset,
     InvalidPreset,
 }
@@ -219,7 +218,6 @@ impl CatalogError {
             Self::LimitExceeded => "preset_library_limit_exceeded",
             Self::CatalogChanged => "preset_catalog_changed",
             Self::OffsetOutsideCatalog => "preset_offset_outside_catalog",
-            Self::UnsupportedApplyProduct => "preset_product_apply_unsupported",
             Self::AmbiguousPreset => "preset_entry_ambiguous",
             Self::InvalidPreset => "preset_file_invalid",
         }
@@ -235,9 +233,6 @@ impl CatalogError {
             }
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
-            Self::UnsupportedApplyProduct => {
-                "This FabFilter product does not support catalog-bound file application."
-            }
             Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
             Self::InvalidPreset => {
                 "The selected file does not match the requested FabFilter preset format."
@@ -262,33 +257,6 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 }
 
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
-    if !matches!(
-        query.product,
-        Product::Micro
-            | Product::One
-            | Product::ProC2
-            | Product::ProDS
-            | Product::ProG
-            | Product::ProL
-            | Product::ProL2
-            | Product::ProMB
-            | Product::ProQ2
-            | Product::ProQ3
-            | Product::ProQ4
-            | Product::ProC3
-            | Product::ProR
-            | Product::ProR2
-            | Product::Saturn
-            | Product::Saturn2
-            | Product::Simplon
-            | Product::Timeless2
-            | Product::Timeless3
-            | Product::Twin2
-            | Product::Twin3
-            | Product::Volcano2
-    ) {
-        return Err(CatalogError::UnsupportedApplyProduct);
-    }
     let (directory, presets, digest) = catalog(library, query.product)?;
     if !query.expected_catalog.eq_ignore_ascii_case(&digest) {
         return Err(CatalogError::CatalogChanged);
@@ -418,8 +386,15 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
                     b"FV2l\x01\0\0\0" | b"FV2l\x02\0\0\0" | b"FVol\x01\0\0\0"
                 );
         }
+        Product::Volcano3 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FV3l\x03\0\0\0" | b"FV3l\x04\0\0\0" | b"FV3l\x05\0\0\0"
+                );
+        }
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
-        _ => return false,
+        Product::ProR => return false,
     };
     let mut header = bytes
         .split(|byte| *byte == b'\n')
@@ -723,6 +698,16 @@ mod tests {
             (b"FV3l\x05\0\0\0abcdefgh", false),
         ] {
             assert_eq!(matches_preset(Product::Volcano2, bytes), valid);
+        }
+        for (bytes, valid) in [
+            (b"FV3l\x03\0\0\0abcdefgh", true),
+            (b"FV3l\x04\0\0\0abcdefgh", true),
+            (b"FV3l\x05\0\0\0abcdefgh", true),
+            (b"FV3l\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x06\0\0\0abcdefgh", false),
+            (b"FV2l\x02\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Volcano3, bytes), valid);
         }
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
