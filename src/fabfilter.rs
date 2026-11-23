@@ -265,6 +265,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
     if !matches!(
         query.product,
         Product::ProQ2
+            | Product::ProQ3
             | Product::ProQ4
             | Product::ProC3
             | Product::ProR
@@ -336,6 +337,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
 fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::ProQ2 => return bytes.len() >= 16 && bytes.starts_with(b"FQ2p\x02\0\0\0"),
+        Product::ProQ3 => return bytes.len() >= 16 && bytes.starts_with(b"FQ3p\x04\0\0\0"),
         Product::ProQ4 => b"Signature=FQ4p",
         Product::ProC3 => b"Signature=FC3p",
         Product::ProR | Product::ProR2 if bytes.starts_with(b"FPRr") => {
@@ -655,6 +657,14 @@ mod tests {
             Product::ProR2,
             b"[Preset]\nSignature=FR2p\nVersion=5\nAuthor=Fixture"
         ));
+    }
+
+    #[test]
+    fn pro_q_3_requires_its_observed_binary_header() {
+        assert!(matches_preset(Product::ProQ3, b"FQ3p\x04\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProQ3, b"FQ3p\x03\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProQ3, b"FQ2p\x04\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProQ3, b"FQ3p\x04\0\0\0"));
     }
 
     #[test]
