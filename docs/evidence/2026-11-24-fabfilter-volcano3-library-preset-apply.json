@@ -1,0 +1,125 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Volcano 3 VST3",
+  "vst3_version": "3.09",
+  "verified_code": "91b4ce1b86d3ed4ed51139e86bb0537f1c114088",
+  "factory_files": 108,
+  "matching_factory_format_counts": {
+    "FV3l_v5": 95,
+    "FV3l_v4": 3,
+    "FV3l_v3": 10
+  },
+  "isolated_sdk": [
+    {
+      "format": "FV3l_v5",
+      "changed_reported_values": 9,
+      "reported_values_restored": 1033,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FV3l_v4",
+      "changed_reported_values": 76,
+      "reported_values_restored": 1033,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FV3l_v3",
+      "changed_reported_values": 130,
+      "reported_values_restored": 1033,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R297",
+      "signature": "FV3l",
+      "version": 5,
+      "verified_ui_preset": "Vintage",
+      "changed_reported_values": 2,
+      "reported_values_exactly_restored": 1033,
+      "automatically_restored_values": 1032,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 101.425,
+      "actual_host_wall_seconds": 141.24,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 114,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R298",
+      "signature": "FV3l",
+      "version": 4,
+      "verified_ui_preset": "Sample&Hold 01 SM",
+      "changed_reported_values": 78,
+      "reported_values_exactly_restored": 1033,
+      "automatically_restored_values": 1032,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 126.259,
+      "actual_host_wall_seconds": 197.565,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 114,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R299",
+      "signature": "FV3l",
+      "version": 3,
+      "verified_ui_preset": "Drum Blender 01 SM",
+      "changed_reported_values": 129,
+      "reported_values_exactly_restored": 1033,
+      "automatically_restored_values": 1032,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 164.434,
+      "actual_host_wall_seconds": 252.658,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 114,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
