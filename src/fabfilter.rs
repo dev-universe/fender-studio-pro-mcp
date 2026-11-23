@@ -264,7 +264,12 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
     if !matches!(
         query.product,
-        Product::ProQ4 | Product::ProC3 | Product::ProR | Product::ProR2 | Product::Twin3
+        Product::ProQ4
+            | Product::ProC3
+            | Product::ProR
+            | Product::ProR2
+            | Product::Saturn2
+            | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
@@ -334,6 +339,13 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
             return bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0");
         }
         Product::ProR2 => b"Signature=FR2p",
+        Product::Saturn2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FS2a\x02\0\0\0" | b"FS2a\x03\0\0\0" | b"FS2a\x04\0\0\0" | b"FSat\x04\0\0\0"
+                );
+        }
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
         _ => return false,
     };
@@ -633,6 +645,20 @@ mod tests {
             Product::ProR2,
             b"[Preset]\nSignature=FR2p\nVersion=5\nAuthor=Fixture"
         ));
+    }
+
+    #[test]
+    fn saturn_2_accepts_the_four_observed_factory_formats() {
+        for bytes in [
+            b"FS2a\x02\0\0\0abcdefgh",
+            b"FS2a\x03\0\0\0abcdefgh",
+            b"FS2a\x04\0\0\0abcdefgh",
+            b"FSat\x04\0\0\0abcdefgh",
+        ] {
+            assert!(matches_preset(Product::Saturn2, bytes));
+        }
+        assert!(!matches_preset(Product::Saturn2, b"FS2a\x05\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Saturn2, b"FSat\x04\0\0\0"));
     }
 
     #[test]
