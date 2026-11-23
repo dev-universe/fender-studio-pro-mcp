@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-Q 2 VST3",
+  "vst3_version": "2.30",
+  "verified_code": "578e10d",
+  "factory_files": 27,
+  "matching_factory_format_counts": {
+    "FQ2p_v2": 27
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 40,
+    "reported_values_restored": 328,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R241",
+    "signature": "FQ2p",
+    "version": 2,
+    "verified_ui_preset": "Flat 5 Bands",
+    "visible_eq_bands": 5,
+    "native_apply_calls": 1,
+    "changed_reported_values": 41,
+    "reported_values_exactly_restored": 328,
+    "automatically_restored_values": 327,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 140,
+    "owner_wall_seconds": 114.927,
+    "actual_host_wall_seconds": 153.972,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 28,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false
+  }
+}

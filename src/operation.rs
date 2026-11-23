@@ -2004,7 +2004,9 @@ impl Operation {
                         && !value.chars().any(char::is_control)
                 };
                 let target_matches = match p.product {
-                    Product::ProQ4
+                    Product::ProQ2
+                    | Product::ProQ3
+                    | Product::ProQ4
                     | Product::ProC3
                     | Product::ProR
                     | Product::ProR2
@@ -2021,7 +2023,7 @@ impl Operation {
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, and Twin 3 VST3",
+                            "Preset file application supports Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, and Twin 3 VST3",
                         ));
                     }
                 };
