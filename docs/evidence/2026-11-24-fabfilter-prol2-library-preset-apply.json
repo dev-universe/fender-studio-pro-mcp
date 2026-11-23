@@ -1,0 +1,48 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-L 2 VST3",
+  "vst3_version": "2.26",
+  "verified_code": "b8252075a6aa955ea178e7cb02bc1c776cf9a86c",
+  "factory_files": 58,
+  "matching_factory_format_counts": {
+    "FL2p_v2": 58
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 6,
+    "reported_values_restored": 169,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R252",
+    "signature": "FL2p",
+    "version": 2,
+    "verified_ui_preset": "Drum Bus - Punchy Limiting 1",
+    "native_apply_calls": 1,
+    "changed_reported_values": 7,
+    "reported_values_exactly_restored": 169,
+    "automatically_restored_values": 168,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 173.643,
+    "actual_host_wall_seconds": 235.262,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 63,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false
+  }
+}
