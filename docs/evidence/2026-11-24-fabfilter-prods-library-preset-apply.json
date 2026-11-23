@@ -1,0 +1,48 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-DS VST3",
+  "vst3_version": "1.32",
+  "verified_code": "1155b564e4da25ad63062678495fd61566f8c3ea",
+  "factory_files": 9,
+  "matching_factory_format_counts": {
+    "FPSr_v2": 9
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 4,
+    "reported_values_restored": 157,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R255",
+    "signature": "FPSr",
+    "version": 2,
+    "verified_ui_preset": "Female Split Band",
+    "native_apply_calls": 1,
+    "changed_reported_values": 2,
+    "reported_values_exactly_restored": 157,
+    "automatically_restored_values": 156,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 43.955,
+    "actual_host_wall_seconds": 99.933,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 11,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false
+  }
+}
