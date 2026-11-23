@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-G VST3",
+  "vst3_version": "1.42",
+  "verified_code": "4de75d52f30a6a5d18bd56e03a4ff07d8af918e1",
+  "factory_files": 57,
+  "matching_factory_format_counts": {
+    "FPGr_v2": 57
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 8,
+    "reported_values_restored": 172,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R262",
+    "signature": "FPGr",
+    "version": 2,
+    "verified_ui_preset": "Classic Channel Strip Gate",
+    "native_apply_calls": 1,
+    "changed_reported_values": 6,
+    "reported_values_exactly_restored": 172,
+    "automatically_restored_values": 171,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 109.802,
+    "actual_host_wall_seconds": 167.294,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 63,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false,
+    "ui_title_evidence": "Unique abbreviated editor title corroborated by the full library menu entry and applied file"
+  }
+}
