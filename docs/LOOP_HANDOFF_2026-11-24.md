@@ -259,3 +259,24 @@ FabFilter는 제조사 파일 형식별 대표 시험 23종이 끝났다. 남은
 2. 빈 슬롯 이동은 점유된 기존 슬롯과 비어 있는 대상을 명시하고, 옮긴 뒤 원래 슬롯이 비는지와 페달의 전체 설정 및 나머지 슬롯을 독립 읽는다. 없는 슬롯을 정식 슬롯 ID와 구분한다. 검증 전에는 단일 교체 호출 또는 여러 슬롯을 건너뛰는 호출로 결과를 추정하지 않는다.
 3. 비인접 교환과 한 페달의 순차 이동은 결과 순서가 다르다. 서로 다른 모델을 세 개 이상 배치하고 기대 순서를 요청 전에 고정한다. 구분선 전후에 걸치는 경우에는 `stompOrder`와 각 부분의 순서도 따로 대조한다. 실제 두 채널을 쓰기 전에 재생을 멈추고 시험 채널과 Main을 확인한다.
 4. 앱의 되돌리기 검증은 R312처럼 교체 전 맨 위 항목, 교체 직후 새 항목, 한 번의 실행 취소, 전체 복원 순으로 검증한다. 저장은 소유한 복제본에서 한 번만 수행하며, 새 프로세스의 독립 읽기와 세션 바인딩까지 확인한다.
+
+
+## 오전 6시 이동 전 마무리
+
+한국 시간 05:57에 직접 실행 범위를 닫고 공개 상태를 확인했다. 오전 5시 45분 이후 새 실앱 시험은 시작하지 않았다. 마지막 실제 시험은 R312다. 앱과 시험용 MCP 프로세스가 없고, REA 분석 세션을 닫았으며 정상 설치 18개와 보호 입력 162개를 재확인했다. 공개 `main`은 `3c8367f1`이며 공식 FabFilter 제조사 프리셋 적용은 17/23종이 포함된다. 실제 시험으로는 23종을 마쳤다. [공개 main](https://github.com/dev-universe/fender-studio-pro-mcp/tree/main)
+
+[Pro-C 2 PR #89](https://github.com/dev-universe/fender-studio-pro-mcp/pull/89)는 오전 5시 31분에 `e083a62`, [FabFilter 레거시 읽기 PR #96](https://github.com/dev-universe/fender-studio-pro-mcp/pull/96)은 오전 5시 44분에 `3c8367f`로 병합했다. 둘 다 정확한 헤드에서 필수 검사 두 개를 확인했고 병합 파일 트리를 대조했다. 로컬 Pedalboard 공개 후보의 기본 시험에서 Rust 244개, JavaScript 432개, Python 560개가 통과했고 macOS 확장의 491개 및 하위 라이브러리도 통과했다. 최신 후보 패키지는 별도로 빌드하고 검증했다.
+
+| 열린 PR | 기준 브랜치 | 검증 헤드 | Core / macOS |
+| --- | --- | --- | --- |
+| [#90](https://github.com/dev-universe/fender-studio-pro-mcp/pull/90) | `main` | `cc51f53c` | 진행 중 / 진행 중 |
+| [#91](https://github.com/dev-universe/fender-studio-pro-mcp/pull/91) | `feature/fabfilter-timeless3-preset-apply` | `9a1fcb6c` | 통과 / 통과 |
+| [#92](https://github.com/dev-universe/fender-studio-pro-mcp/pull/92) | `feature/fabfilter-one-preset-apply` | `a44e76a6` | 통과 / CANCELLED |
+| [#93](https://github.com/dev-universe/fender-studio-pro-mcp/pull/93) | `feature/fabfilter-timeless2-preset-apply` | `fc2105c8` | 통과 / CANCELLED |
+| [#94](https://github.com/dev-universe/fender-studio-pro-mcp/pull/94) | `feature/fabfilter-twin2-preset-apply` | `ef7cd1b8` | 통과 / 통과 |
+| [#95](https://github.com/dev-universe/fender-studio-pro-mcp/pull/95) | `feature/fabfilter-volcano2-preset-apply` | `3c472635` | 통과 / 통과 |
+| [#97](https://github.com/dev-universe/fender-studio-pro-mcp/pull/97) | `main` | `fb6a1c64` | 통과 / 진행 중 |
+| [#98](https://github.com/dev-universe/fender-studio-pro-mcp/pull/98) | `feature/pedalboard-adjacent-swap` | `cd1b8300` | 통과 / 통과 |
+| [#99](https://github.com/dev-universe/fender-studio-pro-mcp/pull/99) | `docs/pedalboard-swap-persistence` | `7c6b10c8` | 통과 / 통과 |
+
+열린 드래프트는 없다. 재개하면 먼저 현재 `main`과 각 PR의 헤드, 필수 검사 두 개, 최신 `main` 반영 여부를 대조한다. Pedalboard는 #97 다음에 #98·#99를 순서대로, FabFilter는 #90부터 #95까지 선행 PR의 병합을 반영한다. 매번 필수 검사를 통과한 정확한 헤드의 병합 파일 트리를 확인한다. 그 뒤 25개 대기열과 위의 Pedalboard 후속 판정 기준을 이어간다. 재개 신호는 사용자의 `진행 재개해`다.

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "updated_date": "2026-11-24",
-  "status": "ACTIVE_NOV24_AT_VERIFIED_CLOSED_HOST_BOUNDARY",
+  "status": "PAUSED_NOV24_USER_TRAVEL_AT_CLOSED_HOST_BOUNDARY",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-24.md",
   "nov24_current_checkpoint": {
@@ -9,7 +9,7 @@
     "new_live_unit_cutoff": "2026-11-24T05:45:00+09:00",
     "user_move_at": "2026-11-24T06:00:00+09:00",
     "verified_host_build": "113103",
-    "main_merge": "e083a621929dc9374cf150e46294bfaa38235e28",
+    "main_merge": "3c8367f1f6fa6544957018317a8b75150f63e16d",
     "remaining_builtin_units": 25,
     "remaining_hardware_units_within_builtin": 4,
     "verified_fabfilter_vendor_products": 23,
@@ -45,7 +45,104 @@
       "SHARED-MACOS-PACKAGE",
       "SHARED-DOCS-RELEASE",
       "SHARED-PHYSICAL-KEYS"
-    ]
+    ],
+    "public_fabfilter_factory_preset_products": 17,
+    "stopped_at": "2026-11-24T05:57:45+09:00",
+    "pending_release_prs": [
+      {
+        "number": 90,
+        "base": "main",
+        "head": "cc51f53cbfd0df6bcfae4264ce3f40c5bb47d58b",
+        "merge_state": "BLOCKED",
+        "checks": {
+          "Core offline checks": "진행 중",
+          "macOS arm64 native checks": "진행 중"
+        }
+      },
+      {
+        "number": 91,
+        "base": "feature/fabfilter-timeless3-preset-apply",
+        "head": "9a1fcb6c4b0fd4fa52bf02a37ea13e2013d555d0",
+        "merge_state": "UNKNOWN",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "통과"
+        }
+      },
+      {
+        "number": 92,
+        "base": "feature/fabfilter-one-preset-apply",
+        "head": "a44e76a6b837ff4ef85d01b96d8464bddccde5da",
+        "merge_state": "UNSTABLE",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "CANCELLED"
+        }
+      },
+      {
+        "number": 93,
+        "base": "feature/fabfilter-timeless2-preset-apply",
+        "head": "fc2105c8ff0e6d667050a1c4f9048f832ea62de9",
+        "merge_state": "UNSTABLE",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "CANCELLED"
+        }
+      },
+      {
+        "number": 94,
+        "base": "feature/fabfilter-twin2-preset-apply",
+        "head": "ef7cd1b84df30baa9bcc44ddc84d80847f43f8c6",
+        "merge_state": "CLEAN",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "통과"
+        }
+      },
+      {
+        "number": 95,
+        "base": "feature/fabfilter-volcano2-preset-apply",
+        "head": "3c4726350f504516fa56553df743bf22262b7cd1",
+        "merge_state": "CLEAN",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "통과"
+        }
+      },
+      {
+        "number": 97,
+        "base": "main",
+        "head": "fb6a1c6466b85e46f6638d3f864ba2f32445b440",
+        "merge_state": "BLOCKED",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "진행 중"
+        }
+      },
+      {
+        "number": 98,
+        "base": "feature/pedalboard-adjacent-swap",
+        "head": "cd1b8300a6016cf4225a3bce02848ce17a947662",
+        "merge_state": "CLEAN",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "통과"
+        }
+      },
+      {
+        "number": 99,
+        "base": "docs/pedalboard-swap-persistence",
+        "head": "7c6b10c85c4a41184eecd2e361703df1f062f0b5",
+        "merge_state": "CLEAN",
+        "checks": {
+          "Core offline checks": "통과",
+          "macOS arm64 native checks": "통과"
+        }
+      }
+    ],
+    "normal_managed_files_restored": 18,
+    "protected_input_hashes_match": 162,
+    "rea_session_closed": true
   },
   "product_source_commit": "15304714c14cf8d765dd0acb08dbb59463924129",
   "branch": "feature/cv-structured-lifecycle",
@@ -19926,9 +20023,9 @@
     "app_version": "8.1.1 Build 113103",
     "product_source_commit": "4f9d7f272f769858e55a665c1e2053ca42d02406"
   },
-  "paused_date": "2026-11-17",
-  "paused_at": "2026-11-17T17:47:20+09:00",
-  "pause_reason": "User set today18:00Asia/Seoul cutoff; completedR81andfinalstatic thenclosedallownedexecution beforedeadline",
+  "paused_date": "2026-11-24",
+  "paused_at": "2026-11-24T05:57:45+09:00",
+  "pause_reason": "User moves at 06:00 Asia/Seoul on November 24. Last Studio Pro trial R312, all owned live work closed, managed runtime restored, GitHub checks and remaining work recorded.",
   "resuming_requires_explicit_instruction": true,
   "paused_execution_summary": {
     "latest_completed_live": "Native59 R81 accepted27, sevenstructuredtrue, no lifecyclecalls",
