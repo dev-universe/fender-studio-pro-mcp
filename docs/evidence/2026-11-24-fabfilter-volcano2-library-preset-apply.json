@@ -1,0 +1,130 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Volcano 2 VST3",
+  "vst3_version": "2.41",
+  "verified_code": "0695c943f89948b6af2337db24bc1a17a369f507",
+  "factory_files": 421,
+  "matching_factory_format_counts": {
+    "FV2l_v2": 291,
+    "FV2l_v1": 4,
+    "FVol_v1": 126
+  },
+  "isolated_sdk": [
+    {
+      "format": "FV2l_v2",
+      "changed_reported_values": 67,
+      "reported_values_restored": 894,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FV2l_v1",
+      "changed_reported_values": 38,
+      "reported_values_restored": 894,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FVol_v1",
+      "changed_reported_values": 38,
+      "reported_values_restored": 894,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R301",
+      "signature": "FV2l",
+      "version": 2,
+      "verified_ui_preset": "Chopped O",
+      "changed_reported_values": 68,
+      "reported_values_exactly_restored": 894,
+      "automatically_restored_values": 893,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 63.323,
+      "actual_host_wall_seconds": 101.019,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 436,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R294",
+      "signature": "FV2l",
+      "version": 1,
+      "verified_ui_preset": "Loudness Curve bM",
+      "changed_reported_values": 39,
+      "reported_values_exactly_restored": 894,
+      "automatically_restored_values": 893,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 106.231,
+      "actual_host_wall_seconds": 158.309,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 436,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R295",
+      "signature": "FVol",
+      "version": 1,
+      "verified_ui_preset": "Arpeggio 1",
+      "changed_reported_values": 37,
+      "reported_values_exactly_restored": 894,
+      "automatically_restored_values": 893,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 99.846,
+      "actual_host_wall_seconds": 148.46,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 436,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ],
+  "notes": [
+    "In the isolated VST3 runner the first editor attachment changed the controller's Filter 1 Linked from 0 to 1. The isolated proof uses the attached-editor baseline and verifies corrections for IDs 16 and 1073741826 after loading the component state.",
+    "Studio Pro restored Filter 1 Linked with the component capsule. Only ID 1073741826 required an independent correction in each actual trial.",
+    "R293 read the actual Filter 1 Linked typed representation and was closed before preset application."
+  ]
+}
