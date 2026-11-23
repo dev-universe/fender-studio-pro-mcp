@@ -2025,14 +2025,14 @@ impl Operation {
                             && p.slot.is_some_and(|slot| slot < 16)
                             && p.track.is_none()
                     }
-                    Product::Twin3 => {
+                    Product::One | Product::Twin3 => {
                         p.track.as_deref().is_some_and(bounded)
                             && p.channel.is_none()
                             && p.slot.is_none()
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Micro, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, Timeless 3, and Twin 3 VST3",
+                            "Preset file application supports Micro, One, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, Timeless 3, and Twin 3 VST3",
                         ));
                     }
                 };

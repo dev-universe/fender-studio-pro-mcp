@@ -938,19 +938,25 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             ? effectClasses[args.product] : null;
         const effect = effectClass && label(args.channel) && Number.isInteger(args.slot)
             && args.slot >= 0 && args.slot <= 15 && args.track === null;
-        const instrument = args && args.product === "Twin 3" && label(args.track) && args.channel === null && args.slot === null;
+        const instrumentClasses = {
+            "One": "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+            "Twin 3": "91AF218E-111A-44CB-ABFE-F7CB065FF157",
+        };
+        const instrumentClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(instrumentClasses, args.product)
+            ? instrumentClasses[args.product] : null;
+        const instrument = instrumentClass && label(args.track) && args.channel === null && args.slot === null;
         if (!(effect || instrument) || Object.keys(args).length !== keys.length || Object.keys(args).some(key => !keys.includes(key))
             || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
             || args.expected_instance === "00000000-0000-0000-0000-000000000000"
             || typeof args.filename !== "string" || args.filename.length > 255 || args.filename[0] === "." || /[\x00-\x1f\x7f/]/.test(args.filename) || !/\.ffp$/i.test(args.filename)
             || typeof args.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.sha256)
             || typeof args.data_hex !== "string" || !args.data_hex || args.data_hex.length > 131072 || args.data_hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(args.data_hex))
-            return invalid("The FabFilter preset and exact effect target are invalid");
+            return invalid("The FabFilter preset and exact target are invalid");
         const target = effect ? {channel: args.channel, slot: args.slot, plugin: args.product}
             : {kind:"instrument", track:args.track, plugin:args.product};
         const plug = this.pluginOf(target);
         if (!plug || plug.error) return invalid("The expected FabFilter target is unavailable");
-        const expectedClass = effect ? effectClass : "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+        const expectedClass = effect ? effectClass : instrumentClass;
         const result = this.nativePluginRequest(plug.device, {operation:"fabfilter_preset_apply", expected_instance:args.expected_instance,
             filename:args.filename, sha256:args.sha256, data_hex:args.data_hex});
         if (!result) return invalid("The matching native FabFilter extension is unavailable");
