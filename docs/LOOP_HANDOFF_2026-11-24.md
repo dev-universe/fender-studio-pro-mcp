@@ -11,7 +11,7 @@
 
 ## 현재 실행과 기존 대기열
 
-내장 43개 중 18개 완료, 25개 잔여다. 장비가 필요한 4개는 Volt 276, Keystation88 MK3 및 물리 루프백 배선이 필요한 경우를 포함한다. 이번 시작 시 두 장치가 감지되지 않았다. FabFilter 제조사 파일 적용은 13/23종, 전수 파라미터 시험은 쓰기 가능한 12,455개 중 12,448개다. 현재 소프트웨어 잔여 기간은 2~5일로 추정한다. 오늘의 실제앱 종료 시각은 이 추정과 별개다.
+내장 43개 중 18개 완료, 25개 잔여다. 장비가 필요한 4개는 Volt 276, Keystation88 MK3 및 물리 루프백 배선이 필요한 경우를 포함한다. 이번 시작 시 두 장치가 감지되지 않았다. FabFilter 제조사 파일 적용은 15/23종, 전수 파라미터 시험은 쓰기 가능한 12,455개 중 12,448개다. 현재 소프트웨어 잔여 기간은 2~5일로 추정한다. 오늘의 실제앱 종료 시각은 이 추정과 별개다.
 
 ### Saturn 2 제조사 파일 적용 완료
 
@@ -98,3 +98,18 @@ R260의 설치 모듈에서는 `AmpSimStompItemModel`이 `stompOrder` 태그 102
 ### 공개 main 진행
 
 중첩 Splitter 제거 기록 PR #81은 정확한 검사 헤드 `fad49df`에서 11월 24일 오전 2시 56분에 `76e11db`로 병합했다. Micro PR #78은 최신 main 변경을 반영한 검사 헤드 `9f62377`에서 오전 3시 11분에 `d28acba`로 병합했다. 예상 파일 트리와 대조했다. 후속 Pro-L 2 PR #80의 main 갱신에는 검증된 코드와 무관한 제거 근거 문서만 추가했다. 새 헤드 `6db156d`에서 검사를 진행한다. [Micro PR #78](https://github.com/dev-universe/fender-studio-pro-mcp/pull/78) · [Pro-L 2 PR #80](https://github.com/dev-universe/fender-studio-pro-mcp/pull/80)
+
+
+### Pro-G와 Simplon 제조사 파일 R259·R262·R264·R266
+
+- Pro-G 1.42의 공장 파일 57개를 `FPGr` 버전 2로 분류했다. Ghidra에서 편집기가 파일 객체를 만들고 해당 상태의 처리기를 호출하는 곳을 확인했다. 공식 SDK에서 `Classic Channel Strip Gate`가 8개 값에 영향을 줬고 전체 172개와 처리부·컨트롤러 상태를 원복했다. R262의 실제 8.1.1에서는 6개 값이 바뀌었고 줄인 편집기 제목과 Bus 메뉴의 전체 제목이 맞았다. 전체 172개와 컴포넌트 지문을 복원했다. 133요청·109.802초, 앱 167.294초였다. 라이브러리 63개 항목, 환경설정과 관리 파일 18개를 확인했다. [Pro-G PR #85](https://github.com/dev-universe/fender-studio-pro-mcp/pull/85)
+- Simplon 1.42의 공장 파일 22개는 `FSim` 버전 1이었다. 공식 SDK에서 `Band Reject`의 12개 변경과 전체 156개 및 상태 원복을 확인했다. R266의 실제 8.1.1에서는 제목, 필터 곡선과 병렬 연결이 표시됐고 11개 값이 바뀌었다. 전체 156개와 컴포넌트 지문을 원복했다. 133요청·60.525초, 앱 113.191초였다. 라이브러리 22개 항목과 관리 파일 18개, 환경설정을 확인했다. 두 제품 모두 잘못된 네 요청을 거부하고 저장 없이 닫았다. [Simplon PR #86](https://github.com/dev-universe/fender-studio-pro-mcp/pull/86)
+- R267에서 Pro-MB 1.33의 공장 파일 55개가 `FPMb` 버전 3임을 확인했다. `3 Full Bands`의 20개 변경과 전체 288개 및 두 상태 원복을 공식 SDK에서 확인했다. 실제 8.1.1 R270 전에 대상·부착 편집기·상태를 새로 묶는다.
+
+### Pedalboard 번호 슬롯 관찰 R265
+
+[Fender 매뉴얼](https://fenderstudiopromanual.fender.com/en/Content/Built-In_Effects_Topics/Distortion.htm)의 별도 번호 슬롯 조작을 새 복제본에서 확인했다. Compressor의 번호 슬롯을 Reverb 쪽으로 한 번 끌었지만 화면과 40개 DSP 보고값, 믹서, 인서트 및 Phase Meter는 그대로였다. 독립 요청 중 `plugin_controller`는 Pedalboard 클래스를 명시적으로 거부했다. 준비와 시험 48회·34.610초, 별도 조회 8회, 앱 105.732초였다. 저장하지 않고 닫았으며 파일 18개를 원복했다. R268은 같은 클래스를 정확히 제한한 읽기 전용 후보에서 실제 컨트롤러가 제공되는지 확인한다. DSP 목록과 별도로 발견되는 경로만 기록한다.
+
+### 중첩 Splitter 추가 기록 배포
+
+PR #79는 최신 main을 기준으로 검사한 헤드 `d910a93`에서 필수 검사 두 개를 통과했다. 오전 3시 22분에 main `4ad6990`으로 병합됐고 예상 파일 트리와 맞았다. PR #80과 #83에는 추가 검증 기록만 들어왔고 기존 검증된 코드는 변경되지 않았다. GitHub의 일시적인 push 실패 직후 원격 헤드를 확인하고 같은 커밋을 다시 보냈다. [중첩 Splitter 추가 PR #79](https://github.com/dev-universe/fender-studio-pro-mcp/pull/79)
