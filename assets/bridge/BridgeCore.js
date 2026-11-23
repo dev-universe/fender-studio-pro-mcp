@@ -397,6 +397,12 @@ class Bridge {
                 return this.fromComponent(c => c.pluginPresets(args));
             case "editChorderAutofill": return this.fromComponent(c => c.editChorderAutofill(args));
             case "pluginAction": return this.fromComponent(c => c.pluginAction(args));
+            case "pedalboardSlotSwap": {
+                const transport = this.song().transport;
+                if (!transport || transport.playing !== false || transport.recording !== false)
+                    return { ok: false, native_outcome: "not_applied", errors: [{ code: "pedalboard_transport_active", message: "Stop playback and recording before exchanging pedals" }] };
+                return this.fromComponent(c => c.pedalboardSlotSwap(args));
+            }
             case "impactOutputSet": return this.fromComponent(c => c.impactOutputSet(args));
             default: return fail("unknown op: " + op);
         }

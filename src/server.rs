@@ -212,6 +212,12 @@ impl McpServer {
                 "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
                 true,
             ),
+            named::<PedalboardSlotSwap>(
+                "pedalboard_slot_swap",
+                "pedalboardSlotSwap",
+                "Exchange two occupied, directly adjacent positions containing different Pedalboard models. Read opt.stompmodel1 through opt.stompmodel8 from the exact DSP instance. Use their current display labels as the expected model names. Insert slot is zero-based and pedal positions are one-based. Stop playback and recording before use. Compare independent parameter reads after an applied_unverified receipt and stop on unknown outcomes.",
+                true,
+            ),
             named::<ImpactOutputSet>(
                 "impact_output_set",
                 "impactOutputSet",

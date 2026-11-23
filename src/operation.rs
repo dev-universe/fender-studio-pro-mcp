@@ -79,6 +79,8 @@ pub enum Operation {
     PluginInspect(PluginParams),
     #[serde(rename = "impactOutputSet", alias = "impact_output_set")]
     ImpactOutputSet(ImpactOutputSet),
+    #[serde(rename = "pedalboardSlotSwap", alias = "pedalboard_slot_swap")]
+    PedalboardSlotSwap(PedalboardSlotSwap),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
     PluginEditorOpen(PluginEditor),
     #[serde(rename = "pluginState", alias = "plugin_state")]
@@ -887,6 +889,20 @@ pub struct PluginAction {
     pub plugin: String,
     pub expected_instance: String,
     pub action: PluginButtonAction,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PedalboardSlotSwap {
+    pub channel: String,
+    pub slot: u32,
+    pub expected_instance: String,
+    #[schemars(range(min = 1, max = 8))]
+    pub first_slot: u8,
+    #[schemars(range(min = 1, max = 8))]
+    pub second_slot: u8,
+    pub expected_first_model: String,
+    pub expected_second_model: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1824,6 +1840,26 @@ impl Operation {
                 )?;
                 if p.plugin.trim().is_empty() {
                     return Err(invalid("An expected plugin class or instance is required"));
+                }
+            }
+            Self::PedalboardSlotSwap(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(Some(&p.channel), Some(p.slot), None, None)?;
+                if !(1..=8).contains(&p.first_slot)
+                    || !(1..=8).contains(&p.second_slot)
+                    || p.first_slot.abs_diff(p.second_slot) != 1
+                    || p.expected_first_model == p.expected_second_model
+                    || [&p.expected_first_model, &p.expected_second_model]
+                        .iter()
+                        .any(|name| {
+                            name.trim().is_empty()
+                                || name.len() > 128
+                                || name.chars().any(char::is_control)
+                        })
+                {
+                    return Err(invalid(
+                        "Supply two distinct occupied Pedalboard slots and their exact model names",
+                    ));
                 }
             }
             Self::ImpactOutputSet(p) => {
