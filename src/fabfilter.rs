@@ -277,6 +277,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::ProR2
             | Product::Saturn
             | Product::Saturn2
+            | Product::Simplon
             | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
@@ -344,6 +345,7 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
         Product::Micro => return bytes.len() >= 16 && bytes.starts_with(b"FMic\x01\0\0\0"),
         Product::ProDS => return bytes.len() >= 16 && bytes.starts_with(b"FPSr\x02\0\0\0"),
         Product::ProG => return bytes.len() >= 16 && bytes.starts_with(b"FPGr\x02\0\0\0"),
+        Product::Simplon => return bytes.len() >= 16 && bytes.starts_with(b"FSim\x01\0\0\0"),
         Product::ProL => return bytes.len() >= 16 && bytes.starts_with(b"FPLr\x03\0\0\0"),
         Product::ProL2 => return bytes.len() >= 16 && bytes.starts_with(b"FL2p\x02\0\0\0"),
         Product::ProQ2 => return bytes.len() >= 16 && bytes.starts_with(b"FQ2p\x02\0\0\0"),
@@ -683,6 +685,14 @@ mod tests {
         assert!(!matches_preset(Product::ProG, b"FPGr\x01\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProG, b"FL2p\x02\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProG, b"FPGr\x02\0\0\0"));
+    }
+
+    #[test]
+    fn simplon_requires_its_observed_binary_header() {
+        assert!(matches_preset(Product::Simplon, b"FSim\x01\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Simplon, b"FSim\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Simplon, b"FL2p\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Simplon, b"FSim\x01\0\0\0"));
     }
 
     #[test]
