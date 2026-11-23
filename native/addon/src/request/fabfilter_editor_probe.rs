@@ -40,6 +40,28 @@ const MICRO: Image = Image {
     destructor: 0x25098,
 };
 
+const PRO_DS: Image = Image {
+    class_uid: "59E324D0-8EE8-11E1-B857-8101BBE59B18",
+    uuid: [
+        0x7d, 0x93, 0x3c, 0x0a, 0xa7, 0xd6, 0x36, 0xdc, 0x91, 0xff, 0x41, 0x6a, 0xec, 0x52, 0x03,
+        0x92,
+    ],
+    controller_table: 0x175d80,
+    state_member: 0xd0,
+    state_table: 0x179148,
+    state_file_method: 0x65984,
+    view_table: 0x176f98,
+    editor_table: 0x178c88,
+    product: "pro_ds",
+    executable: "FabFilter Pro-DS",
+    binary_sha256: "474ffc06b8fd6ddd536639e78d79cbb6b510f448cad7ad98c5721d9c365ad4c3",
+    binary_size: 3_474_528,
+    preset_format: PresetFormat::Binary(b"FPSr\x02\0\0\0"),
+    constructor: 0x1b7a8,
+    loader: 0x67514,
+    destructor: 0x2601c,
+};
+
 const PRO_L2: Image = Image {
     class_uid: "AFD92F72-9A04-47B7-B5E8-D1D568DEA985",
     uuid: [
@@ -290,8 +312,8 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &MICRO, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN,
-        &SATURN2,
+        &MICRO, &PRO_DS, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2,
+        &SATURN, &SATURN2,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -738,6 +760,22 @@ mod tests {
             assert_eq!(
                 preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
                 valid && bytes.starts_with(PRO_R_BINARY_HEADER),
+            );
+        }
+    }
+
+    #[test]
+    fn pro_ds_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FPSr\x02\0\0\0abcdefgh", true),
+            (b"FPSr\x01\0\0\0abcdefgh", false),
+            (b"FL2p\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_DS, "Vocal.ffp", &digest, &hex).is_some(),
+                valid
             );
         }
     }
