@@ -269,6 +269,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::ProG
             | Product::ProL
             | Product::ProL2
+            | Product::ProMB
             | Product::ProQ2
             | Product::ProQ3
             | Product::ProQ4
@@ -348,6 +349,7 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
         Product::Simplon => return bytes.len() >= 16 && bytes.starts_with(b"FSim\x01\0\0\0"),
         Product::ProL => return bytes.len() >= 16 && bytes.starts_with(b"FPLr\x03\0\0\0"),
         Product::ProL2 => return bytes.len() >= 16 && bytes.starts_with(b"FL2p\x02\0\0\0"),
+        Product::ProMB => return bytes.len() >= 16 && bytes.starts_with(b"FPMb\x03\0\0\0"),
         Product::ProQ2 => return bytes.len() >= 16 && bytes.starts_with(b"FQ2p\x02\0\0\0"),
         Product::ProQ3 => return bytes.len() >= 16 && bytes.starts_with(b"FQ3p\x04\0\0\0"),
         Product::ProQ4 => b"Signature=FQ4p",
@@ -685,6 +687,14 @@ mod tests {
         assert!(!matches_preset(Product::ProG, b"FPGr\x01\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProG, b"FL2p\x02\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProG, b"FPGr\x02\0\0\0"));
+    }
+
+    #[test]
+    fn pro_mb_requires_its_observed_binary_header() {
+        assert!(matches_preset(Product::ProMB, b"FPMb\x03\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProMB, b"FPMb\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProMB, b"FL2p\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProMB, b"FPMb\x03\0\0\0"));
     }
 
     #[test]
