@@ -266,6 +266,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
         query.product,
         Product::Micro
             | Product::ProDS
+            | Product::ProG
             | Product::ProL
             | Product::ProL2
             | Product::ProQ2
@@ -342,6 +343,7 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::Micro => return bytes.len() >= 16 && bytes.starts_with(b"FMic\x01\0\0\0"),
         Product::ProDS => return bytes.len() >= 16 && bytes.starts_with(b"FPSr\x02\0\0\0"),
+        Product::ProG => return bytes.len() >= 16 && bytes.starts_with(b"FPGr\x02\0\0\0"),
         Product::ProL => return bytes.len() >= 16 && bytes.starts_with(b"FPLr\x03\0\0\0"),
         Product::ProL2 => return bytes.len() >= 16 && bytes.starts_with(b"FL2p\x02\0\0\0"),
         Product::ProQ2 => return bytes.len() >= 16 && bytes.starts_with(b"FQ2p\x02\0\0\0"),
@@ -673,6 +675,14 @@ mod tests {
         assert!(!matches_preset(Product::ProDS, b"FPSr\x01\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProDS, b"FL2p\x02\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProDS, b"FPSr\x02\0\0\0"));
+    }
+
+    #[test]
+    fn pro_g_requires_its_observed_binary_header() {
+        assert!(matches_preset(Product::ProG, b"FPGr\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProG, b"FPGr\x01\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProG, b"FL2p\x02\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::ProG, b"FPGr\x02\0\0\0"));
     }
 
     #[test]
