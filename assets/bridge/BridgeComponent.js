@@ -916,6 +916,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });
         const label = value => typeof value === "string" && value.trim() && value.length <= 256 && !/[\x00-\x1f\x7f]/.test(value);
         const effectClasses = {
+            "Micro": "751AFC34-1543-4CBC-AA73-672A109BE0FF",
             "Pro-Q 2": "55FD08E6-C00B-44A6-97DA-68F61C6FD576",
             "Pro-Q 3": "72C4DB71-7A4D-459A-B97E-51745D84B39D",
             "Pro-Q 4": "ED57BD72-5C60-467E-A64D-D2F400758B6F",
