@@ -40,6 +40,30 @@ const MICRO: Image = Image {
     destructor: 0x25098,
 };
 
+static PRO_C2_HEADERS: [[u8; 8]; 2] = [*b"FC2p\x02\0\0\0", *b"FPrC\x01\0\0\0"];
+
+const PRO_C2: Image = Image {
+    class_uid: "79F415E3-C8E7-4807-AD5D-A3CF7024F618",
+    uuid: [
+        0xba, 0x3a, 0x9c, 0x3c, 0x82, 0x20, 0x37, 0x49, 0x8a, 0xc5, 0x91, 0x5e, 0x04, 0xed, 0x66,
+        0xa6,
+    ],
+    controller_table: 0x1730e0,
+    state_member: 0xd0,
+    state_table: 0x178c30,
+    state_file_method: 0x12c7c8,
+    view_table: 0x174768,
+    editor_table: 0x16fd18,
+    product: "pro_c_2",
+    executable: "FabFilter Pro-C 2",
+    binary_sha256: "18fb9b61c25e8058cc9ae64167c219e34c8a224b7e824f73faf2c34c2f3d619a",
+    binary_size: 3_440_576,
+    preset_format: PresetFormat::BinaryHeaders(&PRO_C2_HEADERS),
+    constructor: 0x9f918,
+    loader: 0x61bc4,
+    destructor: 0x6f0ec,
+};
+
 const PRO_DS: Image = Image {
     class_uid: "59E324D0-8EE8-11E1-B857-8101BBE59B18",
     uuid: [
@@ -374,6 +398,7 @@ const SATURN2: Image = Image {
 enum PresetFormat {
     Text(&'static [u8]),
     Binary(&'static [u8]),
+    BinaryHeaders(&'static [[u8; 8]]),
     ProR2,
     Saturn,
     Saturn2,
@@ -400,8 +425,8 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &MICRO, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3,
-        &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
+        &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -654,6 +679,9 @@ fn preset_bytes(
     };
     let correct_format = match product.preset_format {
         PresetFormat::Binary(magic) => bytes.len() >= 16 && bytes.starts_with(magic),
+        PresetFormat::BinaryHeaders(headers) => {
+            bytes.len() >= 16 && headers.iter().any(|header| bytes.starts_with(header))
+        }
         PresetFormat::Text(signature) => matches_text(signature, None),
         PresetFormat::ProR2 => {
             (bytes.len() >= 16 && bytes.starts_with(PRO_R_BINARY_HEADER))
@@ -848,6 +876,23 @@ mod tests {
             assert_eq!(
                 preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
                 valid && bytes.starts_with(PRO_R_BINARY_HEADER),
+            );
+        }
+    }
+
+    #[test]
+    fn pro_c_2_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FC2p\x02\0\0\0abcdefgh", true),
+            (b"FPrC\x01\0\0\0abcdefgh", true),
+            (b"FC2p\x01\0\0\0abcdefgh", false),
+            (b"FPrC\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_C2, "Drums.ffp", &digest, &hex).is_some(),
+                valid
             );
         }
     }
