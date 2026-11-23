@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-MB VST3",
+  "vst3_version": "1.33",
+  "verified_code": "4d55ed863dd2607752a9baf11b6e7c6be43cfa8a",
+  "factory_files": 55,
+  "matching_factory_format_counts": {
+    "FPMb_v3": 55
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 20,
+    "reported_values_restored": 288,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R270",
+    "signature": "FPMb",
+    "version": 3,
+    "verified_ui_preset": "3 Full Bands",
+    "native_apply_calls": 1,
+    "changed_reported_values": 20,
+    "reported_values_exactly_restored": 288,
+    "automatically_restored_values": 287,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 140,
+    "owner_wall_seconds": 106.199,
+    "actual_host_wall_seconds": 155.044,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 65,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false,
+    "ui_title_evidence": "3 Full Bands shown in the editor with three filter bands"
+  }
+}
