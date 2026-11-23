@@ -40,6 +40,28 @@ const MICRO: Image = Image {
     destructor: 0x25098,
 };
 
+const PRO_L2: Image = Image {
+    class_uid: "AFD92F72-9A04-47B7-B5E8-D1D568DEA985",
+    uuid: [
+        0xec, 0x32, 0x5c, 0x96, 0x05, 0x4e, 0x38, 0x19, 0xbc, 0x25, 0x46, 0x58, 0xdd, 0xe0, 0xcb,
+        0x47,
+    ],
+    controller_table: 0x18e650,
+    state_member: 0xd0,
+    state_table: 0x187708,
+    state_file_method: 0x76b9c,
+    view_table: 0x193d20,
+    editor_table: 0x18caa0,
+    product: "pro_l_2",
+    executable: "FabFilter Pro-L 2",
+    binary_sha256: "82d8e6bcaccf38a7286908d9f92e8858c51c2e33dd438d74aaa52209745d9199",
+    binary_size: 3_705_904,
+    preset_format: PresetFormat::Binary(b"FL2p\x02\0\0\0"),
+    constructor: 0x1fb30,
+    loader: 0x7872c,
+    destructor: 0x28a20,
+};
+
 const PRO_Q2: Image = Image {
     class_uid: "55FD08E6-C00B-44A6-97DA-68F61C6FD576",
     uuid: [
@@ -268,7 +290,8 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &MICRO, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &MICRO, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN,
+        &SATURN2,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -715,6 +738,22 @@ mod tests {
             assert_eq!(
                 preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
                 valid && bytes.starts_with(PRO_R_BINARY_HEADER),
+            );
+        }
+    }
+
+    #[test]
+    fn pro_l_2_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FL2p\x02\0\0\0abcdefgh", true),
+            (b"FL2p\x03\0\0\0abcdefgh", false),
+            (b"FPLr\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_L2, "Punchy.ffp", &digest, &hex).is_some(),
+                valid
             );
         }
     }
