@@ -1,0 +1,125 @@
+{
+  "verification": "Actual Fender Studio Pro session R304 using official signed Apple Silicon VST3 effects",
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64"
+  },
+  "tool": "plugin_parameter_set",
+  "parameter": "vstp1073741828",
+  "source": "dsp",
+  "requested_normalized": 0.035,
+  "readback_requested": true,
+  "settle_milliseconds": 150,
+  "method": [
+    "Use a fresh document with the transport stopped, Main at zero and muted empty audio tracks.",
+    "Match each inserted product's exact catalog class and local official executable signature and bind its native instance.",
+    "Confirm the complete typed DSP snapshot and digest before writing the shared legacy parameter from zero.",
+    "Compare the native setter's immediate value, the delayed readback and a separate full plugin_parameters enumeration.",
+    "Write zero only when the changed value remained observable, then compare all typed rows and the independent digest."
+  ],
+  "instances": [
+    {
+      "product": "Pro-R",
+      "version": "1.20",
+      "reported_count": 222,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "3D0F5C29",
+      "readback": "matched",
+      "independent_page": "3D0F5C29",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-G",
+      "version": "1.42",
+      "reported_count": 172,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-C 2",
+      "version": "2.22",
+      "reported_count": 183,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-C 3",
+      "version": "3.02",
+      "reported_count": 237,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-DS",
+      "version": "1.32",
+      "reported_count": 157,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-L",
+      "version": "1.37",
+      "reported_count": 156,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-L 2",
+      "version": "2.26",
+      "reported_count": 169,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    },
+    {
+      "product": "Pro-MB",
+      "version": "1.33",
+      "reported_count": 288,
+      "before": "00000000",
+      "posted": "3D0F5C29",
+      "after_settle": "00000000",
+      "readback": "mismatch",
+      "independent_page": "00000000",
+      "all_rows_restored": true
+    }
+  ],
+  "closure": {
+    "requests": 247,
+    "owner_seconds": 22.279,
+    "host_seconds": 49.091,
+    "source_song_saved": false,
+    "host_exit_code": 0,
+    "mcp_exit_code": 0,
+    "normal_managed_files_unchanged": 18,
+    "protected_inputs_unchanged": 162
+  },
+  "limits": [
+    "The seven mismatches establish the behavior for these plug-in versions and stopped-transport conditions.",
+    "The processor feedback path was studied separately; the single returning value does not identify the complete live-host call path."
+  ]
+}
