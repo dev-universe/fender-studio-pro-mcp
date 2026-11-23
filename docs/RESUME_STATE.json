@@ -12,11 +12,11 @@
     "main_merge": "4ad699038b4a4d4405bdcaf4b87712bcedf3e805",
     "remaining_builtin_units": 25,
     "remaining_hardware_units_within_builtin": 4,
-    "verified_fabfilter_vendor_products": 15,
-    "remaining_fabfilter_vendor_products": 8,
+    "verified_fabfilter_vendor_products": 16,
+    "remaining_fabfilter_vendor_products": 7,
     "remaining_fabfilter_transient_values": 7,
-    "last_closed_unit": "R266 Simplon actual full restoration verified",
-    "next": "Finish Pedalboard alias read-only R268 and Pro-MB actual R270. Continue Pro-C 2 with both factory formats. Pending release heads: PR80, PR82, PR84, PR85, PR86 in dependency order; merge independent PR83 after exact required checks."
+    "last_closed_unit": "R270 Pro-MB actual full restoration verified",
+    "next": "R271 Pro-C 2 FC2p v2 and R272 legacy FPrC v1. Continue Timeless 3 R273. Publish the Pedalboard alias read witness with local checks, then inspect the exact stompOrder parameter under the observed controller. Keep required-check publication sequence."
   },
   "product_source_commit": "15304714c14cf8d765dd0acb08dbb59463924129",
   "branch": "feature/cv-structured-lifecycle",
