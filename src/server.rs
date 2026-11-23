@@ -616,12 +616,14 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
+    const EXPECTED_TOOL_COUNT: usize = 57;
+
     use super::*;
 
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -659,7 +661,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -733,7 +735,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 56);
+        assert_eq!(McpServer::specs().len(), EXPECTED_TOOL_COUNT);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -937,6 +939,7 @@ mod tests {
             "plugin_presets",
             "plugin_action",
             "impact_output_set",
+            "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
             "insert_splitter_remove",
@@ -954,7 +957,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
     }
 
     #[test]
@@ -1252,7 +1255,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1336,7 +1339,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 56);
+        assert_eq!(McpServer::specs().len(), EXPECTED_TOOL_COUNT);
     }
 
     #[test]
@@ -1384,7 +1387,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")
