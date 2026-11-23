@@ -281,6 +281,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::Saturn
             | Product::Saturn2
             | Product::Simplon
+            | Product::Timeless2
             | Product::Timeless3
             | Product::Twin3
     ) {
@@ -356,6 +357,17 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
         }
         Product::ProDS => return bytes.len() >= 16 && bytes.starts_with(b"FPSr\x02\0\0\0"),
         Product::ProG => return bytes.len() >= 16 && bytes.starts_with(b"FPGr\x02\0\0\0"),
+        Product::Timeless2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FDel\x01\0\0\0"
+                        | b"FTim\x02\0\0\0"
+                        | b"FTms\x03\0\0\0"
+                        | b"FTms\x04\0\0\0"
+                        | b"FTms\x05\0\0\0"
+                );
+        }
         Product::Timeless3 => {
             return bytes.len() >= 16
                 && matches!(&bytes[..8], b"F3Ts\x09\0\0\0" | b"F3Ts\x0a\0\0\0");
@@ -720,6 +732,19 @@ mod tests {
             b"F3Ts\x0b\0\0\0abcdefgh"
         ));
         assert!(!matches_preset(Product::Timeless3, b"F3Ts\x09\0\0\0"));
+        for (bytes, valid) in [
+            (b"FDel\x01\0\0\0abcdefgh", true),
+            (b"FTim\x02\0\0\0abcdefgh", true),
+            (b"FTms\x03\0\0\0abcdefgh", true),
+            (b"FTms\x04\0\0\0abcdefgh", true),
+            (b"FTms\x05\0\0\0abcdefgh", true),
+            (b"FDel\x02\0\0\0abcdefgh", false),
+            (b"FTim\x03\0\0\0abcdefgh", false),
+            (b"FTms\x06\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Timeless2, bytes), valid);
+        }
     }
 
     #[test]
