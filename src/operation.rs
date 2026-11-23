@@ -2693,6 +2693,35 @@ mod tests {
     use super::*;
 
     #[test]
+    fn pedalboard_exchange_requires_adjacent_occupied_models_and_exact_fields() {
+        let valid = json!({
+            "channel":"Scratch", "slot":0,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "first_slot":7, "second_slot":8,
+            "expected_first_model":"Compressor", "expected_second_model":"Reverb",
+        });
+        let operation = Operation::from_parts("pedalboard_slot_swap", valid.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert_eq!(operation.wire().0, "pedalboardSlotSwap");
+        for (field, value) in [
+            ("first_slot", json!(0)),
+            ("first_slot", json!(6)),
+            ("first_slot", json!(8)),
+            ("expected_first_model", json!("Reverb")),
+            ("expected_second_model", json!("")),
+            ("operation_address", json!(1)),
+        ] {
+            let mut invalid = valid.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("pedalboard_slot_swap", invalid)
+                    .and_then(|op| op.validate())
+                    .is_err()
+            );
+        }
+    }
+
+    #[test]
     fn cv_structure_is_closed_mutating_and_requires_only_the_fixed_instrument_target() {
         let base = json!({"kind":"instrument","track":"Scratch","plugin":"CV Instrument","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"inspect_cv_port_structure"});
         let op = Operation::from_parts("plugin_state", base.clone()).unwrap();
