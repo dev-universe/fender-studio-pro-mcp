@@ -1,0 +1,139 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Saturn 2",
+  "vst3_version": "2.13",
+  "verified_code": "e79600c9413ebb0930a7add969cd91436c89533d",
+  "factory_files": 77,
+  "matching_factory_format_counts": {
+    "FS2a_v2": 21,
+    "FS2a_v3": 14,
+    "FS2a_v4": 36,
+    "FSat_v4": 6
+  },
+  "isolated_sdk": {
+    "changed_reported_values": [
+      64,
+      162,
+      47,
+      15
+    ],
+    "reported_values_restored_in_each": 1088,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trials": [
+    {
+      "test": "R230",
+      "signature": "FS2a",
+      "version": 2,
+      "verified_ui_preset": "Brutal Compressor bM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 58,
+      "reported_values_exactly_restored": 1088,
+      "automatically_restored_values": 1087,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 173.721,
+      "actual_host_wall_seconds": 231.383,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 84,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R231",
+      "signature": "FS2a",
+      "version": 3,
+      "verified_ui_preset": "Magic bM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 164,
+      "reported_values_exactly_restored": 1088,
+      "automatically_restored_values": 1087,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 163.072,
+      "actual_host_wall_seconds": 250.135,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 84,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R232",
+      "signature": "FS2a",
+      "version": 4,
+      "verified_ui_preset": "Clean Tape Base - 4 Bands SM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 45,
+      "reported_values_exactly_restored": 1088,
+      "automatically_restored_values": 1087,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 174.383,
+      "actual_host_wall_seconds": 269.748,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 84,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R233",
+      "signature": "FSat",
+      "version": 4,
+      "verified_ui_preset": "Old Tape Crunch SM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 11,
+      "reported_values_exactly_restored": 1088,
+      "automatically_restored_values": 1087,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 120.054,
+      "actual_host_wall_seconds": 186.149,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 84,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
