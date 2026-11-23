@@ -927,6 +927,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             "Pro-C 3": "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9",
             "Pro-R": "036EB530-2A59-11E2-A281-70076288709B",
             "Pro-R 2": "6070873C-802A-4B07-8FC0-6AB5459154E9",
+            "Simplon": "3317F470-55E8-47E4-896B-59C21B843FAE",
             "Saturn": "5460882A-C2AA-4861-88CC-F15B4ACC25C6",
             "Saturn 2": "8D067533-D8A0-491D-BAA3-6C064C6ABBFB",
         };

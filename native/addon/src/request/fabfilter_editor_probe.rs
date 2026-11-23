@@ -283,6 +283,28 @@ const PRO_R2: Image = Image {
     destructor: 0x48630,
 };
 
+const SIMPLON: Image = Image {
+    class_uid: "3317F470-55E8-47E4-896B-59C21B843FAE",
+    uuid: [
+        0x97, 0xee, 0x58, 0x8d, 0x3a, 0xdb, 0x33, 0xb4, 0x91, 0x10, 0x63, 0x0a, 0x7c, 0x4e, 0xa2,
+        0x47,
+    ],
+    controller_table: 0x1086a8,
+    state_member: 0xd0,
+    state_table: 0x107408,
+    state_file_method: 0x57a58,
+    view_table: 0x10b250,
+    editor_table: 0x1068d8,
+    product: "simplon",
+    executable: "FabFilter Simplon",
+    binary_sha256: "d5f6fa163eb3ee78431bf61db9e3ed19b5054e361fd54d54e0dcf3da88458bca",
+    binary_size: 2_499_792,
+    preset_format: PresetFormat::Binary(b"FSim\x01\0\0\0"),
+    constructor: 0x86e48,
+    loader: 0x59560,
+    destructor: 0x66858,
+};
+
 const SATURN: Image = Image {
     class_uid: "5460882A-C2AA-4861-88CC-F15B4ACC25C6",
     uuid: [
@@ -357,7 +379,7 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3,
-        &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -835,6 +857,22 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_G, "Vocal.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn simplon_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FSim\x01\0\0\0abcdefgh", true),
+            (b"FSim\x02\0\0\0abcdefgh", false),
+            (b"FL2p\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&SIMPLON, "Vocal.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
