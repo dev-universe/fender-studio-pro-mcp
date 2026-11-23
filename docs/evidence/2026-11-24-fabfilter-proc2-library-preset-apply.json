@@ -1,0 +1,91 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-C 2 VST3",
+  "vst3_version": "2.22",
+  "verified_code": "4a56ee76d3cb95cf28600ae5a7b523606e7c3b39",
+  "factory_files": 109,
+  "matching_factory_format_counts": {
+    "FC2p_v2": 108,
+    "FPrC_v1": 1
+  },
+  "isolated_sdk": [
+    {
+      "format": "FC2p_v2",
+      "changed_reported_values": 20,
+      "reported_values_restored": 183,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FPrC_v1",
+      "changed_reported_values": 18,
+      "reported_values_restored": 183,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R274",
+      "signature": "FC2p",
+      "version": 2,
+      "verified_ui_preset": "DI Attack Enhancer bM",
+      "changed_reported_values": 20,
+      "reported_values_exactly_restored": 183,
+      "automatically_restored_values": 182,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 133,
+      "owner_wall_seconds": 105.429,
+      "actual_host_wall_seconds": 156.091,
+      "preferences_exactly_restored": true,
+      "sidechain_panel_preference_restored": true,
+      "preset_tree_entries_preserved": 123,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R272",
+      "signature": "FPrC",
+      "version": 1,
+      "verified_ui_preset": "Extreme Pumping",
+      "changed_reported_values": 18,
+      "reported_values_exactly_restored": 183,
+      "automatically_restored_values": 182,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 133,
+      "owner_wall_seconds": 132.911,
+      "actual_host_wall_seconds": 190.614,
+      "preferences_exactly_restored": true,
+      "sidechain_panel_preference_restored": true,
+      "preset_tree_entries_preserved": 123,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
