@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Pro-L VST3",
+  "vst3_version": "1.37",
+  "verified_code": "a6b5086df3649b2163b4a1e80fbbccb9685742e7",
+  "factory_files": 52,
+  "matching_factory_format_counts": {
+    "FPLr_v3": 52
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 6,
+    "reported_values_restored": 156,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R258",
+    "signature": "FPLr",
+    "version": 3,
+    "verified_ui_preset": "Vocal - Transparent MTK",
+    "native_apply_calls": 1,
+    "changed_reported_values": 7,
+    "reported_values_exactly_restored": 156,
+    "automatically_restored_values": 155,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 69.121,
+    "actual_host_wall_seconds": 120.116,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 58,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false,
+    "ui_title_evidence": "Unique abbreviated editor title corroborated by the full library menu entry and applied file"
+  }
+}

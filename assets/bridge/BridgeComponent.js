@@ -918,6 +918,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const effectClasses = {
             "Micro": "751AFC34-1543-4CBC-AA73-672A109BE0FF",
             "Pro-DS": "59E324D0-8EE8-11E1-B857-8101BBE59B18",
+            "Pro-L": "5AF2703A-E65F-11DE-B804-7C9C56D89593",
             "Pro-L 2": "AFD92F72-9A04-47B7-B5E8-D1D568DEA985",
             "Pro-Q 2": "55FD08E6-C00B-44A6-97DA-68F61C6FD576",
             "Pro-Q 3": "72C4DB71-7A4D-459A-B97E-51745D84B39D",
