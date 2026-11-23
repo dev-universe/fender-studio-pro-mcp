@@ -62,6 +62,28 @@ const PRO_DS: Image = Image {
     destructor: 0x2601c,
 };
 
+const PRO_L: Image = Image {
+    class_uid: "5AF2703A-E65F-11DE-B804-7C9C56D89593",
+    uuid: [
+        0x21, 0xb4, 0x12, 0x3c, 0x66, 0x5f, 0x3f, 0x78, 0xb9, 0x97, 0x83, 0x8f, 0x46, 0x5c, 0x33,
+        0x75,
+    ],
+    controller_table: 0x1708c0,
+    state_member: 0xd0,
+    state_table: 0x169af8,
+    state_file_method: 0x90d40,
+    view_table: 0x175dc8,
+    editor_table: 0x16eec8,
+    product: "pro_l",
+    executable: "FabFilter Pro-L",
+    binary_sha256: "f8511b64b3533d61533f7055adba10f0bc66da2249e8ec4aebc1d18877e82c8d",
+    binary_size: 3_441_776,
+    preset_format: PresetFormat::Binary(b"FPLr\x03\0\0\0"),
+    constructor: 0x1e870,
+    loader: 0x68520,
+    destructor: 0x27628,
+};
+
 const PRO_L2: Image = Image {
     class_uid: "AFD92F72-9A04-47B7-B5E8-D1D568DEA985",
     uuid: [
@@ -312,8 +334,8 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &MICRO, &PRO_DS, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2,
-        &SATURN, &SATURN2,
+        &MICRO, &PRO_DS, &PRO_L, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R,
+        &PRO_R2, &SATURN, &SATURN2,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -775,6 +797,22 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_DS, "Vocal.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn pro_l_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FPLr\x03\0\0\0abcdefgh", true),
+            (b"FPLr\x02\0\0\0abcdefgh", false),
+            (b"FL2p\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_L, "Vocal.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
