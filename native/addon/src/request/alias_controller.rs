@@ -33,7 +33,7 @@ fn supported(class: &str) -> bool {
 }
 
 // Read-only inspection admission is separate from the model-catalog policy.
-// Multi and exact Level Meter use the same declared alias/provider QIs, without fallback.
+// Bounded inspection uses declared alias/provider interfaces without fallback.
 fn inspection_supported(instance: &Instance) -> bool {
     supported(&instance.class_uid)
         || (instance.class_uid == "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
@@ -42,6 +42,10 @@ fn inspection_supported(instance: &Instance) -> bool {
         || (instance.class_uid == "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
             && instance.native_class == "AudioEffect"
             && instance.object_id == "Level Meter"
+            && valid_uid(&instance.object_uid))
+        || (instance.class_uid == "BC9129B4-EC67-41B8-96DE-EC128D5FE54D"
+            && instance.native_class == "AudioEffect"
+            && instance.object_id == "Pedalboard"
             && valid_uid(&instance.object_uid))
 }
 
@@ -351,7 +355,7 @@ fn capture_bound<G: FnMut() -> Result<(), String>>(
     guard()?;
     if !inspection_supported(instance) {
         return Err(
-            "plugin_controller scope requires the observed Mustang Native or Rumble Native class, or exact Multi Instrument AudioSynth or Level Meter AudioEffect"
+            "plugin_controller scope requires the observed Mustang Native or Rumble Native class, or exact Multi Instrument AudioSynth, Level Meter AudioEffect, or Pedalboard AudioEffect"
                 .into(),
         );
     }
