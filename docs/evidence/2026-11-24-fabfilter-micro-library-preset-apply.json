@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Micro VST3",
+  "vst3_version": "1.32",
+  "verified_code": "737355e56a7d3f220fae9dd4c9d25688cc29e3ff",
+  "factory_files": 16,
+  "matching_factory_format_counts": {
+    "FMic_v1": 16
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 7,
+    "reported_values_restored": 146,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R249",
+    "signature": "FMic",
+    "version": 1,
+    "verified_ui_preset": "Broken Speakers",
+    "visible_filter_curve_changed": true,
+    "native_apply_calls": 1,
+    "changed_reported_values": 7,
+    "reported_values_exactly_restored": 146,
+    "automatically_restored_values": 145,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 98.795,
+    "actual_host_wall_seconds": 145.87,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 16,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false
+  }
+}

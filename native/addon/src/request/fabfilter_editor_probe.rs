@@ -18,6 +18,28 @@ mod vendor_preset_abi;
 const HOST_UUID: [u8; 16] = [
     0x20, 0xd9, 0xad, 0xcb, 0xd6, 0x23, 0x32, 0xa7, 0x91, 0x56, 0xa1, 0x1c, 0xb7, 0x05, 0xff, 0x75,
 ];
+const MICRO: Image = Image {
+    class_uid: "751AFC34-1543-4CBC-AA73-672A109BE0FF",
+    uuid: [
+        0x9b, 0x6e, 0xf3, 0x6f, 0xdd, 0x13, 0x3c, 0x54, 0x95, 0x1c, 0x70, 0x00, 0x8f, 0x55, 0x5b,
+        0x8c,
+    ],
+    controller_table: 0x101a00,
+    state_member: 0xd0,
+    state_table: 0x102690,
+    state_file_method: 0x6e7e0,
+    view_table: 0x103848,
+    editor_table: 0x1022b0,
+    product: "micro",
+    executable: "FabFilter Micro",
+    binary_sha256: "6034d2fc31144fe223bad86d8608a3b711f9cbb42a25e89eec9f6b7c7b331636",
+    binary_size: 2_417_168,
+    preset_format: PresetFormat::Binary(b"FMic\x01\0\0\0"),
+    constructor: 0x1c2e0,
+    loader: 0x702e8,
+    destructor: 0x25098,
+};
+
 const PRO_Q2: Image = Image {
     class_uid: "55FD08E6-C00B-44A6-97DA-68F61C6FD576",
     uuid: [
@@ -246,7 +268,7 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &MICRO, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -693,6 +715,22 @@ mod tests {
             assert_eq!(
                 preset_bytes(&PRO_R, "Room.ffp", &digest, &hex).is_some(),
                 valid && bytes.starts_with(PRO_R_BINARY_HEADER),
+            );
+        }
+    }
+
+    #[test]
+    fn micro_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FMic\x01\0\0\0abcdefgh", true),
+            (b"FMic\x02\0\0\0abcdefgh", false),
+            (b"FSat\x01\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&MICRO, "Speakers.ffp", &digest, &hex).is_some(),
+                valid
             );
         }
     }
