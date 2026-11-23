@@ -86,6 +86,9 @@ fn related(ctx: &Context<'_>) -> Result<Value, String> {
             if let Some(assigned) = external_send_route::assigned(ctx, plugin.0) {
                 value["external_stereo_send_route"] = json!({"assigned": assigned});
             }
+            if let Some(assigned) = external_send_route::return_assigned(ctx, plugin.0) {
+                value["external_stereo_return_observation"] = json!({"assigned": assigned});
+            }
             if fabfilter_editor_probe::supports_class(&ctx.instance.class_uid) {
                 ctx.check()?;
                 if let Some(editor) =

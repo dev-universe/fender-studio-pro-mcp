@@ -3,9 +3,10 @@ use super::*;
 const WRAPPER_VTABLE: usize = 0x19b38c0;
 const COMPONENT_VTABLE: usize = 0x19b2d78;
 const HOLDER_VTABLE: usize = 0x19b3dd0;
+const RECEIVE_BUS_VTABLE: usize = 0x1b71ee8;
+const RECEIVE_CONNECTION_AT: usize = 0x0d9cdec;
 
-/// Recheck both links to the shared routing owner before reading its Send slot.
-fn snapshot(wrapper: usize, image: usize) -> Option<(usize, usize, usize)> {
+fn routing_owner(wrapper: usize, image: usize) -> Option<(usize, usize)> {
     if read_word(wrapper, 0)? != image + WRAPPER_VTABLE {
         return None;
     }
@@ -17,7 +18,56 @@ fn snapshot(wrapper: usize, image: usize) -> Option<(usize, usize, usize)> {
     {
         return None;
     }
+    Some((component, holder))
+}
+
+/// Recheck both links to the shared routing owner before reading its Send slot.
+fn snapshot(wrapper: usize, image: usize) -> Option<(usize, usize, usize)> {
+    let (component, holder) = routing_owner(wrapper, image)?;
     Some((component, holder, read_word(holder, 0x60)?))
+}
+
+#[derive(PartialEq, Eq)]
+struct ReceiveConnection {
+    component: usize,
+    holder: usize,
+    receive_bus: usize,
+    storage: usize,
+    count: u32,
+    first: usize,
+}
+
+fn receive_connection(wrapper: usize, image: usize) -> Option<ReceiveConnection> {
+    let (component, holder) = routing_owner(wrapper, image)?;
+    let receive_bus = read_word(holder, 0x58)?;
+    let table = read_word(receive_bus, 0)?;
+    if table != image + RECEIVE_BUS_VTABLE
+        || read_word(table, 0x148)? != image + RECEIVE_CONNECTION_AT
+    {
+        return None;
+    }
+    // The app reads the first entry only when its signed count is positive.
+    let count = read_word(receive_bus, 0xd8)? as u32;
+    let storage = read_word(receive_bus, 0xd0)?;
+    if count > 1 || storage == 0 {
+        return None;
+    }
+    let first = if count == 1 {
+        read_word(storage, 0)?
+    } else {
+        0
+    };
+    if count == 1 && first == 0 {
+        return None;
+    }
+    Some(ReceiveConnection {
+        component,
+        holder,
+        receive_bus,
+        storage,
+        count,
+        first,
+    })
 }
 
 pub(super) fn exact_stereo(ctx: &Context<'_>) -> bool {
@@ -98,4 +148,26 @@ pub(super) fn assigned(ctx: &Context<'_>, alias: *mut c_void) -> Option<bool> {
     drop(route);
     ctx.check().ok()?;
     Some(assigned)
+}
+
+pub(super) fn return_assigned(ctx: &Context<'_>, alias: *mut c_void) -> Option<bool> {
+    if !exact_stereo(ctx) {
+        return None;
+    }
+    ctx.check().ok()?;
+    let image = unsafe { _dyld_get_image_header(0) };
+    if image_uuid(image) != Some(EXPECTED_APP_UUID) {
+        return None;
+    }
+    let canonical = query(alias, &UNKNOWN)?;
+    let wrapper = canonical.0 as usize;
+    let image_address = image as usize;
+    let before = receive_connection(wrapper, image_address)?;
+    ctx.check().ok()?;
+    if receive_connection(wrapper, image_address)? != before {
+        return None;
+    }
+    drop(canonical);
+    ctx.check().ok()?;
+    Some(before.first != 0)
 }
