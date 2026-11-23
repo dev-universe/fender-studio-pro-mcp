@@ -1,0 +1,90 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter One VST3",
+  "vst3_version": "3.52",
+  "target": "exclusively selected Music track",
+  "verified_code": "9e009f0cc87510bb2510af3b84e46d7d64b3b44e",
+  "factory_files": 109,
+  "matching_factory_format_counts": {
+    "FFPr_v1": 84,
+    "FFPr_v0": 25
+  },
+  "isolated_sdk": [
+    {
+      "format": "FFPr_v1",
+      "changed_reported_values": 16,
+      "reported_values_restored": 168,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FFPr_v0",
+      "changed_reported_values": 8,
+      "reported_values_restored": 168,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R278",
+      "signature": "FFPr",
+      "version": 1,
+      "verified_ui_preset": "Dracula",
+      "changed_reported_values": 18,
+      "reported_values_exactly_restored": 168,
+      "automatically_restored_values": 167,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 128,
+      "owner_wall_seconds": 48.263,
+      "actual_host_wall_seconds": 78.571,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 118,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R279",
+      "signature": "FFPr",
+      "version": 0,
+      "verified_ui_preset": "Pink Noise",
+      "changed_reported_values": 16,
+      "reported_values_exactly_restored": 168,
+      "automatically_restored_values": 167,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 128,
+      "owner_wall_seconds": 91.112,
+      "actual_host_wall_seconds": 139.567,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 118,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
