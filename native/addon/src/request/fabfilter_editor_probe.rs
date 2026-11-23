@@ -40,6 +40,8 @@ const MICRO: Image = Image {
     destructor: 0x25098,
 };
 
+static PRO_C2_HEADERS: [[u8; 8]; 2] = [*b"FC2p\x02\0\0\0", *b"FPrC\x01\0\0\0"];
+
 const PRO_C2: Image = Image {
     class_uid: "79F415E3-C8E7-4807-AD5D-A3CF7024F618",
     uuid: [
@@ -56,7 +58,7 @@ const PRO_C2: Image = Image {
     executable: "FabFilter Pro-C 2",
     binary_sha256: "18fb9b61c25e8058cc9ae64167c219e34c8a224b7e824f73faf2c34c2f3d619a",
     binary_size: 3_440_576,
-    preset_format: PresetFormat::BinaryHeaders(&[*b"FC2p\x02\0\0\0", *b"FPrC\x01\0\0\0"]),
+    preset_format: PresetFormat::BinaryHeaders(&PRO_C2_HEADERS),
     constructor: 0x9f918,
     loader: 0x61bc4,
     destructor: 0x6f0ec,
