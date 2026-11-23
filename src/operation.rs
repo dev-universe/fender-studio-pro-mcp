@@ -2005,10 +2005,12 @@ impl Operation {
                 };
                 let target_matches = match p.product {
                     Product::Micro
+                    | Product::ProC2
                     | Product::ProDS
                     | Product::ProG
                     | Product::ProL
                     | Product::ProL2
+                    | Product::ProMB
                     | Product::ProQ2
                     | Product::ProQ3
                     | Product::ProQ4
@@ -2029,7 +2031,7 @@ impl Operation {
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Micro, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, and Twin 3 VST3",
+                            "Preset file application supports Micro, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, and Twin 3 VST3",
                         ));
                     }
                 };
