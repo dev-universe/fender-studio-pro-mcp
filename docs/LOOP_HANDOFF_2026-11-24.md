@@ -174,8 +174,34 @@ R293은 편집기 준비 뒤 `Filter 1 Linked`의 실제 정규화 값을 확인
 
 공식 Volcano 3 3.09의 `FV3l` 버전 5·4·3 파일은 각각 95·3·10개였다. Ghidra에서 실행 이미지와 파일 읽기 경계를 대조했고, 격리 SDK에서 각 형식의 9·76·130개 변경과 전체 1,033개 및 두 상태의 복원을 확인했다. 실제 앱 R297–R299의 `Vintage`, `Sample&Hold 01 SM`, `Drum Blender 01 SM`은 2·78·129개 값을 바꿨다. 화면 제목을 확인했고 각각 전체 1,033개와 컴포넌트 지문을 복원했다. 각각 182요청, 앱 141.240·197.565·252.658초였다. 모든 곡을 저장 없이 닫고 원래 환경설정, 114개 프리셋 트리 항목과 설치 파일 18개를 확인했다. [Volcano 3 PR #95](https://github.com/dev-universe/fender-studio-pro-mcp/pull/95)
 
-이로써 설치된 공식 VST3 23종의 공장 파일 형식별 대표 적용, 독립 읽기, 전체 복원 검증을 마쳤다. 저장된 모든 개별 프리셋 파일을 하나씩 실제 앱에서 실행한 집계는 아니다. 개별 파라미터 변경 검증은 12,455개 중 12,448개다. 별도 읽기에서 즉시 원래 값으로 돌아오는 내부값 7개를 다음 대기열에서 확인한다. Pro-L [PR #84](https://github.com/dev-universe/fender-studio-pro-mcp/pull/84)는 오전 4시 47분에 `7b4aa62`, Pro-G [PR #85](https://github.com/dev-universe/fender-studio-pro-mcp/pull/85)는 오전 4시 59분에 `9d09aad`로 필수 검사를 통과해 병합됐다.
+이로써 설치된 공식 VST3 23종의 공장 파일 형식별 대표 적용, 독립 읽기, 전체 복원 검증을 마쳤다. 실제 시험에서는 각 형식의 대표 파일을 사용했다. 개별 파라미터 변경 검증은 12,455개 중 12,448개다. 별도 읽기에서 즉시 원래 값으로 돌아오는 내부값 7개를 다음 대기열에서 확인한다. Pro-L [PR #84](https://github.com/dev-universe/fender-studio-pro-mcp/pull/84)는 오전 4시 47분에 `7b4aa62`, Pro-G [PR #85](https://github.com/dev-universe/fender-studio-pro-mcp/pull/85)는 오전 4시 59분에 `9d09aad`로 필수 검사를 통과해 병합됐다.
 
 ### Pedalboard 슬롯 조회 후보
 
-실제 설치본 편집기 스킨의 `stomps` 아래에는 본체의 `StompItemModel` 뷰와 하단의 `StompOverviewModel` 뷰가 있다. 번호 영역 배경이 마우스 이벤트를 소비할 수 있고 `opt/stomporder`는 별도 구분선 슬라이더다. 슬롯의 순서와 구분선 위치를 같은 값으로 취급하지 않는다. Ghidra에서 현재 바이너리의 `IItemModel`과 `IItemDragVerifier` 인터페이스를 대조했다. 드롭박스는 `IItemModel`의 평면 항목 수 대신 루트 항목 목록 경로를 호출한다. R302는 검증된 Pedalboard 클래스 및 이미지에서 쓰기 없이 현재 순서·항목 식별자를 읽는 후보로 진행한다. 기존의 본체/하단 드래그 두 시험은 반복하지 않는다. [CCL의 드롭박스 모델 호출](https://github.com/cclsoftware/ccl-framework/blob/8a8cab590b1a2e10cdef3df76ea4b2739c92121f/ccl/gui/itemviews/dropbox.cpp#L530) · [CCL의 인터페이스 정의](https://github.com/cclsoftware/ccl-framework/blob/8a8cab590b1a2e10cdef3df76ea4b2739c92121f/ccl/public/gui/framework/iitemmodel.h#L310)
+실제 설치본 편집기 스킨의 `stomps` 아래에는 본체의 `StompItemModel` 뷰와 하단의 `StompOverviewModel` 뷰가 있다. 번호 영역 배경이 마우스 이벤트를 소비할 수 있고 `opt/stomporder`는 별도 구분선 슬라이더다. 슬라이더는 구분선 위치를 읽는다. Ghidra에서 현재 바이너리의 `IItemModel`과 `IItemDragVerifier` 인터페이스를 대조했다. 드롭박스는 `IItemModel`의 평면 항목 수 대신 루트 항목 목록 경로를 호출한다. R302는 검증된 Pedalboard 클래스 및 이미지에서 쓰기 없이 현재 순서·항목 식별자를 읽는 후보로 진행한다. 기존의 본체/하단 드래그 두 시험은 반복하지 않는다. [CCL의 드롭박스 모델 호출](https://github.com/cclsoftware/ccl-framework/blob/8a8cab590b1a2e10cdef3df76ea4b2739c92121f/ccl/gui/itemviews/dropbox.cpp#L530) · [CCL의 인터페이스 정의](https://github.com/cclsoftware/ccl-framework/blob/8a8cab590b1a2e10cdef3df76ea4b2739c92121f/ccl/public/gui/framework/iitemmodel.h#L310)
+
+
+### Pedalboard 랙 조회 R302·R303과 오른쪽 삽입점 시험 R305
+
+- R302는 `stomps` 아래의 표시상 이름을 일반 자식으로 찾다가 0개를 읽고 종료했다. 실제 노드 보고서에서 `stomps`의 일반 자식 수는 0이며 `StompItemModel`은 alias delegate 관계에 있었다. 보고값 40개, Phase Meter 및 저장하지 않고 원상 복귀한 빈 랙 28개를 확인했다. MCP 76요청·28.780초, 앱 166.931초, 정상 설치 파일 18개 원복을 확인했다.
+- R303에서 정확한 `stomps` alias의 delegate를 붙잡고 `IItemModel::getSubItems`를 두 번 대조했다. 화면에 Compressor, Reverb가 보이고 둘 다 켜진 상태에서 `AmpSimStompSlot` 두 개가 나왔다. 현재 관측 경로는 슬롯의 이름과 고유 ID를 주지 않았다. 이름은 별도의 DSP `opt.stompmodel1–8` 조회에서 확인했다. 이 결과와 예전 R268의 별칭 그래프를 구분한다. R303은 76요청·31.440초, 앱 64.468초였고 빈 상태의 28개 값과 기존 설치 파일 18개를 원복했다.
+- R305는 이전 두 드래그와 다른 위치인 Reverb 본체 오른쪽을 시험했다. 화면 순서가 그대로여서 성공 신호를 보내지 않았다. 시험 도구의 같은 단계 키가 두 번 정의돼 중립 확인 문자열을 받을 수 없는 문제도 발견했다. 앞선 owner를 정상 종료하고 같은 문서·세션을 새 읽기 전용 owner로 묶었다. 8요청에서 Pedalboard 40개, Phase Meter, 믹서, 인서트, 타임라인이 준비 시점과 정확히 같았다. 본 시험은 48요청·41.334초, 앱 83.406초, 소유자 둘은 정상 종료했다. 시험곡은 저장하지 않았으며 설치 파일 18개를 원복했다.
+- Ghidra에서 드롭 처리기가 같은 항목과 바로 뒤 삽입점을 건너뛰고, 위치를 바꿀 때 `stompN` 두 이름을 호스트 슬롯 편집 인터페이스에 전달하는 것을 확인했다. 정확한 대상은 Pedalboard 배포 이미지의 두 공개 기반 인터페이스를 통해 찾는다. R306에서 실제 host가 같은 편집 인터페이스를 제공하는지 읽기 전용으로 확인한다. R305 위치를 다시 반복할 필요가 없다.
+
+### FabFilter 레거시 값 실제 비교 R304
+
+제조사 서명 VST3 8종을 정확한 클래스로 빈 스테레오 트랙에 삽입했다. 재생을 정지하고 각 트랙을 뮤트했으며 메인 볼륨을 0으로 낮췄다. 수치 `vstp1073741828`을 각 인스턴스의 0에서 0.035로 한 번 설정했다. 비교군 Pro-R 1.20은 150ms 후와 전체 독립 조회에서 0.035를 유지했고 별도 쓰기로 원복했다. Pro-G 1.42, Pro-C 2 2.22, Pro-C 3 3.02, Pro-DS 1.32, Pro-L 1.37, Pro-L 2 2.26, Pro-MB 1.33은 쓰기 직후 0.035를 읽었지만 150ms 후와 별도 조회에서는 0이었다.
+
+각 플러그인의 보고값 전체, 8종 합계 1,584개와 DSP 지문 8개가 초기 상태와 일치했다. 요청 247회·22.279초, 앱 49.091초, 정상 종료 뒤 설치 18개와 보존 대상으로 잡은 입력 162개가 기준과 일치했다. 쓰기 후 값이 유지된 개별 시험은 12,448/12,455다. 같은 조건의 입출력을 다시 반복할 필요가 없다. 이 7개를 직접 쓰기로 유지하는 기능이 필요하면 처리부 피드백이 실제 호스트에서 값에 반영되는 시점을 먼저 구분한다. 외부 입력 전달이나 재생 상태에서는 별도 수용이 필요하다. [PR #96](https://github.com/dev-universe/fender-studio-pro-mcp/pull/96)
+
+### 오전 5시 15분 공개 상태
+
+[PR #86 Simplon](https://github.com/dev-universe/fender-studio-pro-mcp/pull/86)은 오전 5시 8분에 필수 검사 2개를 통과한 헤드 `62fe767`에서 `main`의 `4a420f6`로 병합했다. 병합 파일 트리가 예상과 일치했다. [PR #87 Pro-MB](https://github.com/dev-universe/fender-studio-pro-mcp/pull/87)은 최종 Simplon 변경을 반영한 검사 헤드 `bef072d`로 진행한다. Pro-C 2부터 Volcano 3까지는 각 선행 PR 이후의 최신 main에서 검사한다. 레거시 읽기 결과는 별도 [PR #96](https://github.com/dev-universe/fender-studio-pro-mcp/pull/96)으로 열었다. 이 시점에 열린 드래프트는 없다.
+
+### Pedalboard 편집 인터페이스 R306과 유한 교체 R307
+
+- R306에서 `stomps`가 제공하는 모델의 소유 객체를 확인하고 슬롯 편집 인터페이스를 같은 인스턴스에서 두 번 읽었다. 두 `AmpSimStompSlot`과 같은 편집 인터페이스가 관찰됐다. 메서드는 Studio Pro가 함께 설치하는 arm64 `dspshell` 이미지에 있었다. 검사에 쓰기 요청은 없었고, 초기 빈 랙 28개, 채운 랙 40개, Phase Meter와 캡슐 정리를 확인했다. 76요청·34.494초, 앱 65.037초, 정상 설치 파일 18개 원복이다.
+- REA의 Ghidra에서 해당 인터페이스가 두 슬롯 이름을 검증한 뒤 각각의 상태를 읽어 교체하는 경로임을 확인했다. R307은 대상 문서와 인스턴스, 현재 슬롯 이름 및 숫자 ID, 이미지와 메서드를 묶어 한 번 호출했다. 첫 두 위치의 Compressor, Reverb가 화면과 독립 읽기에서 Reverb, Compressor 순서로 나왔다. 두 페달의 전체 모델별 값이 다른 위치로 옮겨갔으며 관련 없는 보고값 24개, Phase Meter, 믹서와 인서트는 같았다.
+- 메뉴에는 ‘되돌리기: 멀티 파라미터 편집’이 표시됐다. 이번 교체와 연결되는 근거를 확보할 때까지 메뉴 실행을 보류했다. 캡슐을 이용해 원래 순서, 40개 값, 컴포넌트 지문을 되돌린 뒤 초기 빈 랙 28개로 복원했다. 93요청·52.556초, 앱 87.923초, 캡슐 네 개와 카탈로그 해제, 시험곡 저장 거부, 설치 파일 18개 원복을 확인했다.
+- 별도 제품 후보는 `pedalboard_slot_swap`에 인접한 슬롯 번호와 현재의 서로 다른 두 모델명을 명시하게 했다. R308에서 틀린 모델 이름을 실제 앱이 `not_applied`로 거부했다. 시험 도구가 예정된 오류 플래그까지 실패로 보아 양성 교체 전에 종료했다. 49요청·23.638초, 앱 71.464초, 저장하지 않고 닫은 뒤 설치 파일 18개 원복이다. Rust 입력 검사는 통과했다. R310에서 거부의 원래 영수증을 별도로 대조한 뒤 1·2의 양방향 교체를 검증한다. R309는 7·8에서 서로 다른 값을 넣고 같은 절차를 대조하는 별도 곡이다.
+- [Pro-MB PR #87](https://github.com/dev-universe/fender-studio-pro-mcp/pull/87)은 오전 5시 18분에 정확한 헤드 `bef072d`의 두 필수 검사를 확인해 `44cae39`로 병합했다. [Pro-C 2 PR #89](https://github.com/dev-universe/fender-studio-pro-mcp/pull/89)의 현재 검증 헤드는 `2ba6507`이다.
