@@ -1,0 +1,49 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Simplon VST3",
+  "vst3_version": "1.42",
+  "verified_code": "d44e8beef0f95876eae42f26c8a00bdd39117884",
+  "factory_files": 22,
+  "matching_factory_format_counts": {
+    "FSim_v1": 22
+  },
+  "isolated_sdk": {
+    "changed_reported_values": 12,
+    "reported_values_restored": 156,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trial": {
+    "test": "R266",
+    "signature": "FSim",
+    "version": 1,
+    "verified_ui_preset": "Band Reject",
+    "native_apply_calls": 1,
+    "changed_reported_values": 11,
+    "reported_values_exactly_restored": 156,
+    "automatically_restored_values": 155,
+    "corrected_parameters": [
+      "vstp1073741826"
+    ],
+    "native_component_fingerprint_restored": true,
+    "refusals_without_change": [
+      "stale_catalog",
+      "stale_document",
+      "wrong_instance",
+      "closed_editor"
+    ],
+    "requests": 133,
+    "owner_wall_seconds": 60.525,
+    "actual_host_wall_seconds": 113.191,
+    "preferences_exactly_restored": true,
+    "preset_tree_entries_preserved": 22,
+    "normal_managed_files_restored": 18,
+    "scratch_saved": false,
+    "ui_title_evidence": "Band Reject shown in the editor with the changed filter curve and parallel routing"
+  }
+}
