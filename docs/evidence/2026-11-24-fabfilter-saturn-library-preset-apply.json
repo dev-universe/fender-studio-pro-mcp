@@ -1,0 +1,110 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Saturn",
+  "vst3_version": "1.31",
+  "verified_code": "7d2984984ee8b1af393ce250a2c65109b4dc0237",
+  "factory_files": 260,
+  "matching_factory_format_counts": {
+    "FSat_v1": 3,
+    "FSat_v2": 17,
+    "FSat_v4": 240
+  },
+  "isolated_sdk": {
+    "changed_reported_values": [
+      76,
+      75,
+      110
+    ],
+    "reported_values_restored_in_each": 1036,
+    "processor_and_controller_state_restored": true,
+    "missing_file_status": -1,
+    "missing_file_changed_state": false
+  },
+  "actual_host_trials": [
+    {
+      "test": "R237",
+      "signature": "FSat",
+      "version": 1,
+      "verified_ui_preset": "Assymetric Destruction 01 bM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 71,
+      "reported_values_exactly_restored": 1036,
+      "automatically_restored_values": 1035,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 184,
+      "owner_wall_seconds": 106.718,
+      "actual_host_wall_seconds": 159.735,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 278,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R238",
+      "signature": "FSat",
+      "version": 2,
+      "verified_ui_preset": "Dynamic Weirdness 02 bM",
+      "native_apply_calls": 1,
+      "changed_reported_values": 70,
+      "reported_values_exactly_restored": 1036,
+      "automatically_restored_values": 1035,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 184,
+      "owner_wall_seconds": 119.453,
+      "actual_host_wall_seconds": 172.014,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 278,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R239",
+      "signature": "FSat",
+      "version": 4,
+      "verified_ui_preset": "4x4 Hat Designer O",
+      "native_apply_calls": 1,
+      "changed_reported_values": 106,
+      "reported_values_exactly_restored": 1036,
+      "automatically_restored_values": 1035,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 184,
+      "owner_wall_seconds": 72.291,
+      "actual_host_wall_seconds": 136.511,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 278,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}

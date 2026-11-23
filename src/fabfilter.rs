@@ -268,6 +268,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::ProC3
             | Product::ProR
             | Product::ProR2
+            | Product::Saturn
             | Product::Saturn2
             | Product::Twin3
     ) {
@@ -339,6 +340,13 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
             return bytes.len() >= 16 && bytes.starts_with(b"FPRr\x04\0\0\0");
         }
         Product::ProR2 => b"Signature=FR2p",
+        Product::Saturn => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FSat\x01\0\0\0" | b"FSat\x02\0\0\0" | b"FSat\x04\0\0\0"
+                );
+        }
         Product::Saturn2 => {
             return bytes.len() >= 16
                 && matches!(
@@ -645,6 +653,20 @@ mod tests {
             Product::ProR2,
             b"[Preset]\nSignature=FR2p\nVersion=5\nAuthor=Fixture"
         ));
+    }
+
+    #[test]
+    fn saturn_accepts_its_three_observed_factory_versions() {
+        for bytes in [
+            b"FSat\x01\0\0\0abcdefgh",
+            b"FSat\x02\0\0\0abcdefgh",
+            b"FSat\x04\0\0\0abcdefgh",
+        ] {
+            assert!(matches_preset(Product::Saturn, bytes));
+        }
+        assert!(!matches_preset(Product::Saturn, b"FSat\x03\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Saturn, b"FS2a\x04\0\0\0abcdefgh"));
+        assert!(!matches_preset(Product::Saturn, b"FSat\x01\0\0\0"));
     }
 
     #[test]
