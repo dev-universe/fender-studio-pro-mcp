@@ -917,6 +917,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const label = value => typeof value === "string" && value.trim() && value.length <= 256 && !/[\x00-\x1f\x7f]/.test(value);
         const effectClasses = {
             "Micro": "751AFC34-1543-4CBC-AA73-672A109BE0FF",
+            "Pro-C 2": "79F415E3-C8E7-4807-AD5D-A3CF7024F618",
             "Pro-DS": "59E324D0-8EE8-11E1-B857-8101BBE59B18",
             "Pro-G": "9D1DCCF7-918A-436F-A3CD-D7115D8B193B",
             "Pro-L": "5AF2703A-E65F-11DE-B804-7C9C56D89593",
