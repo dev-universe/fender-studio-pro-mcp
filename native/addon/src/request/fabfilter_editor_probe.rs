@@ -128,6 +128,28 @@ const PRO_L2: Image = Image {
     destructor: 0x28a20,
 };
 
+const PRO_MB: Image = Image {
+    class_uid: "C3B68142-C798-46F2-82B7-3CABDF139076",
+    uuid: [
+        0x5e, 0x42, 0xba, 0x87, 0xd5, 0x2c, 0x3a, 0xc9, 0x9f, 0x99, 0x2b, 0x36, 0x80, 0x64, 0x2e,
+        0x00,
+    ],
+    controller_table: 0x162d30,
+    state_member: 0xd0,
+    state_table: 0x168ae8,
+    state_file_method: 0x66b5c,
+    view_table: 0x164af0,
+    editor_table: 0x168638,
+    product: "pro_mb",
+    executable: "FabFilter Pro-MB",
+    binary_sha256: "a029c442f945873a0a751f58f4eb186157b3ccd9dcb91d70b0f788d489b52f1f",
+    binary_size: 3_309_088,
+    preset_format: PresetFormat::Binary(b"FPMb\x03\0\0\0"),
+    constructor: 0x1c82c,
+    loader: 0x68734,
+    destructor: 0x255e4,
+};
+
 const PRO_Q2: Image = Image {
     class_uid: "55FD08E6-C00B-44A6-97DA-68F61C6FD576",
     uuid: [
@@ -378,8 +400,8 @@ struct Image {
 
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
-        &MICRO, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3, &PRO_C3,
-        &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &MICRO, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4, &TWIN3,
+        &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -857,6 +879,22 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_G, "Vocal.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn pro_mb_preset_bytes_are_limited_to_observed_factory_format() {
+        for (bytes, valid) in [
+            (b"FPMb\x03\0\0\0abcdefgh", true),
+            (b"FPMb\x02\0\0\0abcdefgh", false),
+            (b"FL2p\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&PRO_MB, "Vocal.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
