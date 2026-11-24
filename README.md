@@ -7,8 +7,7 @@ Fender Studio Pro에서 하는 대부분(이 되도록 열심히 노력 중)의 
 
 내장 플러그인 전체를 빠짐없이 제어하는 것이 목표이지만 아직 완료되지는 않았습니다. 검증된 기능과 미완료 기능을 아래와 [검증 보고서](docs/VALIDATION.md)에 구분했습니다. Windows와 Intel Mac의 DAW 연결은 검증하지 않았습니다.
 
-See the [current progress](docs/PROGRESS_2026-11-18.md), [resume guide](docs/RESUME.md)
-and [latest handoff](docs/LOOP_HANDOFF_2026-11-18.md) for completed work and remaining tasks.
+Continue existing work with the [resume guide](docs/RESUME.md). Use the [MCP development guide](docs/MCP_DEVELOPMENT.md) to add or verify plugin support.
 
 A native Rust MCP server that lets an LLM read and control Fender Studio Pro through typed tools. The server connects to a JavaScript bridge and EditTasks inside the DAW through a local mailbox and CoreMIDI.
 
