@@ -491,3 +491,19 @@ SampleOne 고정 항목은 R363–R366B로 로컬 완료, 공개 PR 병합 대�
 다음은 Chorder Clear·Clear All, Copy·Paste 및 Preview다.
 `main` 20개·로컬 18개 잔여, 소프트웨어 2~5일, 장비 의존 4개,
 지정된 종료 시각 없음.
+
+## 20시 04분 체크포인트
+
+- R369에서 입력 60·61에 코드가 있는 상태로 선택된 61의 Clear는
+  61만 비웠고, Clear All은 다시 준비한 두 코드를 비웠다.
+  각 단계에서 전체 128개 저장 모델을 두 번 읽었다. 원본 캡슐
+  한 번으로 581바이트와 두 지문이 돌아왔다. 해제 응답 바깥 상태는
+  `applied_unverified`였고 안쪽 결과는 `released: true`라
+  새 owner가 두 명령을 반복하지 않고 학습 UI와 DSP 908행을
+  마저 원복 확인했다. 153·64요청, 앱 133.650초. 송·설정 9개·
+  관리 설치 18개를 검증했다.
+  [#160](https://github.com/dev-universe/fender-studio-pro-mcp/pull/160)
+
+다음은 Copy·Paste의 범위와 Preview 눌림·해제다.
+`main` 20개·로컬 18개 잔여, 소프트웨어 2~5일, 장비 의존 4개,
+지정된 종료 시각 없음.
