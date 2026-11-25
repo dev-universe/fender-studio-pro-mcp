@@ -896,7 +896,13 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (plug.error) return plug;
         const native = this.nativePluginRequest(plug.device, request);
         if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_required", message: "plugin actions require the matching native extension" }] };
-        return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        const result = Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        if (clearChorder && native.ok === false && native.outcome === "not_applied"
+            && native.upper_dispatched !== true && native.reset_dispatched !== true && native.error) {
+            result.errors = [native.error];
+            delete result.error;
+        }
+        return result;
     }
 
     pedalboardSlotSwap(args) {

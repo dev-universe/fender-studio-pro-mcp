@@ -330,7 +330,7 @@ impl ClearSelection {
         // The DSP selector uses zero for no selection and MIDI pitch + 1 for a key.
         let input = controller
             .find(INPUT.name, ctx.api)?
-            .pin_raw_integer_state(INPUT, i64::from(expected_pitch) + 1, guard)
+            .pin_raw_integer_float_state(INPUT, i64::from(expected_pitch) + 1, guard)
             .map_err(|error| error.to_string())?;
         let selection = Self { mode, input };
         selection.check()?;

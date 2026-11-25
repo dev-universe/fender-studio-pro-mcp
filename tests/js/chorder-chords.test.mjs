@@ -186,3 +186,26 @@ test('Chorder Clear forwards the exact input and stored model guards', () => {
     chorder_guard: args.chorder_guard
   }]);
 });
+
+test('guarded Clear preserves a pre-dispatch refusal and never promotes an uncertain action', () => {
+  const args = {
+    kind: 'note_effect', plugin: 'Chorder', track: 'Scratch', slot: 0,
+    expected_instance: instance.object_uid, action: 'clear_chorder_selected',
+    chorder_guard: { expected_input_pitch: 61, expected_model_sha256: 'a'.repeat(64) }
+  };
+  const reason = { code: 'chorder_selection_changed', message: 'selected input changed' };
+  for (const outcome of ['not_applied', 'unknown']) {
+    const { component } = harness(() => ({
+      ok: false, outcome, error: reason, instance: { ...instance, native_class: 'MusicEffect' },
+      upper_dispatched: outcome === 'unknown', reset_dispatched: false
+    }));
+    const result = component.pluginAction(args);
+    assert.equal(result.native_outcome, outcome);
+    if (outcome === 'not_applied') {
+      assert.equal(result.error, undefined);
+      assert.deepEqual(structuredClone(result.errors), [reason]);
+    } else {
+      assert.equal(result.error.code, reason.code);
+    }
+  }
+});
