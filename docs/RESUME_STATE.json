@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "2d3ed042439f2a9934d54e82399db193b3004b25",
+    "main_at_checkpoint": "947753eff6a3927666efd4af6375e071e5db26b3",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -39,7 +39,9 @@
       "R342",
       "R343 Vacant",
       "R343 SameModel",
-      "R343 Nonadjacent"
+      "R343 Nonadjacent",
+      "R344",
+      "R345"
     ],
     "merged_pull_requests": [
       109,
@@ -56,10 +58,10 @@
       120,
       121,
       122,
-      123
+      123,
+      124
     ],
     "open_pull_requests": [
-      124,
       125,
       126,
       127,
@@ -69,14 +71,16 @@
       131,
       132,
       133,
-      134
+      134,
+      135,
+      136
     ],
     "remaining_builtin_units": 23,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Check the current Mustang Native model module and exact-instance model selector with a fresh owned scratch before any edits. Merge PRs 124 to 134 in order as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "next": "Verify six Presence MIDI roles and independent neutral readback after loading an owned SoundFont in a fresh scratch. Mustang model selection awaits a working signed model module. Merge PRs 125 to 136 in order as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
     "remaining_builtin_units_after_local_verification": 20,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-MOJITO",
