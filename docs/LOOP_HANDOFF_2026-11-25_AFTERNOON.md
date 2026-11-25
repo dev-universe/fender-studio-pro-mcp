@@ -1922,3 +1922,22 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 다음은 #249 후 #262, #260, #263, 그 뒤 Input Filter·Impact·Chorder와
   Shared Event다. `main` 15개·로컬 11개, 장비 의존 4건. 전체 2~5일과
   CI·장비 대기, 지정 종료 시각 없음. 앱과 owner는 닫혀 있다.
+
+## 11월 26일 07시 40분 Ampire 산술 대조와 Serum 사용 설명
+
+- R474는 R470의 같은 인스턴스에서 6회 읽은 값을 다시 대조했다. A만
+  직접 되돌리면 B·C도 움직이는 것을 기존 독립 Python과 arm64 C 산술로
+  확인했다. Link를 껐을 때의 보유 값을 먼저 읽어야 하며, R470 상태에서
+  R427 복구 순서와 캡슐 복귀는 실앱 미확인이다. 오프라인 1초 미만.
+  원래 설치 18개와 앱·owner 종료도 재확인했다.
+  [#261](https://github.com/dev-universe/fender-studio-pro-mcp/pull/261)
+- R475는 R467 실제 아카이브를 저장 읽기 CLI와 `song_read`로 검사했다.
+  같은 모델 두 개 중 대상 인서트 하나의 UUID, 채널, 슬롯이 일치했고
+  파일은 그대로였다. 0.634초. 실앱 경로와 저장 경로의 확인 방법을
+  README에 연결했다. 전후 아카이브 두 개를 각각 CLI로 읽어 기존
+  Serum 2와 지정 Serum 2 FX가 각자의 정확한 Device UID로 연결됨도
+  확인했다. 읽기 합계 0.014초, 두 파일 모두 바이트가 동일했다.
+  [#264](https://github.com/dev-universe/fender-studio-pro-mcp/pull/264)
+- 현재 대기 순서는 #249, #262, #264, #260, #263 이후 Input Filter다.
+  `main` 15개·로컬 11개, 장비 의존 4건. 전체 2~5일과 CI·장비 대기,
+  지정 종료 시각 없음.
