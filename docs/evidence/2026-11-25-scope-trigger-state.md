@@ -7,6 +7,8 @@ slice is `14eb3a7bc2a37b7867fcf68fbf1acd6537f4a3bd3431ce383fe26317e7801dca`.
 REA with Ghidra located the declarations and decompiled the relevant branches.
 An independent ARM64 disassembly verified the string references and branch
 instructions where Ghidra's defined-string cross references came back empty.
+Craft Anything CLI 0.6.1 in Deep mode independently decoded the instructions
+that clear the trigger flag and store the mode in the restart routine.
 
 | Observation | arm64 address | What it establishes |
 | --- | --- | --- |
