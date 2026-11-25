@@ -280,3 +280,27 @@ R344–R345 시험 곡은 저장 없이 닫았으며 앱과 owner 종료,
 `main` 기준 23개와 로컬 기준 20개가 남았다. 다음은 Presence
 사운드가 로드된 인스턴스에 전용 가상 MIDI 입력을 연결해
 여섯 역할의 활성값·해제 및 원복을 확인하는 시험이다.
+
+## 18시 30분 체크포인트
+
+- Mojito [#125](https://github.com/dev-universe/fender-studio-pro-mcp/pull/125)와
+  [#126](https://github.com/dev-universe/fender-studio-pro-mcp/pull/126)이 정확한
+  최신 헤드에서 두 필수 검사를 통과해 병합됐다. `main`은 `8fb4121`이다.
+  `CONTROL-MOJITO`를 닫았고 #127이 다음 검사에 들어갔다.
+- Presence R346C에서 전용 가상 Core MIDI 입력으로 채널 압력, CC1·2·11·64와
+  피치 벤드의 활성값과 해제를 대조했다. 벤드 중앙의 변환값을 정확한 비트로
+  복원해 241행과 상태 지문을 모두 돌려놓았다. 성공 203요청, 앱 148.746초다.
+  입력 전 중단한 R346 및 R346B를 포함하면 앱 586.074초다.
+  [#137](https://github.com/dev-universe/fender-studio-pro-mcp/pull/137)
+- Presence R347에서 스크립트 매크로 16개를 읽고 그중 두 값의 독립 읽기와
+  연속 매크로의 실제 콜백을 확인했다. 시험한 직접 존 Tune 접근은
+  `undefined`를 반환하고 화면에서도 `0.00 st`가 유지됐다. 같은 세션의
+  상태 복원 이전에 중단했고 시험 곡은 저장하지 않았다. 편집기 조회
+  56요청과 매크로 38요청, 앱 458.224초다.
+  [#138](https://github.com/dev-universe/fender-studio-pro-mcp/pull/138)
+
+앱과 각 owner 종료, 시험 곡 원본과 관리 파일 18개 및 앱 설정의 원복을
+대조했다. `main` 기준 22개와 로컬 기준 20개가 남았다. 다음은 소유한
+Presence 프로그램에서 검증 가능한 타깃에 매크로 16개를 연결하고
+실제 값과 정확한 복원을 시험한다. 전체 소프트웨어 추정 2~5일, 장비
+의존 4개, 지정된 세션 종료 시각 없음.
