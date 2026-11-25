@@ -136,6 +136,7 @@ class Bridge {
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";
         const impactOutputSet = req.op === "impactOutputSet";
+        const chorderClear = req.op === "pluginAction" && req.args && req.args.action === "clear_chorder_selected";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
@@ -163,6 +164,10 @@ class Bridge {
         } catch (e) {
             result = req.op === "externalStereoSendSet"
                 ? stereoSendChangeFailure("unknown", stereoSendChangeTrace("bridge_dispatch", null))
+                : chorderClear
+                ? { ok: false, native_outcome: "unknown", errors: [{
+                    code: "chorder_clear_dispatch_failed", message: "The Chorder Clear outcome could not be established",
+                }] }
                 : impactOutputSet
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
@@ -178,7 +183,13 @@ class Bridge {
         }
         this.requestContext = null;
         const afterContext = this.context();
-        if (!isFail(result) && impactOutputSet
+        if (!isFail(result) && chorderClear
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, native_outcome: outcome, errors: [{
+                code: "chorder_clear_context_changed", message: "The Chorder Clear target changed before publication",
+            }] };
+        } else if (!isFail(result) && impactOutputSet
             && (this.contextError || context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";

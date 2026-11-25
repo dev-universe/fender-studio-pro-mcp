@@ -153,3 +153,36 @@ test('the outer bridge requires both context guards and strips late chord pages'
   const result = host.writeRequest({ op: 'chorderChordsGet', args: target });
   assert.equal(result.ok, false); assert.equal(result.code, 'native_context_lost'); assert.equal(result.result, undefined); assert.equal(calls, 1);
 });
+
+test('Chorder Clear forwards the exact input and stored model guards', () => {
+  const { component, calls, targets } = harness(() => ({
+    ok: true, outcome: 'applied_unverified', instance: { ...instance, native_class: 'MusicEffect' },
+    action: 'clear_chorder_selected', param: 'chorder.clear', source: 'dsp',
+    upper_dispatched: true, reset_dispatched: true, reset_verified: true,
+    before: { tag: 9 }, after: { tag: 9 }, effect_parameters: [], verified: false, effects_verified: false
+  }));
+  const args = {
+    kind: 'note_effect', plugin: 'Chorder', track: 'Scratch', slot: 0,
+    expected_instance: instance.object_uid, action: 'clear_chorder_selected',
+    chorder_guard: { expected_input_pitch: 61, expected_model_sha256: 'a'.repeat(64) }
+  };
+  for (const invalid of [
+    { ...args, slot: 16 },
+    { ...args, plugin: 'Arpeggiator' },
+    { ...args, chorder_guard: undefined },
+    { ...args, chorder_guard: { ...args.chorder_guard, expected_input_pitch: 128 } },
+    { ...args, chorder_guard: { ...args.chorder_guard, expected_model_sha256: 'A'.repeat(64) } },
+    { ...args, action: 'retrigger_scope' }
+  ]) {
+    assert.equal(component.pluginAction(invalid).native_outcome, 'not_applied');
+  }
+  assert.deepEqual(targets, []);
+  assert.deepEqual(calls, []);
+  const result = component.pluginAction(args);
+  assert.equal(result.native_outcome, 'applied_unverified');
+  assert.equal(result.effects_verified, false);
+  assert.deepEqual(calls, [{
+    operation: 'parameter_action', action: args.action, expected_instance: instance.object_uid,
+    chorder_guard: args.chorder_guard
+  }]);
+});
