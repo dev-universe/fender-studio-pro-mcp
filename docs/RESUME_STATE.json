@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "d844c2dcc2576bec8b2f9ee9aa7555a3bdb25292",
+    "main_at_checkpoint": "da5740941b359f8c94a9ab7b22a9792855224259",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -56,7 +56,14 @@
       "R354",
       "R355",
       "R356",
-      "R357"
+      "R357",
+      "R358",
+      "R359",
+      "R360",
+      "R361",
+      "R362",
+      "R363",
+      "R364"
     ],
     "merged_pull_requests": [
       109,
@@ -80,10 +87,10 @@
       127,
       128,
       129,
-      130
+      130,
+      131
     ],
     "open_pull_requests": [
-      131,
       132,
       133,
       134,
@@ -100,14 +107,21 @@
       145,
       146,
       147,
-      148
+      148,
+      149,
+      150,
+      151,
+      152,
+      153,
+      154,
+      155
     ],
     "remaining_builtin_units": 21,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Validate the DSP floating-point List choice fix from fix/native-mutable-list-choices in R358. Ampire Strobe, eight active stomps and Speed are verified through R357; Wah, Volume, Pitch and exact factory mic recovery remain. Mustang selection awaits a signed model module. Merge PRs 131 to 148 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "next": "Save an owned SampleOne region edit once and verify it in a fresh session, then verify six routed MIDI roles. R358 shipped a candidate List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 132 to 155 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
     "remaining_builtin_units_after_local_verification": 19,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PEDALBOARD",

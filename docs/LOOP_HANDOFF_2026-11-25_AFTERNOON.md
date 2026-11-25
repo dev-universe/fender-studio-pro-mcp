@@ -384,3 +384,37 @@ R354–R357 앱과 owner 종료, 시험 곡 원본, 18개 설치와 앱 설정 1
 대조했다. `main` 21개, 로컬 19개 잔여다. Ampire의 Wah·Volume·Pitch
 대상과 공장 마이크 믹스 정확 원복은 남았다. 전체 소프트웨어 추정
 2~5일, 장비 의존 4개, 지정된 종료 시각 없음.
+
+## 19시 34분 체크포인트
+
+- #131이 두 필수 검사 후 `da57409`에 병합됐다. #132가 현재
+  정확한 베이스에서 검사 중이다. [#131](https://github.com/dev-universe/fender-studio-pro-mcp/pull/131)
+- R358은 부동소수점 경계를 반환하는 Ampire의 모델 목록을 새
+  네이티브 빌드에서 스톰프 16, 앰프 6, 캐비닛 18개까지 읽었다.
+  모델 선택 없이 90행과 전체 지문을 보존했다. 59요청,
+  앱 49.164초. [#149](https://github.com/dev-universe/fender-studio-pro-mcp/pull/149)
+- R359는 실제 Wah Wah와 별칭을 함께 0→6250→0으로 왕복해
+  93행과 지문을 복원했다. R360은 빈 슬롯과 설치 모델 15개에서
+  Volume/Pitch가 계속 0과 빈 표시임을 봤다. 처리 대상은 확인하지
+  못했다. 슬롯을 비운 뒤 원래 지문과 별도로 활성 별칭 및 읽기
+  전용 튜너 값 차이가 남았다. 앱 61.780초, 64.493초.
+  [#150](https://github.com/dev-universe/fender-studio-pro-mcp/pull/150) ·
+  [#151](https://github.com/dev-universe/fender-studio-pro-mcp/pull/151)
+- R361의 내부 `bypass`는 화면과 DSP 값에 나타났으며 호스트
+  인서트 활성과 전체 지문은 그대로였다. R362는 캡슐 로드 후
+  Mic A를 정확히 보정하면 Mic B/C에 각각 약 0.000298 차이가
+  생기는 경계를 확인했다. 앱 58.684초, 40.569초.
+  [#152](https://github.com/dev-universe/fender-studio-pro-mcp/pull/152) ·
+  [#153](https://github.com/dev-universe/fender-studio-pro-mcp/pull/153)
+- SampleOne R363은 소유 WAV 12,000·24,000프레임을 불러와 화면과
+  각 지문을 확인했다. 빈 캡슐 복원은 원래 235행과 지문이 정확했다.
+  R364는 첫 프레임 0→256의 실제 변경과 로드된 프로그램 상태 복원을
+  확인했다. 앱 136.636초, 128.707초.
+  [#154](https://github.com/dev-universe/fender-studio-pro-mcp/pull/154) ·
+  [#155](https://github.com/dev-universe/fender-studio-pro-mcp/pull/155)
+
+이 시험에서 저장한 곡은 없다. 앱과 owner가 닫혔고 곡 원본,
+관리 파일 18개와 변경된 설정 10개가 일치했다. 다음은 SampleOne
+영역의 저장·새 세션 검증과 여섯 MIDI 입력이다. `main` 21개·로컬
+19개 잔여, 전체 소프트웨어 추정 2~5일, 장비 의존 4개, 지정된 종료
+시각은 없다.
