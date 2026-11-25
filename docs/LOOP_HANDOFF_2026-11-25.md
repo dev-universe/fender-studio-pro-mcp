@@ -2,7 +2,7 @@
 
 ## 현재 상태
 
-한국 시간 13시 27분의 체크포인트다. Studio Pro 8.1.1 빌드 113103,
+한국 시간 14시 04분의 체크포인트다. Studio Pro 8.1.1 빌드 113103,
 시험 MCP owner, REA 세션과 Ghidra 작업을 닫았다. 앱을 다시 열기 전에
 새 문서와 owner를 바인딩한다. 기존 지시인 공식 Studio Pro 설치 파일
 재대조 생략은 유효하다. 이 세션에 지정된 종료 시각은 없다.
@@ -65,14 +65,12 @@
 
 ## 병합과 다음 작업
 
-원격 `main`은 `bc85ea6`이다. FabFilter [#90](https://github.com/dev-universe/fender-studio-pro-mcp/pull/90),
-[#91](https://github.com/dev-universe/fender-studio-pro-mcp/pull/91),
-[#92](https://github.com/dev-universe/fender-studio-pro-mcp/pull/92), Serum #108은
-필수 검사 두 개를 통과해 머지했다. #107의 헤드 `04b6077`이 새 `main`을
-포함하며 두 검사가 진행 중이다. 이후 FabFilter 스택의 #93 → #94 → #95와
-문서 #104 → #105 → #106을 각각 새 `main`을 포함한 정확한 헤드의 두
-검사 결과에 따라 머지한다. #93은 예전 macOS 검사가 취소됐다.
-#107의 예전 macOS DNS 실패는 다음 실행에서 해소됐다.
+원격 `main`은 `95bf1a3`이다. FabFilter #90~#95와 Serum #102, #103,
+#107, #108은 각각 필수 검사 두 개를 통과해 머지했다. #93의 예전
+macOS 검사 취소와 #107의 예전 DNS 실패는 새 헤드 검사에서 해소됐다.
+Pedalboard 문서 #104 → #105 → #106이 남았다. #104 헤드 `c00aa34`는
+현 `main`을 포함하고 두 검사를 진행 중이다. 각 PR을 최신 `main`을
+포함한 정확한 헤드의 두 검사 결과에 따라 머지한다.
 
 11월 24일의 내장 43개 중 잔여 25개와 하드웨어 의존 4개는 고정
 집계에서 그대로다. 이번 Pedalboard 관측, Serum VST3 분석, 직접 적용

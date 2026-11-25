@@ -7,14 +7,14 @@
   "nov25_current_checkpoint": {
     "verified_host_build": "113103",
     "completed_studio_pro_trials": ["R314", "R315", "R316", "R317", "R318", "R319"],
-    "main_merge": "bc85ea68d16c7717701293d9b9011be477b95e1c",
-    "merged_pull_requests": [97, 98, 99, 103, 102, 90, 91, 92, 108],
-    "open_pull_requests": [93, 94, 95, 104, 105, 106, 107],
+    "main_merge": "95bf1a3f75931d8a534015b486bd902f5a7c037a",
+    "merged_pull_requests": [97, 98, 99, 103, 102, 90, 91, 92, 108, 107, 93, 94, 95],
+    "open_pull_requests": [104, 105, 106],
     "remaining_hardware_units_within_builtin": 4,
     "session_cutoff": null,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
-    "next": "Verify both checks for the exact current-main head of PR 107, then advance PRs 93, 94, 95, 104, 105 and 106. Serum R319 direct apply is merged and the app is closed."
+    "next": "Verify both checks for the exact current-main head of each remaining Pedalboard evidence PR 104, 105 and 106. The six FabFilter and four Serum PRs are merged, the app is closed, and the original installation is restored."
   },
   "nov24_current_checkpoint": {
     "resumed_at": "2026-11-24T01:11:00+09:00",
