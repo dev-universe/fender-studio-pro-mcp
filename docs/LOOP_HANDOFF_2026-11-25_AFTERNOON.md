@@ -1853,3 +1853,33 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   [#258](https://github.com/dev-universe/fender-studio-pro-mcp/pull/258)
 - 앱·owner는 닫혔고 임시 서명 플러그인은 제거됐다. `main` 15개·로컬 11개,
   이 중 장비 4건. 전체 2~5일과 CI·장비 대기, 지정된 종료 시각 없음.
+
+## 11월 26일 07시 20분 Serum 읽기 병합과 Scope·Ampire 경계
+
+- #255, #257, #259가 각각 780.5초, 555.9초, 573.1초에 최신 기준의
+  두 필수 검사를 통과해 병합됐다. #257이 `song_read`의 저장 목적지
+  필드를 제공한다. R468의 실제 `plugin_inspect`는 같은 모델의 다른
+  인스턴스에 `host_rejected`, 이전 문서에 `document_changed`를 반환했다.
+  33회·22.191초, 쓰기와 Save 없음, 원래 설치 18개·프로필 9개 원복.
+  [#255](https://github.com/dev-universe/fender-studio-pro-mcp/pull/255)
+  [#257](https://github.com/dev-universe/fender-studio-pro-mcp/pull/257)
+  [#259](https://github.com/dev-universe/fender-studio-pro-mcp/pull/259)
+- R463C는 빈 Send의 여러 직접 노드로 중단했고 R463D는 실제
+  `AudioSendSlot`만 구분해 Scope의 선택 Variant 거부까지 진행했다.
+  R463E는 제한된 `IListParameter::isEmpty`에서 정확한 선택 목록이
+  비어 있음을 확인했다. 세 번 모두 40요청, 20.104/30.175/25.592초,
+  이전 스크립팅 팝업 재발 없이 Send·Save 0, 각 18+10 원복.
+  빈 선택기를 대신할 독립 보유 경로는 열려 있다.
+  [#260](https://github.com/dev-universe/fender-studio-pro-mcp/pull/260)
+- R469의 FAT 50→75→50%는 전체 FAT 상태 해시와 함께 돌아왔다.
+  전역 Volume/Pitch는 0·빈 표시였다. 빈 슬롯의 활성 값은 남았다.
+  R470 최신 `ccfaec0` 빌드는 16개 선택지와 같은 변화를 확인했다.
+  캡슐 복원 뒤 빈 슬롯 활성값은 원래대로 돌아왔고 micmix A는 Float32
+  1 ULP 차이, 캡슐 2,294/2,297바이트였다. 확정적인 전체 원복은 미완료다.
+  R469 95회·11.191초, R470 83회·7.874초. No Save, 각각 18+10 원복.
+  [#261](https://github.com/dev-universe/fender-studio-pro-mcp/pull/261)
+- 현재 #256의 최신 head 검사 중이다. 다음 #245, #249 FabFilter 이후
+  로컬 적격 Input Filter, Impact, Chorder, Shared Event를 우선 병합한다.
+  07시경 목록에서 Volt 276과 Keystation 88은 관찰되지 않았다.
+  앱·owner 닫힘, 정상 설치 확인. `main` 15개·로컬 11개·장비 4건.
+  전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
