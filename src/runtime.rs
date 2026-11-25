@@ -273,6 +273,18 @@ fn execute(
             change, &context, response, request_id, started,
         ));
     }
+    if let Operation::InsertSplitterRemoveEmptyNested(args) = &operation {
+        let (outcome, result, error) = empty_splitter_remove_result(args, &context, &response);
+        return Ok(Receipt {
+            request_id,
+            outcome,
+            session: Some(response.session),
+            document: Some(response.document),
+            result,
+            error,
+            elapsed_ms: started.elapsed().as_millis(),
+        });
+    }
     if let (Operation::MidiProgramPartAdd(change), Some(staged)) = (&operation, staged_program) {
         let (outcome, result, error) =
             midi_program_part::classify(change, &staged.basename, &context, &response);
@@ -483,15 +495,6 @@ fn execute(
         && (!response.ok || !verify(&operation, &response.result))
     {
         response.result = normalize_stereo_send_set_failure(&response.result);
-    }
-    if let Operation::InsertSplitterRemoveEmptyNested(args) = &operation
-        && response.ok
-        && !valid_empty_splitter_remove_receipt(args, &context, &response)
-    {
-        response.result = json!({"ok":false,"native_outcome":"unknown","errors":[{
-            "code":"empty_splitter_remove_unconfirmed",
-            "message":"Read the exact insert graph before making another edit"
-        }]});
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -794,6 +797,57 @@ fn valid_empty_splitter_remove_receipt(
         && instance["class_uid"] == "E4D7D911-0608-4B46-ABA3-2E345399A5AC"
         && instance["object_uid"] == args.expected_instance.as_str()
         && instance["object_id"] == "Mixtool"
+}
+
+fn empty_splitter_remove_result(
+    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+    context: &HostContext,
+    response: &WireResponse,
+) -> (Outcome, Value, Option<OperationError>) {
+    let result = &response.result;
+    if !response.ok
+        && result.is_null()
+        && response.session == context.session
+        && matches!(
+            response.code.as_deref(),
+            Some(
+                "document_changed"
+                    | "missing_precondition"
+                    | "context_required"
+                    | "protocol_mismatch"
+            )
+        )
+        && response
+            .error
+            .as_ref()
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.is_empty() && s.encode_utf16().count() <= 512)
+    {
+        return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
+    }
+    if response.ok && valid_empty_splitter_remove_receipt(args, context, response) {
+        if result["ok"] == true {
+            return (Outcome::AppliedUnverified, result.clone(), None);
+        }
+        if result["native_outcome"] == "not_applied" {
+            return (
+                Outcome::NotApplied,
+                result.clone(),
+                Some(OperationError::new(
+                    "native_rejected",
+                    "The exact empty nested Splitter was refused before removal",
+                )),
+            );
+        }
+    }
+    let message = "Read the exact insert graph before making another edit";
+    (
+        Outcome::Unknown,
+        json!({"ok":false,"native_outcome":"unknown","errors":[{
+            "code":"empty_splitter_remove_unconfirmed","message":message
+        }]}),
+        Some(OperationError::new("outcome_unknown", message)),
+    )
 }
 
 fn gui_number(value: &Value) -> Option<f64> {
@@ -1757,10 +1811,10 @@ mod tests {
         assert!(valid_empty_splitter_remove_receipt(
             &args, &context, &response
         ));
-        assert_eq!(
-            mutation_outcome(&response.result),
-            Outcome::AppliedUnverified
-        );
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::AppliedUnverified);
+        assert_eq!(result, success);
+        assert!(error.is_none());
 
         for (key, value) in [
             ("verified", json!(true)),
@@ -1776,17 +1830,34 @@ mod tests {
         }
         response.result = success;
         response.document = "session:2".into();
-        assert!(!valid_empty_splitter_remove_receipt(
-            &args, &context, &response
-        ));
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert_eq!(result["ok"], false);
+        assert!(result.get("splitter_node").is_none() && result.get("instance").is_none());
+        assert_eq!(error.unwrap().code, "outcome_unknown");
+        response.ok = false;
+        response.code = Some("document_changed".into());
+        response.error = Some(json!("The active document changed"));
+        let (outcome, result, _) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert!(result.get("splitter_node").is_none());
+        response.result = Value::Null;
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert!(result.is_null());
+        assert_eq!(error.unwrap().code, "document_changed");
+
         response.document = context.document.clone();
+        response.ok = true;
+        response.code = None;
+        response.error = None;
         response.result = json!({"ok":false,"native_outcome":"not_applied","errors":[{
             "code":"insert_splitter_remove_empty_nested_failed","message":"Topology changed"
         }]});
-        assert!(valid_empty_splitter_remove_receipt(
-            &args, &context, &response
-        ));
-        assert_eq!(mutation_outcome(&response.result), Outcome::NotApplied);
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert_eq!(result, response.result);
+        assert_eq!(error.unwrap().code, "native_rejected");
         response.result["errors"] = json!([]);
         assert!(!valid_empty_splitter_remove_receipt(
             &args, &context, &response

@@ -55,6 +55,13 @@ enum GraphChild {
     },
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum GraphChildKind {
+    Splitter,
+    Merger,
+    Slot,
+}
+
 impl GraphChild {
     fn node(&self) -> &CopiedIdentity {
         match self {
@@ -283,7 +290,7 @@ impl GraphOwnership {
         &self,
         [graph, splitter, merger, predecessor, successor]: [&str; 5],
         effect: &str,
-    ) -> Result<(), String> {
+    ) -> Result<[(&str, GraphChildKind); 8], String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) || self.value.children.len() != 8 {
             return Err("The expected eight-node insert graph changed".into());
         }
@@ -327,7 +334,25 @@ impl GraphOwnership {
         {
             return Err("The two Mixtool instances no longer match the verified graph".into());
         }
-        Ok(())
+        self.value
+            .children
+            .iter()
+            .map(|child| {
+                let kind = match child {
+                    GraphChild::Splitter { .. } => GraphChildKind::Splitter,
+                    GraphChild::Merger { .. } => GraphChildKind::Merger,
+                    GraphChild::Slot { .. } => GraphChildKind::Slot,
+                };
+                child
+                    .node()
+                    .object_uid
+                    .as_deref()
+                    .map(|uid| (uid, kind))
+                    .ok_or("A graph child UUID is unavailable")
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .try_into()
+            .map_err(|_| "The eight graph children changed".into())
     }
 
     pub(super) fn capture(
@@ -391,6 +416,12 @@ impl GraphOwnership {
             .map_err(|error| error.to_string())?;
         self.folder.check()?;
         guard()?;
+        self.check_borrowed(borrowed_guard)
+    }
+    pub(super) fn check_borrowed<B: FnMut() -> Result<(), String>>(
+        &self,
+        borrowed_guard: &mut B,
+    ) -> Result<(), String> {
         self.focused
             .check_borrowed_attachments(&mut || {
                 self.folder.check_borrowed_attachments()?;
