@@ -111,6 +111,14 @@ To restore an earlier build, run its `install` and `native-install` commands wit
 
 To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
+### Build a macOS arm64 archive
+
+On Apple Silicon, run `sh scripts/package-macos-arm64.sh`. It writes a
+versioned archive and a SHA-256 sidecar to `artifacts/macos-arm64`. You can
+pass a different output directory as the first argument. To check a copied
+archive, run `shasum -a 256 -c` with its `.sha256` file from that directory.
+The archive contains the CLI, its native add-on, and a build manifest.
+
 ## Optional native add-on
 
 Install the add-on to enumerate native plugin parameters and use supported state capture, presets, and deeper plugin inspection. It requires the tested Studio Pro 8.1.1 arm64 build, Python 3, and the macOS command-line tools for the build.

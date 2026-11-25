@@ -37,11 +37,12 @@ fn supported(class: &str) -> bool {
 
 // Read-only inspection admission is separate from the model-catalog policy.
 // Bounded inspection uses declared alias/provider interfaces without fallback.
+// Multi Instrument's object ID follows its current preset title.
 fn inspection_supported(instance: &Instance) -> bool {
     supported(&instance.class_uid)
         || (instance.class_uid == "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
             && instance.native_class == "AudioSynth"
-            && instance.object_id == "Multi Instrument")
+            && valid_uid(&instance.object_uid))
         || (instance.class_uid == "DF958D90-0196-434F-ADC3-1FC2BB7F4AF6"
             && instance.native_class == "AudioEffect"
             && instance.object_id == "Level Meter"
