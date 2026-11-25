@@ -9,3 +9,14 @@ R443C inspected an owned eight-node Insert graph in Studio Pro 8.1.1 Build 11310
 The first owner reached the visual gate and closed before the diagnostic reads when the editor could not be opened from the console. R443B explicitly opened the bound editor, then stopped at a capture refusal because the older installed bridge did not forward `include_routing`. A private reproduction counted zero native requests with that bridge and one with the matching candidate. R443C used the matching bridge and diagnostic package and checked the independent native view before the first capture.
 
 The optional diagnostic is disabled in the default build. The exact candidate passed 509 default native tests and 513 diagnostic native tests. Its two matching copies and retained ownership verify this settled fixture on the existing service thread. Physical endpoint IDs, concurrent audio-thread changes, and a general connection transaction remain separate.
+
+## Independent replay of the public captures
+
+R455 read both archived captures and enumerated the index of each successor
+in `routing.nodes[].successors`. Counting those ordered occurrences by
+destination reproduced each of the eight incoming counts in all four retained
+native responses. Splitter 3's two occurrences kept their separate ordinals
+and common destination. The public archive therefore supports the authored
+projection directly. The private diagnostic independently observed each
+destination's own incoming list. Source ports, processor endpoints and
+physical routing still require separate evidence.
