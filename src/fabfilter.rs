@@ -205,7 +205,6 @@ pub enum CatalogError {
     LimitExceeded,
     CatalogChanged,
     OffsetOutsideCatalog,
-    UnsupportedApplyProduct,
     AmbiguousPreset,
     InvalidPreset,
 }
@@ -219,7 +218,6 @@ impl CatalogError {
             Self::LimitExceeded => "preset_library_limit_exceeded",
             Self::CatalogChanged => "preset_catalog_changed",
             Self::OffsetOutsideCatalog => "preset_offset_outside_catalog",
-            Self::UnsupportedApplyProduct => "preset_product_apply_unsupported",
             Self::AmbiguousPreset => "preset_entry_ambiguous",
             Self::InvalidPreset => "preset_file_invalid",
         }
@@ -235,9 +233,6 @@ impl CatalogError {
             }
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
-            Self::UnsupportedApplyProduct => {
-                "File application supports Pro-Q 4 4.13, Pro-C 3 3.02, and Twin 3 3.10 VST3."
-            }
             Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
             Self::InvalidPreset => {
                 "The selected file does not match the requested FabFilter preset format."
@@ -262,28 +257,6 @@ pub(crate) fn load_for_apply(query: &PresetApply) -> Result<PresetAsset, Catalog
 }
 
 fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, CatalogError> {
-    if !matches!(
-        query.product,
-        Product::Micro
-            | Product::ProC2
-            | Product::ProDS
-            | Product::ProG
-            | Product::ProL
-            | Product::ProL2
-            | Product::ProMB
-            | Product::ProQ2
-            | Product::ProQ3
-            | Product::ProQ4
-            | Product::ProC3
-            | Product::ProR
-            | Product::ProR2
-            | Product::Saturn
-            | Product::Saturn2
-            | Product::Simplon
-            | Product::Twin3
-    ) {
-        return Err(CatalogError::UnsupportedApplyProduct);
-    }
     let (directory, presets, digest) = catalog(library, query.product)?;
     if !query.expected_catalog.eq_ignore_ascii_case(&digest) {
         return Err(CatalogError::CatalogChanged);
@@ -345,12 +318,30 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
 fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::Micro => return bytes.len() >= 16 && bytes.starts_with(b"FMic\x01\0\0\0"),
+        Product::One => {
+            return bytes.len() >= 16 && matches!(&bytes[..8], b"FFPr\0\0\0\0" | b"FFPr\x01\0\0\0");
+        }
         Product::ProC2 => {
             return bytes.len() >= 16
                 && matches!(&bytes[..8], b"FC2p\x02\0\0\0" | b"FPrC\x01\0\0\0");
         }
         Product::ProDS => return bytes.len() >= 16 && bytes.starts_with(b"FPSr\x02\0\0\0"),
         Product::ProG => return bytes.len() >= 16 && bytes.starts_with(b"FPGr\x02\0\0\0"),
+        Product::Timeless2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FDel\x01\0\0\0"
+                        | b"FTim\x02\0\0\0"
+                        | b"FTms\x03\0\0\0"
+                        | b"FTms\x04\0\0\0"
+                        | b"FTms\x05\0\0\0"
+                );
+        }
+        Product::Timeless3 => {
+            return bytes.len() >= 16
+                && matches!(&bytes[..8], b"F3Ts\x09\0\0\0" | b"F3Ts\x0a\0\0\0");
+        }
         Product::Simplon => return bytes.len() >= 16 && bytes.starts_with(b"FSim\x01\0\0\0"),
         Product::ProL => return bytes.len() >= 16 && bytes.starts_with(b"FPLr\x03\0\0\0"),
         Product::ProL2 => return bytes.len() >= 16 && bytes.starts_with(b"FL2p\x02\0\0\0"),
@@ -377,8 +368,33 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
                     b"FS2a\x02\0\0\0" | b"FS2a\x03\0\0\0" | b"FS2a\x04\0\0\0" | b"FSat\x04\0\0\0"
                 );
         }
+        Product::Twin2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FT2i\x06\0\0\0"
+                        | b"FT2i\x08\0\0\0"
+                        | b"FTwi\x01\0\0\0"
+                        | b"FTwi\x03\0\0\0"
+                        | b"FTwi\x04\0\0\0"
+                );
+        }
+        Product::Volcano2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FV2l\x01\0\0\0" | b"FV2l\x02\0\0\0" | b"FVol\x01\0\0\0"
+                );
+        }
+        Product::Volcano3 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FV3l\x03\0\0\0" | b"FV3l\x04\0\0\0" | b"FV3l\x05\0\0\0"
+                );
+        }
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
-        _ => return false,
+        Product::ProR => return false,
     };
     let mut header = bytes
         .split(|byte| *byte == b'\n')
@@ -656,6 +672,43 @@ mod tests {
 
     #[test]
     fn twin_preset_format_requires_a_bounded_binary_header() {
+        assert!(matches_preset(Product::One, b"FFPr\0\0\0\0exactly8"));
+        assert!(matches_preset(Product::One, b"FFPr\x01\0\0\0exactly8"));
+        assert!(!matches_preset(Product::One, b"FFPr\x02\0\0\0exactly8"));
+        assert!(!matches_preset(Product::One, b"FFPr\x01\0\0\0short"));
+        assert!(!matches_preset(Product::One, b"FT3i012345678901"));
+        for (bytes, valid) in [
+            (b"FT2i\x06\0\0\0abcdefgh", true),
+            (b"FT2i\x08\0\0\0abcdefgh", true),
+            (b"FTwi\x01\0\0\0abcdefgh", true),
+            (b"FTwi\x03\0\0\0abcdefgh", true),
+            (b"FTwi\x04\0\0\0abcdefgh", true),
+            (b"FT2i\x07\0\0\0abcdefgh", false),
+            (b"FTwi\x02\0\0\0abcdefgh", false),
+            (b"FFPr\x01\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Twin2, bytes), valid);
+        }
+        for (bytes, valid) in [
+            (b"FV2l\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x02\0\0\0abcdefgh", true),
+            (b"FVol\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x03\0\0\0abcdefgh", false),
+            (b"FVol\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x05\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Volcano2, bytes), valid);
+        }
+        for (bytes, valid) in [
+            (b"FV3l\x03\0\0\0abcdefgh", true),
+            (b"FV3l\x04\0\0\0abcdefgh", true),
+            (b"FV3l\x05\0\0\0abcdefgh", true),
+            (b"FV3l\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x06\0\0\0abcdefgh", false),
+            (b"FV2l\x02\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Volcano3, bytes), valid);
+        }
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
         assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));
@@ -685,6 +738,40 @@ mod tests {
         assert!(!matches_preset(Product::ProC2, b"FC2p\x01\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProC2, b"FPrC\x02\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProC2, b"FPrC\x01\0\0\0"));
+    }
+
+    #[test]
+    fn timeless_3_accepts_both_observed_factory_headers() {
+        assert!(matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x0a\0\0\0abcdefgh"
+        ));
+        assert!(matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x09\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x08\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x0b\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(Product::Timeless3, b"F3Ts\x09\0\0\0"));
+        for (bytes, valid) in [
+            (b"FDel\x01\0\0\0abcdefgh", true),
+            (b"FTim\x02\0\0\0abcdefgh", true),
+            (b"FTms\x03\0\0\0abcdefgh", true),
+            (b"FTms\x04\0\0\0abcdefgh", true),
+            (b"FTms\x05\0\0\0abcdefgh", true),
+            (b"FDel\x02\0\0\0abcdefgh", false),
+            (b"FTim\x03\0\0\0abcdefgh", false),
+            (b"FTms\x06\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Timeless2, bytes), valid);
+        }
     }
 
     #[test]

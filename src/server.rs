@@ -12,8 +12,9 @@ use serde_json::{Value, json};
 
 use crate::{
     fabfilter::{MidiMappingQuery, PresetApply, PresetQuery},
-    operation::{self, Operation, Request, schema},
+    operation::{self, Operation, Request, TrackEdit, TrackTask, schema},
     runtime::RuntimeHandle,
+    serum::{PresetApply as SerumPresetApply, Variant as SerumVariant},
 };
 
 #[derive(Clone)]
@@ -35,6 +36,53 @@ struct FileQuery {
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct HardwareQuery {}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct Serum2Load {
+    target: Serum2Target,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(tag = "variant", rename_all = "snake_case", deny_unknown_fields)]
+enum Serum2Target {
+    Instrument {
+        #[schemars(length(min = 1, max = 256))]
+        track: String,
+    },
+    Fx {
+        #[schemars(length(min = 1, max = 256))]
+        channel: String,
+    },
+}
+
+impl Serum2Load {
+    fn into_operation(self) -> Result<Operation, ErrorData> {
+        let edit = match self.target {
+            Serum2Target::Instrument { track } => TrackEdit::AddInstrumentTrack {
+                instrument: SerumVariant::Instrument.plugin_name().into(),
+                name: Some(serum2_destination(track)?),
+                class_id: Some(format!("{{{}}}", SerumVariant::Instrument.class_uid())),
+            },
+            Serum2Target::Fx { channel } => TrackEdit::AddPlugin {
+                channel: serum2_destination(channel)?,
+                plugin: SerumVariant::Fx.plugin_name().into(),
+                class_id: Some(format!("{{{}}}", SerumVariant::Fx.class_uid())),
+            },
+        };
+        Ok(Operation::TrackTask(TrackTask { ops: vec![edit] }))
+    }
+}
+
+fn serum2_destination(name: String) -> Result<String, ErrorData> {
+    if name.trim().is_empty() || name.len() > 256 || name.chars().any(char::is_control) {
+        return Err(ErrorData::invalid_params(
+            "A Serum destination must contain 1 to 256 UTF-8 bytes without control characters",
+            None,
+        ));
+    }
+    Ok(name)
+}
 
 fn hardware_query(args: serde_json::Map<String, Value>) -> Result<(), ErrorData> {
     serde_json::from_value::<HardwareQuery>(Value::Object(args))
@@ -152,6 +200,18 @@ impl McpServer {
                 "Run finite EditTask operations for parts, routing, instruments, events and arranger sections. For addPlugin and addInstrumentTrack, pass the exact name and optional classId from a complete plugin_catalog result to select a specific class. Results are per item and batches are not atomic.",
                 true,
             ),
+            named::<Serum2Load>(
+                "serum2_load",
+                "trackTask",
+                "Load Xfer Records Serum 2 VST3 as a new Music track with target.variant instrument and target.track, or add Serum 2 FX VST3 to an existing mixer channel's Inserts with target.variant fx and target.channel. Uses one exact-class track edit. Read tracks_list or the channel inserts after the receipt. Inspect the current song before retrying an unknown outcome.",
+                true,
+            ),
+            named::<SerumPresetApply>(
+                "serum2_preset_apply",
+                "serum2PresetApply",
+                "Apply a processor-only VST3 preset for Serum 2 or Serum 2 FX 2.1.5 from a local absolute path with playback and recording stopped. Supply the lowercase file SHA-256, current document, and exact native instance. Use target.variant instrument with track, or fx with channel and zero-based insert slot. The host receipt confirms acceptance only. Read plugin state before retrying any unknown outcome.",
+                true,
+            ),
             named::<PluginQuery>(
                 "plugins_list",
                 "plugins",
@@ -263,7 +323,7 @@ impl McpServer {
             named::<PresetApply>(
                 "fabfilter_preset_apply",
                 "fabfilterPresetApply",
-                "Apply a local FabFilter preset selected by the zero-based index and catalog SHA-256 from fabfilter_presets_list. Supports Micro 1.32, Pro-C 2 2.22, Pro-DS 1.32, Pro-G 1.42, Pro-L 1.37, Pro-L 2 2.26, Pro-MB 1.33, Pro-Q 2 2.30, Pro-Q 3 3.29, Pro-Q 4 4.13, Pro-C 3 3.02, Pro-R 1.20, Pro-R 2 2.06, Saturn 1.31, Saturn 2 2.13, Simplon 1.42, and Twin 3 3.10 VST3 on Studio Pro 8.1.1 for Apple Silicon. Open the target editor and supply the exact instance and document. Supply channel and slot for an effect, or the exclusively selected instrument track for Twin 3. Confirm effects with a separate readback.",
+                "Apply a local FabFilter preset selected by the zero-based index and catalog SHA-256 from fabfilter_presets_list. Supports Micro 1.32, One 3.52, Pro-C 2 2.22, Pro-DS 1.32, Pro-G 1.42, Pro-L 1.37, Pro-L 2 2.26, Pro-MB 1.33, Pro-Q 2 2.30, Pro-Q 3 3.29, Pro-Q 4 4.13, Pro-C 3 3.02, Pro-R 1.20, Pro-R 2 2.06, Saturn 1.31, Saturn 2 2.13, Simplon 1.42, Timeless 2 2.41, Timeless 3 3.10, Twin 2 2.41, Twin 3 3.10, Volcano 2 2.41, and Volcano 3 3.09 VST3 on Studio Pro 8.1.1 for Apple Silicon. Open the target editor and supply the exact instance and document. Supply channel and slot for an effect, or the exclusively selected instrument track for One, Twin 2, or Twin 3. Confirm effects with a separate readback.",
                 true,
             ),
             named::<PluginEditor>(
@@ -583,9 +643,16 @@ impl ServerHandler for McpServer {
                     })
                 })
                 .transpose()?;
+            let operation = if request.name == "serum2_load" {
+                serde_json::from_value::<Serum2Load>(Value::Object(args))
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?
+                    .into_operation()?
+            } else {
+                Operation::from_parts(name, Value::Object(args))
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?
+            };
             Request {
-                operation: Operation::from_parts(name, Value::Object(args))
-                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?,
+                operation,
                 expected_document,
             }
         } else {
@@ -616,9 +683,147 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 57;
+    const EXPECTED_TOOL_COUNT: usize = 59;
 
     use super::*;
+
+    #[test]
+    fn serum2_load_reuses_exact_class_track_edits() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_load")
+            .unwrap();
+        let schema = &spec.tool.input_schema;
+        assert_eq!(spec.operation, Some("trackTask"));
+        assert_eq!(schema["required"], json!(["target", "expected_document"]));
+        assert_eq!(schema["additionalProperties"], false);
+        for (target, edit) in [
+            (
+                json!({"variant":"instrument","track":"My Serum"}),
+                json!({"op":"addInstrumentTrackByClass","instrument":"Serum 2","name":"My Serum","classId":"{56534558-6673-5073-6572-756D20320000}"}),
+            ),
+            (
+                json!({"variant":"fx","channel":"Mix"}),
+                json!({"op":"addPluginByClass","plugin":"Serum 2 FX","channel":"Mix","classId":"{56534558-6673-5173-6572-756D20322066}"}),
+            ),
+        ] {
+            let load: Serum2Load = serde_json::from_value(json!({"target":target})).unwrap();
+            let operation = load.into_operation().unwrap();
+            assert!(!operation.is_read_only());
+            assert!(operation.validate().is_ok());
+            assert_eq!(
+                operation.wire(),
+                ("trackTask".into(), json!({"ops":[edit]}))
+            );
+        }
+    }
+
+    #[test]
+    fn serum2_load_refuses_extra_keys_wrong_targets_and_invalid_labels() {
+        for args in [
+            json!({"target":{"variant":"fx","channel":"Mix","classId":"arbitrary"}}),
+            json!({"target":{"variant":"instrument","track":"Keys","channel":"Mix"}}),
+            json!({"target":{"variant":"fx","track":"Keys"}}),
+            json!({"target":{"variant":"au","channel":"Mix"}}),
+            json!({"target":{"variant":"fx","channel":"Mix"},"plugin":"Other"}),
+        ] {
+            assert!(serde_json::from_value::<Serum2Load>(args).is_err());
+        }
+        for label in [
+            String::from("  "),
+            String::from("Mix\u{0000}"),
+            "악".repeat(86),
+        ] {
+            let load: Serum2Load =
+                serde_json::from_value(json!({"target":{"variant":"fx","channel":label}})).unwrap();
+            assert!(load.into_operation().is_err());
+        }
+    }
+
+    #[test]
+    fn serum_preset_apply_is_exact_document_bound_and_local_file_only() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_preset_apply")
+            .unwrap();
+        let tool_schema = &spec.tool.input_schema;
+        assert_eq!(tool_schema["additionalProperties"], false);
+        assert_eq!(
+            tool_schema["required"],
+            json!([
+                "target",
+                "expected_instance",
+                "path",
+                "expected_sha256",
+                "expected_document"
+            ])
+        );
+        assert_eq!(
+            tool_schema["properties"]["expected_sha256"]["pattern"],
+            "^[0-9a-f]{64}$"
+        );
+        let args = json!({
+            "target":{"variant":"fx","channel":"FX Return","slot":15},
+            "expected_instance":"DF52AB13-A21E-4EDA-855C-CA68851BACA2",
+            "path":"/private/fixture.vstpreset",
+            "expected_sha256":"a".repeat(64),
+        });
+        let operation = Operation::from_parts(spec.operation.unwrap(), args.clone()).unwrap();
+        assert!(!operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(
+            operation.wire(),
+            (
+                "serum2PresetApply".into(),
+                json!({
+                    "target":args["target"], "expected_instance":args["expected_instance"],
+                })
+            )
+        );
+        for alias in ["serum2PresetApply", "serum2_preset_apply"] {
+            let mut request: Request = serde_json::from_value(json!({
+                "operation":alias, "args":args,
+            }))
+            .unwrap();
+            assert_eq!(
+                crate::runtime::validate_request(&request).unwrap_err().code,
+                "missing_precondition"
+            );
+            request.expected_document = Some("current".into());
+            assert!(crate::runtime::validate_request(&request).is_ok());
+        }
+        for (key, value) in [
+            (
+                "target",
+                json!({"variant":"fx","channel":"FX Return","slot":16}),
+            ),
+            (
+                "expected_instance",
+                json!("df52ab13-a21e-4eda-855c-ca68851baca2"),
+            ),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            ("expected_instance", json!("short")),
+            ("path", json!("relative.vstpreset")),
+            ("path", json!("/private/raw.SerumPreset")),
+            ("expected_sha256", json!("A".repeat(64))),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = value;
+            assert!(
+                Operation::from_parts(spec.operation.unwrap(), invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err(),
+                "{key}"
+            );
+        }
+        let mut mixed_target = args;
+        mixed_target["target"]["track"] = json!("Keys");
+        assert!(Operation::from_parts(spec.operation.unwrap(), mixed_target).is_err());
+    }
 
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
@@ -933,6 +1138,8 @@ mod tests {
         let specs = McpServer::specs();
         for name in [
             "track_select",
+            "serum2_load",
+            "serum2_preset_apply",
             "chorder_autofill_set",
             "channel_set",
             "plugin_editor_open",

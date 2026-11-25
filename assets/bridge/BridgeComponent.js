@@ -943,6 +943,57 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, result, { native_outcome: result.outcome });
     }
 
+    serum2PresetApply(args, stagedPath) {
+        const refused = (message, outcome = "not_applied") => ({
+            ok: false, native_outcome: outcome, errors: [{ code: "serum2_preset_apply_failed", message }],
+        });
+        const target = args.target;
+        const label = value => typeof value === "string" && value.trim() && value.length <= 256
+            && !/[\x00-\x1f\x7f-\x9f]/.test(value);
+        if (Object.keys(args).sort().join(",") !== "expected_instance,fixture,sha256,target"
+            || !target || typeof target !== "object"
+            || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || typeof args.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.sha256))
+            return refused("An exact Serum instance and preset digest are required");
+        let plugin, expectedClass, selector;
+        if (target.variant === "instrument" && Object.keys(target).sort().join(",") === "track,variant" && label(target.track)) {
+            plugin = "Serum 2";
+            expectedClass = "56534558-6673-5073-6572-756D20320000";
+            selector = { kind: "instrument", track: target.track, plugin };
+        } else if (target.variant === "fx" && Object.keys(target).sort().join(",") === "channel,slot,variant"
+            && label(target.channel) && Number.isInteger(target.slot) && target.slot >= 0 && target.slot < 16) {
+            plugin = "Serum 2 FX";
+            expectedClass = "56534558-6673-5173-6572-756D20322066";
+            selector = { channel: target.channel, slot: target.slot, plugin };
+        } else return refused("Supply a Serum instrument track or an exact FX insert");
+        const plug = this.pluginOf(selector);
+        if (!plug || plug.error || plug.name !== plugin)
+            return refused("The requested Serum target is unavailable");
+        if (typeof Host === "undefined" || typeof Host.Url !== "function")
+            return refused("The native preset path is unavailable");
+        let auxiliary;
+        try { auxiliary = Host.Url(""); }
+        catch (_) { return refused("The native preset path is unavailable"); }
+        if (!auxiliary || typeof auxiliary !== "object") return refused("The native preset path is unavailable");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "serum2_preset_apply", expected_instance: args.expected_instance,
+            path: stagedPath, sha256: args.sha256,
+        }, auxiliary);
+        if (!native || native.ok !== true) {
+            const outcome = native && native.outcome === "not_applied" ? "not_applied" : "unknown";
+            const message = native && native.error && typeof native.error.message === "string"
+                ? native.error.message : "The host did not return a Serum preset receipt";
+            return refused(message, outcome);
+        }
+        if (native.outcome !== "applied_unverified" || native.sha256 !== args.sha256 || native.verified !== false
+            || !native.instance || native.instance.object_uid !== args.expected_instance
+            || native.instance.class_uid !== expectedClass)
+            return refused("The Serum preset receipt did not match the target and digest", "unknown");
+        return { ok: true, native_outcome: native.outcome, plugin, sha256: native.sha256,
+            instance: native.instance, verified: false };
+    }
+
     fabfilterPresetApply(args) {
         const keys = ["product", "channel", "slot", "track", "expected_instance", "filename", "sha256", "data_hex"];
         const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });
@@ -961,27 +1012,38 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             "Pro-C 3": "B0A765D6-4EFE-42FA-8C7E-FA87BF5DA0A9",
             "Pro-R": "036EB530-2A59-11E2-A281-70076288709B",
             "Pro-R 2": "6070873C-802A-4B07-8FC0-6AB5459154E9",
+            "Timeless 2": "E45B6533-5E7D-4E28-B4CA-15D7940A3A6D",
+            "Timeless 3": "D2EE67F2-C552-402D-9021-15931AFDAE6B",
             "Simplon": "3317F470-55E8-47E4-896B-59C21B843FAE",
             "Saturn": "5460882A-C2AA-4861-88CC-F15B4ACC25C6",
             "Saturn 2": "8D067533-D8A0-491D-BAA3-6C064C6ABBFB",
+            "Volcano 2": "5D923348-ADF7-43B5-9F86-EC29572B103E",
+            "Volcano 3": "299B276C-E27B-4F51-9596-8A0F8600E9D1",
         };
         const effectClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(effectClasses, args.product)
             ? effectClasses[args.product] : null;
         const effect = effectClass && label(args.channel) && Number.isInteger(args.slot)
             && args.slot >= 0 && args.slot <= 15 && args.track === null;
-        const instrument = args && args.product === "Twin 3" && label(args.track) && args.channel === null && args.slot === null;
+        const instrumentClasses = {
+            "One": "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+            "Twin 2": "3E1E04C5-8250-42D1-B34E-D3F6779D00D2",
+            "Twin 3": "91AF218E-111A-44CB-ABFE-F7CB065FF157",
+        };
+        const instrumentClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(instrumentClasses, args.product)
+            ? instrumentClasses[args.product] : null;
+        const instrument = instrumentClass && label(args.track) && args.channel === null && args.slot === null;
         if (!(effect || instrument) || Object.keys(args).length !== keys.length || Object.keys(args).some(key => !keys.includes(key))
             || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
             || args.expected_instance === "00000000-0000-0000-0000-000000000000"
             || typeof args.filename !== "string" || args.filename.length > 255 || args.filename[0] === "." || /[\x00-\x1f\x7f/]/.test(args.filename) || !/\.ffp$/i.test(args.filename)
             || typeof args.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.sha256)
             || typeof args.data_hex !== "string" || !args.data_hex || args.data_hex.length > 131072 || args.data_hex.length % 2 !== 0 || !/^[0-9a-f]+$/.test(args.data_hex))
-            return invalid("The FabFilter preset and exact effect target are invalid");
+            return invalid("The FabFilter preset and exact target are invalid");
         const target = effect ? {channel: args.channel, slot: args.slot, plugin: args.product}
             : {kind:"instrument", track:args.track, plugin:args.product};
         const plug = this.pluginOf(target);
         if (!plug || plug.error) return invalid("The expected FabFilter target is unavailable");
-        const expectedClass = effect ? effectClass : "91AF218E-111A-44CB-ABFE-F7CB065FF157";
+        const expectedClass = effect ? effectClass : instrumentClass;
         const result = this.nativePluginRequest(plug.device, {operation:"fabfilter_preset_apply", expected_instance:args.expected_instance,
             filename:args.filename, sha256:args.sha256, data_hex:args.data_hex});
         if (!result) return invalid("The matching native FabFilter extension is unavailable");
