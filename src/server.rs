@@ -320,6 +320,12 @@ impl McpServer {
                 "Remove one nested two-way Splitter with a single effect on each branch and a shared merger. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the two slot-node UUIDs in branch order. Inspect and capture the graph first, then independently verify the affected links and effects.",
                 true,
             ),
+            named::<InsertSplitterRemoveEmptyNested>(
+                "insert_splitter_remove_empty_nested",
+                "insertSplitterRemoveEmptyNested",
+                "Remove the bound third Splitter whose two empty lanes lead to its paired merger in the verified nested Mixtool shape. Stop playback and recording. Supply the mixer channel, slot 0 Mixtool, its instance UUID, graph UUID, the two nodes to remove, and the predecessor slot and successor merger UUIDs. After acceptance or an unknown outcome, inspect the graph independently before further editing.",
+                true,
+            ),
             named::<PluginPresets>(
                 "plugin_presets",
                 "pluginPresets",
@@ -696,7 +702,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 60;
+    const EXPECTED_TOOL_COUNT: usize = 61;
 
     use super::*;
 
@@ -1202,6 +1208,7 @@ mod tests {
             "insert_chain_state",
             "insert_slot_move",
             "insert_splitter_remove",
+            "insert_splitter_remove_empty_nested",
             "insert_splitter_add",
             "panner_set",
             "splitter_set",

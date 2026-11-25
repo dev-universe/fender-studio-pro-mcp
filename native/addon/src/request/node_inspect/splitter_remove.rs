@@ -122,9 +122,21 @@ fn table(object: *mut c_void) -> usize {
 }
 
 fn adjacent(object: *mut c_void, pointer: usize, count: usize) -> Result<Vec<*mut c_void>, String> {
+    bounded_links(object, pointer, count, 1)
+}
+
+fn bounded_links(
+    object: *mut c_void,
+    pointer: usize,
+    count: usize,
+    minimum: i32,
+) -> Result<Vec<*mut c_void>, String> {
     let count = unsafe { field::<i32>(object, count) };
+    if count == 0 && minimum == 0 {
+        return Ok(Vec::new());
+    }
     let members = unsafe { field::<*const *mut c_void>(object, pointer) };
-    if !(1..=2).contains(&count) || members.is_null() {
+    if !(minimum..=2).contains(&count) || members.is_null() {
         return Err("The expected narrow nested routing edge changed".into());
     }
     let result = unsafe { std::slice::from_raw_parts(members, count as usize) }.to_vec();
@@ -240,9 +252,153 @@ fn check_shape(
     Ok(())
 }
 
+const EMPTY_SHAPE_CHANGED: &str = "The verified empty nested Splitter topology changed";
+
+struct Links<Node> {
+    incoming: Vec<Node>,
+    outgoing: Vec<Node>,
+}
+
+fn same_incoming<Node: PartialEq>(actual: &[Node], expected: &[Node]) -> bool {
+    actual.len() == expected.len() && expected.iter().all(|n| actual.contains(n))
+}
+
+fn empty_nested_topology<Node: Copy + PartialEq>(
+    [target, paired, preceding, following]: [Node; 4],
+    mut links: impl FnMut(Node) -> Result<Links<Node>, String>,
+) -> Result<[Node; 8], String> {
+    let preceding_links = links(preceding)?;
+    let [inner] = preceding_links.incoming[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let inner_links = links(inner)?;
+    let ([outer], [left, peer]) = (&inner_links.incoming[..], &inner_links.outgoing[..]) else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let outer = *outer;
+    let peer = *peer;
+    let following_links = links(following)?;
+    let [outer_merger] = following_links.outgoing[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let nodes = [
+        outer,
+        inner,
+        preceding,
+        target,
+        peer,
+        outer_merger,
+        paired,
+        following,
+    ];
+    if *left != preceding
+        || nodes
+            .iter()
+            .enumerate()
+            .any(|(index, node)| nodes[..index].contains(node))
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    let target_links = links(target)?;
+    let paired_links = links(paired)?;
+    let peer_links = links(peer)?;
+    let outer_links = links(outer)?;
+    let outer_merger_links = links(outer_merger)?;
+    if preceding_links.outgoing != [target]
+        || target_links.incoming != [preceding]
+        || target_links.outgoing != [paired, paired]
+        || !(paired_links.incoming == [target] || paired_links.incoming == [target, target])
+        || paired_links.outgoing != [following]
+        || peer_links.incoming != [inner]
+        || peer_links.outgoing != [following]
+        || !same_incoming(&following_links.incoming, &[paired, peer])
+        || !outer_links.incoming.is_empty()
+        || outer_links.outgoing != [inner, outer_merger]
+        || !same_incoming(&outer_merger_links.incoming, &[outer, following])
+        || !outer_merger_links.outgoing.is_empty()
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    Ok(nodes)
+}
+
+fn is_effect_slot(image: usize, object: *mut c_void) -> bool {
+    SLOT_TABLES
+        .iter()
+        .any(|offset| table(object) == image + offset)
+}
+
+fn check_empty_shape(
+    image: usize,
+    route: &GraphRoute,
+    splitter: *mut c_void,
+    nodes: &[Owned; 4],
+) -> Result<(), String> {
+    let graph = unsafe { field::<*mut c_void>(splitter, 0x178) };
+    if graph.is_null()
+        || table(graph) != image + GRAPH_TABLE
+        || !matches_identity(graph, &route.graph._canonical)
+    {
+        return Err("The empty Splitter is detached from the bound graph".into());
+    }
+    let [preceding] = adjacent(splitter, 0x188, 0x190)?[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let paired = unsafe { field::<*mut c_void>(splitter, 0x1e0) };
+    if paired.is_null()
+        || !matches_identity(paired, &nodes[1])
+        || !matches_identity(preceding, &nodes[2])
+        || class_name(paired) != "AudioFXGraph::MergerNode"
+        || !is_effect_slot(image, preceding)
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    let [following] = adjacent(paired, 0x1a8, 0x1b0)?[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    if !matches_identity(following, &nodes[3])
+        || class_name(following) != "AudioFXGraph::MergerNode"
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    let [outer, inner, _, _, peer, outer_merger, _, _] =
+        empty_nested_topology([splitter, paired, preceding, following], |object| {
+            let node = query(object, &NODE).ok_or(EMPTY_SHAPE_CHANGED)?;
+            let parent: Borrowed = unsafe { method(node.0, 6) };
+            if unsafe { parent(node.0) } != route.graph.node.0
+                || unsafe { field::<*mut c_void>(object, 0x178) } != graph
+            {
+                return Err(EMPTY_SHAPE_CHANGED.into());
+            }
+            Ok(Links {
+                incoming: bounded_links(object, 0x188, 0x190, 0)?,
+                outgoing: bounded_links(object, 0x1a8, 0x1b0, 0)?,
+            })
+        })?;
+    if !is_effect_slot(image, peer)
+        || class_name(outer_merger) != "AudioFXGraph::MergerNode"
+        || [(outer, outer_merger), (inner, following)]
+            .iter()
+            .any(|(node, expected_merger)| {
+                table(*node) != image + SPLITTER_TABLE
+                    || unsafe { field::<*mut c_void>(*node, 0x1e0) } != *expected_merger
+            })
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    Ok(())
+}
+
+#[derive(Clone, Copy)]
+pub(in crate::native_script::request) enum Shape {
+    OccupiedBranches,
+    EmptyNested,
+}
+
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     ids @ [graph_id, splitter_id, merger_id, first_id, second_id]: [&str; 5],
+    shape: Shape,
 ) -> Reply {
     let mut dispatched = false;
     let result = (|| -> Result<(), String> {
@@ -256,7 +412,14 @@ pub(in crate::native_script::request) fn dispatch(
         else {
             return Err("Graph ownership could not be established".into());
         };
-        ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
+        match shape {
+            Shape::OccupiedBranches => {
+                ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
+            }
+            Shape::EmptyNested => {
+                ownership.check_empty_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
+            }
+        }
         let image = image as usize;
         let nodes = bound_nodes(&ctx, &route, [splitter_id, merger_id, first_id, second_id])?;
         let mut guard = || {
@@ -284,8 +447,12 @@ pub(in crate::native_script::request) fn dispatch(
         if table(splitter) != image + SPLITTER_TABLE || !matches_identity(splitter, &nodes[0]) {
             return Err("The primary Splitter receiver changed".into());
         }
+        let validate_shape = || match shape {
+            Shape::OccupiedBranches => check_shape(image, &route, splitter, &nodes),
+            Shape::EmptyNested => check_empty_shape(image, &route, splitter, &nodes),
+        };
         guard()?;
-        check_shape(image, &route, splitter, &nodes)?;
+        validate_shape()?;
         guard()?;
         let command = CheckCommand {
             category: cstring(ctx.api, c"Splitter")?,
@@ -305,7 +472,7 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The bound Splitter did not recognize its Remove command".into());
         }
         guard()?;
-        check_shape(image, &route, splitter, &nodes)?;
+        validate_shape()?;
         guard()?;
         // The normal menu schedules this fixed message. Deliver it to the same
         // pinned observer under the current document guard instead of queuing it.
@@ -315,15 +482,33 @@ pub(in crate::native_script::request) fn dispatch(
         route.check()?;
         Ok(())
     })();
-    let mut reply = match result {
-        Ok(()) => Reply::unbound(json!({
-            "ok":true,"outcome":"applied_unverified","operation":"insert_splitter_remove",
-            "verified":false,"instance":ctx.instance,"expected_instance":ctx.instance.object_uid,
-            "expected_graph":graph_id,"splitter_node":splitter_id,"merger_node":merger_id,
-            "first_slot_node":first_id,"second_slot_node":second_id
-        })),
-        Err(reason) => Reply::error(
+    let (operation, rejection, first_node, second_node) = match shape {
+        Shape::OccupiedBranches => (
+            "insert_splitter_remove",
             "insert_splitter_remove_rejected",
+            "first_slot_node",
+            "second_slot_node",
+        ),
+        Shape::EmptyNested => (
+            "insert_splitter_remove_empty_nested",
+            "insert_splitter_remove_empty_nested_rejected",
+            "predecessor_slot_node",
+            "successor_merger_node",
+        ),
+    };
+    let mut reply = match result {
+        Ok(()) => {
+            let mut receipt = json!({
+                "ok":true,"outcome":"applied_unverified","operation":operation,
+                "verified":false,"instance":ctx.instance,"expected_instance":ctx.instance.object_uid,
+                "expected_graph":graph_id,"splitter_node":splitter_id,"merger_node":merger_id
+            });
+            receipt[first_node] = json!(first_id);
+            receipt[second_node] = json!(second_id);
+            Reply::unbound(receipt)
+        }
+        Err(reason) => Reply::error(
+            rejection,
             &reason,
             if dispatched { "unknown" } else { "not_applied" },
         ),
@@ -331,4 +516,72 @@ pub(in crate::native_script::request) fn dispatch(
     reply.mutation = dispatched;
     reply.context = Some(ctx);
     reply
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn fixture() -> [Links<u8>; 8] {
+        [
+            (&[][..], &[1, 5][..]),
+            (&[0], &[2, 4]),
+            (&[1], &[3]),
+            (&[2], &[6, 6]),
+            (&[1], &[7]),
+            (&[0, 7], &[]),
+            (&[3], &[7]),
+            (&[6, 4], &[5]),
+        ]
+        .map(|(incoming, outgoing)| Links {
+            incoming: incoming.to_vec(),
+            outgoing: outgoing.to_vec(),
+        })
+    }
+
+    fn check(anchors: [u8; 4], graph: &[Links<u8>; 8]) -> Result<[u8; 8], String> {
+        empty_nested_topology(anchors, |id| {
+            let links = graph.get(usize::from(id)).ok_or("unknown graph node")?;
+            Ok(Links {
+                incoming: links.incoming.clone(),
+                outgoing: links.outgoing.clone(),
+            })
+        })
+    }
+
+    #[test]
+    fn accepts_exact_empty_lanes_with_one_retained_peer() {
+        let mut graph = fixture();
+        let anchors = [3, 6, 2, 7];
+        assert_eq!(check(anchors, &graph).unwrap(), [0, 1, 2, 3, 4, 5, 6, 7]);
+        graph[6].incoming.push(3);
+        graph[7].incoming.reverse();
+        assert_eq!(check(anchors, &graph).unwrap(), [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn refuses_wrong_anchors_and_unverified_layouts() {
+        for anchors in [[1, 6, 2, 7], [3, 7, 2, 6], [3, 6, 4, 7], [3, 6, 2, 5]] {
+            assert!(check(anchors, &fixture()).is_err());
+        }
+
+        let anchors = [3, 6, 2, 7];
+        for (node, outgoing) in [
+            (0, vec![5, 1]),
+            (1, vec![4, 2]),
+            (2, vec![3, 7]),
+            (3, vec![4, 6]),
+            (4, vec![6]),
+            (5, vec![3]),
+            (6, vec![5]),
+            (7, vec![0]),
+        ] {
+            let mut graph = fixture();
+            graph[node].outgoing = outgoing;
+            assert!(check(anchors, &graph).is_err());
+        }
+        let mut graph = fixture();
+        graph[6].incoming.push(4);
+        assert!(check(anchors, &graph).is_err());
+    }
 }

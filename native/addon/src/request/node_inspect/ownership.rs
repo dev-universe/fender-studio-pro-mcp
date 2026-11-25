@@ -279,6 +279,57 @@ impl GraphOwnership {
         Ok(())
     }
 
+    pub(super) fn check_empty_splitter_remove_targets(
+        &self,
+        [graph, splitter, merger, predecessor, successor]: [&str; 5],
+        effect: &str,
+    ) -> Result<(), String> {
+        if self.value.graph.object_uid.as_deref() != Some(graph) || self.value.children.len() != 8 {
+            return Err("The expected eight-node insert graph changed".into());
+        }
+        let unique = self
+            .value
+            .children
+            .iter()
+            .filter_map(|child| child.node().object_uid.as_deref())
+            .collect::<std::collections::HashSet<_>>();
+        if unique.len() != 8 || unique.contains(graph) || unique.contains(effect) {
+            return Err("The eight graph node identities must be distinct".into());
+        }
+        let matches = |identity: &str| {
+            self.value
+                .children
+                .iter()
+                .find(|child| child.node().object_uid.as_deref() == Some(identity))
+        };
+        if !matches!(matches(splitter), Some(GraphChild::Splitter { .. }))
+            || !matches!(matches(merger), Some(GraphChild::Merger { .. }))
+            || !matches!(matches(successor), Some(GraphChild::Merger { .. }))
+            || !matches!(matches(predecessor), Some(GraphChild::Slot { device, .. })
+                if device.object_uid.as_deref() == Some(effect) && device.id == "Mixtool")
+        {
+            return Err("The bound empty Splitter, mergers or preceding Mixtool changed".into());
+        }
+
+        let mut devices = self.value.children.iter().filter_map(|child| match child {
+            GraphChild::Slot { device, .. } => Some(device),
+            _ => None,
+        });
+        let (Some(first), Some(second), None) = (devices.next(), devices.next(), devices.next())
+        else {
+            return Err("The verified empty nested shape requires two Mixtool effects".into());
+        };
+        if first.object_uid == second.object_uid
+            || [first, second].iter().any(|device| {
+                device.native_class != "AudioEffect"
+                    || device.class_uid.as_deref() != Some("E4D7D911-0608-4B46-ABA3-2E345399A5AC")
+            })
+        {
+            return Err("The two Mixtool instances no longer match the verified graph".into());
+        }
+        Ok(())
+    }
+
     pub(super) fn capture(
         ctx: &Context<'static>,
         route: &GraphRoute,

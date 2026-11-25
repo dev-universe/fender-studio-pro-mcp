@@ -136,6 +136,7 @@ class Bridge {
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";
         const impactOutputSet = req.op === "impactOutputSet";
+        const emptyNestedSplitterRemove = req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
@@ -198,6 +199,13 @@ class Bridge {
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = serum2PresetFailure(outcome, "The Serum target document changed before publication");
+        } else if (!isFail(result) && emptyNestedSplitterRemove
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, native_outcome: outcome, errors: [{
+                code: "insert_splitter_remove_empty_nested_context_changed",
+                message: "The Splitter target document changed before publication",
+            }] };
         } else if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
@@ -392,6 +400,7 @@ class Bridge {
             case "insertSlotMove": return this.fromComponent(c => c.insertSlotMove(args));
             case "insertSplitterAdd": return this.fromComponent(c => c.insertSplitterAdd(args));
             case "insertSplitterRemove": return this.fromComponent(c => c.insertSplitterRemove(args));
+            case "insertSplitterRemoveEmptyNested": return this.fromComponent(c => c.insertSplitterRemoveEmptyNested(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
@@ -864,6 +873,14 @@ class Bridge {
     transportPanel() {
         const tp = docObject("Environment/TransportPanel");
         return tp && has(tp, "findParameter", "function") ? tp : null;
+    }
+
+    insertGraphTransportStopped() {
+        const transport = this.transportPanel();
+        return !!transport && ["start", "record"].every(name => {
+            const param = transport.findParameter(name);
+            return !!param && (param.value === false || param.value === 0);
+        });
     }
 
     transportState() {
