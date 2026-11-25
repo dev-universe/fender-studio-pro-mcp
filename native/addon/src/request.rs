@@ -355,6 +355,14 @@ enum Request {
         first_slot_node: String,
         second_slot_node: String,
     },
+    InsertSplitterRemoveEmptyNested {
+        expected_instance: String,
+        expected_graph: String,
+        splitter_node: String,
+        merger_node: String,
+        predecessor_slot_node: String,
+        successor_merger_node: String,
+    },
 }
 impl Request {
     fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
@@ -412,7 +420,8 @@ impl Request {
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
             | Self::InsertSplitterAdd { .. }
-            | Self::InsertSplitterRemove { .. } => Source::Auto,
+            | Self::InsertSplitterRemove { .. }
+            | Self::InsertSplitterRemoveEmptyNested { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -452,6 +461,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::InsertSplitterRemove {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance, ..
             } => Some(expected_instance),
             Self::InsertChainCapture { .. }
@@ -660,15 +672,18 @@ impl Request {
                 expected_graph,
                 splitter_node,
                 merger_node,
-                first_slot_node,
-                second_slot_node,
+                first_slot_node: first,
+                second_slot_node: second,
+            }
+            | Self::InsertSplitterRemoveEmptyNested {
+                expected_instance,
+                expected_graph,
+                splitter_node,
+                merger_node,
+                predecessor_slot_node: first,
+                successor_merger_node: second,
             } => {
-                let nodes = [
-                    splitter_node,
-                    merger_node,
-                    first_slot_node,
-                    second_slot_node,
-                ];
+                let nodes = [splitter_node, merger_node, first, second];
                 if ![expected_instance, expected_graph]
                     .into_iter()
                     .chain(nodes)
@@ -1884,7 +1899,10 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainRelease { .. }
         | Request::InsertSlotMove { .. }
         | Request::InsertSplitterAdd { .. }
-        | Request::InsertSplitterRemove { .. } => Err("request requires its own dispatcher".into()),
+        | Request::InsertSplitterRemove { .. }
+        | Request::InsertSplitterRemoveEmptyNested { .. } => {
+            Err("request requires its own dispatcher".into())
+        }
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -2424,6 +2442,7 @@ fn dispatch_device(
             | Request::InsertSlotMove { .. }
             | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
+            | Request::InsertSplitterRemoveEmptyNested { .. }
             | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
             | Request::ExternalStereoSendSet { .. }
@@ -2596,6 +2615,28 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
+            node_inspect::splitter_remove::Shape::OccupiedBranches,
+        );
+    }
+    if let Request::InsertSplitterRemoveEmptyNested {
+        expected_graph,
+        splitter_node,
+        merger_node,
+        predecessor_slot_node,
+        successor_merger_node,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::dispatch(
+            ctx,
+            [
+                &expected_graph,
+                &splitter_node,
+                &merger_node,
+                &predecessor_slot_node,
+                &successor_merger_node,
+            ],
+            node_inspect::splitter_remove::Shape::EmptyNested,
         );
     }
     if let Request::ExternalStereoSendSet { destination, .. } = request {

@@ -1021,6 +1021,8 @@ class NativePluginControls {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") return ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
+        if (operation === "insert_splitter_remove_empty_nested")
+            return ["splitter_node", "merger_node", "predecessor_slot_node", "successor_merger_node"];
         return null;
     }
 
@@ -1367,6 +1369,9 @@ class NativePluginControls {
                 throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
+            if (request.operation === "insert_splitter_remove_empty_nested"
+                && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
+                throw new Error("unsupported empty nested Splitter remove API");
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
                 return stereoSendUnavailable();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
@@ -1400,6 +1405,10 @@ class NativePluginControls {
                 if (current.error || current.device !== device)
                     throw new Error("The selected track's native instrument changed before insertion");
             }
+            if (request.operation === "insert_splitter_remove_empty_nested"
+                && (typeof this.component.bridge.insertGraphTransportStopped !== "function"
+                    || !this.component.bridge.insertGraphTransportStopped() || !this.sameContext(before)))
+                throw new Error("A current document with stopped playback and recording is required");
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
