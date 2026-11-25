@@ -357,3 +357,30 @@ R350–R353 시험 곡은 저장하지 않았으며 앱과 owner 종료, 원본 
 로컬 기준 19개가 남았다. Ampire의 공장 초기 믹스 정밀 복원과 별칭,
 튜너 표시 모드는 계속 추적한다. 전체 소프트웨어 추정 2~5일,
 장비 의존 4개, 지정된 종료 시각 없음.
+
+## 19시 15분 체크포인트
+
+- Pedalboard 빈 슬롯 저장 [#129](https://github.com/dev-universe/fender-studio-pro-mcp/pull/129)와
+  동일 모델 저장 [#130](https://github.com/dev-universe/fender-studio-pro-mcp/pull/130)이
+  두 필수 검사 후 병합됐다. `main`은 `d844c2d`다. #131부터 이어간다.
+- R354는 Ampire 튜너의 실제 Strobe 스위치와 `tuner.gaugeMode` 동작,
+  전체 90개와 상태 지문의 원복을 확인했다. 앱 101.637초.
+  [#145](https://github.com/dev-universe/fender-studio-pro-mcp/pull/145)
+- R355 기본 슬롯 1·5·6과 R356 신규 Compressor 슬롯 2·3·4·7·8에서
+  슬롯별 활성 별칭, 처리부 활성값과 전체 지문을 원복했다. Chorus의
+  움직이는 읽기 전용 LFO는 별도 관찰했다. 앱 108.613초 및 69.554초.
+  [#146](https://github.com/dev-universe/fender-studio-pro-mcp/pull/146) ·
+  [#147](https://github.com/dev-universe/fender-studio-pro-mcp/pull/147)
+- R357에서 Speed 별칭과 `stomp5.vibratoRate`가 함께 6250까지
+  바뀌고 두 값과 전체 90행 및 지문이 정확히 복원됐다. 앱 74.629초.
+  같은 곡에서 모델 List 선택 조회는 원래 native min/max가 Float
+  0/15라 거부됐다. [#148](https://github.com/dev-universe/fender-studio-pro-mcp/pull/148)
+- `fix/native-mutable-list-choices`의 로컬 `ec89417`은 정수값인
+  Float 경계와 원래 변형을 유지한 포매터 호출을 추가했다. 라이브
+  검증은 별도 R358에서 새 네이티브 빌드를 사용한다. 148개 파라미터
+  라이브러리 단위 테스트와 4개 문서 테스트를 통과했다.
+
+R354–R357 앱과 owner 종료, 시험 곡 원본, 18개 설치와 앱 설정 10개를
+대조했다. `main` 21개, 로컬 19개 잔여다. Ampire의 Wah·Volume·Pitch
+대상과 공장 마이크 믹스 정확 원복은 남았다. 전체 소프트웨어 추정
+2~5일, 장비 의존 4개, 지정된 종료 시각 없음.
