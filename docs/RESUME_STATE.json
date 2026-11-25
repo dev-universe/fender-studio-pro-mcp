@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "d15bc77518920d4dc9af89d6f982b2c0aa7f809b",
+    "main_at_checkpoint": "f2fc27f33ec7dbf848df01418e9a2fbf1c7a15a2",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -66,7 +66,11 @@
       "R364",
       "R365",
       "R366",
-      "R366B"
+      "R366B",
+      "R367",
+      "R367B",
+      "R367C",
+      "R367D"
     ],
     "merged_pull_requests": [
       109,
@@ -92,10 +96,10 @@
       129,
       130,
       131,
-      132
+      132,
+      133
     ],
     "open_pull_requests": [
-      133,
       134,
       135,
       136,
@@ -119,14 +123,15 @@
       154,
       155,
       156,
-      157
+      157,
+      158
     ],
     "remaining_builtin_units": 21,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. Next verify Chorder routed held notes and the five remaining actions. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 133 to 157 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. Next verify learned-note edits through the MCP and the five remaining editor actions. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 134 to 158 as both checks pass on each exact current-base head. PR 134 now targets main.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PEDALBOARD",
