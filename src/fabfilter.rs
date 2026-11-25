@@ -285,6 +285,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::Timeless3
             | Product::Twin2
             | Product::Twin3
+            | Product::Volcano2
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
     }
@@ -408,6 +409,13 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
                         | b"FTwi\x01\0\0\0"
                         | b"FTwi\x03\0\0\0"
                         | b"FTwi\x04\0\0\0"
+                );
+        }
+        Product::Volcano2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FV2l\x01\0\0\0" | b"FV2l\x02\0\0\0" | b"FVol\x01\0\0\0"
                 );
         }
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
@@ -705,6 +713,16 @@ mod tests {
             (b"FFPr\x01\0\0\0abcdefgh", false),
         ] {
             assert_eq!(matches_preset(Product::Twin2, bytes), valid);
+        }
+        for (bytes, valid) in [
+            (b"FV2l\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x02\0\0\0abcdefgh", true),
+            (b"FVol\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x03\0\0\0abcdefgh", false),
+            (b"FVol\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x05\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Volcano2, bytes), valid);
         }
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
