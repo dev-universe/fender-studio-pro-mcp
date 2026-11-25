@@ -135,6 +135,7 @@ class Bridge {
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
         const impactOutputSet = req.op === "impactOutputSet";
+        const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -165,6 +166,8 @@ class Bridge {
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
                 }] }
+                : serum2Preset
+                ? serum2PresetFailure("unknown", "The Serum preset application could not be established")
                 : cvPresetApply
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "cv_preset_settings_apply_failed",
@@ -190,6 +193,10 @@ class Bridge {
                 code: "cv_preset_settings_context_changed",
                 message: "The CV preset settings document lease changed before publication",
             }] };
+        } else if (!isFail(result) && serum2Preset
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = serum2PresetFailure(outcome, "The Serum target document changed before publication");
         } else if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
@@ -388,6 +395,7 @@ class Bridge {
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
+            case "serum2PresetApply": return this.serum2PresetApply(args);
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
             case "pluginPresets":
                 if (args.action === "apply_cv_preset_settings" && (!this.component || typeof this.component.pluginPresets !== "function"))
@@ -406,6 +414,30 @@ class Bridge {
             case "impactOutputSet": return this.fromComponent(c => c.impactOutputSet(args));
             default: return fail("unknown op: " + op);
         }
+    }
+
+    serum2PresetApply(args) {
+        const refused = message => serum2PresetFailure("not_applied", message);
+        if (!args || typeof args.fixture !== "string"
+            || !/^mcp-serum2-preset-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.vstpreset$/.test(args.fixture))
+            return refused("A private staged Serum VST3 preset is required");
+        const transport = this.song().transport;
+        if (!transport || transport.playing !== false || transport.recording !== false)
+            return refused("Stop playback and recording before loading a Serum preset");
+        if (!this.component || typeof this.component.serum2PresetApply !== "function")
+            return refused("The matching control surface is required");
+        let path;
+        try {
+            const url = this.mailbox.url(args.fixture);
+            if (!url || typeof url.url !== "string" || !url.url.startsWith("file:///") || /[?#]/.test(url.url))
+                return refused("The staged preset must be a native local file");
+            path = decodeURIComponent(url.url.slice(7));
+        } catch (_) {
+            return refused("The staged preset path is unavailable");
+        }
+        if (!path.endsWith("/" + args.fixture))
+            return refused("The staged preset name changed");
+        return this.fromComponent(c => c.serum2PresetApply(args, path));
     }
 
     externalStereoSendSet(args) {
@@ -1678,6 +1710,10 @@ const kMidiProgramInstruments = {
     twin_2: { name: "Twin 2", classUid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2" },
     twin_3: { name: "Twin 3", classUid: "91AF218E-111A-44CB-ABFE-F7CB065FF157" }
 };
+
+function serum2PresetFailure(outcome, message) {
+    return { ok: false, native_outcome: outcome, errors: [{ code: "serum2_preset_apply_failed", message }] };
+}
 
 function isMidiProgramFixture(name) {
     return name.length === 57 && /^mcp-midi-program-[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.mid$/.test(name);

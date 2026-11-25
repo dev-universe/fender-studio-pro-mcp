@@ -239,6 +239,114 @@ const PRO_Q4: Image = Image {
     loader: 0x9a4d0,
     destructor: 0x4418c,
 };
+static TIMELESS2_HEADERS: [[u8; 8]; 5] = [
+    *b"FDel\x01\0\0\0",
+    *b"FTim\x02\0\0\0",
+    *b"FTms\x03\0\0\0",
+    *b"FTms\x04\0\0\0",
+    *b"FTms\x05\0\0\0",
+];
+
+const TIMELESS2: Image = Image {
+    class_uid: "E45B6533-5E7D-4E28-B4CA-15D7940A3A6D",
+    uuid: [
+        0x1d, 0xee, 0xd1, 0xc1, 0x48, 0x28, 0x30, 0xb6, 0x82, 0x5a, 0x5e, 0x65, 0x08, 0xa3, 0x9c,
+        0xf5,
+    ],
+    controller_table: 0x179fe0,
+    state_member: 0xd0,
+    state_table: 0x176cf0,
+    state_file_method: 0xc34e0,
+    view_table: 0x181be8,
+    editor_table: 0x174600,
+    product: "timeless_2",
+    executable: "FabFilter Timeless 2",
+    binary_sha256: "f4cb0af7b74f23ac441db656463e28de07bc8108143cd20bd4855c3e7cdbffb0",
+    binary_size: 3_524_416,
+    preset_format: PresetFormat::BinaryHeaders(&TIMELESS2_HEADERS),
+    constructor: 0x9a404,
+    loader: 0x5e288,
+    destructor: 0x6b7f8,
+};
+
+static TIMELESS3_HEADERS: [[u8; 8]; 2] = [*b"F3Ts\x09\0\0\0", *b"F3Ts\x0a\0\0\0"];
+
+const TIMELESS3: Image = Image {
+    class_uid: "D2EE67F2-C552-402D-9021-15931AFDAE6B",
+    uuid: [
+        0xb6, 0x11, 0xaf, 0xfc, 0x4f, 0x51, 0x3b, 0xdc, 0x99, 0xc2, 0x19, 0x31, 0xb4, 0xde, 0x33,
+        0xb0,
+    ],
+    controller_table: 0x230420,
+    state_member: 0xd0,
+    state_table: 0x22bab8,
+    state_file_method: 0x94120,
+    view_table: 0x23ab38,
+    editor_table: 0x22a8e8,
+    product: "timeless_3",
+    executable: "FabFilter Timeless 3",
+    binary_sha256: "c70d3dd974d45b17013c0460517346cc483f4b7016411aec34ee18224bab046d",
+    binary_size: 5_141_760,
+    preset_format: PresetFormat::BinaryHeaders(&TIMELESS3_HEADERS),
+    constructor: 0xddd3c,
+    loader: 0x95c38,
+    destructor: 0xa34d4,
+};
+
+static ONE_HEADERS: [[u8; 8]; 2] = [*b"FFPr\0\0\0\0", *b"FFPr\x01\0\0\0"];
+
+const ONE: Image = Image {
+    class_uid: "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+    uuid: [
+        0x9e, 0xa3, 0x68, 0x71, 0x33, 0xb2, 0x39, 0x99, 0xa8, 0xaf, 0xae, 0x48, 0x2a, 0x4d, 0x0a,
+        0xa6,
+    ],
+    controller_table: 0x104988,
+    state_member: 0xd0,
+    state_table: 0x100190,
+    state_file_method: 0x6bde4,
+    view_table: 0x1062e0,
+    editor_table: 0xf8400,
+    product: "one",
+    executable: "FabFilter One",
+    binary_sha256: "58f06a8f96dd019a174ac8575f59317713573e747fe0a5fb2adadd1388f6e895",
+    binary_size: 2_450_352,
+    preset_format: PresetFormat::BinaryHeaders(&ONE_HEADERS),
+    constructor: 0x124d0,
+    loader: 0x87790,
+    destructor: 0x1b2f8,
+};
+
+static TWIN2_HEADERS: [[u8; 8]; 5] = [
+    *b"FT2i\x06\0\0\0",
+    *b"FT2i\x08\0\0\0",
+    *b"FTwi\x01\0\0\0",
+    *b"FTwi\x03\0\0\0",
+    *b"FTwi\x04\0\0\0",
+];
+
+const TWIN2: Image = Image {
+    class_uid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2",
+    uuid: [
+        0x86, 0x9c, 0x2c, 0xc8, 0x9c, 0x66, 0x38, 0x2c, 0xb5, 0x9b, 0x27, 0xf2, 0x59, 0x52, 0xac,
+        0x2f,
+    ],
+    controller_table: 0x193cf0,
+    state_member: 0xd0,
+    state_table: 0x18a198,
+    state_file_method: 0x98288,
+    view_table: 0x19b620,
+    editor_table: 0x189c18,
+    product: "twin_2",
+    executable: "FabFilter Twin 2",
+    binary_sha256: "7b99eb1967156faa373e4c47a10a36bc681152fb8bcd665adbe34d4e0758e926",
+    binary_size: 3_771_952,
+    preset_format: PresetFormat::BinaryHeaders(&TWIN2_HEADERS),
+    constructor: 0xc12bc,
+    loader: 0x679b0,
+    destructor: 0x749ac,
+};
+
 const TWIN3: Image = Image {
     class_uid: "91AF218E-111A-44CB-ABFE-F7CB065FF157",
     uuid: [
@@ -395,6 +503,56 @@ const SATURN2: Image = Image {
     destructor: 0x7db58,
 };
 
+static VOLCANO2_HEADERS: [[u8; 8]; 3] =
+    [*b"FV2l\x01\0\0\0", *b"FV2l\x02\0\0\0", *b"FVol\x01\0\0\0"];
+
+const VOLCANO2: Image = Image {
+    class_uid: "5D923348-ADF7-43B5-9F86-EC29572B103E",
+    uuid: [
+        0xec, 0xde, 0x1a, 0xfb, 0xe4, 0x13, 0x32, 0x9a, 0x85, 0x0b, 0x0e, 0xb3, 0x14, 0x1c, 0x9c,
+        0x88,
+    ],
+    controller_table: 0x17eb58,
+    state_member: 0xd0,
+    state_table: 0x172f28,
+    state_file_method: 0xa1768,
+    view_table: 0x180bf0,
+    editor_table: 0x17cfa0,
+    product: "volcano_2",
+    executable: "FabFilter Volcano 2",
+    binary_sha256: "dabada1c0af4636f6ac977cc7d33b6c484b0baa5e5dd4b2fa7e04da1385e4218",
+    binary_size: 3_524_080,
+    preset_format: PresetFormat::BinaryHeaders(&VOLCANO2_HEADERS),
+    constructor: 0x1d730,
+    loader: 0x7b084,
+    destructor: 0x26620,
+};
+
+static VOLCANO3_HEADERS: [[u8; 8]; 3] =
+    [*b"FV3l\x03\0\0\0", *b"FV3l\x04\0\0\0", *b"FV3l\x05\0\0\0"];
+
+const VOLCANO3: Image = Image {
+    class_uid: "299B276C-E27B-4F51-9596-8A0F8600E9D1",
+    uuid: [
+        0x1c, 0xed, 0x58, 0x9d, 0x24, 0x2c, 0x3b, 0x57, 0xa1, 0x9b, 0x58, 0x46, 0x90, 0xe8, 0x0b,
+        0x81,
+    ],
+    controller_table: 0x1f8c18,
+    state_member: 0xd0,
+    state_table: 0x1ec4c0,
+    state_file_method: 0x9b0dc,
+    view_table: 0x1fae58,
+    editor_table: 0x1f6fb8,
+    product: "volcano_3",
+    executable: "FabFilter Volcano 3",
+    binary_sha256: "05df3f3ab23aef101f73d13775acb4df6410af792d6ac845185a8b0cd2817e79",
+    binary_size: 4_580_320,
+    preset_format: PresetFormat::BinaryHeaders(&VOLCANO3_HEADERS),
+    constructor: 0x1c318,
+    loader: 0x9cbf4,
+    destructor: 0x25244,
+};
+
 enum PresetFormat {
     Text(&'static [u8]),
     Binary(&'static [u8]),
@@ -426,7 +584,8 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
-        &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &TIMELESS2, &TIMELESS3, &ONE, &TWIN2, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &SIMPLON, &VOLCANO2, &VOLCANO3,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -842,6 +1001,8 @@ mod tests {
             ("036EB530-2A59-11E2-A281-70076288709B", "pro_r"),
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
             ("8D067533-D8A0-491D-BAA3-6C064C6ABBFB", "saturn_2"),
+            ("9240FC40-10CD-45A0-B7DA-CECADDC2E97A", "one"),
+            ("3E1E04C5-8250-42D1-B34E-D3F6779D00D2", "twin_2"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
             assert!(supports_class(class_uid));
@@ -892,6 +1053,121 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_C2, "Drums.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn timeless_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FDel\x01\0\0\0abcdefgh", true),
+            (b"FTim\x02\0\0\0abcdefgh", true),
+            (b"FTms\x03\0\0\0abcdefgh", true),
+            (b"FTms\x04\0\0\0abcdefgh", true),
+            (b"FTms\x05\0\0\0abcdefgh", true),
+            (b"FDel\x02\0\0\0abcdefgh", false),
+            (b"FTim\x03\0\0\0abcdefgh", false),
+            (b"FTms\x06\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TIMELESS2, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn timeless_3_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"F3Ts\x0a\0\0\0abcdefgh", true),
+            (b"F3Ts\x09\0\0\0abcdefgh", true),
+            (b"F3Ts\x08\0\0\0abcdefgh", false),
+            (b"F3Ts\x0b\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TIMELESS3, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn volcano_3_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FV3l\x03\0\0\0abcdefgh", true),
+            (b"FV3l\x04\0\0\0abcdefgh", true),
+            (b"FV3l\x05\0\0\0abcdefgh", true),
+            (b"FV3l\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x06\0\0\0abcdefgh", false),
+            (b"FV2l\x02\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&VOLCANO3, "Filter.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn volcano_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FV2l\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x02\0\0\0abcdefgh", true),
+            (b"FVol\x01\0\0\0abcdefgh", true),
+            (b"FV2l\x03\0\0\0abcdefgh", false),
+            (b"FVol\x02\0\0\0abcdefgh", false),
+            (b"FV3l\x05\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&VOLCANO2, "Filter.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn twin_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FT2i\x06\0\0\0abcdefgh", true),
+            (b"FT2i\x08\0\0\0abcdefgh", true),
+            (b"FTwi\x01\0\0\0abcdefgh", true),
+            (b"FTwi\x03\0\0\0abcdefgh", true),
+            (b"FTwi\x04\0\0\0abcdefgh", true),
+            (b"FT2i\x07\0\0\0abcdefgh", false),
+            (b"FTwi\x02\0\0\0abcdefgh", false),
+            (b"FFPr\x01\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TWIN2, "Twin.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn one_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FFPr\x01\0\0\0abcdefgh", true),
+            (b"FFPr\0\0\0\0abcdefgh", true),
+            (b"FFPr\x02\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&ONE, "Bass.ffp", &digest, &hex).is_some(),
                 valid
             );
         }

@@ -1299,6 +1299,10 @@ class NativePluginControls {
         });
         const cvStructure = request.operation === "cv_port_structure_inspect";
         const cvPresetApply = request.operation === "apply_cv_preset_settings";
+        const serum2Preset = request.operation === "serum2_preset_apply";
+        const serum2Failure = outcome => ({ ok: false, outcome, error: {
+            code: "serum2_preset_apply_failed", message: "The native Serum preset application could not be established",
+        } });
         const insertGraphEdit = this.insertGraphNodeFields(request.operation) !== null;
         try {
             if (insertGraphEdit && !this.insertGraphEditRequest(request)) throw new Error("invalid insert graph edit request");
@@ -1320,7 +1324,8 @@ class NativePluginControls {
             if (guiLearning && !this.guiLearningRequest(request)) throw new Error("invalid fixed Chorder learning request");
             if (request.operation === "model_catalog" && !this.modelRequest(request)) throw new Error("invalid finite native model request");
             if (request.operation === "edit_numeric_parameter" && !this.numericEditRequest(request)) throw new Error("invalid finite native edit request");
-            const needsAuxiliary = request.operation === "inspect_aux" || (request.operation === "presets" && request.catalog_token === undefined);
+            const needsAuxiliary = serum2Preset || request.operation === "inspect_aux"
+                || (request.operation === "presets" && request.catalog_token === undefined);
             if (needsAuxiliary ? !auxiliary || typeof auxiliary !== "object" : auxiliary !== undefined)
                 throw new Error("native auxiliary object is required only for initial presets or fixed auxiliary inspection");
             const before = this.component.bridge && this.component.bridge.requestContext;
@@ -1330,7 +1335,7 @@ class NativePluginControls {
             }
             if (typeof Host === "undefined" || !Host.Objects) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
@@ -1338,7 +1343,7 @@ class NativePluginControls {
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") {
@@ -1361,6 +1366,8 @@ class NativePluginControls {
                 throw new Error("unsupported insert Splitter remove API");
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
                 return stereoSendUnavailable();
+            if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
+                return serum2Failure("not_applied");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
@@ -1464,6 +1471,7 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (serum2Preset) return serum2Failure(dispatched ? "unknown" : "not_applied");
             if (cvPresetApply) return this.cvPresetApplyFailure(dispatched, parsed);
             if (cvStructure) return this.cvStructureFailure(dispatched,null);
             if (rumbleNamedParameters) return this.rumbleNamedParametersFailure();

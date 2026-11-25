@@ -1,8 +1,9 @@
-//! Finite, service-local preset capabilities. Paths and imported bytes never
-//! cross this boundary; only entries observed through the fixed slot are used.
+//! Finite preset capabilities for fixed native slots, including an exact
+//! Serum carrier staged by the MCP server in its private mailbox.
 use super::*;
 use fender_native_preset_api::{
     Availability, Catalog, CvSettingsInspection, Inputs, IssuedCvSettingsFile, Page,
+    vst3::{self, SerumVariant},
 };
 use std::{cell::RefCell, collections::BTreeMap, rc::Rc};
 
@@ -38,6 +39,12 @@ const MANAGER: Uid = Uid {
     b: 0xac7b,
     c: 0x457c,
     d: [0xac, 0xcd, 0x8b, 0x35, 0xdf, 0xcc, 0xea, 0x9d],
+};
+const FILE_REGISTRY: Uid = Uid {
+    a: 0x6c19f466,
+    b: 0xc0c3,
+    c: 0x4c91,
+    d: [0x8b, 0x1e, 0x5e, 0x00, 0x29, 0xc6, 0x74, 0xa8],
 };
 const URL: Uid = Uid {
     a: 0xbfca729d,
@@ -317,6 +324,92 @@ fn transfer(owner: Owned) -> NonNull<c_void> {
     std::mem::forget(owner);
     p
 }
+
+pub(super) fn apply_serum_vst3(
+    ctx: &Context<'_>,
+    auxiliary: Owned,
+    path: &str,
+    expected_sha256: &str,
+) -> Value {
+    let mut dispatched = false;
+    let result: Result<_, String> = (|| {
+        let instance = &ctx.instance;
+        let (variant, expected_slot) =
+            match (instance.native_class.as_str(), instance.object_id.as_str()) {
+                ("AudioSynth", "Serum 2") => (SerumVariant::Instrument, "AudioSynthSlot"),
+                ("AudioEffect", "Serum 2 FX") => (SerumVariant::Fx, "AudioInsertSlot"),
+                _ => return Err("the exact Serum 2 VST3 instrument or effect is required".into()),
+            };
+        if instance.class_uid != variant.class_uid() {
+            return Err("the Serum 2 VST3 class UID did not match".into());
+        }
+        let route = Route::capture(ctx)?;
+        if route.slot_identity.2 != expected_slot {
+            return Err("the expected Serum VST3 slot family was not found".into());
+        }
+        let guard = &mut || route.guard(ctx);
+        let mediator = query(route.slot.0, &MEDIATOR).ok_or("slot IPresetMediator unavailable")?;
+        guard()?;
+        let data_target =
+            query(route.presets.0, &DATA_TARGET).ok_or("Presets IDataTarget unavailable")?;
+        guard()?;
+        let empty_url = query(auxiliary.0, &URL).ok_or("auxiliary has no IUrl interface")?;
+        drop(auxiliary);
+        guard()?;
+        let table = hold(unsafe { (ctx.api.objects)() }).ok_or("object table unavailable")?;
+        guard()?;
+        let by_id: unsafe extern "C" fn(*mut c_void, *const Uid) -> *mut c_void =
+            unsafe { method(table.0, 8) };
+        let registry = hold(unsafe { by_id(table.0, &FILE_REGISTRY) })
+            .ok_or("preset file registry unavailable")?;
+        guard()?;
+        let exact_registry =
+            query(registry.0, &FILE_REGISTRY).ok_or("IPresetFileRegistry unavailable")?;
+        drop(registry);
+        drop(table);
+        guard()?;
+        let plugin_manager =
+            hold(unsafe { (ctx.api.plugin_manager)() }).ok_or("plug-in manager unavailable")?;
+        guard()?;
+        let allocator =
+            query(plugin_manager.0, &ALLOCATOR).ok_or("plug-in IClassAllocator unavailable")?;
+        drop(plugin_manager);
+        guard()?;
+
+        let inputs = vst3::Inputs {
+            registry: transfer(exact_registry),
+            mediator: transfer(mediator),
+            data_target: transfer(data_target),
+            allocator: transfer(allocator),
+            empty_url: transfer(empty_url),
+        };
+        match unsafe { vst3::apply_owned(inputs, path, expected_sha256, variant, guard) } {
+            Ok(result) => {
+                dispatched = true;
+                guard()?;
+                Ok(result)
+            }
+            Err(failure) => {
+                dispatched = failure.dispatched;
+                Err(failure.error.to_string())
+            }
+        }
+    })();
+    match ctx.check().and(result) {
+        Ok(receipt) => json!({
+            "ok": true,
+            "outcome": "applied_unverified",
+            "sha256": expected_sha256,
+            "verified": receipt.verified
+        }),
+        Err(reason) => error(
+            "serum_preset_apply_failed",
+            &reason,
+            if dispatched { "unknown" } else { "not_applied" },
+        ),
+    }
+}
+
 fn discover(ctx: &Context<'_>, auxiliary: Owned) -> Result<Rc<Lease>, String> {
     with_registry(ctx.service, |r| r.capacity())?;
     let route = Route::capture(ctx)?;

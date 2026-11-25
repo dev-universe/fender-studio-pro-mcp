@@ -120,15 +120,15 @@ pub struct ExchangeFailure {
     pub error: OperationError,
 }
 
-pub struct StagedProgramPart {
+pub struct StagedFixture {
     path: PathBuf,
     pub basename: String,
 }
 
-impl StagedProgramPart {
+impl StagedFixture {
     pub fn remove(self) {
         if let Err(error) = fs::remove_file(self.path) {
-            tracing::warn!(%error, "Could not remove the private MIDI program fixture");
+            tracing::warn!(%error, "Could not remove the private bridge fixture");
         }
     }
 }
@@ -155,11 +155,24 @@ impl Bridge {
         })
     }
 
-    pub fn stage_midi_program(
-        &self,
-        contents: &[u8; 46],
-    ) -> Result<StagedProgramPart, OperationError> {
+    pub fn stage_midi_program(&self, contents: &[u8; 46]) -> Result<StagedFixture, OperationError> {
         let basename = format!("mcp-midi-program-{}.mid", Uuid::new_v4());
+        self.stage_fixture(basename, contents)
+    }
+
+    pub(crate) fn stage_serum_preset(
+        &self,
+        contents: &[u8],
+    ) -> Result<StagedFixture, OperationError> {
+        let basename = format!("mcp-serum2-preset-{}.vstpreset", Uuid::new_v4());
+        self.stage_fixture(basename, contents)
+    }
+
+    fn stage_fixture(
+        &self,
+        basename: String,
+        contents: &[u8],
+    ) -> Result<StagedFixture, OperationError> {
         let path = self.directory.join(&basename);
         let mut options = OpenOptions::new();
         options.write(true).create_new(true);
@@ -174,7 +187,7 @@ impl Bridge {
             let _ = fs::remove_file(&path);
             return Err(io_error(error));
         }
-        Ok(StagedProgramPart { path, basename })
+        Ok(StagedFixture { path, basename })
     }
 
     fn exchange_with(
@@ -360,6 +373,38 @@ mod tests {
         first.remove();
         assert!(!removed.exists());
         assert_eq!(fs::read(&second.path).unwrap(), [2; 46]);
+    }
+
+    #[test]
+    fn staged_serum_preset_is_a_private_mailbox_fixture() {
+        let temp = tempfile::tempdir().unwrap();
+        let config = Config {
+            data_dir: Some(temp.path().to_owned()),
+            profile: None,
+            timeout_ms: 100,
+        };
+        let bridge = Bridge::new(&config).unwrap();
+        let fixture = bridge.stage_serum_preset(b"fixture bytes").unwrap();
+        assert_eq!(fixture.path, config.mailbox().join(&fixture.basename));
+        let id = fixture
+            .basename
+            .strip_prefix("mcp-serum2-preset-")
+            .unwrap()
+            .strip_suffix(".vstpreset")
+            .unwrap();
+        assert_eq!(Uuid::parse_str(id).unwrap().get_version_num(), 4);
+        assert_eq!(fs::read(&fixture.path).unwrap(), b"fixture bytes");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                fs::metadata(&fixture.path).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+        let removed = fixture.path.clone();
+        fixture.remove();
+        assert!(!removed.exists());
     }
 
     #[test]
