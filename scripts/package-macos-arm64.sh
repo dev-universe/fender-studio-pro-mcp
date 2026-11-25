@@ -56,7 +56,27 @@ if uuid is None:
 
 for path in (cli, repo / 'LICENSE', repo / 'THIRD_PARTY_NOTICES.md'):
     shutil.copy2(path, stage)
-shutil.copytree(native_root, stage / native_dir)
+staged_native = stage / native_dir
+shutil.copytree(native_root, staged_native)
+bundle = staged_native / 'plugins/mac/fender_mcp_native.bundle'
+binary = bundle / 'Contents/MacOS/fender_mcp_native'
+resources = bundle / 'Contents/_CodeSignature/CodeResources'
+subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--timestamp=none', bundle], check=True)
+for target in (bundle, binary):
+    subprocess.run(['/usr/bin/codesign', '--verify', '--strict', target], check=True)
+signed_uuid = subprocess.check_output(['/usr/bin/dwarfdump', '--uuid', binary], text=True).split()
+if signed_uuid[:3] != ['UUID:', uuid[1], '(arm64)']:
+    raise SystemExit('Signing changed the native executable UUID')
+signed_files = {
+    path.relative_to(staged_native).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+    for path in sorted(staged_native.rglob('*')) if path.is_file()
+}
+binary_path = binary.relative_to(staged_native).as_posix()
+resources_path = resources.relative_to(staged_native).as_posix()
+if signed_files.keys() != native['files'].keys() | {resources_path}:
+    raise SystemExit('The signed native package has unexpected files')
+if any(signed_files[path] != digest for path, digest in native['files'].items() if path != binary_path):
+    raise SystemExit('Signing changed native package metadata')
 manifest = {
     'schema': 1,
     'version': version,
@@ -68,7 +88,7 @@ manifest = {
         'directory': native_dir,
         'binary_uuid': uuid[1],
         'runtime': native['runtime'],
-        'files': native['files'],
+        'files': signed_files,
     },
 }
 (stage / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
