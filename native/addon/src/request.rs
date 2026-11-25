@@ -145,6 +145,16 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    MultiChildParameters {
+        expected_instance: String,
+        child_slot: alias_controller::multi_child::Slot,
+        expected_child_slot: String,
+        expected_child_instance: String,
+        #[serde(default)]
+        offset: u32,
+        #[serde(default = "default_limit")]
+        limit: u32,
+    },
     Choices {
         param: String,
         #[serde(default)]
@@ -357,7 +367,8 @@ impl Request {
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
-            | Self::ChorderLearningGet { .. } => Source::Dsp,
+            | Self::ChorderLearningGet { .. }
+            | Self::MultiChildParameters { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -396,6 +407,9 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::MultiChildParameters {
+                expected_instance, ..
+            }
             | Self::ImpactOutputSet {
                 expected_instance, ..
             }
@@ -537,6 +551,23 @@ impl Request {
             }
         }
         match self {
+            Self::MultiChildParameters {
+                expected_instance,
+                expected_child_slot,
+                expected_child_instance,
+                offset,
+                limit,
+                ..
+            } if !valid_uid(expected_child_slot)
+                || !valid_uid(expected_child_instance)
+                || expected_instance == expected_child_slot
+                || expected_instance == expected_child_instance
+                || expected_child_slot == expected_child_instance
+                || *offset > fender_native_dsp_api::MAX_PARAMETER_COUNT
+                || !(1..=fender_native_dsp_api::MAX_PAGE_SIZE).contains(limit) =>
+            {
+                Err("Multi Instrument child DSP requires distinct exact identity and bounded paging".into())
+            }
             Self::ImpactOutputSet {
                 output_index,
                 output_name,
@@ -1162,7 +1193,10 @@ fn raw_text(a: &Api) -> parameters::TextApi {
 }
 fn dsp(ctx: &Context<'_>) -> Result<DspParameters, String> {
     ctx.check()?;
-    let target = hold(ctx.target.0).ok_or("target unavailable")?;
+    dsp_for(ctx, ctx.target.0)
+}
+fn dsp_for(ctx: &Context<'_>, target: *mut c_void) -> Result<DspParameters, String> {
+    let target = hold(target).ok_or("target unavailable")?;
     let text = DspText {
         get_constant_string: unsafe {
             std::mem::transmute::<
@@ -1382,6 +1416,7 @@ pub(super) enum ObservationKind {
 
 enum Provider {
     Dsp(DspProvider),
+    MultiChild(Box<alias_controller::multi_child::Binding>),
     DspValue(Controller),
     Controller(Controller),
     State(state::AliasLease),
@@ -1394,7 +1429,7 @@ enum Provider {
 impl Provider {
     fn source(&self) -> &'static str {
         match self {
-            Self::Dsp(_) | Self::DspValue(_) => "dsp",
+            Self::Dsp(_) | Self::DspValue(_) | Self::MultiChild(_) => "dsp",
             Self::Controller(_) => "controller",
             Self::State(_) => "component_alias_storable",
             Self::RumbleParameters { .. } => "component_alias_fixed_controllers",
@@ -1404,9 +1439,11 @@ impl Provider {
     fn scalar(&self) -> Option<&Controller> {
         match self {
             Self::DspValue(controller) | Self::Controller(controller) => Some(controller),
-            Self::Dsp(_) | Self::State(_) | Self::LevelMeter(_) | Self::RumbleParameters { .. } => {
-                None
-            }
+            Self::Dsp(_)
+            | Self::MultiChild(_)
+            | Self::State(_)
+            | Self::LevelMeter(_)
+            | Self::RumbleParameters { .. } => None,
         }
     }
     fn check(&self) -> Result<(), String> {
@@ -1416,7 +1453,7 @@ impl Provider {
             Self::Dsp(provider) => provider.direct.as_ref().map_or(Ok(()), |c| c.check()),
             Self::DspValue(controller) | Self::Controller(controller) => controller.check(),
             Self::State(alias) => alias.check(),
-            Self::LevelMeter(_) => Ok(()),
+            Self::LevelMeter(_) | Self::MultiChild(_) => Ok(()),
             Self::RumbleParameters {
                 retrieval,
                 observation,
@@ -1517,18 +1554,19 @@ fn description(d: &parameters::Description) -> Value {
     json!({"name":d.name,"title":d.name,"tag":d.tag,"value":scalar(d.raw.as_ref()),"text":d.display,"min":scalar(d.min.as_ref()),"max":scalar(d.max.as_ref()),"default":scalar(d.default_value.as_ref()),"normalized":match d.normalized {parameters::Normalized::Finite(v)=>Some(v),_=>None},"enabled":d.enabled,"readOnly":d.read_only,"writable":supported&&!opaque,"native_kind":format!("{:?}",d.kind),"native_value":typed(d.raw.as_ref()),"native_min":typed(d.min.as_ref()),"native_max":typed(d.max.as_ref()),"native_default":typed(d.default_value.as_ref()),"native_normalized":match d.normalized {parameters::Normalized::NotApplicable=>json!({"kind":"not_applicable"}),parameters::Normalized::Finite(v) if v.is_finite()=>json!({"kind":"float32","bits_hex":format!("{:08X}",v.to_bits())}),parameters::Normalized::Finite(v)=>json!({"kind":"invalid_float32","bits_hex":format!("{:08X}",v.to_bits())}),parameters::Normalized::NonFinite{bits}=>json!({"kind":"non_finite_float32","bits_hex":format!("{bits:08X}")})},"native_support":{"raw_number":d.support.raw_number,"normalized":d.support.normalized,"display_text":d.support.display_text},"support":{"raw":safe_integers&&d.support.raw_number,"normalized":safe_integers&&d.support.normalized,"text":safe_integers&&d.support.display_text},"display_parser":format!("{:?}",d.display_parser)})
 }
 fn dsp_record(
-    ctx: &Context<'_>,
+    api: &Api,
     provider: &DspProvider,
     record: &fender_native_dsp_api::Parameter,
+    guard: &mut impl FnMut() -> Result<(), String>,
 ) -> Result<Value, String> {
-    ctx.check()?;
+    guard()?;
     let access = match &provider.direct {
-        Ok(controller) => controller
-            .find(&record.name, ctx.api)
-            .and_then(|parameter| parameter.describe().map_err(|e| e.to_string())),
+        Ok(controller) => controller.find(&record.name, api),
         Err(error) => Err(error.clone()),
     };
-    ctx.check()?;
+    guard()?;
+    let access = access.and_then(|parameter| parameter.describe().map_err(|e| e.to_string()));
+    guard()?;
     Ok(dsp_record_value(record, access))
 }
 fn dsp_record_value(
@@ -1545,30 +1583,52 @@ fn dsp_record_value(
     }
     value
 }
+fn dsp_page(
+    api: &Api,
+    provider: &DspProvider,
+    offset: u32,
+    limit: u32,
+    guard: &mut impl FnMut() -> Result<(), String>,
+) -> Result<Value, String> {
+    guard()?;
+    let result = provider
+        .metadata
+        .page_guarded(offset, limit, guard)
+        .map_err(|e| e.to_string())?;
+    guard()?;
+    let records = result
+        .records
+        .iter()
+        .map(|record| dsp_record(api, provider, record, guard))
+        .collect::<Result<Vec<_>, _>>()?;
+    let failed_access: Vec<u32> = records
+        .iter()
+        .filter(|record| record.get("access_error").is_some())
+        .map(|record| record["index"].as_u64().expect("DSP index") as u32)
+        .collect();
+    if provider.metadata.count().map_err(|e| e.to_string())? != result.reported_count {
+        return Err("DSP parameter count changed during access description".into());
+    }
+    guard()?;
+    Ok(json!({
+        "parameters":records,
+        "reported_count":result.reported_count,
+        "offset":offset,
+        "next_offset":result.next,
+        "page_complete":result.failed_indices.is_empty(),
+        "all_indices_read":result.complete,
+        "failed_indices":result.failed_indices.iter()
+            .map(|r|json!({"index":r.index,"reason":format!("{:?}",r.reason)})).collect::<Vec<_>>(),
+        "access_metadata_complete":failed_access.is_empty(),
+        "failed_access_indices":failed_access,
+        "coverage":"direct_device_dsp_provider",
+    }))
+}
 fn page(ctx: &Context<'_>, p: &Provider, offset: u32, limit: u32) -> Result<Value, String> {
     ctx.check()?;
     match p {
-        Provider::Dsp(p) => {
-            let result = p.metadata.page(offset, limit).map_err(|e| e.to_string())?;
-            ctx.check()?;
-            let records = result
-                .records
-                .iter()
-                .map(|record| dsp_record(ctx, p, record))
-                .collect::<Result<Vec<_>, _>>()?;
-            let failed_access: Vec<u32> = records
-                .iter()
-                .filter(|record| record.get("access_error").is_some())
-                .map(|record| record["index"].as_u64().expect("DSP index") as u32)
-                .collect();
-            if p.metadata.count().map_err(|e| e.to_string())? != result.reported_count {
-                return Err("DSP parameter count changed during access description".into());
-            }
-            ctx.check()?;
-            Ok(
-                json!({"parameters":records,"reported_count":result.reported_count,"offset":offset,"next_offset":result.next,"page_complete":result.failed_indices.is_empty(),"all_indices_read":result.complete,"failed_indices":result.failed_indices.iter().map(|r|json!({"index":r.index,"reason":format!("{:?}",r.reason)})).collect::<Vec<_>>(),"access_metadata_complete":failed_access.is_empty(),"failed_access_indices":failed_access,"coverage":"direct_device_dsp_provider"}),
-            )
-        }
+        Provider::Dsp(p) => dsp_page(ctx.api, p, offset, limit, &mut || ctx.check()),
+        Provider::MultiChild(_) => Err("Multi Instrument child has its own guarded reader".into()),
         Provider::DspValue(_) => {
             Err("DSP scalar provider cannot enumerate controller indices".into())
         }
@@ -1720,7 +1780,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
             let mut value = match provider {
                 Provider::Dsp(p) => p.metadata.count().map(|count| json!({"reported_count":count,"coverage":"direct_device_dsp_provider","native_setter":p.direct.is_ok(),"native_setter_scope":"direct_device_named_parameter"})).map_err(|e| e.to_string())?,
                 Provider::Controller(c) => c.count().map(|count| json!({"reported_count":count,"coverage":c.coverage(),"native_setter":true}))?,
-                Provider::DspValue(_) => return Err("inspect requires an indexed provider".into()),
+                Provider::DspValue(_) | Provider::MultiChild(_) => return Err("inspect requires an indexed provider".into()),
                 Provider::State(_) | Provider::RumbleParameters { .. } => return Err("inspect requires an indexed provider".into()),
                 Provider::LevelMeter(_) => unreachable!("handled exact provider"),
             };
@@ -1779,6 +1839,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::PedalboardSlotSwap { .. }
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
+        | Request::MultiChildParameters { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
@@ -2008,6 +2069,10 @@ impl Reply {
     }
 
     fn invalidate(&mut self, message: String) {
+        if self.value["operation"] == "multi_child_parameters" {
+            self.value = error("context_changed_before_receipt", &message, "not_applied");
+            return;
+        }
         let outcome = if self.edit.as_ref().is_some_and(ParameterEditLease::began)
             || self.mutation && self.value["outcome"] != "not_applied"
         {
@@ -2147,6 +2212,7 @@ impl Reply {
                     })
                 })
                 .and_then(|_| match &self.provider {
+                    Some(Provider::MultiChild(binding)) => binding.check(ctx),
                     Some(Provider::RumbleParameters { observation, .. }) => {
                         observation.as_ref().map_or(Ok(()), |o| o.check(ctx))
                     }
@@ -2415,6 +2481,24 @@ fn dispatch_device(
     }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
+    }
+    if let Request::MultiChildParameters {
+        child_slot,
+        expected_child_slot,
+        expected_child_instance,
+        offset,
+        limit,
+        ..
+    } = request
+    {
+        return alias_controller::multi_child::dispatch(
+            ctx,
+            child_slot,
+            expected_child_slot,
+            &expected_child_instance,
+            offset,
+            limit,
+        );
     }
     if let Request::InsertSlotMove {
         expected_graph,

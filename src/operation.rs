@@ -61,6 +61,11 @@ pub enum Operation {
     EditEvents(EditEvents),
     #[serde(rename = "pluginParams", alias = "plugin_parameters")]
     PluginParams(PluginParams),
+    #[serde(
+        rename = "pluginMultiChildParameters",
+        alias = "plugin_multi_child_parameters"
+    )]
+    PluginMultiChildParameters(PluginMultiChildParameters),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
     ExternalPortMenu(ExternalPortMenu),
     #[serde(rename = "externalStereoSendSet", alias = "external_stereo_send_set")]
@@ -443,6 +448,30 @@ pub struct PluginParams {
     )]
     #[schemars(with = "bool")]
     pub include_context: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginMultiChildParameters {
+    #[schemars(length(min = 1, max = 512))]
+    pub track: String,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    pub child_slot: MultiChildSlot,
+    #[schemars(length(equal = 36))]
+    pub expected_child_slot: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_instance: String,
+    #[schemars(range(min = 0, max = 1_000_000))]
+    pub offset: Option<u32>,
+    #[schemars(range(min = 1, max = 128))]
+    pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
+pub enum MultiChildSlot {
+    Inst01,
+    Inst02,
 }
 
 fn context_option<'de, D: serde::Deserializer<'de>>(
@@ -1489,6 +1518,7 @@ impl Operation {
             | Self::Inserts(_)
             | Self::Sends(_)
             | Self::PluginParams(_)
+            | Self::PluginMultiChildParameters(_)
             | Self::PluginChoices(_)
             | Self::PluginParameterDetails(_)
             | Self::ChorderLearningGet(_)
@@ -1553,6 +1583,7 @@ impl Operation {
                 Self::ChorderLearningGet(_)
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
+                    | Self::PluginMultiChildParameters(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
@@ -2290,6 +2321,37 @@ impl Operation {
                     ));
                 }
             }
+            Self::PluginMultiChildParameters(query) => {
+                if query.track.trim().is_empty()
+                    || query.track.len() > 512
+                    || query.track.chars().any(char::is_control)
+                {
+                    return Err(invalid("An exact Multi Instrument track name is required"));
+                }
+                let uids = [
+                    &query.expected_instance,
+                    &query.expected_child_slot,
+                    &query.expected_child_instance,
+                ];
+                for (index, uid) in uids.iter().enumerate() {
+                    if validate_instance_uid(Some(uid)).is_err()
+                        || uid.as_str() == "00000000-0000-0000-0000-000000000000"
+                        || uid.bytes().any(|b| b.is_ascii_lowercase())
+                        || uids[..index].contains(uid)
+                    {
+                        return Err(invalid(
+                            "Multi Instrument, child slot and child Device require three distinct nonzero canonical native UUIDs",
+                        ));
+                    }
+                }
+                if query.offset.is_some_and(|offset| offset > 1_000_000)
+                    || query.limit.is_some_and(|limit| !(1..=128).contains(&limit))
+                {
+                    return Err(invalid(
+                        "Native parameter pages require offset 0..1000000 and limit 1..128",
+                    ));
+                }
+            }
             Self::PluginParameterDetails(p) => {
                 validate_plugin_target(
                     p.channel.as_deref(),
@@ -2695,13 +2757,87 @@ pub fn schema() -> Value {
     let mut schema =
         serde_json::to_value(schemars::schema_for!(Request)).expect("operation schema");
     cv_structure_schema(&mut schema["$defs"]["PluginState"]);
-    schema["allOf"] = json!([{"if":{"properties":{"operation":{"enum":["pluginState","plugin_state"]},"args":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]}},"required":["operation","args"]},"then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}]);
+    schema["allOf"] = json!([
+        {"if":{"properties":{"operation":{"enum":["pluginState","plugin_state"]},"args":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]}},"required":["operation","args"]},"then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
+        {"if":{"properties":{"operation":{"enum":["pluginMultiChildParameters","plugin_multi_child_parameters"]}},"required":["operation"]},
+            "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}
+    ]);
     schema
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn multi_child_dsp_pages_require_a_document_and_distinct_exact_ids() {
+        let mut args = json!({
+            "track": "Multi Fixture",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot": "Inst01",
+            "expected_child_slot": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC"
+        });
+        for slot in ["Inst01", "Inst02"] {
+            args["child_slot"] = json!(slot);
+            if slot == "Inst02" {
+                args["expected_child_slot"] = json!("DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD");
+                args["expected_child_instance"] = json!("EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE");
+                args["offset"] = json!(64);
+                args["limit"] = json!(128);
+            }
+            let mut request: Request = serde_json::from_value(json!({
+                "operation":"plugin_multi_child_parameters", "args":args
+            }))
+            .unwrap();
+            assert!(request.operation.is_read_only());
+            assert_eq!(
+                request.operation.wire(),
+                ("pluginMultiChildParameters".into(), args.clone())
+            );
+            for document in [None, Some("  ".into())] {
+                request.expected_document = document;
+                assert_eq!(
+                    crate::runtime::validate_request(&request).unwrap_err().code,
+                    "missing_precondition"
+                );
+            }
+            request.expected_document = Some("current".into());
+            assert!(crate::runtime::validate_request(&request).is_ok());
+        }
+
+        for (key, invalid_value) in [
+            ("track", json!(" \t")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_child_slot",
+                json!("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"),
+            ),
+            ("expected_child_slot", args["expected_instance"].clone()),
+            (
+                "expected_child_instance",
+                args["expected_child_slot"].clone(),
+            ),
+            ("expected_child_instance", json!("short")),
+            ("child_slot", json!("Inst03")),
+            ("child_slot", json!("Instruments/Inst01")),
+            ("offset", json!(1_000_001)),
+            ("limit", json!(0)),
+            ("limit", json!(129)),
+            ("source", json!("controller")),
+            ("value", json!(1)),
+        ] {
+            let mut invalid = args.clone();
+            invalid[key] = invalid_value;
+            let error = Operation::from_parts("pluginMultiChildParameters", invalid)
+                .and_then(|op| op.validate())
+                .unwrap_err();
+            assert_eq!(error.code, "invalid_argument", "{key}");
+        }
+    }
 
     #[test]
     fn pedalboard_exchange_requires_adjacent_occupied_models_and_exact_fields() {
