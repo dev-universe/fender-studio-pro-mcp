@@ -31,9 +31,9 @@ The same editor and viewport were used for all screenshots.
 | 4,601 to 4,687 ms | Trace persisted after Off with a flat central region and oscillation at the right |
 
 The sampled frames establish progressive visible filling and a
-subsequent full-width trace. The displayed waveform changed
-again after the verified Off, so stable holding of that complete
-trace was unverified at this scale. The intervals refer to request
+subsequent full-width trace. The frame sampled after verified Off differs from the earlier
+full-width trace. The frame intervals leave the time of that change
+open, and stable holding of the complete trace is unverified. The intervals refer to request
 and screenshot boundaries. Direct internal trigger and completion
 times and the hidden buffer remain unobserved.
 
