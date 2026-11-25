@@ -6,16 +6,43 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "cbb0540d8b8a771cbdbf49606d90712755e23b9a",
-    "closed_studio_pro_trials": ["R320", "R321A", "R321B", "R322"],
-    "merged_pull_requests": [109],
-    "open_pull_requests": [110, 111],
+    "main_at_checkpoint": "edb41652a23c9482ffcefccc128170bfab4e517e",
+    "closed_studio_pro_trials": [
+      "R320",
+      "R321A",
+      "R321B",
+      "R322",
+      "R323 Impact",
+      "R324 Rumble",
+      "R324 Impact",
+      "R325",
+      "R326",
+      "Rumble 028",
+      "R327"
+    ],
+    "merged_pull_requests": [
+      109,
+      110,
+      111
+    ],
+    "open_pull_requests": [
+      112,
+      113,
+      114,
+      115,
+      116,
+      117
+    ],
     "remaining_builtin_units": 25,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Verify Multi Instrument controller identity after preset recall, then test the one-to-two-to-one fixture. Continue Rumble empty-slot Undo and bounded Impact selection. The local macOS archive is testable; remote workflow edits need a workflow-enabled credential."
+    "next": "Run Impact R328 with the detached console and Track / Show in Console check. Verify Multi child DSP after its bounded implementation. Prepare hardware-free shared event note-on/off. Merge current-base PRs 112, 113, 116, 114, 115 and 117 in order as checks pass.",
+    "remaining_builtin_units_after_local_verification": 24,
+    "locally_qualified_fixed_units_pending_merge": [
+      "PRESET-RUMBLE"
+    ]
   },
   "nov25_current_checkpoint": {
     "verified_host_build": "113103",

@@ -2,7 +2,7 @@
 
 ## 완료 기준과 현재 상태
 
-11월 24일의 고정 단위는 43개다. 18개 완료, 25개 잔여이며 그중 4개는
+재개 당시 11월 24일의 고정 단위는 43개였다. 18개 완료, 25개 잔여였으며 그중 4개는
 하드웨어가 필요하다. 이번 세션에 지정된 종료 시각은 없다. 11월 24일의
 소프트웨어 2~5일 추정에 장비 대기는 포함되지 않는다. 재개 시 실제
 Studio Pro 8.1.1 빌드 113103을 확인했고 Volt 276과 Keystation88 MK3는
@@ -48,3 +48,45 @@ Studio Pro 8.1.1 빌드 113103을 확인했고 Volt 276과 Keystation88 MK3는
 R320과 R321A/B 및 R322 앱과 MCP owner가 정상 종료했다. 모든 소유
 시험곡은 저장 없이 닫았고 원본 바이트, 정상 설치 18개와 복원한 설정
 10개를 대조했다. 각 PR의 상태는 다음 재개에서 실제 GitHub 값으로 확인한다.
+
+## 15시 37분 체크포인트
+
+- `main`은 `edb4165`다. [#110](https://github.com/dev-universe/fender-studio-pro-mcp/pull/110)은
+  `c2678d9`, [#111](https://github.com/dev-universe/fender-studio-pro-mcp/pull/111)은
+  `edb4165`에 병합했다. 두 PR 모두 병합 직전 현재 `main`과 정합하는 정확한
+  헤드에서 필수 검사 두 개를 통과했다. R324 Rumble의 프리셋 적용 뒤 Undo
+  메뉴 맨 위는 그대로여서 Undo는 실행하지 않았다.
+- R325에서 정확한 클래스·종류·인스턴스 ID로 Multi Instrument의 프리셋
+  적용 뒤 컨트롤러를 두 번 읽고 다른 인스턴스 요청을 거부했다. macOS arm64
+  릴리스 테스트 498개 통과. [#113](https://github.com/dev-universe/fender-studio-pro-mcp/pull/113)
+- 새 R326에서 Multi 공장 프리셋 47→48→47의 UI 연결과 두 독립 조회가
+  Mai Tai 슬롯 1→2→1을 표시했다. 루트 150행과 정렬 슬롯 목록은 정확히
+  돌아왔고 세 가지 거부 조건을 통과했다. 같은 루트 상태에서 연속 캡처의
+  해시가 달랐다. 자식 DSP 읽기와 실제 이벤트 경로를 별도로 검증한다.
+  109요청·103.255초, 앱 138.894초이다. [#114](https://github.com/dev-universe/fender-studio-pro-mcp/pull/114)
+- R323 Impact는 출력 선택기를 확인하기 전에 종료했다. 분리 콘솔을 사용한
+  R324 Impact는 한 번의 Undo로 St 1과 색상, 편곡 선택을 확인했다. 보존된
+  DSP 4,262행과 출력 32개를 읽었다. `Console / Previous Channel` 한 번은
+  콘솔 선택을 St 1로 바꾸면서 편곡 선택을 해제했다. 207요청·109.469초,
+  앱 161.940초이다. R328에서 `Track / Show in Console`을 시험한다.
+  [#115](https://github.com/dev-universe/fender-studio-pro-mcp/pull/115)
+- Rumble 028 레벨 시험은 `input.level`을 −33.36 dB로 바꾼 뒤 028이
+  입력 0 dB, 출력 −3.10 dB와 다른 앰프·첫 효과를 적용함을 확인했다.
+  001 재적용으로 DSP 39행, 26개 모델, 22개 숫자 설정과 출력 −11.00 dB를
+  정확히 복원했다. 100요청·29.417초, 앱 69.139초이다. `010`에 이은 두 번째
+  수용 사례다. `PRESET-RUMBLE` 검증 기준을 충족해 검증 잔여는 24개이며
+  기록 PR 병합을 포함한 잔여는 25개다. [#116](https://github.com/dev-universe/fender-studio-pro-mcp/pull/116)
+- R327은 플러그인 자체 `List View`에서 100→001을 시험했다. 제목, DSP
+  39행과 숫자 22개는 돌아왔고 두 독립 읽기에 `effect2`, `effect3`의 모델
+  ID가 남았다. 88요청·66.442초, 앱 106.431초이다. 실제 처리 여부는 미확인
+  상태며 `CONTROL-RUMBLE`에서 추적한다. [#117](https://github.com/dev-universe/fender-studio-pro-mcp/pull/117)
+- macOS 로컬 arm64 아카이브를 조립하고 새 격리 환경에서 설치·진단·제거했다.
+  [#112](https://github.com/dev-universe/fender-studio-pro-mcp/pull/112)는
+  최신 `main` 반영 헤드 `8292b42`에서 재검사 중이다. 이후 #113, #116,
+  #114, #115, #117을 최신 `main`에서 차례로 검사한다. 공개 Release 자산의
+  설치와 이전 설치 원복은 아직 남았다.
+
+위 실앱 시험은 모두 이름을 확인한 소유 시험곡에서 진행했다. 앱과 MCP
+owner를 정상 종료했고 저장을 거부했다. 18개 관리 파일과 모드, 앱 설정 및
+시험곡 원본을 다시 확인했다. 전체 소프트웨어 예상 2~5일, 하드웨어 4개는
+실제 장치와 배선 확인이 필요하다. 이번 작업의 종료 시각은 정해져 있지 않다.
