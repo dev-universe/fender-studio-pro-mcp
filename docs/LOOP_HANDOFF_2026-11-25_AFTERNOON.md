@@ -1293,3 +1293,27 @@ Ampire 대조와 R428 공개용 빈 Splitter 제거·저장·재열기를 이어
 
 `main` 16개·로컬 12개, 전체 소프트웨어 2~5일, 장비 의존 4건,
 지정 종료 시각 없음. 현재 Studio Pro와 MCP owner는 닫혀 있다.
+
+## 11월 26일 03시 00분 Ampire 숨은 기준값과 Pedalboard 문서
+
+- R429는 이전 여섯 쓰기와 링크 상태 90행, 2,297바이트 캡슐 일치를
+  재현했다. 하나의 새 승인으로 Link Off를 실행하니 공장 Link Off 대비
+  A·B가 각각 정규화 Float32 1 ULP 작고 C는 일치했다. Link와 A·B
+  이외의 행과 믹서·트랙·인서트는 그대로였다. 168요청 68.357초,
+  앱 116.192초, 여섯 토큰 해제와 원본·설치 18개·설정 10개 확인.
+  R430에서 복구된 링크 상태를 한 번 저장한 뒤 새 세션에서 확인한다.
+  [#218](https://github.com/dev-universe/fender-studio-pro-mcp/pull/218)
+- #209 완료. 최신 베이스 헤드 `b437c14`에서 두 검사를 통과해
+  `602984c`에 병합됐다. 재검사 시작부터 병합까지 12분 41초.
+  다음 #210 현재 헤드 `1c52427`을 검사 중이다.
+  [#209](https://github.com/dev-universe/fender-studio-pro-mcp/pull/209)
+- R428 로컬 구현은 초기 리뷰에서 드러난 정확한 그래프 8개 소유권 및
+  오래된 응답 처리 보강을 적용했다. 최종 독립 검토와 실앱 Save·재열기가
+  남았다. 폐기된 초기 후보의 빌드 결과를 실제 시험에 사용하지 않는다.
+
+고정 항목은 `main` 16개·로컬 12개, 전체 소프트웨어 2~5일,
+지정 종료 시각 없음. 로컬 수용 뒤 병합을 기다리는 네 가지는 Chorder,
+Input Filter, Shared Event, Impact다. 남은 로컬 항목은 Ampire, Mustang,
+Rumble, Scope, Shared Graph, Shared Persistence, Shared Docs Release,
+CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
+장비가 필요한 시험은 CV 두 항목을 한 묶음으로 세어 네 가지다.
