@@ -97,6 +97,8 @@ pub enum Operation {
     PluginPresets(PluginPresets),
     #[serde(rename = "fabfilterPresetApply", alias = "fabfilter_preset_apply")]
     FabfilterPresetApply(crate::fabfilter::PresetApply),
+    #[serde(rename = "serum2PresetApply", alias = "serum2_preset_apply")]
+    Serum2PresetApply(crate::serum::PresetApply),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
     PluginAction(PluginAction),
     #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
@@ -1426,6 +1428,11 @@ impl Operation {
             Self::SetPluginParam(_) => {
                 args.as_object_mut().unwrap().remove("readback");
             }
+            Self::Serum2PresetApply(_) => {
+                let args = args.as_object_mut().unwrap();
+                args.remove("path");
+                args.remove("expected_sha256");
+            }
             Self::SetTransport(transport) => {
                 if let Some(position) = &transport.position {
                     args.as_object_mut().unwrap().remove("position");
@@ -1548,6 +1555,7 @@ impl Operation {
                     | Self::ChorderChordsGet(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
+                    | Self::Serum2PresetApply(_)
             )
     }
 
@@ -2031,6 +2039,10 @@ impl Operation {
                     }
                 }
             }
+            Self::Serum2PresetApply(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                p.validate()?;
+            }
             Self::FabfilterPresetApply(p) => {
                 use crate::fabfilter::Product;
                 validate_instance_uid(Some(&p.expected_instance))?;
@@ -2055,19 +2067,21 @@ impl Operation {
                     | Product::ProR2
                     | Product::Saturn
                     | Product::Saturn2
-                    | Product::Simplon => {
+                    | Product::Simplon
+                    | Product::Timeless2
+                    | Product::Timeless3 => {
                         p.channel.as_deref().is_some_and(bounded)
                             && p.slot.is_some_and(|slot| slot < 16)
                             && p.track.is_none()
                     }
-                    Product::Twin3 => {
+                    Product::One | Product::Twin3 => {
                         p.track.as_deref().is_some_and(bounded)
                             && p.channel.is_none()
                             && p.slot.is_none()
                     }
                     _ => {
                         return Err(invalid(
-                            "Preset file application supports Micro, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, and Twin 3 VST3",
+                            "Preset file application supports Micro, One, Pro-C 2, Pro-DS, Pro-G, Pro-L, Pro-L 2, Pro-MB, Pro-Q 2, Pro-Q 3, Pro-Q 4, Pro-C 3, Pro-R, Pro-R 2, Saturn, Saturn 2, Simplon, Timeless 2, Timeless 3, and Twin 3 VST3",
                         ));
                     }
                 };

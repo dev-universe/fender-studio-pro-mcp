@@ -239,6 +239,84 @@ const PRO_Q4: Image = Image {
     loader: 0x9a4d0,
     destructor: 0x4418c,
 };
+static TIMELESS2_HEADERS: [[u8; 8]; 5] = [
+    *b"FDel\x01\0\0\0",
+    *b"FTim\x02\0\0\0",
+    *b"FTms\x03\0\0\0",
+    *b"FTms\x04\0\0\0",
+    *b"FTms\x05\0\0\0",
+];
+
+const TIMELESS2: Image = Image {
+    class_uid: "E45B6533-5E7D-4E28-B4CA-15D7940A3A6D",
+    uuid: [
+        0x1d, 0xee, 0xd1, 0xc1, 0x48, 0x28, 0x30, 0xb6, 0x82, 0x5a, 0x5e, 0x65, 0x08, 0xa3, 0x9c,
+        0xf5,
+    ],
+    controller_table: 0x179fe0,
+    state_member: 0xd0,
+    state_table: 0x176cf0,
+    state_file_method: 0xc34e0,
+    view_table: 0x181be8,
+    editor_table: 0x174600,
+    product: "timeless_2",
+    executable: "FabFilter Timeless 2",
+    binary_sha256: "f4cb0af7b74f23ac441db656463e28de07bc8108143cd20bd4855c3e7cdbffb0",
+    binary_size: 3_524_416,
+    preset_format: PresetFormat::BinaryHeaders(&TIMELESS2_HEADERS),
+    constructor: 0x9a404,
+    loader: 0x5e288,
+    destructor: 0x6b7f8,
+};
+
+static TIMELESS3_HEADERS: [[u8; 8]; 2] = [*b"F3Ts\x09\0\0\0", *b"F3Ts\x0a\0\0\0"];
+
+const TIMELESS3: Image = Image {
+    class_uid: "D2EE67F2-C552-402D-9021-15931AFDAE6B",
+    uuid: [
+        0xb6, 0x11, 0xaf, 0xfc, 0x4f, 0x51, 0x3b, 0xdc, 0x99, 0xc2, 0x19, 0x31, 0xb4, 0xde, 0x33,
+        0xb0,
+    ],
+    controller_table: 0x230420,
+    state_member: 0xd0,
+    state_table: 0x22bab8,
+    state_file_method: 0x94120,
+    view_table: 0x23ab38,
+    editor_table: 0x22a8e8,
+    product: "timeless_3",
+    executable: "FabFilter Timeless 3",
+    binary_sha256: "c70d3dd974d45b17013c0460517346cc483f4b7016411aec34ee18224bab046d",
+    binary_size: 5_141_760,
+    preset_format: PresetFormat::BinaryHeaders(&TIMELESS3_HEADERS),
+    constructor: 0xddd3c,
+    loader: 0x95c38,
+    destructor: 0xa34d4,
+};
+
+static ONE_HEADERS: [[u8; 8]; 2] = [*b"FFPr\0\0\0\0", *b"FFPr\x01\0\0\0"];
+
+const ONE: Image = Image {
+    class_uid: "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+    uuid: [
+        0x9e, 0xa3, 0x68, 0x71, 0x33, 0xb2, 0x39, 0x99, 0xa8, 0xaf, 0xae, 0x48, 0x2a, 0x4d, 0x0a,
+        0xa6,
+    ],
+    controller_table: 0x104988,
+    state_member: 0xd0,
+    state_table: 0x100190,
+    state_file_method: 0x6bde4,
+    view_table: 0x1062e0,
+    editor_table: 0xf8400,
+    product: "one",
+    executable: "FabFilter One",
+    binary_sha256: "58f06a8f96dd019a174ac8575f59317713573e747fe0a5fb2adadd1388f6e895",
+    binary_size: 2_450_352,
+    preset_format: PresetFormat::BinaryHeaders(&ONE_HEADERS),
+    constructor: 0x124d0,
+    loader: 0x87790,
+    destructor: 0x1b2f8,
+};
+
 const TWIN3: Image = Image {
     class_uid: "91AF218E-111A-44CB-ABFE-F7CB065FF157",
     uuid: [
@@ -426,7 +504,8 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
-        &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &TIMELESS2, &TIMELESS3, &ONE, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -842,6 +921,7 @@ mod tests {
             ("036EB530-2A59-11E2-A281-70076288709B", "pro_r"),
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
             ("8D067533-D8A0-491D-BAA3-6C064C6ABBFB", "saturn_2"),
+            ("9240FC40-10CD-45A0-B7DA-CECADDC2E97A", "one"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
             assert!(supports_class(class_uid));
@@ -892,6 +972,62 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_C2, "Drums.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn timeless_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FDel\x01\0\0\0abcdefgh", true),
+            (b"FTim\x02\0\0\0abcdefgh", true),
+            (b"FTms\x03\0\0\0abcdefgh", true),
+            (b"FTms\x04\0\0\0abcdefgh", true),
+            (b"FTms\x05\0\0\0abcdefgh", true),
+            (b"FDel\x02\0\0\0abcdefgh", false),
+            (b"FTim\x03\0\0\0abcdefgh", false),
+            (b"FTms\x06\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TIMELESS2, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn timeless_3_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"F3Ts\x0a\0\0\0abcdefgh", true),
+            (b"F3Ts\x09\0\0\0abcdefgh", true),
+            (b"F3Ts\x08\0\0\0abcdefgh", false),
+            (b"F3Ts\x0b\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TIMELESS3, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn one_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FFPr\x01\0\0\0abcdefgh", true),
+            (b"FFPr\0\0\0\0abcdefgh", true),
+            (b"FFPr\x02\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&ONE, "Bass.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
