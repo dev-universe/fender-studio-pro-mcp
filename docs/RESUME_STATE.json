@@ -1,9 +1,22 @@
 {
   "schema": 1,
   "updated_date": "2026-11-25",
-  "status": "NOV25_REQUESTED_RELEASES_MERGED_AT_CLOSED_HOST_BOUNDARY",
+  "status": "ACTIVE_NOV25_BUILTIN_QUEUE_AT_CLOSED_HOST_BOUNDARY",
   "resume_phrase": "진행 재개해",
-  "resume_document": "docs/LOOP_HANDOFF_2026-11-25.md",
+  "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
+  "nov25_development_resume": {
+    "verified_host_build": "113103",
+    "main_at_checkpoint": "cbb0540d8b8a771cbdbf49606d90712755e23b9a",
+    "closed_studio_pro_trials": ["R320", "R321A", "R321B", "R322"],
+    "merged_pull_requests": [109],
+    "open_pull_requests": [110, 111],
+    "remaining_builtin_units": 25,
+    "remaining_hardware_units_within_builtin": 4,
+    "normal_managed_installation_restored": true,
+    "app_closed_observed": true,
+    "session_cutoff": null,
+    "next": "Verify Multi Instrument controller identity after preset recall, then test the one-to-two-to-one fixture. Continue Rumble empty-slot Undo and bounded Impact selection. The local macOS archive is testable; remote workflow edits need a workflow-enabled credential."
+  },
   "nov25_current_checkpoint": {
     "verified_host_build": "113103",
     "completed_studio_pro_trials": ["R314", "R315", "R316", "R317", "R318", "R319"],
