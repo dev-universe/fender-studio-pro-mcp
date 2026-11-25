@@ -1009,6 +1009,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return this.insertGraphEdit("insert_splitter_remove", args);
     }
 
+    insertSplitterRemoveEmptyNested(args) {
+        return this.insertGraphEdit("insert_splitter_remove_empty_nested", args);
+    }
+
     insertGraphEdit(operation, args) {
         const fail = (outcome, code, message) => ({
             ok: false, native_outcome: outcome, errors: [{ code, message }]
@@ -1025,6 +1029,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             && !/[\x00-\x1f\x7f-\x9f]/.test(value);
         if (!controls.guiExact(args, fields) || !validName(args.channel) || !validName(args.plugin)
             || !controls.guiInteger(args.slot, 0, 15)) return refuse("Supply an exact insert effect and graph nodes");
+        if (operation === "insert_splitter_remove_empty_nested" && (args.slot !== 0 || args.plugin !== "Mixtool"))
+            return refuse("Empty nested Splitter removal requires Mixtool in insert slot 0");
         const request = { operation };
         for (const key of requestFields) request[key] = args[key];
         if (!controls.insertGraphEditRequest(request)) return refuse("Supply distinct graph nodes with canonical UUIDs");

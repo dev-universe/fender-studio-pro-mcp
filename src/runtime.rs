@@ -273,6 +273,18 @@ fn execute(
             change, &context, response, request_id, started,
         ));
     }
+    if let Operation::InsertSplitterRemoveEmptyNested(args) = &operation {
+        let (outcome, result, error) = empty_splitter_remove_result(args, &context, &response);
+        return Ok(Receipt {
+            request_id,
+            outcome,
+            session: Some(response.session),
+            document: Some(response.document),
+            result,
+            error,
+            elapsed_ms: started.elapsed().as_millis(),
+        });
+    }
     if let (Operation::MidiProgramPartAdd(change), Some(staged)) = (&operation, staged_program) {
         let (outcome, result, error) =
             midi_program_part::classify(change, &staged.basename, &context, &response);
@@ -711,6 +723,131 @@ fn exact_gui_object(value: &Value, fields: &[&str]) -> bool {
     value.as_object().is_some_and(|object| {
         object.len() == fields.len() && fields.iter().all(|field| object.contains_key(*field))
     })
+}
+
+fn valid_empty_splitter_remove_receipt(
+    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+    context: &HostContext,
+    response: &WireResponse,
+) -> bool {
+    if response.session != context.session
+        || response.document != context.document
+        || response.error.is_some()
+        || response.code.is_some()
+    {
+        return false;
+    }
+    let result = &response.result;
+    if result["ok"] == false {
+        return exact_gui_object(result, &["ok", "native_outcome", "errors"])
+            && matches!(
+                result["native_outcome"].as_str(),
+                Some("not_applied" | "unknown")
+            )
+            && result["errors"].as_array().is_some_and(|errors| {
+                matches!(errors.as_slice(), [error] if exact_gui_object(error, &["code", "message"])
+                && matches!(error["code"].as_str(), Some(
+                    "insert_splitter_remove_empty_nested_refused" |
+                    "insert_splitter_remove_empty_nested_failed" |
+                    "insert_splitter_remove_empty_nested_context_changed"
+                ))
+                && error["message"].as_str().is_some_and(|s| {
+                    !s.is_empty() && s.encode_utf16().count() <= 512
+                }))
+            });
+    }
+    let identifiers = [
+        ("expected_instance", &args.expected_instance),
+        ("expected_graph", &args.expected_graph),
+        ("splitter_node", &args.splitter_node),
+        ("merger_node", &args.merger_node),
+        ("predecessor_slot_node", &args.predecessor_slot_node),
+        ("successor_merger_node", &args.successor_merger_node),
+    ];
+    let instance = &result["instance"];
+    exact_gui_object(
+        result,
+        &[
+            "ok",
+            "native_outcome",
+            "outcome",
+            "operation",
+            "verified",
+            "instance",
+            "expected_instance",
+            "expected_graph",
+            "splitter_node",
+            "merger_node",
+            "predecessor_slot_node",
+            "successor_merger_node",
+        ],
+    ) && result["ok"] == true
+        && result["outcome"] == "applied_unverified"
+        && result["native_outcome"] == "applied_unverified"
+        && result["operation"] == "insert_splitter_remove_empty_nested"
+        && result["verified"] == false
+        && identifiers
+            .iter()
+            .all(|&(key, id)| result[key] == id.as_str())
+        && exact_gui_object(
+            instance,
+            &["object_id", "native_class", "class_uid", "object_uid"],
+        )
+        && instance["native_class"] == "AudioEffect"
+        && instance["class_uid"] == "E4D7D911-0608-4B46-ABA3-2E345399A5AC"
+        && instance["object_uid"] == args.expected_instance.as_str()
+        && instance["object_id"] == "Mixtool"
+}
+
+fn empty_splitter_remove_result(
+    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+    context: &HostContext,
+    response: &WireResponse,
+) -> (Outcome, Value, Option<OperationError>) {
+    let result = &response.result;
+    if !response.ok
+        && result.is_null()
+        && response.session == context.session
+        && matches!(
+            response.code.as_deref(),
+            Some(
+                "document_changed"
+                    | "missing_precondition"
+                    | "context_required"
+                    | "protocol_mismatch"
+            )
+        )
+        && response
+            .error
+            .as_ref()
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.is_empty() && s.encode_utf16().count() <= 512)
+    {
+        return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
+    }
+    if response.ok && valid_empty_splitter_remove_receipt(args, context, response) {
+        if result["ok"] == true {
+            return (Outcome::AppliedUnverified, result.clone(), None);
+        }
+        if result["native_outcome"] == "not_applied" {
+            return (
+                Outcome::NotApplied,
+                result.clone(),
+                Some(OperationError::new(
+                    "native_rejected",
+                    "The exact empty nested Splitter was refused before removal",
+                )),
+            );
+        }
+    }
+    let message = "Read the exact insert graph before making another edit";
+    (
+        Outcome::Unknown,
+        json!({"ok":false,"native_outcome":"unknown","errors":[{
+            "code":"empty_splitter_remove_unconfirmed","message":message
+        }]}),
+        Some(OperationError::new("outcome_unknown", message)),
+    )
 }
 
 fn gui_number(value: &Value) -> Option<f64> {
@@ -1602,6 +1739,132 @@ mod tests {
     use super::*;
 
     #[test]
+    fn empty_splitter_remove_requires_exact_anchors_and_a_bound_receipt() {
+        let tool = "insert_splitter_remove_empty_nested";
+        let fixture = json!({
+            "channel":"Scratch", "slot":0, "plugin":"Mixtool",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "expected_graph":"10000000-1234-1234-1234-123456789ABC",
+            "splitter_node":"20000000-1234-1234-1234-123456789ABC",
+            "merger_node":"30000000-1234-1234-1234-123456789ABC",
+            "predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+            "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"
+        });
+        let operation = Operation::from_parts(tool, fixture.clone()).unwrap();
+        operation.validate().unwrap();
+        assert_eq!(
+            operation.wire(),
+            ("insertSplitterRemoveEmptyNested".into(), fixture.clone())
+        );
+        for (key, value) in [
+            ("slot", json!(1)),
+            ("plugin", json!("Mixtool 2")),
+            ("predecessor_slot_node", fixture["splitter_node"].clone()),
+            (
+                "successor_merger_node",
+                json!("50000000-1234-1234-1234-123456789abc"),
+            ),
+        ] {
+            let mut wrong = fixture.clone();
+            wrong[key] = value;
+            assert!(
+                Operation::from_parts(tool, wrong)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        assert!(Operation::from_parts("insert_splitter_remove", fixture.clone()).is_err());
+        let Operation::InsertSplitterRemoveEmptyNested(args) = operation else {
+            unreachable!()
+        };
+        let context = HostContext {
+            session: "session".into(),
+            document: "session:1".into(),
+            open: true,
+            title: None,
+            file_url: None,
+            protocol: 2,
+        };
+        let mut success = fixture;
+        for key in ["slot", "channel", "plugin"] {
+            success.as_object_mut().unwrap().remove(key);
+        }
+        success["ok"] = json!(true);
+        success["verified"] = json!(false);
+        success["operation"] = json!(tool);
+        success["outcome"] = json!("applied_unverified");
+        success["native_outcome"] = json!("applied_unverified");
+        success["instance"] = json!({"object_uid":args.expected_instance,
+            "class_uid":"E4D7D911-0608-4B46-ABA3-2E345399A5AC","object_id":"Mixtool",
+            "native_class":"AudioEffect"});
+        let mut response = WireResponse {
+            protocol: 2,
+            id: "receipt".into(),
+            session: context.session.clone(),
+            document: context.document.clone(),
+            ok: true,
+            result: success.clone(),
+            error: None,
+            code: None,
+        };
+        assert!(valid_empty_splitter_remove_receipt(
+            &args, &context, &response
+        ));
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::AppliedUnverified);
+        assert_eq!(result, success);
+        assert!(error.is_none());
+
+        for (key, value) in [
+            ("verified", json!(true)),
+            ("successor_merger_node", success["merger_node"].clone()),
+            ("native_outcome", json!("applied_verified")),
+            ("instance", json!({"object_uid":args.expected_instance})),
+        ] {
+            response.result = success.clone();
+            response.result[key] = value;
+            assert!(!valid_empty_splitter_remove_receipt(
+                &args, &context, &response
+            ));
+        }
+        response.result = success;
+        response.document = "session:2".into();
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert_eq!(result["ok"], false);
+        assert!(result.get("splitter_node").is_none() && result.get("instance").is_none());
+        assert_eq!(error.unwrap().code, "outcome_unknown");
+        response.ok = false;
+        response.code = Some("document_changed".into());
+        response.error = Some(json!("The active document changed"));
+        let (outcome, result, _) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert!(result.get("splitter_node").is_none());
+        response.result = Value::Null;
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert!(result.is_null());
+        assert_eq!(error.unwrap().code, "document_changed");
+
+        response.document = context.document.clone();
+        response.ok = true;
+        response.code = None;
+        response.error = None;
+        response.result = json!({"ok":false,"native_outcome":"not_applied","errors":[{
+            "code":"insert_splitter_remove_empty_nested_failed","message":"Topology changed"
+        }]});
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert_eq!(result, response.result);
+        assert_eq!(error.unwrap().code, "native_rejected");
+        response.result["errors"] = json!([]);
+        assert!(!valid_empty_splitter_remove_receipt(
+            &args, &context, &response
+        ));
+    }
+
+    #[test]
     fn impact_outputs_require_a_bound_instrument_and_ordered_complete_observation() {
         let uid = "12345678-1234-1234-1234-123456789ABC";
         let args = json!({"kind":"instrument","track":"Scratch Impact","plugin":"Impact",
@@ -1684,6 +1947,10 @@ mod tests {
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
                 "merger_node":"30000000-1234-1234-1234-123456789ABC","first_slot_node":"40000000-1234-1234-1234-123456789ABC",
                 "second_slot_node":"50000000-1234-1234-1234-123456789ABC"})),
+            ("insertSplitterRemoveEmptyNested", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
+                "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
             ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
