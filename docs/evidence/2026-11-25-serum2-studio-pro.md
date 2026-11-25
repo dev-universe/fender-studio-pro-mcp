@@ -36,3 +36,7 @@ was removed from the scan directory.
 R449C subsequently verified one arrangement note using the same official
 instrument, a separate downstream DSP observer and one Play/Stop cycle.
 [Arrangement playback verification](2026-11-26-serum2-arrangement-playback.md)
+
+R456B verified exact change and restoration of three mapped DSP parameters
+on each variant, with the peer instance observed independently.
+[Mapped parameter writes](2026-11-26-serum2-mapped-parameter-writes.md)
