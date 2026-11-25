@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "b6b16d508b7479b440ec0b7c28a26fda3a39896e",
+    "main_at_checkpoint": "c1fe290842e96edab00b52b24cbb7930d34e641e",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -79,7 +79,8 @@
       "R373",
       "R373B",
       "R374",
-      "R375"
+      "R375",
+      "R376"
     ],
     "merged_pull_requests": [
       109,
@@ -110,10 +111,10 @@
       134,
       135,
       136,
-      137
+      137,
+      138
     ],
     "open_pull_requests": [
-      138,
       139,
       140,
       141,
@@ -141,18 +142,20 @@
       163,
       164,
       165,
-      166
+      166,
+      167
     ],
     "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D–R373B verified Chorder live MIDI, learned note editing, GUI clipboard and clear, lower-key audition, direct Clear and the guarded Clear action. R374 independently verified the public DSP Clear All, Copy and Paste paths. R375 independently verified five held and released output notes from the public DSP audition lane with the editor closed. Resolve the separate Learn Mode preview effect before closing Chorder. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 138 to 166 as both checks pass on each exact current-base head.",
-    "remaining_builtin_units_after_local_verification": 18,
+    "next": "R365 saved and reopened one owned SampleOne region, and R366B verified all six live MIDI input roles. R367D–R375 verified Chorder MIDI, learned note editing, clipboard, clear and the public keyboard audition. R376 confirmed that Learn Mode preview sends the five expected held notes to a separate downstream Chorder and releases them. Next extend Scope capture evidence beyond the qualified R68 waveform hold and retrigger. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 139 to 167 as both checks pass on each exact current-base head.",
+    "remaining_builtin_units_after_local_verification": 17,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PRESENCE",
-      "CONTROL-SAMPLEONE"
+      "CONTROL-SAMPLEONE",
+      "CONTROL-CHORDER"
     ]
   },
   "nov25_current_checkpoint": {
