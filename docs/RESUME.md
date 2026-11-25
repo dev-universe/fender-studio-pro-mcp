@@ -1,26 +1,24 @@
 # 작업 재개 안내
 
-**진행 재개해**라는 요청을 받으면 최신 인수인계와 상태 파일을 먼저 읽는다. 두 파일은 `feature/cv-structured-lifecycle` 브랜치에서 갱신한다. 상태 파일의 `resume_document`와 `next_units_in_order`에서 최신 순서와 완료 근거를 확인한다. [11월 20일 인수인계](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [현재 상태 파일](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/RESUME_STATE.json)
+**진행 재개해**라고 하면 아래 순서로 저장된 작업을 이어간다. 새 기능과 검증 절차는 [MCP 개발 절차](MCP_DEVELOPMENT.md)에서 확인한다.
 
-11월 18일 실행에서는 공개 저장소를 보호하고 검증된 코드를 main에 병합했다. 당시 오전 6시 이동 마감과 USB 연결은 그날의 기록이다. [11월 18일 전체 대기열](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-18.md) · [11월 18일 진행 기록](PROGRESS_2026-11-18.md)
+1. `feature/cv-structured-lifecycle`의 [현재 상태 파일](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/RESUME_STATE.json)에서 `status`와 `resume_document`를 읽는다. 작업 브랜치는 유지하고 최신 원격 기록을 확인한다.
+2. `resume_document`가 가리키는 문서를 **같은 브랜치의 같은 커밋**에서 연다. 마지막 검증, 다음 작업, 열린 PR, 설치와 정리 상태에 해당하는 절부터 읽는다. 추가 정보가 필요하면 그 절이 가리키는 증거를 읽는다.
+3. GitHub의 PR 헤드와 검사, 앱·플러그인 설치, 제어권과 장치를 새로 확인한다. 실앱 작업에는 새 세션·문서·인스턴스를 묶는다. 이전 마감과 장치 상태는 해당 날짜의 기록이다.
 
-2026년 11월 17일 재개 작업은 사용자가 지정한 오후6시 마감에 맞춰 안전한 경계에서 중단했다. Native59 R81 실제27요청과 마지막 정적 조사를 완료했고 앱·MCP owner·분석 엔진을 모두 닫았다. 최신 재개 기준은 [11월 17일 인수인계](LOOP_HANDOFF_2026-11-17.md), [진행 기록](PROGRESS_2026-11-17.md), `RESUME_STATE.json`이다. 자동 재개는 없다. **진행 재개해** 한마디로 남은 대기열을 이어간다.
+저장소에서 확인할 때는 아래처럼 상태 파일을 가져온 커밋을 고정한다.
 
-11월 15일에는 이동 일정에 맞춰 앱·MCP owner·Ghidra/REA 분석 엔진을 모두 닫고 중단했다. 그날의 종료 시각은 현재 마감이 아니다. 기존 작업 이력과 미완료 대기열은 [11월 15일 인수인계](LOOP_HANDOFF_2026-11-15.md)에 보존했다.
+```sh
+git fetch origin feature/cv-structured-lifecycle
+handoff_commit=$(git rev-parse FETCH_HEAD)
+handoff_document=$(git show "$handoff_commit:docs/RESUME_STATE.json" |
+	python3 -c 'import json, sys; print(json.load(sys.stdin)["resume_document"])')
+git show "$handoff_commit:$handoff_document" | rg -n '^#{1,3} '
+```
 
-## 재개 순서
+아래 기록은 날짜별 역사다. 이미 끝난 검증은 최신 인수인계에서 범위와 근거를 확인하고 재사용한다.
 
-사용자가 **진행 재개해**라고 하면 다음 순서로 읽고 미완료 대기열을 이어간다.
-
-1. 저장소 `AGENTS.md`와 사용자의 최신 지시를 읽는다.
-2. 위 상태 파일과 그 안에 있는 `resume_document`, `current_execution`, `next_units_in_order`를 읽는다.
-3. 최신 인수인계에서 끝난 단위와 다음 단위의 근거를 확인한다.
-4. Git, 현재 설치 파일, 프로세스, 두 잠금, 저장본과 장치 상태를 새로 확인한다.
-5. 필요한 다음 유한 단위에 새 문서·세션·인스턴스 바인딩을 만든다.
-
-완료한 unit64, 대규모 파라미터 검사, 프리셋 사례와 과거 실패 연결을 반복하지 않는다.
-과거 runtime token을 새 연결에 재사용하지 않는다. 이번 이동 마감은 해당 날짜의 이력이며, 재개할 때 새 세션의 현재 마감으로 재사용하지 않는다.
-앱 초기화를 마친 뒤 MCP owner를 시작하는 순서는 실제로 동작했지만, 시작 정체의 인과적 해결로 확정하지 않는다.
+[11월 18일 전체 대기열](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-18.md) · [11월 18일 진행 기록](PROGRESS_2026-11-18.md) · [11월 17일 인수인계](LOOP_HANDOFF_2026-11-17.md) · [11월 15일 인수인계](LOOP_HANDOFF_2026-11-15.md)
 
 ## 이전 실행의 제품과 범위
 
@@ -40,7 +38,7 @@ Vocal r69/r70의 집계값·동적 접근 예상 실패는 보존했다. 새 r71
 ## 유지할 사용자 결정
 
 - 공식 8.1.1 설치 파일 대조는 사용자가 생략했다. 설치 경로나 MyFender 로그인을 다시 요청하거나 기다리지 않는다.
-- Volt 276과 Keystation88 MK3는 11월 18일 USB로 재연결했다. 루프백 배선은 확인되지 않았고 이번 연결 마감은 오전 6시다.
+- Volt 276과 Keystation88 MK3는 11월 18일 USB로 재연결했다. 루프백 배선은 확인되지 않았고 당시 연결 마감은 오전 6시였다.
 - Hopper를 사용하지 않는다. 추가 분석에는 Ghidra와 REA의 기존 증거를 활용한다.
 - 사용자 보고는 한국어, 내부 지시는 한국어 또는 영어만 사용한다.
 - branch와 PR 제목에 `codex`를 쓰지 않는다.
