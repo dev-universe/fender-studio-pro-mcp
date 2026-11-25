@@ -109,6 +109,8 @@ Quit Studio Pro and stop the server first. After updating the source, rebuild an
 
 To restore an earlier build, run its `install` and `native-install` commands with its native package. Use the same Studio Pro profile and MCP data directory. Run `doctor` from that build to check the restored files.
 
+For a native bundle with a signature resource file, use a CLI that supports signed bundle resources for install, restore and uninstall. It preserves `CodeResources` with the bundle and backs up the file when restoring a legacy package.
+
 To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
 ### Build a macOS arm64 archive
