@@ -884,6 +884,24 @@ enumeration and model selection remain unverified; an empty current model is
 not evidence that all available Fender models have been enumerated.
 An unpopulated scalar facade is not classified as an empty rack.
 
+## Representative Save and reopen coverage
+
+These Studio Pro 8.1.1 Apple Silicon trials save an owned copy, restart the
+app, bind the newly opened document, and independently compare the stored
+payload and live values. Reacquire live graph, folder and device bindings
+when the operation or host supplies replacements.
+
+| Supported case | Verified scope |
+| --- | --- |
+| Pedalboard | Adjacent distinct pedals, a pedal moved into a vacant slot, two identical models with distinct settings, and a nonadjacent exchange with an unchanged middle pedal. The file and reopened rack match. Read-only peaks and temporary alias lag are recorded by each trial. [Adjacent](evidence/2026-11-24-pedalboard-swap-persistence.json) · [Vacant](https://github.com/dev-universe/fender-studio-pro-mcp/pull/228) · [Identical model](evidence/2026-11-26-pedalboard-same-model-public-persistence.md) · [Nonadjacent](https://github.com/dev-universe/fender-studio-pro-mcp/pull/230) |
+| Insert routing | Serial movement, first and second empty lanes, insertion, occupied and empty removal, and a captured chain restore with replaced slot and device bindings. Each proof records the exact directed shape and both Mixtools’ values after reopen. [Serial](evidence/2026-11-24-insert-slot-move-persistence.json) · [First lane](https://github.com/dev-universe/fender-studio-pro-mcp/pull/224) · [Second lane](evidence/2026-11-20-insert-routing-reopen.json) · [Add](evidence/2026-11-24-insert-splitter-add-persistence.json) · [Occupied removal](evidence/2026-11-24-insert-splitter-remove-persistence.json) · [Empty removal](evidence/2026-11-26-empty-nested-splitter-public.md) · [Restore](https://github.com/dev-universe/fender-studio-pro-mcp/pull/227) |
+| Chorder and Multi Instrument | The tested Chorder input/output settings survived two restarts. One bounded stock Mai Tai addition preserved both child devices and all 566 child values. The recorded parent Filter Env difference matched the assignment already saved in the file. [Chorder](evidence/2026-11-13-chorder-song-persistence.json) · [Multi Instrument](evidence/2026-11-26-multi-add-mai-tai-live.md) |
+
+Coverage is limited to the recorded edits and exact fixture shapes. The
+component settings contract and a song Save have separately measured effects
+on hidden data, including [Scope capture memory](https://github.com/dev-universe/fender-studio-pro-mcp/pull/226)
+and the [Ampire linked mic basis](https://github.com/dev-universe/fender-studio-pro-mcp/pull/220).
+
 ## Reproduction and evidence
 
 The runners include `scripts/verify_all_parameters.py`,

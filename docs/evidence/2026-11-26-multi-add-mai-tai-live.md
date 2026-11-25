@@ -1,0 +1,19 @@
+# Multi Instrument stock Mai Tai insertion on Studio Pro 8.1.1
+
+The public `plugin_multi_add_mai_tai` tool was exercised through the arm64 MCP CLI and its native add-on built from source commit `2bd61a3f60e8646638d01d81a847d519a98b3b3e`, on Studio Pro 8.1.1 Build 113103 for macOS arm64. Tests used independent copies of a stopped scratch song with a named Music track, one original stock Mai Tai, and muted Main. The live ownership chain was rebound for each session and each child.
+
+## R417. Closed editor, Save, and reopen
+
+- The tool refused six separate document or native UID mismatches before dispatch. The valid request returned `applied_unverified` with `dispatch_attempted: true`. A second request after the structure reached two layers was refused before dispatch.
+- Two new reads found two distinct native child slots and Device identities attached to a seven-node graph. The original graph nodes, slot and child binding, parent and old child values (433 rows), track, and original mixer records were preserved. The new layer had 283 readable DSP rows and one mixer entry. Routing showed both parallel Mai Tai branches.
+- The scratch song was saved once. Its archive contained two slots and six directed successor links. The original slot UUID and its ordered route suffix matched the original file. The new branch occupied its own route.
+- A fresh Studio Pro process and MCP owner reopened that exact file. Both routes and new child identities were verified, all 566 child DSP rows and mixer/track observations matched, and the previous document was refused. The upper-level Filter Env pilot was the only changed parent row (149 of 150 exact). The archived pilot had already represented the value of its sole target, the original Mai Tai's `modulationTable.cell1.amount`, and reopening exposed that same value in the parent. The native pilot raw value changed from about 9,300 to 8,180.276. The originally assigned child value matched exactly before and after. The earlier GUI insertion exhibited the same boundary. Whole-parent bitwise persistence is unverified.
+- The first and reopened MCP owners made 646 requests in 235.185 seconds and 137 in 21.929 seconds respectively. Both Studio Pro processes and both owners exited normally. The source and once-saved file were rehashed. All 18 managed installation files and 10 application profile files were verified after restoration.
+
+## R418. Open editor, active transport refusal, and Undo
+
+- With Routing visibly open, the initial graph contained one original MaiTai. The empty and muted scratch song was briefly played. An independent transport read confirmed active playback without recording. The same tool arguments returned `not_applied` and `dispatch_attempted: false`. Stop and Return to Zero restored the transport, and the original graph, mixer, track and values remained exact.
+- With transport confirmed stopped, one tool request returned `applied_unverified`. Two independent graph reads found two distinct attached slots and seven nodes. All 433 previous root and child rows, the original binding, track and mixer entries remained exact. The editor showed both parallel layers and the top Edit item named the exact Mai Tai addition.
+- That Undo item was executed once. The original graph records, original child binding, mixer, track and all 433 rows matched the baseline on independent readback. The source and unsaved scratch file hashes were identical after closing. The owner made 199 requests in 68.794 seconds. Studio Pro and the MCP owner exited normally, and all 18 managed files and 10 application profile files were verified after restoration.
+
+This release covers inserting one stock Mai Tai into a bound Multi Instrument with exactly one stock Mai Tai. The evidence covers controller readback, displayed routing and saved state. Arbitrary instruments, other layer counts, general graph edits and physical audio or MIDI measurement for the new layer remain open.

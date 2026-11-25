@@ -22,9 +22,6 @@ output="$(CDPATH= cd -- "$output" && pwd)"
 work="$(mktemp -d "$output/.fsp-package.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 
-cargo +1.88.0 build --locked --release --manifest-path "$repo_root/Cargo.toml" --target-dir "$repo_root/target"
-sh "$repo_root/native/build.sh" "$work/native"
-
 python3 - "$repo_root" "$work" "$output" "$commit" "$dirty" <<'PY'
 import hashlib
 import json
@@ -38,6 +35,25 @@ import tarfile
 
 repo, work, output = map(Path, sys.argv[1:4])
 commit, dirty = sys.argv[4], sys.argv[5] == 'true'
+home = Path.home()
+cargo_home = Path(os.environ.get('CARGO_HOME') or home / '.cargo')
+sysroot = Path(subprocess.check_output(['rustc', '+1.88.0', '--print', 'sysroot'], text=True).strip())
+local_paths = {}
+for path, replacement in ((home, '/build'), (cargo_home, '/cargo'), (sysroot, '/rust'), (repo, '/source')):
+    local_paths[path.absolute()] = replacement
+    local_paths[path.resolve()] = replacement
+env = os.environ.copy()
+encoded = env.get('CARGO_ENCODED_RUSTFLAGS')
+flags = encoded.split('\x1f') if encoded else []
+if encoded is None:
+    flags = env.get('RUSTFLAGS', '').split()
+for path in sorted(local_paths, key=lambda path: len(str(path))):
+    flags.extend(['--remap-path-prefix', f'{path}={local_paths[path]}'])
+env['CARGO_ENCODED_RUSTFLAGS'] = '\x1f'.join(flags)
+subprocess.run(['cargo', '+1.88.0', 'build', '--locked', '--release',
+                '--manifest-path', repo / 'Cargo.toml', '--target-dir', repo / 'target'], check=True, env=env)
+subprocess.run(['sh', repo / 'native/build.sh', '--archive', work / 'native'], check=True, env=env)
+
 cli = repo / 'target/release/fender-studio-pro-mcp'
 version_output = subprocess.check_output([cli, '--version'], text=True)
 match = re.fullmatch(r'fender-studio-pro-mcp ([0-9A-Za-z.+-]+)\n?', version_output)
@@ -49,6 +65,14 @@ stage = work / name
 stage.mkdir()
 native_dir = 'fender-studio-pro-mcp.native.mac'
 native_root = work / 'native' / native_dir
+native_binary = native_root / 'plugins/mac/fender_mcp_native.bundle/Contents/MacOS/fender_mcp_native'
+for binary in (cli, native_binary):
+    contents = binary.read_bytes()
+    if any(os.fsencode(path) in contents for path in local_paths):
+        raise SystemExit(f'Refused archive with a local build path in {binary.name}')
+install_id = subprocess.check_output(['otool', '-D', native_binary], text=True).splitlines()[1:]
+if install_id != ['@rpath/fender_mcp_native']:
+    raise SystemExit('The native archive executable has an unexpected install name')
 native = json.loads((native_root.parent / 'native-artifact-manifest.json').read_text())
 uuid = re.fullmatch(r'UUID: ([0-9A-F-]{36}) \(arm64\) .+', native['binary_uuid'])
 if uuid is None:
@@ -56,7 +80,27 @@ if uuid is None:
 
 for path in (cli, repo / 'LICENSE', repo / 'THIRD_PARTY_NOTICES.md'):
     shutil.copy2(path, stage)
-shutil.copytree(native_root, stage / native_dir)
+staged_native = stage / native_dir
+shutil.copytree(native_root, staged_native)
+bundle = staged_native / 'plugins/mac/fender_mcp_native.bundle'
+binary = bundle / 'Contents/MacOS/fender_mcp_native'
+resources = bundle / 'Contents/_CodeSignature/CodeResources'
+subprocess.run(['/usr/bin/codesign', '--force', '--sign', '-', '--timestamp=none', bundle], check=True)
+for target in (bundle, binary):
+    subprocess.run(['/usr/bin/codesign', '--verify', '--strict', target], check=True)
+signed_uuid = subprocess.check_output(['/usr/bin/dwarfdump', '--uuid', binary], text=True).split()
+if signed_uuid[:3] != ['UUID:', uuid[1], '(arm64)']:
+    raise SystemExit('Signing changed the native executable UUID')
+signed_files = {
+    path.relative_to(staged_native).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
+    for path in sorted(staged_native.rglob('*')) if path.is_file()
+}
+binary_path = binary.relative_to(staged_native).as_posix()
+resources_path = resources.relative_to(staged_native).as_posix()
+if signed_files.keys() != native['files'].keys() | {resources_path}:
+    raise SystemExit('The signed native package has unexpected files')
+if any(signed_files[path] != digest for path, digest in native['files'].items() if path != binary_path):
+    raise SystemExit('Signing changed native package metadata')
 manifest = {
     'schema': 1,
     'version': version,
@@ -68,7 +112,7 @@ manifest = {
         'directory': native_dir,
         'binary_uuid': uuid[1],
         'runtime': native['runtime'],
-        'files': native['files'],
+        'files': signed_files,
     },
 }
 (stage / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
