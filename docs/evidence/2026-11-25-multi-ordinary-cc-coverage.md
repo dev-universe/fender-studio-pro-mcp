@@ -5,15 +5,15 @@ two-Mai-Tai test song used one registered receive-only Core MIDI source,
 the track's All Inputs assignment, and only that track's monitor. Main
 remained zero and transport was stopped. The source emitted CC0–119
 except CC1, CC2, CC11, and CC64, which were already tested with both
-children. The isolated loopback matched all 232 message bytes as ordered
+children. The isolated loopback matched the emitted bytes of all 232 ordered
 three-byte messages.
 
 Each of the 116 tested CC numbers changed its independently bound
 `controlN` facade on at least two active reads. Two separate neutral
 reads returned to zero. The complete set of 150 parent DSP rows matched
 after each case. The earlier four cases bring the observed ordinary CC
-range to all 120 numbers. This census observes the parent facade. It
-does not identify a child target for each CC.
+range to all 120 numbers. This census observes the parent facade. Individual child targets for
+these CCs remain unverified.
 
 The final child scan found only the two `masterGain.gain` rows changed
 from 1990.535855293274 to zero. A separate owner rebound the same
