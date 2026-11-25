@@ -26,10 +26,30 @@ Both had one event bus in each direction. The signed AU registered
 
 REA with Ghidra 12.1.4 analyzed `GetPluginFactory` at `0x16fc` in the signed VST3
 and the signed AU factory at `0x116b8`. The AU constructor resolves an external
-module's `bundleEntry` through Core Foundation. Craft Anything 0.6.1 in Deep
-mode independently resolved the VST3 factory and the bundle entry and exit
-at `0x52d88c` and `0x52da04`. Its 27,725 function candidates included all
-26,802 Mach-O function starts. It left 1,590 indirect jumps unresolved.
+module's `bundleEntry` through Core Foundation. Craft Anything 0.6.1 in Deep mode independently resolved the VST3 factory
+and the Apple Silicon bundle entry and exit at `0x52d88c` and `0x52da04`.
+Its function inventory included every Mach-O function start in both signed
+VST3 slices.
+
+| VST3 slice | Mach-O starts | Craft candidates | Ghidra entries | Ghidra pseudocode | Additional Craft pseudocode |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| arm64 | 26,802 | 27,725 | 27,741 | 27,712 | 29 |
+| x86_64 | 26,907 | 30,295 | 27,535 | 27,501 | 34 |
+
+Ghidra headless completed both new imports. For the 63 Ghidra entries with
+no decompiler output, Craft Anything returned nonempty pseudocode at each
+matching address. Function counts differ by engine because discovery
+rules differ. Craft reported 1,590 unresolved indirect jumps in arm64 and
+1,642 in x86_64. The outputs measure function coverage. DSP algorithms,
+indirect control flow and all editing behavior still require semantic
+validation.
+
+Both signed VST3 slices differ byte-for-byte from the earlier Ableton
+MCP inputs. The notarized installer's two AU slices match the earlier
+AU inputs exactly. The AAX 2.0.24 executable slices also match the earlier
+AAX inputs, and the extracted AAX bundle did not pass strict bundle
+signature verification. No AAX runtime claim follows from the matching
+slices.
 
 The SDK probe found the same method offsets for both VST3 classes. These
 signed-image offsets differ from the earlier installed-image observations.
@@ -54,7 +74,8 @@ both renders. [Ableton VST3 host probe](https://github.com/dev-universe/ableton-
 
 The observed processor states contained 352 bytes for Serum 2 and 356 for
 Serum 2 FX. The Ableton MCP decoder verified the XferJson metadata and
-compressed frame. Both decoded maps included `demoVersion: true` and product
+compressed frame. Under Rosetta, class and parameter listings and both default-state chunks matched the Apple Silicon results.
+Both decoded maps included `demoVersion: true` and product
 metadata. The editable oscillator and FX rack fields were absent. These
 observations establish default demo-state replay and scalar control. Full
 patch editing and Studio Pro integration require separate evidence.
