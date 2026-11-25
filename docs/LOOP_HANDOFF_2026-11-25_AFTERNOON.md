@@ -1183,3 +1183,25 @@ Core 성공과 같은 헤드의 macOS 검사를 진행 중이다. `main` 18개·
 `main` 18개·로컬 13개, 소프트웨어 2~5일, 장비 의존 4건,
 지정 종료 시각 없음. R420의 Scope 독립 관측 경로, R421의 새
 Splitter 분기, R422의 Ampire Save 전후 대조를 준비한다.
+
+## 11월 26일 02시 30분 Scope 표시와 중첩 Splitter 분기
+
+- R420에서 정확한 Studio Pro 8.1.1 arm64 설치 이미지 SHA와 UUID를
+  고정했다. REA/Ghidra 및 Craft Anything으로 Scope의 표시 배열을
+  찾고 28개 명령 바이트를 별도 대조했다. DSP가 캡처 도중에도 배열을
+  갱신한다. 해당 렌더러의 직접 시작·완료 플래그와 누적 샘플 수 관측
+  경로, 별도 동기화 계약은 확인하지 못했다. 최대 창 80,000샘플의
+  화면 진행은 R423에서 시험한다. 분석 7분 4초.
+  [#210](https://github.com/dev-universe/fender-studio-pro-mcp/pull/210)
+- R421에서 공개 `insert_slot_move` 한 번으로 Mixtool 2를
+  Splitter 3의 빈 첫 레인에 옮겼다. 연결 목록 세 곳만 바뀌었고
+  8노드·순서 연결 10개, 소유권과 두 DSP 144행은 그대로였다.
+  네이티브 자식 나열 순서는 바뀌었다. 85요청 77.619초, 앱 128.402초.
+  소유 파일을 저장하지 않고 닫았고 토큰 6개를 해제했다. 원본 파일,
+  설치 18개·설정 9개를 확인했다.
+  [#211](https://github.com/dev-universe/fender-studio-pro-mcp/pull/211)
+
+`main` 18개·로컬 13개, 전체 소프트웨어 2~5일, 장비 의존 4건,
+지정 종료 시각 없음. 실제 USB·오디오 재열거에 Volt 276과 Keystation88
+항목이 없었다. 이어서 R422 Ampire 저장 대조와 R424 빈 Splitter
+제거를 한 앱·한 owner로 직렬 시험한다.
