@@ -1941,3 +1941,15 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 현재 대기 순서는 #249, #262, #264, #260, #263 이후 Input Filter다.
   `main` 15개·로컬 11개, 장비 의존 4건. 전체 2~5일과 CI·장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 07시 46분 FabFilter 우선 병합 완료
+
+- #249의 최신 기준 `13b5440`이 필수 검사 두 개를 통과해
+  `cbc24ee`에 병합됐다. 갱신부터 병합까지 817.3초.
+  [#249](https://github.com/dev-universe/fender-studio-pro-mcp/pull/249)
+- #262부터 새 `main` 기준으로 검사한다. 그 뒤 #264, #260, #263,
+  Input Filter, Impact, Chorder, Shared Event 순이다. 로컬 병합 점검
+  프로세스는 실행 중이다. 앱과 MCP owner 닫힘 및 원래 관리 파일
+  18개는 독립 해시를 다시 확인했다.
+- `main` 15개·로컬 11개, 이 안에 장비 의존 4건. 다음 검사 9~14분,
+  전체 2~5일과 CI·장비 대기 예상. 지정 종료 시각 없음.
