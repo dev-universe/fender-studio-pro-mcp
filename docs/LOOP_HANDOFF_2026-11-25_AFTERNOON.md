@@ -1638,3 +1638,24 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   `main` 잔여 16개·로컬 11개, 장비 의존 4건. 소프트웨어 전체
   2~5일과 CI·장비 대기. 지정된 종료 시각 없음. 앱·owner 종료와
   정상 설치 확인.
+
+## 11월 26일 05시 09분 Serum FX 병합과 MIDI 조회 구현
+
+- #237은 정확한 `dc104f17`에서 두 필수 검사를 통과한 뒤 `922b9c3`에
+  병합됐다. 검사 재개부터 9분 50초. #240의 갱신된 `ee331185`에서
+  두 검사를 진행 중이다. [#237](https://github.com/dev-universe/fender-studio-pro-mcp/pull/237)
+  [#240](https://github.com/dev-universe/fender-studio-pro-mcp/pull/240)
+- R453은 서명된 2.1.5 arm64 VST3의 Serum 2·FX에서 첫 MIDI
+  채널 스칼라 매핑 각 130개를 독립 SDK로 검증했다. 실제 R449C·R445FXC
+  DSP 이름과 각 130개를 맞췄다. REA/Ghidra의 29개 명령 및 Craft의
+  116바이트가 일치했다. 넓은 별도 SDK 시험은 완료되지 않았다.
+  두 변형의 첫 채널 밖 범위와 Note Expression은 공개 조회에 포함하지
+  않았다. 새로운 `serum2_midi_mapping`이 실제 독립 MCP 요청 260개를
+  SDK와 동일하게 반환했고 잘못된 다섯 요청을 거부했다. 전체 준비부터
+  MCP 확인 17분 43초, 실제 stdio 1.720초, Rust 264·JS 441 통과.
+  [#243](https://github.com/dev-universe/fender-studio-pro-mcp/pull/243)
+- R454는 FabFilter의 legacy feedback 7개에 대한 호스트 전달을
+  정적으로 조사 중이다. R452B는 신호를 물리로 내보내지 않는
+  채널 스템 사전 검증을 준비한다. 앱과 모든 소유자 종료, 정상 설치
+  확인. `main` 16개·로컬 11개, 장비 4건, 전체 2~5일과 CI·장비 대기,
+  지정된 종료 시각 없음.
