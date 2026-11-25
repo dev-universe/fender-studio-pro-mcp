@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "8fb4121df6dc104e799d6e85b122caf7f3233f5d",
+    "main_at_checkpoint": "85984a91d862ac077da0b2b614290626102ce6d8",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -45,7 +45,10 @@
       "R346",
       "R346B",
       "R346C",
-      "R347"
+      "R347",
+      "R348",
+      "R349",
+      "R349B"
     ],
     "merged_pull_requests": [
       109,
@@ -65,10 +68,10 @@
       123,
       124,
       125,
-      126
+      126,
+      127
     ],
     "open_pull_requests": [
-      127,
       128,
       129,
       130,
@@ -79,18 +82,21 @@
       135,
       136,
       137,
-      138
+      138,
+      139,
+      140
     ],
     "remaining_builtin_units": 22,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Verify all sixteen Presence macro callbacks, a supported effect target and an exact state restore in a fresh owned SoundFont program. R347 proved typed writes and a float callback, but the direct sample-zone tune access was unverified. Mustang model selection awaits a working signed model module. Merge PRs 127 to 138 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
-    "remaining_builtin_units_after_local_verification": 20,
+    "next": "Verify Ampire linked and independent microphone level changes, host bypass and exact recovery in owned scratches. Presence MIDI and sixteen macros qualified locally in R346C and R349B. Mustang selection awaits a working signed model module. Merge PRs 128 to 140 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "remaining_builtin_units_after_local_verification": 19,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-MAITAI",
-      "CONTROL-PEDALBOARD"
+      "CONTROL-PEDALBOARD",
+      "CONTROL-PRESENCE"
     ]
   },
   "nov25_current_checkpoint": {
