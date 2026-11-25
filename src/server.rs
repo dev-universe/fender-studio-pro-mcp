@@ -230,6 +230,12 @@ impl McpServer {
                 "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. source level_meter enumerates only six registered Level Meter GUI settings and requires Level Meter, expected_document and expected_instance. Native enumeration requires the matching optional extension; metadata fallback is partial.",
                 false,
             ),
+            named::<crate::operation::PluginMultiAddMaiTai>(
+                "plugin_multi_add_mai_tai",
+                "pluginMultiAddMaiTai",
+                "Add a second stock Mai Tai in parallel to an exact Multi Instrument with one existing Mai Tai with the supported three-node graph ownership shape. Select the unique Music track and stop playback and recording. Bind the current document, parent device, Instruments folder, Graph, original Inst01 slot and its Mai Tai Device. First call plugin_inspect with kind instrument and the selected track to obtain the Multi Instrument identity. Then repeat with plugin, expected_instance, include_nodes=true, and node_scope=plugin_controller. An accepted call is applied_unverified. Independently inspect both children, graph and mixer. After an explicit Undo, read fresh bindings before issuing a new request. Stop on an unknown outcome.",
+                true,
+            ),
             named::<PluginMultiChildParameters>(
                 "plugin_multi_child_parameters",
                 "pluginMultiChildParameters",
@@ -696,7 +702,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 60;
+    const EXPECTED_TOOL_COUNT: usize = 61;
 
     use super::*;
 
@@ -1203,6 +1209,7 @@ mod tests {
             "insert_slot_move",
             "insert_splitter_remove",
             "insert_splitter_add",
+            "plugin_multi_add_mai_tai",
             "panner_set",
             "splitter_set",
         ] {

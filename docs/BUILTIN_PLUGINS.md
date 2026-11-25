@@ -46,7 +46,7 @@ The same server/native build passed 56 representative parameter roundtrips, Phas
 | Scope | Effect | 31 | `crossLevel` |
 | Tone Generator | Effect | 10 | `freq` |
 | Ampire | Effect | 94 | `cab.micmixA` |
-| Pedalboard | Effect | 28 | `input.level` |
+| Pedalboard | Effect | 28 | `input.level`, [guarded slot exchanges](evidence/2026-11-25-pedalboard-guarded-exchange.md) |
 | Mustang Native | Effect | 39 | `input.level` |
 | Rumble Native | Effect | 39 | `input.level` |
 | Studio Verb | Effect | 151 | `algoreverb.centerlevel` |
