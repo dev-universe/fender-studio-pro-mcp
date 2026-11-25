@@ -285,6 +285,15 @@ impl PedalboardExchange {
     }
 }
 
+fn describe_scope_state(instance: &Instance, receipt: &mut Value) {
+    if instance.native_class == "AudioEffect" && instance.class_uid == SCOPE_CLASS {
+        receipt["scope_state_coverage"] = json!({
+            "capsule_includes_live_trace": false,
+            "restore_may_clear_held_trace": true,
+        });
+    }
+}
+
 pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
     with_registry(ctx.service, |registry| registry.capacity(0))?;
     let lease = AliasLease::capture(ctx)?;
@@ -293,6 +302,7 @@ pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> 
     let sha256 = sha256(&bytes);
     let token = token();
     let mut summary = json!({"ok":true,"token":token,"byte_count":bytes.len(),"sha256":sha256,"serialization":"component_alias_IStorable","verified":false,"outcome":"observed"});
+    describe_scope_state(&ctx.instance, &mut summary);
     if ctx.instance.native_class == "AudioEffect"
         && ctx.instance.object_id == "Pedalboard"
         && ctx.instance.class_uid == pedalboard::CLASS
@@ -542,7 +552,10 @@ pub(super) fn restore(ctx: &Context<'_>, token: &str) -> (Value, Option<AliasLea
         drop(capsule);
     }
     let value = match result {
-        Ok(value) => value,
+        Ok(mut value) => {
+            describe_scope_state(&ctx.instance, &mut value);
+            value
+        }
         Err(failure) => error(
             "state_restore_failed",
             &failure.reason,

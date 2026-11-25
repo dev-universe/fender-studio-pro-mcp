@@ -63,6 +63,7 @@ pub(super) const MAX_RESPONSE_BYTES: usize = 256 * 1024;
 const MAX_COUNT: u32 = 1_000_000;
 const MAX_SAFE_INTEGER: i64 = 9_007_199_254_740_991;
 const ZERO_UID: &str = "00000000-0000-0000-0000-000000000000";
+const SCOPE_CLASS: &str = "36322412-AD90-4EE0-B63C-37929566B081";
 const DOC_MANAGER: Uid = Uid {
     a: 0x1e03d0d4,
     b: 0x9fc9,

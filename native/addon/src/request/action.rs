@@ -65,7 +65,7 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             effects: &[],
             expected_tag: Some(88),
         }),
-        ("36322412-AD90-4EE0-B63C-37929566B081", Action::RetriggerScope) => Ok(Spec {
+        (SCOPE_CLASS, Action::RetriggerScope) => Ok(Spec {
             parameter: c"trigRetrig",
             effects: &[],
             expected_tag: Some(1398043218),

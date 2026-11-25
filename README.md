@@ -149,6 +149,14 @@ transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
 Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
+### Scope settings and the live trace
+
+On Studio Pro 8.1.1 with the matching native extension, Scope `plugin_state`
+capture and accepted restore return `scope_state_coverage`. The capsule covers
+component settings. Its `capsule_includes_live_trace` field is `false` and
+`restore_may_clear_held_trace` is `true`. Read the settings independently after
+restore. [Held trace verification](https://github.com/dev-universe/fender-studio-pro-mcp/pull/171)
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
