@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "f2fc27f33ec7dbf848df01418e9a2fbf1c7a15a2",
+    "main_at_checkpoint": "af4c58816800516d69e615124103583386ecd345",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -70,7 +70,8 @@
       "R367",
       "R367B",
       "R367C",
-      "R367D"
+      "R367D",
+      "R368"
     ],
     "merged_pull_requests": [
       109,
@@ -97,10 +98,10 @@
       130,
       131,
       132,
-      133
+      133,
+      134
     ],
     "open_pull_requests": [
-      134,
       135,
       136,
       137,
@@ -124,17 +125,17 @@
       155,
       156,
       157,
-      158
+      158,
+      159
     ],
-    "remaining_builtin_units": 21,
+    "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. Next verify learned-note edits through the MCP and the five remaining editor actions. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 134 to 158 as both checks pass on each exact current-base head. PR 134 now targets main.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. Next verify the five remaining editor actions, starting with Clear and Clear All. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 135 to 159 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
-      "CONTROL-PEDALBOARD",
       "CONTROL-PRESENCE",
       "CONTROL-SAMPLEONE"
     ]
