@@ -483,6 +483,16 @@ fn exact_multi_fake_uses_declared_interfaces_retains_owners_and_keeps_bounds() {
     fixture.released();
 }
 #[test]
+fn multi_controller_inspection_accepts_preset_title_changes() {
+    let mut instance = multi_instance();
+    instance.object_id = "Temp - 1 Mai Tai - Controls".into();
+    let fixture = Fixture::new(true);
+    let inventory = multi_capture(&fixture, &instance, &mut || Ok(())).unwrap();
+    assert_eq!(inventory.value()["mutation_capability"], false);
+    drop(inventory);
+    fixture.released();
+}
+#[test]
 fn multi_wrong_instance_context_is_refused_before_any_native_dispatch() {
     let fixture = Fixture::new(true);
     assert!(
