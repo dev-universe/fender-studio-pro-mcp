@@ -100,6 +100,8 @@ For edits, the client passes the current `document` token from `host_status` as 
 
 To control an instrument on a track, read its exact name with `tracks_list`. Call `track_select` with that name and the current document token. Check that `tracks_list` shows only that track selected before inspecting or editing the instrument.
 
+For a Multi Instrument with one stock Mai Tai, stop playback and recording and keep its uniquely named Music track selected. Use `plugin_inspect` with `kind: "instrument"` and `track: "Your track name"` to get the Multi Instrument's native instance UID. Repeat with the observed `plugin` and `expected_instance`, plus `include_nodes: true` and `node_scope: "plugin_controller"`, to read the Instruments folder, Graph, original `Inst01` slot, and its Mai Tai Device UIDs. Pass those five UIDs to `plugin_multi_add_mai_tai` with the current document and track. After `applied_unverified` or `outcome_unknown`, inspect the current children and mixer before issuing any further edit. After an explicit Undo, repeat the inspection before issuing a new add request. [Studio Pro 8.1.1 validation](docs/evidence/2026-11-26-multi-add-mai-tai-live.md).
+
 ### Troubleshooting
 
 | Symptom | What to check |
@@ -112,9 +114,9 @@ To control an instrument on a track, read its exact name with `tracks_list`. Cal
 
 Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. The installers report backup paths for the files they replace.
 
-To restore an earlier build, run its `install` and `native-install` commands with its native package. Use the same Studio Pro profile and MCP data directory. Run `doctor` from that build to check the restored files.
+To restore an earlier build, run its `install` command and pass its native package to `native-install`. Use the same Studio Pro profile and MCP data directory. Run `doctor` from the restored build to check the files.
 
-For a native bundle with a signature resource file, use a CLI that supports signed bundle resources for install, restore and uninstall. It preserves `CodeResources` with the bundle and backs up the file when restoring a legacy package.
+If either the installed bundle or the package contains `CodeResources`, use a CLI that supports signed bundle resources for native install, restore and uninstall. A CLI built before that support may refuse to restore a legacy bundle from a signed installation. Use the newer CLI's `native-install` with the legacy package to preserve the signature resource in a backup.
 
 To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
@@ -124,7 +126,9 @@ On Apple Silicon, run `sh scripts/package-macos-arm64.sh`. It writes a
 versioned archive and a SHA-256 sidecar to `artifacts/macos-arm64`. You can
 pass a different output directory as the first argument. To check a copied
 archive, run `shasum -a 256 -c` with its `.sha256` file from that directory.
-The archive contains the CLI, its native add-on, and a build manifest.
+The archive contains the CLI, its native add-on, and a build manifest. The
+archive's native bundle has an ad-hoc resource signature. Developer ID and
+notarization are separate from this build.
 
 ## Optional native add-on
 
