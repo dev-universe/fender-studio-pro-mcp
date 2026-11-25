@@ -32,3 +32,12 @@ operator invoked the stock Sources control and left the route unchanged.
 The bounded native list reported empty before the selected value was
 read. This trial made 40 requests in 25.592 seconds, repeated the clean
 shutdown, and restored 18 managed files and 10 app profile files.
+
+R471 inspected the same arm64 build with REA and Ghidra. LLVM
+disassembly and Craft-Anything byte reads corroborated the inspected
+resolver. The stock command first checks the selected object's native
+input type. Its fallback scans the effect's private input array and
+borrows the first matching input pointer. That path carries no retained
+interface or uniqueness check suitable for binding an MCP request.
+This was offline evidence. A supported retained input and a live Send
+assignment remain unverified.
