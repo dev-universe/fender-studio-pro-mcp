@@ -86,6 +86,7 @@ In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two posit
 
 - Adjacent occupied positions with different models can be exchanged directly. Tests covered both directions at positions 1–2 and 7–8, and separately verified Save, reopen, and Undo. [Adjacent exchange](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Save and reopen](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
 - An empty position, two identical model names, or nonadjacent positions require a fresh `plugin_state` capture for the exact insert. Confirm that `pedalboard_rack` shows two distinct payloads and pass the capture's `sha256` as `expected_rack_sha256`. Capture again after the exchange and compare all eight slots, then release both tokens. Identical-model DSP rows and a vacant-slot active alias can lag behind the serialized rack, so use payload fingerprints for this check. [Guarded exchanges](docs/evidence/2026-11-25-pedalboard-guarded-exchange.md) · [Empty slot restart](docs/evidence/2026-11-25-pedalboard-empty-slot-persistence.md) · [Same-model restart](docs/evidence/2026-11-25-pedalboard-same-model-persistence.md)
+- A Studio Pro 8.1.1 test saved Compressor after moving it to the empty slot. Fresh open kept the moved payload and cleared the vacated slot’s temporary active alias. [Moved-to-vacant restart](docs/evidence/2026-11-26-pedalboard-vacant-moved-persistence.md)
 
 Ampire has a separate pre/post divider controlled by `opt.stomporder`. The standalone Pedalboard has a continuous rack. [Divider verification](docs/evidence/2026-11-25-pedalboard-ampire-divider.md)
 
@@ -220,6 +221,13 @@ get the native instance ID, then use `plugin_parameters` and
 were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
 can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
+[Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
+
+Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx` and
+`controller` set to 0–129. This offline reference covers CC 0–127, channel
+pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
+2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
+on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
 
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
@@ -230,6 +238,7 @@ before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+[Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
 
 ### FabFilter preset library
 
@@ -362,6 +371,8 @@ A separate save and restart trial kept both Mixtools in series in the inner Spli
 
 To move an existing effect into an empty branch of a supported two-way Splitter, use the same tool with the Splitter UUID in `after_node` and its merger UUID in `following_node`. Set `branch` to `0` for the first branch or `1` for the second. In a fresh routing capture, the selected branch must lead directly to that merger. In the actual 8.1.1 trial, the second branch gained the effect, and one host Undo restored the original location, all graph and effect IDs, and all 144 reported values. Studio Pro kept the moved effect selected. [Empty branch move and Undo verification](docs/evidence/2026-11-20-insert-slot-empty-branch.json)
 
+The first-branch move was also verified through one Save and a fresh Studio Pro process. All eight nodes, ten ordered links and 144 Mixtool values matched, and the previous document binding was refused. [First-branch persistence](docs/evidence/2026-11-26-splitter-first-lane-persistence.md)
+
 After reopening a song, obtain a fresh document binding and read the current insert folder and graph UUIDs before editing. In the Studio Pro 8.1.1 restart trial, the saved links, slot and effect IDs, and all 144 values survived. The live folder and graph UUIDs changed, and the MCP rejected requests with the prior document or prior graph UUID before applying a change. [Save, restart and stale request verification](docs/evidence/2026-11-20-insert-routing-reopen.json)
 
 `insert_splitter_add` inserts a default two-branch Splitter and its merger on the existing link from a supported effect slot to its immediate merger. Both new branches start empty and rejoin before reaching the original merger. Open the exact rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` and a fresh routing capture to get the effect and graph UUIDs. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, the effect slot-node UUID in `after_node`, the immediate merger UUID in `following_node`, and the current `expected_document`. Use canonical uppercase UUIDs. The matching native extension checks that a recorded Undo is available on the tested Apple Silicon build of Studio Pro 8.1.1. After `applied_unverified`, inspect the new links and plugin values. One host Undo restored the original graph and all 144 Mixtool values in the nested trial. [Splitter insertion and Undo verification](docs/evidence/2026-11-20-insert-splitter-add.json)
@@ -375,6 +386,8 @@ The saved removal trial reopened the same song in a fresh Studio Pro session. Th
 `insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
+
+In a separate Studio Pro 8.1.1 trial, one Save and a fresh process preserved the restored six-node parallel graph, both newly bound slot and effect IDs, and all 144 reported Mixtool values. An old-document restore request was refused before dispatch. [Restored chain persistence](docs/evidence/2026-11-26-restored-insert-chain-persistence.md)
 
 ## Validation
 
