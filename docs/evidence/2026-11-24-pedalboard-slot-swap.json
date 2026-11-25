@@ -1,0 +1,100 @@
+{
+  "verification": "Actual adjacent Pedalboard position exchange with the exact native editor, independent types and actual editor UI",
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64"
+  },
+  "tool": "pedalboard_slot_swap",
+  "observations": [
+    {
+      "trial": "R310",
+      "positions": [
+        1,
+        2
+      ],
+      "before": [
+        "Compressor",
+        "Reverb",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - "
+      ],
+      "after": [
+        "Reverb",
+        "Compressor",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - "
+      ],
+      "customized_pedal_values": false,
+      "checked_pedalboard_values": 40,
+      "unrelated_rows_unchanged": 24,
+      "both_pedal_payloads_moved": true,
+      "reverse_exchange_matches_all_values_and_component_fingerprint": true,
+      "restored_empty_baseline_rows": 28,
+      "mixer_insert_peer_timeline_unchanged": true,
+      "stale_model_and_instance_refusals": 2,
+      "host_exit_code": 0,
+      "mcp_exit_code": 0,
+      "requests": 113,
+      "owner_seconds": 52.891,
+      "host_seconds": 116.711,
+      "saved": false,
+      "normal_managed_files_restored": 18
+    },
+    {
+      "trial": "R309",
+      "positions": [
+        7,
+        8
+      ],
+      "before": [
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        "Compressor",
+        "Reverb"
+      ],
+      "after": [
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        " - ",
+        "Reverb",
+        "Compressor"
+      ],
+      "customized_pedal_values": true,
+      "checked_pedalboard_values": 40,
+      "unrelated_rows_unchanged": 24,
+      "both_pedal_payloads_moved": true,
+      "reverse_exchange_matches_all_values_and_component_fingerprint": true,
+      "restored_empty_baseline_rows": 28,
+      "mixer_insert_peer_timeline_unchanged": true,
+      "stale_model_and_instance_refusals": 0,
+      "host_exit_code": 0,
+      "mcp_exit_code": 0,
+      "requests": 96,
+      "owner_seconds": 45.899,
+      "host_seconds": 81.181,
+      "saved": false,
+      "normal_managed_files_restored": 18
+    }
+  ],
+  "boundaries": [
+    "Transport stopped in both app trials.",
+    "The narrow operation returns applied_unverified and current model labels. Inspect typed parameters independently.",
+    "Host Undo history and saved-song persistence require separate verification."
+  ]
+}
