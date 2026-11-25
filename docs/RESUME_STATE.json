@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "85984a91d862ac077da0b2b614290626102ce6d8",
+    "main_at_checkpoint": "8cd33700b6e967ae0f9116816cab54a4e32dadb9",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -48,7 +48,11 @@
       "R347",
       "R348",
       "R349",
-      "R349B"
+      "R349B",
+      "R350",
+      "R351",
+      "R352",
+      "R353"
     ],
     "merged_pull_requests": [
       109,
@@ -69,10 +73,10 @@
       124,
       125,
       126,
-      127
+      127,
+      128
     ],
     "open_pull_requests": [
-      128,
       129,
       130,
       131,
@@ -84,17 +88,20 @@
       137,
       138,
       139,
-      140
+      140,
+      141,
+      142,
+      143,
+      144
     ],
-    "remaining_builtin_units": 22,
+    "remaining_builtin_units": 21,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Verify Ampire linked and independent microphone level changes, host bypass and exact recovery in owned scratches. Presence MIDI and sixteen macros qualified locally in R346C and R349B. Mustang selection awaits a working signed model module. Merge PRs 128 to 140 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "next": "Verify Ampire tuner GUI mode and remaining alias routes against exact DSP targets. R352 recovered the prepared 25/25/50 microphone state and R353 verified three bypass roles. Default mix exact recovery remains unresolved. Mustang selection awaits a working signed model module. Merge PRs 129 to 144 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
     "remaining_builtin_units_after_local_verification": 19,
     "locally_qualified_fixed_units_pending_merge": [
-      "CONTROL-MAITAI",
       "CONTROL-PEDALBOARD",
       "CONTROL-PRESENCE"
     ]
