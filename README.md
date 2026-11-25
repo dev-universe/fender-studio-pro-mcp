@@ -360,6 +360,8 @@ These commands run without connecting to Studio Pro.
 
 `song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
 
+For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+
 For a supported saved Impact instance, `song_read` and `song-read` include `instrument_outputs` on the plugin. Each output reports its saved enabled state, speaker layout and mixer channel ID and name when connected. The reader checks both the saved output descriptors and mixer membership. If those disagree, it reports a warning and leaves the output graph absent. The same fields were verified in Studio Pro 8.1.1 scratch copies with `Impact St 2` enabled and restored after reopening.
 
 For saved pre-fader insert racks with supported Splitter routing, `song_read` and `song-read` include `mixer[].insert_routing.nodes`. The ordered `successors` show where each node sends audio. Slot nodes include their saved rack index, slot ID and device name. The file reader reflects the last save. A warning identifies a rack whose links or slots could not be verified. [Studio Pro 8.1.1 verification](docs/evidence/2026-11-20-saved-insert-routing.json)
