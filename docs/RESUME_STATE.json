@@ -77,7 +77,9 @@
       "R371",
       "R372",
       "R373",
-      "R373B"
+      "R373B",
+      "R374",
+      "R375"
     ],
     "merged_pull_requests": [
       109,
@@ -137,14 +139,16 @@
       161,
       162,
       163,
-      164
+      164,
+      165,
+      166
     ],
     "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. R371 verified lower-key audition and the distinct raw preview flag. R372 verified direct DSP Clear on the selected Chorder input. R373B verified the typed selected Clear action and four distinct stale-context refusals. Next verify the public DSP command paths for Chorder Clear All, Copy and Paste. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 138 to 164 as both checks pass on each exact current-base head.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D–R373B verified Chorder live MIDI, learned note editing, GUI clipboard and clear, lower-key audition, direct Clear and the guarded Clear action. R374 independently verified the public DSP Clear All, Copy and Paste paths. R375 independently verified five held and released output notes from the public DSP audition lane with the editor closed. Resolve the separate Learn Mode preview effect before closing Chorder. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 138 to 166 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PRESENCE",
