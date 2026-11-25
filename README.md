@@ -82,7 +82,13 @@ Start the client and ask it to call `host_status` to confirm it can see the open
 
 For a Pedalboard insert, use `plugin_inspect` with `source: "controller"`, `include_nodes: true`, and `node_scope: "plugin_controller"`. Bind the exact channel, slot, plugin, instance, and document. The bounded controller graph can show its `StompItemModel` under `stomps`. [Pedalboard controller verification](docs/evidence/2026-11-24-pedalboard-controller-inspection.json)
 
-In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Saved-song and restart verification](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo verification](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
+In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two positions in the standalone Pedalboard. Stop playback and recording. Read `opt.stompmodel1` through `opt.stompmodel8` with `source: "dsp"` and pass the current document, exact instance, and both displayed model names. Use the literal `" - "` for an empty slot. Insert slots start at zero and pedal positions start at one.
+
+- Adjacent occupied positions with different models can be exchanged directly. Tests covered both directions at positions 1–2 and 7–8, and separately verified Save, reopen, and Undo. [Adjacent exchange](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Save and reopen](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
+- An empty position, two identical model names, or nonadjacent positions require a fresh `plugin_state` capture for the exact insert. Confirm that `pedalboard_rack` shows two distinct payloads and pass the capture's `sha256` as `expected_rack_sha256`. Capture again after the exchange and compare all eight slots, then release both tokens. Identical-model DSP rows and a vacant-slot active alias can lag behind the serialized rack, so use payload fingerprints for this check. [Guarded exchanges](docs/evidence/2026-11-25-pedalboard-guarded-exchange.md) · [Empty slot restart](docs/evidence/2026-11-25-pedalboard-empty-slot-persistence.md) · [Same-model restart](docs/evidence/2026-11-25-pedalboard-same-model-persistence.md)
+- A Studio Pro 8.1.1 test saved Compressor after moving it to the empty slot. Fresh open kept the moved payload and cleared the vacated slot’s temporary active alias. [Moved-to-vacant restart](docs/evidence/2026-11-26-pedalboard-vacant-moved-persistence.md)
+
+Ampire has a separate pre/post divider controlled by `opt.stomporder`. The standalone Pedalboard has a continuous rack. [Divider verification](docs/evidence/2026-11-25-pedalboard-ampire-divider.md)
 
 The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
@@ -94,6 +100,8 @@ For edits, the client passes the current `document` token from `host_status` as 
 `applied_verified` includes operation-specific readback. `applied_unverified` records an acknowledged edit with incomplete verification. `partially_applied` means some changes took effect. If the client receives `outcome_unknown`, check the current state before repeating the request.
 
 To control an instrument on a track, read its exact name with `tracks_list`. Call `track_select` with that name and the current document token. Check that `tracks_list` shows only that track selected before inspecting or editing the instrument.
+
+For a Multi Instrument with one stock Mai Tai, stop playback and recording and keep its uniquely named Music track selected. Use `plugin_inspect` with `kind: "instrument"` and `track: "Your track name"` to get the Multi Instrument's native instance UID. Repeat with the observed `plugin` and `expected_instance`, plus `include_nodes: true` and `node_scope: "plugin_controller"`, to read the Instruments folder, Graph, original `Inst01` slot, and its Mai Tai Device UIDs. Pass those five UIDs to `plugin_multi_add_mai_tai` with the current document and track. After `applied_unverified` or `outcome_unknown`, inspect the current children and mixer before issuing any further edit. After an explicit Undo, repeat the inspection before issuing a new add request. [Studio Pro 8.1.1 validation](docs/evidence/2026-11-26-multi-add-mai-tai-live.md).
 
 ### Troubleshooting
 
@@ -107,9 +115,9 @@ To control an instrument on a track, read its exact name with `tracks_list`. Cal
 
 Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. The installers report backup paths for the files they replace.
 
-To restore an earlier build, run its `install` and `native-install` commands with its native package. Use the same Studio Pro profile and MCP data directory. Run `doctor` from that build to check the restored files.
+To restore an earlier build, run its `install` command and pass its native package to `native-install`. Use the same Studio Pro profile and MCP data directory. Run `doctor` from the restored build to check the files.
 
-For a native bundle with a signature resource file, use a CLI that supports signed bundle resources for install, restore and uninstall. It preserves `CodeResources` with the bundle and backs up the file when restoring a legacy package.
+If either the installed bundle or the package contains `CodeResources`, use a CLI that supports signed bundle resources for native install, restore and uninstall. A CLI built before that support may refuse to restore a legacy bundle from a signed installation. Use the newer CLI's `native-install` with the legacy package to preserve the signature resource in a backup.
 
 To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
@@ -119,7 +127,9 @@ On Apple Silicon, run `sh scripts/package-macos-arm64.sh`. It writes a
 versioned archive and a SHA-256 sidecar to `artifacts/macos-arm64`. You can
 pass a different output directory as the first argument. To check a copied
 archive, run `shasum -a 256 -c` with its `.sha256` file from that directory.
-The archive contains the CLI, its native add-on, and a build manifest.
+The archive contains the CLI, its native add-on, and a build manifest. The
+archive's native bundle has an ad-hoc resource signature. Developer ID and
+notarization are separate from this build.
 
 ## Optional native add-on
 
@@ -211,6 +221,27 @@ get the native instance ID, then use `plugin_parameters` and
 were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
 can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
+[Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
+
+Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx` and
+`controller` set to 0–129. This offline reference covers CC 0–127, channel
+pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
+2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
+on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
+
+To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
+`kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
+`expected_document`. Inspect the candidate FX insert by its exact channel
+and slot. Compare the two `native.instance.object_uid` values and use the
+matching UID as `expected_instance` on a fresh track inspection. Change
+the route with the track's **Out** menu in Studio Pro, then repeat the
+inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
+
+To check the destination in a saved song, call `song_read` on the
+`.song` file and look for `midi_destination` on the source track. A
+resolved destination identifies the original Serum 2 instrument or the
+specific Serum 2 FX insert, even with multiple FX copies in the song.
+[Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
@@ -221,6 +252,8 @@ before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+[Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
+[Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
 
 ### FabFilter preset library
 
@@ -341,6 +374,8 @@ These commands run without connecting to Studio Pro.
 
 `song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
 
+For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+
 For a supported saved Impact instance, `song_read` and `song-read` include `instrument_outputs` on the plugin. Each output reports its saved enabled state, speaker layout and mixer channel ID and name when connected. The reader checks both the saved output descriptors and mixer membership. If those disagree, it reports a warning and leaves the output graph absent. The same fields were verified in Studio Pro 8.1.1 scratch copies with `Impact St 2` enabled and restored after reopening.
 
 For saved pre-fader insert racks with supported Splitter routing, `song_read` and `song-read` include `mixer[].insert_routing.nodes`. The ordered `successors` show where each node sends audio. Slot nodes include their saved rack index, slot ID and device name. The file reader reflects the last save. A warning identifies a rack whose links or slots could not be verified. [Studio Pro 8.1.1 verification](docs/evidence/2026-11-20-saved-insert-routing.json)
@@ -353,6 +388,8 @@ A separate save and restart trial kept both Mixtools in series in the inner Spli
 
 To move an existing effect into an empty branch of a supported two-way Splitter, use the same tool with the Splitter UUID in `after_node` and its merger UUID in `following_node`. Set `branch` to `0` for the first branch or `1` for the second. In a fresh routing capture, the selected branch must lead directly to that merger. In the actual 8.1.1 trial, the second branch gained the effect, and one host Undo restored the original location, all graph and effect IDs, and all 144 reported values. Studio Pro kept the moved effect selected. [Empty branch move and Undo verification](docs/evidence/2026-11-20-insert-slot-empty-branch.json)
 
+The first-branch move was also verified through one Save and a fresh Studio Pro process. All eight nodes, ten ordered links and 144 Mixtool values matched, and the previous document binding was refused. [First-branch persistence](docs/evidence/2026-11-26-splitter-first-lane-persistence.md)
+
 After reopening a song, obtain a fresh document binding and read the current insert folder and graph UUIDs before editing. In the Studio Pro 8.1.1 restart trial, the saved links, slot and effect IDs, and all 144 values survived. The live folder and graph UUIDs changed, and the MCP rejected requests with the prior document or prior graph UUID before applying a change. [Save, restart and stale request verification](docs/evidence/2026-11-20-insert-routing-reopen.json)
 
 `insert_splitter_add` inserts a default two-branch Splitter and its merger on the existing link from a supported effect slot to its immediate merger. Both new branches start empty and rejoin before reaching the original merger. Open the exact rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` and a fresh routing capture to get the effect and graph UUIDs. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, the effect slot-node UUID in `after_node`, the immediate merger UUID in `following_node`, and the current `expected_document`. Use canonical uppercase UUIDs. The matching native extension checks that a recorded Undo is available on the tested Apple Silicon build of Studio Pro 8.1.1. After `applied_unverified`, inspect the new links and plugin values. One host Undo restored the original graph and all 144 Mixtool values in the nested trial. [Splitter insertion and Undo verification](docs/evidence/2026-11-20-insert-splitter-add.json)
@@ -363,7 +400,11 @@ In Studio Pro 8.1.1, an added Splitter and both branches survived saving and res
 
 The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
+`insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
+
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
+
+In a separate Studio Pro 8.1.1 trial, one Save and a fresh process preserved the restored six-node parallel graph, both newly bound slot and effect IDs, and all 144 reported Mixtool values. An old-document restore request was refused before dispatch. [Restored chain persistence](docs/evidence/2026-11-26-restored-insert-chain-persistence.md)
 
 ## Validation
 

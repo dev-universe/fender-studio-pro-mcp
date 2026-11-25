@@ -14,11 +14,50 @@ const MAX_FILE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_METADATA_BYTES: usize = 64 * 1024;
 const HEADER_BYTES: usize = 48;
 const CHUNK_TABLE_BYTES: usize = 28;
+const REFERENCE_VERSION: &str = "2.1.5";
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Deserialize, JsonSchema, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub(crate) enum Variant {
     Instrument,
     Fx,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct MidiMappingQuery {
+    variant: Variant,
+    /// Reference MIDI 1.0 controller number (CC 0–127, channel pressure 128, pitch bend 129).
+    #[schemars(range(max = 129))]
+    controller: u8,
+}
+
+impl MidiMappingQuery {
+    pub(crate) fn lookup(self) -> Result<serde_json::Value, &'static str> {
+        let (control, vst3_id) = match self.controller {
+            1 => ("control_change", 516_000_000),
+            0..=127 => ("control_change", 500_000_000 + u32::from(self.controller)),
+            128 => ("channel_pressure", 500_000_128),
+            129 => ("pitch_bend", 516_000_001),
+            _ => return Err("controller must be in the reference MIDI range 0..129"),
+        };
+        Ok(serde_json::json!({
+            "scope": "reference_vst3_sdk_midi_mapping",
+            "variant": self.variant,
+            "product": self.variant.plugin_name(),
+            "reference_version": REFERENCE_VERSION,
+            "reference_architecture": "arm64",
+            "class_uid": self.variant.class_uid(),
+            "bus": 0,
+            "channel": 0,
+            "controller": self.controller,
+            "control": control,
+            "parameter": {
+                "vst3_id": vst3_id,
+                "studio_pro_name": format!("vstp{vst3_id}"),
+            },
+        }))
+    }
 }
 
 impl Variant {
@@ -240,7 +279,7 @@ fn valid_processor(bytes: &[u8], variant: Variant) -> bool {
     let decoded = u32::from_le_bytes(*decoded);
     metadata.component == "processor"
         && metadata.product == variant.state_product()
-        && metadata.product_version == "2.1.5"
+        && metadata.product_version == REFERENCE_VERSION
         && metadata.version == 11.0
         && valid_digest(metadata.hash, 32)
         && (1..=MAX_FILE_BYTES as u32).contains(&decoded)

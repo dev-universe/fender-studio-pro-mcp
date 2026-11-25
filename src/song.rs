@@ -12,8 +12,10 @@ use zip::ZipArchive;
 
 mod insert_routing;
 mod instrument_outputs;
+mod midi_destination;
 use insert_routing::SavedInsertRouting;
 use instrument_outputs::SavedInstrumentOutputs;
+use midi_destination::SavedMidiDestination;
 
 const MAX_ARCHIVE_BYTES: u64 = 128 * 1024 * 1024;
 const MAX_ENTRY_BYTES: u64 = 16 * 1024 * 1024;
@@ -66,6 +68,8 @@ pub struct SavedTrack {
     pub media_type: Option<String>,
     pub track_id: Option<String>,
     pub channel_id: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub midi_destination: Option<SavedMidiDestination>,
     pub hidden: bool,
     pub active_layer: Option<u32>,
     pub layers: Vec<SavedLayer>,
@@ -247,9 +251,9 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
     let mut warnings = Vec::new();
     let tempo = read_tempo(time, &mut warnings);
     let time_signatures = read_meter(time);
-    let tracks = root
-        .child_id("Tracks")
-        .map(|n| n.children.iter().map(read_track).collect())
+    let track_nodes = root.child_id("Tracks");
+    let mut tracks = track_nodes
+        .map(|n| n.children.iter().map(read_track).collect::<Vec<_>>())
         .unwrap_or_default();
     let transport = archive
         .xml("Devices/transportdevice.xml")?
@@ -263,6 +267,7 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
     let mut mixer = Vec::new();
     let mut plugins = Vec::new();
     let mut synth_folder = None;
+    let mut music_track_device = None;
     let device_entries: Vec<_> = archive
         .names
         .iter()
@@ -277,11 +282,16 @@ pub fn read_song(path: &Path) -> Result<SavedSong, String> {
             scan_plugins(&doc, &entry, None, "", &mut plugins);
             if entry == "Devices/audiosynthfolder.xml" {
                 synth_folder = Some(doc);
+            } else if entry == "Devices/musictrackdevice.xml" {
+                music_track_device = Some(doc);
             }
         }
     }
     if let Some(folder) = &synth_folder {
         instrument_outputs::attach_impact_outputs(folder, &mixer, &mut plugins, &mut warnings);
+    }
+    if let (Some(nodes), Some(device)) = (track_nodes, music_track_device.as_ref()) {
+        midi_destination::attach(nodes, device, &mut tracks, &plugins);
     }
     for plugin in &mut plugins {
         if let Some(preset_path) = plugin.preset_path.clone() {
@@ -437,6 +447,7 @@ fn read_track(node: &XmlNode) -> SavedTrack {
         media_type: node.attr("mediaType").map(str::to_owned),
         track_id: node.attr("trackID").map(str::to_owned),
         channel_id: node.uid("channelID"),
+        midi_destination: None,
         hidden: node
             .child_id("attributes")
             .is_some_and(|n| n.attr("hidden") == Some("1")),
@@ -719,6 +730,74 @@ mod tests {
     }
 
     const SONG: &str = r#"<Song><Attributes x:id="Root" length="10"><Attributes x:id="timeContext"><TempoMap x:id="tempoMap"><TempoMapSegment start="0" tempo="0.5" curveType="0"/><TempoMapSegment start="8" tempo="0.6" curveType="1"/></TempoMap><TimeSignatureMap x:id="timeSignatureMap"><TimeSignatureMapSegment start="0" numerator="7" denominator="8"/></TimeSignatureMap></Attributes><List x:id="Tracks"><MediaTrack name="Keys" mediaType="Music" trackID="track-a" timeFormat="2"><UID x:id="channelID" uid="channel-a"/><List x:id="Events"><MusicPart name="Part" start="4" length="8" clipID="clip-a"/></List></MediaTrack></List></Attributes></Song>"#;
+
+    #[test]
+    fn resolves_saved_midi_destination_by_device_instance() {
+        let uid = |n| uuid::Uuid::from_u128(n).to_string();
+        let (source, synth, fx, peer, slot, class) =
+            (uid(1), uid(2), uid(3), uid(4), uid(5), uid(6));
+        let song = SONG.replace("channel-a", &source);
+        let synth_folder = format!(
+            r#"<AudioSynthFolder><Attributes name="Inst01"><UID x:id="deviceClassID" uid="{class}"/>
+               <Attributes x:id="deviceData" name="Synth"><UID x:id="uniqueID" uid="{synth}"/>
+               </Attributes></Attributes></AudioSynthFolder>"#
+        );
+        let rack = |label: &str, id: &str| {
+            format!(
+                r#"<AudioTrackChannel label="{label}"><Attributes x:id="Inserts">
+               <Attributes name="FX01"><UID x:id="deviceClassID" uid="{class}"/>
+               <UID x:id="uniqueID" uid="{slot}"/><Attributes x:id="deviceData" name="Same model">
+               <UID x:id="uniqueID" uid="{id}"/></Attributes></Attributes></Attributes></AudioTrackChannel>"#
+            )
+        };
+        let read = |id: &str, port: &str, peer_id: &str, music_copies: usize| {
+            let channel = format!(
+                r#"<MusicTrackChannel label="Duplicate label"><UID x:id="uniqueID" uid="{source}"/>
+                   <Connection x:id="destination" objectID="{{{id}}}/{port}" friendlyName="Ignored"/>
+                   </MusicTrackChannel>"#
+            );
+            let music = format!(
+                r#"<MusicTrackDevice><Attributes x:id="channels"><ChannelGroup>{}</ChannelGroup>
+                   </Attributes></MusicTrackDevice>"#,
+                channel.repeat(music_copies)
+            );
+            let mixer = format!(
+                "<AudioMixer>{}{}</AudioMixer>",
+                rack("Target", &fx),
+                rack("Peer", peer_id)
+            );
+            let file = write_archive(&[
+                ("Song/song.xml", &song),
+                ("Devices/musictrackdevice.xml", &music),
+                ("Devices/audiosynthfolder.xml", &synth_folder),
+                ("Devices/audiomixer.xml", &mixer),
+            ]);
+            serde_json::to_value(read_song(file.path()).unwrap()).unwrap()["tracks"][0].clone()
+        };
+        let original = read(&synth, "MusicInput00", &peer, 1);
+        assert_eq!(
+            original["midi_destination"],
+            json!({
+                "port":"MusicInput00", "kind":"instrument", "plugin_name":"Synth", "plugin_instance_id":synth,
+            })
+        );
+        let routed = read(&fx, "MusicInput00", &peer, 1);
+        assert_eq!(
+            routed["midi_destination"],
+            json!({
+                "port":"MusicInput00", "kind":"insert", "plugin_name":"Same model", "plugin_instance_id":fx,
+                "channel":"Target", "slot":0,
+            })
+        );
+        for invalid in [
+            read(&slot, "MusicInput00", &peer, 1),
+            read(&fx, "MusicInput00", &fx, 1),
+            read(&fx, "MusicInput00", &peer, 2),
+            read(&fx, "MusicInput01", &peer, 1),
+        ] {
+            assert!(invalid.get("midi_destination").is_none());
+        }
+    }
 
     #[test]
     fn reads_saved_splitter_successors_and_binds_the_device_by_slot_id() {
