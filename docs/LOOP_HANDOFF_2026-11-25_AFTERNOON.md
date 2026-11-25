@@ -1806,3 +1806,24 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   새 CoreAudio/CoreMIDI 장치 목록에도 Volt 276·Keystation88 없음.
   `main` 15개·로컬 11개·장비 4건. 전체 2~5일과 CI·장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 06시 25분 Sidechain 경고와 후속 검증
+
+- R463의 29번째 요청에서 비공개 진단에 필요한 보조 객체를 공용 스크립트가
+  거부했다. 잘못된 슬롯과 소스는 먼저 거부됐고 Send나 Save는 실행하지 않았다.
+  앱과 owner를 종료하고 관리 파일 18개·프로필 10개를 원복했다. R463B에서
+  실제 BridgeCore → BridgeComponent → NativePluginControls 경로로 원래
+  경고를 재현했다. 수정 뒤 정상 요청과 예외 입력을 포함한 집중 검사 6건이
+  통과했다. 정확한 Studio Pro 빌드에서 재검증한다.
+- R466은 실제 dry 스템을 분석한 뒤 Ampire 편집기에서 스톰프 바이패스
+  상태 변화가 보여 Mode 전환 전에 중단했다. 79회·126.828초. No Save,
+  관리 파일 18개·프로필 11개 원복. stock 스킨으로 확인한 Pedalboard
+  공개 컨트롤은 상단 Amp 선택 왼쪽의 아래쪽 버튼이다.
+- #250의 최신 기준 `d8063b6`가 두 필수 검사에 통과해 `5cfb17a`에
+  병합됐다. 9분 49초. #251의 `d11b24d`가 새 `main`을 검사 중이다.
+  R467은 Serum 2 FX로 지정된 MIDI 출력과 같은 모델의 별도 인서트를
+  저장·재열기 후 구분할 수 있는지 준비한다.
+  [#250](https://github.com/dev-universe/fender-studio-pro-mcp/pull/250)
+  [#251](https://github.com/dev-universe/fender-studio-pro-mcp/pull/251)
+- 앱과 owner를 닫은 경계다. `main` 15개·로컬 11개·장비 4건. 전체 2~5일과
+  CI·장비 대기이며 지정 종료 시각은 없다.
