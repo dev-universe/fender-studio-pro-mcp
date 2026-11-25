@@ -19,17 +19,34 @@ two distinct instances. [Studio Pro preset commands](https://fenderstudiopromanu
 REA with Ghidra located the Studio Pro Apple Silicon `vstservice` class
 registration for `VST3 Preset Handler` and the separate registration of
 the `.vstpreset` extension with MIME type `application/x-steinberg-vstpreset`.
-The observed host menu can therefore use its normal VST3 preset path.
-This static result identifies the host handler. A direct MCP receiver
-for this handler has yet to be verified.
+The observed host menu uses that VST3 preset path. R319 separately
+verified calling the same handler through `serum2_preset_apply`.
+[MCP receiver and live evidence](https://github.com/dev-universe/fender-studio-pro-mcp/pull/108)
+
+## Load order and the inactive scale index
+
+R318 loaded FX first, and its inactive `Scale` read back as 51. The
+instrument read back as 52. R319 applied the same files through MCP in the
+opposite order, and the first and second applies again returned 51 and 52.
+The two processor maps carry twelve zero entries and an empty `scaleName`.
+The scale selector stayed inactive in both editors.
+
+The signed VST3 state loader at arm64 entry `0x82d1f4` and x86_64 entry
+`0x919bb0` compares the input scale and raw name to a process-wide table.
+For an unmatched entry it uses `User Scale` as the stored name when the
+incoming name is empty. It assigns the next index in the table, whose
+capacity check is 64, and passes the index to VST3 parameter 14000001
+(Studio Pro tag 14000002). Craft Anything Deep independently confirmed
+the arm64 comparisons, fallback name, capacity check, and index write
+in the instruction listing. These static observations explain the
+load-order result across the two host trials.
 
 The host also exported an instrument `.vstpreset`. Its 352-byte `Comp`
 chunk decoded to demo metadata. The imported file's 1,294-byte `Comp`
 chunk contained editable oscillator, envelope, modulation and FX maps.
 The export therefore did not preserve the applied instrument data in
 this demo configuration. The test establishes portable preset input via
-the host menu. Full editable state export and production MCP file
-application still require separate evidence.
+the host menu. Full editable state export still requires separate evidence.
 
 The scratch song closed without saving after 292.062 seconds. The two
 source presets and the original installation were preserved. Ten Studio
