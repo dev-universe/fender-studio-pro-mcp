@@ -1,0 +1,201 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Twin 2 VST3",
+  "vst3_version": "2.41",
+  "verified_code": "85abd070d1032ced17475e0514961cb67e74d5a6",
+  "factory_files": 1667,
+  "matching_factory_format_counts": {
+    "FT2i_v8": 1102,
+    "FT2i_v6": 2,
+    "FTwi_v4": 99,
+    "FTwi_v3": 456,
+    "FTwi_v1": 8
+  },
+  "isolated_sdk": [
+    {
+      "format": "FT2i_v8",
+      "changed_reported_values": 228,
+      "reported_values_restored": 1020,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FT2i_v6",
+      "changed_reported_values": 103,
+      "reported_values_restored": 1020,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTwi_v4",
+      "changed_reported_values": 86,
+      "reported_values_restored": 1020,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTwi_v3",
+      "changed_reported_values": 39,
+      "reported_values_restored": 1020,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTwi_v1",
+      "changed_reported_values": 58,
+      "reported_values_restored": 1020,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R300",
+      "signature": "FT2i",
+      "version": 8,
+      "verified_ui_preset": "1 Finger Wunder A DJM",
+      "changed_reported_values": 269,
+      "reported_values_exactly_restored": 1020,
+      "automatically_restored_values": 1019,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 183,
+      "owner_wall_seconds": 83.043,
+      "actual_host_wall_seconds": 148.221,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 1720,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R288",
+      "signature": "FT2i",
+      "version": 6,
+      "verified_ui_preset": "Beat",
+      "changed_reported_values": 203,
+      "reported_values_exactly_restored": 1020,
+      "automatically_restored_values": 1019,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 183,
+      "owner_wall_seconds": 64.535,
+      "actual_host_wall_seconds": 96.083,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 1720,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R289",
+      "signature": "FTwi",
+      "version": 4,
+      "verified_ui_preset": "Liquid Saw BM",
+      "changed_reported_values": 180,
+      "reported_values_exactly_restored": 1020,
+      "automatically_restored_values": 1019,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 183,
+      "owner_wall_seconds": 70.953,
+      "actual_host_wall_seconds": 136.922,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 1720,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R290",
+      "signature": "FTwi",
+      "version": 3,
+      "verified_ui_preset": "Noise Pink",
+      "changed_reported_values": 166,
+      "reported_values_exactly_restored": 1020,
+      "automatically_restored_values": 1019,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 183,
+      "owner_wall_seconds": 69.435,
+      "actual_host_wall_seconds": 115.134,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 1720,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R291",
+      "signature": "FTwi",
+      "version": 1,
+      "verified_ui_preset": "Kick FL",
+      "changed_reported_values": 175,
+      "reported_values_exactly_restored": 1020,
+      "automatically_restored_values": 1019,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 183,
+      "owner_wall_seconds": 86.023,
+      "actual_host_wall_seconds": 133.497,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 1720,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ],
+  "target": "exclusively selected Music track",
+  "notes": [
+    "R287 reached 768 entries in the 1667-entry catalog and stopped before preset application. The runner then read all pages under one unchanged catalog digest in the five completed trials."
+  ]
+}

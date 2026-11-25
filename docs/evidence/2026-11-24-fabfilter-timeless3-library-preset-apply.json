@@ -1,0 +1,89 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Timeless 3 VST3",
+  "vst3_version": "3.10",
+  "verified_code": "797bad24de04b6672f018f67c2c80fe022cfe31a",
+  "factory_files": 118,
+  "matching_factory_format_counts": {
+    "F3Ts_v10": 116,
+    "F3Ts_v9": 2
+  },
+  "isolated_sdk": [
+    {
+      "format": "F3Ts_v10",
+      "changed_reported_values": 107,
+      "reported_values_restored": 1144,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "F3Ts_v9",
+      "changed_reported_values": 192,
+      "reported_values_restored": 1144,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R275",
+      "signature": "F3Ts",
+      "version": 10,
+      "verified_ui_preset": "Basic - MultiTap Delay bM",
+      "changed_reported_values": 90,
+      "reported_values_exactly_restored": 1144,
+      "automatically_restored_values": 1143,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741827"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 73.641,
+      "actual_host_wall_seconds": 163.669,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 126,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R276",
+      "signature": "F3Ts",
+      "version": 9,
+      "verified_ui_preset": "Flexible Slapback Delay bM",
+      "changed_reported_values": 186,
+      "reported_values_exactly_restored": 1144,
+      "automatically_restored_values": 1143,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 182,
+      "owner_wall_seconds": 205.889,
+      "actual_host_wall_seconds": 260.262,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 126,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
