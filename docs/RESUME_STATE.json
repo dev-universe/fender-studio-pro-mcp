@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "2fd0a62481185c1d30a954e5e4414293d1ed68e5",
+    "main_at_checkpoint": "593dc997d5bbba468f2a17516c8b94a707c1e555",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -23,7 +23,10 @@
       "R329",
       "R330",
       "R331",
-      "R332"
+      "R332",
+      "R334",
+      "R334B",
+      "R335"
     ],
     "merged_pull_requests": [
       109,
@@ -32,27 +35,31 @@
       112,
       113,
       116,
-      114
+      114,
+      115,
+      117
     ],
     "open_pull_requests": [
-      115,
-      117,
       118,
       119,
       120,
       121,
       122,
-      123
+      123,
+      124,
+      125,
+      126
     ],
     "remaining_builtin_units": 24,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Reuse accepted Scope capture and hold evidence. Investigate a directly observable one-shot armed and completion state, then resume the fixed queue in the November 24 handoff. Merge current-base PRs 115 and 117 through 123 in order as exact-head checks pass.",
-    "remaining_builtin_units_after_local_verification": 23,
+    "next": "Prepare the six Mai Tai MIDI roles and the conditional character editor. Reuse R334B virtual Core MIDI ordering and independent readbacks. Scope direct timing, hidden waveform and inactive-C remain open. Merge PRs 118 to 126 in order as both checks pass on each exact current-base head.",
+    "remaining_builtin_units_after_local_verification": 22,
     "locally_qualified_fixed_units_pending_merge": [
-      "PRESET-MULTI"
+      "PRESET-MULTI",
+      "CONTROL-MOJITO"
     ]
   },
   "nov25_current_checkpoint": {
