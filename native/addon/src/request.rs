@@ -147,6 +147,14 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    MultiAddMaiTai {
+        document_token: String,
+        expected_instance: String,
+        expected_folder: String,
+        expected_graph: String,
+        expected_child_slot: String,
+        expected_child_instance: String,
+    },
     MultiChildParameters {
         expected_instance: String,
         child_slot: alias_controller::multi_child::Slot,
@@ -378,7 +386,8 @@ impl Request {
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
             | Self::ChorderLearningGet { .. }
-            | Self::MultiChildParameters { .. } => Source::Dsp,
+            | Self::MultiChildParameters { .. }
+            | Self::MultiAddMaiTai { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -418,6 +427,9 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::MultiAddMaiTai {
+                expected_instance, ..
+            }
             | Self::MultiChildParameters {
                 expected_instance, ..
             }
@@ -1857,6 +1869,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::MultiChildParameters { .. }
+        | Request::MultiAddMaiTai { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
@@ -2049,6 +2062,16 @@ impl Reply {
     }
     pub(super) fn error(code: &str, message: &str, outcome: &str) -> Self {
         Self::unbound(error(code, message, outcome))
+    }
+    fn multi_add_mai_tai_error(message: &str, dispatched: bool) -> Self {
+        let (code, outcome) = if dispatched {
+            ("multi_add_mai_tai_unknown", "unknown")
+        } else {
+            ("multi_add_mai_tai_refused", "not_applied")
+        };
+        let mut reply = Self::error(code, message, outcome);
+        reply.value["dispatch_attempted"] = json!(dispatched);
+        reply
     }
     fn rumble_kind(&self) -> state::ObservationKind {
         match &self.provider {
@@ -2396,9 +2419,13 @@ fn dispatch_device(
     auxiliary: Option<Owned>,
     a: &'static Api,
 ) -> Reply {
+    let multi_add_mai_tai = matches!(request, Request::MultiAddMaiTai { .. });
     let ctx = match Context::capture(service, target, request.expected(), a) {
         Ok(ctx) => Box::new(ctx),
         Err(e) => {
+            if multi_add_mai_tai {
+                return Reply::multi_add_mai_tai_error(&e, false);
+            }
             return if let Some(retrieval) = request.rumble_retrieval() {
                 Reply::unbound(retrieval.failure())
             } else {
@@ -2413,6 +2440,7 @@ fn dispatch_device(
             | Request::ImpactOutputSet { .. }
             | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
+            | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterRemoveEmptyNested { .. }
             | Request::InsertSplitterAdd { .. }
@@ -2434,6 +2462,9 @@ fn dispatch_device(
         .and_then(|_| presets::expire(&ctx))
         .and_then(|_| insert_chain::expire(&ctx))
     {
+        if multi_add_mai_tai {
+            return Reply::multi_add_mai_tai_error(&reason, false);
+        }
         return Reply {
             value: if let Some(retrieval) = request.rumble_retrieval() {
                 retrieval.failure()
@@ -2502,6 +2533,24 @@ fn dispatch_device(
     }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
+    }
+    if let Request::MultiAddMaiTai {
+        document_token,
+        expected_folder,
+        expected_graph,
+        expected_child_slot,
+        expected_child_instance,
+        ..
+    } = request
+    {
+        return alias_controller::multi_child::dispatch_add_mai_tai(
+            ctx,
+            &document_token,
+            &expected_folder,
+            &expected_graph,
+            expected_child_slot,
+            &expected_child_instance,
+        );
     }
     if let Request::MultiChildParameters {
         child_slot,

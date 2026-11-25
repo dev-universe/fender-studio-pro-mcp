@@ -268,6 +268,11 @@ fn execute(
             });
         }
     };
+    if let Operation::PluginMultiAddMaiTai(change) = &operation {
+        return Ok(multi_add_mai_tai_receipt(
+            change, &context, response, request_id, started,
+        ));
+    }
     if let (Operation::MidiProgramPartAdd(change), Some(staged)) = (&operation, staged_program) {
         let (outcome, result, error) =
             midi_program_part::classify(change, &staged.basename, &context, &response);
@@ -590,6 +595,125 @@ fn execute(
         error: error.map(|error| bounded_cv_preset_error(&operation, error)),
         elapsed_ms: started.elapsed().as_millis(),
     })
+}
+
+fn multi_add_mai_tai_receipt(
+    change: &crate::operation::PluginMultiAddMaiTai,
+    context: &HostContext,
+    response: WireResponse,
+    request_id: String,
+    started: Instant,
+) -> Receipt {
+    let (outcome, result, error) = multi_add_mai_tai_result(change, context, &response);
+    Receipt {
+        request_id,
+        outcome,
+        session: Some(response.session),
+        document: Some(response.document),
+        result,
+        error,
+        elapsed_ms: started.elapsed().as_millis(),
+    }
+}
+
+fn multi_add_mai_tai_result(
+    change: &crate::operation::PluginMultiAddMaiTai,
+    context: &HostContext,
+    response: &WireResponse,
+) -> (Outcome, Value, Option<OperationError>) {
+    let value = &response.result;
+    let bound = response.session == context.session && response.document == context.document;
+    let clean = response.ok && response.code.is_none() && response.error.is_none();
+    if !response.ok
+        && value.is_null()
+        && matches!(
+            response.code.as_deref(),
+            Some(
+                "session_changed"
+                    | "document_changed"
+                    | "missing_precondition"
+                    | "context_required"
+                    | "protocol_mismatch"
+            )
+        )
+    {
+        return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
+    }
+    if bound
+        && clean
+        && exact_gui_object(
+            value,
+            &[
+                "ok",
+                "outcome",
+                "native_outcome",
+                "dispatch_attempted",
+                "error",
+            ],
+        )
+        && value["ok"] == false
+        && value["outcome"] == "not_applied"
+        && value["native_outcome"] == "not_applied"
+        && value["dispatch_attempted"] == false
+        && exact_gui_object(&value["error"], &["code", "message"])
+        && value["error"]["code"] == "multi_add_mai_tai_refused"
+        && let Some(message) = value["error"]["message"].as_str()
+        && !message.is_empty()
+        && message.encode_utf16().count() <= 512
+    {
+        return (
+            Outcome::NotApplied,
+            value.clone(),
+            Some(OperationError::new("multi_add_mai_tai_refused", message)),
+        );
+    }
+    let instance = &value["instance"];
+    if bound
+        && clean
+        && exact_gui_object(
+            value,
+            &[
+                "ok",
+                "outcome",
+                "native_outcome",
+                "operation",
+                "instance",
+                "dispatch_attempted",
+                "instrument",
+                "graph_attachment_verified",
+                "undo_verified",
+            ],
+        )
+        && value["ok"] == true
+        && value["outcome"] == "applied_unverified"
+        && value["native_outcome"] == "applied_unverified"
+        && value["operation"] == "multi_add_mai_tai"
+        && value["instrument"] == "Mai Tai"
+        && value["dispatch_attempted"] == true
+        && value["graph_attachment_verified"] == false
+        && value["undo_verified"] == false
+        && exact_gui_object(
+            instance,
+            &["object_uid", "class_uid", "native_class", "object_id"],
+        )
+        && instance["object_uid"] == change.expected_instance
+        && instance["class_uid"] == "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
+        && instance["native_class"] == "AudioSynth"
+        && instance["object_id"]
+            .as_str()
+            .is_some_and(|id| !id.is_empty() && id.encode_utf16().count() <= 512)
+    {
+        return (Outcome::AppliedUnverified, value.clone(), None);
+    }
+    let message = "The native Mai Tai insertion could not be confirmed. Read the current Multi Instrument before making another edit.";
+    let dispatch_attempted =
+        (bound && clean && value["dispatch_attempted"] == true).then_some(true);
+    (
+        Outcome::Unknown,
+        json!({"ok":false,"outcome":"unknown","native_outcome":"unknown","dispatch_attempted":dispatch_attempted,
+            "error":{"code":"multi_add_mai_tai_unknown","message":message}}),
+        Some(OperationError::new("multi_add_mai_tai_unknown", message)),
+    )
 }
 
 fn exact_gui_object(value: &Value, fields: &[&str]) -> bool {
@@ -1742,6 +1866,9 @@ mod tests {
             ("insertSlotMove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","source_node":"20000000-1234-1234-1234-123456789ABC",
                 "after_node":"30000000-1234-1234-1234-123456789ABC","following_node":"40000000-1234-1234-1234-123456789ABC"})),
+            ("pluginMultiAddMaiTai", json!({"track":"Selected music track","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_folder":"10000000-1234-1234-1234-123456789ABC","expected_graph":"20000000-1234-1234-1234-123456789ABC",
+                "expected_child_slot":"30000000-1234-1234-1234-123456789ABC","expected_child_instance":"40000000-1234-1234-1234-123456789ABC"})),
             ("insertSplitterAdd", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","after_node":"20000000-1234-1234-1234-123456789ABC",
                 "following_node":"30000000-1234-1234-1234-123456789ABC"})),
@@ -1851,6 +1978,80 @@ mod tests {
                 .collect::<std::collections::BTreeSet<_>>(),
             registered
         );
+    }
+
+    #[test]
+    fn stock_mai_tai_serialized_receipt_distinguishes_refusal_from_uncertain_dispatch() {
+        let Operation::PluginMultiAddMaiTai(change) = mutating_operations()
+            .into_iter()
+            .find(|operation| matches!(operation, Operation::PluginMultiAddMaiTai(_)))
+            .unwrap()
+        else {
+            unreachable!()
+        };
+        let context = HostContext {
+            session: "bridge-session".into(),
+            document: "bridge-session:1".into(),
+            open: true,
+            title: None,
+            file_url: None,
+            protocol: 2,
+        };
+        let acknowledged = json!({
+            "ok": true, "operation": "multi_add_mai_tai", "outcome": "applied_unverified",
+            "native_outcome": "applied_unverified","dispatch_attempted": true,
+            "instrument": "Mai Tai", "graph_attachment_verified": false, "undo_verified": false,
+            "instance": {
+                "object_uid":change.expected_instance,"class_uid":"B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+                "native_class":"AudioSynth","object_id":"Multi"
+            },
+        });
+        let refused = json!({
+            "ok":false, "outcome":"not_applied", "native_outcome":"not_applied", "dispatch_attempted":false,
+            "error":{"code":"multi_add_mai_tai_refused","message":"the expected native plugin instance is unavailable"}
+        });
+        let receipt = |result, session: &str, document: &str| {
+            serde_json::to_value(multi_add_mai_tai_receipt(
+                &change,
+                &context,
+                WireResponse {
+                    protocol: 2,
+                    id: "wire-id".into(),
+                    session: session.into(),
+                    document: document.into(),
+                    ok: true,
+                    result,
+                    error: None,
+                    code: None,
+                },
+                "owner-id".into(),
+                Instant::now(),
+            ))
+            .unwrap()
+        };
+        let ack = receipt(acknowledged.clone(), &context.session, &context.document);
+        assert_eq!(ack["request_id"], "owner-id");
+        assert_eq!(ack["outcome"], "applied_unverified");
+        assert!(ack.get("error").is_none());
+        let rejected = receipt(refused.clone(), &context.session, &context.document);
+        assert_eq!(rejected["outcome"], "not_applied");
+        assert_eq!(rejected["error"]["code"], "multi_add_mai_tai_refused");
+        assert_eq!(rejected["result"]["dispatch_attempted"], false);
+        let mut contradictory = refused.clone();
+        contradictory["dispatch_attempted"] = json!(true);
+        let mut malformed = acknowledged.clone();
+        malformed["graph_attachment_verified"] = json!(true);
+        for reply in [
+            receipt(contradictory, &context.session, &context.document),
+            receipt(malformed, &context.session, &context.document),
+            receipt(acknowledged, &context.session, "bridge-session:2"),
+            receipt(refused, "unbound-session", &context.document),
+            receipt(Value::Null, &context.session, &context.document),
+        ] {
+            assert_eq!(reply["outcome"], "outcome_unknown");
+            assert_eq!(reply["error"]["code"], "multi_add_mai_tai_unknown");
+            assert!(reply["result"].get("instance").is_none());
+        }
     }
 
     #[test]
