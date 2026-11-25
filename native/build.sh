@@ -7,9 +7,14 @@ if [ "$(uname -s)" != Darwin ] || [ "$(uname -m)" != arm64 ]; then
     echo "Native add-on currently supports macOS arm64 only" >&2
     exit 2
 fi
+archive=false
+if [ "${1:-}" = "--archive" ]; then
+    archive=true
+    shift
+fi
 output_root="${1:-$repo_root/artifacts/native}"
 if [ "$#" -gt 1 ]; then
-    echo "Usage: sh native/build.sh [output-directory]" >&2
+    echo "Usage: sh native/build.sh [--archive] [output-directory]" >&2
     exit 2
 fi
 if [ -n "${CCL_FRAMEWORK_SOURCE:-}" ]; then
@@ -18,7 +23,12 @@ if [ -n "${CCL_FRAMEWORK_SOURCE:-}" ]; then
     sh "$native_root/editor-api/checks/check_sdk.sh" "$CCL_FRAMEWORK_SOURCE"
 fi
 export CARGO_TARGET_DIR="$repo_root/target/native-addon"
-cargo +1.88.0 build --locked --release --manifest-path "$native_root/addon/Cargo.toml"
+if [ "$archive" = true ]; then
+    cargo +1.88.0 rustc --locked --release --manifest-path "$native_root/addon/Cargo.toml" --lib -- \
+        -C strip=debuginfo -C link-arg=-Wl,-install_name,@rpath/fender_mcp_native
+else
+    cargo +1.88.0 build --locked --release --manifest-path "$native_root/addon/Cargo.toml"
+fi
 package="$output_root/fender-studio-pro-mcp.native.mac"
 bundle="$package/plugins/mac/fender_mcp_native.bundle"
 mkdir -p "$bundle/Contents/MacOS"
