@@ -70,6 +70,7 @@ pub enum Error {
     MissingTextConstant(&'static str),
     InvalidEmptyString,
     CountChanged { before: u32, after: u32 },
+    Guard(String),
 }
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -152,11 +153,26 @@ impl DspParameters {
     /// Read at most 128 indices. Failures do not suppress later indices.
     /// `next` advances past attempted indices; retry failed indices explicitly.
     pub fn page(&self, offset: u32, limit: u32) -> Result<Page, Error> {
+        self.page_guarded(offset, limit, &mut || Ok(()))
+    }
+
+    /// Read a page while rechecking the owning context across provider calls.
+    /// A guard failure stops traversal and discards the entire page.
+    pub fn page_guarded(
+        &self,
+        offset: u32,
+        limit: u32,
+        guard: &mut impl FnMut() -> Result<(), String>,
+    ) -> Result<Page, Error> {
         self.check_thread()?;
         if !(1..=MAX_PAGE_SIZE).contains(&limit) {
             return Err(Error::InvalidLimit(limit));
         }
-        let count = self.count()?;
+        let mut check = || guard().map_err(Error::Guard);
+        check()?;
+        let count = self.count();
+        check()?;
+        let count = count?;
         if offset > count {
             return Err(Error::InvalidOffset { offset, count });
         }
@@ -169,7 +185,9 @@ impl DspParameters {
                 unsafe { ffi::method(self.provider.raw(), 4) };
             for index in offset..end {
                 let mut record = empty.record();
+                check()?;
                 let status = unsafe { info(self.provider.raw(), &mut record.0, index as i32) };
+                check()?;
                 let decoded = if status == 1 {
                     record.decode(index)
                 } else {
@@ -178,13 +196,17 @@ impl DspParameters {
                 // Explicit cleanup before returning copied data. Native output
                 // assignment may have replaced all owners, even on failure.
                 drop(record);
+                check()?;
                 match decoded {
                     Ok(parameter) => records.push(parameter),
                     Err(reason) => failed_indices.push(FailedIndex { index, reason }),
                 }
             }
         }
-        let after = self.count()?;
+        check()?;
+        let after = self.count();
+        check()?;
+        let after = after?;
         if after != count {
             return Err(Error::CountChanged {
                 before: count,

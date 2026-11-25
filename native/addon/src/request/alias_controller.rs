@@ -9,6 +9,8 @@ use fender_native_node_api::{Inspection, Limits, NodeInspector, TextApi};
 pub(super) mod catalog;
 #[path = "alias_controller/level.rs"]
 mod level;
+#[path = "alias_controller/multi_child.rs"]
+pub(super) mod multi_child;
 #[path = "alias_controller/pedalboard_swap.rs"]
 mod pedalboard_swap;
 pub(super) use pedalboard_swap::swap_slots;
