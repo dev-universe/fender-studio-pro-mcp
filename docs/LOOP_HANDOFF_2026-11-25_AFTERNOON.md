@@ -1883,3 +1883,25 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   07시경 목록에서 Volt 276과 Keystation 88은 관찰되지 않았다.
   앱·owner 닫힘, 정상 설치 확인. `main` 15개·로컬 11개·장비 4건.
   전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 07시 29분 Scope 경고와 Serum 매핑 후속
+
+- #256은 최신 head의 두 필수 검사에 통과해 `c3d8ae2`에 병합됐다.
+  갱신부터 병합까지 553.3초였다. 경고를 발생시킨 R463 요청은 Send와
+  Save 전에 중단했다. 수정한 R463B는 동일한 불일치를 팝업 없이
+  `host_rejected`로 전달했다. [#256](https://github.com/dev-universe/fender-studio-pro-mcp/pull/256)
+- R471은 REA·Ghidra 여섯 함수와 LLVM·Craft-Anything 바이트를 대조했다.
+  주 경로는 선택된 입력의 타입을 검사한다. 빈 선택의 대체 경로는 효과의
+  비공개 입력 배열에서 첫 항목을 빌린다. 정확한 입력을 독립적으로 찾아
+  소유권을 유지하는 방법은 확인되지 않았다. 주 조사 242초, 실앱 0회.
+  [#260](https://github.com/dev-universe/fender-studio-pro-mcp/pull/260)
+- R472에서 Xfer 서명을 다시 검증한 2.1.5 VST3 두 클래스를 각각 격리했다.
+  각 프로세스는 기존 채널의 130개와 다음 채널의 첫 결과를 내고
+  비정상 종료했다. 두 프로세스 합계 1.015초. 첫 번째 샌드박스 초기화
+  오류는 플러그인 실행 전에 수정했다. MCP stdio는 260개를 정확히
+  반환했고 두 종류에서 다른 채널을 명시한 30건 등 35건을 거부했다.
+  MCP 검사 1.237초, 종료 코드 0, Studio Pro 실행 없음.
+  [#262](https://github.com/dev-universe/fender-studio-pro-mcp/pull/262)
+- #245 재검사가 진행 중이다. 이후 #249, #262, #260을 최신 `main` 기준으로
+  검사한다. 앱·owner 닫힘, 정상 설치 확인. `main` 15개·로컬 11개,
+  그중 장비 4건. 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
