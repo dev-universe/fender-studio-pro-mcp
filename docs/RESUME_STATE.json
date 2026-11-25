@@ -1,20 +1,20 @@
 {
   "schema": 1,
   "updated_date": "2026-11-25",
-  "status": "ACTIVE_NOV25_REQUIRED_CHECKS_AT_CLOSED_HOST_BOUNDARY",
+  "status": "NOV25_REQUESTED_RELEASES_MERGED_AT_CLOSED_HOST_BOUNDARY",
   "resume_phrase": "진행 재개해",
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25.md",
   "nov25_current_checkpoint": {
     "verified_host_build": "113103",
     "completed_studio_pro_trials": ["R314", "R315", "R316", "R317", "R318", "R319"],
-    "main_merge": "95bf1a3f75931d8a534015b486bd902f5a7c037a",
-    "merged_pull_requests": [97, 98, 99, 103, 102, 90, 91, 92, 108, 107, 93, 94, 95],
-    "open_pull_requests": [104, 105, 106],
+    "main_merge": "d743ca67a4974fc2dec379a1c554f80ab6bb3cd0",
+    "merged_pull_requests": [97, 98, 99, 103, 102, 90, 91, 92, 108, 107, 93, 94, 95, 104, 105, 106],
+    "open_pull_requests": [],
     "remaining_hardware_units_within_builtin": 4,
     "session_cutoff": null,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
-    "next": "Verify both checks for the exact current-main head of each remaining Pedalboard evidence PR 104, 105 and 106. The six FabFilter and four Serum PRs are merged, the app is closed, and the original installation is restored."
+    "next": "Resume the remaining fixed built-in units from the November 24 checkpoint with the new Pedalboard evidence. The named November 25 release queue is empty. Full Serum editable-state save and reload remain unverified with the official demo."
   },
   "nov24_current_checkpoint": {
     "resumed_at": "2026-11-24T01:11:00+09:00",
