@@ -82,7 +82,12 @@ Start the client and ask it to call `host_status` to confirm it can see the open
 
 For a Pedalboard insert, use `plugin_inspect` with `source: "controller"`, `include_nodes: true`, and `node_scope: "plugin_controller"`. Bind the exact channel, slot, plugin, instance, and document. The bounded controller graph can show its `StompItemModel` under `stomps`. [Pedalboard controller verification](docs/evidence/2026-11-24-pedalboard-controller-inspection.json)
 
-In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Saved-song and restart verification](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo verification](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
+In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two positions in the standalone Pedalboard. Stop playback and recording. Read `opt.stompmodel1` through `opt.stompmodel8` with `source: "dsp"` and pass the current document, exact instance, and both displayed model names. Use the literal `" - "` for an empty slot. Insert slots start at zero and pedal positions start at one.
+
+- Adjacent occupied positions with different models can be exchanged directly. Tests covered both directions at positions 1–2 and 7–8, and separately verified Save, reopen, and Undo. [Adjacent exchange](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Save and reopen](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
+- An empty position, two identical model names, or nonadjacent positions require a fresh `plugin_state` capture for the exact insert. Confirm that `pedalboard_rack` shows two distinct payloads and pass the capture's `sha256` as `expected_rack_sha256`. Capture again after the exchange and compare all eight slots, then release both tokens. Identical-model DSP rows and a vacant-slot active alias can lag behind the serialized rack, so use payload fingerprints for this check. [Guarded exchanges](docs/evidence/2026-11-25-pedalboard-guarded-exchange.md) · [Empty slot restart](docs/evidence/2026-11-25-pedalboard-empty-slot-persistence.md) · [Same-model restart](docs/evidence/2026-11-25-pedalboard-same-model-persistence.md)
+
+Ampire has a separate pre/post divider controlled by `opt.stomporder`. The standalone Pedalboard has a continuous rack. [Divider verification](docs/evidence/2026-11-25-pedalboard-ampire-divider.md)
 
 The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
@@ -94,6 +99,8 @@ For edits, the client passes the current `document` token from `host_status` as 
 `applied_verified` includes operation-specific readback. `applied_unverified` records an acknowledged edit with incomplete verification. `partially_applied` means some changes took effect. If the client receives `outcome_unknown`, check the current state before repeating the request.
 
 To control an instrument on a track, read its exact name with `tracks_list`. Call `track_select` with that name and the current document token. Check that `tracks_list` shows only that track selected before inspecting or editing the instrument.
+
+For a Multi Instrument with one stock Mai Tai, stop playback and recording and keep its uniquely named Music track selected. Use `plugin_inspect` with `kind: "instrument"` and `track: "Your track name"` to get the Multi Instrument's native instance UID. Repeat with the observed `plugin` and `expected_instance`, plus `include_nodes: true` and `node_scope: "plugin_controller"`, to read the Instruments folder, Graph, original `Inst01` slot, and its Mai Tai Device UIDs. Pass those five UIDs to `plugin_multi_add_mai_tai` with the current document and track. After `applied_unverified` or `outcome_unknown`, inspect the current children and mixer before issuing any further edit. After an explicit Undo, repeat the inspection before issuing a new add request. [Studio Pro 8.1.1 validation](docs/evidence/2026-11-26-multi-add-mai-tai-live.md).
 
 ### Troubleshooting
 
@@ -107,9 +114,9 @@ To control an instrument on a track, read its exact name with `tracks_list`. Cal
 
 Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. The installers report backup paths for the files they replace.
 
-To restore an earlier build, run its `install` and `native-install` commands with its native package. Use the same Studio Pro profile and MCP data directory. Run `doctor` from that build to check the restored files.
+To restore an earlier build, run its `install` command and pass its native package to `native-install`. Use the same Studio Pro profile and MCP data directory. Run `doctor` from the restored build to check the files.
 
-For a native bundle with a signature resource file, use a CLI that supports signed bundle resources for install, restore and uninstall. It preserves `CodeResources` with the bundle and backs up the file when restoring a legacy package.
+If either the installed bundle or the package contains `CodeResources`, use a CLI that supports signed bundle resources for native install, restore and uninstall. A CLI built before that support may refuse to restore a legacy bundle from a signed installation. Use the newer CLI's `native-install` with the legacy package to preserve the signature resource in a backup.
 
 To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
@@ -119,7 +126,9 @@ On Apple Silicon, run `sh scripts/package-macos-arm64.sh`. It writes a
 versioned archive and a SHA-256 sidecar to `artifacts/macos-arm64`. You can
 pass a different output directory as the first argument. To check a copied
 archive, run `shasum -a 256 -c` with its `.sha256` file from that directory.
-The archive contains the CLI, its native add-on, and a build manifest.
+The archive contains the CLI, its native add-on, and a build manifest. The
+archive's native bundle has an ad-hoc resource signature. Developer ID and
+notarization are separate from this build.
 
 ## Optional native add-on
 
