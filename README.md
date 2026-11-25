@@ -378,6 +378,8 @@ The saved removal trial reopened the same song in a fresh Studio Pro session. Th
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 
+In a separate Studio Pro 8.1.1 trial, one Save and a fresh process preserved the restored six-node parallel graph, both newly bound slot and effect IDs, and all 144 reported Mixtool values. An old-document restore request was refused before dispatch. [Restored chain persistence](docs/evidence/2026-11-26-restored-insert-chain-persistence.md)
+
 ## Validation
 
 A live run checked 60 built-in plugin classes. Of those, 59 passed a representative parameter or graph edit with readback and restoration. Phase Meter passed an insert-slot bypass check. [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md)
