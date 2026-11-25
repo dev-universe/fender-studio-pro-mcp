@@ -105,7 +105,11 @@ To control an instrument on a track, read its exact name with `tracks_list`. Cal
 
 ### Update or uninstall
 
-Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files.
+Quit Studio Pro and stop the server first. After updating the source, rebuild and run `install` again. If the native add-on changed, rebuild and reinstall it separately. The installers report backup paths for the files they replace.
+
+To restore an earlier build, run its `install` and `native-install` commands with its native package. Use the same Studio Pro profile and MCP data directory. Run `doctor` from that build to check the restored files.
+
+To remove the installed assets, run `uninstall` for the bridge and `native-uninstall` for the add-on. Both preserve modified files. [macOS installer lifecycle verification](docs/evidence/2026-11-25-macos-installer-lifecycle.md)
 
 ## Optional native add-on
 
