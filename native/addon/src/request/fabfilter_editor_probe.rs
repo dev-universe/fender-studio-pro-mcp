@@ -239,6 +239,36 @@ const PRO_Q4: Image = Image {
     loader: 0x9a4d0,
     destructor: 0x4418c,
 };
+static TIMELESS2_HEADERS: [[u8; 8]; 5] = [
+    *b"FDel\x01\0\0\0",
+    *b"FTim\x02\0\0\0",
+    *b"FTms\x03\0\0\0",
+    *b"FTms\x04\0\0\0",
+    *b"FTms\x05\0\0\0",
+];
+
+const TIMELESS2: Image = Image {
+    class_uid: "E45B6533-5E7D-4E28-B4CA-15D7940A3A6D",
+    uuid: [
+        0x1d, 0xee, 0xd1, 0xc1, 0x48, 0x28, 0x30, 0xb6, 0x82, 0x5a, 0x5e, 0x65, 0x08, 0xa3, 0x9c,
+        0xf5,
+    ],
+    controller_table: 0x179fe0,
+    state_member: 0xd0,
+    state_table: 0x176cf0,
+    state_file_method: 0xc34e0,
+    view_table: 0x181be8,
+    editor_table: 0x174600,
+    product: "timeless_2",
+    executable: "FabFilter Timeless 2",
+    binary_sha256: "f4cb0af7b74f23ac441db656463e28de07bc8108143cd20bd4855c3e7cdbffb0",
+    binary_size: 3_524_416,
+    preset_format: PresetFormat::BinaryHeaders(&TIMELESS2_HEADERS),
+    constructor: 0x9a404,
+    loader: 0x5e288,
+    destructor: 0x6b7f8,
+};
+
 static TIMELESS3_HEADERS: [[u8; 8]; 2] = [*b"F3Ts\x09\0\0\0", *b"F3Ts\x0a\0\0\0"];
 
 const TIMELESS3: Image = Image {
@@ -474,7 +504,8 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
-        &TIMELESS3, &ONE, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &TIMELESS2, &TIMELESS3, &ONE, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -941,6 +972,28 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&PRO_C2, "Drums.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn timeless_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FDel\x01\0\0\0abcdefgh", true),
+            (b"FTim\x02\0\0\0abcdefgh", true),
+            (b"FTms\x03\0\0\0abcdefgh", true),
+            (b"FTms\x04\0\0\0abcdefgh", true),
+            (b"FTms\x05\0\0\0abcdefgh", true),
+            (b"FDel\x02\0\0\0abcdefgh", false),
+            (b"FTim\x03\0\0\0abcdefgh", false),
+            (b"FTms\x06\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TIMELESS2, "Delay.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
