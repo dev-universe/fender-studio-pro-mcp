@@ -1164,3 +1164,22 @@ Core 성공과 같은 헤드의 macOS 검사를 진행 중이다. `main` 18개·
 다음은 Scope 캡처의 직접 시작·완료를 들여다보는 동기화된 읽기 경로다.
 `main` 18개·로컬 13개, 소프트웨어 2~5일, 장비 의존 4건,
 지정 종료 시각 없음.
+
+## 11월 26일 02시 26분 패키지 경로 병합과 Pedalboard 가이드
+
+- #201은 최신 `main`을 포함하는 정확한 `77fa734`에서 필수
+  두 검사를 통과했다. `main`의 결과는 `07b7a0b`이며
+  검사 시작부터 병합까지 11분 50초였다. #203은 최신 베이스의
+  `3355c8c`를 재검사한다. 공개용 패키지의 새 다운로드, 설치,
+  업데이트, 제거와 롤백을 아직 시험해야 한다.
+  [#201](https://github.com/dev-universe/fender-studio-pro-mcp/pull/201)
+  [#203](https://github.com/dev-universe/fender-studio-pro-mcp/pull/203)
+- #209는 이미 병합된 빈 슬롯·동일 모델·비인접 교체의 최신 컨트롤을
+  README와 지원표에 연결했다. 예상 랙 SHA, 빈 슬롯 문자열,
+  별도 캡처와 토큰 반환, 지연된 별칭과 Ampire 구분선을 포함한다.
+  현재 스키마와 로컬 증거 링크 8개를 대조했다.
+  [#209](https://github.com/dev-universe/fender-studio-pro-mcp/pull/209)
+
+`main` 18개·로컬 13개, 소프트웨어 2~5일, 장비 의존 4건,
+지정 종료 시각 없음. R420의 Scope 독립 관측 경로, R421의 새
+Splitter 분기, R422의 Ampire Save 전후 대조를 준비한다.
