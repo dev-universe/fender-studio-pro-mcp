@@ -79,6 +79,8 @@ pub enum Operation {
     PluginInspect(PluginParams),
     #[serde(rename = "impactOutputSet", alias = "impact_output_set")]
     ImpactOutputSet(ImpactOutputSet),
+    #[serde(rename = "pedalboardSlotSwap", alias = "pedalboard_slot_swap")]
+    PedalboardSlotSwap(PedalboardSlotSwap),
     #[serde(rename = "pluginEditorOpen", alias = "plugin_editor_open")]
     PluginEditorOpen(PluginEditor),
     #[serde(rename = "pluginState", alias = "plugin_state")]
@@ -887,6 +889,20 @@ pub struct PluginAction {
     pub plugin: String,
     pub expected_instance: String,
     pub action: PluginButtonAction,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PedalboardSlotSwap {
+    pub channel: String,
+    pub slot: u32,
+    pub expected_instance: String,
+    #[schemars(range(min = 1, max = 8))]
+    pub first_slot: u8,
+    #[schemars(range(min = 1, max = 8))]
+    pub second_slot: u8,
+    pub expected_first_model: String,
+    pub expected_second_model: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1826,6 +1842,26 @@ impl Operation {
                     return Err(invalid("An expected plugin class or instance is required"));
                 }
             }
+            Self::PedalboardSlotSwap(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                validate_plugin_target(Some(&p.channel), Some(p.slot), None, None)?;
+                if !(1..=8).contains(&p.first_slot)
+                    || !(1..=8).contains(&p.second_slot)
+                    || p.first_slot.abs_diff(p.second_slot) != 1
+                    || p.expected_first_model == p.expected_second_model
+                    || [&p.expected_first_model, &p.expected_second_model]
+                        .iter()
+                        .any(|name| {
+                            name.trim().is_empty()
+                                || name.len() > 128
+                                || name.chars().any(char::is_control)
+                        })
+                {
+                    return Err(invalid(
+                        "Supply two distinct occupied Pedalboard slots and their exact model names",
+                    ));
+                }
+            }
             Self::ImpactOutputSet(p) => {
                 validate_instance_uid(Some(&p.expected_instance))?;
                 if p.track.trim().is_empty()
@@ -2655,6 +2691,35 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn pedalboard_exchange_requires_adjacent_occupied_models_and_exact_fields() {
+        let valid = json!({
+            "channel":"Scratch", "slot":0,
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "first_slot":7, "second_slot":8,
+            "expected_first_model":"Compressor", "expected_second_model":"Reverb",
+        });
+        let operation = Operation::from_parts("pedalboard_slot_swap", valid.clone()).unwrap();
+        assert!(operation.validate().is_ok());
+        assert_eq!(operation.wire().0, "pedalboardSlotSwap");
+        for (field, value) in [
+            ("first_slot", json!(0)),
+            ("first_slot", json!(6)),
+            ("first_slot", json!(8)),
+            ("expected_first_model", json!("Reverb")),
+            ("expected_second_model", json!("")),
+            ("operation_address", json!(1)),
+        ] {
+            let mut invalid = valid.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("pedalboard_slot_swap", invalid)
+                    .and_then(|op| op.validate())
+                    .is_err()
+            );
+        }
+    }
 
     #[test]
     fn cv_structure_is_closed_mutating_and_requires_only_the_fixed_instrument_target() {

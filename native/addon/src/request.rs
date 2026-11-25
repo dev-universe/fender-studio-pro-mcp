@@ -101,6 +101,13 @@ enum Request {
     CvPortStructureInspect {
         expected_instance: String,
     },
+    PedalboardSlotSwap {
+        expected_instance: String,
+        first_slot: u8,
+        second_slot: u8,
+        expected_first_model: String,
+        expected_second_model: String,
+    },
     ImpactOutputSet {
         expected_instance: String,
         output_index: u32,
@@ -340,6 +347,7 @@ impl Request {
             }
             Self::CvPortStructureInspect { .. }
             | Self::ImpactOutputSet { .. }
+            | Self::PedalboardSlotSwap { .. }
             | Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
@@ -383,6 +391,9 @@ impl Request {
         match self {
             Self::CvPortStructureInspect { expected_instance }
             | Self::ImpactOutputSet {
+                expected_instance, ..
+            }
+            | Self::PedalboardSlotSwap {
                 expected_instance, ..
             }
             | Self::InspectCvPresetSettings {
@@ -1742,6 +1753,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         }
         Request::CvPortStructureInspect { .. }
         | Request::ImpactOutputSet { .. }
+        | Request::PedalboardSlotSwap { .. }
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::ParameterAction { .. }
@@ -2289,6 +2301,7 @@ fn dispatch_device(
         request,
         Request::CvPortStructureInspect { .. }
             | Request::ImpactOutputSet { .. }
+            | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterAdd { .. }
@@ -2494,6 +2507,37 @@ fn dispatch_device(
             menu: None,
             catalog: None,
             edit: edit.map(|lease| ParameterEditLease::Direct(Box::new(lease))),
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
+    if let Request::PedalboardSlotSwap {
+        first_slot,
+        second_slot,
+        ref expected_first_model,
+        ref expected_second_model,
+        ..
+    } = request
+    {
+        let mut value = alias_controller::swap_slots(
+            &ctx,
+            [first_slot, second_slot],
+            [expected_first_model, expected_second_model],
+        );
+        value["instance"] = json!(ctx.instance);
+        return Reply {
+            value,
+            menu: None,
+            catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,

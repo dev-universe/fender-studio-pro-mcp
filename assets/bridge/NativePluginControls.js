@@ -1433,6 +1433,15 @@ class NativePluginControls {
             if (result.ok && request.expected_instance !== undefined && result.instance.object_uid !== request.expected_instance) throw new Error("native target instance changed");
             if (result.ok && request.operation === "model_catalog" && !this.modelResult(result, request)) throw new Error("invalid native current-selector model list contract");
             if (result.ok && request.operation === "set_parameter" && (typeof result.verified !== "boolean" || !result.before || typeof result.before !== "object" || !result.after || typeof result.after !== "object")) throw new Error("native mutation readback unavailable");
+            if (result.ok && request.operation === "pedalboard_slot_swap"
+                && (result.outcome !== "applied_unverified" || result.operation !== request.operation
+                    || result.instance.class_uid !== "BC9129B4-EC67-41B8-96DE-EC128D5FE54D"
+                    || result.instance.native_class !== "AudioEffect"
+                    || result.verified !== false || result.effects_verified !== false
+                    || JSON.stringify(result.slots) !== JSON.stringify([request.first_slot, request.second_slot])
+                    || JSON.stringify(result.before) !== JSON.stringify([request.expected_first_model, request.expected_second_model])
+                    || JSON.stringify(result.after) !== JSON.stringify([request.expected_second_model, request.expected_first_model])))
+                throw new Error("invalid Pedalboard exchange receipt");
             if (result.ok && request.operation === "parameter_action"
                 && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
                     || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].indexOf(request.action) < 0
