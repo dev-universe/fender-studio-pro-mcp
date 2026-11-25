@@ -158,11 +158,13 @@ impl Editor {
 const DSP_SHELL: [u8; 16] = [
     0x23, 0x02, 0xb0, 0xe7, 0xed, 0xf3, 0x3a, 0x00, 0xa5, 0xb6, 0x48, 0x1a, 0x8b, 0x85, 0x44, 0x7b,
 ];
+const VACANT: &str = " - ";
 
 pub(in crate::native_script::request) fn swap_slots(
     ctx: &Context<'_>,
     slots: [u8; 2],
     names: [&str; 2],
+    expected_rack_sha256: Option<&str>,
 ) -> Value {
     let mut dispatched = false;
     let result = (|| {
@@ -173,17 +175,27 @@ pub(in crate::native_script::request) fn swap_slots(
             return Err("The exact Pedalboard AudioEffect is required".to_owned());
         }
         let [first, second] = slots;
+        let vacant = names.map(|name| name == VACANT);
         if !(1..=8).contains(&first)
             || !(1..=8).contains(&second)
-            || first.abs_diff(second) != 1
-            || names[0] == names[1]
+            || first == second
+            || vacant == [true, true]
             || names.iter().any(|name| {
                 name.is_empty() || name.len() > 128 || name.chars().any(char::is_control)
             })
+            || match expected_rack_sha256 {
+                None => {
+                    first.abs_diff(second) != 1 || names[0] == names[1] || vacant.contains(&true)
+                }
+                Some(fingerprint) => {
+                    fingerprint.len() != 64
+                        || !fingerprint
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                }
+            }
         {
-            return Err(
-                "Supply adjacent occupied Pedalboard positions with different exact models".into(),
-            );
+            return Err("Supply two distinct Pedalboard positions, exact model labels, and the required rack fingerprint".into());
         }
         let mut guard = || ctx.check();
         let dsp = direct_controller(ctx)?;
@@ -220,14 +232,18 @@ pub(in crate::native_script::request) fn swap_slots(
             let Some(parameters::Value::Float(value)) = row.raw.map(|raw| raw.value) else {
                 return Err("Pedalboard model is unavailable".into());
             };
-            if row.tag != 40961 + i32::from(slot) || !value.is_finite() || value <= 0.0 {
-                return Err("Both Pedalboard positions must be occupied".into());
+            if row.tag != 40961 + i32::from(slot)
+                || !value.is_finite()
+                || value < 0.0
+                || (value == 0.0) != (row.display == VACANT)
+            {
+                return Err("Pedalboard slot model and vacancy could not be established".into());
             }
             Ok((row.display, value.to_bits()))
         };
         let before = [observe(first)?, observe(second)?];
         if [before[0].0.as_str(), before[1].0.as_str()] != names
-            || before[0].1 == before[1].1
+            || expected_rack_sha256.is_none() && before[0].1 == before[1].1
             || before != [observe(first)?, observe(second)?]
         {
             return Err("Pedalboard models changed or do not match the expected names".into());
@@ -247,6 +263,9 @@ pub(in crate::native_script::request) fn swap_slots(
             *const PlainCString,
             *const PlainCString,
         ) -> i32 = unsafe { method(editor.editor.0, 8) };
+        let exchange = expected_rack_sha256
+            .map(|fingerprint| state::PedalboardExchange::prepare(ctx, slots, vacant, fingerprint))
+            .transpose()?;
         editor.check(&mut checked)?;
         dispatched = true;
         if unsafe { swap(editor.editor.0, &left, &right) } != OK {
@@ -257,13 +276,18 @@ pub(in crate::native_script::request) fn swap_slots(
         if after[0] != before[1] || after[1] != before[0] {
             return Err("The current Pedalboard models do not match the requested exchange".into());
         }
+        if let Some(exchange) = exchange {
+            exchange.verify(ctx)?;
+        }
         release((editor, model), &mut checked)?;
         release((binding, dsp), &mut guard)?;
-        Ok(
-            json!({"ok":true, "operation":"pedalboard_slot_swap", "outcome":"applied_unverified",
+        let mut receipt = json!({"ok":true, "operation":"pedalboard_slot_swap", "outcome":"applied_unverified",
                   "verified":false, "effects_verified":false, "slots":slots,
-                  "before":names, "after":[names[1],names[0]]}),
-        )
+                  "before":names, "after":[names[1],names[0]]});
+        if expected_rack_sha256.is_some() {
+            receipt["serialized_payload_verified"] = json!(true);
+        }
+        Ok(receipt)
     })();
     result.unwrap_or_else(|reason| {
         error(
