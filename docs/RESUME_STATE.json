@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "316a25261de4a89c1228db1844b696f125d1ede1",
+    "main_at_checkpoint": "2d3ed042439f2a9934d54e82399db193b3004b25",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -36,7 +36,10 @@
       "R339",
       "R340",
       "R341",
-      "R342"
+      "R342",
+      "R343 Vacant",
+      "R343 SameModel",
+      "R343 Nonadjacent"
     ],
     "merged_pull_requests": [
       109,
@@ -51,11 +54,11 @@
       118,
       119,
       120,
-      121
+      121,
+      122,
+      123
     ],
     "open_pull_requests": [
-      122,
-      123,
       124,
       125,
       126,
@@ -65,19 +68,20 @@
       130,
       131,
       132,
-      133
+      133,
+      134
     ],
-    "remaining_builtin_units": 24,
+    "remaining_builtin_units": 23,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Use the R342 component fingerprint to guard and independently verify the public empty-slot, same-model and nonadjacent exchange paths. Keep the existing adjacent call contract. Merge PRs 122 to 133 in order as both checks pass on each exact current-base head.",
-    "remaining_builtin_units_after_local_verification": 21,
+    "next": "Check the current Mustang Native model module and exact-instance model selector with a fresh owned scratch before any edits. Merge PRs 124 to 134 in order as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "remaining_builtin_units_after_local_verification": 20,
     "locally_qualified_fixed_units_pending_merge": [
-      "PRESET-MULTI",
       "CONTROL-MOJITO",
-      "CONTROL-MAITAI"
+      "CONTROL-MAITAI",
+      "CONTROL-PEDALBOARD"
     ]
   },
   "nov25_current_checkpoint": {
