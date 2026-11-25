@@ -2,7 +2,7 @@
 
 ## 현재 상태
 
-한국 시간 13시 12분의 체크포인트다. Studio Pro 8.1.1 빌드 113103,
+한국 시간 13시 27분의 체크포인트다. Studio Pro 8.1.1 빌드 113103,
 시험 MCP owner, REA 세션과 Ghidra 작업을 닫았다. 앱을 다시 열기 전에
 새 문서와 owner를 바인딩한다. 기존 지시인 공식 Studio Pro 설치 파일
 재대조 생략은 유효하다. 이 세션에 지정된 종료 시각은 없다.
@@ -38,7 +38,11 @@
   적용 순서를 따라갔다. 두 에디터의 스케일 선택은 비활성 상태였다.
   호스트 실행은 259.251초, 397건 API 요청은 49.338초였다. 시험곡을 저장
   없이 닫고 정상 MCP 파일 18개와 Studio Pro 환경설정 10개를 복원했다.
-  [MCP 직접 프리셋 적용 #108](https://github.com/dev-universe/fender-studio-pro-mcp/pull/108)
+  [MCP 직접 프리셋 적용 #108](https://github.com/dev-universe/fender-studio-pro-mcp/pull/108)은
+  두 필수 검사를 통과해 `main`에 머지됐다. REA와 Ghidra는 두 아키텍처의
+  `Scale` 처리 원인을 확인했다. Craft Anything Deep은 arm64에서 이름이
+  빈 스케일에 `User Scale`을 붙일 때 공용 테이블의 인덱스가 증가하는
+  명령을 별도로 확인했다. 이 증거는 #107에 추가됐다.
 
 ## Pedalboard
 
@@ -61,14 +65,14 @@
 
 ## 병합과 다음 작업
 
-원격 `main`은 `5855ce7`이다. FabFilter [#90](https://github.com/dev-universe/fender-studio-pro-mcp/pull/90)과
-[#91](https://github.com/dev-universe/fender-studio-pro-mcp/pull/91)은 필수
-검사 두 개를 통과해 머지했다. 남은 스택 순서는 #92 → #93 → #94 → #95다.
-#92의 `f2125e5`와 #108의 `f73b85b`가 현 `main`을 포함한다. 두 검사를
-통과하는 PR을 정확한 헤드로 머지하고, 이후 헤드에 새 `main`을 반영해
-검사를 다시 받는다. #104, #105, #106, #107도 같은 기준을 적용한다.
-#93은 예전 macOS 검사가 취소됐다. #107의 예전 macOS DNS 실패는
-다음 실행에서 해소됐다.
+원격 `main`은 `bc85ea6`이다. FabFilter [#90](https://github.com/dev-universe/fender-studio-pro-mcp/pull/90),
+[#91](https://github.com/dev-universe/fender-studio-pro-mcp/pull/91),
+[#92](https://github.com/dev-universe/fender-studio-pro-mcp/pull/92), Serum #108은
+필수 검사 두 개를 통과해 머지했다. #107의 헤드 `04b6077`이 새 `main`을
+포함하며 두 검사가 진행 중이다. 이후 FabFilter 스택의 #93 → #94 → #95와
+문서 #104 → #105 → #106을 각각 새 `main`을 포함한 정확한 헤드의 두
+검사 결과에 따라 머지한다. #93은 예전 macOS 검사가 취소됐다.
+#107의 예전 macOS DNS 실패는 다음 실행에서 해소됐다.
 
 11월 24일의 내장 43개 중 잔여 25개와 하드웨어 의존 4개는 고정
 집계에서 그대로다. 이번 Pedalboard 관측, Serum VST3 분석, 직접 적용
