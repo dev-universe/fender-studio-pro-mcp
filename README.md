@@ -125,6 +125,9 @@ The archive contains the CLI, its native add-on, and a build manifest. The
 archive's native bundle has an ad-hoc resource signature. Developer ID and
 notarization are separate from this build.
 
+The macOS arm64 developer preview includes the archive and SHA-256 sidecar.
+Gatekeeper rejected its CLI on the verification Mac. [Preview downloads](https://github.com/dev-universe/fender-studio-pro-mcp/releases/tag/v0.1.0-preview.1) · [Installer verification](docs/evidence/2026-11-26-macos-preview-release.md)
+
 ## Optional native add-on
 
 Install the add-on to enumerate native plugin parameters and use supported state capture, presets, and deeper plugin inspection. It requires the tested Studio Pro 8.1.1 arm64 build, Python 3, and the macOS command-line tools for the build.
