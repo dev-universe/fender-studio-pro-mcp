@@ -281,7 +281,7 @@ impl McpServer {
             named::<PedalboardSlotSwap>(
                 "pedalboard_slot_swap",
                 "pedalboardSlotSwap",
-                "Exchange two occupied, directly adjacent positions containing different Pedalboard models. Read opt.stompmodel1 through opt.stompmodel8 from the exact DSP instance. Use their current display labels as the expected model names. Insert slot is zero-based and pedal positions are one-based. Stop playback and recording before use. Compare independent parameter reads after an applied_unverified receipt and stop on unknown outcomes.",
+                "Exchange two positions in the exact Pedalboard insert. Use current opt.stompmodel display labels, including ' - ' for a vacant position. Insert slot is zero-based and pedal positions are one-based. A vacant position, identical model names, or nonadjacent positions require expected_rack_sha256 from a fresh plugin_state capture with pedalboard_rack on the same instance. The two serialized payloads must differ. A fingerprint-guarded receipt reports serialized_payload_verified when the complete component matches the expected exchange. Use a fresh capture to verify it independently and release both capture tokens. Without a fingerprint, the two positions must be adjacent and occupied by different models. Stop playback and recording before use. Stop on unknown outcomes.",
                 true,
             ),
             named::<ImpactOutputSet>(
