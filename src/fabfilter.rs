@@ -283,6 +283,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::Simplon
             | Product::Timeless2
             | Product::Timeless3
+            | Product::Twin2
             | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
@@ -396,6 +397,17 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
                 && matches!(
                     &bytes[..8],
                     b"FS2a\x02\0\0\0" | b"FS2a\x03\0\0\0" | b"FS2a\x04\0\0\0" | b"FSat\x04\0\0\0"
+                );
+        }
+        Product::Twin2 => {
+            return bytes.len() >= 16
+                && matches!(
+                    &bytes[..8],
+                    b"FT2i\x06\0\0\0"
+                        | b"FT2i\x08\0\0\0"
+                        | b"FTwi\x01\0\0\0"
+                        | b"FTwi\x03\0\0\0"
+                        | b"FTwi\x04\0\0\0"
                 );
         }
         Product::Twin3 => return bytes.len() >= 16 && bytes.starts_with(b"FT3i"),
@@ -682,6 +694,18 @@ mod tests {
         assert!(!matches_preset(Product::One, b"FFPr\x02\0\0\0exactly8"));
         assert!(!matches_preset(Product::One, b"FFPr\x01\0\0\0short"));
         assert!(!matches_preset(Product::One, b"FT3i012345678901"));
+        for (bytes, valid) in [
+            (b"FT2i\x06\0\0\0abcdefgh", true),
+            (b"FT2i\x08\0\0\0abcdefgh", true),
+            (b"FTwi\x01\0\0\0abcdefgh", true),
+            (b"FTwi\x03\0\0\0abcdefgh", true),
+            (b"FTwi\x04\0\0\0abcdefgh", true),
+            (b"FT2i\x07\0\0\0abcdefgh", false),
+            (b"FTwi\x02\0\0\0abcdefgh", false),
+            (b"FFPr\x01\0\0\0abcdefgh", false),
+        ] {
+            assert_eq!(matches_preset(Product::Twin2, bytes), valid);
+        }
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
         assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));

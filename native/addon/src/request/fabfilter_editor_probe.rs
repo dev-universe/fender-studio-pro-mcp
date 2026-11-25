@@ -317,6 +317,36 @@ const ONE: Image = Image {
     destructor: 0x1b2f8,
 };
 
+static TWIN2_HEADERS: [[u8; 8]; 5] = [
+    *b"FT2i\x06\0\0\0",
+    *b"FT2i\x08\0\0\0",
+    *b"FTwi\x01\0\0\0",
+    *b"FTwi\x03\0\0\0",
+    *b"FTwi\x04\0\0\0",
+];
+
+const TWIN2: Image = Image {
+    class_uid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2",
+    uuid: [
+        0x86, 0x9c, 0x2c, 0xc8, 0x9c, 0x66, 0x38, 0x2c, 0xb5, 0x9b, 0x27, 0xf2, 0x59, 0x52, 0xac,
+        0x2f,
+    ],
+    controller_table: 0x193cf0,
+    state_member: 0xd0,
+    state_table: 0x18a198,
+    state_file_method: 0x98288,
+    view_table: 0x19b620,
+    editor_table: 0x189c18,
+    product: "twin_2",
+    executable: "FabFilter Twin 2",
+    binary_sha256: "7b99eb1967156faa373e4c47a10a36bc681152fb8bcd665adbe34d4e0758e926",
+    binary_size: 3_771_952,
+    preset_format: PresetFormat::BinaryHeaders(&TWIN2_HEADERS),
+    constructor: 0xc12bc,
+    loader: 0x679b0,
+    destructor: 0x749ac,
+};
+
 const TWIN3: Image = Image {
     class_uid: "91AF218E-111A-44CB-ABFE-F7CB065FF157",
     uuid: [
@@ -504,7 +534,7 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
-        &TIMELESS2, &TIMELESS3, &ONE, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
+        &TIMELESS2, &TIMELESS3, &ONE, &TWIN2, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2,
         &SIMPLON,
     ]
     .into_iter()
@@ -922,6 +952,7 @@ mod tests {
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
             ("8D067533-D8A0-491D-BAA3-6C064C6ABBFB", "saturn_2"),
             ("9240FC40-10CD-45A0-B7DA-CECADDC2E97A", "one"),
+            ("3E1E04C5-8250-42D1-B34E-D3F6779D00D2", "twin_2"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
             assert!(supports_class(class_uid));
@@ -1011,6 +1042,27 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&TIMELESS3, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn twin_2_preset_bytes_accept_only_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FT2i\x06\0\0\0abcdefgh", true),
+            (b"FT2i\x08\0\0\0abcdefgh", true),
+            (b"FTwi\x01\0\0\0abcdefgh", true),
+            (b"FTwi\x03\0\0\0abcdefgh", true),
+            (b"FTwi\x04\0\0\0abcdefgh", true),
+            (b"FT2i\x07\0\0\0abcdefgh", false),
+            (b"FTwi\x02\0\0\0abcdefgh", false),
+            (b"FFPr\x01\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&TWIN2, "Twin.ffp", &digest, &hex).is_some(),
                 valid
             );
         }

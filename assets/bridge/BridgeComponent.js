@@ -1024,6 +1024,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             && args.slot >= 0 && args.slot <= 15 && args.track === null;
         const instrumentClasses = {
             "One": "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+            "Twin 2": "3E1E04C5-8250-42D1-B34E-D3F6779D00D2",
             "Twin 3": "91AF218E-111A-44CB-ABFE-F7CB065FF157",
         };
         const instrumentClass = args && typeof args.product === "string" && Object.prototype.hasOwnProperty.call(instrumentClasses, args.product)
