@@ -11,7 +11,7 @@
 - Keep the MCP server in native Rust. Keep JavaScript inside the DAW bridge and EditTask. Expose finite typed operations and preserve upstream MIT notices.
 - Serialize DAW access across processes. Check the request ID, bridge session, and active document. Bind plugin changes to the exact native instance. Treat lost replies after dispatch as unknown. Read fresh state before deciding how to recover.
 - Run authorized live checks in a named scratch song with one Studio Pro process and one MCP owner. Verify the app, plugin, build, and relevant UI state. Preserve user songs and settings, and restore the normal installation after diagnostics.
-- Test on macOS arm64 first. Check official plugin distributions and existing MCP or SDK paths before using REA and Ghidra for unresolved behavior. Keep raw songs, audio, app logs, local paths, and proprietary resources out of Git. Public evidence belongs in `docs/evidence/`.
+- Test on macOS arm64 first. Check official plugin distributions and existing MCP or SDK paths. Use REA, Ghidra, and Craft-Anything to investigate unresolved behavior. Keep raw songs, audio, app logs, local paths, and proprietary resources out of Git. Public evidence belongs in `docs/evidence/`.
 - Record the exact version and scope of each verified result. A setter receipt, independent readback, saved state, and physical audio or MIDI each have their own evidence.
 
 ## Report and ship
