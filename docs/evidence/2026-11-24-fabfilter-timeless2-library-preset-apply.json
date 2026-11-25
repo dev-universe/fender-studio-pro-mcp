@@ -1,0 +1,198 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "FabFilter Timeless 2 VST3",
+  "vst3_version": "2.41",
+  "verified_code": "7c72e4c88f03dde5c8903dedb7d4b943b06b96c3",
+  "factory_files": 482,
+  "matching_factory_format_counts": {
+    "FTms_v5": 49,
+    "FTms_v4": 359,
+    "FTms_v3": 2,
+    "FTim_v2": 49,
+    "FDel_v1": 23
+  },
+  "isolated_sdk": [
+    {
+      "format": "FTms_v5",
+      "changed_reported_values": 96,
+      "reported_values_restored": 842,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTms_v4",
+      "changed_reported_values": 98,
+      "reported_values_restored": 842,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTms_v3",
+      "changed_reported_values": 95,
+      "reported_values_restored": 842,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FTim_v2",
+      "changed_reported_values": 78,
+      "reported_values_restored": 842,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    },
+    {
+      "format": "FDel_v1",
+      "changed_reported_values": 42,
+      "reported_values_restored": 842,
+      "processor_and_controller_state_restored": true,
+      "missing_file_status": -1,
+      "missing_file_changed_state": false
+    }
+  ],
+  "actual_host_trials": [
+    {
+      "test": "R281",
+      "signature": "FTms",
+      "version": 5,
+      "verified_ui_preset": "1 Bar Bounce O",
+      "changed_reported_values": 95,
+      "reported_values_exactly_restored": 842,
+      "automatically_restored_values": 841,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 64.867,
+      "actual_host_wall_seconds": 91.438,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 503,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R282",
+      "signature": "FTms",
+      "version": 4,
+      "verified_ui_preset": "60s Psychedelica RD",
+      "changed_reported_values": 92,
+      "reported_values_exactly_restored": 842,
+      "automatically_restored_values": 841,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 100.961,
+      "actual_host_wall_seconds": 133.714,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 503,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R283",
+      "signature": "FTms",
+      "version": 3,
+      "verified_ui_preset": "Hypnotic Bounce bM",
+      "changed_reported_values": 77,
+      "reported_values_exactly_restored": 842,
+      "automatically_restored_values": 841,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 94.155,
+      "actual_host_wall_seconds": 132.264,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 503,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    },
+    {
+      "test": "R284",
+      "signature": "FTim",
+      "version": 2,
+      "verified_ui_preset": "Resonant Ping Pong BM",
+      "changed_reported_values": 74,
+      "reported_values_exactly_restored": 842,
+      "automatically_restored_values": 841,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 89.458,
+      "actual_host_wall_seconds": 123.312,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 503,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false,
+      "ui_observation": "The editor displayed Resonant Ping Pong\u2026. The Basic menu contained the full title and the apply receipt confirmed the exact catalog file."
+    },
+    {
+      "test": "R285",
+      "signature": "FDel",
+      "version": 1,
+      "verified_ui_preset": "Beauty",
+      "changed_reported_values": 46,
+      "reported_values_exactly_restored": 842,
+      "automatically_restored_values": 841,
+      "native_apply_calls": 1,
+      "corrected_parameters": [
+        "vstp1073741826"
+      ],
+      "native_component_fingerprint_restored": true,
+      "refusals_without_change": [
+        "stale_catalog",
+        "stale_document",
+        "wrong_instance",
+        "closed_editor"
+      ],
+      "requests": 171,
+      "owner_wall_seconds": 99.751,
+      "actual_host_wall_seconds": 159.943,
+      "preferences_exactly_restored": true,
+      "preset_tree_entries_preserved": 503,
+      "normal_managed_files_restored": 18,
+      "scratch_saved": false
+    }
+  ]
+}
