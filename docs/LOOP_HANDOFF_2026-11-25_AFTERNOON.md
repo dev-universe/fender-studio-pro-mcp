@@ -1712,3 +1712,30 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   계속 감지되지 않았다. 앱과 owner 종료, 정상 관리 설치 확인.
   `main` 16개·로컬 11개·장비 4건, 전체 2~5일과 CI·장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 05시 42분 Serum 변경·원복 근거와 Ampire 스템
+
+- #244의 최신 `main` 기반 `fd15015`에서 두 필수 검사를 통과해
+  `cdbb060`에 병합했다. 9분 26초. 두 공식 Serum VST3에서 CC1,
+  채널 압력, 피치 벤드의 DSP 값 변경과 2,623행 독립 원복을 확인했다.
+  #228은 새 `main`을 반영한 `1a14332`를 검사 중이다.
+  [#244](https://github.com/dev-universe/fender-studio-pro-mcp/pull/244)
+  [#228](https://github.com/dev-universe/fender-studio-pro-mcp/pull/228)
+- R452C는 실제 8.1.1에서 dry 및 Chorus A/B/복귀 A의 24초 스템을
+  네 개 내보냈다. 기본 PCM 판독과 dry 보정 통과. 플러그인 설정 전체의
+  RMS는 dry −27.010 dBFS, active 약 −16.18 dBFS였다. 왼쪽 변조
+  기준 미달로 Speed 간격 판정 중단. 오른쪽 최강 변조 성분은 세 단계
+  모두 3 Hz였다. 안정값 89개와 동일 2,297바이트 캡처를 복구했다.
+  148회·218.501초, 앱 254.312초, No Save, 설치 18 및 설정 11개 원복.
+  [#247](https://github.com/dev-universe/fender-studio-pro-mcp/pull/247)
+- R457은 Ghidra 22함수와 Craft 13범위로 VST3 컨트롤러의 값 비교 후
+  setter 경로를 닫았다. 알림에 호출 결과와 원래 처리점의 대응이 없다.
+  실제 값 유지 7건은 열려 있다. 8분 49초.
+  [#249](https://github.com/dev-universe/fender-studio-pro-mcp/pull/249)
+- R458은 기존 Send의 typed destination 지정과 상호 포트 추가를
+  확인했다. 현재 문서에서 source Send와 target Scope 입력을 함께 읽는
+  수명 보장 경계는 R460에 남겼다. 약 9분 30초.
+  [#248](https://github.com/dev-universe/fender-studio-pro-mcp/pull/248)
+- 다음 실앱은 R459의 실제 Serum instrument MIDI 입력 및 독립 조회다.
+  CUA와 앱·MCP owner 종료, 정상 관리 설치 확인. `main` 16개·로컬
+  11개·장비 4건, 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
