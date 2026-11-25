@@ -1269,3 +1269,27 @@ Ampire 대조와 R428 공개용 빈 Splitter 제거·저장·재열기를 이어
 
 `main` 17개·로컬 13개, 전체 소프트웨어 2~5일, 장비 의존 4건,
 지정 종료 시각 없음. Studio Pro와 MCP owner는 닫혀 있다.
+
+## 11월 26일 02시 53분 Ampire 정확 복구 및 macOS 프리뷰
+
+- R427이 R425의 여섯 단계 MCP 쓰기를 정확히 재현했다. 최종 C 뒤
+  공장 마이크의 세 값과 Link, DSP 90행, 2,297바이트 캡슐 SHA-256,
+  믹서와 트랙이 모두 일치했다. 138요청 45.841초, 앱 96.754초,
+  캡처 4개 해제, 원본 시험곡·설치 18개·설정 10개 원복.
+  숨은 Link 해제 기준값은 R429에서 별도 대조한다.
+  [#216](https://github.com/dev-universe/fender-studio-pro-mcp/pull/216)
+- 정확한 `1654cd1`의 macOS arm64 프리뷰 `v0.1.0-preview.1`을
+  02시 52분 47초 KST에 공개했다. 최초 빌드와 최신 main 재빌드를
+  포함해 약 15분이다. 태그, 검사 통과 PR 트리, 두 자산의 draft
+  재다운로드와 비인증 공개 재다운로드를 대조했다. 공개 아카이브에서
+  최초 설치·갱신·이전 설치 원복·제거를 21회 격리 명령으로 확인했다.
+  체크섬 `db04621a6c6c435cf05ccb65e070fc7ca259828ac31d44f57f76a66813691a7b`.
+  strict ad-hoc 서명은 결과가 일치했고 Gatekeeper는 CLI를 거부했다.
+  `SHARED-MACOS-PACKAGE`의 공개 자산·격리 설치 검증을 닫았다.
+  [공개 프리뷰](https://github.com/dev-universe/fender-studio-pro-mcp/releases/tag/v0.1.0-preview.1)
+  [#217](https://github.com/dev-universe/fender-studio-pro-mcp/pull/217)
+- R428 구현은 공유 앱을 열기 전에 정확한 그래프 소유권과 거부·불명
+  응답을 독립 리뷰한다. 현재 후보의 저장·재열기 시험은 준비만 됐다.
+
+`main` 16개·로컬 12개, 전체 소프트웨어 2~5일, 장비 의존 4건,
+지정 종료 시각 없음. 현재 Studio Pro와 MCP owner는 닫혀 있다.
