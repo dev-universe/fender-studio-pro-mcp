@@ -82,7 +82,7 @@ Start the client and ask it to call `host_status` to confirm it can see the open
 
 For a Pedalboard insert, use `plugin_inspect` with `source: "controller"`, `include_nodes: true`, and `node_scope: "plugin_controller"`. Bind the exact channel, slot, plugin, instance, and document. The bounded controller graph can show its `StompItemModel` under `stomps`. [Pedalboard controller verification](docs/evidence/2026-11-24-pedalboard-controller-inspection.json)
 
-In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Saved-song and restart verification](docs/evidence/2026-11-24-pedalboard-swap-persistence.json)
+In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Saved-song and restart verification](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo verification](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
 
 The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
@@ -181,6 +181,22 @@ from the inspected row, its current `expected_active` state, and the desired
 `active` state. The tool checks both reported activation flags and preserves
 the last active output. Disabling an output removes its mixer channel. Verify
 your mixer routing with `channels_list` after a change.
+
+### Serum 2 and Serum 2 FX
+
+Call `host_status` for the current document token. Use `serum2_load` with
+`target: {"variant":"instrument","track":"Serum Keys"}` to create a Music
+track, or `target: {"variant":"fx","channel":"Guitar"}` to add the effect to
+an existing mixer channel. Include `expected_document` with either request.
+The tool selects the exact Xfer VST3 class. Read the track or inserts after
+the operation to confirm placement.
+
+Select the instrument track before inspecting it. Use `plugin_inspect` to
+get the native instance ID, then use `plugin_parameters` and
+`plugin_parameter_set` on that exact instance. Serum 2 and Serum 2 FX 2.1.5
+were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
+can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
+[Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
 
 ### FabFilter preset library
 
