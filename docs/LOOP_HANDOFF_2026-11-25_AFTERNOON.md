@@ -892,3 +892,22 @@ R391–R393의 종료 코드, 시험곡 원본, 관리 파일 18개와 설정 9�
 Multi 일반 그래프 수정은 열린 상태다. 다음은 Impact의 다른 패드
 Focus 대상 시험이다. `main` 19개·로컬 15개 잔여, 전체 2~5일,
 장비 의존 4건, 지정 종료 시각 없음.
+
+## 23시 03분 Impact MIDI Pad Focus
+
+- R402는 Pad Focus를 끈 상태에서 C♯1을 화면으로 선택했다. 전체
+  제공값은 그대로였으며 Focus cutoff 쓰기는 alias와 pad0에만 적용됐다.
+  261요청 49.840초, 앱 222.923초. 저장 없이 닫고 원본을 대조했다.
+- R403은 Pad Focus를 켜고 실제 Studio Pro의 모든 입력에 가상 CoreMIDI
+  노트 36·37·53·36을 보냈다. 패드 1·17의 cutoff와 Focus값은 Float32
+  정규화 비트가 일치하고 원시 Float64는 달랐다. 뱅크 B F2 선택과
+  뱅크 A C1 복귀, 4,262 DSP행의 정확한 복구를 확인했다. 661요청
+  137.225초, 앱 174.944초. 두 시험에서 관리 파일 18개와 각 설정
+  9개·10개를 확인했다. [#191](https://github.com/dev-universe/fender-studio-pro-mcp/pull/191)
+- [#150](https://github.com/dev-universe/fender-studio-pro-mcp/pull/150)은
+  현재 main을 반영한 헤드에서 두 검사 통과 후 `a3c8cec`로 병합됐다.
+
+다음은 이진 분수 cutoff를 이용한 두 MIDI 선택 패드의 별도 쓰기와
+복원이다. 샘플의 note-on/off 처리와 저장 후 다시 열기도 남았다.
+`main` 19개·로컬 15개 잔여, 전체 2~5일, 장비 의존 4건,
+지정 종료 시각 없음.
