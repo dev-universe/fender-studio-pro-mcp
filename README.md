@@ -86,6 +86,7 @@ In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two posit
 
 - Adjacent occupied positions with different models can be exchanged directly. Tests covered both directions at positions 1–2 and 7–8, and separately verified Save, reopen, and Undo. [Adjacent exchange](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Save and reopen](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
 - An empty position, two identical model names, or nonadjacent positions require a fresh `plugin_state` capture for the exact insert. Confirm that `pedalboard_rack` shows two distinct payloads and pass the capture's `sha256` as `expected_rack_sha256`. Capture again after the exchange and compare all eight slots, then release both tokens. Identical-model DSP rows and a vacant-slot active alias can lag behind the serialized rack, so use payload fingerprints for this check. [Guarded exchanges](docs/evidence/2026-11-25-pedalboard-guarded-exchange.md) · [Empty slot restart](docs/evidence/2026-11-25-pedalboard-empty-slot-persistence.md) · [Same-model restart](docs/evidence/2026-11-25-pedalboard-same-model-persistence.md)
+- A Studio Pro 8.1.1 test saved Compressor after moving it to the empty slot. Fresh open kept the moved payload and cleared the vacated slot’s temporary active alias. [Moved-to-vacant restart](docs/evidence/2026-11-26-pedalboard-vacant-moved-persistence.md)
 
 Ampire has a separate pre/post divider controlled by `opt.stomporder`. The standalone Pedalboard has a continuous rack. [Divider verification](docs/evidence/2026-11-25-pedalboard-ampire-divider.md)
 
@@ -222,6 +223,12 @@ can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
 [Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
 
+Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx` and
+`controller` set to 0–129. This offline reference covers CC 0–127, channel
+pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
+2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
+on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
+
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
 `expected_sha256` in lowercase, current `expected_document`, and native
@@ -232,6 +239,7 @@ any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
 [Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
+[Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
 
 ### FabFilter preset library
 
@@ -351,6 +359,8 @@ These commands run without connecting to Studio Pro.
 ```
 
 `song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
+
+For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
 For a supported saved Impact instance, `song_read` and `song-read` include `instrument_outputs` on the plugin. Each output reports its saved enabled state, speaker layout and mixer channel ID and name when connected. The reader checks both the saved output descriptors and mixer membership. If those disagree, it reports a warning and leaves the output graph absent. The same fields were verified in Studio Pro 8.1.1 scratch copies with `Impact St 2` enabled and restored after reopening.
 
