@@ -220,6 +220,7 @@ get the native instance ID, then use `plugin_parameters` and
 were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
 can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
+[Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
 
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
@@ -230,6 +231,7 @@ before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+[Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
 
 ### FabFilter preset library
 
