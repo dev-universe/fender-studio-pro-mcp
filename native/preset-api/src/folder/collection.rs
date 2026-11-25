@@ -1,4 +1,4 @@
-//! Host-authored collection presets at an integrating-owner private destination.
+//! Host preset URLs at integrating-owner private destinations.
 use super::{FolderPresetRoute, query, same_interface};
 use crate::{Error, ffi, guard};
 use ffi::{Owned, StringRepr, Uid};
@@ -67,8 +67,16 @@ impl PrivateDestination {
         g: &mut G,
     ) -> Result<Self, Error> {
         let prototype = unsafe { Owned::take(empty_url) };
+        Self::from_empty_url(prototype, path, ".multipreset", g)
+    }
+    pub(crate) fn from_empty_url<G: FnMut() -> Result<(), String>>(
+        prototype: Owned,
+        path: &str,
+        extension: &'static str,
+        g: &mut G,
+    ) -> Result<Self, Error> {
         let result = (|| {
-            validate_private_path(path)?;
+            validate_private_path(path, extension)?;
             guard(g)?;
             let prototype = same_interface(&prototype, &URL, g)?;
             let empty: unsafe extern "C" fn(*mut c_void) -> u8 =
@@ -104,7 +112,10 @@ impl PrivateDestination {
         });
         finish(result, g)
     }
-    fn check<G: FnMut() -> Result<(), String>>(&self, g: &mut G) -> Result<(), Error> {
+    pub(crate) fn raw(&self) -> *mut c_void {
+        self.url.raw()
+    }
+    pub(crate) fn check<G: FnMut() -> Result<(), String>>(&self, g: &mut G) -> Result<(), Error> {
         if thread::current().id() != self.thread {
             return Err(Error::WrongThread);
         }
@@ -321,7 +332,7 @@ fn finish<T, G: FnMut() -> Result<(), String>>(
     }
     result
 }
-fn validate_private_path(path: &str) -> Result<(), Error> {
+pub(crate) fn validate_private_path(path: &str, extension: &'static str) -> Result<(), Error> {
     if path.len() >= MAX_PATH
         || path.contains('\0')
         || !path.starts_with('/')
@@ -339,8 +350,8 @@ fn validate_private_path(path: &str) -> Result<(), Error> {
         .and_then(|s| s.to_str())
         .ok_or(Error::InvalidData("private filename unavailable"))?;
     let stem = name
-        .strip_suffix(".multipreset")
-        .ok_or(Error::InvalidData("private collection extension required"))?;
+        .strip_suffix(extension)
+        .ok_or(Error::InvalidData("unexpected private preset extension"))?;
     if stem.is_empty()
         || stem.len() > 64
         || !stem
@@ -462,7 +473,7 @@ fn inspect_preset<G: FnMut() -> Result<(), String>>(
     })();
     finish(result, g)
 }
-fn verify_preset_url<G: FnMut() -> Result<(), String>>(
+pub(crate) fn verify_preset_url<G: FnMut() -> Result<(), String>>(
     preset: &Owned,
     destination: &PrivateDestination,
     g: &mut G,
@@ -474,7 +485,7 @@ fn verify_preset_url<G: FnMut() -> Result<(), String>>(
         let accepted = unsafe { get(preset.raw(), cloned.raw()) };
         guard(g)?;
         if accepted != 1 {
-            return Err(Error::InvalidData("collection preset URL unavailable"));
+            return Err(Error::InvalidData("preset URL unavailable"));
         }
         check_url(&cloned, &destination.path, g)
     })();

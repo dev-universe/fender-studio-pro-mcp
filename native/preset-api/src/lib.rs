@@ -1,11 +1,12 @@
 //! Owned local preset catalogs, folder preflight and private collection primitives.
-//! No IPC, native discovery, arbitrary invoker or caller-supplied preset bytes.
+//! No IPC, native discovery or arbitrary invoker.
 #![deny(unsafe_op_in_unsafe_fn)]
 mod cv_settings;
 pub use cv_settings::{CvSettingsInspection, IssuedCvSettingsFile, PreparedCvSettings};
 mod ffi;
 pub mod folder;
 mod list;
+pub mod vst3;
 use ffi::{Owned, StringRepr};
 use std::{
     ffi::c_void,
@@ -121,22 +122,7 @@ fn guard<G: FnMut() -> Result<(), String>>(g: &mut G) -> Result<(), Error> {
 
 impl Services {
     fn attributes(&self) -> Result<Owned, Error> {
-        let create: unsafe extern "C" fn(
-            *mut c_void,
-            *const ffi::Uid,
-            *const ffi::Uid,
-            *mut *mut c_void,
-        ) -> i32 = unsafe { ffi::method(self.allocator.raw(), 3) };
-        let mut out = ptr::null_mut();
-        let status = unsafe {
-            create(
-                self.allocator.raw(),
-                &ffi::ATTRIBUTES_CLASS,
-                &ffi::ATTRIBUTES,
-                &mut out,
-            )
-        };
-        unsafe { Owned::from_success(status, out, "Attributes factory failed") }
+        attributes(&self.allocator)
     }
     fn meta(&self) -> Result<(Owned, String), Error> {
         let attributes = self.attributes()?;
@@ -149,9 +135,7 @@ impl Services {
         Ok((attributes, key))
     }
     fn target(&self) -> Result<Target, Error> {
-        let get: unsafe extern "C" fn(*mut c_void) -> *mut c_void =
-            unsafe { ffi::method(self.mediator.raw(), 4) };
-        let object = unsafe { Owned::hold(get(self.mediator.raw())) }?;
+        let object = unsafe { Owned::hold(mediator_target(&self.mediator)) }?;
         let identity = object.query(&ffi::UNKNOWN)?;
         Ok(Target {
             handle: object,
@@ -239,6 +223,31 @@ impl Services {
             url,
         })
     }
+}
+
+fn attributes(allocator: &Owned) -> Result<Owned, Error> {
+    let create: unsafe extern "C" fn(
+        *mut c_void,
+        *const ffi::Uid,
+        *const ffi::Uid,
+        *mut *mut c_void,
+    ) -> i32 = unsafe { ffi::method(allocator.raw(), 3) };
+    let mut out = ptr::null_mut();
+    let status = unsafe {
+        create(
+            allocator.raw(),
+            &ffi::ATTRIBUTES_CLASS,
+            &ffi::ATTRIBUTES,
+            &mut out,
+        )
+    };
+    unsafe { Owned::from_success(status, out, "Attributes factory failed") }
+}
+
+fn mediator_target(mediator: &Owned) -> *mut c_void {
+    let get: unsafe extern "C" fn(*mut c_void) -> *mut c_void =
+        unsafe { ffi::method(mediator.raw(), 4) };
+    unsafe { get(mediator.raw()) }
 }
 
 impl Catalog {
@@ -463,9 +472,7 @@ impl Catalog {
         if valid { Ok(()) } else { Err(Error::Changed) }
     }
     fn borrowed_target(&self) -> Result<(), Error> {
-        let get: unsafe extern "C" fn(*mut c_void) -> *mut c_void =
-            unsafe { ffi::method(self.services.mediator.raw(), 4) };
-        if unsafe { get(self.services.mediator.raw()) } == self.target.handle.raw() {
+        if mediator_target(&self.services.mediator) == self.target.handle.raw() {
             Ok(())
         } else {
             Err(Error::Changed)
