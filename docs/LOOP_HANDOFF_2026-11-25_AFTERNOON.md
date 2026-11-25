@@ -1579,3 +1579,27 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   격리된 편곡 재생과 파라미터 독립 읽기를 확인할 준비다. 현재
   앱·owner 종료와 정상 설치 원복. `main` 16개·로컬 11개, 장비 4건,
   전체 예상 2~5일과 CI·장비 대기, 지정된 종료 시각 없음.
+
+## 11월 26일 04시 47분 인서트 원복 병합과 편곡 시험
+
+- #227은 최신 `6980f674`의 두 필수 검사에서 통과했다. 검사
+  확인부터 17분 48초, `f05980a`에 병합됐다. #236은 이 기반을
+  반영한 정확한 `39edb2ec`에서 검사 중이다.
+  [#227](https://github.com/dev-universe/fender-studio-pro-mcp/pull/227)
+  [#236](https://github.com/dev-universe/fender-studio-pro-mcp/pull/236)
+- 기존 대표 검증표에 상태 읽기, Save/reopen, 이벤트와 내부 신호를
+  근거별로 연결했다. 상대 링크와 앵커 26개 확인, 약 4분.
+  [#238](https://github.com/dev-universe/fender-studio-pro-mcp/pull/238)
+- R448은 그래프 게시와 인서트 재빌드의 잠금 경로, 태스크 배열의
+  제자리 재할당을 대조했다. 실제 Routing 태스크와 게시 엔진의
+  잠금 및 객체 수명 연결은 남아 있다. 11분 12초, 실앱 요청 0.
+  [#239](https://github.com/dev-universe/fender-studio-pro-mcp/pull/239)
+- R449는 메트로놈 조회의 `preroll:null`과 정확한 독립 transport의
+  `preroll:false` 차이로 part/Play/Stop 전에 중단했다. 클릭과
+  프리카운트 off, 73요청·30.476초, 앱 약 57초. 앱·owner 정상 종료,
+  No Save, 임시 공식 번들 회수, 설치 18개·프로필 10개 원복.
+  독립 Transport가 프리롤을 확인하는 새 R449B를 준비한다.
+- 이전 R422·R441 앱에 딸렸던 두 스캐너 프로세스를 전용 로그의
+  파일 참조로 식별해 정상 종료했다. 현재 USB/CoreAudio에 Volt 276과
+  Keystation88은 보이지 않는다. R451은 Scope 캡처 게시, R452는
+  Ampire Speed 내부 처리의 검증 가능성을 독립 조사 중이다.
