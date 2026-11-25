@@ -1603,3 +1603,38 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   파일 참조로 식별해 정상 종료했다. 현재 USB/CoreAudio에 Volt 276과
   Keystation88은 보이지 않는다. R451은 Scope 캡처 게시, R452는
   Ampire Speed 내부 처리의 검증 가능성을 독립 조사 중이다.
+
+## 11월 26일 05시 Serum 편곡 재생과 Ampire 표시값
+
+- #236은 새 기반의 `39edb2ec` 두 필수 검사 통과 뒤 `e9c356b`에
+  병합됐다. 검사 준비부터 10분 38초. 공용 `FETCH_HEAD` 경합으로
+  #237 확인이 한 번 멈췄다. 각 PR의 전용 로컬 ref로 바꿔 같은
+  비교 조건을 유지하고 #237 최신 `dc104f17` 검사를 재개했다.
+  [#236](https://github.com/dev-universe/fender-studio-pro-mcp/pull/236)
+  [#237](https://github.com/dev-universe/fender-studio-pro-mcp/pull/237)
+- R449B는 프리롤 확인 뒤 정확한 MIDI 파트 1개와 pitch 60 음표 1개를
+  쓰고 실제 편곡에 표시했다. 빈 화면 전용 include_context 조회가
+  차단해 Play 전 중단했다. 83요청·43.786초, Save 없음.
+  R449C는 같은 검사를 빈 화면에 한정하고 populated 편곡은 현재
+  바인딩, 파트·노트·믹서와 조합해 검증했다. 실제 Play/Stop 각 1회,
+  노트 전 무음 5회·활성 stereo 7회·정지 후 8.109초의 무음 3회와
+  2,623행 일치. 300요청·64.074초. 두 시험 모두 호스트·owner 종료,
+  설치 18개·프로필 10개 원복, 임시 스캔 경로 비어 있음.
+  [#240](https://github.com/dev-universe/fender-studio-pro-mcp/pull/240)
+- R451은 Scope DSP가 블록 크기·버퍼를 사용하고 캡처 표시 배열을
+  제자리 갱신하는 경로를 확인했다. 엔진 수명·잠금·알림으로 같은
+  세대의 프레임·latch·count를 원자적으로 읽는 계약은 미확인이다.
+  10분 26초, 실앱 요청 0. [#241](https://github.com/dev-universe/fender-studio-pro-mcp/pull/241)
+- R452A의 활성 Chorus Speed A/B/A에서 슬롯 5 위상 표시 72개를
+  대조했다. Off 뒤 읽기 전용 raw `1129.0789395570755`가 남아
+  최초 0 조건은 실패했다. 별도 쓰기 없는 owner는 동일한 여섯 값,
+  고정 DSP 89행과 원래 2,297바이트 컴포넌트 지문을 확인했다.
+  UI Off와 수정 표시, 210요청·41.080초 + 24요청·4.138초,
+  앱 274.590초, Save 없음, 설치 18개·설정 10개 원복.
+  [#242](https://github.com/dev-universe/fender-studio-pro-mcp/pull/242)
+- R453은 Xfer 공식 2.1.5 arm64 두 클래스의 입력 bus 0/channel 0
+  130개 매핑과 실제 호스트의 각 130개 DSP 이름을 맞췄다. REA/Ghidra와
+  Craft 정적 대조 완료. 현재 공개 read-only MCP 조회를 테스트 중이다.
+  `main` 잔여 16개·로컬 11개, 장비 의존 4건. 소프트웨어 전체
+  2~5일과 CI·장비 대기. 지정된 종료 시각 없음. 앱·owner 종료와
+  정상 설치 확인.
