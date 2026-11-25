@@ -83,7 +83,9 @@
       "R376",
       "R377",
       "R378",
-      "R378B"
+      "R378B",
+      "R379",
+      "R379B"
     ],
     "merged_pull_requests": [
       109,
@@ -147,14 +149,15 @@
       165,
       166,
       167,
-      168
+      168,
+      169
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365–R366B qualified the owned SampleOne region persistence and live MIDI inputs. R367D–R376 qualified Chorder, including delivery and release from Learn Mode preview through a second Chorder. R377 independently reproduced the Scope C caption mismatch with C on and off. R378 stopped before transport zeroing or playback. R378B zeroed transport but the file picker timed out, with no confirmed event or playback. Both app processes and owners closed and local files and normal settings were restored. Use Tone Generator and a right-polarity Mixtool to distinguish the left and right traces through the bound Scope, then extend R68 capture and retrigger. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 141 to 168 as both checks pass on each exact current-base head.",
+    "next": "R365–R366B qualified the owned SampleOne region persistence and live MIDI inputs. R367D–R376 qualified Chorder including downstream Learn Mode preview. R377 reproduced the Scope C caption mismatch. R379B showed that C followed Main Left or Main Right when DSP was set accordingly while the GUI caption stayed fixed. With sidechain disabled, raw Side Left produced the right-phase trace. Next extend Scope R68 using silent arming, a subthreshold interval, first qualifying acquisition, hold, and one retrigger. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 141 to 169 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 17,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
