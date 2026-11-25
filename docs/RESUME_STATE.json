@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "edb41652a23c9482ffcefccc128170bfab4e517e",
+    "main_at_checkpoint": "2fd0a62481185c1d30a954e5e4414293d1ed68e5",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -18,30 +18,41 @@
       "R325",
       "R326",
       "Rumble 028",
-      "R327"
+      "R327",
+      "R328",
+      "R329",
+      "R330",
+      "R331",
+      "R332"
     ],
     "merged_pull_requests": [
       109,
       110,
-      111
-    ],
-    "open_pull_requests": [
+      111,
       112,
       113,
-      114,
-      115,
       116,
-      117
+      114
     ],
-    "remaining_builtin_units": 25,
+    "open_pull_requests": [
+      115,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123
+    ],
+    "remaining_builtin_units": 24,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Run Impact R328 with the detached console and Track / Show in Console check. Verify Multi child DSP after its bounded implementation. Prepare hardware-free shared event note-on/off. Merge current-base PRs 112, 113, 116, 114, 115 and 117 in order as checks pass.",
-    "remaining_builtin_units_after_local_verification": 24,
+    "next": "Reuse accepted Scope capture and hold evidence. Investigate a directly observable one-shot armed and completion state, then resume the fixed queue in the November 24 handoff. Merge current-base PRs 115 and 117 through 123 in order as exact-head checks pass.",
+    "remaining_builtin_units_after_local_verification": 23,
     "locally_qualified_fixed_units_pending_merge": [
-      "PRESET-RUMBLE"
+      "PRESET-MULTI"
     ]
   },
   "nov25_current_checkpoint": {
