@@ -1905,3 +1905,20 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - #245 재검사가 진행 중이다. 이후 #249, #262, #260을 최신 `main` 기준으로
   검사한다. 앱·owner 닫힘, 정상 설치 확인. `main` 15개·로컬 11개,
   그중 장비 4건. 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 07시 35분 FabFilter 상태
+
+- #245의 최신 기준 `a5648e8`이 필수 검사 두 개에 통과해
+  `f268dcd`로 병합됐다. 551.0초. #249의 최신 기준 `13b5440`이
+  필수 검사를 진행한다. [#245](https://github.com/dev-universe/fender-studio-pro-mcp/pull/245)
+  [#249](https://github.com/dev-universe/fender-studio-pro-mcp/pull/249)
+- R473은 서명이 확인된 FabFilter Pro-G 1.42 arm64의 독립 SDK
+  프로세스 두 개를 비교했다. 두 처리부 모두 같은 음수 피드백을
+  내보냈다. 전달을 생략한 대조군은 0.035, 전달한 쪽은 반환 성공과
+  독립 값 0을 확인했다. 두 컴포넌트는 원래 바이트를 되찾았다.
+  0.228초와 0.222초, 둘 다 종료 코드 0. Studio Pro에서 실제 전달된
+  값과 정지 중에는 어느 경로가 동작했는지 열린 상태다.
+  [#263](https://github.com/dev-universe/fender-studio-pro-mcp/pull/263)
+- 다음은 #249 후 #262, #260, #263, 그 뒤 Input Filter·Impact·Chorder와
+  Shared Event다. `main` 15개·로컬 11개, 장비 의존 4건. 전체 2~5일과
+  CI·장비 대기, 지정 종료 시각 없음. 앱과 owner는 닫혀 있다.
