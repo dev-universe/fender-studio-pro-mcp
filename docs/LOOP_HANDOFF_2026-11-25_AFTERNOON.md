@@ -1414,3 +1414,15 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 
 고정 항목은 `main` 16개·로컬 12개, 소프트웨어 2~5일, 장비 검증
 4건, 지정 종료 시각 없음. 현재 앱·MCP owner 종료와 정상 설치를 확인했다.
+
+## 11월 26일 03시 36분 Scope 파형과 설정 스트림
+
+- R436은 정확한 8.1.1 Scope 이미지의 REA/Ghidra 자료에 LLVM·Craft
+  검사를 더했다. 세 개 Float32 원시 버퍼와 네 개 화면 요약 배열을
+  구분했다. 공개 `IStorable`은 설정을 전달하며 Scope 저장·읽기
+  훅에 원시 파형 전달이 없었다. DSP 캡처 동기화·실제 시간·복원은
+  미확인이다. 정적 대조 8분 11초, 앱 실행은 없었다.
+  [#226](https://github.com/dev-universe/fender-studio-pro-mcp/pull/226)
+- R438 인서트 체인 복구와 R439 빈 Pedalboard 슬롯 이동본의 독립
+  Save/reopen 시험을 준비하고 있다. R440은 그래프의 포트·연결을
+  소유권과 함께 읽을 수 있는 정확한 경로를 조사한다.
