@@ -239,6 +239,7 @@ any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
 [Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
+[Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
 
 ### FabFilter preset library
 
