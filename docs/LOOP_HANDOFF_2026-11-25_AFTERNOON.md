@@ -1739,3 +1739,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 다음 실앱은 R459의 실제 Serum instrument MIDI 입력 및 독립 조회다.
   CUA와 앱·MCP owner 종료, 정상 관리 설치 확인. `main` 16개·로컬
   11개·장비 4건, 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 05시 55분 Serum MIDI 입력과 FX 목적지
+
+- R459는 공식 2.1.5 Serum 2에서 가상 CoreMIDI의 CC1, 압력, 벤드
+  세 가지가 실제 대응 DSP값을 움직이는 것을 확인했다. CC1 및 압력은
+  정확히 0으로 돌아왔다. 새 읽기 전용 owner와 가상 입력 종료 뒤
+  전체 2,623행 중 `vstp516000001`만 MIDI 중앙값
+  `5000.30517578125`에 남았다. 160회·56.565초와 재확인 38회·4.741초.
+  No Save, 스캐너 원복, 관리 18 및 설정 11개 원복.
+  [#250](https://github.com/dev-universe/fender-studio-pro-mcp/pull/250)
+- R461은 같은 8.1.1의 별도 Audio 트랙에 Serum 2 FX를 삽입했을 때
+  Music 트랙의 Out 장치 목록이 `없음, Serum 2`에서 `없음, Serum 2,
+  Serum 2 FX`가 되는 것을 확인했다. 선택·라우팅 변경·MIDI 발신 0회,
+  각 DSP 2,623행 유지, 141회·83.855초, No Save와 18+10개 원복.
+  [#251](https://github.com/dev-universe/fender-studio-pro-mcp/pull/251)
+- #228의 최신 `1a14332`에서 필수 검사 두 개를 통과해 `9ee5ea0`에
+  병합했다. 12분 58초. #230은 최신 `main` 기반 `21e001f` 검사 중이다.
+  [#228](https://github.com/dev-universe/fender-studio-pro-mcp/pull/228)
+  [#230](https://github.com/dev-universe/fender-studio-pro-mcp/pull/230)
+- R460은 보유되는 Send 설정 포트와 Scope 선택 포트의 정규 객체
+  동일성을 비교할 후보를 확인했다. 컴파일 대조를 포함해 약 12분 30초.
+  R463에서 작은 비공개 후보와 실앱 시험을 준비한다. 다음 실앱은 R462의
+  Serum 2 FX 목적지 선택과 실제 MIDI 수신이다.
+- 앱·owner·가상 신호 종료, 사용자 관리 설치와 프로필 원복 확인.
+  `main` 16개·로컬 11개·장비 4건. 전체 2~5일과 CI·장비 대기이며
+  지정 종료 시각은 없다.
