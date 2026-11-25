@@ -556,3 +556,22 @@ SampleOne 고정 항목은 R363–R366B로 로컬 완료, 공개 PR 병합 대�
 모델 지문 일치 조건을 갖는 유한 MCP 호출이다. 분리 worktree를
 `d39fe8f`에서 시작했다. `main` 20개·로컬 18개 잔여, 소프트웨어
 2~5일, 장비 의존 4개, 지정된 종료 시각 없음.
+
+## 20시 34분 체크포인트
+
+- #137이 두 필수 검사 통과 후 `b6b16d5`에 병합됐다. #138은
+  최신 베이스를 반영한 정확한 헤드에서 두 검사 실행 중이다.
+  [#137](https://github.com/dev-universe/fender-studio-pro-mcp/pull/137)
+- 보호형 `plugin_action.clear_chorder_selected` 구현을
+  실제 8.1.1에서 확인했다. R373은 DSP의 Integer 종류가
+  Float64 값을 갖는 실제 차이와 외부 거부 결과 변환에서 멈췄다.
+  새 owner로 두 코드 모두 보존됐음을 확인했다.
+- R373B는 기대 음정·지문·인스턴스·문서가 다른 네 요청을 실행
+  전 거부했다. 정확한 요청만 MIDI 61을 비웠고 기존 MIDI 60 및
+  나머지 입력, DSP 908행 및 원래 지문이 일치했다. 169요청
+  32.257초, 앱 73.204초. 송 원본, 설정 9개, 관리 설치 18개 복원.
+  [#164](https://github.com/dev-universe/fender-studio-pro-mcp/pull/164)
+
+다음은 Chorder Clear All·Copy·Paste의 실제 MCP 동작 경계다.
+`main` 20개·로컬 18개 잔여, 소프트웨어 2~5일, 장비 의존 4개,
+지정된 종료 시각 없음.

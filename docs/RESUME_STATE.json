@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "d39fe8fff0a47fb3d17792eeddd44ca06bda6e2f",
+    "main_at_checkpoint": "b6b16d508b7479b440ec0b7c28a26fda3a39896e",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -75,7 +75,9 @@
       "R369",
       "R370",
       "R371",
-      "R372"
+      "R372",
+      "R373",
+      "R373B"
     ],
     "merged_pull_requests": [
       109,
@@ -105,10 +107,10 @@
       133,
       134,
       135,
-      136
+      136,
+      137
     ],
     "open_pull_requests": [
-      137,
       138,
       139,
       140,
@@ -134,14 +136,15 @@
       160,
       161,
       162,
-      163
+      163,
+      164
     ],
     "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. R371 verified lower-key audition and the distinct raw preview flag. R372 verified direct DSP Clear on the selected Chorder input. Next implement a typed bounded Clear action with selected pitch and stored model digest guards, then verify it in a named scratch. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 137 to 163 as both checks pass on each exact current-base head.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. R371 verified lower-key audition and the distinct raw preview flag. R372 verified direct DSP Clear on the selected Chorder input. R373B verified the typed selected Clear action and four distinct stale-context refusals. Next verify the public DSP command paths for Chorder Clear All, Copy and Paste. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 138 to 164 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PRESENCE",
