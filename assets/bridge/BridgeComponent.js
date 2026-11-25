@@ -837,6 +837,38 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
     }
 
+    pedalboardSlotSwap(args) {
+        const fields = ["channel", "slot", "expected_instance", "first_slot", "second_slot", "expected_first_model", "expected_second_model"];
+        const refuse = message => ({ ok: false, native_outcome: "not_applied",
+            errors: [{ code: "pedalboard_swap_refused", message: message }] });
+        const label = name => typeof name === "string" && name.trim()
+            && name.length <= 128 && !/[\x00-\x1f\x7f-\x9f]/.test(name);
+        if (!args || Object.keys(args).length !== fields.length || Object.keys(args).some(key => !fields.includes(key))
+            || !label(args.channel) || !Number.isInteger(args.slot) || args.slot < 0
+            || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || !Number.isInteger(args.first_slot) || !Number.isInteger(args.second_slot)
+            || args.first_slot < 1 || args.first_slot > 8 || args.second_slot < 1 || args.second_slot > 8
+            || Math.abs(args.first_slot - args.second_slot) !== 1
+            || !label(args.expected_first_model) || !label(args.expected_second_model)
+            || args.expected_first_model === args.expected_second_model)
+            return refuse("Supply adjacent occupied Pedalboard slots with different exact models");
+        const plug = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: "Pedalboard" });
+        if (!plug || plug.error || plug.name !== "Pedalboard") return refuse("The exact Pedalboard insert is unavailable");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "pedalboard_slot_swap", expected_instance: args.expected_instance,
+            first_slot: args.first_slot, second_slot: args.second_slot,
+            expected_first_model: args.expected_first_model, expected_second_model: args.expected_second_model
+        });
+        if (!native || native.ok !== true) {
+            const problem = native && native.error;
+            return { ok: false, native_outcome: native && native.outcome === "not_applied" ? "not_applied" : "unknown",
+                errors: [{ code: problem && problem.code || "pedalboard_swap_no_receipt",
+                    message: problem && problem.message || "The host did not return an exchange receipt" }] };
+        }
+        return Object.assign({}, native, { plugin: "Pedalboard", native_outcome: native.outcome });
+    }
+
     impactOutputSet(args) {
         const fields = ["track", "expected_instance", "output_index", "output_name", "expected_active", "active"];
         const refusal = message => ({ ok: false, native_outcome: "not_applied",

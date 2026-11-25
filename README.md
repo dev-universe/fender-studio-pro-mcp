@@ -80,6 +80,10 @@ Start the client and ask it to call `host_status` to confirm it can see the open
 
 ## Usage
 
+For a Pedalboard insert, use `plugin_inspect` with `source: "controller"`, `include_nodes: true`, and `node_scope: "plugin_controller"`. Bind the exact channel, slot, plugin, instance, and document. The bounded controller graph can show its `StompItemModel` under `stomps`. [Pedalboard controller verification](docs/evidence/2026-11-24-pedalboard-controller-inspection.json)
+
+In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json) · [Saved-song and restart verification](docs/evidence/2026-11-24-pedalboard-swap-persistence.json) · [Host Undo verification](docs/evidence/2026-11-24-pedalboard-slot-swap-undo.json)
+
 The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
 - "Which mixer channels are muted in this song?"
@@ -178,6 +182,22 @@ from the inspected row, its current `expected_active` state, and the desired
 the last active output. Disabling an output removes its mixer channel. Verify
 your mixer routing with `channels_list` after a change.
 
+### Serum 2 and Serum 2 FX
+
+Call `host_status` for the current document token. Use `serum2_load` with
+`target: {"variant":"instrument","track":"Serum Keys"}` to create a Music
+track, or `target: {"variant":"fx","channel":"Guitar"}` to add the effect to
+an existing mixer channel. Include `expected_document` with either request.
+The tool selects the exact Xfer VST3 class. Read the track or inserts after
+the operation to confirm placement.
+
+Select the instrument track before inspecting it. Use `plugin_inspect` to
+get the native instance ID, then use `plugin_parameters` and
+`plugin_parameter_set` on that exact instance. Serum 2 and Serum 2 FX 2.1.5
+were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
+can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
+[Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
+
 ### FabFilter preset library
 
 Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)
@@ -210,7 +230,7 @@ FabFilter Simplon 1.42 passed individual change, independent readback and restor
 
 FabFilter One 3.52 passed individual change, independent readback and restoration for all 167 writable parameters in Studio Pro 8.1.1. These include all 31 named controls, all 128 virtual MIDI CC values, the program list and the legacy CC. With the transport stopped, the program list and its read-only counter changed from 0 to 1 and returned to 0. The program change and modulation wheel each required a separate companion correction. All 168 reported values returned to baseline in both trials. [One writable controls](docs/evidence/2026-11-20-fabfilter-one-controls.json) · [Direct program list verification](docs/evidence/2026-11-20-fabfilter-one-direct-program.json) · [Legacy MIDI CC verification](docs/evidence/2026-11-20-fabfilter-one-legacy-control.json) · [Modulation wheel verification](docs/evidence/2026-11-20-fabfilter-one-modulation-wheel.json)
 
-Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. The legacy row `vstp1073741828` briefly accepted a value in Pro-G, Pro-C 2, Pro-C 3 and Pro-DS, then returned to baseline on an independent `plugin_parameters` call. Treat that row as transient in these versions. In a separate SDK test, the Pro-G processor received the input and emitted its own value under the same ID. [Legacy MIDI parameter verification](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
+Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. For Pro-G 1.42, Pro-C 2 2.22, Pro-C 3 3.02, Pro-DS 1.32, Pro-L 1.37, Pro-L 2 2.26 and Pro-MB 1.33, the legacy row `vstp1073741828` briefly accepted a value in Studio Pro 8.1.1 and returned to zero by the 150 ms readback. An independent parameter read confirmed zero. Use `plugin_parameter_set` with `readback: true` to detect this behavior and treat `applied_unverified` as a transient result for this row. Pro-R 1.20 kept the changed value through both readings and an explicit write restored it. [Studio Pro verification](docs/evidence/2026-11-24-fabfilter-legacy-readback.json) · [Separate VST3 processor experiment](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
 
 FabFilter Pro-Q 2 2.30 passed individual change, independent readback and restoration of all 327 writable parameters in Studio Pro 8.1.1. The legacy `vstp1073741828` row also passed on this version. [Pro-Q 2 verification details](docs/evidence/2026-11-20-fabfilter-proq2-controls.json)
 
@@ -305,13 +325,19 @@ For the current insert rack, use `insert_chain_state` with `action: "capture"` a
 
 `insert_slot_move` moves an effect immediately after another slot in the same supported Inserts graph. Open that rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` to get the graph, slot-node and effect UUIDs. Use a fresh capture with `include_routing: true` to identify the destination slot's single current successor. Supply the source channel, rack slot, plugin and instance UUID, plus the graph UUID, source node, destination node, and destination's current successor UUID. Send canonical uppercase UUIDs and the current `expected_document`. The move is available on the tested Apple Silicon build of Studio Pro 8.1.1 with the matching native extension. After `applied_unverified`, read the graph and plugin values independently. One host Undo restored the two parallel branches, all graph and effect IDs, and all 144 reported values in the nested Splitter trial. Studio Pro kept the moved effect selected after Undo. [Nested slot move and Undo verification](docs/evidence/2026-11-20-insert-slot-move.json)
 
+A separate save and restart trial kept both Mixtools in series in the inner Splitter branch. The reopened Routing screen, seven directed links and 144 reported values matched the saved song. [Saved nested slot move verification](docs/evidence/2026-11-24-insert-slot-move-persistence.json)
+
 To move an existing effect into an empty branch of a supported two-way Splitter, use the same tool with the Splitter UUID in `after_node` and its merger UUID in `following_node`. Set `branch` to `0` for the first branch or `1` for the second. In a fresh routing capture, the selected branch must lead directly to that merger. In the actual 8.1.1 trial, the second branch gained the effect, and one host Undo restored the original location, all graph and effect IDs, and all 144 reported values. Studio Pro kept the moved effect selected. [Empty branch move and Undo verification](docs/evidence/2026-11-20-insert-slot-empty-branch.json)
 
 After reopening a song, obtain a fresh document binding and read the current insert folder and graph UUIDs before editing. In the Studio Pro 8.1.1 restart trial, the saved links, slot and effect IDs, and all 144 values survived. The live folder and graph UUIDs changed, and the MCP rejected requests with the prior document or prior graph UUID before applying a change. [Save, restart and stale request verification](docs/evidence/2026-11-20-insert-routing-reopen.json)
 
 `insert_splitter_add` inserts a default two-branch Splitter and its merger on the existing link from a supported effect slot to its immediate merger. Both new branches start empty and rejoin before reaching the original merger. Open the exact rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` and a fresh routing capture to get the effect and graph UUIDs. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, the effect slot-node UUID in `after_node`, the immediate merger UUID in `following_node`, and the current `expected_document`. Use canonical uppercase UUIDs. The matching native extension checks that a recorded Undo is available on the tested Apple Silicon build of Studio Pro 8.1.1. After `applied_unverified`, inspect the new links and plugin values. One host Undo restored the original graph and all 144 Mixtool values in the nested trial. [Splitter insertion and Undo verification](docs/evidence/2026-11-20-insert-splitter-add.json)
 
+In Studio Pro 8.1.1, an added Splitter and both branches survived saving and restarting Studio Pro. The reopened rack matched all eight nodes, ten directed links, and 144 Mixtool values. Studio Pro issued new live document, insert folder, and graph bindings. Requests with the old document or graph were refused. [Splitter insertion persistence](docs/evidence/2026-11-24-insert-splitter-add-persistence.json)
+
 `insert_splitter_remove` removes a supported inner Splitter and its merger. Each of its two ordered branches must contain one effect slot, and the other outer branch must lead directly to the outer merger. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json)
+
+The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 
@@ -326,7 +352,7 @@ The detailed notes include run outcomes, remaining gaps, and links to evidence. 
 ## Project docs
 
 - How the Rust server, in-DAW JavaScript bridge, and CoreMIDI connection work. [Architecture](docs/ARCHITECTURE.md)
-- Completed checks and the remaining built-in and FabFilter work. [Latest handoff](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [Resume guide](docs/RESUME.md)
+- Continue an existing work queue or add support for another plugin. [Resume guide](docs/RESUME.md) · [MCP development guide](docs/MCP_DEVELOPMENT.md)
 - Impact factory preset application and mixer recovery. [Verified Impact preset procedure](docs/IMPACT_PRESETS.md)
 - Development setup, offline checks, and private security reports. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 

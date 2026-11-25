@@ -12,7 +12,7 @@ use serde_json::{Value, json};
 
 use crate::{
     fabfilter::{MidiMappingQuery, PresetApply, PresetQuery},
-    operation::{self, Operation, Request, schema},
+    operation::{self, Operation, Request, TrackEdit, TrackTask, schema},
     runtime::RuntimeHandle,
 };
 
@@ -35,6 +35,53 @@ struct FileQuery {
 #[derive(Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 struct HardwareQuery {}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct Serum2Load {
+    target: Serum2Target,
+}
+
+#[derive(Deserialize, JsonSchema)]
+#[serde(tag = "variant", rename_all = "snake_case", deny_unknown_fields)]
+enum Serum2Target {
+    Instrument {
+        #[schemars(length(min = 1, max = 256))]
+        track: String,
+    },
+    Fx {
+        #[schemars(length(min = 1, max = 256))]
+        channel: String,
+    },
+}
+
+impl Serum2Load {
+    fn into_operation(self) -> Result<Operation, ErrorData> {
+        let edit = match self.target {
+            Serum2Target::Instrument { track } => TrackEdit::AddInstrumentTrack {
+                instrument: "Serum 2".into(),
+                name: Some(serum2_destination(track)?),
+                class_id: Some("{56534558-6673-5073-6572-756D20320000}".into()),
+            },
+            Serum2Target::Fx { channel } => TrackEdit::AddPlugin {
+                channel: serum2_destination(channel)?,
+                plugin: "Serum 2 FX".into(),
+                class_id: Some("{56534558-6673-5173-6572-756D20322066}".into()),
+            },
+        };
+        Ok(Operation::TrackTask(TrackTask { ops: vec![edit] }))
+    }
+}
+
+fn serum2_destination(name: String) -> Result<String, ErrorData> {
+    if name.trim().is_empty() || name.len() > 256 || name.chars().any(char::is_control) {
+        return Err(ErrorData::invalid_params(
+            "A Serum destination must contain 1 to 256 UTF-8 bytes without control characters",
+            None,
+        ));
+    }
+    Ok(name)
+}
 
 fn hardware_query(args: serde_json::Map<String, Value>) -> Result<(), ErrorData> {
     serde_json::from_value::<HardwareQuery>(Value::Object(args))
@@ -152,6 +199,12 @@ impl McpServer {
                 "Run finite EditTask operations for parts, routing, instruments, events and arranger sections. For addPlugin and addInstrumentTrack, pass the exact name and optional classId from a complete plugin_catalog result to select a specific class. Results are per item and batches are not atomic.",
                 true,
             ),
+            named::<Serum2Load>(
+                "serum2_load",
+                "trackTask",
+                "Load Xfer Records Serum 2 VST3 as a new Music track with target.variant instrument and target.track, or add Serum 2 FX VST3 to an existing mixer channel's Inserts with target.variant fx and target.channel. Uses one exact-class track edit. Read tracks_list or the channel inserts after the receipt. Inspect the current song before retrying an unknown outcome.",
+                true,
+            ),
             named::<PluginQuery>(
                 "plugins_list",
                 "plugins",
@@ -173,7 +226,7 @@ impl McpServer {
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
-                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, cv_ports, cv_port_parameters, or cv_preset_target. CV scopes require exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. cv_ports observes bounded host PortSetup metadata. cv_port_parameters discovers bounded direct indexed host parameters. cv_preset_target observes the slot mediator target identity relationship and IStorable availability. The latter two scopes accept no names or pagination. The CV scopes establish no routing or mutation capability. impact_outputs reads the 32 live Impact output names and requested and acknowledged activation states. It uses the exact instrument track, dsp source, expected document and native instance. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
+                "Inspect a live plugin's available parameter enumeration interfaces without arbitrary script execution. With include_context=true, a bound Music instrument/note-effect target and explicit source add strict before/after fixture observations; these are not an atomic snapshot and cannot include nodes. With include_nodes=true, node_scope selects target, graph, the declared plugin_controller, cv_ports, cv_port_parameters, or cv_preset_target. CV scopes require exact CV Instrument instrument, dsp source, expected_document, expected_instance and no include_context. cv_ports observes bounded host PortSetup metadata. cv_port_parameters discovers bounded direct indexed host parameters. cv_preset_target observes the slot mediator target identity relationship and IStorable availability. The latter two scopes accept no names or pagination. The CV scopes establish no routing or mutation capability. impact_outputs reads the 32 live Impact output names and requested and acknowledged activation states. It uses the exact instrument track, dsp source, expected document and native instance. The controller scope requires an expected plugin and expected_instance and admits only the exact Mustang Native and Rumble Native classes or the exact Multi Instrument AudioSynth identity or exact Level Meter AudioEffect identity or exact Pedalboard AudioEffect identity. The alias provider may return no controller; its bounded read-only metadata may be partial and establishes no model catalog or mutation capability.",
                 false,
             ),
             named::<PluginChoices>(
@@ -210,6 +263,12 @@ impl McpServer {
                 "plugin_action",
                 "pluginAction",
                 "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
+                true,
+            ),
+            named::<PedalboardSlotSwap>(
+                "pedalboard_slot_swap",
+                "pedalboardSlotSwap",
+                "Exchange two occupied, directly adjacent positions containing different Pedalboard models. Read opt.stompmodel1 through opt.stompmodel8 from the exact DSP instance. Use their current display labels as the expected model names. Insert slot is zero-based and pedal positions are one-based. Stop playback and recording before use. Compare independent parameter reads after an applied_unverified receipt and stop on unknown outcomes.",
                 true,
             ),
             named::<ImpactOutputSet>(
@@ -577,9 +636,16 @@ impl ServerHandler for McpServer {
                     })
                 })
                 .transpose()?;
+            let operation = if request.name == "serum2_load" {
+                serde_json::from_value::<Serum2Load>(Value::Object(args))
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?
+                    .into_operation()?
+            } else {
+                Operation::from_parts(name, Value::Object(args))
+                    .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?
+            };
             Request {
-                operation: Operation::from_parts(name, Value::Object(args))
-                    .map_err(|e| ErrorData::invalid_params(e.to_string(), None))?,
+                operation,
                 expected_document,
             }
         } else {
@@ -610,12 +676,67 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
+    const EXPECTED_TOOL_COUNT: usize = 58;
+
     use super::*;
+
+    #[test]
+    fn serum2_load_reuses_exact_class_track_edits() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_load")
+            .unwrap();
+        let schema = &spec.tool.input_schema;
+        assert_eq!(spec.operation, Some("trackTask"));
+        assert_eq!(schema["required"], json!(["target", "expected_document"]));
+        assert_eq!(schema["additionalProperties"], false);
+        for (target, edit) in [
+            (
+                json!({"variant":"instrument","track":"My Serum"}),
+                json!({"op":"addInstrumentTrackByClass","instrument":"Serum 2","name":"My Serum","classId":"{56534558-6673-5073-6572-756D20320000}"}),
+            ),
+            (
+                json!({"variant":"fx","channel":"Mix"}),
+                json!({"op":"addPluginByClass","plugin":"Serum 2 FX","channel":"Mix","classId":"{56534558-6673-5173-6572-756D20322066}"}),
+            ),
+        ] {
+            let load: Serum2Load = serde_json::from_value(json!({"target":target})).unwrap();
+            let operation = load.into_operation().unwrap();
+            assert!(!operation.is_read_only());
+            assert!(operation.validate().is_ok());
+            assert_eq!(
+                operation.wire(),
+                ("trackTask".into(), json!({"ops":[edit]}))
+            );
+        }
+    }
+
+    #[test]
+    fn serum2_load_refuses_extra_keys_wrong_targets_and_invalid_labels() {
+        for args in [
+            json!({"target":{"variant":"fx","channel":"Mix","classId":"arbitrary"}}),
+            json!({"target":{"variant":"instrument","track":"Keys","channel":"Mix"}}),
+            json!({"target":{"variant":"fx","track":"Keys"}}),
+            json!({"target":{"variant":"au","channel":"Mix"}}),
+            json!({"target":{"variant":"fx","channel":"Mix"},"plugin":"Other"}),
+        ] {
+            assert!(serde_json::from_value::<Serum2Load>(args).is_err());
+        }
+        for label in [
+            String::from("  "),
+            String::from("Mix\u{0000}"),
+            "악".repeat(86),
+        ] {
+            let load: Serum2Load =
+                serde_json::from_value(json!({"target":{"variant":"fx","channel":label}})).unwrap();
+            assert!(load.into_operation().is_err());
+        }
+    }
 
     #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let tool = &specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -653,7 +774,7 @@ mod tests {
     #[test]
     fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_state")
@@ -727,7 +848,7 @@ mod tests {
 
     #[test]
     fn external_menu_schema_is_closed_and_completion_sensitive() {
-        assert_eq!(McpServer::specs().len(), 56);
+        assert_eq!(McpServer::specs().len(), EXPECTED_TOOL_COUNT);
         let spec = McpServer::specs()
             .into_iter()
             .find(|s| s.tool.name == "external_port_menu")
@@ -925,12 +1046,14 @@ mod tests {
         let specs = McpServer::specs();
         for name in [
             "track_select",
+            "serum2_load",
             "chorder_autofill_set",
             "channel_set",
             "plugin_editor_open",
             "plugin_presets",
             "plugin_action",
             "impact_output_set",
+            "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
             "insert_splitter_remove",
@@ -948,7 +1071,7 @@ mod tests {
         }
         let names: std::collections::BTreeSet<_> = specs.iter().map(|s| &s.tool.name).collect();
         assert_eq!(names.len(), specs.len());
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
     }
 
     #[test]
@@ -1246,7 +1369,7 @@ mod tests {
     #[test]
     fn inspection_description_covers_exact_multi_readonly_metadata_without_expanding_schema() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "plugin_inspect")
@@ -1257,6 +1380,7 @@ mod tests {
             "exact Mustang Native and Rumble Native classes",
             "exact Multi Instrument AudioSynth identity",
             "exact Level Meter AudioEffect identity",
+            "exact Pedalboard AudioEffect identity",
             "provider may return no controller",
             "read-only metadata may be partial",
             "no model catalog or mutation capability",
@@ -1329,7 +1453,7 @@ mod tests {
             rule["then"]["properties"]["plugin"]["const"],
             "CV Instrument"
         );
-        assert_eq!(McpServer::specs().len(), 56);
+        assert_eq!(McpServer::specs().len(), EXPECTED_TOOL_COUNT);
     }
 
     #[test]
@@ -1377,7 +1501,7 @@ mod tests {
     #[test]
     fn chord_note_extends_existing_tool_without_new_backend_or_tool_version() {
         let specs = McpServer::specs();
-        assert_eq!(specs.len(), 56);
+        assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
             .iter()
             .find(|s| s.tool.name == "chorder_learning_set")

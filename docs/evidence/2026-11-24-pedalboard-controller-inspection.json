@@ -1,0 +1,27 @@
+{
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "macos": "arm64"
+  },
+  "product": "Pedalboard",
+  "trial": "R268",
+  "verified_code": "54de613cc0abe46f62e05cbccaef7b3cd4295b8e",
+  "scope": "alias_declared_controller_observation",
+  "reported_nodes": 23,
+  "reported_edges": 22,
+  "stable_controller_reads": 2,
+  "reported_stomp_model_parent": "stomps",
+  "reported_stomp_model_class": "AmpSimStompItemModel",
+  "report_complete": false,
+  "report_mutation_capability": false,
+  "rack_order_changes": 0,
+  "populated_rows_unchanged": 40,
+  "empty_rows_restored": 28,
+  "peer_effect_preserved": true,
+  "requests": 76,
+  "owner_wall_seconds": 35.305,
+  "app_wall_seconds": 138.558,
+  "scratch_saved": false,
+  "managed_files_restored": 18
+}
