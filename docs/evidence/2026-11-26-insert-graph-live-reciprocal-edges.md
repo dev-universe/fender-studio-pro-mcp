@@ -1,0 +1,11 @@
+# Live Insert graph reciprocal edge diagnostic
+
+R443C inspected an owned eight-node Insert graph in Studio Pro 8.1.1 Build 113103 on macOS arm64. The exact read-only diagnostic candidate was `9fdedf42521d45d44f02cd9cfdb552edc8980b56`, native UUID `9D7BFE9B-426C-3CDB-9AB9-19E7D32674D2` and SHA-256 `85f4d97d27ba919cc5e1a1173412b9d3260f211165db8a34feeb1d7bc49ff6b6`. The target track was muted, Main gain was zero and transport was stopped.
+
+- The original Routing view showed the two Mixtools and two empty Splitter 3 lanes. The diagnostic read from both retained Mixtool anchors in each of two separate rounds. It reported eight nodes and ten ordered outgoing occurrences. Splitter 3 listed the same merger at ordinals 0 and 1. The merger independently reported two incoming occurrences, and the reverse edge was absent.
+- Two live capture ZIPs and the protected source graph matched all ten outgoing occurrences in order. All 144 typed values and metadata across both Mixtools matched the baseline. Two wrong live instance anchors were refused, and two requests without the instance anchor returned only the ordinary ownership report.
+- One owner processed 56 calls in 32.474 seconds and released both temporary capture tokens. The host ran 110.198 seconds. There was no graph mutation, Undo, or Save. The app and owner closed normally, the original and scratch file bytes matched, and 18 managed runtime and nine app profile files were restored.
+
+The first owner reached the visual gate and closed before the diagnostic reads when the editor could not be opened from the console. R443B explicitly opened the bound editor, then stopped at a capture refusal because the older installed bridge did not forward `include_routing`. A private reproduction counted zero native requests with that bridge and one with the matching candidate. R443C used the matching bridge and diagnostic package and checked the independent native view before the first capture.
+
+The optional diagnostic is disabled in the default build. The exact candidate passed 509 default native tests and 513 diagnostic native tests. Its two matching copies and retained ownership verify this settled fixture on the existing service thread. Physical endpoint IDs, concurrent audio-thread changes, and a general connection transaction remain separate.
