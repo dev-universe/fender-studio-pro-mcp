@@ -236,7 +236,7 @@ impl CatalogError {
             Self::CatalogChanged => "The preset names changed. Request the first page again.",
             Self::OffsetOutsideCatalog => "The requested offset is past the end of the catalog.",
             Self::UnsupportedApplyProduct => {
-                "File application supports Pro-Q 4 4.13, Pro-C 3 3.02, and Twin 3 3.10 VST3."
+                "This FabFilter product does not support catalog-bound file application."
             }
             Self::AmbiguousPreset => "More than one preset file has the requested catalog name.",
             Self::InvalidPreset => {
@@ -265,6 +265,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
     if !matches!(
         query.product,
         Product::Micro
+            | Product::One
             | Product::ProC2
             | Product::ProDS
             | Product::ProG
@@ -346,6 +347,9 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
 fn matches_preset(product: Product, bytes: &[u8]) -> bool {
     let signature = match product {
         Product::Micro => return bytes.len() >= 16 && bytes.starts_with(b"FMic\x01\0\0\0"),
+        Product::One => {
+            return bytes.len() >= 16 && matches!(&bytes[..8], b"FFPr\0\0\0\0" | b"FFPr\x01\0\0\0");
+        }
         Product::ProC2 => {
             return bytes.len() >= 16
                 && matches!(&bytes[..8], b"FC2p\x02\0\0\0" | b"FPrC\x01\0\0\0");
@@ -661,6 +665,11 @@ mod tests {
 
     #[test]
     fn twin_preset_format_requires_a_bounded_binary_header() {
+        assert!(matches_preset(Product::One, b"FFPr\0\0\0\0exactly8"));
+        assert!(matches_preset(Product::One, b"FFPr\x01\0\0\0exactly8"));
+        assert!(!matches_preset(Product::One, b"FFPr\x02\0\0\0exactly8"));
+        assert!(!matches_preset(Product::One, b"FFPr\x01\0\0\0short"));
+        assert!(!matches_preset(Product::One, b"FT3i012345678901"));
         assert!(matches_preset(Product::Twin3, b"FT3i012345678901"));
         assert!(!matches_preset(Product::Twin3, b"FT3i01234567890"));
         assert!(!matches_preset(Product::Twin3, b"FQ4p012345678901"));

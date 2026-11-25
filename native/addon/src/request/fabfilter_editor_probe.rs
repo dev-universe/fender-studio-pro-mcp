@@ -263,6 +263,30 @@ const TIMELESS3: Image = Image {
     destructor: 0xa34d4,
 };
 
+static ONE_HEADERS: [[u8; 8]; 2] = [*b"FFPr\0\0\0\0", *b"FFPr\x01\0\0\0"];
+
+const ONE: Image = Image {
+    class_uid: "9240FC40-10CD-45A0-B7DA-CECADDC2E97A",
+    uuid: [
+        0x9e, 0xa3, 0x68, 0x71, 0x33, 0xb2, 0x39, 0x99, 0xa8, 0xaf, 0xae, 0x48, 0x2a, 0x4d, 0x0a,
+        0xa6,
+    ],
+    controller_table: 0x104988,
+    state_member: 0xd0,
+    state_table: 0x100190,
+    state_file_method: 0x6bde4,
+    view_table: 0x1062e0,
+    editor_table: 0xf8400,
+    product: "one",
+    executable: "FabFilter One",
+    binary_sha256: "58f06a8f96dd019a174ac8575f59317713573e747fe0a5fb2adadd1388f6e895",
+    binary_size: 2_450_352,
+    preset_format: PresetFormat::BinaryHeaders(&ONE_HEADERS),
+    constructor: 0x124d0,
+    loader: 0x87790,
+    destructor: 0x1b2f8,
+};
+
 const TWIN3: Image = Image {
     class_uid: "91AF218E-111A-44CB-ABFE-F7CB065FF157",
     uuid: [
@@ -450,7 +474,7 @@ struct Image {
 fn image_for_class(class_uid: &str) -> Option<&'static Image> {
     [
         &MICRO, &PRO_C2, &PRO_DS, &PRO_G, &PRO_L, &PRO_L2, &PRO_MB, &PRO_Q2, &PRO_Q3, &PRO_Q4,
-        &TIMELESS3, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
+        &TIMELESS3, &ONE, &TWIN3, &PRO_C3, &PRO_R, &PRO_R2, &SATURN, &SATURN2, &SIMPLON,
     ]
     .into_iter()
     .find(|product| product.class_uid == class_uid)
@@ -866,6 +890,7 @@ mod tests {
             ("036EB530-2A59-11E2-A281-70076288709B", "pro_r"),
             ("6070873C-802A-4B07-8FC0-6AB5459154E9", "pro_r_2"),
             ("8D067533-D8A0-491D-BAA3-6C064C6ABBFB", "saturn_2"),
+            ("9240FC40-10CD-45A0-B7DA-CECADDC2E97A", "one"),
             ("91AF218E-111A-44CB-ABFE-F7CB065FF157", "twin_3"),
         ] {
             assert!(supports_class(class_uid));
@@ -933,6 +958,23 @@ mod tests {
             let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
             assert_eq!(
                 preset_bytes(&TIMELESS3, "Delay.ffp", &digest, &hex).is_some(),
+                valid
+            );
+        }
+    }
+
+    #[test]
+    fn one_preset_bytes_accept_the_two_observed_factory_headers() {
+        for (bytes, valid) in [
+            (b"FFPr\x01\0\0\0abcdefgh", true),
+            (b"FFPr\0\0\0\0abcdefgh", true),
+            (b"FFPr\x02\0\0\0abcdefgh", false),
+            (b"F3Ts\x09\0\0\0abcdefgh", false),
+        ] {
+            let digest = format!("{:x}", Sha256::digest(bytes));
+            let hex: String = bytes.iter().map(|byte| format!("{byte:02x}")).collect();
+            assert_eq!(
+                preset_bytes(&ONE, "Bass.ffp", &digest, &hex).is_some(),
                 valid
             );
         }
