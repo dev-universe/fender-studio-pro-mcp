@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "9a5f5b8ce0c0866703e72699424912cb8f40baac",
+    "main_at_checkpoint": "7f90198ab51bf361f49a3a1b93ea137e2f77a072",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -108,7 +108,9 @@
       "R394B",
       "R395",
       "R397",
-      "R396"
+      "R396",
+      "R398",
+      "R399"
     ],
     "merged_pull_requests": [
       109,
@@ -150,10 +152,10 @@
       145,
       146,
       147,
-      148
+      148,
+      149
     ],
     "open_pull_requests": [
-      149,
       150,
       151,
       152,
@@ -191,14 +193,16 @@
       184,
       185,
       186,
-      187
+      187,
+      188,
+      189
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Multi R391B resolved 20 saved macro assignments and confirmed three live controls on exact children. R392 proved exact Resonance recovery and a Filter Env mismatch after root-only restore. R393 restored all 566 child rows, replaced their live Device IDs, and left only the parent pilot changed. R394B verified six routed MIDI inputs on the parent and both exact Mai Tai Devices. Five returned exactly, and a separate parent pitch-bend correction left only two child positions at the emitted MIDI center. R395 completed ordinary CC0–119 parent facade coverage and restored all 716 rows after independent assigned gain recovery. R397 observed CC120–127 in an empty fixture and restored all 716 DSP rows. R396 verified the exact one-child Filter Env setter and restored the same live parent and both children. PR187 is stacked on PR177 for the shared compare primitive. Next test 14 other assigned macros; keep the unlike Filter Decay pilot/child fixture and general Multi graph control separate. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 149 to 187 as both checks pass on each exact current-base head.",
+    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Multi R391B resolved 20 saved macro assignments and confirmed three live controls on exact children. R392 proved exact Resonance recovery and a Filter Env mismatch after root-only restore. R393 restored all 566 child rows, replaced their live Device IDs, and left only the parent pilot changed. R394B verified six routed MIDI inputs on the parent and both exact Mai Tai Devices. Five returned exactly, and a separate parent pitch-bend correction left only two child positions at the emitted MIDI center. R395 completed ordinary CC0–119 parent facade coverage and restored all 716 rows after independent assigned gain recovery. R397 observed CC120–127 in an empty fixture and restored all 716 DSP rows. R396 verified the exact one-child Filter Env setter and restored the same live parent and both children. PR187 is stacked on PR177 for the shared compare primitive. R398 verified 14 more assigned macros with exact restoration. All 20 roles have live propagation evidence and 19 recovered exactly. R399 left exactly two child Filter Decay values a few Float64 bits from baseline after the root returned. Next test its existing state-capsule recovery; keep general Multi graph control separate. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 150 to 189 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 15,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",

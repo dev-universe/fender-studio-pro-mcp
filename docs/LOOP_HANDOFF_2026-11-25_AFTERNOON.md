@@ -858,3 +858,20 @@ R391–R393의 종료 코드, 시험곡 원본, 관리 파일 18개와 설정 9�
 다음은 나머지 매크로 14개와 별도 Filter Decay 시험이다.
 `main` 19개·로컬 15개 잔여, 전체 2~5일, 장비 의존 4건, 지정
 종료 시각 없음.
+
+## 22시 46분 Multi 매크로 전체 변경 확인
+
+- #149가 두 검사를 통과해 `7f90198`에 병합됐다.
+  [#149](https://github.com/dev-universe/fender-studio-pro-mcp/pull/149)
+- R398에서 Spread·Vol·온오프·패드 축 등 14개의 정확한 매핑과
+  매번 716행 원복을 확인했다. 앞선 시험을 합쳐 19개가 정확히 복구됐다.
+  790요청 59.934초, 앱 112.570초.
+  [#188](https://github.com/dev-universe/fender-studio-pro-mcp/pull/188)
+- R399는 Filter Decay가 두 자식의 `adsr2.decay`를 바꾼다는 점을
+  확인했다. 부모가 돌아와도 자식 두 값은 원래
+  `3FAE90831A900000` 대신 `3FAE908404F00000`였다.
+  85요청 7.328초, 앱 69.482초. 저장 없이 닫아 원본과 설치 18개,
+  설정 9개를 검증했다. [#189](https://github.com/dev-universe/fender-studio-pro-mcp/pull/189)
+
+다음은 Filter Decay 캡슐 복원이다. `main` 19개·로컬 15개 잔여,
+전체 2~5일, 장비 의존 4건, 지정 종료 시각 없음.
