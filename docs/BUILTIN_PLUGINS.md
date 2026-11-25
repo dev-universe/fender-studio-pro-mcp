@@ -92,7 +92,11 @@ Both modes passed actual MCP change/readback/restore for `inputGain`, `outputGai
 
 ## Graph, spatial and musical scope
 
-Splitter addresses the exact existing node name and label under a channel's top-level insert graph. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed 21 cases. Creating, connecting or deleting nodes, branch plugin placement and nested graphs remain unverified.
+Splitter control addresses the exact existing node name and label under a channel's top-level insert graph. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed 21 cases.
+
+The nested insert tools cover the specific two-branch Splitter shapes exercised on Studio Pro 8.1.1. `insert_splitter_add` inserts a Splitter and merger, `insert_slot_move` reconnects an existing effect after a slot or into an empty branch, and `insert_splitter_remove` removes an eligible inner Splitter and retains its two effects in series. The trials compared exact graph links and identities and all 144 Mixtool values after one host Undo. The matching Routing tab is required to move and add. The tested removal also worked with the editor closed. [Move](evidence/2026-11-20-insert-slot-move.json) · [Empty branch](evidence/2026-11-20-insert-slot-empty-branch.json) · [Add](evidence/2026-11-20-insert-splitter-add.json) · [Remove](evidence/2026-11-20-insert-splitter-remove.json)
+
+Current graph reads use an instance-bound routing capture. Saved graph reads describe the last save. In the tested fixtures, ordered links and effect values survived closing and reopening the song. Old document and graph bindings were refused after reopen. Supported topology is limited to the documented shapes. [Save and reopen](evidence/2026-11-20-insert-routing-reopen.json) · [Current routing](evidence/2026-11-20-live-insert-routing.json) · [Saved routing](evidence/2026-11-20-saved-insert-routing.json)
 
 Surround Panner uses `kind:"panner"`, `slot:0` and the expected plugin identity. Its current 5.1 provider reported 47 indexed records. Fifteen controls passed change/readback/restore: `editMode`, `azimuth`, `altitude`, `spread`, `size`, `balanceAzimuth`, `balanceAmount`, `lfeLevel`, `centerLevel`, `disableCenter`, `muteLfe`, `sendLfe`, `snap`, `sizeLock`, `soloLfe`. Other speaker formats and audible spatial behavior require separate checks. The standard Simple panner is a separate path through `panner_get`/`panner_set`.
 
