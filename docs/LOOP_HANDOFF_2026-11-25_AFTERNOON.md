@@ -707,3 +707,18 @@ Scope 캡슐 응답에 파형 범위를 명시하는 `feature/scope-state-covera
 `feature/chorder-audition-lifecycle`에서 문서·인스턴스와 일회용 토큰을
 묶어 구현 중이다. `main` 19개·로컬 17개 잔여, 전체 2~5일,
 장비 의존 4건, 지정 종료 시각 없음.
+
+## 21시 44분 Input Filter 완료
+
+- R385는 동일 7개 GUI 입력을 모니터 활성 상태에서 대조해 범위 안의
+  48·60·72가 두 번째 Chorder에 전달됐음을 확인했다. 240요청 19.527초,
+  앱 59.616초. 1296행·설치 18개·설정 9개 및 시험곡 원본을 확인했다.
+  [#174](https://github.com/dev-universe/fender-studio-pro-mcp/pull/174)
+- R386은 범위를 0~127로 넓혀 모든 GUI 입력의 정확한 MIDI 음정 전달과
+  해제를 두 개의 독립 읽기로 확인했다. 1615요청 123.855초, 앱 154.160초.
+  범위 48~72, 모니터, 1296행, 시험곡과 설치 18개·설정 9개를 복원했다.
+  [#175](https://github.com/dev-universe/fender-studio-pro-mcp/pull/175)
+
+Input Filter를 로컬 완료로 집계했다. 다음은 Rumble Native 앰프 위치와
+앰프·튜너 바이패스 제어를 실제로 대조한다. `main` 19개·로컬 16개 잔여,
+전체 2~5일, 장비 의존 4건, 지정 종료 시각 없음.

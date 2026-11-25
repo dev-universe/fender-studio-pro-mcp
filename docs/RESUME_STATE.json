@@ -91,7 +91,9 @@
       "R381",
       "R382",
       "R383",
-      "R384"
+      "R384",
+      "R385",
+      "R386"
     ],
     "merged_pull_requests": [
       109,
@@ -160,18 +162,21 @@
       170,
       171,
       172,
-      173
+      173,
+      174,
+      175
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne and Chorder are locally qualified. R377–R382 established Scope source display, visible trigger and waveform reset limitations, and the public coverage field. Direct internal trigger timing and capture buffer bytes remain open. R383 observed local Input Filter GUI-lane hold/release without monitoring or downstream events. R384 verified exclusive routed virtual MIDI, factory pitch bounds 48 and 72, and release through a downstream Chorder. Next R385 compares direct GUI lanes with monitoring enabled. Shared Event Chorder audition lifecycle implementation is in feature/chorder-audition-lifecycle using one owner-issued permit and guarded native MIDI 60 edges. R358–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 144 to 173 as both checks pass on each exact current-base head.",
-    "remaining_builtin_units_after_local_verification": 17,
+    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. Next verify Rumble Native amp location, amp bypass and tuner bypass on one bound insert. Shared Event Chorder audition lifecycle implementation is in feature/chorder-audition-lifecycle using an owner-issued permit and guarded native MIDI 60 edges. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 144 to 175 as both checks pass on each exact current-base head.",
+    "remaining_builtin_units_after_local_verification": 16,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
-      "CONTROL-CHORDER"
+      "CONTROL-CHORDER",
+      "CONTROL-INPUTFILTER"
     ]
   },
   "nov25_current_checkpoint": {
