@@ -11,7 +11,7 @@
 ## 호스트에서 쓸 제어 경로를 고른다
 
 1. 제조사 문서, 플러그인 SDK, 호스트가 제공하는 파라미터·프리셋·상태 인터페이스를 확인한다. `plugin_inspect`, `plugin_parameters`, `plugin_parameter_set`의 읽기 확인, `plugin_state`로 처리할 수 있는 범위를 먼저 대조한다.
-2. 공통 경로로 확인할 수 없는 동작에는 REA와 Ghidra를 사용한다. 공식 바이너리에서 대상 객체와 호출 관계를 확인하고, 가능한 경우 격리한 SDK 시험으로 입출력과 복원을 대조한다.
+2. 공통 경로로 확인할 수 없는 동작은 제조사 공식 배포본을 대상으로 REA, Ghidra, Craft-Anything에서 조사한다. Craft-Anything에서는 조사 전용으로 대상을 열고, 바이너리 내부를 볼 때는 Deep 모드에서 파일 구성·문자열·호출 관계를 살핀다. REA·Ghidra의 관측과 대조하고, 가능한 경우 격리한 SDK 시험으로 입출력과 복원을 확인한다. [Craft-Anything 공식 사용 안내](https://github.com/storytold/craft-anything#two-ways-to-use-it)
 3. Rust에서 공통 검증과 타입을 재사용한다. 제품 전용 프리셋이나 동작은 공통 도구의 제품별 처리로 추가할 수 있는지 확인한다. 정확한 버전·클래스·인스턴스와 허용된 입력에 묶는다. 호스트의 네이티브 경로에는 검증된 빌드 또는 ABI 조건을 적용한다. [브리지와 네이티브 호출 구조](ARCHITECTURE.md)
 
 ## 실제 앱에서 변경과 복원을 확인한다
