@@ -26,3 +26,9 @@ profile files.
 The diagnostic remains private. A supported retained Scope destination
 and the corresponding exact native Send assignment still need live
 verification.
+
+R463E added an independent `IListParameter::isEmpty()` check. The
+operator invoked the stock Sources control and left the route unchanged.
+The bounded native list reported empty before the selected value was
+read. This trial made 40 requests in 25.592 seconds, repeated the clean
+shutdown, and restored 18 managed files and 10 app profile files.
