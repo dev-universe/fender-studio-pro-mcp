@@ -205,6 +205,8 @@ Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
 FX, include the zero-based `slot` in the `target`. Stop playback and recording
 before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
+Studio Pro displays the temporary file name for this processor-only import.
+[Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
 
 ### FabFilter preset library
 
