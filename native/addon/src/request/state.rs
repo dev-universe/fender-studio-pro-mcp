@@ -6,6 +6,8 @@ use std::sync::Arc;
 mod stream;
 use stream::MemoryStream;
 
+#[path = "state/pedalboard.rs"]
+mod pedalboard;
 #[path = "state/rumble_model_manifest.rs"]
 mod rumble_model_manifest;
 #[path = "state/rumble_processor_state.rs"]
@@ -249,7 +251,14 @@ pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> 
     let binding = Binding::capture(ctx, &lease)?;
     let sha256 = sha256(&bytes);
     let token = token();
-    let summary = json!({"ok":true,"token":token,"byte_count":bytes.len(),"sha256":sha256,"serialization":"component_alias_IStorable","verified":false,"outcome":"observed"});
+    let mut summary = json!({"ok":true,"token":token,"byte_count":bytes.len(),"sha256":sha256,"serialization":"component_alias_IStorable","verified":false,"outcome":"observed"});
+    if ctx.instance.native_class == "AudioEffect"
+        && ctx.instance.object_id == "Pedalboard"
+        && ctx.instance.class_uid == pedalboard::CLASS
+        && let Some(rack) = pedalboard::rack(&bytes)
+    {
+        summary["pedalboard_rack"] = rack;
+    }
     lease.guard(ctx)?;
     with_registry(ctx.service, |registry| registry.capacity(bytes.len()))?;
     let capsule = Capsule {
