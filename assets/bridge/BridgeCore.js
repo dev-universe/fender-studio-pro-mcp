@@ -135,6 +135,7 @@ class Bridge {
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";
+        const multiChildFilterEnv = req.op === "pluginMultiChildFilterEnvSet";
         const impactOutputSet = req.op === "impactOutputSet";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
@@ -167,6 +168,8 @@ class Bridge {
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
                 }] }
+                : multiChildFilterEnv
+                ? multiChildFilterEnvFailure("unknown", "The Mai Tai Filter Env change could not be established")
                 : serum2Preset
                 ? serum2PresetFailure("unknown", "The Serum preset application could not be established")
                 : cvPresetApply
@@ -185,6 +188,10 @@ class Bridge {
             result = { ok: false, native_outcome: outcome, errors: [{
                 code: "impact_output_context_changed", message: "The Impact output document changed before publication",
             }] };
+        } else if (!isFail(result) && multiChildFilterEnv
+            && (this.contextError || !sameFixtureContext(context, afterContext))) {
+            const outcome = result && result.ok === false && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = multiChildFilterEnvFailure(outcome, "The Multi Instrument document changed before publication");
         } else if (!isFail(result) && cvPresetApply
             && (this.contextError || context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
@@ -400,6 +407,14 @@ class Bridge {
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginMultiChildParameters": return this.fromComponent(c => c.pluginMultiChildParameters(args));
+            case "pluginMultiChildFilterEnvSet": {
+                const transport = this.song().transport;
+                if (!transport || transport.playing !== false || transport.recording !== false)
+                    return multiChildFilterEnvFailure("not_applied", "Stop playback and recording before setting Mai Tai Filter Env");
+                if (!this.component || typeof this.component.pluginMultiChildFilterEnvSet !== "function")
+                    return multiChildFilterEnvFailure("not_applied", "The matching control surface is required");
+                return this.component.pluginMultiChildFilterEnvSet(args);
+            }
             case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
             case "serum2PresetApply": return this.serum2PresetApply(args);
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
@@ -1716,6 +1731,10 @@ const kMidiProgramInstruments = {
     twin_2: { name: "Twin 2", classUid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2" },
     twin_3: { name: "Twin 3", classUid: "91AF218E-111A-44CB-ABFE-F7CB065FF157" }
 };
+
+function multiChildFilterEnvFailure(outcome, message) {
+    return { ok: false, native_outcome: outcome, errors: [{ code: "multi_child_filter_env_unconfirmed", message }] };
+}
 
 function serum2PresetFailure(outcome, message) {
     return { ok: false, native_outcome: outcome, errors: [{ code: "serum2_preset_apply_failed", message }] };

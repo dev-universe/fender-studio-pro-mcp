@@ -149,6 +149,26 @@ transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
 Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
+### Set a Mai Tai child Filter Env amount
+
+On Studio Pro 8.1.1 with the matching macOS arm64 add-on, stop playback and
+recording and select the Multi Instrument Music track. Use `plugin_inspect`
+with `include_nodes: true` and `node_scope: "plugin_controller"` to find the
+parent, the `Inst01` or `Inst02` slot, and its live Mai Tai Device. Read
+`modulationTable.cell1.amount` with `plugin_multi_child_parameters`.
+
+Pass `track`, `expected_document`, `expected_instance`, `child_slot`,
+`expected_child_slot`, and `expected_child_instance` to
+`plugin_multi_child_filter_env_set`. Set `expected_float_bits` to the
+observed `native_value.data.bits_hex` and pass the new value as `float_bits`.
+Both strings encode distinct Float64 values in 0 through 10000.
+
+The add-on compares the original bits before the setter. After
+`applied_unverified`, read the same child again. If the reply is
+`outcome_unknown`, read the current state before making another change.
+The receipt covers the one child amount. Inspect the parent or the other
+child separately when those values matter.
+
 ### Chorder audition
 
 On Studio Pro 8.1.1 with the matching native add-on, `chorder_audition` auditions MIDI 60 on one Chorder Note FX. Stop playback and recording, turn Chorder Learn off, then select the target Music track and inspect the exact Note FX slot and native instance UID. Use the current document token from `host_status` and keep the same MCP server session for all three actions.

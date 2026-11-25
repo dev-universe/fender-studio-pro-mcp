@@ -498,6 +498,42 @@ class NativePluginControls {
                 && (output === 0 || chord.output_pitches[output - 1] < pitch)));
     }
 
+    multiChildFilterEnvRequest(request) {
+        const ids = ["expected_instance", "expected_child_slot", "expected_child_instance"];
+        const fields = ["operation", "child_slot", "expected_float_bits", "float_bits", ...ids];
+        if (!this.guiExact(request, fields) || request.operation !== "multi_child_filter_env_set"
+            || !["Inst01", "Inst02"].includes(request.child_slot)
+            || !ids.every(key => this.insertChainUid(request[key]))
+            || new Set(ids.map(key => request[key])).size !== ids.length
+            || request.expected_float_bits === request.float_bits) return false;
+        return [request.expected_float_bits, request.float_bits].every(bits => {
+            const value = this.guiBitsNumber(bits, 64);
+            return value >= 0 && value <= 10000;
+        });
+    }
+
+    multiChildFilterEnvResult(result, request) {
+        if (result.ok === false) {
+            return this.guiExact(result, ["ok", "outcome", "error"])
+                && ["not_applied", "unknown"].includes(result.outcome)
+                && this.guiExact(result.error, ["code", "message"])
+                && typeof result.error.code === "string" && /^[a-z0-9_]{1,64}$/.test(result.error.code)
+                && typeof result.error.message === "string" && result.error.message.length <= 512;
+        }
+        const matches = (instance, uid, cls) =>
+            this.guiExact(instance, ["object_uid", "class_uid", "native_class", "object_id"])
+            && instance.object_uid === uid && instance.class_uid === cls && instance.native_class === "AudioSynth"
+            && typeof instance.object_id === "string";
+        return this.guiExact(result, ["ok", "outcome", "operation", "source", "parameter", "instance",
+            "child_slot", "child_slot_uid", "child_instance", "before_float_bits", "after_float_bits"])
+            && result.ok === true && result.outcome === "applied_unverified" && result.operation === request.operation
+            && result.source === "dsp" && result.parameter === "modulationTable.cell1.amount"
+            && matches(result.instance, request.expected_instance, "B9D410AD-E47D-495E-8AEE-10D2B2987CC7")
+            && result.child_slot === request.child_slot && result.child_slot_uid === request.expected_child_slot
+            && matches(result.child_instance, request.expected_child_instance, "B625F134-4485-4A50-A3C8-C9CF0C5495E1")
+            && result.before_float_bits === request.expected_float_bits && result.after_float_bits === request.float_bits;
+    }
+
     chorderChordsFailure(error) {
         const valid = this.guiExact(error, ["code", "message"]) && typeof error.code === "string" && error.code.length > 0 && error.code.length <= 64
             && typeof error.message === "string" && error.message.length <= 512;
@@ -1280,7 +1316,7 @@ class NativePluginControls {
                     : "CV preset settings request was refused before loading" } };
     }
 
-    request(device, request, auxiliary) {
+    request(device, request, auxiliary, beforeDispatch) {
         let dispatched = false;
         let parsed = null;
         const guiComparison = request.operation === "parameter_details" && request.compare_gui === true;
@@ -1289,6 +1325,7 @@ class NativePluginControls {
         const guiLearningSet = request.operation === "edit_chorder_model";
         const chorderChords = request.operation === "chorder_chords_get";
         const chorderAudition = request.operation === "chorder_audition_lane";
+        const multiChildFilterEnv = request.operation === "multi_child_filter_env_set";
         const rumbleSerialization = request.operation === "rumble_serialization_inspect";
         const rumbleState = request.operation === "rumble_state_read";
         const rumbleParameters = request.operation === "rumble_parameters_read";
@@ -1318,6 +1355,7 @@ class NativePluginControls {
                 || !this.insertChainUid(request.expected_instance) || !["main", "none"].includes(request.destination)))
                 return stereoSendUnavailable();
             if (chorderChords && !this.chorderChordsRequest(request)) throw new Error("invalid fixed Chorder chord-page request");
+            if (multiChildFilterEnv && !this.multiChildFilterEnvRequest(request)) throw new Error("invalid fixed Mai Tai Filter Env request");
             if (request.operation === "parameter_details" && request.compare_gui !== undefined
                 && (typeof request.compare_gui !== "boolean" || (guiComparison && !this.guiComparisonRequest(request))))
                 throw new Error("invalid finite native GUI comparison request");
@@ -1336,7 +1374,7 @@ class NativePluginControls {
             }
             if (typeof Host === "undefined" || !Host.Objects) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (serum2Preset || chorderAudition || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || chorderAudition || multiChildFilterEnv || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
@@ -1344,7 +1382,7 @@ class NativePluginControls {
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (serum2Preset || chorderAudition || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || chorderAudition || multiChildFilterEnv || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") {
@@ -1372,6 +1410,7 @@ class NativePluginControls {
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
             if (chorderAudition && capability.chorder_audition_api !== "fixed_midi60_v1") throw new Error("unsupported native Chorder audition API");
+            if (multiChildFilterEnv && capability.multi_child_filter_env_set_api !== "mai_tai_filter_env_v1") throw new Error("unsupported native Mai Tai Filter Env API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
             if (guiLearning && capability.gui_model_edit_api !== "chorder_learning_controls_v1") throw new Error("unsupported native Chorder learning API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
@@ -1388,6 +1427,13 @@ class NativePluginControls {
                 const transport = this.component.bridge.song().transport;
                 if (!transport || transport.playing !== false || transport.recording !== false)
                     throw new Error("stop playback and recording before Chorder audition");
+            }
+            if (multiChildFilterEnv) {
+                const transport = this.component.bridge.song().transport;
+                if (!transport || transport.playing !== false || transport.recording !== false)
+                    throw new Error("stop playback and recording before setting Mai Tai Filter Env");
+                if (typeof beforeDispatch !== "function" || !beforeDispatch() || !this.sameContext(before))
+                    throw new Error("the selected Multi Instrument track or document changed before dispatch");
             }
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
@@ -1407,6 +1453,7 @@ class NativePluginControls {
                     return { ok: false, outcome: "unknown", diagnostic: stereoSendChangeTrace("native_reply", true) };
             }
             if (insertGraphEdit && !this.insertGraphEditResult(result, request)) throw new Error("invalid insert graph edit receipt");
+            if (multiChildFilterEnv && !this.multiChildFilterEnvResult(result, request)) throw new Error("invalid native Mai Tai Filter Env receipt");
             if (cvStructure) {
                 if (result.ok === false) return this.cvStructureFailure(true,result);
                 if (!this.cvStructureResult(result,request)) throw new Error("invalid CV structure lifecycle result");
@@ -1479,6 +1526,11 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (multiChildFilterEnv) {
+                return { ok: false, outcome: dispatched ? "unknown" : "not_applied", error: {
+                    code: "multi_child_filter_env_unconfirmed", message: "The native Mai Tai Filter Env change could not be established",
+                } };
+            }
             if (serum2Preset) return serum2Failure(dispatched ? "unknown" : "not_applied");
             if (cvPresetApply) return this.cvPresetApplyFailure(dispatched, parsed);
             if (cvStructure) return this.cvStructureFailure(dispatched,null);

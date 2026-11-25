@@ -236,6 +236,12 @@ impl McpServer {
                 "Read a native DSP parameter page for a Mai Tai child in Multi Instrument slot Inst01 or Inst02. On the exclusively selected Music track, call plugin_inspect with include_nodes=true and node_scope=plugin_controller to find the current parent, child slot and Device UUIDs. Supply all three UUIDs and expected_document for every page. Offset defaults to 0 and limit to 64. Follow next_offset until null. Pages are sequential observations.",
                 false,
             ),
+            named::<PluginMultiChildFilterEnvSet>(
+                "plugin_multi_child_filter_env_set",
+                "pluginMultiChildFilterEnvSet",
+                "Set modulationTable.cell1.amount on one exact Mai Tai child in Multi Instrument slot Inst01 or Inst02. Requires a selected Music track, stopped playback and recording, the current document, and the live parent, slot and Device UUIDs. Pass two distinct Float64 hex values in 0..10000. Read expected_float_bits from the child's native_value.data.bits_hex. The setter compares it before dispatch. After applied_unverified, read the child again.",
+                true,
+            ),
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
@@ -714,9 +720,50 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 61;
+    const EXPECTED_TOOL_COUNT: usize = 62;
 
     use super::*;
+
+    #[test]
+    fn multi_child_filter_env_tool_schema_admits_only_the_closed_comparison() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "plugin_multi_child_filter_env_set")
+            .unwrap();
+        assert_eq!(spec.operation, Some("pluginMultiChildFilterEnvSet"));
+        let schema = &spec.tool.input_schema;
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(
+            schema["$defs"]["MultiChildSlot"]["enum"],
+            json!(["Inst01", "Inst02"])
+        );
+        assert_eq!(
+            schema["required"],
+            json!([
+                "track",
+                "expected_instance",
+                "child_slot",
+                "expected_child_slot",
+                "expected_child_instance",
+                "expected_float_bits",
+                "float_bits",
+                "expected_document"
+            ])
+        );
+        assert_eq!(
+            schema["properties"]["expected_float_bits"]["pattern"],
+            "^[0-9a-fA-F]{16}$"
+        );
+        let union = crate::operation::schema();
+        assert!(union["allOf"].as_array().unwrap().iter().any(|rule| {
+            rule["if"]["properties"]["operation"]["enum"]
+                == json!([
+                    "pluginMultiChildFilterEnvSet",
+                    "plugin_multi_child_filter_env_set"
+                ])
+                && rule["then"]["required"] == json!(["expected_document"])
+        }));
+    }
 
     #[test]
     fn multi_child_dsp_tool_exposes_two_slots_and_requires_live_identity() {

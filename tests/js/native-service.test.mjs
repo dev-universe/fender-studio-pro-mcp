@@ -615,6 +615,143 @@ test('Multi child DSP rejects stale document and session before bridge dispatch'
   assert.equal(calls, 1);
 });
 
+const multiChildFilterEnvArgs = {
+  track: 'Multi Fixture', expected_instance: instance.object_uid, child_slot: 'Inst02',
+  expected_child_slot: '42345678-1234-1234-1234-123456789ABC',
+  expected_child_instance: '52345678-1234-1234-1234-123456789ABC',
+  expected_float_bits: '40b549fe36300000', float_bits: '40B38BA513300000',
+};
+
+function filterEnvAck(request) {
+  return {
+    ok: true, outcome: 'applied_unverified', operation: request.operation,
+    source: 'dsp', parameter: 'modulationTable.cell1.amount',
+    instance: { object_uid: request.expected_instance, class_uid: 'B9D410AD-E47D-495E-8AEE-10D2B2987CC7',
+      native_class: 'AudioSynth', object_id: 'Multi Instrument' },
+    child_slot: request.child_slot, child_slot_uid: request.expected_child_slot,
+    child_instance: { object_uid: request.expected_child_instance, class_uid: 'B625F134-4485-4A50-A3C8-C9CF0C5495E1',
+      native_class: 'AudioSynth', object_id: 'Mai Tai' },
+    before_float_bits: request.expected_float_bits, after_float_bits: request.float_bits,
+  };
+}
+
+test('Multi child Filter Env carries one addressed compare and preserves a proven stale-value or target refusal', () => {
+  const args = multiChildFilterEnvArgs;
+  const expectedBits = args.expected_float_bits.toUpperCase();
+  let currentBits = expectedBits, writes = 0;
+  const calls = [];
+  const h = harness({ getObjectByName() {
+    return {
+      capabilities() {
+        return JSON.stringify({ ok: true, api: 'fender-mcp-native-v1', multi_child_filter_env_set_api: 'mai_tai_filter_env_v1' });
+      },
+      request(device, body) {
+        assert.equal(device, h.device);
+        const request = JSON.parse(body);
+        calls.push(request);
+        if (request.expected_child_instance !== args.expected_child_instance || request.expected_float_bits !== currentBits)
+          return JSON.stringify({ ok: false, outcome: 'not_applied',
+            error: { code: 'multi_child_filter_env_write', message: 'Expected bound child or value changed' } });
+        writes++;
+        currentBits = request.float_bits;
+        return JSON.stringify(filterEnvAck(request));
+      },
+    };
+  } });
+  h.component.bridge.song = () => ({ transport: { playing: false, recording: false } });
+  h.component.instrumentOf = ({ track }) => track === args.track ? { device: h.device } : { error: 'wrong track' };
+
+  for (const bad of [{ track: 'Peer' }, { child_slot: 'Inst03' }, { expected_child_slot: args.expected_instance },
+    { float_bits: expectedBits }, { expected_float_bits: 4 }, { float_bits: '7FF8000000000000' },
+    { float_bits: '40C3880000000001' }, { param: 'filter.cutoff' }]) {
+    assert.equal(h.component.pluginMultiChildFilterEnvSet({ ...args, ...bad }).native_outcome, 'not_applied');
+  }
+  assert.equal(calls.length, 0);
+  const result = h.component.pluginMultiChildFilterEnvSet(args);
+  assert.equal(result.native_outcome, 'applied_unverified');
+  assert.equal(result.after_float_bits, args.float_bits);
+  const { track: _track, ...fields } = args;
+  assert.deepEqual(calls[0], { ...fields, expected_float_bits: expectedBits, operation: 'multi_child_filter_env_set' });
+
+  const replay = h.component.pluginMultiChildFilterEnvSet(args);
+  assert.equal(replay.native_outcome, 'not_applied');
+  assert.equal(replay.after_float_bits, undefined);
+  const crosswire = h.component.pluginMultiChildFilterEnvSet({ ...args, expected_float_bits: args.float_bits,
+    float_bits: expectedBits, expected_child_instance: '62345678-1234-1234-1234-123456789ABC' });
+  assert.equal(crosswire.native_outcome, 'not_applied');
+  assert.equal(writes, 1);
+});
+
+test('Multi child Filter Env separates undispatched focus, recording and capability failures from lost native proof', () => {
+  const args = multiChildFilterEnvArgs;
+  let mode, phase, dispatches = 0;
+  const nextDevice = {};
+  const h = harness({ getObjectByName() {
+    return {
+      capabilities() {
+        phase = 'capabilities';
+        return JSON.stringify({ ok: true, api: 'fender-mcp-native-v1',
+          ...(mode === 'old_api' ? {} : { multi_child_filter_env_set_api: 'mai_tai_filter_env_v1' }) });
+      },
+      request(_device, body) {
+        dispatches++;
+        phase = 'dispatched';
+        if (mode === 'lost') throw new Error('No reply from the matching native service');
+        const ack = filterEnvAck(JSON.parse(body));
+        if (mode === 'malformed') ack.child_slot_uid = ack.child_instance.object_uid;
+        return JSON.stringify(ack);
+      },
+    };
+  } });
+  h.component.bridge.song = () => ({ transport: { playing: false, recording: mode === 'recording' } });
+  h.component.instrumentOf = () => ({
+    device: (mode === 'pre_focus' && phase === 'capabilities') || (mode === 'post_focus' && phase === 'dispatched')
+      ? nextDevice : h.device,
+  });
+  for (mode of ['pre_focus', 'recording', 'old_api']) {
+    phase = null;
+    assert.equal(h.component.pluginMultiChildFilterEnvSet(args).native_outcome, 'not_applied');
+  }
+  assert.equal(dispatches, 0);
+  for (mode of ['lost', 'malformed', 'post_focus']) {
+    phase = null;
+    const failure = h.component.pluginMultiChildFilterEnvSet(args);
+    assert.equal(failure.native_outcome, 'unknown');
+    assert.equal(failure.after_float_bits, undefined);
+    assert.equal(failure.child_instance, undefined);
+  }
+  assert.equal(dispatches, 3);
+});
+
+test('Multi child Filter Env bridge refuses stale framework binds and erases an acknowledgement after a document switch', () => {
+  const host = bridgeHarness();
+  const context = host.current();
+  let calls = 0, playing = false;
+  const args = multiChildFilterEnvArgs;
+  const op = 'pluginMultiChildFilterEnvSet';
+  host.bridge.song = () => ({ transport: { playing, recording: false } });
+  host.bridge.component = {
+    pluginMultiChildFilterEnvSet() {
+      calls++;
+      host.manager.activeDocument = { title: 'Other', path: { url: 'file:///scratch/other.song' } };
+      return { ok: true, native_outcome: 'applied_unverified', after_float_bits: args.float_bits };
+    },
+  };
+  assert.equal(host.request({ op, args }).code, 'context_required');
+  assert.equal(host.request({ op, args, expectedSession: 'old', expectedDocument: context.document }).code, 'session_changed');
+  assert.equal(host.request({ op, args, expectedSession: context.session, expectedDocument: 'old' }).code, 'document_changed');
+  const request = { op, args, expectedSession: context.session, expectedDocument: context.document };
+  playing = true;
+  assert.equal(host.request(request).result.native_outcome, 'not_applied');
+  assert.equal(calls, 0);
+  playing = false;
+  const changed = host.request(request);
+  assert.equal(changed.result.native_outcome, 'unknown');
+  assert.notEqual(changed.document, context.document);
+  assert.equal(changed.result.after_float_bits, undefined);
+  assert.equal(calls, 1);
+});
+
 test('native calls preserve the exact host object and use the fixed registered service', () => {
   const lookups = [], calls = [];
   const h = harness({ getObjectByName(name) { lookups.push(name); return native((target, body) => { calls.push([target, JSON.parse(body)]); return success(); }); } });

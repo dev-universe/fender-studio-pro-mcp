@@ -364,11 +364,13 @@ fn execute(
     }
     let parameter_readback_requested =
         matches!(&operation, Operation::SetPluginParam(change) if change.readback == Some(true));
+    let multi_child_filter_env = matches!(operation, Operation::PluginMultiChildFilterEnvSet(_));
     if response.document != context.document
         || (matches!(
             operation,
             Operation::ExternalPortMenu(_) | Operation::ExternalStereoSendSet(_)
         ) || parameter_readback_requested
+            || multi_child_filter_env
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
             || operation.inspects_impact_outputs()
@@ -382,14 +384,24 @@ fn execute(
     {
         let cv_apply_refused =
             operation.applies_cv_preset_settings() && cv_preset_apply::refused(&response);
-        if operation.applies_cv_preset_settings() || parameter_readback_requested {
+        let multi_child_refused = multi_child_filter_env
+            && if response.ok {
+                valid_filter_env_failure(&response.result)
+                    && response.result["native_outcome"] == "not_applied"
+            } else {
+                response.code.as_deref() == Some("document_changed")
+            };
+        if operation.applies_cv_preset_settings()
+            || parameter_readback_requested
+            || multi_child_filter_env
+        {
             response.result = Value::Null;
         } else {
             invalidate_gui_evidence(&operation, &mut response.result);
         }
         return Ok(Receipt {
             request_id,
-            outcome: if read_only || cv_apply_refused {
+            outcome: if read_only || cv_apply_refused || multi_child_refused {
                 Outcome::NotApplied
             } else {
                 Outcome::Unknown
@@ -494,6 +506,18 @@ fn execute(
         && (!response.ok || !verify(&operation, &response.result))
     {
         response.result = normalize_stereo_send_set_failure(&response.result);
+    }
+    if let Operation::PluginMultiChildFilterEnvSet(change) = &operation {
+        if !response.ok {
+            response.result = Value::Null;
+        } else if !valid_filter_env_ack(change, &response.result)
+            && !valid_filter_env_failure(&response.result)
+        {
+            response.result = json!({"ok": false, "native_outcome": "unknown", "errors": [{
+                "code": "invalid_multi_child_filter_env_receipt",
+                "message": "The Filter Env receipt did not establish the exact child amount change"
+            }]});
+        }
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -1104,6 +1128,65 @@ fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
     }
 }
 
+fn valid_filter_env_ack(
+    change: &crate::operation::PluginMultiChildFilterEnvSet,
+    value: &Value,
+) -> bool {
+    let identity = |key: &str, uid: &str, class: &str| {
+        let instance = &value[key];
+        instance.as_object().is_some_and(|fields| fields.len() == 4)
+            && instance["object_uid"] == uid
+            && instance["class_uid"] == class
+            && instance["native_class"] == "AudioSynth"
+            && instance["object_id"].is_string()
+    };
+    value.as_object().is_some_and(|fields| fields.len() == 12)
+        && value["ok"] == true
+        && value["outcome"] == "applied_unverified"
+        && value["native_outcome"] == "applied_unverified"
+        && value["operation"] == "multi_child_filter_env_set"
+        && value["source"] == "dsp"
+        && value["parameter"] == "modulationTable.cell1.amount"
+        && identity(
+            "instance",
+            &change.expected_instance,
+            "B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+        )
+        && value["child_slot"] == json!(change.child_slot)
+        && value["child_slot_uid"] == change.expected_child_slot
+        && identity(
+            "child_instance",
+            &change.expected_child_instance,
+            "B625F134-4485-4A50-A3C8-C9CF0C5495E1",
+        )
+        && value["before_float_bits"] == change.expected_float_bits.to_ascii_uppercase()
+        && value["after_float_bits"] == change.float_bits.to_ascii_uppercase()
+}
+
+fn valid_filter_env_failure(value: &Value) -> bool {
+    value.as_object().is_some_and(|fields| fields.len() == 3)
+        && value["ok"] == false
+        && matches!(
+            value["native_outcome"].as_str(),
+            Some("not_applied" | "unknown")
+        )
+        && value["errors"].as_array().is_some_and(|errors| {
+            let [error] = errors.as_slice() else {
+                return false;
+            };
+            error.as_object().is_some_and(|fields| fields.len() == 2)
+                && error["code"].as_str().is_some_and(|code| {
+                    (1..=64).contains(&code.len())
+                        && code
+                            .bytes()
+                            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+                })
+                && error["message"]
+                    .as_str()
+                    .is_some_and(|message| message.encode_utf16().count() <= 512)
+        })
+}
+
 fn mutation_outcome(value: &Value) -> Outcome {
     if let Some(outcome) = value.get("native_outcome").and_then(Value::as_str) {
         match outcome {
@@ -1494,6 +1577,50 @@ mod tests {
     use super::*;
 
     #[test]
+    fn multi_child_filter_env_rejects_receipts_with_an_unbound_target_or_bits() {
+        let change = serde_json::from_value(json!({
+            "track": "Multi Fixture", "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot": "Inst02", "expected_child_slot": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits": "40b549fe36300000", "float_bits": "40B38BA513300000"
+        }))
+        .unwrap();
+        let clean = json!({
+            "ok":true, "outcome":"applied_unverified", "native_outcome":"applied_unverified",
+            "operation":"multi_child_filter_env_set", "source":"dsp", "parameter":"modulationTable.cell1.amount",
+            "instance":{"object_uid":"AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA","class_uid":"B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+                "native_class":"AudioSynth","object_id":"Parent preset"},
+            "child_slot":"Inst02", "child_slot_uid":"BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "child_instance":{"object_uid":"CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC","class_uid":"B625F134-4485-4A50-A3C8-C9CF0C5495E1",
+                "native_class":"AudioSynth","object_id":"Child preset"},
+            "before_float_bits":"40B549FE36300000", "after_float_bits":"40B38BA513300000"
+        });
+        assert!(valid_filter_env_ack(&change, &clean));
+        assert_eq!(mutation_outcome(&clean), Outcome::AppliedUnverified);
+        for (field, wrong) in [
+            ("child_slot", json!("Inst01")),
+            ("before_float_bits", json!("40B38BA513300000")),
+            ("after_float_bits", json!("40B549FE36300000")),
+            ("native_outcome", json!("applied_verified")),
+        ] {
+            let mut wrong_receipt = clean.clone();
+            wrong_receipt[field] = wrong;
+            assert!(!valid_filter_env_ack(&change, &wrong_receipt), "{field}");
+        }
+        let mut wrong_child = clean.clone();
+        wrong_child["child_instance"]["object_uid"] = clean["instance"]["object_uid"].clone();
+        assert!(!valid_filter_env_ack(&change, &wrong_child));
+
+        let mut refusal = json!({"ok":false,"native_outcome":"not_applied","errors":[
+            {"code":"multi_child_filter_env_write","message":"Expected value changed"}
+        ]});
+        assert!(valid_filter_env_failure(&refusal));
+        assert_eq!(mutation_outcome(&refusal), Outcome::NotApplied);
+        refusal["after_float_bits"] = clean["after_float_bits"].clone();
+        assert!(!valid_filter_env_failure(&refusal));
+    }
+
+    #[test]
     fn impact_outputs_require_a_bound_instrument_and_ordered_complete_observation() {
         let uid = "12345678-1234-1234-1234-123456789ABC";
         let args = json!({"kind":"instrument","track":"Scratch Impact","plugin":"Impact",
@@ -1584,6 +1711,9 @@ mod tests {
             ("chorderAudition", json!({"action":"prepare","track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
+            ("pluginMultiChildFilterEnvSet", json!({"track":"Scratch","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "child_slot":"Inst01","expected_child_slot":"22345678-1234-1234-1234-123456789ABC","expected_child_instance":"32345678-1234-1234-1234-123456789ABC",
+                "expected_float_bits":"3FF0000000000000","float_bits":"4000000000000000"})),
             ("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","param":"gain","value":0})),
             ("setChannel", json!({"channel":"Scratch","field":"mute","value":true})),
             ("setChannelLabel", json!({"channel":"Scratch","name":"Scratch"})),

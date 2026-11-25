@@ -617,6 +617,38 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return native;
     }
 
+    pluginMultiChildFilterEnvSet(args) {
+        const failure = (outcome, error) => ({ ok: false, native_outcome: outcome, errors: [error] });
+        const refuse = message => failure("not_applied", { code: "multi_child_filter_env_refused", message });
+        const controls = new NativePluginControls(this);
+        if (!controls.guiExact(args, ["track", "expected_instance", "child_slot", "expected_child_slot",
+            "expected_child_instance", "expected_float_bits", "float_bits"])
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512
+            || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.expected_float_bits !== "string" || typeof args.float_bits !== "string")
+            return refuse("A selected Multi Instrument track and exact child amount are required");
+        const { track, ...fields } = args;
+        const request = { ...fields, operation: "multi_child_filter_env_set",
+            expected_float_bits: fields.expected_float_bits.toUpperCase(), float_bits: fields.float_bits.toUpperCase() };
+        if (!controls.multiChildFilterEnvRequest(request))
+            return refuse("Distinct live parent, slot and child UUIDs and two valid Float64 bit strings are required");
+        const target = { track };
+        const plug = this.instrumentOf(target);
+        if (!plug || plug.error) return refuse("Select the unique target Music track with Multi Instrument");
+        const stillFocused = () => {
+            const current = this.instrumentOf(target);
+            return current && !current.error && current.device === plug.device
+                && current.component === plug.component && current.element === plug.element;
+        };
+        const native = controls.request(plug.device, request, undefined, stillFocused);
+        if (native.ok === false) return failure(native.outcome, native.error);
+        if (!stillFocused()) {
+            return failure("unknown", { code: "multi_child_filter_env_unconfirmed",
+                message: "The active child amount or selected track could not be confirmed after native dispatch" });
+        }
+        return { ...native, native_outcome: native.outcome };
+    }
+
     pluginModels(args) {
         const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "catalog", "offset", "limit"];
         const uid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
