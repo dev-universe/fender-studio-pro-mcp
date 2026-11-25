@@ -36,3 +36,12 @@ owner resolution.
 The release MCP server returned all 260 observed mappings over stdio on an
 isolated profile with Studio Pro closed. Five invalid requests were refused,
 including a controller outside the reference range and an extra channel.
+
+R472 repeated the comparison using the signed 2.1.5 arm64 bundle for both
+classes. The wider SDK probes exited before completing. All 130 channel-0
+replies per variant matched R453. The MCP server independently returned
+all 260 reference mappings and rejected each explicit extra channel from
+1 through 15 for both variants as an invalid request. The verification also
+repeated the five earlier refusals. The MCP server exited normally with
+Studio Pro closed. The reference coverage remains MIDI channel 1, which is
+channel 0 in the SDK.
