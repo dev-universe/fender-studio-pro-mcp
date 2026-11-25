@@ -28,3 +28,18 @@ The three guarded owners made 24, 16, and 55 requests. Total owner time
 was 11.191 seconds. Studio Pro exited normally after 98.417 seconds.
 No playback, MIDI, or Save was dispatched, and 18 managed files and 10
 app profile files were restored and verified.
+
+R470 rebuilt the current `main` at `ccfaec0` and repeated the installed
+8.1.1 test. The list query confirmed all 16 choices and `FAT` at index
+5. The same local Volume sequence and unchanged global alias readings
+were reproduced. The FAT component remained 2,371 bytes with an
+identical hash before and after the local Volume change.
+
+After returning the slot to vacant, the original same-instance component
+load was acknowledged. Independent reads confirmed the vacant activation
+value returned. The writable `cab.micmixA` normalized value shifted by
+one Float32 ULP, from `3F4BB3E9` to `3F4BB3E8`. The resulting component
+had 2,294 bytes compared with the original 2,297 bytes. The trial kept
+this as an incomplete full-component restoration. It made 83 requests
+in 7.874 seconds. Studio Pro exited normally without saving. All 18
+managed files and 10 app profile files were restored and verified.
