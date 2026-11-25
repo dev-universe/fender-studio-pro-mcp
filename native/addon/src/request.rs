@@ -90,7 +90,7 @@ enum Mode {
 fn default_limit() -> u32 {
     64
 }
-fn supplied_folder<'de, D: serde::Deserializer<'de>>(
+fn supplied_string<'de, D: serde::Deserializer<'de>>(
     deserializer: D,
 ) -> Result<Option<String>, D::Error> {
     String::deserialize(deserializer).map(Some)
@@ -107,6 +107,8 @@ enum Request {
         second_slot: u8,
         expected_first_model: String,
         expected_second_model: String,
+        #[serde(default, deserialize_with = "supplied_string")]
+        expected_rack_sha256: Option<String>,
     },
     ImpactOutputSet {
         expected_instance: String,
@@ -306,20 +308,20 @@ enum Request {
         document_epoch: String,
         #[serde(default)]
         include_routing: bool,
-        #[serde(default, deserialize_with = "supplied_folder")]
+        #[serde(default, deserialize_with = "supplied_string")]
         expected_folder: Option<String>,
     },
     InsertChainRestore {
         bridge_session: String,
         document_epoch: String,
-        #[serde(default, deserialize_with = "supplied_folder")]
+        #[serde(default, deserialize_with = "supplied_string")]
         expected_folder: Option<String>,
         token: String,
     },
     InsertChainRelease {
         bridge_session: String,
         document_epoch: String,
-        #[serde(default, deserialize_with = "supplied_folder")]
+        #[serde(default, deserialize_with = "supplied_string")]
         expected_folder: Option<String>,
         token: String,
     },
@@ -2633,6 +2635,7 @@ fn dispatch_device(
         second_slot,
         ref expected_first_model,
         ref expected_second_model,
+        ref expected_rack_sha256,
         ..
     } = request
     {
@@ -2640,6 +2643,7 @@ fn dispatch_device(
             &ctx,
             [first_slot, second_slot],
             [expected_first_model, expected_second_model],
+            expected_rack_sha256.as_deref(),
         );
         value["instance"] = json!(ctx.instance);
         return Reply {
