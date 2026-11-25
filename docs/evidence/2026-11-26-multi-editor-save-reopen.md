@@ -28,6 +28,15 @@ persisted exactly. The parent Filter Env changed from raw
 MCP owner in the reopened app confirmed the single discrepancy, the visual
 branches, and the old-document rejection without changing parameter values.
 
+An archive comparison across all 20 macro definitions found one change.
+The original Filter Env pilot was `0.929999828338623046875`. The pilot
+written by Save was `0.81802761554718017578125`. The latter exactly
+matches the normalized value of the one assigned `Inst01` parameter,
+`modulationTable.cell1.amount`, and the reopened parent value. The new
+`Inst02` was unassigned and had a different value for that parameter.
+The discrepancy is already present in the saved archive. A Save-only
+control on the one-instrument fixture remains to be run.
+
 The Save witness took 134 MCP requests in 106.567 seconds. The strict reopen
 and boundary confirmation took 49 and 94 requests in 4.500 and 15.271
 seconds, respectively. Both DAW processes and all three owners exited
