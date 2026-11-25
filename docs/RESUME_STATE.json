@@ -73,7 +73,8 @@
       "R367D",
       "R368",
       "R369",
-      "R370"
+      "R370",
+      "R371"
     ],
     "merged_pull_requests": [
       109,
@@ -130,14 +131,15 @@
       158,
       159,
       160,
-      161
+      161,
+      162
     ],
     "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. Next verify the preview press/release and consider the typed command surface. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 136 to 161 as both checks pass on each exact current-base head.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. R371 verified lower-key audition and the distinct raw preview flag. Next test whether the public DSP Clear route invokes the stored-model action, then implement typed editor commands where needed. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 136 to 162 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PRESENCE",
