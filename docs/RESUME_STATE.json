@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "da498a507767c76696b6f1d0c25db0d899e491a4",
+    "main_at_checkpoint": "6115edad1412fb26d0971f0d832bdae57ec2d7c4",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -118,7 +118,9 @@
       "R404",
       "R405",
       "R405B",
-      "R406"
+      "R406",
+      "R407",
+      "R408"
     ],
     "merged_pull_requests": [
       109,
@@ -165,12 +167,12 @@
       150,
       151,
       152,
-      153
-    ],
-    "open_pull_requests": [
+      153,
       154,
       155,
-      156,
+      156
+    ],
+    "open_pull_requests": [
       157,
       158,
       159,
@@ -208,14 +210,16 @@
       191,
       192,
       193,
-      194
+      194,
+      195,
+      196
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Multi R391B resolved 20 saved macro assignments and confirmed three live controls on exact children. R392 proved exact Resonance recovery and a Filter Env mismatch after root-only restore. R393 restored all 566 child rows, replaced their live Device IDs, and left only the parent pilot changed. R394B verified six routed MIDI inputs on the parent and both exact Mai Tai Devices. Five returned exactly, and a separate parent pitch-bend correction left only two child positions at the emitted MIDI center. R395 completed ordinary CC0–119 parent facade coverage and restored all 716 rows after independent assigned gain recovery. R397 observed CC120–127 in an empty fixture and restored all 716 DSP rows. R396 verified the exact one-child Filter Env setter and restored the same live parent and both children. PR187 is stacked on PR177 for the shared compare primitive. R398 verified 14 more assigned macros with exact restoration. All 20 roles have live propagation evidence and 19 recovered exactly. R399 left exactly two child Filter Decay values a few Float64 bits from baseline after the root returned. R400 showed the capsule restores Decay and both children but affects the unrelated Filter Env pilot. R401 combined that capsule with exact Filter Env recovery and verified all 716 DSP rows with rebound Devices. The capsule fingerprint still changed. All twenty assigned macros have tested live change and exact DSP recovery. General Multi graph editing remains open. R402 found that a mouse click with Pad Focus off changed the editor selection, but the Focus cutoff write still targeted pad 0. R403 confirmed MIDI Focus selection on pads 1 and 17 with equal normalized bits, different raw precision, and exact 4,262-row recovery. R404 verified exact binary-fraction Focus cutoff writes and recovery on MIDI-selected pads 1 and 17, then recovered all 4,262 records. R405 and R405B observed a loaded Impact Normal pad hold and release, its silent neighbor, exact zero in a fresh MCP owner in the same DAW session, and exact loaded 4,262-row recovery. R406 verified reopening an Impact test song with the original C1 sample reference available, Normal trigger and exact parameter readback across all 4,262 rows. All four Impact evidence PRs are pending current-base checks. CONTROL-IMPACT locally qualified within the fixed predicate. Next investigate typed ownership and host mutations for Multi Instrument and Shared Graph. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 154 to 194 as both checks pass on each exact current-base head.",
+    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Multi R391B resolved 20 saved macro assignments and confirmed three live controls on exact children. R392 proved exact Resonance recovery and a Filter Env mismatch after root-only restore. R393 restored all 566 child rows, replaced their live Device IDs, and left only the parent pilot changed. R394B verified six routed MIDI inputs on the parent and both exact Mai Tai Devices. Five returned exactly, and a separate parent pitch-bend correction left only two child positions at the emitted MIDI center. R395 completed ordinary CC0–119 parent facade coverage and restored all 716 rows after independent assigned gain recovery. R397 observed CC120–127 in an empty fixture and restored all 716 DSP rows. R396 verified the exact one-child Filter Env setter and restored the same live parent and both children. PR187 is stacked on PR177 for the shared compare primitive. R398 verified 14 more assigned macros with exact restoration. All 20 roles have live propagation evidence and 19 recovered exactly. R399 left exactly two child Filter Decay values a few Float64 bits from baseline after the root returned. R400 showed the capsule restores Decay and both children but affects the unrelated Filter Env pilot. R401 combined that capsule with exact Filter Env recovery and verified all 716 DSP rows with rebound Devices. The capsule fingerprint still changed. All twenty assigned macros have tested live change and exact DSP recovery. General Multi graph editing remains open. R402 found that a mouse click with Pad Focus off changed the editor selection, but the Focus cutoff write still targeted pad 0. R403 confirmed MIDI Focus selection on pads 1 and 17 with equal normalized bits, different raw precision, and exact 4,262-row recovery. R404 verified exact binary-fraction Focus cutoff writes and recovery on MIDI-selected pads 1 and 17, then recovered all 4,262 records. R405 and R405B observed a loaded Impact Normal pad hold and release, its silent neighbor, exact zero in a fresh MCP owner in the same DAW session, and exact loaded 4,262-row recovery. R406 verified reopening an Impact test song with the original C1 sample reference available, Normal trigger and exact parameter readback across all 4,262 rows. All four Impact evidence PRs are pending current-base checks. CONTROL-IMPACT locally qualified within the fixed predicate. Next investigate typed ownership and host mutations for Multi Instrument and Shared Graph. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. R407 observed one actual Multi editor Add and one Undo. It recovered the original complete node records, exact child binding and DSP values; controller enumeration order changed. R408 found no change from one actual Splitter drop between consecutive Mixtool nodes. Continue R409 with one actual Save and a fresh app and MCP reopen of an independently owned scratch copy. Verify the saved logical graph against live ownership and reject the old document. Merge PRs 157 to 196 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 14,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
