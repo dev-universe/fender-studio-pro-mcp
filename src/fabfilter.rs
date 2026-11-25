@@ -280,6 +280,7 @@ fn load_from(library: &Path, query: &PresetApply) -> Result<PresetAsset, Catalog
             | Product::Saturn
             | Product::Saturn2
             | Product::Simplon
+            | Product::Timeless3
             | Product::Twin3
     ) {
         return Err(CatalogError::UnsupportedApplyProduct);
@@ -351,6 +352,10 @@ fn matches_preset(product: Product, bytes: &[u8]) -> bool {
         }
         Product::ProDS => return bytes.len() >= 16 && bytes.starts_with(b"FPSr\x02\0\0\0"),
         Product::ProG => return bytes.len() >= 16 && bytes.starts_with(b"FPGr\x02\0\0\0"),
+        Product::Timeless3 => {
+            return bytes.len() >= 16
+                && matches!(&bytes[..8], b"F3Ts\x09\0\0\0" | b"F3Ts\x0a\0\0\0");
+        }
         Product::Simplon => return bytes.len() >= 16 && bytes.starts_with(b"FSim\x01\0\0\0"),
         Product::ProL => return bytes.len() >= 16 && bytes.starts_with(b"FPLr\x03\0\0\0"),
         Product::ProL2 => return bytes.len() >= 16 && bytes.starts_with(b"FL2p\x02\0\0\0"),
@@ -685,6 +690,27 @@ mod tests {
         assert!(!matches_preset(Product::ProC2, b"FC2p\x01\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProC2, b"FPrC\x02\0\0\0abcdefgh"));
         assert!(!matches_preset(Product::ProC2, b"FPrC\x01\0\0\0"));
+    }
+
+    #[test]
+    fn timeless_3_accepts_both_observed_factory_headers() {
+        assert!(matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x0a\0\0\0abcdefgh"
+        ));
+        assert!(matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x09\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x08\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(
+            Product::Timeless3,
+            b"F3Ts\x0b\0\0\0abcdefgh"
+        ));
+        assert!(!matches_preset(Product::Timeless3, b"F3Ts\x09\0\0\0"));
     }
 
     #[test]
