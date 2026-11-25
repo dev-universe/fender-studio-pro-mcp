@@ -1765,3 +1765,24 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 앱·owner·가상 신호 종료, 사용자 관리 설치와 프로필 원복 확인.
   `main` 16개·로컬 11개·장비 4건. 전체 2~5일과 CI·장비 대기이며
   지정 종료 시각은 없다.
+
+## 11월 26일 06시 02분 Serum FX 실제 MIDI 수신
+
+- R462는 single-item Insert/Send 응답의 형식을 원래 객체로 비교해
+  27회·24.975초에서 멈췄다. 라우팅 수정과 MIDI 전송은 0회였다.
+  분리한 R462B는 실제 배열 응답을 검증하고 stock Out 메뉴의 exact
+  Serum 2 FX를 선택해 CC1·압력·피치 벤드를 보냈다. 각 활성 13회와
+  중립 3회가 일치했다. 라우팅·모니터 원복 뒤 악기 2,623개는 같았고
+  FX는 피치 벤드 MIDI 중심 `5000.30517578125` 한 행만 달랐다.
+  212회·111.695초. No Save, 앱·owner·가상 입력 종료, 18+11개 원복.
+  [#253](https://github.com/dev-universe/fender-studio-pro-mcp/pull/253)
+- #230의 최신 기준 `21e001f`가 두 필수 검사를 통과해 `e121fe8`에
+  병합됐다. 9분 4초. #231의 `da8c1b1`이 새 `main`을 검사한다.
+  [#230](https://github.com/dev-universe/fender-studio-pro-mcp/pull/230)
+  [#231](https://github.com/dev-universe/fender-studio-pro-mcp/pull/231)
+- R460의 Sidechain 보유 객체 대조 후보는 #252에 기록했다.
+  R463은 실제 후보 구현, R464는 기존 Ampire 스템의 독립 분석,
+  R465는 Serum 2 FX의 현재 MIDI 포트 소유자를 MCP에서 확인하는
+  경로를 조사한다. 로컬 11개·`main` 16개·장비 4건, 전체 2~5일과
+  CI·장비 대기. 지정 종료 시각 없음.
+  [#252](https://github.com/dev-universe/fender-studio-pro-mcp/pull/252)
