@@ -198,6 +198,16 @@ were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
 can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
 
+Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
+Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
+`expected_sha256` in lowercase, current `expected_document`, and native
+`expected_instance`. Use the same instrument selector as `serum2_load`. For
+FX, include the zero-based `slot` in the `target`. Stop playback and recording
+before applying a preset. Use a separate `plugin_parameters` call to confirm
+any change. For an `unknown` receipt, read the target before retrying.
+Studio Pro displays the temporary file name for this processor-only import.
+[Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+
 ### FabFilter preset library
 
 Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)

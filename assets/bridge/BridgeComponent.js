@@ -943,6 +943,57 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, result, { native_outcome: result.outcome });
     }
 
+    serum2PresetApply(args, stagedPath) {
+        const refused = (message, outcome = "not_applied") => ({
+            ok: false, native_outcome: outcome, errors: [{ code: "serum2_preset_apply_failed", message }],
+        });
+        const target = args.target;
+        const label = value => typeof value === "string" && value.trim() && value.length <= 256
+            && !/[\x00-\x1f\x7f-\x9f]/.test(value);
+        if (Object.keys(args).sort().join(",") !== "expected_instance,fixture,sha256,target"
+            || !target || typeof target !== "object"
+            || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || typeof args.sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.sha256))
+            return refused("An exact Serum instance and preset digest are required");
+        let plugin, expectedClass, selector;
+        if (target.variant === "instrument" && Object.keys(target).sort().join(",") === "track,variant" && label(target.track)) {
+            plugin = "Serum 2";
+            expectedClass = "56534558-6673-5073-6572-756D20320000";
+            selector = { kind: "instrument", track: target.track, plugin };
+        } else if (target.variant === "fx" && Object.keys(target).sort().join(",") === "channel,slot,variant"
+            && label(target.channel) && Number.isInteger(target.slot) && target.slot >= 0 && target.slot < 16) {
+            plugin = "Serum 2 FX";
+            expectedClass = "56534558-6673-5173-6572-756D20322066";
+            selector = { channel: target.channel, slot: target.slot, plugin };
+        } else return refused("Supply a Serum instrument track or an exact FX insert");
+        const plug = this.pluginOf(selector);
+        if (!plug || plug.error || plug.name !== plugin)
+            return refused("The requested Serum target is unavailable");
+        if (typeof Host === "undefined" || typeof Host.Url !== "function")
+            return refused("The native preset path is unavailable");
+        let auxiliary;
+        try { auxiliary = Host.Url(""); }
+        catch (_) { return refused("The native preset path is unavailable"); }
+        if (!auxiliary || typeof auxiliary !== "object") return refused("The native preset path is unavailable");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "serum2_preset_apply", expected_instance: args.expected_instance,
+            path: stagedPath, sha256: args.sha256,
+        }, auxiliary);
+        if (!native || native.ok !== true) {
+            const outcome = native && native.outcome === "not_applied" ? "not_applied" : "unknown";
+            const message = native && native.error && typeof native.error.message === "string"
+                ? native.error.message : "The host did not return a Serum preset receipt";
+            return refused(message, outcome);
+        }
+        if (native.outcome !== "applied_unverified" || native.sha256 !== args.sha256 || native.verified !== false
+            || !native.instance || native.instance.object_uid !== args.expected_instance
+            || native.instance.class_uid !== expectedClass)
+            return refused("The Serum preset receipt did not match the target and digest", "unknown");
+        return { ok: true, native_outcome: native.outcome, plugin, sha256: native.sha256,
+            instance: native.instance, verified: false };
+    }
+
     fabfilterPresetApply(args) {
         const keys = ["product", "channel", "slot", "track", "expected_instance", "filename", "sha256", "data_hex"];
         const invalid = (error, outcome = "not_applied") => ({ error: error, native_outcome: outcome });

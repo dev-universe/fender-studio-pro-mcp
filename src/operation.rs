@@ -97,6 +97,8 @@ pub enum Operation {
     PluginPresets(PluginPresets),
     #[serde(rename = "fabfilterPresetApply", alias = "fabfilter_preset_apply")]
     FabfilterPresetApply(crate::fabfilter::PresetApply),
+    #[serde(rename = "serum2PresetApply", alias = "serum2_preset_apply")]
+    Serum2PresetApply(crate::serum::PresetApply),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
     PluginAction(PluginAction),
     #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
@@ -1426,6 +1428,11 @@ impl Operation {
             Self::SetPluginParam(_) => {
                 args.as_object_mut().unwrap().remove("readback");
             }
+            Self::Serum2PresetApply(_) => {
+                let args = args.as_object_mut().unwrap();
+                args.remove("path");
+                args.remove("expected_sha256");
+            }
             Self::SetTransport(transport) => {
                 if let Some(position) = &transport.position {
                     args.as_object_mut().unwrap().remove("position");
@@ -1548,6 +1555,7 @@ impl Operation {
                     | Self::ChorderChordsGet(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
+                    | Self::Serum2PresetApply(_)
             )
     }
 
@@ -2030,6 +2038,10 @@ impl Operation {
                         ));
                     }
                 }
+            }
+            Self::Serum2PresetApply(p) => {
+                validate_instance_uid(Some(&p.expected_instance))?;
+                p.validate()?;
             }
             Self::FabfilterPresetApply(p) => {
                 use crate::fabfilter::Product;

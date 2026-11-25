@@ -10,6 +10,7 @@ mod native_install;
 mod operation;
 mod plugin_catalog;
 mod runtime;
+mod serum;
 mod server;
 mod song;
 
