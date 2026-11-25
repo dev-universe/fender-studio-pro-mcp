@@ -26,3 +26,12 @@ The two MCP owners used 90 requests in 42.842 seconds and 72 requests in
 Both owners and hosts exited normally. The scratch songs closed without
 saving and their original bytes matched. The 18 managed MCP files and ten
 Studio Pro settings and cache files were restored.
+
+In the separate R324 scratch song, a bound `100 A REMARK JACO MADE` recall
+again produced its model and numeric state. The phase-meter peer retained
+its state. Reopening the Edit menu after the recall showed the same top
+Undo item as before, `Fender MCP Track Edit`. The trial issued zero Undo
+requests and closed without saving. This rules out an attributable Undo
+entry for that recall in this trial. The 63 API requests and visual checks
+took 74.887 seconds. The host exited in 114.659 seconds, and the original
+scratch, 18 managed files and ten settings and cache files were checked.
