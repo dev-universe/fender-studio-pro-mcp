@@ -968,3 +968,25 @@ Focus 대상 시험이다. `main` 19개·로컬 15개 잔여, 전체 2~5일,
 편집자 범위를 비교한 뒤 가장 작은 새 실제 변경을 검증하는 일이다.
 `main` 19개·로컬 14개 잔여, 전체 2~5일, 장비 의존 4건,
 지정 종료 시각 없음.
+
+## 11월 26일 01시 16분 Multi 실제 편집과 직렬 Splitter
+
+- R407은 Multi Routing에서 두 번째 Mai Tai 한 대를 추가했다. 그래프
+  3→7 노드와 별도 슬롯·Device를 읽고, 기존 부모 150행과 자식 283행,
+  믹서가 그대로임을 확인했다. Undo 한 번 뒤 원래 노드 레코드 셋과
+  바인딩·값이 돌아왔다. controller 읽기 순서는 달라졌다.
+  124요청 167.581초, 앱 237.633초. 원본, 설치 18개, 설정 10개 확인.
+  [#195](https://github.com/dev-universe/fender-studio-pro-mcp/pull/195)
+- R408은 연속한 두 Mixtool 사이 선 한 지점에 Splitter를 드롭했다.
+  두 독립 읽기에서 6노드·7연결과 두 Mixtool의 각 72행, 소유권이
+  동일했다. 같은 상태의 캡처 지문은 시험 전에도 달랐다. Undo와 저장
+  없이 닫고 토큰 6개, 원본, 설치 18개, 설정 9개를 확인했다.
+  89요청 157.743초, 앱 305.765초.
+  [#196](https://github.com/dev-universe/fender-studio-pro-mcp/pull/196)
+- #154, #155, #156이 최신 베이스의 각 정확한 헤드에서 두 필수 검사를
+  통과해 병합됐다. 관측된 main은 `6115eda`다. [#154](https://github.com/dev-universe/fender-studio-pro-mcp/pull/154) [#155](https://github.com/dev-universe/fender-studio-pro-mcp/pull/155) [#156](https://github.com/dev-universe/fender-studio-pro-mcp/pull/156)
+
+다음은 R409의 독립 시험곡 한 번 저장과 재실행이다. 저장 그래프의
+successor 연결을 라이브 노드·슬롯 및 새 문서 바인딩과 대조한다.
+`main` 19개·로컬 14개, 전체 2~5일, 장비 의존 4건,
+지정 종료 시각 없음.
