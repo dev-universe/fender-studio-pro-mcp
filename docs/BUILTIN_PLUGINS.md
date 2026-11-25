@@ -74,6 +74,26 @@ The same server/native build passed 56 representative parameter roundtrips, Phas
 | Console Shaper | Mix FX | 8 | `drive` |
 | Surround Panner | Panner | 47 | 15 controls, 5.1 fixture |
 
+## Current workflow verification
+
+The indexed counts above describe the original representative run. The
+subsequent evidence below records the verified workflow and the remaining
+tests on Studio Pro 8.1.1 build 113103. Each row has its own success criteria
+for state readback, saved state, events or a signal measurement.
+
+| Workflow | Actual verification | Open verification |
+| --- | --- | --- |
+| Pedalboard | Guarded exchanges for empty positions, identical models and nonadjacent positions. The exchange check uses all eight payload fingerprints. Adjacent, empty and identical-model restart evidence is recorded separately. [Exchanges](evidence/2026-11-25-pedalboard-guarded-exchange.md) · [Adjacent](evidence/2026-11-24-pedalboard-swap-persistence.json) · [Empty](evidence/2026-11-25-pedalboard-empty-slot-persistence.md) · [Identical](evidence/2026-11-25-pedalboard-same-model-persistence.md) | Each additional persistence shape needs its own archived observation. |
+| Nested Inserts | Supported Splitter insertion, removal, and an exact branch move have independent native routing and restart checks. Empty inner Splitter removal was also verified with one Undo. [Add](evidence/2026-11-24-insert-splitter-add-persistence.json) · [Remove](evidence/2026-11-24-insert-splitter-remove-persistence.json) · [Move](evidence/2026-11-26-splitter-first-lane-persistence.md) · [Empty removal](evidence/2026-11-26-empty-nested-splitter-public.md) | General connection and deletion require independently verified endpoints, ownership and transaction scope. |
+| Multi Instrument | One stock Mai Tai can be added to the tested one-child graph. The test verified live graph and child state, followed by Undo. A separate trial verifies the saved child graph. [Add and Undo](evidence/2026-11-26-multi-add-mai-tai-live.md) · [Saved graph](evidence/2026-11-25-multi-saved-graph-persistence.md) | Other child types and graph shapes require separate qualification. |
+| Scope | Actual trigger and held display observations. The typed settings and the renderer's waveform hold have separate records. [Trigger states](evidence/2026-11-25-scope-trigger-state.md) · [Display and state](evidence/2026-11-26-scope-capture-display.md) | Direct producer timing, coherent waveform readback and hidden waveform restore. |
+| Ampire | Independent readbacks for documented stomp aliases, amplifier bypass and linked microphone state. [Stomp aliases](evidence/2026-11-25-ampire-filled-stomp-aliases.md) · [Bypass](evidence/2026-11-25-ampire-dsp-bypass.md) · [Linked microphones](evidence/2026-11-25-ampire-linked-mic-restore.md) | Global Volume and Pitch still require a verified control owner and processing result. [Volume and Pitch observations](evidence/2026-11-25-ampire-volume-pitch.md) |
+| Mustang Native and Rumble Native | Current provider, tested saved-state and factory recall paths. The installed model selector was investigated in each case. [Mustang selector](evidence/2026-11-25-mustang-model-selector.md) · [Rumble recall](evidence/2026-11-25-rumble-factory-recall.md) | Populated live model choice domains, selection and per-model restoration. |
+| CV Instrument | A factory preset applied 97 settings to an instance with unassigned outputs. Independent reads verified the settings and seven unchanged unassigned outputs. [Preset application](evidence/2026-11-20-cv-settings-apply-r106.json) | Preservation of assigned routes and physical CV output behavior. |
+| External Effect and hardware MIDI | External Effect Stereo Send state, the native port-list observation in the hardware guide, and bounded OS MIDI observation. [Stereo Send](evidence/2026-11-20-external-stereo-send-observation.json) · [Audio and MIDI hardware](HARDWARE.md) | Positive physical Mono/Stereo send-return and latency measurement, CV output, and physical key press, release and disconnect. |
+| Serum 2 and Serum 2 FX | Official 2.1.5 VST3 loading and processor-only preset application from MCP with independent DSP reads of all 2,623 rows for each target. [Load and edit](evidence/2026-11-25-serum2-studio-pro.md) · [Direct application](evidence/2026-11-25-serum2-mcp-vst3-preset.md) | Editable vendor preset save and reload. The verified processor carrier used the vendor demo. |
+| FabFilter | Representative factory presets and guarded application for 23 listed VST3 products. [Supported versions and formats](../README.md#fabfilter-preset-library) | One legacy parameter across seven products remains pending independent readback retention in the real host. [Readback analysis](evidence/2026-11-24-fabfilter-legacy-readback.json) |
+
 ## Native access
 
 `plugin_parameters` without `names` returns one native page when the optional extension is installed. Follow `next_offset` until it is null. Carry the receipt document token as `expected_document`, the first page's `instance.object_uid` as `expected_instance`, and the returned source on later requests. Verify index coverage and an unchanged count/class UID. `page_complete` describes one page; `complete` is true only when a single page covers the whole current provider. `value_read_complete` separately identifies unresolved scripting values.
@@ -92,7 +112,7 @@ Both modes passed actual MCP change/readback/restore for `inputGain`, `outputGai
 
 ## Graph, spatial and musical scope
 
-Splitter addresses the exact existing node name and label under a channel's top-level insert graph. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed 21 cases. Creating, connecting or deleting nodes, branch plugin placement and nested graphs remain unverified.
+The original Splitter runner addressed the existing node by name and label under a channel's top-level insert graph. Counts 2..5, modes 0..2, five gains, five mutes and four crossovers passed 21 cases. The current workflow table records the supported nested shapes and links to their later evidence.
 
 Surround Panner uses `kind:"panner"`, `slot:0` and the expected plugin identity. Its current 5.1 provider reported 47 indexed records. Fifteen controls passed change/readback/restore: `editMode`, `azimuth`, `altitude`, `spread`, `size`, `balanceAzimuth`, `balanceAmount`, `lfeLevel`, `centerLevel`, `disableCenter`, `muteLfe`, `sendLfe`, `snap`, `sizeLock`, `soloLfe`. Other speaker formats and audible spatial behavior require separate checks. The standard Simple panner is a separate path through `panner_get`/`panner_set`.
 
