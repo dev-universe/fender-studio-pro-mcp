@@ -1,0 +1,9 @@
+# Multi Instrument saved graph and restart
+
+R331 used Studio Pro 8.1.1 build 113103 on macOS arm64 and the child DSP candidate whose installation was verified in R330. The owned scratch contained one unarmed Music track, silent Main and no timeline events. The MCP applied issued factory preset 48, `Temp - 2 Mai Tai - Controls`. Two independent reads recorded 150 root rows and 283 typed DSP rows for each Mai Tai child. The two connected branches were visible before the scratch was saved once.
+
+The saved song contained one Multi Instrument bundle with two embedded Mai Tai states. Its component declared seven event nodes and six explicit ordered successor links. Two full-range key zones, each with a zero-transpose transformer, connected the splitter to the two named synth slots. The ordered successor projection, graph node IDs, slot IDs, key zones and transpose matched the factory file. Every successor resolved to a declared node and both routes terminated at the expected slots.
+
+After quitting Studio Pro, a new process opened that exact saved file and a fresh MCP owner obtained a new session and document. A request bound to the old document was refused. Two new reads matched all 150 root and 566 child parameter rows. The live controller node and slot IDs matched the saved graph IDs. The editor showed both branches. The test observed saved routing and restart readback without playing an event through the two branches.
+
+The save phase used 124 requests in 97.318 seconds and the app ran for 134.445 seconds. The reopen phase used 37 requests in 22.035 seconds and the app ran for 59.935 seconds. The second session closed without another save. The saved file digest remained unchanged, and all 18 managed installation files and their permissions, ten application profile files and the protected inputs were verified after restoration.
