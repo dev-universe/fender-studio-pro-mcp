@@ -98,6 +98,11 @@ pub enum Operation {
     InsertSlotMove(InsertSlotMove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
+    #[serde(
+        rename = "insertSplitterRemoveEmptyNested",
+        alias = "insert_splitter_remove_empty_nested"
+    )]
+    InsertSplitterRemoveEmptyNested(InsertSplitterRemoveEmptyNested),
     #[serde(rename = "insertSplitterAdd", alias = "insert_splitter_add")]
     InsertSplitterAdd(InsertSplitterAdd),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
@@ -927,6 +932,22 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertSplitterRemoveEmptyNested {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 0))]
+    pub slot: u32,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub splitter_node: String,
+    pub merger_node: String,
+    pub predecessor_slot_node: String,
+    pub successor_merger_node: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2054,6 +2075,26 @@ impl Operation {
                         &p.merger_node,
                         &p.first_slot_node,
                         &p.second_slot_node,
+                    ],
+                )?;
+            }
+            Self::InsertSplitterRemoveEmptyNested(p) => {
+                if p.slot != 0 || p.plugin != "Mixtool" {
+                    return Err(invalid(
+                        "Empty nested Splitter removal requires Mixtool in insert slot 0",
+                    ));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.splitter_node,
+                        &p.merger_node,
+                        &p.predecessor_slot_node,
+                        &p.successor_merger_node,
                     ],
                 )?;
             }
