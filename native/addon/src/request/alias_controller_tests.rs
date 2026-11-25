@@ -442,14 +442,25 @@ fn exact_multi_readonly_admission_cannot_admit_its_model_catalog_or_other_namesp
     let instance = multi_instance();
     assert!(inspection_supported(&instance));
     assert!(!supported(&instance.class_uid)); // catalog keeps its original two classes
-    for field in 0..3 {
+    for wrong in [
+        Instance {
+            class_uid: "831A0046-BD71-45BF-A419-6FC90D6E9F2F".into(),
+            ..instance.clone()
+        },
+        Instance {
+            native_class: "Device".into(),
+            ..instance.clone()
+        },
+        Instance {
+            object_uid: ZERO_UID.into(),
+            ..instance.clone()
+        },
+        Instance {
+            object_uid: "invalid".into(),
+            ..instance
+        },
+    ] {
         let fixture = Fixture::new(true);
-        let mut wrong = instance.clone();
-        match field {
-            0 => wrong.class_uid = "831A0046-BD71-45BF-A419-6FC90D6E9F2F".into(),
-            1 => wrong.native_class = "Device".into(),
-            _ => wrong.object_id = "Other Multi".into(),
-        }
         assert!(multi_capture(&fixture, &wrong, &mut || Ok(())).is_err());
         assert!(
             fixture
@@ -479,6 +490,16 @@ fn exact_multi_fake_uses_declared_interfaces_retains_owners_and_keeps_bounds() {
             .contains(&CONTROLLER_PROVIDER)
     );
     inventory.check(&mut || Ok(())).unwrap();
+    drop(inventory);
+    fixture.released();
+}
+#[test]
+fn multi_controller_inspection_accepts_preset_title_changes() {
+    let mut instance = multi_instance();
+    instance.object_id = "Temp - 1 Mai Tai - Controls".into();
+    let fixture = Fixture::new(true);
+    let inventory = multi_capture(&fixture, &instance, &mut || Ok(())).unwrap();
+    assert_eq!(inventory.value()["mutation_capability"], false);
     drop(inventory);
     fixture.released();
 }
