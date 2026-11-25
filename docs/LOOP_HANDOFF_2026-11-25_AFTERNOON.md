@@ -1786,3 +1786,23 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   경로를 조사한다. 로컬 11개·`main` 16개·장비 4건, 전체 2~5일과
   CI·장비 대기. 지정 종료 시각 없음.
   [#252](https://github.com/dev-universe/fender-studio-pro-mcp/pull/252)
+
+## 11월 26일 06시 13분 Pedalboard 저장·재열기 닫힘
+
+- #231 최신 `da8c1b1`에 두 필수 검사 통과, 원격 `377d002` 병합.
+  11분 35초. #228/230/231 및 앞선 분기·캡슐 근거가 모두 반영돼
+  SHARED-PERSISTENCE를 고정 단위에서 닫았다.
+  [#231](https://github.com/dev-universe/fender-studio-pro-mcp/pull/231)
+- R464는 R452C 오른쪽 반송파의 약 1.5132 Hz 기본 간격과 약
+  3.0264 Hz 최강 두 번째 성분을 세 스템에서 대조했다. 모두 Chorus
+  모드였으므로 R466이 Vibrato 모드 독립 대조를 준비한다. 10분 27초.
+  [#254](https://github.com/dev-universe/fender-studio-pro-mcp/pull/254)
+- R465는 REA/Ghidra의 41개 진입점과 Craft Anything의 7범위로
+  Music 출력의 retained getter와 AudioFXMusicUnit 소유 관계를 확인했다.
+  현재 포트에서 정확한 인서트까지의 공개 연결자는 검증되지 않았다.
+  [#255](https://github.com/dev-universe/fender-studio-pro-mcp/pull/255)
+- R463은 실제 Sidechain 설정 대상의 정규 객체 동일성 비교를 준비한다.
+  앱·owner·임시 플러그인·MIDI 입력 없음, 정상 관리 설치 확인.
+  새 CoreAudio/CoreMIDI 장치 목록에도 Volt 276·Keystation88 없음.
+  `main` 15개·로컬 11개·장비 4건. 전체 2~5일과 CI·장비 대기,
+  지정 종료 시각 없음.
