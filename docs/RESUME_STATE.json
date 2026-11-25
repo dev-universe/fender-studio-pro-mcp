@@ -93,7 +93,9 @@
       "R383",
       "R384",
       "R385",
-      "R386"
+      "R386",
+      "R387",
+      "R387B"
     ],
     "merged_pull_requests": [
       109,
@@ -130,10 +132,10 @@
       140,
       141,
       142,
-      143
+      143,
+      144
     ],
     "open_pull_requests": [
-      144,
       145,
       146,
       147,
@@ -164,14 +166,15 @@
       172,
       173,
       174,
-      175
+      175,
+      176
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. Next verify Rumble Native amp location, amp bypass and tuner bypass on one bound insert. Shared Event Chorder audition lifecycle implementation is in feature/chorder-audition-lifecycle using an owner-issued permit and guarded native MIDI 60 edges. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 144 to 175 as both checks pass on each exact current-base head.",
+    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. Next live-verify the candidate feature/chorder-audition-lifecycle with its owner-issued permit and guarded native MIDI 60 edges. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 145 to 176 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 16,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
