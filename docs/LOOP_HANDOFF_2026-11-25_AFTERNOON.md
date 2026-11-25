@@ -539,3 +539,20 @@ SampleOne 고정 항목은 R363–R366B로 로컬 완료, 공개 PR 병합 대�
 다음은 MCP의 직접 Clear가 저장 모델을 변경하는지 확인하고
 필요한 유한 도구를 구현하는 작업이다. `main` 20개·로컬 18개
 잔여, 소프트웨어 2~5일, 장비 의존 4개, 지정된 종료 시각 없음.
+
+## 20시 18분 체크포인트
+
+- #136이 두 필수 검사를 통과해 `d39fe8f`에 병합됐다.
+  Presence의 다음 공개 범위는 #137부터 확인한다.
+  [#136](https://github.com/dev-universe/fender-studio-pro-mcp/pull/136)
+- R372에서 학습 입력 MIDI 61을 선택한 뒤 DSP `chorder.clear`
+  tag 9를 0→1→0으로 한 번 왕복했다. 1을 읽는 동안 전체 128개
+  모델에서 선택된 61만 비었고, 0으로 내린 뒤에도 유지됐다.
+  원본 컴포넌트와 DSP 908행이 복원되고 앱과 owner가 종료됐다.
+  179요청, 앱 73.576초. 설정 9개·관리 설치 18개·송 원본 확인.
+  [#163](https://github.com/dev-universe/fender-studio-pro-mcp/pull/163)
+
+다음 이행 단위는 `feature/chorder-guarded-clear`의 선택 음정 및
+모델 지문 일치 조건을 갖는 유한 MCP 호출이다. 분리 worktree를
+`d39fe8f`에서 시작했다. `main` 20개·로컬 18개 잔여, 소프트웨어
+2~5일, 장비 의존 4개, 지정된 종료 시각 없음.
