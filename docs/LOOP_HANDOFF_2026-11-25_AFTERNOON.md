@@ -1659,3 +1659,33 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   채널 스템 사전 검증을 준비한다. 앱과 모든 소유자 종료, 정상 설치
   확인. `main` 16개·로컬 11개, 장비 4건, 전체 2~5일과 CI·장비 대기,
   지정된 종료 시각 없음.
+
+## 11월 26일 05시 25분 Serum 값 원복과 건식 스템 확인
+
+- #240은 최신 `ee331185`에서 두 검사 통과 뒤 `cb84a71`에 병합됐다.
+  검사 준비부터 11분 14초. #243의 새 `330e0436` 검사 중이다.
+  Rust·JS에 더해 로컬 Python 560개도 통과했다.
+  [#240](https://github.com/dev-universe/fender-studio-pro-mcp/pull/240)
+  [#243](https://github.com/dev-universe/fender-studio-pro-mcp/pull/243)
+- R456은 Audio 무입력을 한국어 `없음`으로 읽는 지점에서 setter 전에
+  멈췄다. 28요청·27.104초. 독립 R456B는 해당 FX 표기와 악기 `null`을
+  각각 확인하고 CC1·채널 압력·피치 벤드의 매핑값을 두 변형에서
+  각 한 번 쓰고 원복했다. 각 변경 중 피어 2,623행, 각 원복 뒤 양쪽
+  2,623행 및 현 문서·라우팅·인스턴스를 확인했다. 767요청·105.095초,
+  12 setter, 재생·MIDI·Save 0. 두 호스트와 owner 종료, 임시 VST3 회수,
+  설치 18개·프로필 10개 원복. [#244](https://github.com/dev-universe/fender-studio-pro-mcp/pull/244)
+- R454는 실제 빌드 VST3 출력점이 host queue와 현재 hosted 파라미터에
+  전달되는 경로를 확인했다. 편집 컨트롤러의 실제 반환이나 Pro-G 음수
+  처리는 확인되지 않았다. 13분 43초, Ghidra 34함수, Craft 18범위,
+  실앱 요청 0. 7개 유지 확인은 계속 열려 있다.
+  [#245](https://github.com/dev-universe/fender-studio-pro-mcp/pull/245)
+- R455의 독립 오프라인 대조는 기존 두 공개 라우팅 캡처로 모든
+  소스 순번·중복 및 8노드 유입 수를 네 직접 조회에서 재구성했다.
+  3분 37초. 고정 SHARED-GRAPH의 일반 연결/삭제·원복은 남아 있다.
+- R452B는 정확한 Audio track에 24초 기준 WAV를 하나 넣고 Main mute/0
+  아래서 48 kHz stereo PCM24 채널 한 개를 오프라인 스템으로 내보냈다.
+  파일과 프레임 경계는 대조됐고 1 LSB 판정은 첫 비영 표본에서 실패했다.
+  37요청·195.055초, 앱 297.587초, No Save·정상 종료, 설치 18개와
+  프로필 10개 원복. 전체 잔차와 위상의 독립 정량화 후 실제 Ampire
+  오디오 비교를 진행한다. 앱·owner 종료, `main` 16개·로컬 11개,
+  장비 4건, 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
