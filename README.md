@@ -229,6 +229,20 @@ pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
 2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
 on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
 
+To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
+`kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
+`expected_document`. Inspect the candidate FX insert by its exact channel
+and slot. Compare the two `native.instance.object_uid` values and use the
+matching UID as `expected_instance` on a fresh track inspection. Change
+the route with the track's **Out** menu in Studio Pro, then repeat the
+inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
+
+To check the destination in a saved song, call `song_read` on the
+`.song` file and look for `midi_destination` on the source track. A
+resolved destination identifies the original Serum 2 instrument or the
+specific Serum 2 FX insert, even with multiple FX copies in the song.
+[Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
 `expected_sha256` in lowercase, current `expected_document`, and native
