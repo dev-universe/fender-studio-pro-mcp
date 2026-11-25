@@ -43,3 +43,11 @@ had 2,294 bytes compared with the original 2,297 bytes. The trial kept
 this as an incomplete full-component restoration. It made 83 requests
 in 7.874 seconds. Studio Pro exited normally without saving. All 18
 managed files and 10 app profile files were restored and verified.
+
+R474 compared six independent reads from the same R470 instance and
+checked the recorded microphone values with separate Python and arm64
+C arithmetic. Directly correcting A is predicted to shift B and C.
+The previously verified Link-off preparation and relink sequence can
+be considered after a fresh read of the retained gains. Its result on
+the post-FAT capsule state, including the capsule restoration, remains
+unverified. R474 ran entirely offline.
