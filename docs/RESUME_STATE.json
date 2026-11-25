@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "d91608599f405ddec4356ad24a9afce120fc75a4",
+    "main_at_checkpoint": "b87fb3e73d5087aa82fe1b742526de68d6190980",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -85,7 +85,9 @@
       "R378",
       "R378B",
       "R379",
-      "R379B"
+      "R379B",
+      "R380",
+      "R380B"
     ],
     "merged_pull_requests": [
       109,
@@ -119,10 +121,10 @@
       137,
       138,
       139,
-      140
+      140,
+      141
     ],
     "open_pull_requests": [
-      141,
       142,
       143,
       144,
@@ -150,14 +152,15 @@
       166,
       167,
       168,
-      169
+      169,
+      170
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365–R366B qualified the owned SampleOne region persistence and live MIDI inputs. R367D–R376 qualified Chorder including downstream Learn Mode preview. R377 reproduced the Scope C caption mismatch. R379B showed that C followed Main Left or Main Right when DSP was set accordingly while the GUI caption stayed fixed. With sidechain disabled, raw Side Left produced the right-phase trace. Next extend Scope R68 using silent arming, a subthreshold interval, first qualifying acquisition, hold, and one retrigger. R358 prepared a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 141 to 169 as both checks pass on each exact current-base head.",
+    "next": "SampleOne and Chorder are locally qualified. R377 and R379B established the scope of the C display mismatch and observed Main Left/Right and unavailable-sidechain behavior. R380B qualified the visible Scope Oneshot waiting, first qualifying capture, hold and one retrigger. Next compare the exact component capsules with two different held traces and observe the result of restoring the first one. Direct internal trigger timing and capture-buffer bytes are not yet observed. R358 prepared the List choice fix in PR149 and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 142 to 170 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 17,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
