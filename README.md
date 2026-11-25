@@ -182,6 +182,22 @@ from the inspected row, its current `expected_active` state, and the desired
 the last active output. Disabling an output removes its mixer channel. Verify
 your mixer routing with `channels_list` after a change.
 
+### Serum 2 and Serum 2 FX
+
+Call `host_status` for the current document token. Use `serum2_load` with
+`target: {"variant":"instrument","track":"Serum Keys"}` to create a Music
+track, or `target: {"variant":"fx","channel":"Guitar"}` to add the effect to
+an existing mixer channel. Include `expected_document` with either request.
+The tool selects the exact Xfer VST3 class. Read the track or inserts after
+the operation to confirm placement.
+
+Select the instrument track before inspecting it. Use `plugin_inspect` to
+get the native instance ID, then use `plugin_parameters` and
+`plugin_parameter_set` on that exact instance. Serum 2 and Serum 2 FX 2.1.5
+were tested in Studio Pro 8.1.1 on Apple Silicon. In the Serum editor, you
+can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
+[Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
+
 ### FabFilter preset library
 
 Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)
