@@ -1220,3 +1220,38 @@ Splitter 분기, R422의 Ampire Save 전후 대조를 준비한다.
 다음은 R424 빈 중첩 Splitter 제거와 R423 Scope 시각 표시 대조다.
 `main` 18개·로컬 13개, 전체 소프트웨어 2~5일, 장비 의존 4건,
 지정 종료 시각 없음.
+
+## 11월 26일 02시 43분 빈 Splitter, Scope 전이와 패키지
+
+- R424는 Splitter 3 노드 메뉴의 Remove를 한 번 실행했다. 정확히
+  해당 Splitter와 Merger가 사라져 8노드·10연결에서 6노드·7연결이
+  됐다. 원래 첫 Mixtool의 다음 연결만 바뀌었고 두 DSP 144행,
+  남은 객체와 믹서는 그대로였다. Undo 항목을 읽고 실행은 하지 않았다.
+  86요청 78.977초, 앱 126.741초, 6개 토큰과 설치 18개·설정 9개 확인.
+  [#213](https://github.com/dev-universe/fender-studio-pro-mcp/pull/213)
+- R423에서 41.3Hz를 한 번 공급했다. 80,000샘플로 표시된 Scope
+  창은 평평한 기준에서 왼쪽 일부·1/4·1/2·3/4·전체 폭으로 채워졌다.
+  실제 Off 확인 뒤 찍은 프레임은 앞선 전체 파형과 달랐다. 바뀐 정확한
+  시각, 내부 래치와 파형 버퍼는 미검증이다. 41개 값을 복원해
+  평평한 화면을 확인했다. 84요청 88.469초, 앱 133.421초,
+  원본·설치 18개·설정 10개 확인.
+  [#214](https://github.com/dev-universe/fender-studio-pro-mcp/pull/214)
+- R425는 Ampire의 링크 기준값과 표시 게인이 별개임을 확인했다.
+  REA/Ghidra와 Craft Anything 및 C·Python Float32 수치 대조, 약 7분.
+  A를 마지막으로 쓰던 방식의 한계를 확인하고 C를 마지막으로 쓰는
+  여섯 단계 후보를 모델링했다. 표시 게인과 컴포넌트의 실제 결과,
+  Link 해제 시의 숨은 기준값은 별도다.
+  [#215](https://github.com/dev-universe/fender-studio-pro-mcp/pull/215)
+- #203은 정확한 헤드 `3355c8c` 두 검사 뒤 `e5ebb53`으로 병합됐다.
+  R426은 그 커밋에서 프리뷰를 만들고 배포 파일 9개, 개인 경로 0개,
+  로컬 ad-hoc 서명, 21회 격리 설치·갱신·원복·제거를 확인했다.
+  Gatekeeper는 CLI를 거부했다. 정확한 `main` 실행, 공개 자산과
+  비인증 재다운로드는 다음 단계다. #208은 최신 `main`을 포함하는
+  `7455031`의 두 검사를 진행 중이다.
+  [#203](https://github.com/dev-universe/fender-studio-pro-mcp/pull/203)
+  [#208](https://github.com/dev-universe/fender-studio-pro-mcp/pull/208)
+
+두 앱 시험 모두 저장하지 않고 정상 종료했다. 단일 호스트로 R427
+Ampire 대조와 R428 공개용 빈 Splitter 제거·저장·재열기를 이어간다.
+`main` 18개·로컬 13개, 전체 소프트웨어 2~5일, 장비 의존 4건,
+지정 종료 시각 없음.
