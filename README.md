@@ -214,7 +214,7 @@ FabFilter Simplon 1.42 passed individual change, independent readback and restor
 
 FabFilter One 3.52 passed individual change, independent readback and restoration for all 167 writable parameters in Studio Pro 8.1.1. These include all 31 named controls, all 128 virtual MIDI CC values, the program list and the legacy CC. With the transport stopped, the program list and its read-only counter changed from 0 to 1 and returned to 0. The program change and modulation wheel each required a separate companion correction. All 168 reported values returned to baseline in both trials. [One writable controls](docs/evidence/2026-11-20-fabfilter-one-controls.json) · [Direct program list verification](docs/evidence/2026-11-20-fabfilter-one-direct-program.json) · [Legacy MIDI CC verification](docs/evidence/2026-11-20-fabfilter-one-legacy-control.json) · [Modulation wheel verification](docs/evidence/2026-11-20-fabfilter-one-modulation-wheel.json)
 
-Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. The legacy row `vstp1073741828` briefly accepted a value in Pro-G, Pro-C 2, Pro-C 3 and Pro-DS, then returned to baseline on an independent `plugin_parameters` call. Treat that row as transient in these versions. In a separate SDK test, the Pro-G processor received the input and emitted its own value under the same ID. [Legacy MIDI parameter verification](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
+Some parameters share the display title `MIDI CC`. Use the SDK mapping to choose the parameter ID for a particular CC number. For Pro-G 1.42, Pro-C 2 2.22, Pro-C 3 3.02, Pro-DS 1.32, Pro-L 1.37, Pro-L 2 2.26 and Pro-MB 1.33, the legacy row `vstp1073741828` briefly accepted a value in Studio Pro 8.1.1 and returned to zero by the 150 ms readback. An independent parameter read confirmed zero. Use `plugin_parameter_set` with `readback: true` to detect this behavior and treat `applied_unverified` as a transient result for this row. Pro-R 1.20 kept the changed value through both readings and an explicit write restored it. [Studio Pro verification](docs/evidence/2026-11-24-fabfilter-legacy-readback.json) · [Separate VST3 processor experiment](docs/evidence/2026-11-20-fabfilter-legacy-midi.json)
 
 FabFilter Pro-Q 2 2.30 passed individual change, independent readback and restoration of all 327 writable parameters in Studio Pro 8.1.1. The legacy `vstp1073741828` row also passed on this version. [Pro-Q 2 verification details](docs/evidence/2026-11-20-fabfilter-proq2-controls.json)
 
@@ -336,7 +336,7 @@ The detailed notes include run outcomes, remaining gaps, and links to evidence. 
 ## Project docs
 
 - How the Rust server, in-DAW JavaScript bridge, and CoreMIDI connection work. [Architecture](docs/ARCHITECTURE.md)
-- Completed checks and the remaining built-in and FabFilter work. [Latest handoff](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [Resume guide](docs/RESUME.md)
+- Continue an existing work queue or add support for another plugin. [Resume guide](docs/RESUME.md) · [MCP development guide](docs/MCP_DEVELOPMENT.md)
 - Impact factory preset application and mixer recovery. [Verified Impact preset procedure](docs/IMPACT_PRESETS.md)
 - Development setup, offline checks, and private security reports. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
