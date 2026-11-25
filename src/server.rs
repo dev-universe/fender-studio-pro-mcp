@@ -1245,7 +1245,7 @@ mod tests {
     }
 
     #[test]
-    fn button_action_schema_is_the_closed_five_action_set() {
+    fn button_action_schema_lists_only_registered_actions() {
         let specs = McpServer::specs();
         let tool = &specs
             .iter()
@@ -1259,7 +1259,8 @@ mod tests {
                 "reset_meter_hold",
                 "reset_meter_loudness",
                 "reset_minimum_reduction",
-                "retrigger_scope"
+                "retrigger_scope",
+                "clear_chorder_selected"
             ])
         );
         assert_eq!(tool.input_schema["additionalProperties"], false);
