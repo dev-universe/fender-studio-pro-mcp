@@ -14,7 +14,14 @@ parameter read reported 13 changed values out of 2,623. The instrument's
 Env 1 Release increased from 15 ms to 150 ms on screen. Its parameter
 read reported 15 changes and normalized release moved from 0.2150 to 0.34213.
 The independent enumerations took 4.14 and 4.90 seconds and were bound to the
-two distinct instances. [Studio Pro preset commands](https://fenderstudiopromanual.fender.com/en/Content/Mixing_Topics/Effects_Signal_Routing.htm#)
+two distinct instances. [Studio Pro preset commands](https://fenderstudiopromanual.fender.com/en/Content/Mixing_Topics/Effects_Signal_Routing.htm)
+
+REA with Ghidra located the Studio Pro Apple Silicon `vstservice` class
+registration for `VST3 Preset Handler` and the separate registration of
+the `.vstpreset` extension with MIME type `application/x-steinberg-vstpreset`.
+The observed host menu can therefore use its normal VST3 preset path.
+This static result identifies the host handler. A direct MCP receiver
+for this handler has yet to be verified.
 
 The host also exported an instrument `.vstpreset`. Its 352-byte `Comp`
 chunk decoded to demo metadata. The imported file's 1,294-byte `Comp`
