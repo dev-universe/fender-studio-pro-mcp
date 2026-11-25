@@ -64,7 +64,9 @@
       "R362",
       "R363",
       "R364",
-      "R365"
+      "R365",
+      "R366",
+      "R366B"
     ],
     "merged_pull_requests": [
       109,
@@ -116,18 +118,20 @@
       153,
       154,
       155,
-      156
+      156,
+      157
     ],
     "remaining_builtin_units": 21,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. Next verify the six routed MIDI roles. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 133 to 156 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
-    "remaining_builtin_units_after_local_verification": 19,
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. Next verify Chorder routed held notes and the five remaining actions. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 133 to 157 as both checks pass on each exact current-base head. Retarget 134 after 133 is merged.",
+    "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PEDALBOARD",
-      "CONTROL-PRESENCE"
+      "CONTROL-PRESENCE",
+      "CONTROL-SAMPLEONE"
     ]
   },
   "nov25_current_checkpoint": {
