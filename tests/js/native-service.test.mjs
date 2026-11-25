@@ -19,6 +19,42 @@ function native(request) {
   return { capabilities() { return '{"ok":true,"api":"fender-mcp-native-v1"}'; }, request };
 }
 
+test('extended Pedalboard dispatch requires a rack fingerprint and its native proof', () => {
+  const calls = [];
+  let reportProof = true;
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device);
+    const request = JSON.parse(body);
+    calls.push(request);
+    return JSON.stringify({
+      ok: true, outcome: 'applied_unverified', operation: request.operation, verified: false, effects_verified: false,
+      instance: { ...instance, native_class: 'AudioEffect', class_uid: 'BC9129B4-EC67-41B8-96DE-EC128D5FE54D' },
+      slots: [request.first_slot, request.second_slot], before: [request.expected_first_model, request.expected_second_model],
+      after: [request.expected_second_model, request.expected_first_model],
+      ...(reportProof && { serialized_payload_verified: true }),
+    });
+  }); } });
+  h.component.pluginOf = () => ({ name: 'Pedalboard', device: h.device });
+  const args = { channel: 'Scratch', slot: 0, expected_instance: instance.object_uid, first_slot: 1,
+    second_slot: 3, expected_first_model: 'Compressor', expected_second_model: ' - ' };
+  const fingerprint = 'ab'.repeat(32);
+  for (const invalid of [args, { ...args, expected_rack_sha256: 'bad' },
+    { ...args, expected_first_model: ' - ', expected_rack_sha256: fingerprint }]) {
+    assert.equal(h.component.pedalboardSlotSwap(invalid).native_outcome, 'not_applied');
+  }
+  assert.equal(calls.length, 0);
+  const expected = { ...args, expected_rack_sha256: fingerprint };
+  const moved = h.component.pedalboardSlotSwap(expected);
+  assert.equal(moved.native_outcome, 'applied_unverified');
+  assert.equal(moved.serialized_payload_verified, true);
+  assert.equal(calls[0].expected_rack_sha256, fingerprint);
+  reportProof = false;
+  assert.equal(h.component.pedalboardSlotSwap(expected).native_outcome, 'unknown');
+  const ordinary = { ...args, second_slot: 2, expected_second_model: 'Reverb' };
+  assert.equal(h.component.pedalboardSlotSwap(ordinary).native_outcome, 'applied_unverified');
+  assert.equal(calls[2].expected_rack_sha256, undefined);
+});
+
 const actionResult = () => ({ ok: true, instance, action: 'swap_filter_frequencies', source: 'dsp',
   outcome: 'applied_unverified', verified: false, effects_verified: false,
   upper_dispatched: true, reset_dispatched: true, reset_verified: true,
