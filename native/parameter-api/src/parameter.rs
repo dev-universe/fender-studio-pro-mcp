@@ -46,6 +46,32 @@ pub struct RawParameter {
     pub(crate) text: TextApi,
     thread: ThreadId,
 }
+/// One retained IObject view and property key. Reading a Float moves no
+/// native ownership after a successful observation.
+pub struct FloatWitness<'a> {
+    parameter: &'a RawParameter,
+    object: Owned,
+    id: *const c_void,
+}
+impl FloatWitness<'_> {
+    pub fn bits(&self) -> Result<u64, Error> {
+        self.parameter.check_thread()?;
+        let mut value = Variant::empty();
+        let get: unsafe extern "C" fn(*mut c_void, *mut Variant, *const c_void) -> u8 =
+            unsafe { ffi::method(self.object.raw(), 4) };
+        if unsafe { get(self.object.raw(), &mut value, self.id) } == 0 {
+            return Err(Error::MissingValue("value"));
+        }
+        if value.tag != 2 {
+            return Err(Error::TypeMismatch);
+        }
+        if !f64::from_bits(value.payload).is_finite() {
+            return Err(Error::NonFinite);
+        }
+        Ok(value.payload)
+    }
+}
+
 enum Expected {
     Number(Number),
     Normalized(f32),
@@ -83,7 +109,10 @@ impl RawParameter {
     pub fn as_borrowed_raw(&self) -> NonNull<c_void> {
         NonNull::new(self.parameter.raw()).expect("owned pointer is nonnull")
     }
-    pub(crate) fn check_structure_header(&self, expected: &Description) -> Result<(), Error> {
+    /// Rechecks the resolved parameter's identity and access flags without
+    /// probing property values or creating a temporary native reference.
+    pub fn check_structure_header(&self, expected: &Description) -> Result<(), Error> {
+        self.check_thread()?;
         let (name, tag, kind) = self.signature()?;
         let (enabled, read_only) = self.flags();
         if name != expected.name
@@ -481,6 +510,43 @@ impl RawParameter {
         number: Number,
         guard: &mut G,
     ) -> Result<MutationReadback, MutationError> {
+        self.set_raw_number_inner(number, guard, None)
+    }
+
+    pub fn pin_float(&self) -> Result<FloatWitness<'_>, Error> {
+        self.check_thread()?;
+        let object = self.parameter.query(&ffi::OBJECT)?;
+        let id = ffi::property_id(self.text, c"value")?;
+        Ok(FloatWitness {
+            parameter: self,
+            object,
+            id,
+        })
+    }
+
+    /// Compares the exact current Float carrier before the setter. The
+    /// additional admission is used only before dispatch, including when it
+    /// observes a different pinned parameter of the same guarded target.
+    pub fn set_raw_float_if<G, A>(
+        &self,
+        expected_bits: u64,
+        value: f64,
+        guard: &mut G,
+        admit: &mut A,
+    ) -> Result<MutationReadback, MutationError>
+    where
+        G: FnMut() -> Result<(), String>,
+        A: FnMut() -> Result<(), String>,
+    {
+        self.set_raw_number_inner(Number::Float(value), guard, Some((expected_bits, admit)))
+    }
+
+    fn set_raw_number_inner<G: FnMut() -> Result<(), String>>(
+        &self,
+        number: Number,
+        guard: &mut G,
+        compare: Option<(u64, &mut dyn FnMut() -> Result<(), String>)>,
+    ) -> Result<MutationReadback, MutationError> {
         let initial = self.begin(guard)?;
         let before = self
             .refreshed(&initial)
@@ -501,8 +567,26 @@ impl RawParameter {
             .variant_tag;
         let input = Variant::number(native, tag)
             .map_err(|e| failure(e, Some(before.clone()), None, false))?;
+        let pinned = if compare.is_some() {
+            Some(
+                self.pin_float()
+                    .map_err(|e| failure(e, Some(before.clone()), None, false))?,
+            )
+        } else {
+            None
+        };
         self.final_guard(&before, guard, None)
             .map_err(|e| failure(e, Some(before.clone()), None, false))?;
+        if let Some(((expected, admit), witness)) = compare.zip(pinned.as_ref()) {
+            admit().map_err(|e| failure(Error::Guard(e), Some(before.clone()), None, false))?;
+            if witness
+                .bits()
+                .map_err(|e| failure(e, Some(before.clone()), None, false))?
+                != expected
+            {
+                return Err(failure(Error::MetadataChanged, Some(before), None, false));
+            }
+        }
         let set: unsafe extern "C" fn(*mut c_void, *const Variant, u8) =
             unsafe { ffi::method(self.parameter.raw(), 21) };
         unsafe { set(self.parameter.raw(), &input, 1) };
@@ -511,7 +595,9 @@ impl RawParameter {
             before,
             Expected::Number(native),
             guard,
-            || {},
+            || {
+                drop(pinned);
+            },
         )
     }
     pub fn set_normalized<G: FnMut() -> Result<(), String>>(

@@ -994,6 +994,33 @@ fn raw_change_has_exact_readback_including_negative_zero() {
     );
 }
 #[test]
+fn guarded_float_compare_uses_bits_observed_after_the_final_admission() {
+    let env = TextEnv::new();
+    let (f, p) = float_fixture(&env);
+    let mut admit = || {
+        f.p().value.replace(FakeValue::Number(Number::Float(-0.0)));
+        Ok(())
+    };
+    let refused = p
+        .set_raw_float_if(1.0_f64.to_bits(), 0.25, &mut f.guard(), &mut admit)
+        .unwrap_err();
+    assert_eq!(refused.outcome, Outcome::NotApplied);
+    assert_eq!(f.p().writes.get(), 0);
+
+    assert_eq!(p.pin_float().unwrap().bits().unwrap(), (-0.0_f64).to_bits());
+    assert!(
+        p.set_raw_float_if(0, 0.25, &mut f.guard(), &mut || Ok(()))
+            .is_err()
+    );
+    assert_eq!(f.p().writes.get(), 0);
+    let applied = p
+        .set_raw_float_if((-0.0_f64).to_bits(), 0.25, &mut f.guard(), &mut || Ok(()))
+        .unwrap();
+    assert!(applied.verified);
+    assert_eq!(f.p().writes.get(), 1);
+}
+
+#[test]
 fn read_only_disabled_range_nan_and_nonintegral_inputs_never_dispatch() {
     let env = TextEnv::new();
     let (f, p) = float_fixture(&env);

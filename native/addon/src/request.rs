@@ -16,6 +16,8 @@ mod alias_controller;
 use alias_controller::catalog;
 #[path = "request/capabilities.rs"]
 mod capabilities;
+#[path = "request/chorder_audition.rs"]
+mod chorder_audition;
 #[path = "request/chorder_chords.rs"]
 mod chorder_chords;
 #[path = "request/details.rs"]
@@ -225,6 +227,10 @@ enum Request {
         limit: u32,
         expected_instance: String,
     },
+    ChorderAuditionLane {
+        phase: chorder_audition::Phase,
+        expected_instance: String,
+    },
     SetParameter {
         param: String,
         mode: Mode,
@@ -370,6 +376,7 @@ impl Request {
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
             | Self::ChorderLearningGet { .. }
+            | Self::ChorderAuditionLane { .. }
             | Self::MultiChildParameters { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
@@ -461,6 +468,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::ChorderChordsGet {
+                expected_instance, ..
+            }
+            | Self::ChorderAuditionLane {
                 expected_instance, ..
             }
             | Self::RumbleParametersRead { expected_instance }
@@ -1245,15 +1255,17 @@ impl Controller {
     }
     fn find(&self, name: &str, a: &Api) -> Result<RawParameter, String> {
         let text = CString::new(name).map_err(|_| "parameter contains NUL")?;
-        // Borrowed CString representation, valid for this synchronous call;
-        // dynamic parameter names are never interned in a process-wide cache.
+        self.parameter(self.find_borrowed(&text), a)
+    }
+    fn find_borrowed(&self, text: &std::ffi::CStr) -> *mut c_void {
+        // Borrowed CString representation, valid for this synchronous call.
         let name = PlainCString {
             text: text.as_ptr(),
             owner: ptr::null_mut(),
         };
         let get: unsafe extern "C" fn(*mut c_void, *const PlainCString) -> *mut c_void =
             unsafe { method(self.handle.0, 5) };
-        self.parameter(unsafe { get(self.handle.0, &name) }, a)
+        unsafe { get(self.handle.0, &name) }
     }
     fn parameter(&self, p: *mut c_void, a: &Api) -> Result<RawParameter, String> {
         let owned = hold(p).ok_or("native controller parameter unavailable")?;
@@ -1778,6 +1790,9 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         return settings.execute(ctx, request);
     }
     let result: Result<Value, String> = match request {
+        Request::ChorderAuditionLane { phase, .. } => {
+            return chorder_audition::execute(ctx, provider, phase);
+        }
         Request::Inspect { .. } => (|| {
             let mut value = match provider {
                 Provider::Dsp(p) => p.metadata.count().map(|count| json!({"reported_count":count,"coverage":"direct_device_dsp_provider","native_setter":p.direct.is_ok(),"native_setter_scope":"direct_device_named_parameter"})).map_err(|e| e.to_string())?,
@@ -2403,6 +2418,10 @@ fn dispatch_device(
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
             | Request::EditChorderModel { .. }
+            | Request::ChorderAuditionLane {
+                phase: chorder_audition::Phase::Press | chorder_audition::Phase::Release,
+                ..
+            }
             | Request::ParameterAction { .. }
             | Request::FabfilterPresetApply { .. }
             | Request::Serum2PresetApply { .. }
@@ -3156,6 +3175,7 @@ fn dispatch_device(
             | Request::SetParameter { .. }
             | Request::ParameterAction { .. }
             | Request::ParameterDetails { .. }
+            | Request::ChorderAuditionLane { .. }
             | Request::FormatValues { .. }
     );
     let node_scope = match &request {

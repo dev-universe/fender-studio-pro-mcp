@@ -153,3 +153,43 @@ test('the outer bridge requires both context guards and strips late chord pages'
   const result = host.writeRequest({ op: 'chorderChordsGet', args: target });
   assert.equal(result.ok, false); assert.equal(result.code, 'native_context_lost'); assert.equal(result.result, undefined); assert.equal(calls, 1);
 });
+
+test('Chorder audition binds the Note FX and admits a press only while transport is stopped', () => {
+  const h = harness(request => ({ ok: true, operation: request.operation, phase: request.phase,
+    outcome: 'acknowledged', source: 'dsp', instance: { ...instance, native_class: 'MusicEffect' } }));
+  h.service.capabilities = () => JSON.stringify({ ok: true, api: 'fender-mcp-native-v1', chorder_audition_api: 'fixed_midi60_v1' });
+  const device = {}, transport = { playing: false, recording: false };
+  h.component.bridge.song = () => ({ transport });
+  h.component.pluginOf = () => ({ name: 'Chorder', device });
+  const args = { track: 'Scratch', slot: 0, expected_instance: instance.object_uid, phase: 'press' };
+  const stopped = () => !transport.playing && !transport.recording;
+  assert.equal(h.component.chorderAuditionLane({ ...args, pitch: 61 }, stopped).native_outcome, 'not_applied');
+  transport.playing = true;
+  assert.equal(h.component.chorderAuditionLane(args, stopped).native_outcome, 'not_applied');
+  assert.equal(h.component.chorderAuditionLane(args, () => true).native_outcome, 'not_applied');
+  assert.equal(h.calls.length, 0);
+  transport.playing = false;
+  assert.equal(h.component.chorderAuditionLane(args, stopped).native_outcome, 'acknowledged');
+  transport.recording = true;
+  assert.equal(h.component.chorderAuditionLane({ ...args, phase: 'release' }, stopped).native_outcome, 'acknowledged');
+  assert.deepEqual(h.calls, ['press', 'release'].map(phase => ({
+    operation: 'chorder_audition_lane', expected_instance: instance.object_uid, phase,
+  })));
+});
+
+test('the bridge refuses missing audition context and discards acknowledgement after document replacement', () => {
+  const host = bridgeHarness();
+  const args = { track: 'Scratch', slot: 0, expected_instance: instance.object_uid, phase: 'press' };
+  let calls = 0;
+  host.bridge.component = { chorderAuditionLane() {
+    calls++;
+    host.manager.activeDocument = { title: 'Other song' };
+    return { ok: true, native_outcome: 'acknowledged' };
+  } };
+  assert.equal(host.request({ op: 'chorderAuditionLane', args }).ok, false);
+  assert.equal(calls, 0);
+  const result = host.writeRequest({ op: 'chorderAuditionLane', args });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'native_context_lost');
+  assert.equal(calls, 1);
+});

@@ -112,6 +112,8 @@ pub enum Operation {
     ChorderLearningGet(ChorderLearningGet),
     #[serde(rename = "chorderChordsGet", alias = "chorder_chords_get")]
     ChorderChordsGet(ChorderChordsGet),
+    #[serde(rename = "chorderAudition", alias = "chorder_audition")]
+    ChorderAudition(ChorderAudition),
     #[serde(rename = "chorderLearningSet", alias = "chorder_learning_set")]
     ChorderLearningSet(ChorderLearningSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
@@ -629,6 +631,22 @@ pub struct ChorderChordsGet {
     pub offset: u32,
     #[schemars(range(min = 1, max = 16))]
     pub limit: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ChorderAudition {
+    Prepare {
+        track: String,
+        slot: u32,
+        expected_instance: String,
+    },
+    Play {
+        permit: String,
+    },
+    Status {
+        permit: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1525,6 +1543,7 @@ impl Operation {
             | Self::PluginParameterDetails(_)
             | Self::ChorderLearningGet(_)
             | Self::ChorderChordsGet(_)
+            | Self::ChorderAudition(ChorderAudition::Status { .. })
             | Self::PluginParameterFormat(_)
             | Self::PluginParameterDigest(_)
             | Self::PluginModels(_)
@@ -1585,6 +1604,7 @@ impl Operation {
                 Self::ChorderLearningGet(_)
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
+                    | Self::ChorderAudition(_)
                     | Self::PluginMultiChildParameters(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
@@ -1762,6 +1782,22 @@ impl Operation {
                 if p.offset > 127 || !(1..=16).contains(&p.limit) {
                     return Err(invalid(
                         "Chorder chord pages require offset 0..127 and limit 1..16",
+                    ));
+                }
+            }
+            Self::ChorderAudition(ChorderAudition::Prepare {
+                track,
+                slot,
+                expected_instance,
+            }) => validate_chorder_target(track, *slot, expected_instance)?,
+            Self::ChorderAudition(
+                ChorderAudition::Play { permit } | ChorderAudition::Status { permit },
+            ) => {
+                if !uuid::Uuid::parse_str(permit)
+                    .is_ok_and(|id| id.get_version_num() == 4 && id.to_string() == *permit)
+                {
+                    return Err(invalid(
+                        "Chorder audition requires a canonical owner-issued permit",
                     ));
                 }
             }

@@ -368,6 +368,12 @@ impl McpServer {
                 "Read a page of stored Chorder input chords from the exact Note FX instance. Requires the current document, instance, offset 0..127 and limit 1..16. Empty inputs are explicit. Compare model and capture digests across pages because each page is a fresh sequential observation. No GUI, imported XML, file path, mutation, audio or persistence claim is supplied.",
                 false,
             ),
+            named::<ChorderAudition>(
+                "chorder_audition",
+                "chorderAudition",
+                "Prepare, play or inspect one short-lived permit for finite MIDI 60 audition on exact Chorder Note FX. Prepare requires track, slot and expected_instance with stopped transport and Learn off. Play and status require the permit and the same expected_document. Status reads the owner history. An unknown press is quarantined and never retried. Verification covers the local Chorder key lane.",
+                true,
+            ),
             named::<ChorderLearningSet>(
                 "chorder_learning_set",
                 "chorderLearningSet",
@@ -485,6 +491,18 @@ fn named<T: JsonSchema>(
             .as_array_mut()
             .unwrap()
             .push(json!("expected_document"));
+    }
+    if operation == "chorderAudition" {
+        let document_schema = schema["properties"]["expected_document"].clone();
+        if let Some(variants) = schema["oneOf"].as_array_mut() {
+            for variant in variants {
+                variant["properties"]["expected_document"] = document_schema.clone();
+                variant["required"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!("expected_document"));
+            }
+        }
     }
     if operation == "pluginInspect" {
         schema["allOf"] = json!([{
@@ -696,7 +714,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 60;
+    const EXPECTED_TOOL_COUNT: usize = 61;
 
     use super::*;
 
@@ -1146,6 +1164,37 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn chorder_audition_has_closed_document_bound_action_shapes() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "chorder_audition")
+            .unwrap();
+        assert_eq!(spec.operation, Some("chorderAudition"));
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        let variants = schema["oneOf"].as_array().unwrap();
+        assert_eq!(variants.len(), 3);
+        for variant in variants {
+            let properties = &variant["properties"];
+            let action = properties["action"]["const"].as_str().unwrap();
+            assert_eq!(variant["additionalProperties"], false);
+            assert!(properties.get("expected_document").is_some());
+            assert!(
+                variant["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!("expected_document"))
+            );
+            for field in ["track", "slot", "expected_instance"] {
+                assert_eq!(properties.get(field).is_some(), action == "prepare");
+            }
+            assert_eq!(properties.get("permit").is_some(), action != "prepare");
+        }
+        assert!(Operation::from_parts("chorderAudition", json!({
+            "action":"status","permit":"e1973f51-0000-4000-8000-000000000001","track":"extra"
+        })).is_err());
     }
 
     #[test]

@@ -1288,6 +1288,7 @@ class NativePluginControls {
         const guiLearning = request.operation === "chorder_learning_get" || request.operation === "edit_chorder_model";
         const guiLearningSet = request.operation === "edit_chorder_model";
         const chorderChords = request.operation === "chorder_chords_get";
+        const chorderAudition = request.operation === "chorder_audition_lane";
         const rumbleSerialization = request.operation === "rumble_serialization_inspect";
         const rumbleState = request.operation === "rumble_state_read";
         const rumbleParameters = request.operation === "rumble_parameters_read";
@@ -1335,7 +1336,7 @@ class NativePluginControls {
             }
             if (typeof Host === "undefined" || !Host.Objects) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (serum2Preset || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || chorderAudition || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             const objects = Host.Objects;
@@ -1343,7 +1344,7 @@ class NativePluginControls {
             if (!service && typeof objects.getObjectByUrl === "function") service = objects.getObjectByUrl("object://FenderMcpNative/", true);
             if (!service) {
                 if (stereoSendChange) return stereoSendUnavailable();
-                if (serum2Preset || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
+                if (serum2Preset || chorderAudition || guiLearning || externalMenu || rumbleNamedParameters || cvStructure || cvPresetApply || insertGraphEdit) throw new Error("matching native extension unavailable");
                 return guiComparison ? this.guiComparisonFailure("native GUI comparison requires the matching native extension") : null;
             }
             if (typeof service.capabilities !== "function" || typeof service.request !== "function") {
@@ -1370,6 +1371,7 @@ class NativePluginControls {
                 return serum2Failure("not_applied");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
                 throw new Error("unsupported CV preset settings apply API");
+            if (chorderAudition && capability.chorder_audition_api !== "fixed_midi60_v1") throw new Error("unsupported native Chorder audition API");
             if (guiEdit && capability.gui_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native Chorder GUI edit API");
             if (guiLearning && capability.gui_model_edit_api !== "chorder_learning_controls_v1") throw new Error("unsupported native Chorder learning API");
             if (request.operation === "edit_numeric_parameter" && capability.numeric_edit_api !== "chorder_autofill_v1") throw new Error("unsupported native numeric edit API");
@@ -1382,6 +1384,11 @@ class NativePluginControls {
             if (vendorApply && capability.fabfilter_preset_apply_api !== "pro_q_4_file_v1")
                 throw new Error("unsupported FabFilter preset apply API");
             if (body.length > (vendorApply ? 163840 : 16384)) throw new Error("native request exceeds the supported size");
+            if (chorderAudition && ["preflight", "press"].includes(request.phase)) {
+                const transport = this.component.bridge.song().transport;
+                if (!transport || transport.playing !== false || transport.recording !== false)
+                    throw new Error("stop playback and recording before Chorder audition");
+            }
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;

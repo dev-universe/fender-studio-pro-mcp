@@ -4,7 +4,7 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 
 pub(super) const MAX_CAPTURE_BYTES: usize = 1_048_576;
-const CLASS: &str = "D2D9B002-12FC-4F1D-AFDA-70336D1DC108";
+pub(super) const CLASS: &str = "D2D9B002-12FC-4F1D-AFDA-70336D1DC108";
 const SCOPE: &str = "component_alias_IStorable_chorder_chords";
 const SCHEMA: &str = "chorder_music_effect_preset_v1";
 
