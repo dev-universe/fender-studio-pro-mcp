@@ -168,6 +168,7 @@ The add-on compares the original bits before the setter. After
 `outcome_unknown`, read the current state before making another change.
 The receipt covers the one child amount. Inspect the parent or the other
 child separately when those values matter.
+[Live recovery verification](docs/evidence/2026-11-25-multi-child-filter-env.md)
 
 ### Chorder audition
 
