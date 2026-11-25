@@ -686,3 +686,24 @@ Chorder는 로컬 완료다. Scope는 R68, #117의 근거를 재사용해 캡처
 Scope 캡슐 응답에 파형 범위를 명시하는 `feature/scope-state-coverage`
 후보를 분리했고 다음 실제 R382에서 Scope와 별도 피어 효과를 대조한다.
 `main` 19개·로컬 17개 잔여, 전체 2~5일, 장비 의존 4건, 지정 종료 시각 없음.
+
+## 21시 37분 체크포인트
+
+- R382가 Scope의 `scope_state_coverage` 응답, Tone Generator에서의 필드
+  부재와 토큰 4개 해제를 확인했다. 42요청 4.107초, 앱 31.025초.
+  네이티브 505개, 핵심 Rust 260개, JS 438개, Python 560개가 통과했다.
+  두 플러그인의 원래 41행, 관리 파일 18개와 설정 10개를 대조했다.
+  [#172](https://github.com/dev-universe/fender-studio-pro-mcp/pull/172)
+- #143이 두 검사 후 550.3초에 `01e62d1`로 병합됐다. #144의 새
+  헤드에서 검사 중이다. [#143](https://github.com/dev-universe/fender-studio-pro-mcp/pull/143)
+- R383에서 모니터가 꺼진 상태의 Input Filter GUI 입력 7개는 자체
+  눌림·해제가 관측됐고 별도 Chorder에선 입력이 잡히지 않았다.
+  R384는 소유 가상 MIDI에서 동일 7음을 입력했다. 기본 범위 48~72의
+  48·60·72만 다음 Chorder에서 읽혔다. 모두 해제되고 1296행을 원복했다.
+  399요청 50.039초, 앱 80.733초. 임시 MIDI 설정과 소스도 정리했다.
+  [#173](https://github.com/dev-universe/fender-studio-pro-mcp/pull/173)
+
+다음은 R385의 모니터 활성 GUI 입력이다. 공통 Chorder audition은
+`feature/chorder-audition-lifecycle`에서 문서·인스턴스와 일회용 토큰을
+묶어 구현 중이다. `main` 19개·로컬 17개 잔여, 전체 2~5일,
+장비 의존 4건, 지정 종료 시각 없음.

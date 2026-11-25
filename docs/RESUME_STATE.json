@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "112e5717f98418cfd89686b678c52a3cf0f7861a",
+    "main_at_checkpoint": "01e62d1324548e8ffce93cf4bb6b3f7aa354f857",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -88,7 +88,10 @@
       "R379B",
       "R380",
       "R380B",
-      "R381"
+      "R381",
+      "R382",
+      "R383",
+      "R384"
     ],
     "merged_pull_requests": [
       109,
@@ -124,10 +127,10 @@
       139,
       140,
       141,
-      142
+      142,
+      143
     ],
     "open_pull_requests": [
-      143,
       144,
       145,
       146,
@@ -155,14 +158,16 @@
       168,
       169,
       170,
-      171
+      171,
+      172,
+      173
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne and Chorder are locally qualified. R377 and R379B established the scope of the C display mismatch and observed Main Left/Right and unavailable-sidechain behavior. R380B qualified the visible Scope Oneshot waiting, first qualifying capture, hold and one retrigger. R381 compared two distinct held waveforms that had identical 762-byte component capsules. Restoring the original capsule reset the visible hold while keeping the 31 settings. Next run R382 through the public MCP response on the Scope coverage candidate. Direct internal trigger timing and capture-buffer bytes are not yet observed. R358 prepared the List choice fix in PR149 and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 143 to 171 as both checks pass on each exact current-base head.",
+    "next": "SampleOne and Chorder are locally qualified. R377–R382 established Scope source display, visible trigger and waveform reset limitations, and the public coverage field. Direct internal trigger timing and capture buffer bytes remain open. R383 observed local Input Filter GUI-lane hold/release without monitoring or downstream events. R384 verified exclusive routed virtual MIDI, factory pitch bounds 48 and 72, and release through a downstream Chorder. Next R385 compares direct GUI lanes with monitoring enabled. Shared Event Chorder audition lifecycle implementation is in feature/chorder-audition-lifecycle using one owner-issued permit and guarded native MIDI 60 edges. R358–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 144 to 173 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 17,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
