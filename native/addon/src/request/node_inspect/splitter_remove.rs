@@ -333,6 +333,63 @@ struct EmptyMember<'a> {
     canonical: Owned,
 }
 
+struct GraphObjectLayout {
+    primary: usize,
+    node: usize,
+    canonical: usize,
+}
+
+impl GraphObjectLayout {
+    fn primary(
+        &self,
+        image: usize,
+        node: *mut c_void,
+        canonical: *mut c_void,
+    ) -> Option<*mut c_void> {
+        // The verified 8.1.1 QueryInterface paths return INode at +0x30
+        // and IUnknown at +0x18. The two retained interfaces must agree
+        // before recovering and checking the primary address.
+        if node.is_null()
+            || canonical.is_null()
+            || node.cast::<u8>().wrapping_sub(0x18).cast() != canonical
+            || table(node) != image + self.node
+            || table(canonical) != image + self.canonical
+        {
+            return None;
+        }
+        let primary = unsafe { node.cast::<u8>().sub(0x30).cast() };
+        (table(primary) == image + self.primary).then_some(primary)
+    }
+}
+
+const GRAPH_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: GRAPH_TABLE,
+    node: 0x1b7af00,
+    canonical: 0x1b7ae38,
+};
+const SPLITTER_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: SPLITTER_TABLE,
+    node: 0x1b7b4a8,
+    canonical: 0x1b7b3e0,
+};
+const MERGER_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: MERGER_TABLE,
+    node: 0x1b7ba80,
+    canonical: 0x1b7b9b8,
+};
+const SLOT_LAYOUTS: [GraphObjectLayout; 2] = [
+    GraphObjectLayout {
+        primary: SLOT_TABLES[0],
+        node: 0x1be1c70,
+        canonical: 0x1be1ba8,
+    },
+    GraphObjectLayout {
+        primary: SLOT_TABLES[1],
+        node: 0x1bcd150,
+        canonical: 0x1bcd088,
+    },
+];
+
 struct EmptyGraph<'a> {
     graph: *mut c_void,
     image: usize,
@@ -347,9 +404,8 @@ impl<'a> EmptyGraph<'a> {
         expected: [(&'a str, GraphChildKind); 8],
     ) -> Result<Self, String> {
         let graph_node = route.graph.node.0;
-        let graph = [route.graph._canonical.0, graph_node]
-            .into_iter()
-            .find(|&pointer| table(pointer) == image + GRAPH_TABLE)
+        let graph = GRAPH_LAYOUT
+            .primary(image, graph_node, route.graph._canonical.0)
             .ok_or("The retained insert graph primary interface changed")?;
         let count: Count = unsafe { method(graph_node, 8) };
         let child: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
@@ -380,24 +436,15 @@ impl<'a> EmptyGraph<'a> {
             {
                 return Err("The retained graph child identity or ownership changed".into());
             }
-            let supported: &[usize] = match kind {
-                GraphChildKind::Splitter => &[SPLITTER_TABLE],
-                GraphChildKind::Merger => &[MERGER_TABLE],
-                GraphChildKind::Slot => &SLOT_TABLES,
+            let supported: &[GraphObjectLayout] = match kind {
+                GraphChildKind::Splitter => &[SPLITTER_LAYOUT],
+                GraphChildKind::Merger => &[MERGER_LAYOUT],
+                GraphChildKind::Slot => &SLOT_LAYOUTS,
             };
-            // Only retained interfaces may establish a primary address.
-            // An INode subobject with a different vtable cannot establish it.
-            let mut primary = None;
-            for pointer in [canonical.0, child.0, node.0] {
-                if supported
-                    .iter()
-                    .any(|offset| table(pointer) == image + offset)
-                    && primary.replace(pointer).is_some_and(|old| old != pointer)
-                {
-                    return Err("More than one primary pointer matches a graph child".into());
-                }
-            }
-            let primary = primary.ok_or("The retained graph child primary interface changed")?;
+            let primary = supported
+                .iter()
+                .find_map(|layout| layout.primary(image, node.0, canonical.0))
+                .ok_or("The retained graph child primary interface changed")?;
             if members.iter().any(|member| member.primary == primary) {
                 return Err("Two graph nodes share a primary pointer".into());
             }
@@ -631,6 +678,38 @@ pub(in crate::native_script::request) fn dispatch(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn resolves_only_the_primary_of_two_matching_retained_interfaces() {
+        let image = 0x100000000;
+        for layout in [GRAPH_LAYOUT, SPLITTER_LAYOUT, MERGER_LAYOUT]
+            .iter()
+            .chain(&SLOT_LAYOUTS)
+        {
+            let mut object = [0usize; 7];
+            object[0] = image + layout.primary;
+            object[3] = image + layout.canonical;
+            object[6] = image + layout.node;
+            let primary = object.as_mut_ptr().cast::<c_void>();
+            let node = object.as_mut_ptr().wrapping_add(6).cast();
+            let canonical = object.as_mut_ptr().wrapping_add(3).cast();
+            assert_eq!(layout.primary(image, node, canonical), Some(primary));
+            let mut other_identity = image + layout.canonical;
+            assert_eq!(
+                layout.primary(image, node, std::ptr::addr_of_mut!(other_identity).cast()),
+                None
+            );
+            assert_eq!(layout.primary(image, canonical, node), None);
+            object[6] = image + layout.canonical;
+            assert_eq!(layout.primary(image, node, canonical), None);
+            object[6] = image + layout.node;
+            object[3] = image + layout.node;
+            assert_eq!(layout.primary(image, node, canonical), None);
+            object[3] = image + layout.canonical;
+            object[0] = image + layout.node;
+            assert_eq!(layout.primary(image, node, canonical), None);
+        }
+    }
 
     fn fixture() -> [Links<u8>; 8] {
         [
