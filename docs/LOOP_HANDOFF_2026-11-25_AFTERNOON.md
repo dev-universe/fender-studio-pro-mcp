@@ -1317,3 +1317,35 @@ Input Filter, Shared Event, Impact다. 남은 로컬 항목은 Ampire, Mustang,
 Rumble, Scope, Shared Graph, Shared Persistence, Shared Docs Release,
 CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 장비가 필요한 시험은 CV 두 항목을 한 묶음으로 세어 네 가지다.
+
+## 11월 26일 03시 17분 복구된 Ampire 저장본과 Scope Hold 대조
+
+- R430에서 정확히 복구된 Ampire를 한 번 저장하고 새 프로세스 및
+  세션에서 열었다. 저장된 컴포넌트 2,297바이트와 DSP 90행이 원래
+  링크 상태와 같았다. 이전 문서 거부 뒤 한 번 Link Off를 실행하니
+  A/B/C 원시 비트가 공장 초기 Link Off와 정확히 같았다. 링크 이외의
+  89행과 믹서·트랙이 유지됐다. 166요청 77.929초와 63요청 27.492초,
+  앱 133.914·88.617초, 토큰 10개. 저장본과 원래 관리 파일 18개,
+  설정 10개를 확인했다. Volume·Pitch는 R433에서 별도 조사한다.
+  [#220](https://github.com/dev-universe/fender-studio-pro-mcp/pull/220)
+- R431은 Scope Hold의 검출 억제와 Oneshot의 블록 시작 분기를
+  정확한 설치본에서 확인했다. REA/Ghidra·Craft·LLVM 대조 8분 20초.
+  R432는 Hold 200%와 Trigger 160,000 smp를 확인해 이전과 같은
+  입력·시간 창에서 전체 폭 프레임 세 개가 바이트 단위로 일치했다.
+  두 개는 Off 전, 하나는 실제 Off 확인 뒤다. DSP 41행과 Hold 100%
+  복원, 앱 143.256초, owner 96요청 84.972초, 18+10 파일 확인.
+  내부 카운터와 버퍼는 여전히 열려 있다.
+  [#219](https://github.com/dev-universe/fender-studio-pro-mcp/pull/219)
+  [#221](https://github.com/dev-universe/fender-studio-pro-mcp/pull/221)
+- R428 첫 후보 `35ec765`에서 잘못된 바인딩 5개와 올바른 앵커
+  요청이 모두 실행 전 거부됐다. 올바른 요청은 retained primary
+  인터페이스 불일치였다. 원래 8노드·10연결·DSP 144행을 재조회했고
+  207요청 54.897초, 앱 124.538초, 16회 토큰 해제, 18+9 파일 복원.
+  `d625d07`은 exact INode/IUnknown 오프셋을 정적으로 확인해 수정하고
+  독립 리뷰를 통과했다. 원본과 분리된 R428B에서 다시 검증한다.
+- #210이 `1c52427`의 두 검사 후 `74c35f8`에 병합됐다.
+  검사 시작부터 8분 55초. #211은 최신 main 검사 중이다.
+  [#210](https://github.com/dev-universe/fender-studio-pro-mcp/pull/210)
+
+`main` 16개·로컬 12개, 전체 소프트웨어 2~5일, 장비 의존 4건,
+지정 종료 시각 없음.
