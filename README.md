@@ -239,8 +239,9 @@ inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-l
 
 To check the destination in a saved song, call `song_read` on the
 `.song` file and look for `midi_destination` on the source track. A
-resolved destination identifies the specific Serum 2 FX insert, even
-with multiple copies in the song. [Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+resolved destination identifies the original Serum 2 instrument or the
+specific Serum 2 FX insert, even with multiple FX copies in the song.
+[Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
