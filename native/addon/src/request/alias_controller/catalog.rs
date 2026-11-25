@@ -1,7 +1,7 @@
 //! Fixed current-selector flat models. No item interaction or model mutation.
 use super::*;
 
-const ITEM_MODEL: Uid = Uid {
+pub(super) const ITEM_MODEL: Uid = Uid {
     a: 0x5a8661f7,
     b: 0xcc02,
     c: 0x4432,
@@ -139,7 +139,7 @@ impl Drop for RoutePins {
 }
 type Find = unsafe extern "C" fn(*mut c_void, *const PlainString) -> *mut c_void;
 type GetObject = unsafe extern "C" fn(*mut c_void, *const PlainCString, *const Uid) -> *mut c_void;
-fn find(parent: *mut c_void, name: *const PlainString) -> *mut c_void {
+pub(super) fn find(parent: *mut c_void, name: *const PlainString) -> *mut c_void {
     let get: Find = unsafe { method(parent, 10) };
     unsafe { get(parent, name) }
 }

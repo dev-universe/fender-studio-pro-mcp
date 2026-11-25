@@ -1,0 +1,54 @@
+{
+  "verification": "Actual Studio Pro save, full app restart, fresh document and independent Pedalboard readback",
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64"
+  },
+  "trial": "R311",
+  "tool": "pedalboard_slot_swap",
+  "positions": [
+    1,
+    2
+  ],
+  "before": [
+    "Compressor",
+    "Reverb",
+    " - ",
+    " - ",
+    " - ",
+    " - ",
+    " - ",
+    " - "
+  ],
+  "after_exchange_and_after_restart": [
+    "Reverb",
+    "Compressor",
+    " - ",
+    " - ",
+    " - ",
+    " - ",
+    " - ",
+    " - "
+  ],
+  "all_reopened_typed_values_matched": 40,
+  "fresh_session_and_document": true,
+  "peer_and_quiet_mixer_preserved": true,
+  "scratch_saved_times": 1,
+  "reopened_file_sha_unchanged": true,
+  "normal_managed_files_restored": 18,
+  "save": {
+    "requests": 82,
+    "owner_seconds": 72.115,
+    "host_seconds": 104.86
+  },
+  "reopen": {
+    "requests": 20,
+    "owner_seconds": 46.321,
+    "host_seconds": 123.711
+  },
+  "verification_notes": [
+    "The first reopened observer rejected null monitor and record-arm values on the Main bus. A fresh observer matched the bus shape and verified all 40 values without changing routing or audio settings.",
+    "Only the named scratch song was saved. After reopening, the save prompt was declined and the saved file hash was rechecked."
+  ]
+}

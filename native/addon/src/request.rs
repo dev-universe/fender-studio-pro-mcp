@@ -101,6 +101,13 @@ enum Request {
     CvPortStructureInspect {
         expected_instance: String,
     },
+    PedalboardSlotSwap {
+        expected_instance: String,
+        first_slot: u8,
+        second_slot: u8,
+        expected_first_model: String,
+        expected_second_model: String,
+    },
     ImpactOutputSet {
         expected_instance: String,
         output_index: u32,
@@ -232,6 +239,11 @@ enum Request {
         sha256: String,
         data_hex: String,
     },
+    Serum2PresetApply {
+        expected_instance: String,
+        path: String,
+        sha256: String,
+    },
     StateCapture {
         expected_instance: Option<String>,
     },
@@ -340,6 +352,7 @@ impl Request {
             }
             Self::CvPortStructureInspect { .. }
             | Self::ImpactOutputSet { .. }
+            | Self::PedalboardSlotSwap { .. }
             | Self::ParameterAction { .. }
             | Self::EditNumericParameter { .. }
             | Self::EditChorderAutofill { .. }
@@ -355,6 +368,7 @@ impl Request {
             | Self::FormatValues { source, .. }
             | Self::SetParameter { source, .. } => *source,
             Self::FabfilterPresetApply { .. }
+            | Self::Serum2PresetApply { .. }
             | Self::StateCapture { .. }
             | Self::ChorderChordsGet { .. }
             | Self::RumbleParametersRead { .. }
@@ -385,10 +399,16 @@ impl Request {
             | Self::ImpactOutputSet {
                 expected_instance, ..
             }
+            | Self::PedalboardSlotSwap {
+                expected_instance, ..
+            }
             | Self::InspectCvPresetSettings {
                 expected_instance, ..
             }
             | Self::ApplyCvPresetSettings {
+                expected_instance, ..
+            }
+            | Self::Serum2PresetApply {
                 expected_instance, ..
             }
             | Self::ExternalPortMenu {
@@ -756,6 +776,19 @@ impl Request {
             {
                 Err("Impact output inspection requires explicit dsp and expected_instance".into())
             }
+            Self::Serum2PresetApply {
+                expected_instance,
+                path,
+                sha256,
+            } if !valid_uid(expected_instance)
+                || !path.starts_with('/')
+                || path.len() > 4096
+                || path.contains('\0')
+                || sha256.len() != 64
+                || !sha256.bytes().all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)) =>
+            {
+                Err("Serum preset application requires a bound instance, private path, and lowercase SHA-256".into())
+            }
             Self::FabfilterPresetApply {
                 expected_instance: None,
                 ..
@@ -869,7 +902,8 @@ impl Request {
             Self::Presets {
                 catalog_token: None,
                 ..
-            } | Self::InspectAux { .. }
+            } | Self::Serum2PresetApply { .. }
+                | Self::InspectAux { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
                 | Self::InsertChainCapture { .. }
@@ -1742,6 +1776,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         }
         Request::CvPortStructureInspect { .. }
         | Request::ImpactOutputSet { .. }
+        | Request::PedalboardSlotSwap { .. }
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::ParameterAction { .. }
@@ -1756,6 +1791,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
         | Request::FabfilterPresetApply { .. }
+        | Request::Serum2PresetApply { .. }
         | Request::StateCapture { .. }
         | Request::StateRestore { .. }
         | Request::StateRelease { .. }
@@ -2289,6 +2325,7 @@ fn dispatch_device(
         request,
         Request::CvPortStructureInspect { .. }
             | Request::ImpactOutputSet { .. }
+            | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterAdd { .. }
@@ -2300,6 +2337,7 @@ fn dispatch_device(
             | Request::EditChorderModel { .. }
             | Request::ParameterAction { .. }
             | Request::FabfilterPresetApply { .. }
+            | Request::Serum2PresetApply { .. }
             | Request::StateRestore { .. }
             | Request::PresetApply { .. }
             | Request::ApplyCvPresetSettings { .. }
@@ -2494,6 +2532,37 @@ fn dispatch_device(
             menu: None,
             catalog: None,
             edit: edit.map(|lease| ParameterEditLease::Direct(Box::new(lease))),
+            action: None,
+            presets: None,
+            auxiliary: None,
+            folder_preflight: None,
+            owner: None,
+            gui: None,
+            nodes: None,
+            provider: None,
+            context: Some(ctx),
+            mutation: true,
+        };
+    }
+    if let Request::PedalboardSlotSwap {
+        first_slot,
+        second_slot,
+        ref expected_first_model,
+        ref expected_second_model,
+        ..
+    } = request
+    {
+        let mut value = alias_controller::swap_slots(
+            &ctx,
+            [first_slot, second_slot],
+            [expected_first_model, expected_second_model],
+        );
+        value["instance"] = json!(ctx.instance);
+        return Reply {
+            value,
+            menu: None,
+            catalog: None,
+            edit: None,
             action: None,
             presets: None,
             auxiliary: None,
@@ -2882,6 +2951,26 @@ fn dispatch_device(
             context: Some(ctx),
             mutation: false,
         };
+    }
+    if let Request::Serum2PresetApply {
+        ref path,
+        ref sha256,
+        ..
+    } = request
+    {
+        let mut value = match auxiliary {
+            Some(url) => presets::apply_serum_vst3(&ctx, url, path, sha256),
+            None => error(
+                "missing_auxiliary",
+                "Serum preset application requires a host URL prototype",
+                "not_applied",
+            ),
+        };
+        value["instance"] = json!(ctx.instance);
+        let mut reply = Reply::unbound(value);
+        reply.context = Some(ctx);
+        reply.mutation = true;
+        return reply;
     }
     let state_result = match &request {
         Request::FabfilterPresetApply {

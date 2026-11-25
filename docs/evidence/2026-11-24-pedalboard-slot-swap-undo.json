@@ -1,0 +1,41 @@
+{
+  "verification": "Single host Undo in Studio Pro after exchanging two occupied Pedalboard positions",
+  "host": {
+    "version": "8.1.1",
+    "build": "113103",
+    "platform": "macOS arm64"
+  },
+  "trial": "R312",
+  "positions": [
+    1,
+    2
+  ],
+  "before_swap": [
+    "Compressor",
+    "Reverb"
+  ],
+  "after_swap": [
+    "Reverb",
+    "Compressor"
+  ],
+  "after_undo": [
+    "Compressor",
+    "Reverb"
+  ],
+  "previous_undo_action": "Main volume change",
+  "new_top_undo_action": "Multi Parameter Edit",
+  "undo_request_count": 1,
+  "undo_receipt": "applied_unverified",
+  "independent_restore": {
+    "typed_parameter_rows": 40,
+    "component_fingerprint_matches": true,
+    "peer_inserts_mixer_timeline_match": true
+  },
+  "closure": {
+    "requests": 107,
+    "owner_seconds": 80.845,
+    "host_seconds": 148.77,
+    "scratch_saved": false,
+    "normal_managed_files_restored": 18
+  }
+}
