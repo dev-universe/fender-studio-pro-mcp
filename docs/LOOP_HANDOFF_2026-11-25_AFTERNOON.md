@@ -1827,3 +1827,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   [#251](https://github.com/dev-universe/fender-studio-pro-mcp/pull/251)
 - 앱과 owner를 닫은 경계다. `main` 15개·로컬 11개·장비 4건. 전체 2~5일과
   CI·장비 대기이며 지정 종료 시각은 없다.
+
+## 11월 26일 06시 54분 Serum FX 저장·재열기와 Ampire 실측
+
+- R463B에서 종전의 29번째 요청이 실제 8.1.1에서 일치하지 않는 Scope를
+  명시적으로 거부했고, 편집기는 오류 없이 열렸다. 소스 목록을 확인하지
+  못해 Send 추가 전 중단했다. 33회·76.598초, No Save, 18+10개 원복.
+  [#256](https://github.com/dev-universe/fender-studio-pro-mcp/pull/256)
+- #251과 #253은 각 최신 헤드의 두 필수 검사를 통과해 `81f9d27`과
+  `8da4a28`에 병합됐다. 각각 609.9초와 572.3초였다.
+  [#251](https://github.com/dev-universe/fender-studio-pro-mcp/pull/251)
+  [#253](https://github.com/dev-universe/fender-studio-pro-mcp/pull/253)
+- R467에서 Serum 2 FX MIDI 목적지가 같은 모델의 두 번째 인서트와
+  구분된 채 실제 저장·재열기 뒤에도 유지됐다. Music 트랙에 `kind=instrument`
+  DSP 판독을 하면 현재 Out의 FX 인스턴스로 이어졌다. exact 인서트 판독 및
+  저장 `MusicInput00` Device UID가 모두 일치했다. 소유한 시험곡만 두 번 저장.
+  `song_read`와 `song-read`의 실제 아카이브 검증 및 로컬 `scripts/check.sh`
+  통과. 라이브 owner 50+24+16+16회. 원래 설치 18개·프로필 10개 원복.
+  다음은 기존 MCP 판독의 현재 경로와 잘못 지정한 같은 모델의 분리 검증이다.
+  [#257](https://github.com/dev-universe/fender-studio-pro-mcp/pull/257)
+- R466B는 실제 Vibrato의 오른쪽 Sweep 간격 5.9821→9.7137→5.9866 Hz를
+  두 계산 경로로 검증했다. 왼쪽은 기준 미달이다. 복귀한 Chorus·전원·속도와
+  89개 제어값은 정확했고, 같은 크기의 불투명 상태 해시가 달라 완전 복원을
+  인정하지 않았다. 182회·280.753초. No Save, 18+12개 원복.
+  [#258](https://github.com/dev-universe/fender-studio-pro-mcp/pull/258)
+- 앱·owner는 닫혔고 임시 서명 플러그인은 제거됐다. `main` 15개·로컬 11개,
+  이 중 장비 4건. 전체 2~5일과 CI·장비 대기, 지정된 종료 시각 없음.
