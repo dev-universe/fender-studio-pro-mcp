@@ -1121,3 +1121,18 @@ successor 연결을 라이브 노드·슬롯 및 새 문서 바인딩과 대조�
 
 `main` 18개·로컬 14개, 전체 예상 2~5일, 장비 의존 4건,
 지정 종료 시각 없음.
+
+## 11월 26일 02시 09분 Scope의 활성 사이드체인
+
+- R419는 자체 440 Hz Tone Generator와 오른쪽만 반전한 Mixtool을
+  프리페이더 Send로 Scope에 보냈다. 정지·Main 뮤트·0 상태였다.
+  C가 raw 2이면 Side Left와, raw 3이면 Side Right와 같은 위상을
+  보였다. raw 3에서도 C 화면 글자는 Side Left였다. Tone을 끄고
+  Send를 제거한 뒤 DSP 113행을 정확히 원복했다.
+- 138요청 132.649초, 앱 190.765초. 소유 원본과 시험곡, 설치
+  18개·설정 10개 원복. 실제 완료 시각과 숨은 파형은 별도다.
+  [#207](https://github.com/dev-universe/fender-studio-pro-mcp/pull/207)
+
+Multi 공개 후보의 오프라인 검사와 R417을 이어간다. #159의 재실행은
+Core 성공과 같은 헤드의 macOS 검사를 진행 중이다. `main` 18개·
+로컬 14개, 전체 2~5일, 장비 의존 4건, 지정 종료 시각 없음.
