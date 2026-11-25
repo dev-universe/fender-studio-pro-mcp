@@ -14,4 +14,10 @@ The two MCP owners handled 253 and 75 requests in 63.064 and 23.786 seconds and 
 
 The initial R428 candidate refused the valid request because it treated the retained graph’s `IUnknown` and `INode` interface addresses as the primary object address. Fresh reads in that trial still showed all eight nodes, ten links, and 144 typed DSP rows, and the operator closed without saving. R428B verifies both pinned interface addresses and their tables before recovering the primary object. It rechecks node ownership and topology before opening the edit transaction.
 
-This trial covers the two empty lanes of the supported third-Splitter shape. Studio Pro Undo for this public tool, operation with Routing closed, and other empty-lane topologies remain unverified.
+## Undo in a separate scratch session
+
+R435 used the same exact candidate and a fresh independent copy of the original scratch. With transport stopped and Routing open, one public removal produced the same six nodes, seven ordered links, and 144 unchanged Mixtool rows. The Studio Pro Edit menu then showed the enabled `되돌리기: 스플리터 제거` command. The operator selected that exact item once. Studio Pro selected the restored Splitter 3 and showed its two empty lanes in the original position.
+
+Independent native observations recovered all eight original node IDs, ten ordered links, original child enumeration order, the two slot and device identities, and both 72-row typed DSP snapshots. Mixer, transport and timeline guards matched. The owner handled 162 requests in 120.362 seconds and released 12 capture tokens. Studio Pro ran for 185.851 seconds. Both exited normally after declining Save. The original and scratch file hashes remained exact, and 18 runtime and nine profile files were restored.
+
+These trials cover the two empty lanes of the supported third-Splitter shape with Routing open. Operation with Routing closed and other empty-lane topologies remain unverified.

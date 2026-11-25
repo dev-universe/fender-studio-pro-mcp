@@ -14,7 +14,10 @@ use crate::{
     fabfilter::{MidiMappingQuery, PresetApply, PresetQuery},
     operation::{self, Operation, Request, TrackEdit, TrackTask, schema},
     runtime::RuntimeHandle,
-    serum::{PresetApply as SerumPresetApply, Variant as SerumVariant},
+    serum::{
+        MidiMappingQuery as SerumMidiMappingQuery, PresetApply as SerumPresetApply,
+        Variant as SerumVariant,
+    },
 };
 
 #[derive(Clone)]
@@ -450,6 +453,13 @@ impl McpServer {
             tool: Tool::new("fabfilter_midi_mapping", "Look up the reference VST3 SDK mapping for a FabFilter controller on bus 0, channel 0. Use CC 0–127, channel pressure 128, pitch bend 129, or program change 130. Compare the reference version with your VST3 bundle and resolve the parameter on the current instance with plugin_parameters. This lookup does not inspect a live instance or send MIDI.", mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
+        let serum_mapping_schema =
+            serde_json::to_value(schemars::schema_for!(SerumMidiMappingQuery)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("serum2_midi_mapping", "Look up the reference Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0, channel 0. Use CC 0–127, channel pressure 128, or pitch bend 129. Resolve the returned parameter name on the current version and instance with plugin_parameters. This is an offline lookup with no MIDI dispatch or instance inspection.", serum_mapping_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
         specs.push(ToolSpec {
             operation: None,
@@ -633,6 +643,14 @@ impl ServerHandler for McpServer {
                 .map_err(|error| ErrorData::invalid_params(error, None))?;
             return Ok(CallToolResult::structured(serde_json::to_value(mapping).unwrap()).into());
         }
+        if request.name == "serum2_midi_mapping" {
+            let query: SerumMidiMappingQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let mapping = query
+                .lookup()
+                .map_err(|error| ErrorData::invalid_params(error, None))?;
+            return Ok(CallToolResult::structured(mapping).into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -708,7 +726,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 62;
+    const EXPECTED_TOOL_COUNT: usize = 63;
 
     use super::*;
 
@@ -749,6 +767,57 @@ mod tests {
                 ])
                 && rule["then"]["required"] == json!(["expected_document"])
         }));
+    }
+
+    #[test]
+    fn serum2_midi_reference_is_read_only_and_channel_bounded() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_midi_mapping")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        let input = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(input["additionalProperties"], false);
+        assert_eq!(input["properties"]["controller"]["maximum"], 129);
+
+        for (controller, control, id) in [
+            (0, "control_change", 500_000_000),
+            (1, "control_change", 516_000_000),
+            (127, "control_change", 500_000_127),
+            (128, "channel_pressure", 500_000_128),
+            (129, "pitch_bend", 516_000_001),
+        ] {
+            let lookup = |variant| {
+                serde_json::from_value::<SerumMidiMappingQuery>(
+                    json!({"variant": variant, "controller": controller}),
+                )
+                .unwrap()
+                .lookup()
+                .unwrap()
+            };
+            let instrument = lookup("instrument");
+            let fx = lookup("fx");
+            assert_eq!(instrument["bus"], 0);
+            assert_eq!(instrument["channel"], 0);
+            assert_eq!(instrument["reference_version"], "2.1.5");
+            assert_ne!(instrument["class_uid"], fx["class_uid"]);
+            assert_eq!(fx["control"], control);
+            assert_eq!(instrument["parameter"], fx["parameter"]);
+            assert_eq!(fx["parameter"]["vst3_id"], id);
+            assert_eq!(fx["parameter"]["studio_pro_name"], format!("vstp{id}"));
+        }
+        for invalid in [
+            json!({"variant":"instrument", "controller":-1}),
+            json!({"variant":"other", "controller":1}),
+            json!({"variant":"fx", "controller":1, "channel":1}),
+            json!({"variant":"fx", "controller":1, "expected_document":"older"}),
+        ] {
+            assert!(serde_json::from_value::<SerumMidiMappingQuery>(invalid).is_err());
+        }
+        let unsupported: SerumMidiMappingQuery =
+            serde_json::from_value(json!({"variant":"fx", "controller":130})).unwrap();
+        assert!(unsupported.lookup().is_err());
     }
 
     #[test]
