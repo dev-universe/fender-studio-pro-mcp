@@ -777,3 +777,25 @@ Input Filter를 로컬 완료로 집계했다. 다음은 Rumble Native 앰프 �
 다음은 저장된 Multi Instrument의 매크로와 실제 자식 파라미터를
 대조하는 시험이다. `main` 19개·로컬 15개 잔여, 전체 2~5일,
 장비 의존 4건, 지정 종료 시각 없음.
+
+## 22시 19분 Multi 매크로 복구 체크포인트
+
+- #146은 두 필수 검사 후 정확한 헤드에서 `3ddfb0a`에 병합됐다.
+  [#146](https://github.com/dev-universe/fender-studio-pro-mcp/pull/146)
+- R391에서 저장된 경로의 Device ID와 새 실행에서의 Device ID가
+  달라 쓰기 전에 중단했다. R391B는 같은 슬롯과 현재 Device를 다시
+  묶었다. 매크로 20개의 저장 대상 30개 중 Cutoff, Synth 1, Amount를
+  실기했다. 716개 값이 정확히 복구됐다. 196요청 15.375초, 앱 62.553초.
+  [#180](https://github.com/dev-universe/fender-studio-pro-mcp/pull/180)
+- R392에서 Resonance는 양쪽 자식과 부모를 복원했다. Filter Env는
+  원래 부모 비트를 되돌려도 두 자식 값이 5003.644824028015 대신
+  5449.993014335632였다. 127요청 10.051초, 앱 90.543초.
+  [#181](https://github.com/dev-universe/fender-studio-pro-mcp/pull/181)
+- R393에서 원래 캡슐을 적용하니 566 자식 행은 돌아왔다. 두 자식
+  Device ID가 교체됐고 부모 150행 중 Filter Env만 다른 값이 됐다.
+  토큰 4개 해제, 80요청 7.166초, 앱 44.483초.
+  [#182](https://github.com/dev-universe/fender-studio-pro-mcp/pull/182)
+
+R391–R393의 종료 코드, 시험곡 원본, 관리 파일 18개와 설정 9개를
+대조했다. 다음은 Multi의 가상 MIDI 전달과 유한 자식 값 복구 설계다.
+`main` 19개·로컬 15개, 전체 2~5일, 장비 의존 4건, 지정 종료 시각 없음.

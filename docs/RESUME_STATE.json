@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "d5511f53193a69a5daead90b6706541017262c6b",
+    "main_at_checkpoint": "3ddfb0a55ce7852499afc4e3f64e46fddfee69ae",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -99,7 +99,11 @@
       "R388",
       "R389",
       "R390",
-      "R390B"
+      "R390B",
+      "R391",
+      "R391B",
+      "R392",
+      "R393"
     ],
     "merged_pull_requests": [
       109,
@@ -138,10 +142,10 @@
       142,
       143,
       144,
-      145
+      145,
+      146
     ],
     "open_pull_requests": [
-      146,
       147,
       148,
       149,
@@ -174,14 +178,17 @@
       176,
       177,
       178,
-      179
+      179,
+      180,
+      181,
+      182
     ],
     "remaining_builtin_units": 19,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Next verify the saved Multi Instrument macro assignments against live root and child DSP changes. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 146 to 179 as both checks pass on each exact current-base head.",
+    "next": "SampleOne, Chorder and Input Filter are locally qualified. R377–R382 established Scope source display, functional trigger, waveform reset limitations and the public coverage field. Direct internal trigger timing and capture-buffer bytes remain open. R383–R386 verified Input Filter's monitor distinction, actual virtual MIDI boundaries and all 128 monitored GUI note lanes with exact downstream neutral and restoration. R387B verified Rumble Native amp position and bypass readback and the live tuner screen. Populated amp and stomp routing and the selection domain remain open. R388 locally qualified Shared Event with a one-owner permit, independent held and neutral reads, replay, expiry and guard refusals. R389 found an empty Rumble Add Block surface and mapped factory processing orders and model counts. R390B measured a 440 Hz input with matching in/out taps for the active, bypassed and position samples. No tuner pitch label or individually selectable model was confirmed. Multi R391B resolved 20 saved macro assignments and confirmed three live controls on exact children. R392 proved exact Resonance recovery and a Filter Env mismatch after root-only restore. R393 restored all 566 child rows, replaced their live Device IDs, and left only the parent pilot changed. Next compare the six routed MIDI roles and evaluate a bounded exact child write using the existing Multi ownership path. Exact Ampire factory mic recovery and Volume/Pitch processing remain open. Merge PRs 147 to 182 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 15,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-SAMPLEONE",
