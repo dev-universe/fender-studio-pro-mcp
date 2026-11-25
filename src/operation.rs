@@ -934,6 +934,8 @@ pub struct PedalboardSlotSwap {
     pub second_slot: u8,
     pub expected_first_model: String,
     pub expected_second_model: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_rack_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1884,20 +1886,33 @@ impl Operation {
             Self::PedalboardSlotSwap(p) => {
                 validate_instance_uid(Some(&p.expected_instance))?;
                 validate_plugin_target(Some(&p.channel), Some(p.slot), None, None)?;
+                let labels = [&p.expected_first_model, &p.expected_second_model];
+                let vacant = labels.map(|name| name == " - ");
                 if !(1..=8).contains(&p.first_slot)
                     || !(1..=8).contains(&p.second_slot)
-                    || p.first_slot.abs_diff(p.second_slot) != 1
-                    || p.expected_first_model == p.expected_second_model
-                    || [&p.expected_first_model, &p.expected_second_model]
-                        .iter()
-                        .any(|name| {
-                            name.trim().is_empty()
-                                || name.len() > 128
-                                || name.chars().any(char::is_control)
-                        })
+                    || p.first_slot == p.second_slot
+                    || vacant == [true, true]
+                    || labels.iter().any(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 128
+                            || name.chars().any(char::is_control)
+                    })
+                    || match p.expected_rack_sha256.as_deref() {
+                        None => {
+                            p.first_slot.abs_diff(p.second_slot) != 1
+                                || labels[0] == labels[1]
+                                || vacant.contains(&true)
+                        }
+                        Some(fingerprint) => {
+                            fingerprint.len() != 64
+                                || !fingerprint.bytes().all(|byte| {
+                                    byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)
+                                })
+                        }
+                    }
                 {
                     return Err(invalid(
-                        "Supply two distinct occupied Pedalboard slots and their exact model names",
+                        "Supply two distinct Pedalboard positions, exact model labels, and the required rack fingerprint",
                     ));
                 }
             }
@@ -2850,12 +2865,14 @@ mod tests {
         let operation = Operation::from_parts("pedalboard_slot_swap", valid.clone()).unwrap();
         assert!(operation.validate().is_ok());
         assert_eq!(operation.wire().0, "pedalboardSlotSwap");
+        assert!(operation.wire().1.get("expected_rack_sha256").is_none());
         for (field, value) in [
             ("first_slot", json!(0)),
             ("first_slot", json!(6)),
             ("first_slot", json!(8)),
             ("expected_first_model", json!("Reverb")),
             ("expected_second_model", json!("")),
+            ("expected_second_model", json!(" - ")),
             ("operation_address", json!(1)),
         ] {
             let mut invalid = valid.clone();
@@ -2866,6 +2883,38 @@ mod tests {
                     .is_err()
             );
         }
+    }
+
+    #[test]
+    fn pedalboard_extended_exchange_requires_a_well_formed_fingerprint() {
+        let fingerprint = "ab".repeat(32);
+        let mut args = json!({
+            "channel":"Scratch", "slot":0, "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "first_slot":1, "second_slot":3, "expected_first_model":"Compressor",
+            "expected_second_model":"Compressor", "expected_rack_sha256":fingerprint,
+        });
+        for label in ["Compressor", "Reverb", " - "] {
+            args["expected_second_model"] = json!(label);
+            let operation = Operation::from_parts("pedalboard_slot_swap", args.clone()).unwrap();
+            assert!(operation.validate().is_ok());
+            assert_eq!(operation.wire().1["expected_rack_sha256"], fingerprint);
+        }
+        for value in [Value::Null, json!("a"), json!(fingerprint.to_uppercase())] {
+            let mut refused = args.clone();
+            refused["expected_rack_sha256"] = value;
+            assert!(
+                Operation::from_parts("pedalboard_slot_swap", refused)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+        args["expected_first_model"] = json!(" - ");
+        assert!(
+            Operation::from_parts("pedalboard_slot_swap", args)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
     }
 
     #[test]
