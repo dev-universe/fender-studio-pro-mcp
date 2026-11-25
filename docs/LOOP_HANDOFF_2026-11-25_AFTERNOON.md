@@ -1458,3 +1458,28 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 
 고정 항목 `main` 16개·로컬 12개, 전체 소프트웨어 2~5일, 장비
 검증 4건, 지정 종료 시각 없음. 두 앱과 MCP owner는 현재 닫혀 있다.
+
+## 11월 26일 03시 56분 Pedalboard 비인접 저장 및 체크 재개
+
+- R442는 Standalone Pedalboard 1↔3 교환 후 한 번 저장하고
+  새 앱에서 열었다. Big Fuzz·Compressor의 이동 payload와
+  가운데 Reverb 7행·payload, 5개 빈 슬롯 및 컴포넌트 지문이
+  일치했다. 42개 고정 행을 정확 대조했고 두 read-only peak는
+  스키마와 순간값을 따로 기록했다. 이전 문서 거부, 추가 저장
+  없음. 앱 90.369·61.319초, owner 92요청·58.859초와
+  45요청·15.985초. 18+10 파일과 원본·저장본 확인.
+  [#230](https://github.com/dev-universe/fender-studio-pro-mcp/pull/230)
+- #211은 현재 헤드 `126995f`의 두 검사 후 `b01a38f`에
+  병합됐다. 최근 재검사 시작부터 18분 11초. #224는 새 베이스
+  헤드 `e11336e`에서 검사 중이다.
+  [#211](https://github.com/dev-universe/fender-studio-pro-mcp/pull/211)
+- R441B는 Tone과 Ampire의 정확한 본체를 추가했다. 수정된
+  카탈로그 조회는 통과했으나 후보 `92145d5f`가 List bound
+  수정 이전이라 35번째 Wah 모델 목록 요청을 거부했다. 신호와
+  모델 값 변경 없이 캡처 1개 해제, No Save, 앱 82.494초,
+  owner 3.665초, 정상 설치 18개·설정 10개 확인. R441C는
+  동일 실제 역할을 검증했던 `5d0fea1`의 공식 tool 경로를 쓴다.
+- 다음 R444는 공개 같은 모델 교환의 변경 랙을 저장한다.
+  R439와 R442는 각각 빈 슬롯·비인접 변경 자체를 저장해
+  재열기까지 완료했다. Volt 276·Keystation88은 새 USB 및
+  CoreAudio 열거에도 나타나지 않았다.
