@@ -520,6 +520,65 @@ test('digest observations are read-only and an explicitly stale document blocks 
   assert.equal(calls, 1);
 });
 
+test('Multi child DSP forwards exact identities and discards rows on a mismatched child or focus', () => {
+  const args = { track: 'Multi fixture', expected_instance: instance.object_uid, child_slot: 'Inst01',
+    expected_child_slot: '22345678-1234-1234-1234-123456789ABC',
+    expected_child_instance: '32345678-1234-1234-1234-123456789ABC' };
+  const calls = [];
+  let wrongChild = false, replaceDevice = false, mappingReads = 0;
+  const h = harness({ getObjectByName() { return native((target, body) => {
+    assert.equal(target, h.device);
+    const request = JSON.parse(body);
+    calls.push(request);
+    return success({
+      operation: 'multi_child_parameters', outcome: 'observed', source: 'dsp', mutation_capability: false,
+      instance: { ...instance, class_uid: 'B9D410AD-E47D-495E-8AEE-10D2B2987CC7',
+        native_class: 'AudioSynth', object_id: 'Recalled title' },
+      child_slot: request.child_slot, child_slot_uid: request.expected_child_slot,
+      child_instance: { object_uid: wrongChild ? args.expected_child_instance : request.expected_child_instance,
+        class_uid: 'B625F134-4485-4A50-A3C8-C9CF0C5495E1', native_class: 'AudioSynth' },
+      offset: request.offset, parameters: [{ index: request.offset, name: 'noise.color' }]
+    });
+  }); } });
+  h.component.instrumentOf = (target) => {
+    assert.equal(target.track, args.track);
+    mappingReads++;
+    return { device: replaceDevice && mappingReads % 2 === 0 ? {} : h.device };
+  };
+  const second = { ...args, child_slot: 'Inst02', expected_child_slot: '42345678-1234-1234-1234-123456789ABC',
+    expected_child_instance: '52345678-1234-1234-1234-123456789ABC', offset: 64, limit: 32 };
+  assert.equal(h.component.pluginMultiChildParameters(args).child_instance.object_uid, args.expected_child_instance);
+  assert.equal(h.component.pluginMultiChildParameters(second).child_instance.object_uid, second.expected_child_instance);
+  assert.deepEqual(calls, [
+    { operation: 'multi_child_parameters', expected_instance: args.expected_instance, child_slot: 'Inst01',
+      expected_child_slot: args.expected_child_slot, expected_child_instance: args.expected_child_instance, offset: 0, limit: 64 },
+    { operation: 'multi_child_parameters', expected_instance: args.expected_instance, child_slot: 'Inst02',
+      expected_child_slot: second.expected_child_slot, expected_child_instance: second.expected_child_instance, offset: 64, limit: 32 },
+  ]);
+  wrongChild = true;
+  assert.match(h.component.pluginMultiChildParameters(second).error, /invalid.*receipt/);
+  wrongChild = false;
+  mappingReads = 0;
+  replaceDevice = true;
+  const changed = h.component.pluginMultiChildParameters(second);
+  assert.match(changed.error, /mapping changed/);
+  assert.equal(changed.parameters, undefined);
+});
+
+test('Multi child DSP rejects stale document and session before bridge dispatch', () => {
+  const host = bridgeHarness();
+  const context = host.current();
+  let calls = 0;
+  host.bridge.component = { pluginMultiChildParameters() { calls++; return { observed: true }; } };
+  const op = 'pluginMultiChildParameters';
+  assert.equal(host.request({ op }).code, 'context_required');
+  assert.equal(host.request({ op, expectedSession: 'stale', expectedDocument: context.document }).code, 'session_changed');
+  assert.equal(host.request({ op, expectedSession: context.session, expectedDocument: 'stale' }).code, 'document_changed');
+  assert.equal(calls, 0);
+  assert.equal(host.request({ op, expectedSession: context.session, expectedDocument: context.document }).ok, true);
+  assert.equal(calls, 1);
+});
+
 test('native calls preserve the exact host object and use the fixed registered service', () => {
   const lookups = [], calls = [];
   const h = harness({ getObjectByName(name) { lookups.push(name); return native((target, body) => { calls.push([target, JSON.parse(body)]); return success(); }); } });
