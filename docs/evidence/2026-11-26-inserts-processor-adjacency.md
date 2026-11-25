@@ -9,7 +9,7 @@ reciprocal incoming occurrences.
 
 ## Splitter and Merger
 
-The host compiler resolves each eligible graph node to its owning audio
+The host compiler resolves each eligible graph node to its owning `AudioTask`
 processor. It copies all outgoing occurrences into the source processor's
 output list and all incoming occurrences into the destination processor's
 input list. Each list is built in the order of its corresponding logical
