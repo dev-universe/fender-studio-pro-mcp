@@ -882,28 +882,37 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pedalboardSlotSwap(args) {
-        const fields = ["channel", "slot", "expected_instance", "first_slot", "second_slot", "expected_first_model", "expected_second_model"];
+        const fields = ["channel", "slot", "expected_instance", "first_slot", "second_slot", "expected_first_model", "expected_second_model", "expected_rack_sha256"];
         const refuse = message => ({ ok: false, native_outcome: "not_applied",
             errors: [{ code: "pedalboard_swap_refused", message: message }] });
         const label = name => typeof name === "string" && name.trim()
             && name.length <= 128 && !/[\x00-\x1f\x7f-\x9f]/.test(name);
-        if (!args || Object.keys(args).length !== fields.length || Object.keys(args).some(key => !fields.includes(key))
+        const guarded = args && Object.prototype.hasOwnProperty.call(args, "expected_rack_sha256");
+        const vacant = " - ";
+        if (!args || Object.keys(args).some(key => !fields.includes(key))
             || !label(args.channel) || !Number.isInteger(args.slot) || args.slot < 0
             || typeof args.expected_instance !== "string" || !/^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(args.expected_instance)
             || args.expected_instance === "00000000-0000-0000-0000-000000000000"
             || !Number.isInteger(args.first_slot) || !Number.isInteger(args.second_slot)
             || args.first_slot < 1 || args.first_slot > 8 || args.second_slot < 1 || args.second_slot > 8
-            || Math.abs(args.first_slot - args.second_slot) !== 1
+            || args.first_slot === args.second_slot
             || !label(args.expected_first_model) || !label(args.expected_second_model)
-            || args.expected_first_model === args.expected_second_model)
-            return refuse("Supply adjacent occupied Pedalboard slots with different exact models");
+            || (args.expected_first_model === vacant && args.expected_second_model === vacant)
+            || (guarded
+                ? typeof args.expected_rack_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(args.expected_rack_sha256)
+                : Math.abs(args.first_slot - args.second_slot) !== 1
+                    || args.expected_first_model === args.expected_second_model
+                    || args.expected_first_model === vacant || args.expected_second_model === vacant))
+            return refuse("Supply two distinct Pedalboard positions, exact model labels, and the required rack fingerprint");
         const plug = this.pluginOf({ channel: args.channel, slot: args.slot, plugin: "Pedalboard" });
         if (!plug || plug.error || plug.name !== "Pedalboard") return refuse("The exact Pedalboard insert is unavailable");
-        const native = this.nativePluginRequest(plug.device, {
+        const request = {
             operation: "pedalboard_slot_swap", expected_instance: args.expected_instance,
             first_slot: args.first_slot, second_slot: args.second_slot,
             expected_first_model: args.expected_first_model, expected_second_model: args.expected_second_model
-        });
+        };
+        if (guarded) request.expected_rack_sha256 = args.expected_rack_sha256;
+        const native = this.nativePluginRequest(plug.device, request);
         if (!native || native.ok !== true) {
             const problem = native && native.error;
             return { ok: false, native_outcome: native && native.outcome === "not_applied" ? "not_applied" : "unknown",

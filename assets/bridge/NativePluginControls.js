@@ -1445,6 +1445,7 @@ class NativePluginControls {
                     || result.instance.class_uid !== "BC9129B4-EC67-41B8-96DE-EC128D5FE54D"
                     || result.instance.native_class !== "AudioEffect"
                     || result.verified !== false || result.effects_verified !== false
+                    || (request.expected_rack_sha256 !== undefined && result.serialized_payload_verified !== true)
                     || JSON.stringify(result.slots) !== JSON.stringify([request.first_slot, request.second_slot])
                     || JSON.stringify(result.before) !== JSON.stringify([request.expected_first_model, request.expected_second_model])
                     || JSON.stringify(result.after) !== JSON.stringify([request.expected_second_model, request.expected_first_model])))
