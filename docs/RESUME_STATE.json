@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "af4c58816800516d69e615124103583386ecd345",
+    "main_at_checkpoint": "700969aca3f3bf43db140abcc8749a14f93fbe6a",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -72,7 +72,8 @@
       "R367C",
       "R367D",
       "R368",
-      "R369"
+      "R369",
+      "R370"
     ],
     "merged_pull_requests": [
       109,
@@ -100,10 +101,10 @@
       131,
       132,
       133,
-      134
+      134,
+      135
     ],
     "open_pull_requests": [
-      135,
       136,
       137,
       138,
@@ -128,14 +129,15 @@
       157,
       158,
       159,
-      160
+      160,
+      161
     ],
     "remaining_builtin_units": 20,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. Next verify Copy, Paste, and preview, and consider the typed command surface. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 135 to 160 as both checks pass on each exact current-base head.",
+    "next": "R365 saved and reopened one owned SampleOne region. R366B verified all six live MIDI input roles and exact restoration. R367D verified Chorder live MIDI held and released state on two inputs. R368 verified a public MCP edit on the empty Chorder input 61 and exact full reversal. R369 independently verified native Clear and Clear All and restore. R370 verified Chorder Copy, relative one-semitone Paste, and exact restore. Next verify the preview press/release and consider the typed command surface. R358 shipped a List choice fix in PR149, and R359–R362 established Ampire scope. Exact factory mic recovery and Volume/Pitch processing remain open. Merge PRs 136 to 161 as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 18,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-PRESENCE",
