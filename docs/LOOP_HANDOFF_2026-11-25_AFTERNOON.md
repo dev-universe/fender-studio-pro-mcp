@@ -1689,3 +1689,26 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   프로필 10개 원복. 전체 잔차와 위상의 독립 정량화 후 실제 Ampire
   오디오 비교를 진행한다. 앱·owner 종료, `main` 16개·로컬 11개,
   장비 4건, 전체 2~5일과 CI·장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 05시 30분 Serum MIDI 공개와 스템 잔차
+
+- #243 exact `330e0436`의 두 필수 검사에서 통과해 `5a65f0a`에
+  병합됐다. 준비부터 13분 37초. `serum2_midi_mapping`은 두 공식
+  2.1.5 arm64 변형의 첫 입력 채널을 읽기 전용으로 조회한다.
+  #244의 `fd15015`가 새 `main`을 반영했다.
+  [#243](https://github.com/dev-universe/fender-studio-pro-mcp/pull/243)
+  [#244](https://github.com/dev-universe/fender-studio-pro-mcp/pull/244)
+- R452B의 보존 스템 1,152,000 프레임을 두 독립 분석에서 다시
+  대조했다. 게인은 L/R `1.000000007276/1.000000007743`, 영 지연
+  상관계수 각각 0.999999999810 초과, 최대 PCM 잔차 32/39 LSB,
+  RMS 7.284/7.266 LSB. 1 LSB 원 판정 실패 기록을 보존했다.
+  [#246](https://github.com/dev-universe/fender-studio-pro-mcp/pull/246)
+- R455의 동일 public archive 대조는 #234에 추가됐다. 새 그래프
+  조회 작성 없이 기본 읽기 근거를 유지한다. R457은 FabFilter 최종
+  도착과 기존 알림, R458은 실제 Sidechain 소유 경계, R452C는 Ampire
+  스템의 Speed A/B/A 검증을 준비한다.
+  [#234](https://github.com/dev-universe/fender-studio-pro-mcp/pull/234)
+- 독립 CoreAudio/CoreMIDI 새 목록에서 Volt 276과 Keystation88은
+  계속 감지되지 않았다. 앱과 owner 종료, 정상 관리 설치 확인.
+  `main` 16개·로컬 11개·장비 4건, 전체 2~5일과 CI·장비 대기,
+  지정 종료 시각 없음.
