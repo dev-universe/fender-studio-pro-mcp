@@ -911,3 +911,18 @@ Focus 대상 시험이다. `main` 19개·로컬 15개 잔여, 전체 2~5일,
 복원이다. 샘플의 note-on/off 처리와 저장 후 다시 열기도 남았다.
 `main` 19개·로컬 15개 잔여, 전체 2~5일, 장비 의존 4건,
 지정 종료 시각 없음.
+
+## 23시 09분 Impact MIDI 선택 패드 쓰기
+
+- R404의 MIDI 노트 37·53이 선택한 패드 1·17에서 cutoff는 각각
+  2500→5000→2500, 7500→5000→7500이었다. 독립 읽기 두 번에서
+  Focus와 해당 indexed cutoff만 바뀌었다. 뱅크 A C1로 돌아와
+  4,262행과 원본 파일, 관리 파일 18개, 프로필 10개를 확인했다.
+  1,015요청 203.668초, 앱 255.751초.
+  [#192](https://github.com/dev-universe/fender-studio-pro-mcp/pull/192)
+- [#151](https://github.com/dev-universe/fender-studio-pro-mcp/pull/151)은
+  현재 main을 반영한 헤드에서 필수 두 검사 통과 후 `353c34f`로 병합됐다.
+
+다음 R405는 생성한 WAV를 사용한 Impact의 downstream note-on/off
+처리다. 검증 잔여는 `main` 19개·로컬 15개, 전체 2~5일,
+장비 의존 4건, 지정 종료 시각 없음.
