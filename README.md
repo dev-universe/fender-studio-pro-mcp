@@ -82,6 +82,8 @@ Start the client and ask it to call `host_status` to confirm it can see the open
 
 For a Pedalboard insert, use `plugin_inspect` with `source: "controller"`, `include_nodes: true`, and `node_scope: "plugin_controller"`. Bind the exact channel, slot, plugin, instance, and document. The bounded controller graph can show its `StompItemModel` under `stomps`. [Pedalboard controller verification](docs/evidence/2026-11-24-pedalboard-controller-inspection.json)
 
+In Studio Pro 8.1.1 on Apple Silicon, `pedalboard_slot_swap` exchanges two adjacent occupied positions with different models. Stop playback and recording, read the target instance and `opt.stompmodel1` through `opt.stompmodel8` using `source: "dsp"`, then pass the expected document, instance and both current model names. The insert slot starts at zero and pedal positions start at one. Read the parameters again after the exchange to confirm the new order and values. Both directions were verified at positions 1–2 and 7–8. [Pedalboard exchange verification](docs/evidence/2026-11-24-pedalboard-slot-swap.json)
+
 The client can inspect the open song, edit tracks and MIDI notes, adjust the mixer and transport, and change supported built-in plugin settings. Try these prompts in your scratch song.
 
 - "Which mixer channels are muted in this song?"
@@ -334,7 +336,7 @@ The detailed notes include run outcomes, remaining gaps, and links to evidence. 
 ## Project docs
 
 - How the Rust server, in-DAW JavaScript bridge, and CoreMIDI connection work. [Architecture](docs/ARCHITECTURE.md)
-- Completed checks and the remaining built-in and FabFilter work. [Latest handoff](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/LOOP_HANDOFF_2026-11-20_LIVE.md) · [Resume guide](docs/RESUME.md)
+- Continue an existing work queue or add support for another plugin. [Resume guide](docs/RESUME.md) · [MCP development guide](docs/MCP_DEVELOPMENT.md)
 - Impact factory preset application and mixer recovery. [Verified Impact preset procedure](docs/IMPACT_PRESETS.md)
 - Development setup, offline checks, and private security reports. [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 

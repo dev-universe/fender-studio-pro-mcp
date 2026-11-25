@@ -1554,6 +1554,8 @@ mod tests {
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
             ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
+            ("pedalboardSlotSwap", json!({"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "first_slot":1,"second_slot":2,"expected_first_model":"Compressor","expected_second_model":"Reverb"})),
             ("impactOutputSet", json!({"track":"Scratch Impact","expected_instance":"12345678-1234-1234-1234-123456789ABC","output_index":1,"output_name":"Impact St 2","expected_active":false,"active":true})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
