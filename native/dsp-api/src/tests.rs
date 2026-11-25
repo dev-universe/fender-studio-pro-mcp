@@ -412,6 +412,34 @@ fn pagination_is_bounded_and_never_claims_unobserved_global_completeness() {
     env.balanced();
 }
 #[test]
+fn guarded_page_does_not_continue_after_count_or_info_reenters() {
+    for stop_after_first_index in [false, true] {
+        let env = Env::new();
+        let f = Fixture::new(&env, (0..3).map(Entry::valid).collect());
+        let p = f.wrap(&env).unwrap();
+        let mut guard = || {
+            let stale = if stop_after_first_index {
+                !f.native().calls.borrow().is_empty()
+            } else {
+                f.native().count_calls.get() != 0
+            };
+            if stale {
+                Err("child changed".into())
+            } else {
+                Ok(())
+            }
+        };
+        assert_eq!(
+            p.page_guarded(0, 3, &mut guard),
+            Err(Error::Guard("child changed".into()))
+        );
+        let expected: &[i32] = if stop_after_first_index { &[0] } else { &[] };
+        assert_eq!(f.native().calls.borrow().as_slice(), expected);
+        assert_eq!(f.native().count_calls.get(), 1);
+        env.balanced();
+    }
+}
+#[test]
 fn single_page_and_empty_provider_can_report_complete() {
     let env = Env::new();
     let f = Fixture::new(&env, vec![Entry::valid(0)]);

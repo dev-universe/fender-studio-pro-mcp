@@ -573,6 +573,50 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return Object.assign({}, native, { plugin: plug.name });
     }
 
+    pluginMultiChildParameters(args) {
+        const fields = ["track", "expected_instance", "child_slot", "expected_child_slot",
+            "expected_child_instance", "offset", "limit"];
+        const uid = /^[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}$/;
+        const identities = [args.expected_instance, args.expected_child_slot, args.expected_child_instance];
+        const offset = args.offset === undefined ? 0 : args.offset;
+        const limit = args.limit === undefined ? 64 : args.limit;
+        if (Object.keys(args).some(name => fields.indexOf(name) < 0)
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512
+            || (args.child_slot !== "Inst01" && args.child_slot !== "Inst02")
+            || !identities.every(value => typeof value === "string" && uid.test(value)
+                && value !== "00000000-0000-0000-0000-000000000000")
+            || identities[0] === identities[1] || identities[0] === identities[2] || identities[1] === identities[2]
+            || !Number.isInteger(offset) || offset < 0 || offset > 1000000
+            || !Number.isInteger(limit) || limit < 1 || limit > 128)
+            return { error: "Multi Instrument child DSP requires distinct exact identities and bounded paging" };
+        const target = { track: args.track };
+        const plug = this.instrumentOf(target);
+        if (plug.error) return plug;
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "multi_child_parameters", expected_instance: args.expected_instance,
+            child_slot: args.child_slot, expected_child_slot: args.expected_child_slot,
+            expected_child_instance: args.expected_child_instance, offset: offset, limit: limit
+        });
+        if (!native)
+            return { error: "Multi Instrument child DSP requires the matching native extension" };
+        if (!native.ok)
+            return { error: native.error && native.error.message || "Multi Instrument child DSP unavailable" };
+        const parent = native.instance, child = native.child_instance;
+        if (native.operation !== "multi_child_parameters" || native.outcome !== "observed"
+            || native.mutation_capability !== false || native.source !== "dsp"
+            || !parent || parent.object_uid !== args.expected_instance
+            || parent.class_uid !== "B9D410AD-E47D-495E-8AEE-10D2B2987CC7" || parent.native_class !== "AudioSynth"
+            || native.child_slot !== args.child_slot || native.child_slot_uid !== args.expected_child_slot
+            || !child || child.object_uid !== args.expected_child_instance
+            || child.class_uid !== "B625F134-4485-4A50-A3C8-C9CF0C5495E1" || child.native_class !== "AudioSynth"
+            || native.offset !== offset || !Array.isArray(native.parameters) || native.parameters.length > limit)
+            return { error: "invalid Multi Instrument child DSP receipt" };
+        const current = this.instrumentOf(target);
+        if (current.error || current.device !== plug.device)
+            return { error: "focused instrument mapping changed before publication" };
+        return native;
+    }
+
     pluginModels(args) {
         const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "catalog", "offset", "limit"];
         const uid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;

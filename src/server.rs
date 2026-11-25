@@ -230,6 +230,12 @@ impl McpServer {
                 "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. source level_meter enumerates only six registered Level Meter GUI settings and requires Level Meter, expected_document and expected_instance. Native enumeration requires the matching optional extension; metadata fallback is partial.",
                 false,
             ),
+            named::<PluginMultiChildParameters>(
+                "plugin_multi_child_parameters",
+                "pluginMultiChildParameters",
+                "Read a native DSP parameter page for a Mai Tai child in Multi Instrument slot Inst01 or Inst02. On the exclusively selected Music track, call plugin_inspect with include_nodes=true and node_scope=plugin_controller to find the current parent, child slot and Device UUIDs. Supply all three UUIDs and expected_document for every page. Offset defaults to 0 and limit to 64. Follow next_offset until null. Pages are sequential observations.",
+                false,
+            ),
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
@@ -452,8 +458,12 @@ fn named<T: JsonSchema>(
     mutation: bool,
 ) -> ToolSpec {
     let mut schema = serde_json::to_value(schemars::schema_for!(T)).expect("tool schema");
-    if mutation
-        || matches!(operation, "chorderLearningGet" | "chorderChordsGet")
+    let document_required = mutation
+        || matches!(
+            operation,
+            "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+        );
+    if document_required
         || matches!(
             operation,
             "pluginParams"
@@ -467,7 +477,7 @@ fn named<T: JsonSchema>(
     {
         schema["properties"]["expected_document"] = json!({"type":"string","description":"Document token returned by host_status. Refuses stale document intents."});
     }
-    if mutation || matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
+    if document_required {
         let object = schema.as_object_mut().unwrap();
         object
             .entry("required")
@@ -509,7 +519,10 @@ fn named<T: JsonSchema>(
         crate::operation::cv_structure_schema(&mut schema);
     }
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
-    if matches!(operation, "chorderLearningGet" | "chorderChordsGet") {
+    if matches!(
+        operation,
+        "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+    ) {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     } else if operation == "externalPortMenu" {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(false));
@@ -683,9 +696,48 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 59;
+    const EXPECTED_TOOL_COUNT: usize = 60;
 
     use super::*;
+
+    #[test]
+    fn multi_child_dsp_tool_exposes_two_slots_and_requires_live_identity() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "plugin_multi_child_parameters")
+            .unwrap();
+        assert_eq!(spec.operation, Some("pluginMultiChildParameters"));
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        let schema = &spec.tool.input_schema;
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(
+            schema["$defs"]["MultiChildSlot"]["enum"],
+            json!(["Inst01", "Inst02"])
+        );
+        assert_eq!(
+            schema["required"],
+            json!([
+                "track",
+                "expected_instance",
+                "child_slot",
+                "expected_child_slot",
+                "expected_child_instance",
+                "expected_document"
+            ])
+        );
+        assert!(schema["properties"].get("offset").is_some());
+        assert!(schema["properties"].get("limit").is_some());
+
+        let union = crate::operation::schema();
+        assert!(union["allOf"].as_array().unwrap().iter().any(|rule| {
+            rule["if"]["properties"]["operation"]["enum"]
+                == json!([
+                    "pluginMultiChildParameters",
+                    "plugin_multi_child_parameters"
+                ])
+                && rule["then"]["required"] == json!(["expected_document"])
+        }));
+    }
 
     #[test]
     fn serum2_load_reuses_exact_class_track_edits() {

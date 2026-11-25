@@ -17,6 +17,8 @@ const FILES: [&str; 4] = [
     "plugins/mac/fender_mcp_native.bundle/Contents/Info.plist",
     "plugins/mac/fender_mcp_native.bundle/Contents/MacOS/fender_mcp_native",
 ];
+const SIGNATURE_RESOURCES: &str =
+    "plugins/mac/fender_mcp_native.bundle/Contents/_CodeSignature/CodeResources";
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -40,7 +42,8 @@ fn manifest(config: &Config) -> Result<Option<Manifest>, OperationError> {
         .map_err(|e| OperationError::new("invalid_manifest", e.to_string()))?;
     if value.schema != 1
         || value.root != config.profile().join("Extensions").join(EXTENSION)
-        || value.files.len() != FILES.len()
+        || value.files.len()
+            != FILES.len() + usize::from(value.files.contains_key(SIGNATURE_RESOURCES))
         || !FILES.iter().all(|name| value.files.contains_key(*name))
     {
         return Err(error(
@@ -52,7 +55,11 @@ fn manifest(config: &Config) -> Result<Option<Manifest>, OperationError> {
 }
 
 fn maximum(name: &str) -> u64 {
-    if name == FILES[3] { 32_000_000 } else { 32_768 }
+    match name {
+        name if name == FILES[3] => 32_000_000,
+        SIGNATURE_RESOURCES => 262_144,
+        _ => 32_768,
+    }
 }
 
 fn read_regular(path: &Path, maximum: u64) -> Result<Vec<u8>, OperationError> {
@@ -107,42 +114,46 @@ pub fn install(config: &Config, source: &Path, force: bool) -> Result<Value, Ope
     let previous = manifest(config)?;
     let mut contents = BTreeMap::new();
     let mut originals = BTreeMap::new();
-    for name in FILES {
+    for name in FILES.into_iter().chain([SIGNATURE_RESOURCES]) {
         let input = source.join(name);
         let output = root.join(name);
         reject_symlinks(&input)?;
         reject_symlinks(&output)?;
-        let bytes = read_regular(&input, maximum(name))?;
-        if bytes.is_empty() {
-            return Err(error(
-                "invalid_native_package",
-                "Native payload has an unsupported size",
-            ));
+        if name != SIGNATURE_RESOURCES || input.try_exists().map_err(io_error)? {
+            let bytes = read_regular(&input, maximum(name))?;
+            if bytes.is_empty() {
+                return Err(error(
+                    "invalid_native_package",
+                    "Native payload has an unsupported size",
+                ));
+            }
+            if name == FILES[3] && !bytes.starts_with(&[0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 1]) {
+                return Err(error(
+                    "invalid_native_package",
+                    "Expected a native arm64 Mach-O payload",
+                ));
+            }
+            contents.insert(name, bytes);
         }
-        if name == FILES[3] && !bytes.starts_with(&[0xcf, 0xfa, 0xed, 0xfe, 0x0c, 0, 0, 1]) {
-            return Err(error(
-                "invalid_native_package",
-                "Expected a native arm64 Mach-O payload",
-            ));
-        }
-        if output.exists() {
+        if output.try_exists().map_err(io_error)? {
             let current = read_regular(&output, maximum(name))?;
             let known = previous.as_ref().and_then(|m| m.files.get(name));
-            if current != bytes && known.is_none() {
+            let changed = contents.get(name) != Some(&current);
+            if changed && known.is_none() {
                 return Err(error(
                     "unknown_installation",
                     "Native target is not owned by this installation",
                 ));
             }
-            if current != bytes && known.is_some_and(|hash| *hash != digest(&current)) && !force {
+            if changed && known.is_some_and(|hash| *hash != digest(&current)) && !force {
                 return Err(error(
                     "modified_installation",
                     "Native target was modified; use --force to back it up and replace it",
                 ));
             }
-            originals.insert(name, current);
+            let permissions = fs::metadata(&output).map_err(io_error)?.permissions();
+            originals.insert(name, (current, permissions));
         }
-        contents.insert(name, bytes);
     }
     // Preflight all payloads before replacing any managed file.
     let backup = config
@@ -150,10 +161,8 @@ pub fn install(config: &Config, source: &Path, force: bool) -> Result<Value, Ope
         .join("backups")
         .join(uuid::Uuid::new_v4().to_string());
     let mut backups = Vec::new();
-    for (name, bytes) in &contents {
-        if let Some(original) = originals.get(name)
-            && original != bytes
-        {
+    for (name, (original, _)) in &originals {
+        if contents.get(name) != Some(original) {
             let target = backup.join(EXTENSION).join(name);
             reject_symlinks(&target)?;
             fs::create_dir_all(target.parent().unwrap()).map_err(io_error)?;
@@ -161,27 +170,64 @@ pub fn install(config: &Config, source: &Path, force: bool) -> Result<Value, Ope
             backups.push(target);
         }
     }
-    let mut installed = Manifest {
+    let installed = Manifest {
         schema: 1,
         root: root.clone(),
-        files: BTreeMap::new(),
+        files: contents
+            .iter()
+            .map(|(name, bytes)| ((*name).into(), digest(bytes)))
+            .collect(),
     };
-    for (name, bytes) in contents {
-        let output = root.join(name);
-        fs::create_dir_all(output.parent().unwrap()).map_err(io_error)?;
-        write_complete_file(&output, &bytes)?;
-        #[cfg(unix)]
-        if name == FILES[3] {
-            use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&output, fs::Permissions::from_mode(0o755)).map_err(io_error)?;
-        }
-        installed.files.insert(name.into(), digest(&bytes));
-    }
     private_dir(&config.data_dir())?;
-    write_complete_file(
-        &config.data_dir().join("native-installation.json"),
-        &serde_json::to_vec_pretty(&installed).unwrap(),
-    )?;
+    let mut touched = Vec::new();
+    let result = (|| {
+        for (name, bytes) in contents {
+            let output = root.join(name);
+            fs::create_dir_all(output.parent().unwrap()).map_err(io_error)?;
+            write_complete_file(&output, &bytes)?;
+            touched.push(name);
+            #[cfg(unix)]
+            if name == FILES[3] {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&output, fs::Permissions::from_mode(0o755))
+                    .map_err(io_error)?;
+            }
+        }
+        if !installed.files.contains_key(SIGNATURE_RESOURCES)
+            && originals.contains_key(SIGNATURE_RESOURCES)
+        {
+            fs::remove_file(root.join(SIGNATURE_RESOURCES)).map_err(io_error)?;
+            touched.push(SIGNATURE_RESOURCES);
+        }
+        write_complete_file(
+            &config.data_dir().join("native-installation.json"),
+            &serde_json::to_vec_pretty(&installed).unwrap(),
+        )
+    })();
+    if let Err(install_error) = result {
+        let mut rollback_failed = false;
+        for name in touched.into_iter().rev() {
+            let target = root.join(name);
+            let restored = if let Some((bytes, permissions)) = originals.get(name) {
+                write_complete_file(&target, bytes).and_then(|()| {
+                    fs::set_permissions(&target, permissions.clone()).map_err(io_error)
+                })
+            } else {
+                fs::remove_file(&target).map_err(io_error)
+            };
+            rollback_failed |= restored.is_err();
+        }
+        if rollback_failed {
+            return Err(error(
+                "native_install_rollback_failed",
+                &format!(
+                    "Native install failed and some assets could not be restored: {}",
+                    install_error.message
+                ),
+            ));
+        }
+        return Err(install_error);
+    }
     Ok(json!({"installed":true,"extension":root,"backups":backups,
         "restart_required":true,"compatibility":"Studio Pro 8.1.1 Build 113103, macOS arm64; native runtime verifies image identities"}))
 }
@@ -303,6 +349,91 @@ mod tests {
             1
         );
         assert_eq!(fs::read(root.join(FILES[2])).unwrap(), b"preserve");
+    }
+
+    #[test]
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    fn owns_signature_resources_when_updating_and_restoring_a_legacy_bundle() {
+        let temp = tempfile::tempdir().unwrap();
+        let (config, source) = fixture(temp.path());
+        let root = config.profile().join("Extensions").join(EXTENSION);
+        let source_signature = source.join(SIGNATURE_RESOURCES);
+        let installed_signature = root.join(SIGNATURE_RESOURCES);
+
+        install(&config, &source, false).unwrap();
+        assert_eq!(manifest(&config).unwrap().unwrap().files.len(), 4);
+        fs::create_dir_all(source_signature.parent().unwrap()).unwrap();
+        fs::write(&source_signature, b"package signature").unwrap();
+        install(&config, &source, false).unwrap();
+        assert_eq!(manifest(&config).unwrap().unwrap().files.len(), 5);
+        assert_eq!(
+            fs::read(&installed_signature).unwrap(),
+            b"package signature"
+        );
+        assert_eq!(doctor(&config)["files_match_manifest"], true);
+
+        fs::remove_file(&source_signature).unwrap();
+        fs::write(&installed_signature, b"modified signature").unwrap();
+        assert_eq!(
+            install(&config, &source, false).unwrap_err().code,
+            "modified_installation"
+        );
+        assert_eq!(
+            fs::read(&installed_signature).unwrap(),
+            b"modified signature"
+        );
+        let restore = install(&config, &source, true).unwrap();
+        let backups = restore["backups"].as_array().unwrap();
+        assert_eq!(backups.len(), 1);
+        assert_eq!(
+            fs::read(backups[0].as_str().unwrap()).unwrap(),
+            b"modified signature"
+        );
+        assert!(!installed_signature.exists());
+        assert_eq!(doctor(&config)["files_match_manifest"], true);
+
+        fs::write(&source_signature, b"package signature").unwrap();
+        install(&config, &source, false).unwrap();
+        assert_eq!(
+            uninstall(&config).unwrap()["removed"]
+                .as_array()
+                .unwrap()
+                .len(),
+            5
+        );
+        assert!(!installed_signature.exists());
+    }
+
+    #[test]
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    fn a_signature_destination_failure_rolls_back_files_and_keeps_the_manifest() {
+        use std::os::unix::fs::PermissionsExt;
+        if unsafe { libc::geteuid() } == 0 {
+            return;
+        }
+        let temp = tempfile::tempdir().unwrap();
+        let (config, source) = fixture(temp.path());
+        install(&config, &source, false).unwrap();
+        let root = config.profile().join("Extensions").join(EXTENSION);
+        let manifest_path = config.data_dir().join("native-installation.json");
+        let before = fs::read(&manifest_path).unwrap();
+
+        fs::write(source.join(FILES[0]), b"new metadata").unwrap();
+        let source_signature = source.join(SIGNATURE_RESOURCES);
+        fs::create_dir_all(source_signature.parent().unwrap()).unwrap();
+        fs::write(&source_signature, b"signature").unwrap();
+        let installed_signature = root.join(SIGNATURE_RESOURCES);
+        let signature_directory = installed_signature.parent().unwrap();
+        fs::create_dir_all(signature_directory).unwrap();
+        fs::set_permissions(signature_directory, fs::Permissions::from_mode(0o500)).unwrap();
+
+        let result = install(&config, &source, false);
+        fs::set_permissions(signature_directory, fs::Permissions::from_mode(0o700)).unwrap();
+        assert_eq!(result.unwrap_err().code, "io_error");
+        assert_eq!(fs::read(root.join(FILES[0])).unwrap(), b"fixture");
+        assert_eq!(fs::read(&manifest_path).unwrap(), before);
+        assert!(!installed_signature.exists());
+        assert_eq!(doctor(&config)["files_match_manifest"], true);
     }
 
     #[test]

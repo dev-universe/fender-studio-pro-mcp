@@ -1634,6 +1634,7 @@ mod tests {
                 "inserts",
                 "sends",
                 "pluginParams",
+                "pluginMultiChildParameters",
                 "pluginChoices",
                 "pluginParameterDetails",
                 "chorderLearningGet",
@@ -1731,6 +1732,19 @@ mod tests {
         let executor = tokio::runtime::Runtime::new().unwrap();
         let mut operations = vec![Operation::from_parts("chorderLearningGet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})).unwrap()];
         operations.push(Operation::from_parts("chorderChordsGet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","offset":0,"limit":1})).unwrap());
+        operations.push(
+            Operation::from_parts(
+                "pluginMultiChildParameters",
+                json!({
+                    "track": "Scratch",
+                    "expected_instance": "12345678-1234-1234-1234-123456789ABC",
+                    "child_slot": "Inst01",
+                    "expected_child_slot": "22345678-1234-1234-1234-123456789ABC",
+                    "expected_child_instance": "32345678-1234-1234-1234-123456789ABC"
+                }),
+            )
+            .unwrap(),
+        );
         for action in [
             "read_rumble_state",
             "read_rumble_parameters",
