@@ -6,15 +6,15 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25.md",
   "nov25_current_checkpoint": {
     "verified_host_build": "113103",
-    "completed_studio_pro_trials": ["R314", "R315", "R316", "R317", "R318"],
-    "main_merge": "d6e254e",
-    "merged_pull_requests": [97, 98, 99, 103, 102],
-    "open_pull_requests": [90, 91, 92, 93, 94, 95, 104, 105, 106, 107],
+    "completed_studio_pro_trials": ["R314", "R315", "R316", "R317", "R318", "R319"],
+    "main_merge": "5855ce773ca6e6a5e537b35a24ea334a84580a10",
+    "merged_pull_requests": [97, 98, 99, 103, 102, 90, 91],
+    "open_pull_requests": [92, 93, 94, 95, 104, 105, 106, 107, 108],
     "remaining_hardware_units_within_builtin": 4,
     "session_cutoff": null,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
-    "next": "Verify exact heads against current main and merge the FabFilter stack and open evidence PRs. Reuse official Serum VST3 analysis and R318 portable preset acceptance."
+    "next": "Verify both checks for the exact current-main heads of PR 92 and PR 108. Merge on success and advance the remaining FabFilter stack and evidence PRs. Serum R319 direct apply is live-tested and the app is closed."
   },
   "nov24_current_checkpoint": {
     "resumed_at": "2026-11-24T01:11:00+09:00",
