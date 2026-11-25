@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "7cb8ef051601b86f5e25246234501375b8f37681",
+    "main_at_checkpoint": "53f44d69a01d5aafbaac249b9a77a8b4d55c8f36",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -31,7 +31,9 @@
       "R336B",
       "R336C",
       "R336D",
-      "R337"
+      "R337",
+      "R338",
+      "R339"
     ],
     "merged_pull_requests": [
       109,
@@ -44,10 +46,10 @@
       115,
       117,
       118,
-      119
+      119,
+      120
     ],
     "open_pull_requests": [
-      120,
       121,
       122,
       123,
@@ -55,14 +57,16 @@
       125,
       126,
       127,
-      128
+      128,
+      129,
+      130
     ],
     "remaining_builtin_units": 24,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Compare the Pedalboard R317 empty-slot activity residual with native saved state. Reuse the nonadjacent and Ampire-divider observations. Merge PRs 120 to 128 in order as both checks pass on each exact current-base head.",
+    "next": "Use R340 to compare immediate same-model DSP readback after restoring the exact swapped Pedalboard component capsule on the same instance. R338 and R339 establish saved behavior. Merge PRs 121 to 130 in order as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 21,
     "locally_qualified_fixed_units_pending_merge": [
       "PRESET-MULTI",
