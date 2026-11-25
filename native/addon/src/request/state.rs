@@ -244,6 +244,47 @@ fn save(ctx: &Context<'_>, lease: &AliasLease, limit: usize) -> Result<Arc<[u8]>
     }
     Ok(Arc::from(bytes?))
 }
+
+pub(super) struct PedalboardExchange {
+    lease: AliasLease,
+    expected: Vec<u8>,
+}
+
+impl PedalboardExchange {
+    pub(super) fn prepare(
+        ctx: &Context<'_>,
+        slots: [u8; 2],
+        vacant: [bool; 2],
+        fingerprint: &str,
+    ) -> Result<Self, String> {
+        let lease = AliasLease::capture(ctx)?;
+        let bytes = save(ctx, &lease, pedalboard::MAX_RACK_BYTES)?;
+        if sha256(&bytes) != fingerprint {
+            return Err("Pedalboard component no longer matches the expected fingerprint".into());
+        }
+        let expected = pedalboard::expected_exchange(&bytes, slots, vacant)
+            .ok_or("Pedalboard serialization cannot establish the expected exchange")?;
+        lease.guard(ctx)?;
+        Ok(Self { lease, expected })
+    }
+
+    pub(super) fn verify(&self, ctx: &Context<'_>) -> Result<(), String> {
+        let bytes = save(ctx, &self.lease, pedalboard::MAX_RACK_BYTES)?;
+        let value =
+            pedalboard::decode(&bytes).ok_or("Post-exchange Pedalboard state is unavailable")?;
+        if serde_json::to_vec(&value)
+            .map_err(|_| "Post-exchange Pedalboard state is unavailable")?
+            != self.expected
+        {
+            return Err(
+                "Serialized Pedalboard component differs from the expected exchange".into(),
+            );
+        }
+        self.lease.guard(ctx)?;
+        ctx.check_document()
+    }
+}
+
 pub(super) fn capture(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
     with_registry(ctx.service, |registry| registry.capacity(0))?;
     let lease = AliasLease::capture(ctx)?;
