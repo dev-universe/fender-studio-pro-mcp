@@ -2,10 +2,9 @@
 
 GitHub published `v0.1.0-preview.1` on November 26, 2026 at 02:52 KST.
 The Git tag points to `1654cd10d85381b217f4275bd509af190c13ab34` from
-main. The tree is identical to PR #208's exact tested head. Both its
-Core offline and macOS arm64 required checks passed. The archive
-includes the second stock Mai Tai command from that merge.
-[Release assets](https://github.com/dev-universe/fender-studio-pro-mcp/releases/tag/v0.1.0-preview.1) · [Exact PR checks](https://github.com/dev-universe/fender-studio-pro-mcp/actions/runs/45666764150)
+main. The tree is identical to PR #208's exact tested head. Both required checks passed on that PR and on the exact main commit.
+The archive includes the second stock Mai Tai command from that merge.
+[Release assets](https://github.com/dev-universe/fender-studio-pro-mcp/releases/tag/v0.1.0-preview.1) · [Exact PR checks](https://github.com/dev-universe/fender-studio-pro-mcp/actions/runs/45666764150) · [Exact main checks](https://github.com/dev-universe/fender-studio-pro-mcp/actions/runs/45668360195)
 
 | Check | Observed result |
 | --- | --- |
