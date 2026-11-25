@@ -21,13 +21,13 @@ const COLLECTOR: Uid = Uid {
     c: 0x481d,
     d: [0xa1, 0x38, 0x4b, 0xd0, 0x65, 0x1c, 0x71, 0xbb],
 };
-const REGISTRY: Uid = Uid {
+pub(crate) const REGISTRY: Uid = Uid {
     a: 0x6c19f466,
     b: 0xc0c3,
     c: 0x4c91,
     d: [0x8b, 0x1e, 0x5e, 0x00, 0x29, 0xc6, 0x74, 0xa8],
 };
-const HANDLER: Uid = Uid {
+pub(crate) const HANDLER: Uid = Uid {
     a: 0x4351b0e8,
     b: 0xa282,
     c: 0x45ae,
@@ -79,7 +79,7 @@ pub struct FolderPresetRoute {
     thread: ThreadId,
 }
 
-fn query<G: FnMut() -> Result<(), String>>(
+pub(crate) fn query<G: FnMut() -> Result<(), String>>(
     source: &Owned,
     iid: &Uid,
     g: &mut G,
@@ -93,7 +93,7 @@ fn query<G: FnMut() -> Result<(), String>>(
     }
     result
 }
-fn same_interface<G: FnMut() -> Result<(), String>>(
+pub(crate) fn same_interface<G: FnMut() -> Result<(), String>>(
     source: &Owned,
     iid: &Uid,
     g: &mut G,
