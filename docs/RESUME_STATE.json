@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "53f44d69a01d5aafbaac249b9a77a8b4d55c8f36",
+    "main_at_checkpoint": "316a25261de4a89c1228db1844b696f125d1ede1",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -33,7 +33,10 @@
       "R336D",
       "R337",
       "R338",
-      "R339"
+      "R339",
+      "R340",
+      "R341",
+      "R342"
     ],
     "merged_pull_requests": [
       109,
@@ -47,10 +50,10 @@
       117,
       118,
       119,
-      120
+      120,
+      121
     ],
     "open_pull_requests": [
-      121,
       122,
       123,
       124,
@@ -59,14 +62,17 @@
       127,
       128,
       129,
-      130
+      130,
+      131,
+      132,
+      133
     ],
     "remaining_builtin_units": 24,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
     "session_cutoff": null,
-    "next": "Use R340 to compare immediate same-model DSP readback after restoring the exact swapped Pedalboard component capsule on the same instance. R338 and R339 establish saved behavior. Merge PRs 121 to 130 in order as both checks pass on each exact current-base head.",
+    "next": "Use the R342 component fingerprint to guard and independently verify the public empty-slot, same-model and nonadjacent exchange paths. Keep the existing adjacent call contract. Merge PRs 122 to 133 in order as both checks pass on each exact current-base head.",
     "remaining_builtin_units_after_local_verification": 21,
     "locally_qualified_fixed_units_pending_merge": [
       "PRESET-MULTI",
