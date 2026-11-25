@@ -129,11 +129,12 @@ class Bridge {
         let code = null;
         const context = this.context();
         const contextError = this.contextError;
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
+        const multiChildParameters = req.op === "pluginMultiChildParameters";
         const impactOutputSet = req.op === "impactOutputSet";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
@@ -153,7 +154,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
@@ -201,7 +202,7 @@ class Bridge {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || nodeScope === "cv_preset_target")
+        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             code = "native_context_lost";
@@ -394,6 +395,7 @@ class Bridge {
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
+            case "pluginMultiChildParameters": return this.fromComponent(c => c.pluginMultiChildParameters(args));
             case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
             case "serum2PresetApply": return this.serum2PresetApply(args);
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
