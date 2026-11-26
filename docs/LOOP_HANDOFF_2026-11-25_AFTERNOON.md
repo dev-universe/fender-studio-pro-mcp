@@ -2618,3 +2618,26 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - Studio Pro 메인과 MCP owner 종료, 정상 설치 복원 상태다.
   고정 잔여 main 13개, 로컬 11개, 장비 의존 4건, 열린 PR
   73개다. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 17시 44분 실제 Serum 트랙 출력 조회
+
+- #302 정확한 `f768dd3`의 두 검사를 확인하고 main
+  `c8be5fc`에 병합했다. 551.2초. 다음 순서는 #303,
+  #304, #305, #282다. #303 정확한 `1315875` 검사 중이다.
+- R530은 Inspector의 Event Input 1·2·16·1을 확인했다.
+  스크립트 `getDestinationChannel`과 `port`, `destination`,
+  `output` 파라미터는 네 단계 모두 현재 포트를 반환하지
+  않았다. 101요청·73.424초, 앱 약 85초, 2,623행 유지,
+  시험 곡·관리 18개·프로필 10개 원복 확인.
+  [#304](https://github.com/dev-universe/fender-studio-pro-mcp/pull/304)
+- R531은 ARM64 생성자에서 `outputPort`와 별도
+  `recordPort`를 찾고, 같은 유형의 격리한 실제 8.1.1
+  시험에서 현재 포트 라벨이 Inspector의 1·2·16·1과
+  일치함을 확인했다. 조회 8회, 101요청·71.842초,
+  앱 약 81초, 관리 18개와 프로필 10개 원복. 다음 단위는
+  정확한 Music 트랙과 현재 네이티브 문서가 필요한 공개
+  `track_event_input_get` 조회 및 제품 빌드 실앱 검증이다.
+  [#305](https://github.com/dev-universe/fender-studio-pro-mcp/pull/305)
+- Studio Pro 메인·MCP owner 종료, 정상 설치 원복, Save 없음.
+  고정 잔여 main 13개, 로컬 11개, 장비 의존 4건, 열린 PR
+  74개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
