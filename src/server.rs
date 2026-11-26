@@ -350,7 +350,7 @@ impl McpServer {
             named::<InsertSplitterRemoveOneLaneNested>(
                 "insert_splitter_remove_one_lane_nested",
                 "insertSplitterRemoveOneLaneNested",
-                "Remove the third Splitter in the verified nested Mixtool graph when its first lane is empty and the second contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
+                "Remove the third Splitter in the verified nested Mixtool graph when one lane is empty and the other contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
                 true,
             ),
             named::<PluginPresets>(
