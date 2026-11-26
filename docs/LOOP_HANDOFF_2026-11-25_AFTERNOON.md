@@ -3042,3 +3042,36 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   21시 20분에 Volt 276과 Keystation88 미감지. 고정 잔여
   로컬 11·main 13·하드웨어 4. 전체 2~5일과 장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 21시 46분 양쪽 Splitter 제거와 Ampire 역할 대조
+
+- #326은 헤드 `e57df16`에서 필수 검사 두 개를 통과해
+  `6290844`에 병합됐다. 665.5초. 다음은 #294의 `63041b6`.
+  [#326](https://github.com/dev-universe/fender-studio-pro-mcp/pull/326)
+- R560은 후보 `9a2d6e7`의 tail 누락과 양쪽 tail 뒤바뀜을
+  거부하고 각각 10노드·12연결·DSP 288행으로 불변을 확인했다.
+  정확한 한 번의 제거 뒤 8노드·9연결 및 Mixtool 2, 3, 1, 4
+  순서를 확인했다. 네이티브 Undo 1회로 원래 그래프와 288행을
+  복원했다. 325요청·194.812초, 앱 266.421초. 캡처 24개 해제,
+  Save 없음, 원본 해시 및 설치 18개·설정 10개 원복 확인.
+  Rust 277, JS 451, Python 560, macOS 네이티브 512와 빌드 완료.
+  [#334](https://github.com/dev-universe/fender-studio-pro-mcp/pull/334)
+- #334는 #333 뒤에 배치했다. Chorder와 Multi의 충돌을 해당
+  브랜치 `54b2bac`, `3064460`에서 각각 해결했다. Ampire #335를
+  #312 뒤에 배치한 다음 `6290844` 기준 열린 84개를 전부 합성했다.
+- R561은 실제 8.1.1의 전역 네 항목이 `DeviceParam`과
+  `DeviceParameterList`로 관측됨을 확인했다. FAT Volume은
+  로컬에서만 변했고 Wah와 Speed는 각 로컬 값과 같이 변했다.
+  전역 Volume·Pitch는 해당 상태에서 raw 0과 빈 표시를 유지했다.
+  FAT와 Wah를 뺀 뒤 슬롯 활성화를 보정해 전체 DSP 89행 및
+  컴포넌트 바이트를 원복했다. 네 owner 2/99/93/72요청,
+  9.076/8.910/8.870/6.401초. 앱 177.144초, 토큰 3개 명시
+  해제 및 나머지는 owner 종료로 정리됐다. 앱과 owner 정상 종료,
+  저장 없음, 해시 일치 및 관리 18개·설정 10개 원복.
+  [#335](https://github.com/dev-universe/fender-studio-pro-mcp/pull/335)
+- 21시 42분 USB·오디오에서 Volt 276과 Keystation88을 감지하지
+  못했다. 다음 R562는 Scope의 호스트 Bypass 전후 표시 보존을
+  확인하고, DSP 콜백이 멈췄다는 별도 근거가 있는지 찾는다.
+  표시 결과만으로 생산자 동기화나 직접 샘플 조회를 승인하지 않는다.
+  고정 잔여 로컬 11, main 13, 장비 4. 전체 2~5일과 장비 대기,
+  지정된 종료 시각 없음.
