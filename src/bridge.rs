@@ -155,6 +155,25 @@ impl Bridge {
         })
     }
 
+    pub(crate) fn transact_bounded(
+        &self,
+        op: &str,
+        args: &Value,
+        expected_session: Option<&str>,
+        expected_document: Option<&str>,
+        midi: &mut MidiWakeup,
+        limit: Duration,
+    ) -> Result<WireResponse, ExchangeFailure> {
+        self.exchange_until(
+            op,
+            args,
+            expected_session,
+            expected_document,
+            self.timeout.min(limit),
+            || midi.nudge(),
+        )
+    }
+
     pub fn stage_midi_program(&self, contents: &[u8; 46]) -> Result<StagedFixture, OperationError> {
         let basename = format!("mcp-midi-program-{}.mid", Uuid::new_v4());
         self.stage_fixture(basename, contents)
@@ -196,6 +215,25 @@ impl Bridge {
         args: &Value,
         expected_session: Option<&str>,
         expected_document: Option<&str>,
+        wake: impl FnMut() -> Result<(), OperationError>,
+    ) -> Result<WireResponse, ExchangeFailure> {
+        self.exchange_until(
+            op,
+            args,
+            expected_session,
+            expected_document,
+            self.timeout,
+            wake,
+        )
+    }
+
+    fn exchange_until(
+        &self,
+        op: &str,
+        args: &Value,
+        expected_session: Option<&str>,
+        expected_document: Option<&str>,
+        timeout: Duration,
         mut wake: impl FnMut() -> Result<(), OperationError>,
     ) -> Result<WireResponse, ExchangeFailure> {
         let id = Uuid::new_v4().to_string();
@@ -227,7 +265,7 @@ impl Bridge {
         // The bridge can read the published request on any tick, including
         // before this process sends its first wakeup.
         let dispatched = true;
-        let deadline = Instant::now() + self.timeout;
+        let deadline = Instant::now() + timeout;
         let mut last_wake = None;
         while Instant::now() < deadline {
             if last_wake.is_none_or(|t: Instant| t.elapsed() >= Duration::from_millis(150)) {

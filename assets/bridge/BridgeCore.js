@@ -242,7 +242,7 @@ class Bridge {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
+        if (!isFail(result) && (req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "chorderAuditionLane" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session
                 || (req.op === "trackEventInput" && (this.documentMode !== "native" || context.fileUrl !== afterContext.fileUrl)))) {
@@ -375,6 +375,10 @@ class Bridge {
             case "externalPortMenu": return this.fromComponent(c => c.externalPortMenu(args));
             case "externalStereoSendSet": return this.externalStereoSendSet(args);
             case "chorderChordsGet": return this.fromComponent(c => c.chorderChordsGet(args));
+            case "chorderAuditionLane": return this.fromComponent(c => c.chorderAuditionLane(args, () => {
+                const transport = this.song().transport;
+                return transport && transport.playing === false && transport.recording === false;
+            }));
             case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };

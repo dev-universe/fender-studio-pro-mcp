@@ -63,12 +63,18 @@ impl RuntimeHandle {
                     }
                 };
                 let mut local_catalog = None;
+                let mut audition = crate::chorder_audition::Ledger::default();
                 while let Ok(envelope) = receiver.recv() {
                     if envelope.reply.is_closed() {
                         continue;
                     }
-                    let result =
-                        execute(&mut bridge, &mut midi, &mut local_catalog, envelope.request);
+                    let result = execute(
+                        &mut bridge,
+                        &mut midi,
+                        &mut local_catalog,
+                        &mut audition,
+                        envelope.request,
+                    );
                     let _ = envelope.reply.send(result);
                 }
             })
@@ -125,10 +131,20 @@ fn execute(
     bridge: &mut Bridge,
     midi: &mut MidiWakeup,
     local_catalog: &mut Option<crate::plugin_catalog::LocalCatalog>,
+    audition: &mut crate::chorder_audition::Ledger,
     request: Request,
 ) -> Result<Receipt, OperationError> {
     let started = Instant::now();
     let request_id = Uuid::new_v4().to_string();
+    if let Operation::ChorderAudition(action) = request.operation {
+        return Ok(audition.handle(
+            action,
+            request.expected_document.as_deref().unwrap_or_default(),
+            request_id,
+            started,
+            &mut crate::chorder_audition::BridgeLane { bridge, midi },
+        ));
+    }
     let mut operation = request.operation;
     let read_only = operation.is_read_only();
     let context_response = bridge.transact("context", &json!({}), None, None, midi);
@@ -2069,6 +2085,7 @@ mod tests {
             ("pedalboardSlotSwap", json!({"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "first_slot":1,"second_slot":2,"expected_first_model":"Compressor","expected_second_model":"Reverb"})),
             ("impactOutputSet", json!({"track":"Scratch Impact","expected_instance":"12345678-1234-1234-1234-123456789ABC","output_index":1,"output_name":"Impact St 2","expected_active":false,"active":true})),
+            ("chorderAudition", json!({"action":"prepare","track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
             ("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","param":"gain","value":0})),

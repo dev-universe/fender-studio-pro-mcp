@@ -861,6 +861,31 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return result;
     }
 
+    chorderAuditionLane(args, stopped) {
+        const refuse = code => ({ ok: false, native_outcome: "not_applied", error: { code: code } });
+        const controls = new NativePluginControls(this);
+        if (!controls.guiExact(args, ["track", "slot", "expected_instance", "phase"])
+            || typeof args.track !== "string" || !args.track.trim()
+            || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || !controls.guiInteger(args.slot, 0, 15)
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || !["preflight", "observe", "press", "release"].includes(args.phase)) return refuse("chorder_audition_target");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return refuse("chorder_audition_target");
+        if (["preflight", "press"].includes(args.phase) && !stopped()) return refuse("chorder_audition_transport");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "chorder_audition_lane", expected_instance: args.expected_instance, phase: args.phase
+        });
+        if (!native) return { ok: false, native_outcome: "unknown" };
+        const current = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!current || current.error || current.name !== plug.name || current.device !== plug.device
+            || current.component !== plug.component || current.element !== plug.element)
+            return { ok: false, native_outcome: "unknown" };
+        return Object.assign({}, native, { native_outcome: native.outcome });
+    }
+
     chorderChordsGet(args) {
         const controls = new NativePluginControls(this);
         const fields = ["track", "slot", "expected_instance", "offset", "limit"];

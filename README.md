@@ -171,6 +171,16 @@ transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
 Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
+### Chorder audition
+
+On Studio Pro 8.1.1 with the matching native add-on, `chorder_audition` auditions MIDI 60 on one Chorder Note FX. Stop playback and recording, turn Chorder Learn off, then select the target Music track and inspect the exact Note FX slot and native instance UID. Use the current document token from `host_status` and keep the same MCP server session for all three actions.
+
+1. Call `chorder_audition` with `action: "prepare"`, the `track`, zero-based `slot`, `expected_instance`, and `expected_document`. The owner returns a permit valid for 15 seconds.
+2. Call again with `action: "play"`, the `permit` and the same `expected_document`. The owner issues one guarded press and one guarded release and separately observes the held and neutral DSP states. The receipt verifies the local Chorder key lane.
+3. To retrieve an interrupted reply, call with `action: "status"`, the same `permit`, and `expected_document`. Status reads the owner's record even after the active song changes. A replay returns history with no new key event. A new successful prepare supersedes the last permit.
+
+A missing press acknowledgement yields `outcome_unknown`. Inspect the original Chorder and clear the key using Studio Pro if necessary. The owner requires a fresh neutral observation of the original binding before permitting another audition. A later neutral observation preserves the recorded unknown outcome, and an owner restart discards permit history and requires a fresh neutral preflight on the requested target.
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
