@@ -144,6 +144,18 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### Mustang Native processor state
+
+Call `plugin_state` with `action: "read_mustang_state"`, the insert's
+`channel` and `slot`, `plugin: "Mustang Native"`, `expected_instance`
+from `plugin_inspect`, and `expected_document` from `host_status`.
+This reads the serialized processor class IDs and numeric settings for
+all 26 slots through the matching native extension. Compare
+`models_sha256` and `settings_sha256` across reads. The
+`capture_sha256` identifies one serialization and can differ when
+the two projections match. The read issues no token.
+[8.1.1 verification](docs/evidence/2026-11-26-mustang-processor-state.md)
+
 ### Verify a parameter through a separate read
 
 Set `readback` to `true` on `plugin_parameter_set` with the canonical name from
@@ -478,20 +490,20 @@ After reopening a song, obtain a fresh document binding and read the current ins
 
 In Studio Pro 8.1.1, an added Splitter and both branches survived saving and restarting Studio Pro. The reopened rack matched all eight nodes, ten directed links, and 144 Mixtool values. Studio Pro issued new live document, insert folder, and graph bindings. Requests with the old document or graph were refused. [Splitter insertion persistence](docs/evidence/2026-11-24-insert-splitter-add-persistence.json)
 
-`insert_splitter_remove` removes a supported inner Splitter and its merger. Each of its two ordered branches must contain one effect slot, and the other outer branch must lead directly to the outer merger. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json)
+`insert_splitter_remove` removes a supported inner Splitter and its merger. The other outer branch must lead directly to the outer merger. Supply both branch head slot-node UUIDs. By default each branch contains one effect. For exactly two effects on the first branch, supply its second slot-node UUID as `first_branch_tail_node`. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json) [Three-effect removal verification](docs/evidence/2026-11-26-splitter-three-effect-mcp-remove.md)
 
 The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
 `insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
 
 Use `insert_splitter_remove_one_lane_nested` with the same slot 0
-Mixtool and graph identifiers when the first lane of the third Splitter
-is empty and its second lane contains exactly one Mixtool. Add that
+Mixtool and graph identifiers when one lane of the third Splitter is
+empty and the other contains exactly one Mixtool. Add that
 effect's slot-node UUID as `occupied_slot_node`. Stop transport and
 inspect the graph independently after the request. In the verified
 shape, removal kept both effects connected in series. One host Undo
 restored the original topology and all 144 reported DSP values.
-[One-lane MCP removal verification](docs/evidence/2026-11-26-splitter-single-occupied-mcp.md)
+[First- and second-lane MCP verification](docs/evidence/2026-11-26-nested-splitter-mcp-either-lane.md)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 

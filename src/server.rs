@@ -314,7 +314,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state or read_mustang_state for direct serialized processor IDs and numeric settings of the corresponding effect, and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(
@@ -338,7 +338,7 @@ impl McpServer {
             named::<InsertSplitterRemove>(
                 "insert_splitter_remove",
                 "insertSplitterRemove",
-                "Remove one nested two-way Splitter with a single effect on each branch and a shared merger. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the two slot-node UUIDs in branch order. Inspect and capture the graph first, then independently verify the affected links and effects.",
+                "Remove one nested two-way Splitter with one effect on each branch and a shared merger. For exactly two effects on the first branch, also supply first_branch_tail_node for its second slot, directly before the merger. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
                 true,
             ),
             named::<InsertSplitterRemoveEmptyNested>(
@@ -350,7 +350,7 @@ impl McpServer {
             named::<InsertSplitterRemoveOneLaneNested>(
                 "insert_splitter_remove_one_lane_nested",
                 "insertSplitterRemoveOneLaneNested",
-                "Remove the third Splitter in the verified nested Mixtool graph when its first lane is empty and the second contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
+                "Remove the third Splitter in the verified nested Mixtool graph when one lane is empty and the other contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
                 true,
             ),
             named::<PluginPresets>(
@@ -1214,7 +1214,7 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .len(),
-            8
+            9
         );
         assert!(
             named["required"]
@@ -1226,7 +1226,7 @@ mod tests {
     }
 
     #[test]
-    fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
+    fn plugin_state_schema_keeps_closed_actions_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
         assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
@@ -1241,6 +1241,7 @@ mod tests {
             json!([
                 "inspect_cv_port_structure",
                 "read_rumble_state",
+                "read_mustang_state",
                 "read_rumble_parameters",
                 "read_rumble_named_parameters",
                 "inspect_rumble_serialization",

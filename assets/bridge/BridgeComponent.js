@@ -1073,7 +1073,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const refuse = message => fail("not_applied", operation + "_refused", message);
         if (typeof NativePluginControls !== "function") return refuse("The matching native extension is required");
         const controls = new NativePluginControls(this);
-        const nodeFields = controls.insertGraphNodeFields(operation);
+        const nodeFields = controls.insertGraphNodeFields(operation, args);
         if (!nodeFields) return refuse("Unsupported insert graph operation");
         const requestFields = ["expected_instance", "expected_graph"].concat(nodeFields,
             controls.insertGraphBranchFields(operation, args));
@@ -1249,16 +1249,23 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             const result=Object.assign({},native,{plugin:"Rumble Native",native_outcome:native.outcome});
             return controls.rumbleSerializationBytes(result)<=262144 ? result : failure();
         }
-        if (args.action === "read_rumble_state") {
-            const controls=new NativePluginControls(this),failure=()=>controls.rumbleStateFailure();
-            if (Object.keys(args).some(k=>["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k)<0) || args.plugin !== "Rumble Native" || args.token !== undefined) return failure();
-            const request={operation:"rumble_state_read",expected_instance:args.expected_instance};
-            if (!controls.rumbleStateRequest(request)) return failure();
-            const plug=this.pluginOf(args);if (!plug || plug.error || plug.name !== "Rumble Native") return failure();
-            const native=this.nativePluginRequest(plug.device,request);
-            if (!native || native.ok !== true || !controls.rumbleStateResult(native,request)) return failure();
-            const result=Object.assign({},native,{plugin:"Rumble Native",native_outcome:native.outcome});
-            return controls.rumbleSerializationBytes(result)<=32768 ? result : failure();
+        if (args.action === "read_rumble_state" || args.action === "read_mustang_state") {
+            const controls = new NativePluginControls(this);
+            const mustang = args.action === "read_mustang_state";
+            const operation = mustang ? "mustang_state_read" : "rumble_state_read";
+            const profile = controls.processorStateProfile(operation);
+            const failure = () => controls.processorStateFailure(profile);
+            if (Object.keys(args).some(k => ["channel","slot","kind","track","plugin","expected_instance","action"].indexOf(k) < 0)
+                || args.plugin !== profile.plugin || args.token !== undefined
+                || (mustang && args.kind !== undefined && args.kind !== "effect")) return failure();
+            const request = { operation, expected_instance: args.expected_instance };
+            if (!controls.processorStateRequest(request)) return failure();
+            const plug = this.pluginOf(args);
+            if (!plug || plug.error || plug.name !== profile.plugin) return failure();
+            const native = this.nativePluginRequest(plug.device, request);
+            if (!native || native.ok !== true || !controls.processorStateResult(native, request)) return failure();
+            const result = Object.assign({}, native, {plugin: profile.plugin, native_outcome: native.outcome});
+            return controls.rumbleSerializationBytes(result) <= 32768 ? result : failure();
         }
         if (args.action === "inspect_rumble_serialization") {
             const controls = new NativePluginControls(this), failure = () => controls.rumbleSerializationFailure();
