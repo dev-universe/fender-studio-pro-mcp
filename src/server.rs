@@ -323,6 +323,12 @@ impl McpServer {
                 "Capture, restore or release the whole Inserts folder of one exact mixer channel with the matching native extension. Every action requires expected_document. Capture issues a private opaque token; restore and release require that same token. Optional expected_folder pins its native folder UUID. Set include_routing=true on capture to read the host-authored Splitter, merger and slot links when present. A successful load remains applied_unverified and requires independent graph and per-part parameter/model readback. No caller file path, URL, bytes or plugin slot is accepted.",
                 true,
             ),
+            named::<operation::ScopeSidechainAssignmentGet>(
+                "scope_sidechain_assignment_get",
+                "scopeSidechainAssignmentGet",
+                "Observe whether the sole Send on one exact audio source channel is assigned to the exact stock Scope at insert slot 0 of another audio channel. Supply both unique channel names, the Scope instance UUID from plugin_inspect, and expected_document from host_status. Stop playback and recording first. Reports the authored assignment only.",
+                false,
+            ),
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
@@ -530,6 +536,7 @@ fn named<T: JsonSchema>(
                 | "chorderChordsGet"
                 | "pluginMultiChildParameters"
                 | "trackEventInput"
+                | "scopeSidechainAssignmentGet"
         );
     if document_required
         || matches!(
@@ -605,6 +612,7 @@ fn named<T: JsonSchema>(
             | "chorderChordsGet"
             | "pluginMultiChildParameters"
             | "trackEventInput"
+            | "scopeSidechainAssignmentGet"
     ) {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     } else if operation == "externalPortMenu" {
@@ -815,7 +823,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 70;
+    const EXPECTED_TOOL_COUNT: usize = 71;
 
     use super::*;
 
@@ -1191,6 +1199,41 @@ mod tests {
         let mut mixed_target = args;
         mixed_target["target"]["track"] = json!("Keys");
         assert!(Operation::from_parts(spec.operation.unwrap(), mixed_target).is_err());
+    }
+
+    #[test]
+    fn scope_sidechain_has_a_read_only_schema_with_a_required_document() {
+        let specs = McpServer::specs();
+        let tool = &specs
+            .iter()
+            .find(|spec| spec.tool.name == "scope_sidechain_assignment_get")
+            .unwrap()
+            .tool;
+        assert_eq!(
+            tool.input_schema["required"],
+            json!([
+                "source_channel",
+                "scope_channel",
+                "expected_instance",
+                "expected_document"
+            ])
+        );
+        assert_eq!(tool.input_schema["additionalProperties"], false);
+        assert_eq!(
+            tool.annotations.as_ref().and_then(|a| a.read_only_hint),
+            Some(true)
+        );
+        let arguments = json!({
+            "source_channel":"Source","scope_channel":"Receiver",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"
+        });
+        let valid =
+            Operation::from_parts("scope_sidechain_assignment_get", arguments.clone()).unwrap();
+        assert!(valid.is_read_only() && valid.requires_explicit_document());
+        let mut invalid = arguments;
+        invalid["scope_channel"] = invalid["source_channel"].clone();
+        let parsed = Operation::from_parts("scope_sidechain_assignment_get", invalid).unwrap();
+        assert!(parsed.validate().is_err());
     }
 
     #[test]
