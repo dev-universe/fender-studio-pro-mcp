@@ -2341,3 +2341,23 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   보호된 원본 해시를 확인한다. 잔여 `main` 13개·로컬 11개,
   장비 의존 4건, 병합 대기 67개. 전체 2~5일과 장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 15시 29분 Serum 저장 결과와 FX 준비
+
+- #285 최신 head `b62c86c`의 두 필수 검사 뒤 `e7a3975`에
+  병합했다. 566.7초. #286 최신 head `c6ce26c`가 검사 중이고
+  #287이 뒤따른다.
+  [#285](https://github.com/dev-universe/fender-studio-pro-mcp/pull/285)
+- R508 첫 Save에서 Event Input 2는 `MusicInput01`, R509
+  첫 Save에서 Input 16은 `MusicInput15`였다. 저장 목적지 및
+  악기 Device UUID가 실제 로드한 인스턴스와 각각 일치했다.
+  각 73요청·48.488/66.129초, 앱 76.745/78.598초. DSP 2,623행과
+  믹서 및 타임라인 동일. 종료 후 18+10 원복, 서명 VST3 회수.
+- #287의 `song_read`와 `song-read`를 실제 저장본 4개에서 대조했다.
+  악기 1·2·16과 이전 FX 1, 원본 해시와 결과 및 UUID 일치
+  1.715초. Rust 273 통과. R510은 별도 Audio 트랙에 Serum 2 FX
+  한 개와 Music 트랙 하나만 두고 정확한 FX 포트 전달을 시험한다.
+  [#287](https://github.com/dev-universe/fender-studio-pro-mcp/pull/287)
+- 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건, 병합 대기
+  67개. 현재 USB에서 Volt 276과 Keystation 88은 확인되지 않았다.
+  전체 2~5일과 장비 대기, 지정 종료 시각 없음.
