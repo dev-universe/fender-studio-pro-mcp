@@ -2150,3 +2150,39 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 앱과 owner 닫힘, 정상 관리 18개 확인. `main` 13단위, 로컬 11단위,
   장비 의존 4건. 다음 검사 5~9분, 전체 2~5일과 장비 대기.
   지정 종료 시각 없음.
+
+## 11월 26일 14시 10분 Rumble 병합과 중첩 Splitter 교차 이동
+
+- #272와 #273의 갱신 head에서 필수 검사 두 개가 통과했다.
+  병합 커밋은 각각 `efa74c8`과 `26a32b6`이며 준비부터 753.5초와
+  545.4초였다. #274는 새 head `7cf16d5`에서 검사 중이다.
+  [#272](https://github.com/dev-universe/fender-studio-pro-mcp/pull/272)
+  [#273](https://github.com/dev-universe/fender-studio-pro-mcp/pull/273)
+  [#274](https://github.com/dev-universe/fender-studio-pro-mcp/pull/274)
+- R494는 Rumble 프리셋 001→100→001의 각 상태에서 이름과 인덱스를
+  대조했다. 26개 인덱스와 이름 묶음 22/39/22에서 선택 항목이 0이었다.
+  101요청·8.252초, 앱 59.571초, 저장 없음, 설치 18개와 프로필 10개 원복.
+  [#275](https://github.com/dev-universe/fender-studio-pro-mcp/pull/275)
+- R495는 Ampire FAT 복원 뒤 Link-on 상태 89행과 2,297바이트 캡슐을
+  맞췄다. 한 번 저장하고 쓰기를 막은 별도 프로세스에서 Link를 해제하니
+  마이크 A·B·C가 공장 기준과 비트 단위로 일치했다. 재열기 첫 SDK
+  요청은 CLI pin 누락으로 schema 단계에서 전달 전에 거절됐으며, 일치하는
+  CLI로 재확인했다. 135+20+28요청·38.546초, 설치 18개·프로필 10개 원복.
+  [#276](https://github.com/dev-universe/fender-studio-pro-mcp/pull/276)
+- R496은 기존 Mixtool 2를 중첩 Splitter 3의 두 번째 빈 레인으로 옮겼다.
+  R497은 다른 레인에서 기존 Mixtool 직후, Splitter 3의 직전으로 같은
+  효과를 옮겼다. 각 MCP receipt와 편집기 및 독립 라우팅 읽기를 대조했고
+  각 시험에서 세 successor 목록이 바뀌었다. 8노드, 링크 10개, DSP
+  144행, 식별자, 믹서·타임라인은 일치했다. 각 85요청·68.406/71.199초,
+  앱 131.066/103.972초. 두 시험의 정상 설치 18개·프로필 9개 원복,
+  저장 없음, 각 캡처 토큰 6개 반납.
+  [#277](https://github.com/dev-universe/fender-studio-pro-mcp/pull/277)
+  [#278](https://github.com/dev-universe/fender-studio-pro-mcp/pull/278)
+- #177, #172, #184, #187의 예상 충돌을 각 head에서 해결했다.
+  #272 직후 합성 병합 점검에서 당시 다음 65개가 충돌 없었다.
+  현 병합 대기 67개. #274→#275→#276→#277→#278 이후 Chorder와
+  Shared Event 우선 순서를 이어간다. 남은 소프트웨어에서는 Ampire
+  전역 Volume·Pitch, Scope 캡처 및 그래프 추가 연결·삭제의 독립
+  검증 가능성을 먼저 확인한다.
+- 앱·owner 닫힘과 설치 원복 확인. 고정 잔여 `main` 13개·로컬 11개,
+  그중 장비 4건. 전체 2~5일과 장비 대기, 지정 종료 시각 없음.
