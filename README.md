@@ -340,6 +340,11 @@ Studio Pro displays the temporary file name for this processor-only import.
 [Serum 2 FX assigned Macro 1 audio verification](docs/evidence/2026-11-26-serum2-fx-macro-routing.md)
 [Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
 
+Keep the source preset when using the Serum 2 instrument demo. In Studio
+Pro 8.1.1, a saved song reopened with the original instrument and notes,
+but its saved demo state omitted the applied delay rack.
+[Demo song save and reopen verification](docs/evidence/2026-11-26-serum2-demo-delay-reopen.md)
+
 ### FabFilter preset library
 
 Call `fabfilter_presets_list` with `{"product":"Pro-Q 4"}` to see preset names and their folders. The tool covers the 23 FabFilter products and versions in the compatibility checks. It reads names under `~/Documents/FabFilter/Presets` by default. For a library stored elsewhere, set `FSP_FABFILTER_PRESET_LIBRARY` to the absolute parent of the per-product directories when starting the MCP server. [FabFilter preset folders](https://www.fabfilter.com/help/pro-q/presets/howpresetsarestored)
