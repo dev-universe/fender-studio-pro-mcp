@@ -435,7 +435,7 @@ effect's slot-node UUID as `occupied_slot_node`. Stop transport and
 inspect the graph independently after the request. In the verified
 shape, removal kept both effects connected in series. One host Undo
 restored the original topology and all 144 reported DSP values.
-[One-lane MCP removal verification](docs/evidence/2026-11-26-splitter-single-occupied-mcp.md)
+[First- and second-lane MCP verification](docs/evidence/2026-11-26-nested-splitter-mcp-either-lane.md)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 
