@@ -249,6 +249,15 @@ resolved destination identifies the original Serum 2 instrument or the
 specific Serum 2 FX insert, even with multiple FX copies in the song.
 [Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
+Use `serum2_factory_presets_list` to search the installed Xfer Factory
+library. Filter with `variant: "instrument"` or `"fx"` and `search`.
+Follow `next_offset` with the first page's `catalog_sha256` as
+`expected_catalog`. Results include the source version and schema from the
+preset header and the local path for **Menu → Load Preset** in Serum.
+If you moved the library, start the MCP server with
+`FSP_SERUM_FACTORY_PRESET_LIBRARY` set to the absolute `Presets/Factory`
+directory.
+
 Use `serum2_preset_inspect` with the absolute local `path` to identify a
 Serum 2.1.5 `.SerumPreset` or processor-only `.vstpreset`. The tool reports
 the instrument or FX variant, file SHA-256, and the matching load method.
