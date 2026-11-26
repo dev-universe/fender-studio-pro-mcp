@@ -463,6 +463,11 @@ impl McpServer {
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
         specs.push(ToolSpec {
             operation: None,
+            tool: Tool::new("serum2_preset_inspect", "Inspect an absolute .vstpreset or .SerumPreset path for Serum 2 or Serum 2 FX 2.1.5, schema 11. Checks the preset header and Zstandard frame bounds and reports the variant, file SHA-256 and applicable loader.", saved_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
+        specs.push(ToolSpec {
+            operation: None,
             tool: Tool::new("song_read", "Read a saved .song archive without editing it. Results are saved state, not unsaved live state; plugin parameter snapshots may be partial.", saved_schema.as_object().unwrap().clone()),
         });
         specs.push(ToolSpec {
@@ -651,6 +656,21 @@ impl ServerHandler for McpServer {
                 .map_err(|error| ErrorData::invalid_params(error, None))?;
             return Ok(CallToolResult::structured(mapping).into());
         }
+        if request.name == "serum2_preset_inspect" {
+            let query: FileQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result =
+                tokio::task::spawn_blocking(move || crate::serum::inspect_preset(&query.path))
+                    .await
+                    .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(inspection) => {
+                    CallToolResult::structured(serde_json::to_value(inspection).unwrap())
+                }
+                Err(error) => CallToolResult::structured_error(json!({"error":error})),
+            }
+            .into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -726,7 +746,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 63;
+    const EXPECTED_TOOL_COUNT: usize = 64;
 
     use super::*;
 
@@ -767,6 +787,18 @@ mod tests {
                 ])
                 && rule["then"]["required"] == json!(["expected_document"])
         }));
+    }
+
+    #[test]
+    fn serum2_preset_inspection_accepts_only_a_path_without_live_routing() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_preset_inspect")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        assert_eq!(spec.tool.input_schema["required"], json!(["path"]));
+        assert_eq!(spec.tool.input_schema["additionalProperties"], false);
     }
 
     #[test]
