@@ -450,7 +450,12 @@ test('Splitter insertion anchors one directed connection and rejects mismatched 
   assert.equal(stale.calls.length, 1);
 });
 
-test('empty nested Splitter removal limits the slot, stopped transport and native reply', () => {
+for (const [name, method, operation, capability, occupied] of [
+  ['empty', 'insertSplitterRemoveEmptyNested', 'insert_splitter_remove_empty_nested',
+    'empty_nested_splitter_remove_v1'],
+  ['one-lane', 'insertSplitterRemoveOneLaneNested', 'insert_splitter_remove_one_lane_nested',
+    'one_lane_nested_splitter_remove_v1', '60000000-1234-1234-1234-123456789ABC'],
+]) test(`${name} nested Splitter removal limits the slot, stopped transport and native reply`, () => {
   const args = {
     channel: 'Scratch', slot: 0, plugin: 'Mixtool', expected_instance: folderUid,
     expected_graph: '10000000-1234-1234-1234-123456789ABC',
@@ -458,11 +463,12 @@ test('empty nested Splitter removal limits the slot, stopped transport and nativ
     merger_node: '30000000-1234-1234-1234-123456789ABC',
     predecessor_slot_node: '40000000-1234-1234-1234-123456789ABC',
     successor_merger_node: '50000000-1234-1234-1234-123456789ABC',
+    ...(occupied ? { occupied_slot_node: occupied } : {}),
   };
   const { channel, slot, plugin, ...ids } = args;
   const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
     native_class: 'AudioEffect', object_id: 'Mixtool' };
-  const capabilityFields = { insert_splitter_remove_empty_nested_api: 'empty_nested_splitter_remove_v1' };
+  const capabilityFields = { [`${operation}_api`]: capability };
   const success = body => ({ ...body, instance, ok: true, outcome: 'applied_unverified', verified: false });
   const device = {};
   const prepare = (options, stopped = () => true) => {
@@ -482,25 +488,26 @@ test('empty nested Splitter removal limits the slot, stopped transport and nativ
     { ...args, predecessor_slot_node: args.splitter_node },
     { ...args, successor_merger_node: args.successor_merger_node.toLowerCase() },
     { ...args, first_slot_node: args.predecessor_slot_node },
+    { ...args, occupied_slot_node: args.predecessor_slot_node },
   ]) {
-    assert.equal(good.component.insertSplitterRemoveEmptyNested(wrong).native_outcome, 'not_applied');
+    assert.equal(good.component[method](wrong).native_outcome, 'not_applied');
   }
   assert.equal(good.calls.length, 0);
-  assert.equal(good.component.insertSplitterRemoveEmptyNested(args).native_outcome, 'applied_unverified');
+  assert.equal(good.component[method](args).native_outcome, 'applied_unverified');
   assert.equal(good.calls.length, 1);
   assert.equal(good.calls[0][0], device);
-  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation: 'insert_splitter_remove_empty_nested', ...ids });
+  assert.deepEqual(JSON.parse(good.calls[0][1]), { operation, ...ids });
 
   const old = prepare({ capabilityFields: { insert_splitter_remove_api: 'nested_splitter_remove_v1' } });
   const running = prepare({ capabilityFields }, () => false);
   const stale = prepare({ capabilityFields }, context => { context.document = 'other-document'; return true; });
   for (const blocked of [old, running, stale]) {
-    assert.equal(blocked.component.insertSplitterRemoveEmptyNested(args).native_outcome, 'not_applied');
+    assert.equal(blocked.component[method](args).native_outcome, 'not_applied');
     assert.equal(blocked.calls.length, 0);
   }
   const mismatched = prepare({ capabilityFields, nativeReply: body => ({ ...success(body),
-    successor_merger_node: args.merger_node }) });
-  const result = mismatched.component.insertSplitterRemoveEmptyNested(args);
+    ...(occupied ? { occupied_slot_node: args.predecessor_slot_node } : { successor_merger_node: args.merger_node }) }) });
+  const result = mismatched.component[method](args);
   assert.equal(result.native_outcome, 'unknown');
   assert.equal(result.successor_merger_node, undefined);
   assert.equal(mismatched.calls.length, 1);
