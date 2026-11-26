@@ -737,11 +737,13 @@ mod tests {
         let (source, synth, fx, peer, slot, class) =
             (uid(1), uid(2), uid(3), uid(4), uid(5), uid(6));
         let song = SONG.replace("channel-a", &source);
-        let synth_folder = format!(
-            r#"<AudioSynthFolder><Attributes name="Inst01"><UID x:id="deviceClassID" uid="{class}"/>
+        let synth_folder = |instrument_class: &str| {
+            format!(
+                r#"<AudioSynthFolder><Attributes name="Inst01"><UID x:id="deviceClassID" uid="{instrument_class}"/>
                <Attributes x:id="deviceData" name="Synth"><UID x:id="uniqueID" uid="{synth}"/>
                </Attributes></Attributes></AudioSynthFolder>"#
-        );
+            )
+        };
         let rack = |label: &str, id: &str| {
             format!(
                 r#"<AudioTrackChannel label="{label}"><Attributes x:id="Inserts">
@@ -750,7 +752,11 @@ mod tests {
                <UID x:id="uniqueID" uid="{id}"/></Attributes></Attributes></Attributes></AudioTrackChannel>"#
             )
         };
-        let read = |id: &str, port: &str, peer_id: &str, music_copies: usize| {
+        let read = |id: &str,
+                    port: &str,
+                    peer_id: &str,
+                    music_copies: usize,
+                    instrument_class: &str| {
             let channel = format!(
                 r#"<MusicTrackChannel label="Duplicate label"><UID x:id="uniqueID" uid="{source}"/>
                    <Connection x:id="destination" objectID="{{{id}}}/{port}" friendlyName="Ignored"/>
@@ -769,19 +775,22 @@ mod tests {
             let file = write_archive(&[
                 ("Song/song.xml", &song),
                 ("Devices/musictrackdevice.xml", &music),
-                ("Devices/audiosynthfolder.xml", &synth_folder),
+                (
+                    "Devices/audiosynthfolder.xml",
+                    &synth_folder(instrument_class),
+                ),
                 ("Devices/audiomixer.xml", &mixer),
             ]);
             serde_json::to_value(read_song(file.path()).unwrap()).unwrap()["tracks"][0].clone()
         };
-        let original = read(&synth, "MusicInput00", &peer, 1);
+        let original = read(&synth, "MusicInput00", &peer, 1, &class);
         assert_eq!(
             original["midi_destination"],
             json!({
                 "port":"MusicInput00", "kind":"instrument", "plugin_name":"Synth", "plugin_instance_id":synth,
             })
         );
-        let routed = read(&fx, "MusicInput00", &peer, 1);
+        let routed = read(&fx, "MusicInput00", &peer, 1, &class);
         assert_eq!(
             routed["midi_destination"],
             json!({
@@ -789,11 +798,24 @@ mod tests {
                 "channel":"Target", "slot":0,
             })
         );
+        let serum_class = "56534558-6673-5073-6572-756D20320000";
+        for port in ["MusicInput01", "MusicInput15"] {
+            let alternate = read(&synth, port, &peer, 1, serum_class);
+            assert_eq!(
+                alternate["midi_destination"],
+                json!({
+                    "port":port, "kind":"instrument", "plugin_name":"Synth", "plugin_instance_id":synth,
+                })
+            );
+        }
         for invalid in [
-            read(&slot, "MusicInput00", &peer, 1),
-            read(&fx, "MusicInput00", &fx, 1),
-            read(&fx, "MusicInput00", &peer, 2),
-            read(&fx, "MusicInput01", &peer, 1),
+            read(&slot, "MusicInput00", &peer, 1, &class),
+            read(&fx, "MusicInput00", &fx, 1, &class),
+            read(&fx, "MusicInput00", &peer, 2, &class),
+            read(&fx, "MusicInput01", &peer, 1, serum_class),
+            read(&synth, "MusicInput01", &peer, 1, &class),
+            read(&synth, "MusicInput02", &peer, 1, serum_class),
+            read(&synth, "MusicInput1", &peer, 1, serum_class),
         ] {
             assert!(invalid.get("midi_destination").is_none());
         }
