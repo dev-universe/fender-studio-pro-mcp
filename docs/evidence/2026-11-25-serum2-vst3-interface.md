@@ -79,3 +79,7 @@ Both decoded maps included `demoVersion: true` and product
 metadata. The editable oscillator and FX rack fields were absent. These
 observations establish default demo-state replay and scalar control. Full
 patch editing and Studio Pro integration require separate evidence.
+
+R545 later queried the requested host timing fields on both signed VST3 slices
+and traced several context reads in the arm64 audio processor.
+[Process context verification](2026-11-26-serum2-vst3-process-context.md)
