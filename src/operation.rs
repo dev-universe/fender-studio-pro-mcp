@@ -83,6 +83,11 @@ pub enum Operation {
         alias = "plugin_multi_child_parameters"
     )]
     PluginMultiChildParameters(PluginMultiChildParameters),
+    #[serde(
+        rename = "pluginMultiChildFilterEnvSet",
+        alias = "plugin_multi_child_filter_env_set"
+    )]
+    PluginMultiChildFilterEnvSet(PluginMultiChildFilterEnvSet),
     #[serde(rename = "pluginMultiAddMaiTai", alias = "plugin_multi_add_mai_tai")]
     PluginMultiAddMaiTai(PluginMultiAddMaiTai),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
@@ -525,6 +530,24 @@ pub struct PluginMultiChildParameters {
     pub offset: Option<u32>,
     #[schemars(range(min = 1, max = 128))]
     pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginMultiChildFilterEnvSet {
+    #[schemars(length(min = 1, max = 512))]
+    pub track: String,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    pub child_slot: MultiChildSlot,
+    #[schemars(length(equal = 36))]
+    pub expected_child_slot: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_instance: String,
+    #[schemars(regex(pattern = "^[0-9a-fA-F]{16}$"))]
+    pub expected_float_bits: String,
+    #[schemars(regex(pattern = "^[0-9a-fA-F]{16}$"))]
+    pub float_bits: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1769,6 +1792,7 @@ impl Operation {
                     | Self::ChorderChordsGet(_)
                     | Self::ChorderAudition(_)
                     | Self::PluginMultiChildParameters(_)
+                    | Self::PluginMultiChildFilterEnvSet(_)
                     | Self::PluginMultiAddMaiTai(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
@@ -2738,34 +2762,50 @@ impl Operation {
                 }
             }
             Self::PluginMultiChildParameters(query) => {
-                if query.track.trim().is_empty()
-                    || query.track.len() > 512
-                    || query.track.chars().any(char::is_control)
-                {
-                    return Err(invalid("An exact Multi Instrument track name is required"));
-                }
-                let uids = [
-                    &query.expected_instance,
-                    &query.expected_child_slot,
-                    &query.expected_child_instance,
-                ];
-                for (index, uid) in uids.iter().enumerate() {
-                    if validate_instance_uid(Some(uid)).is_err()
-                        || uid.as_str() == "00000000-0000-0000-0000-000000000000"
-                        || uid.bytes().any(|b| b.is_ascii_lowercase())
-                        || uids[..index].contains(uid)
-                    {
-                        return Err(invalid(
-                            "Multi Instrument, child slot and child Device require three distinct nonzero canonical native UUIDs",
-                        ));
-                    }
-                }
+                validate_multi_child_target(
+                    &query.track,
+                    [
+                        &query.expected_instance,
+                        &query.expected_child_slot,
+                        &query.expected_child_instance,
+                    ],
+                )?;
                 if query.offset.is_some_and(|offset| offset > 1_000_000)
                     || query.limit.is_some_and(|limit| !(1..=128).contains(&limit))
                 {
                     return Err(invalid(
                         "Native parameter pages require offset 0..1000000 and limit 1..128",
                     ));
+                }
+            }
+            Self::PluginMultiChildFilterEnvSet(change) => {
+                validate_multi_child_target(
+                    &change.track,
+                    [
+                        &change.expected_instance,
+                        &change.expected_child_slot,
+                        &change.expected_child_instance,
+                    ],
+                )?;
+                let amount = |bits: &str| {
+                    if bits.len() != 16 || !bits.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+                        return None;
+                    }
+                    let raw = u64::from_str_radix(bits, 16).ok()?;
+                    (0.0..=10000.0)
+                        .contains(&f64::from_bits(raw))
+                        .then_some(raw)
+                };
+                match (
+                    amount(&change.expected_float_bits),
+                    amount(&change.float_bits),
+                ) {
+                    (Some(expected), Some(desired)) if expected != desired => {}
+                    _ => {
+                        return Err(invalid(
+                            "Filter Env requires two distinct Float64 bit strings with finite values in 0..10000",
+                        ));
+                    }
                 }
             }
             Self::PluginParameterDetails(p) => {
@@ -3108,6 +3148,24 @@ fn validate_insert_graph_target(
     Ok(())
 }
 
+fn validate_multi_child_target(track: &str, uids: [&str; 3]) -> Result<(), OperationError> {
+    if track.trim().is_empty() || track.len() > 512 || track.chars().any(char::is_control) {
+        return Err(invalid("An exact Multi Instrument track name is required"));
+    }
+    for (index, uid) in uids.iter().enumerate() {
+        if validate_instance_uid(Some(uid)).is_err()
+            || *uid == "00000000-0000-0000-0000-000000000000"
+            || uid.bytes().any(|b| b.is_ascii_lowercase())
+            || uids[..index].contains(uid)
+        {
+            return Err(invalid(
+                "Multi Instrument, child slot and child Device require three distinct nonzero canonical native UUIDs",
+            ));
+        }
+    }
+    Ok(())
+}
+
 fn validate_plugin_target(
     channel: Option<&str>,
     slot: Option<u32>,
@@ -3204,6 +3262,8 @@ pub fn schema() -> Value {
         {"if":{"properties":{"operation":{"enum":["pluginMultiAddMaiTai","plugin_multi_add_mai_tai"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
         {"if":{"properties":{"operation":{"enum":["pluginMultiChildParameters","plugin_multi_child_parameters"]}},"required":["operation"]},
+            "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
+        {"if":{"properties":{"operation":{"enum":["pluginMultiChildFilterEnvSet","plugin_multi_child_filter_env_set"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}
     ]);
     schema
@@ -3212,6 +3272,59 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn multi_child_filter_env_requires_a_document_and_distinct_bounded_bits() {
+        let args = json!({
+            "track": "Multi Fixture",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot": "Inst02",
+            "expected_child_slot": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits": "40b549fe36300000",
+            "float_bits": "40B38BA513300000"
+        });
+        let parse = |args| Operation::from_parts("plugin_multi_child_filter_env_set", args);
+        let mut request = Request {
+            operation: parse(args.clone()).unwrap(),
+            expected_document: None,
+        };
+        assert!(!request.operation.is_read_only());
+        assert!(request.operation.requires_explicit_document());
+        assert_eq!(
+            request.operation.wire(),
+            ("pluginMultiChildFilterEnvSet".into(), args.clone())
+        );
+        assert_eq!(
+            crate::runtime::validate_request(&request).unwrap_err().code,
+            "missing_precondition"
+        );
+        request.expected_document = Some("live-document".into());
+        assert!(crate::runtime::validate_request(&request).is_ok());
+
+        for (field, invalid) in [
+            ("child_slot", json!("Inst03")),
+            (
+                "expected_child_slot",
+                args["expected_child_instance"].clone(),
+            ),
+            ("expected_float_bits", json!(5)),
+            ("expected_float_bits", json!("7FF8000000000000")),
+            ("float_bits", json!("7FF0000000000000")),
+            ("float_bits", json!("BFF0000000000000")),
+            ("float_bits", json!("40C3880000000001")),
+            ("float_bits", json!("40B549FE36300000")),
+            ("float_bits", json!("0X00000000000000")),
+            ("param", json!("filter.cutoff")),
+        ] {
+            let mut invalid_args = args.clone();
+            invalid_args[field] = invalid;
+            assert!(
+                parse(invalid_args).and_then(|op| op.validate()).is_err(),
+                "{field}"
+            );
+        }
+    }
 
     #[test]
     fn splitter_removal_checks_ordered_continuation_shape_and_distinct_nodes() {

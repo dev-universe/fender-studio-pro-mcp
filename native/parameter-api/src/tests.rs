@@ -1018,6 +1018,12 @@ fn guarded_float_compare_uses_bits_observed_after_the_final_admission() {
         .unwrap();
     assert!(applied.verified);
     assert_eq!(f.p().writes.get(), 1);
+    let replay = p
+        .set_raw_float_if((-0.0_f64).to_bits(), 0.25, &mut f.guard(), &mut || Ok(()))
+        .unwrap_err();
+    assert_eq!(replay.outcome, Outcome::NotApplied);
+    assert_eq!(f.p().writes.get(), 1);
+    assert_eq!(p.pin_float().unwrap().bits().unwrap(), 0.25_f64.to_bits());
 }
 
 #[test]

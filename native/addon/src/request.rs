@@ -179,6 +179,14 @@ enum Request {
         #[serde(default = "default_limit")]
         limit: u32,
     },
+    MultiChildFilterEnvSet {
+        expected_instance: String,
+        child_slot: alias_controller::multi_child::Slot,
+        expected_child_slot: String,
+        expected_child_instance: String,
+        expected_float_bits: alias_controller::multi_child::AmountBits,
+        float_bits: alias_controller::multi_child::AmountBits,
+    },
     Choices {
         param: String,
         #[serde(default)]
@@ -434,6 +442,7 @@ impl Request {
             | Self::ChorderLearningGet { .. }
             | Self::ChorderAuditionLane { .. }
             | Self::MultiChildParameters { .. }
+            | Self::MultiChildFilterEnvSet { .. }
             | Self::MultiAddMaiTai { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
@@ -489,6 +498,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::MultiChildParameters {
+                expected_instance, ..
+            }
+            | Self::MultiChildFilterEnvSet {
                 expected_instance, ..
             }
             | Self::ImpactOutputSet {
@@ -668,6 +680,22 @@ impl Request {
                 || !(1..=fender_native_dsp_api::MAX_PAGE_SIZE).contains(limit) =>
             {
                 Err("Multi Instrument child DSP requires distinct exact identity and bounded paging".into())
+            }
+            Self::MultiChildFilterEnvSet {
+                expected_instance,
+                expected_child_slot,
+                expected_child_instance,
+                expected_float_bits,
+                float_bits,
+                ..
+            } if !valid_uid(expected_child_slot)
+                || !valid_uid(expected_child_instance)
+                || expected_instance == expected_child_slot
+                || expected_instance == expected_child_instance
+                || expected_child_slot == expected_child_instance
+                || expected_float_bits == float_bits =>
+            {
+                Err("Filter Env requires three distinct exact identities and different amount bits".into())
             }
             Self::ImpactOutputSet {
                 output_index,
@@ -1623,7 +1651,7 @@ pub(super) enum ObservationKind {
 
 enum Provider {
     Dsp(DspProvider),
-    MultiChild(Box<alias_controller::multi_child::Binding>),
+    MultiChild(Box<alias_controller::multi_child::Proof>),
     DspValue(Controller),
     Controller(Controller),
     State(state::AliasLease),
@@ -2050,6 +2078,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::MultiChildParameters { .. }
+        | Request::MultiChildFilterEnvSet { .. }
         | Request::MultiAddMaiTai { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
@@ -2313,6 +2342,10 @@ impl Reply {
         } else {
             "not_applied"
         };
+        if self.value["operation"] == alias_controller::multi_child::FILTER_ENV_OPERATION {
+            self.value = error("context_changed_before_receipt", &message, outcome);
+            return;
+        }
         if let Some(edit) = self.edit.as_ref() {
             self.value["edit_phase"] = json!(edit.phase());
         }
@@ -2639,6 +2672,7 @@ fn dispatch_device(
             | Request::ExternalPortMenu { .. }
             | Request::ExternalStereoSendSet { .. }
             | Request::SetParameter { .. }
+            | Request::MultiChildFilterEnvSet { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
             | Request::EditChorderModel { .. }
@@ -2773,6 +2807,24 @@ fn dispatch_device(
             &expected_child_instance,
             offset,
             limit,
+        );
+    }
+    if let Request::MultiChildFilterEnvSet {
+        child_slot,
+        expected_child_slot,
+        expected_child_instance,
+        expected_float_bits,
+        float_bits,
+        ..
+    } = request
+    {
+        return alias_controller::multi_child::dispatch_filter_env(
+            ctx,
+            child_slot,
+            expected_child_slot,
+            &expected_child_instance,
+            expected_float_bits,
+            float_bits,
         );
     }
     if let Request::InsertSlotMove {
@@ -3964,6 +4016,55 @@ mod tests {
         r.validate()?;
         Ok(r)
     }
+    #[test]
+    fn filter_env_native_request_rejects_crossed_identities_and_unbounded_amounts() {
+        let args = json!({
+            "operation":"multi_child_filter_env_set",
+            "expected_instance":"AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot":"Inst02", "expected_child_slot":"BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance":"CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits":"40b549fe36300000", "float_bits":"40B38BA513300000"
+        });
+        assert!(matches!(
+            parse(args.clone()).unwrap(),
+            Request::MultiChildFilterEnvSet { .. }
+        ));
+        for (field, invalid_value) in [
+            ("child_slot", json!("Inst03")),
+            ("expected_instance", args["expected_child_slot"].clone()),
+            (
+                "expected_child_instance",
+                args["expected_child_slot"].clone(),
+            ),
+            ("expected_float_bits", json!("40B38BA513300000")),
+            ("float_bits", json!("7FF8000000000000")),
+            ("float_bits", json!("40C3880000000001")),
+            ("float_bits", json!(5000)),
+            ("param", json!("filter.cutoff")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = invalid_value;
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
+    #[test]
+    fn filter_env_publication_loss_discards_both_bits() {
+        let mut reply = Reply::unbound(json!({
+            "ok":true, "outcome":"applied_unverified", "operation":"multi_child_filter_env_set",
+            "before_float_bits":"40B549FE36300000", "after_float_bits":"40B38BA513300000"
+        }));
+        reply.mutation = true;
+        reply.invalidate("Child attachment changed".into());
+        assert_eq!(
+            reply.value,
+            json!({
+                "ok":false, "outcome":"unknown",
+                "error":{"code":"context_changed_before_receipt","message":"Child attachment changed"}
+            })
+        );
+    }
+
     #[test]
     fn request_schema_is_finite_and_operation_specific() {
         for operation in ["inspect", "parameters"] {
