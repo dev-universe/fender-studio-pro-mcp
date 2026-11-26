@@ -51,6 +51,8 @@ mod numeric_edit;
 mod owner_inspect;
 #[path = "request/presets.rs"]
 pub(super) mod presets;
+#[path = "request/scope_sidechain.rs"]
+mod scope_sidechain;
 #[path = "request/state.rs"]
 pub(super) mod state;
 
@@ -98,6 +100,9 @@ fn supplied_string<'de, D: serde::Deserializer<'de>>(
 #[derive(Debug, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Request {
+    ScopeSidechainAssignmentGet {
+        expected_instance: String,
+    },
     CvPortStructureInspect {
         expected_instance: String,
     },
@@ -436,6 +441,7 @@ impl Request {
             | Self::InspectInsertFolderPresetPreflight { .. }
             | Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
+            | Self::ScopeSidechainAssignmentGet { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
             | Self::InsertSplitterAdd { .. }
@@ -447,6 +453,7 @@ impl Request {
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::ScopeSidechainAssignmentGet { expected_instance }
             | Self::MultiAddMaiTai {
                 expected_instance, ..
             }
@@ -1017,6 +1024,7 @@ impl Request {
                 ..
             } | Self::Serum2PresetApply { .. }
                 | Self::InspectAux { .. }
+                | Self::ScopeSidechainAssignmentGet { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
                 | Self::InsertChainCapture { .. }
@@ -1989,6 +1997,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InspectCvPresetSettings { .. }
         | Request::ApplyCvPresetSettings { .. }
         | Request::PresetRelease { .. }
+        | Request::ScopeSidechainAssignmentGet { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
         | Request::InspectInsertFolderPresetPreflight { .. }
@@ -2211,7 +2220,10 @@ impl Reply {
     }
 
     fn invalidate(&mut self, message: String) {
-        if self.value["operation"] == "multi_child_parameters" {
+        if matches!(
+            self.value["operation"].as_str(),
+            Some("multi_child_parameters" | "scope_sidechain_assignment_get")
+        ) {
             self.value = error("context_changed_before_receipt", &message, "not_applied");
             return;
         }
@@ -2630,6 +2642,9 @@ fn dispatch_device(
         };
         reply.context = Some(ctx);
         return reply;
+    }
+    if matches!(request, Request::ScopeSidechainAssignmentGet { .. }) {
+        return scope_sidechain::dispatch(ctx, auxiliary);
     }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
