@@ -2014,3 +2014,17 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - #266의 최신 기준은 macOS 통과·Core 대기다. 이어 #267·#268·
   Impact 순으로 검사한다. `main` 14개·로컬 11개, 장비 의존 4건.
   다음 검사 9~14분, 전체 2~5일과 CI·장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 09시 21분 Ampire 실앱 기록 병합
+
+- #266은 `371874e`의 필수 검사 두 개를 통과해 `e5c3e29`에
+  병합됐다. 갱신부터 병합까지 692.3초. #267은 최신 `main`을
+  포함한 `857a943` 기준으로 필수 검사를 시작했다.
+  [#266](https://github.com/dev-universe/fender-studio-pro-mcp/pull/266)
+  [#267](https://github.com/dev-universe/fender-studio-pro-mcp/pull/267)
+- #268의 Python 오프라인 검사 560개도 통과했다. Rust 269개,
+  JS 441개와 함께 로컬 확인을 마쳤다. 다음은 #267, #268, Impact,
+  Chorder, Shared Event 순이다. 병합 점검 프로세스는 실행 중이다.
+- 앱과 owner 닫힘, 원본 설치 관리 파일 18개 확인. `main` 14개·
+  로컬 11개, 장비 의존 4건. 다음 검사 9~14분, 전체 2~5일과
+  CI·장비 대기. 지정 종료 시각 없음.

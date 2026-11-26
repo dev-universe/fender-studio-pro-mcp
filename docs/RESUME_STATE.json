@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "179cfeb2242c4d208d7ec5206f6a3877ad5792e3",
+    "main_at_checkpoint": "e5c3e29ef0b3e1fc7081c4ab4371b34d5631abdc",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -268,7 +268,8 @@
       173,
       174,
       175,
-      265
+      265,
+      266
     ],
     "open_pull_requests": [
       160,
@@ -342,7 +343,6 @@
       254,
       258,
       261,
-      266,
       267,
       268
     ],
