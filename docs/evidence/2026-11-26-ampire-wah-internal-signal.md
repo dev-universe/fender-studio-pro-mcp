@@ -17,3 +17,25 @@ Tone Off and its ten rows, the 93 prepared Ampire rows, and the prepared compone
 The primary run handled 123 requests in 62.373 seconds. The independent quiet confirmation used 16 requests and the final model recovery used 18. All four state capture tokens were released. The host ran 362.268 seconds, exited normally without saving, and the protected original, scratch file, 18 managed files, and ten app profile files were verified.
 
 The first R441 setup stopped on the catalog’s braced class ID representation. R441B reached Wah discovery, where its candidate lacked the already-shipped exact Float list-bound fix. Neither preliminary setup enabled Tone or attempted a Wah write.
+
+## Global Wah with the same model in two slots
+
+R587 used Studio Pro 8.1.1 build 113103 on macOS arm64. It populated
+slots 2 and 3 with the stock Wah Wah model in both selection orders.
+The exact local pedal markers were 2500 and 7500. In both orders the
+global read matched slot 2. A global write to 6250 changed only the
+global row and slot 2 pedal. Slot 3 stayed at 7500. Independent typed
+reads confirmed the match, the preserved peer and the restored markers.
+
+Clearing both slots left the familiar vacant slot activation flags and
+a detached global value with an empty display. After restoring the two
+activation flags and clearing the observed global value, all 89 original
+stable rows and the original component fingerprint matched. The result
+covers these two slot positions with both models active. Audio for this
+duplicate configuration was outside the test.
+
+The first owner handled 117 requests in 11.358 seconds. A fresh owner
+resumed from the observed residual state and handled 134 requests in
+13.840 seconds. Three temporary captures were released. The host closed
+without Save after 131.843 seconds. The scratch digest, 18 managed files,
+and ten changed app-profile files were verified after restoration.
