@@ -77,6 +77,10 @@ pub(crate) struct MidiMappingQuery {
     #[serde(default)]
     #[schemars(range(max = 15))]
     channel: u8,
+    /// One-based Studio Pro Event Input for the live-tested route reference, 2 or 16.
+    /// Use the matching zero-based wire channel, 1 or 15.
+    #[schemars(range(min = 2, max = 16))]
+    event_input: Option<u8>,
     /// Reference MIDI 1.0 controller number (CC 0–127, channel pressure 128, pitch bend 129).
     #[schemars(range(max = 129))]
     controller: u8,
@@ -93,16 +97,26 @@ impl MidiMappingQuery {
             129 => "pitch_bend",
             _ => return Err("controller must be in the reference MIDI range 0..129"),
         };
+        let scope = match (self.event_input, self.channel) {
+            (None, _) => "reference_vst3_sdk_midi_mapping",
+            (Some(2), 1) | (Some(16), 15) => "reference_studio_pro_event_input",
+            (Some(_), _) => {
+                return Err("use Event Input 2 with channel 1 or Event Input 16 with channel 15");
+            }
+        };
+        if self.event_input.is_some() && !matches!(self.controller, 1 | 74 | 129) {
+            return Err("the Studio Pro route reference covers CC 1, CC 74, and pitch bend");
+        }
         let vst3_id = match (self.channel, self.controller) {
-            (0, 1) => 516_000_000,
-            (0, 129) => 516_000_001,
+            (channel, 1) if channel == 0 || self.event_input.is_some() => 516_000_000,
+            (channel, 129) if channel == 0 || self.event_input.is_some() => 516_000_001,
             (_, 1 | 129) => return Err("CC 1 and pitch bend are qualified only on channel 0"),
             (channel, controller) => {
                 500_000_000 + u32::from(channel) * 1_000_000 + u32::from(controller)
             }
         };
-        Ok(serde_json::json!({
-            "scope": "reference_vst3_sdk_midi_mapping",
+        let mut mapping = serde_json::json!({
+            "scope": scope,
             "variant": self.variant,
             "product": self.variant.plugin_name(),
             "reference_version": REFERENCE_VERSION,
@@ -116,7 +130,14 @@ impl MidiMappingQuery {
                 "vst3_id": vst3_id,
                 "studio_pro_name": format!("vstp{vst3_id}"),
             },
-        }))
+        });
+        if let Some(event_input) = self.event_input {
+            mapping["event_input"] = serde_json::json!(event_input);
+            mapping["wire_midi_channel"] = serde_json::json!(self.channel + 1);
+            mapping["studio_pro_version"] = serde_json::json!("8.1.1");
+            mapping["studio_pro_build"] = serde_json::json!(113103);
+        }
+        Ok(mapping)
     }
 }
 

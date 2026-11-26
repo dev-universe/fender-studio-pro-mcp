@@ -453,11 +453,12 @@ impl McpServer {
             tool: Tool::new("fabfilter_midi_mapping", "Look up the reference VST3 SDK mapping for a FabFilter controller on bus 0, channel 0. Use CC 0–127, channel pressure 128, pitch bend 129, or program change 130. Compare the reference version with your VST3 bundle and resolve the parameter on the current instance with plugin_parameters. This lookup does not inspect a live instance or send MIDI.", mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
-        let serum_mapping_schema =
+        let mut serum_mapping_schema =
             serde_json::to_value(schemars::schema_for!(SerumMidiMappingQuery)).unwrap();
+        serum_mapping_schema["properties"]["event_input"]["enum"] = json!([null, 2, 16]);
         specs.push(ToolSpec {
             operation: None,
-            tool: Tool::new("serum2_midi_mapping", "Look up the Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0. Use zero-based channel 0–15, with channel 0 as the default. CCs other than CC 1 and channel pressure 128 are supported on all 16 channels. CC 1 and pitch bend 129 are qualified on channel 0. Resolve the returned name with plugin_parameters on the current instance. This offline lookup sends no MIDI.", serum_mapping_schema.as_object().unwrap().clone())
+            tool: Tool::new("serum2_midi_mapping", "Look up the Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0. Use zero-based channel 0–15, with channel 0 as the default. The SDK reference covers CC 0, CC 2–127 and channel pressure 128 on all channels, plus CC 1 and pitch bend 129 on channel 0. Set event_input to 2 with channel 1 or to 16 with channel 15 for the separate Studio Pro 8.1.1 live-tested route reference for controllers 1, 74 and 129. Resolve the returned name with plugin_parameters on the current instance. This offline lookup sends no MIDI.", serum_mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
@@ -913,6 +914,60 @@ mod tests {
             assert_eq!(mapping["channel"], channel);
             assert_eq!(mapping["parameter"]["vst3_id"], id);
             assert_eq!(mapping["parameter"]["studio_pro_name"], format!("vstp{id}"));
+        }
+    }
+
+    #[test]
+    fn serum2_midi_reference_preserves_sdk_scope_and_bounds_studio_pro_routes() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_midi_mapping")
+            .unwrap();
+        assert_eq!(
+            spec.tool.input_schema["properties"]["event_input"]["enum"],
+            json!([null, 2, 16])
+        );
+
+        let lookup = |args| {
+            serde_json::from_value::<SerumMidiMappingQuery>(args)
+                .unwrap()
+                .lookup()
+        };
+        for variant in ["instrument", "fx"] {
+            for (channel, event_input, cc74_id) in [(1, 2, 501_000_074), (15, 16, 515_000_074)] {
+                for (controller, expected_id) in
+                    [(1, 516_000_000), (74, cc74_id), (129, 516_000_001)]
+                {
+                    let mapping = lookup(json!({
+                        "variant": variant, "controller": controller,
+                        "channel": channel, "event_input": event_input,
+                    }))
+                    .unwrap();
+                    assert_eq!(mapping["scope"], "reference_studio_pro_event_input");
+                    assert_eq!(mapping["channel"], channel);
+                    assert_eq!(mapping["event_input"], event_input);
+                    assert_eq!(mapping["wire_midi_channel"], channel + 1);
+                    assert_eq!(mapping["studio_pro_version"], "8.1.1");
+                    assert_eq!(mapping["studio_pro_build"], 113103);
+                    assert_eq!(mapping["parameter"]["vst3_id"], expected_id);
+                }
+            }
+        }
+
+        let sdk = lookup(json!({"variant": "fx", "controller": 74, "channel": 15})).unwrap();
+        assert_eq!(sdk["scope"], "reference_vst3_sdk_midi_mapping");
+        assert_eq!(sdk["parameter"]["vst3_id"], 515_000_074);
+        assert!(sdk.get("event_input").is_none());
+        assert!(sdk.get("wire_midi_channel").is_none());
+        for invalid in [
+            json!({"variant":"fx", "controller":1, "event_input":2}),
+            json!({"variant":"instrument", "controller":1, "channel":1, "event_input":16}),
+            json!({"variant":"fx", "controller":129, "channel":15, "event_input":2}),
+            json!({"variant":"instrument", "controller":74, "channel":1, "event_input":3}),
+            json!({"variant":"fx", "controller":2, "channel":1, "event_input":2}),
+            json!({"variant":"instrument", "controller":128, "channel":15, "event_input":16}),
+        ] {
+            assert!(lookup(invalid).is_err());
         }
     }
 
