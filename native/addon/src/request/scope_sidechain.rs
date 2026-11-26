@@ -653,6 +653,255 @@ impl Observation {
     }
 }
 
+#[repr(C, align(16))]
+struct SendDescriptorStorage([u8; 0x120]);
+
+#[repr(C, align(16))]
+struct EmptyAttributesStorage([u8; 0x10]);
+
+struct HostStorage {
+    ptr: *mut c_void,
+    finish: unsafe extern "C" fn(*mut c_void),
+}
+
+impl Drop for HostStorage {
+    fn drop(&mut self) {
+        unsafe { (self.finish)(self.ptr) };
+    }
+}
+
+fn record_send_edit<T>(
+    ctx: &Context<'_>,
+    image: usize,
+    owner: *mut c_void,
+    check: impl Fn() -> Result<(), String>,
+    edit: impl FnOnce(*mut c_void) -> Result<T, String>,
+) -> Result<T, String> {
+    check()?;
+    undo_available(image, owner)?;
+
+    let begin: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+        unsafe { std::mem::transmute(image + 0xd6c290) };
+    let begin_group: unsafe extern "C" fn(*mut c_void, *const PlainString, u8) -> *mut c_void =
+        unsafe { std::mem::transmute(image + 0xd6c924) };
+    let finish: unsafe extern "C" fn(*mut c_void) =
+        unsafe { std::mem::transmute(image + 0xd6c4a4) };
+    let string = crate::constant_string().ok_or("Native host Strings are unavailable")?;
+    let empty = unsafe { string(c"".as_ptr()) };
+    if empty.is_null() {
+        return Err("An Undo label is unavailable".into());
+    }
+    let mut storage = MaybeUninit::<ScopeStorage>::uninit();
+    let scope = storage.as_mut_ptr().cast();
+    unsafe { begin(scope, owner) };
+    let recording = RecordingScope::new(scope, finish);
+    recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
+    let current_journal = || {
+        let manager = unsafe { field::<*mut c_void>(scope, 0x40) };
+        if manager.is_null() {
+            return std::ptr::null_mut();
+        }
+        let get: Borrowed = unsafe { method(manager, 3) };
+        unsafe { get(manager) }
+    };
+    let raw_journal = current_journal();
+    let journal =
+        query(raw_journal, &ACTION_JOURNAL).ok_or("The Send Undo journal is unavailable")?;
+    let last_edit: unsafe extern "C" fn(*mut c_void) -> i64 = unsafe { method(journal.0, 3) };
+    let performing: unsafe extern "C" fn(*mut c_void) -> u8 = unsafe { method(journal.0, 8) };
+    if unsafe { performing(journal.0) } != 0 {
+        return Err("The Send Undo journal is busy".into());
+    }
+    let initial_edit = unsafe { last_edit(journal.0) };
+    check()?;
+    let group = unsafe { begin_group(scope, empty, 0) };
+    if group.is_null() || group != unsafe { field::<*mut c_void>(image as *mut c_void, 0x1e834b0) }
+    {
+        return Err("The host did not open a recorded Send Undo group".into());
+    }
+    recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
+    check()?;
+    if current_journal() != raw_journal {
+        return Err("The Send Undo journal changed before dispatch".into());
+    }
+    let outcome = edit(scope);
+    drop(recording);
+    ctx.check()?;
+    if outcome.is_ok() && unsafe { last_edit(journal.0) } == initial_edit {
+        return Err("The host did not record the exact Send edit".into());
+    }
+    outcome
+}
+
+pub(super) fn dispatch_create(ctx: Box<Context<'static>>, source: Option<Owned>) -> Reply {
+    let mut dispatched = false;
+    let result = (|| -> Result<Observation, String> {
+        let source = source.ok_or("The current source channel is unavailable")?;
+        let fresh_source = query(source.0, &UNKNOWN).ok_or("The exact source channel detached")?;
+        let mut before = Observation::capture(&ctx, source)?;
+        if before.source.send.is_some() {
+            return Err("The exact source already has a Send".into());
+        }
+        before.bind_input(&ctx)?;
+        let input = before
+            .input
+            .as_ref()
+            .ok_or("The Scope input is unavailable")?;
+        let image = before.scope.image;
+        let rack = send_primary(&before.source.rack.node, image, SEND_RACK_LAYOUT)?;
+        let check_empty = || -> Result<(), String> {
+            before.check(&ctx)?;
+            if unsafe { field::<u8>(rack, 0x2ec) } & 0x60 != 0x20 {
+                return Err("The exact Send rack does not support a recorded addition".into());
+            }
+            let factory: Borrowed = unsafe { method(rack, 0x210 / 8) };
+            if factory as usize != image + 0xc7647c {
+                return Err("The installed Send rack factory is unverified".into());
+            }
+            Ok(())
+        };
+        check_empty()?;
+        let port_view: *mut c_void = input.view.cast::<u8>().wrapping_sub(8).cast();
+        if table(port_view) != image + 0x1b776e0
+            || query(port_view, &UNKNOWN).is_none_or(|id| id.0 != input.canonical.0)
+        {
+            return Err("The stock AudioInput argument view is unverified".into());
+        }
+
+        let init_desc: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+            unsafe { std::mem::transmute(image + 0x14a32e0) };
+        let finish_desc: unsafe extern "C" fn(*mut c_void) =
+            unsafe { std::mem::transmute(image + 0x14a3388) };
+        let init_attr: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+            unsafe { std::mem::transmute(image + 0x15eec54) };
+        let finish_attr: unsafe extern "C" fn(*mut c_void) =
+            unsafe { std::mem::transmute(image + 0x15eec9c) };
+        let mut desc_memory = MaybeUninit::<SendDescriptorStorage>::uninit();
+        let desc_ptr = desc_memory.as_mut_ptr().cast();
+        unsafe { init_desc(desc_ptr, std::ptr::null_mut()) };
+        let descriptor = HostStorage {
+            ptr: desc_ptr,
+            finish: finish_desc,
+        };
+        let descriptor_interface = desc_ptr.cast::<u8>().wrapping_add(0x30).cast();
+        if table(desc_ptr) != image + 0x1d49670
+            || table(descriptor_interface) != image + 0x1d498a0
+            || !unsafe { field::<*mut c_void>(desc_ptr, 0x50) }.is_null()
+        {
+            return Err("The stock Send descriptor changed".into());
+        }
+        let descriptor_input = hold(port_view).ok_or("The stock descriptor input detached")?;
+        unsafe {
+            desc_ptr
+                .cast::<u8>()
+                .add(0x50)
+                .cast::<*mut c_void>()
+                .write(descriptor_input.0)
+        };
+        std::mem::forget(descriptor_input);
+        let mut attr_memory = MaybeUninit::<EmptyAttributesStorage>::uninit();
+        let attr_ptr = attr_memory.as_mut_ptr().cast();
+        unsafe { init_attr(attr_ptr, std::ptr::null_mut()) };
+        let attributes = HostStorage {
+            ptr: attr_ptr,
+            finish: finish_attr,
+        };
+
+        let add: unsafe extern "C" fn(
+            *mut c_void,
+            *mut c_void,
+            *mut c_void,
+            i32,
+            *mut c_void,
+            *mut c_void,
+        ) -> *mut c_void = unsafe { std::mem::transmute(image + 0xd6cc98) };
+        let (created, id) = record_send_edit(&ctx, image, rack, check_empty, |scope| {
+            if unsafe { field::<*mut c_void>(desc_ptr, 0x50) } != port_view {
+                return Err("The Send descriptor changed before creation".into());
+            }
+            dispatched = true;
+            let slot = unsafe {
+                add(
+                    scope,
+                    rack,
+                    descriptor_interface,
+                    -1,
+                    std::ptr::null_mut(),
+                    attr_ptr,
+                )
+            };
+            if slot.is_null() || table(slot) != image + SEND_LAYOUT[0] {
+                return Err("The stock Send creation did not return an exact Send slot".into());
+            }
+            let created = Node::capture(slot)?;
+            if send_primary(&created, image, SEND_LAYOUT)? != slot
+                || created.parent() != before.source.rack.node.raw()
+                || unsafe { field::<*mut c_void>(slot, 0x58) } != rack
+            {
+                return Err("The newly created Send belongs to a different rack".into());
+            }
+            let id = created.object_id()?;
+            drop(attributes);
+            drop(descriptor);
+            let level: unsafe extern "C" fn(*mut c_void, f32) = unsafe { method(slot, 0x3e0 / 8) };
+            if level as usize != image + 0xc6f1fc {
+                return Err("The created Send's stock 0 dB setter is unverified".into());
+            }
+            ctx.check()?;
+            if created.parent() != before.source.rack.node.raw() || created.object_id()? != id {
+                return Err("The new Send detached before its stock level could be set".into());
+            }
+            unsafe { level(slot, 1.0) };
+            Ok((created, id))
+        })?;
+        let mut after = Observation::capture(&ctx, fresh_source)?;
+        after.bind_input(&ctx)?;
+        let other_children = after
+            .source
+            .rack_children
+            .iter()
+            .filter(|child| child.identity.0 != created.identity.0)
+            .map(|child| child.identity.0);
+        if after.send_id.as_deref() != Some(id.as_str())
+            || !after.initial.exact_destination
+            || after
+                .input
+                .as_ref()
+                .is_none_or(|port| port.canonical.0 != input.canonical.0)
+            || after.source.rack.node.identity.0 != before.source.rack.node.identity.0
+            || after.source.rack_children.len() != before.source.rack_children.len() + 1
+            || !other_children.eq(before
+                .source
+                .rack_children
+                .iter()
+                .map(|child| child.identity.0))
+        {
+            return Err(
+                "The new Send or Scope endpoint did not satisfy the exact postcondition".into(),
+            );
+        }
+        after.check(&ctx)?;
+        Ok(after)
+    })();
+    let mut reply = match result {
+        Ok(after) => {
+            let mut reply = Reply::unbound(json!({"ok": true, "outcome": "applied_unverified",
+                "operation": "scope_sidechain_assignment_create", "instance": ctx.instance,
+                "created_send": after.send_id, "recorded": true}));
+            reply.auxiliary = Some(node_inspect::Auxiliary::ScopeSidechain(Box::new(after)));
+            reply
+        }
+        Err(reason) => Reply::error(
+            "scope_sidechain_assignment_create_failed",
+            &reason,
+            if dispatched { "unknown" } else { "not_applied" },
+        ),
+    };
+    reply.mutation = dispatched;
+    reply.context = Some(ctx);
+    reply
+}
+
 pub(super) fn dispatch_remove(
     ctx: Box<Context<'static>>,
     source: Option<Owned>,
@@ -694,63 +943,15 @@ pub(super) fn dispatch_remove(
             }
             ctx.check()
         };
-        check_bound()?;
-        undo_available(image, slot)?;
-
-        let begin: unsafe extern "C" fn(*mut c_void, *mut c_void) =
-            unsafe { std::mem::transmute(image + 0xd6c290) };
-        let begin_group: unsafe extern "C" fn(*mut c_void, *const PlainString, u8) -> *mut c_void =
-            unsafe { std::mem::transmute(image + 0xd6c924) };
         let remove: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
             unsafe { std::mem::transmute(image + 0xd6d27c) };
-        let finish: unsafe extern "C" fn(*mut c_void) =
-            unsafe { std::mem::transmute(image + 0xd6c4a4) };
-        let string = crate::constant_string().ok_or("Native host Strings are unavailable")?;
-        let empty = unsafe { string(c"".as_ptr()) };
-        if empty.is_null() {
-            return Err("An Undo label is unavailable".into());
-        }
-        let mut storage = MaybeUninit::<ScopeStorage>::uninit();
-        let scope_ptr = storage.as_mut_ptr().cast();
-        unsafe { begin(scope_ptr, slot) };
-        let recording = RecordingScope::new(scope_ptr, finish);
-        recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
-        let journal_of = || {
-            let manager = unsafe { field::<*mut c_void>(scope_ptr, 0x40) };
-            if manager.is_null() {
-                return std::ptr::null_mut();
+        record_send_edit(&ctx, image, slot, check_bound, |scope| {
+            dispatched = true;
+            if unsafe { remove(scope, slot) } & 1 != 1 {
+                return Err("The stock host did not accept the Send removal".into());
             }
-            let getter: Borrowed = unsafe { method(manager, 3) };
-            unsafe { getter(manager) }
-        };
-        let raw_journal = journal_of();
-        let journal =
-            query(raw_journal, &ACTION_JOURNAL).ok_or("The Send Undo journal is unavailable")?;
-        let last_edit: unsafe extern "C" fn(*mut c_void) -> i64 = unsafe { method(journal.0, 3) };
-        let performing: unsafe extern "C" fn(*mut c_void) -> u8 = unsafe { method(journal.0, 8) };
-        if unsafe { performing(journal.0) } != 0 {
-            return Err("The Send Undo journal is busy".into());
-        }
-        let previous_edit = unsafe { last_edit(journal.0) };
-        check_bound()?;
-        let group = unsafe { begin_group(scope_ptr, empty, 0) };
-        if group.is_null()
-            || group != unsafe { field::<*mut c_void>(image as *mut c_void, 0x1e834b0) }
-        {
-            return Err("The stock Send removal did not open a recorded Undo group".into());
-        }
-        recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
-        check_bound()?;
-        if journal_of() != raw_journal {
-            return Err("The Send Undo journal changed before removal".into());
-        }
-        dispatched = true;
-        let accepted = unsafe { remove(scope_ptr, slot) } & 1 == 1;
-        drop(recording);
-        ctx.check()?;
-        if !accepted || unsafe { last_edit(journal.0) } == previous_edit {
-            return Err("The stock Send deletion did not advance its Undo journal".into());
-        }
+            Ok(())
+        })?;
         let mut after = Observation::capture(&ctx, fresh_source)?;
         after.bind_input(&ctx)?;
         let siblings = source

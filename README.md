@@ -479,6 +479,13 @@ tool observes whether the source's sole Send is absent, unassigned, assigned to 
 Scope, or assigned elsewhere. The verified native route supports up to 16 mixer-list
 entries. The result describes the authored assignment only.
 
+Use `scope_sidechain_assignment_create` to connect an empty source Sends rack
+to that Scope at 0 dB. Enable the Scope Sidechain header and stop transport first.
+Supply the exact channels, Scope instance and current document. Verify the Send
+and assignment independently. Studio Pro records a Send Slot Addition in the
+Undo history. A preceding mixer edit can finish recording after the Send, so
+check the active Undo entry before using it.
+
 Use `scope_sidechain_assignment_remove` to remove the sole Send assigned to that
 Scope. Pass the same document, channels and Scope instance plus the read tool's
 `send_node` as `expected_send`. Keep transport stopped. After the result, read the

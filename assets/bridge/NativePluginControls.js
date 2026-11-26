@@ -1347,9 +1347,11 @@ class NativePluginControls {
         });
         const cvStructure = request.operation === "cv_port_structure_inspect";
         const scopeRemove = request.operation === "scope_sidechain_assignment_remove";
-        const scopeAssignment = scopeRemove || request.operation === "scope_sidechain_assignment_get";
+        const scopeCreate = request.operation === "scope_sidechain_assignment_create";
+        const scopeEdit = scopeRemove || scopeCreate;
+        const scopeAssignment = scopeEdit || request.operation === "scope_sidechain_assignment_get";
         const scopeAssignmentFailure = () => ({
-            ok: false, outcome: scopeRemove && dispatched ? "unknown" : "not_applied", error: {
+            ok: false, outcome: scopeEdit && dispatched ? "unknown" : "not_applied", error: {
                 code: "scope_sidechain_assignment_unavailable", message: "The exact Scope assignment could not be established",
             },
         });
@@ -1455,6 +1457,8 @@ class NativePluginControls {
                 return scopeAssignmentFailure();
             if (scopeRemove && capability.scope_sidechain_assignment_remove_api !== "recorded_scope_send_remove_v1")
                 return scopeAssignmentFailure();
+            if (scopeCreate && capability.scope_sidechain_assignment_create_api !== "recorded_scope_send_create_v1")
+                return scopeAssignmentFailure();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
                 return serum2Failure("not_applied");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
@@ -1522,9 +1526,11 @@ class NativePluginControls {
             if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
             if (scopeAssignment && result.ok === false && ["not_applied", "unknown"].includes(result.outcome)
                 && result.error && typeof result.error.message === "string") return result;
-            if (scopeRemove) {
+            if (scopeEdit) {
                 if (result.ok !== true || result.operation !== request.operation || result.outcome !== "applied_unverified"
-                    || result.recorded !== true || result.removed_send !== request.expected_send || !result.instance
+                    || result.recorded !== true
+                    || (scopeRemove ? result.removed_send !== request.expected_send : !this.insertChainUid(result.created_send))
+                    || !result.instance
                     || result.instance.object_uid !== request.expected_instance
                     || result.instance.native_class !== "AudioEffect"
                     || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081"
