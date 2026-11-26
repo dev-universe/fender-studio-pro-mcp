@@ -1,4 +1,5 @@
 use std::{
+    collections::BTreeMap,
     fs::OpenOptions,
     io::Read,
     path::{Path, PathBuf},
@@ -15,12 +16,54 @@ const MAX_METADATA_BYTES: usize = 64 * 1024;
 const HEADER_BYTES: usize = 48;
 const CHUNK_TABLE_BYTES: usize = 28;
 const REFERENCE_VERSION: &str = "2.1.5";
+const SCHEMA_VERSION: u8 = 11;
 
 #[derive(Clone, Copy, Debug, Deserialize, JsonSchema, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum Variant {
     Instrument,
     Fx,
+}
+
+#[derive(Clone, Copy, Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+enum PresetFormat {
+    Vst3ProcessorPreset,
+    SerumPreset,
+}
+
+impl PresetFormat {
+    fn from_path(path: &Path) -> Option<Self> {
+        if !path.is_absolute() {
+            return None;
+        }
+        let extension = path.extension()?.to_str()?;
+        if extension.eq_ignore_ascii_case("vstpreset") {
+            Some(Self::Vst3ProcessorPreset)
+        } else if extension.eq_ignore_ascii_case("serumpreset") {
+            Some(Self::SerumPreset)
+        } else {
+            None
+        }
+    }
+
+    fn apply_method(self) -> &'static str {
+        match self {
+            Self::Vst3ProcessorPreset => "serum2_preset_apply",
+            Self::SerumPreset => "serum_editor",
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+pub(crate) struct PresetInspection {
+    format: PresetFormat,
+    variant: Variant,
+    product_version: &'static str,
+    schema_version: u8,
+    sha256: String,
+    size_bytes: usize,
+    apply_method: &'static str,
 }
 
 #[derive(Deserialize, JsonSchema)]
@@ -136,14 +179,6 @@ fn valid_digest(value: &str, length: usize) -> bool {
             .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
 }
 
-fn valid_path(path: &Path) -> bool {
-    path.is_absolute()
-        && path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("vstpreset"))
-}
-
 impl PresetApply {
     pub(crate) fn validate(&self) -> Result<(), OperationError> {
         let target_valid = match &self.target {
@@ -156,7 +191,10 @@ impl PresetApply {
                 .expected_instance
                 .bytes()
                 .any(|b| b.is_ascii_lowercase())
-            || !valid_path(&self.path)
+            || !matches!(
+                PresetFormat::from_path(&self.path),
+                Some(PresetFormat::Vst3ProcessorPreset)
+            )
             || !valid_digest(&self.expected_sha256, 64)
         {
             return Err(OperationError::new(
@@ -168,41 +206,7 @@ impl PresetApply {
     }
 
     pub(crate) fn read_preset(&self) -> Result<Vec<u8>, OperationError> {
-        let mut options = OpenOptions::new();
-        options.read(true);
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::OpenOptionsExt;
-            options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
-        }
-        let unavailable = || {
-            OperationError::new(
-                "serum_preset_unavailable",
-                "Cannot open the local Serum preset as a regular file",
-            )
-        };
-        let input = options.open(&self.path).map_err(|_| unavailable())?;
-        let metadata = input.metadata().map_err(|_| unavailable())?;
-        if !metadata.is_file() {
-            return Err(unavailable());
-        }
-        let too_large = || {
-            OperationError::new(
-                "serum_preset_too_large",
-                "A Serum VST3 preset cannot exceed 16 MiB",
-            )
-        };
-        if metadata.len() > MAX_FILE_BYTES as u64 {
-            return Err(too_large());
-        }
-        let mut bytes = Vec::new();
-        input
-            .take(MAX_FILE_BYTES as u64 + 1)
-            .read_to_end(&mut bytes)
-            .map_err(|_| unavailable())?;
-        if bytes.len() > MAX_FILE_BYTES {
-            return Err(too_large());
-        }
+        let bytes = read_preset_file(&self.path, "A Serum VST3 preset cannot exceed 16 MiB")?;
         if format!("{:x}", Sha256::digest(&bytes)) != self.expected_sha256 {
             return Err(OperationError::new(
                 "serum_preset_digest_changed",
@@ -217,6 +221,71 @@ impl PresetApply {
         }
         Ok(bytes)
     }
+}
+
+pub(crate) fn inspect_preset(path: &Path) -> Result<PresetInspection, OperationError> {
+    let format = PresetFormat::from_path(path).ok_or_else(|| {
+        OperationError::new(
+            "invalid_argument",
+            "Supply an absolute .vstpreset or .SerumPreset path",
+        )
+    })?;
+    let bytes = read_preset_file(path, "A Serum preset cannot exceed 16 MiB")?;
+    let variant = match format {
+        PresetFormat::Vst3ProcessorPreset => [Variant::Instrument, Variant::Fx]
+            .into_iter()
+            .find(|&variant| valid_carrier(&bytes, variant)),
+        PresetFormat::SerumPreset => native_preset_variant(&bytes),
+    }
+    .ok_or_else(|| {
+        OperationError::new(
+            "invalid_serum_preset",
+            "Expected a Serum 2 or Serum 2 FX 2.1.5 preset with schema 11 and a matching file format",
+        )
+    })?;
+    Ok(PresetInspection {
+        format,
+        variant,
+        product_version: REFERENCE_VERSION,
+        schema_version: SCHEMA_VERSION,
+        sha256: format!("{:x}", Sha256::digest(&bytes)),
+        size_bytes: bytes.len(),
+        apply_method: format.apply_method(),
+    })
+}
+
+fn read_preset_file(path: &Path, size_message: &str) -> Result<Vec<u8>, OperationError> {
+    let mut options = OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW | libc::O_NONBLOCK);
+    }
+    let unavailable = || {
+        OperationError::new(
+            "serum_preset_unavailable",
+            "Cannot open the local Serum preset as a regular file",
+        )
+    };
+    let input = options.open(path).map_err(|_| unavailable())?;
+    let metadata = input.metadata().map_err(|_| unavailable())?;
+    if !metadata.is_file() {
+        return Err(unavailable());
+    }
+    let too_large = || OperationError::new("serum_preset_too_large", size_message);
+    if metadata.len() > MAX_FILE_BYTES as u64 {
+        return Err(too_large());
+    }
+    let mut bytes = Vec::new();
+    input
+        .take(MAX_FILE_BYTES as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| unavailable())?;
+    if bytes.len() > MAX_FILE_BYTES {
+        return Err(too_large());
+    }
+    Ok(bytes)
 }
 
 fn valid_carrier(bytes: &[u8], variant: Variant) -> bool {
@@ -255,52 +324,83 @@ struct StateMetadata<'a> {
 }
 
 fn valid_processor(bytes: &[u8], variant: Variant) -> bool {
-    let Some(data) = bytes.strip_prefix(b"XferJson\0") else {
-        return false;
-    };
-    let Some((length, data)) = data.split_first_chunk::<8>() else {
-        return false;
-    };
-    let Ok(length) = usize::try_from(u64::from_le_bytes(*length)) else {
-        return false;
-    };
-    if !(1..=MAX_METADATA_BYTES).contains(&length) {
-        return false;
-    }
-    let Some((metadata, payload)) = data.split_at_checked(length) else {
+    let Some(metadata) = bounded_state_metadata(bytes, PresetFormat::Vst3ProcessorPreset) else {
         return false;
     };
     let Ok(metadata) = serde_json::from_slice::<StateMetadata<'_>>(metadata) else {
         return false;
     };
-    let Some((decoded, payload)) = payload.split_first_chunk::<4>() else {
-        return false;
-    };
-    let decoded = u32::from_le_bytes(*decoded);
     metadata.component == "processor"
         && metadata.product == variant.state_product()
-        && metadata.product_version == REFERENCE_VERSION
-        && metadata.version == 11.0
-        && valid_digest(metadata.hash, 32)
-        && (1..=MAX_FILE_BYTES as u32).contains(&decoded)
-        && valid_frame(payload, decoded)
+        && supported_metadata(metadata.product_version, metadata.version, metadata.hash)
 }
 
-fn valid_frame(bytes: &[u8], decoded: u32) -> bool {
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct NativePresetMetadata<'a> {
+    file_type: &'a str,
+    product: &'a str,
+    product_version: &'a str,
+    version: f64,
+    hash: &'a str,
+    #[serde(flatten)]
+    extra: BTreeMap<String, serde::de::IgnoredAny>,
+}
+
+fn native_preset_variant(bytes: &[u8]) -> Option<Variant> {
+    let metadata: NativePresetMetadata<'_> =
+        serde_json::from_slice(bounded_state_metadata(bytes, PresetFormat::SerumPreset)?).ok()?;
+    if metadata.file_type != "SerumPreset"
+        || metadata.extra.contains_key("component")
+        || !supported_metadata(metadata.product_version, metadata.version, metadata.hash)
+    {
+        return None;
+    }
+    [Variant::Instrument, Variant::Fx]
+        .into_iter()
+        .find(|variant| variant.state_product() == metadata.product)
+}
+
+fn supported_metadata(product_version: &str, version: f64, hash: &str) -> bool {
+    product_version == REFERENCE_VERSION
+        && version == f64::from(SCHEMA_VERSION)
+        && valid_digest(hash, 32)
+}
+
+fn bounded_state_metadata(bytes: &[u8], format: PresetFormat) -> Option<&[u8]> {
+    let data = bytes.strip_prefix(b"XferJson\0")?;
+    let (length, data) = data.split_first_chunk::<8>()?;
+    let length = usize::try_from(u64::from_le_bytes(*length)).ok()?;
+    if !(1..=MAX_METADATA_BYTES).contains(&length) {
+        return None;
+    }
+    let (metadata, payload) = data.split_at_checked(length)?;
+    let (decoded, frame) = payload.split_first_chunk::<4>()?;
+    let decoded = u32::from_le_bytes(*decoded);
+    ((1..=MAX_FILE_BYTES as u32).contains(&decoded) && valid_frame(frame, decoded, format))
+        .then_some(metadata)
+}
+
+fn valid_frame(bytes: &[u8], decoded: u32, format: PresetFormat) -> bool {
     let Some((&descriptor, bytes)) = bytes
         .strip_prefix(b"\x02\0\0\0\x28\xb5\x2f\xfd")
         .and_then(|frame| frame.split_first())
     else {
         return false;
     };
-    // Bound the Zstandard window and require the embedded content size from
-    // the supported encoder. Serum's decoder remains responsible for the data.
+    // The editor can omit frame content size. The outer size and window
+    // still bound the frame, and the VST3 carrier requires an embedded size.
     // https://github.com/meta/zstd/blob/dev/doc/zstd_compression_format.md#frame_header
     if descriptor & 0x1b != 0 {
         return false;
     }
     let single_segment = descriptor & 0x20 != 0;
-    let width = 1 << (descriptor >> 6);
+    let size_flag = descriptor >> 6;
+    let width = if single_segment || size_flag != 0 {
+        1 << size_flag
+    } else {
+        0
+    };
     let bytes = if single_segment {
         bytes
     } else {
@@ -309,7 +409,7 @@ fn valid_frame(bytes: &[u8], decoded: u32) -> bool {
         };
         let base = 1_u64 << (10 + (window >> 3));
         let window_size = base + (base / 8) * u64::from(window & 7);
-        if width == 1 || window_size > MAX_FILE_BYTES as u64 {
+        if window_size > MAX_FILE_BYTES as u64 {
             return false;
         }
         bytes
@@ -317,40 +417,194 @@ fn valid_frame(bytes: &[u8], decoded: u32) -> bool {
     let Some((size, blocks)) = bytes.split_at_checked(width) else {
         return false;
     };
+    let checksum_bytes = if descriptor & 4 != 0 { 4 } else { 0 };
+    if blocks.len() < 4 + checksum_bytes {
+        return false;
+    }
+    if width == 0 {
+        return matches!(format, PresetFormat::SerumPreset);
+    }
     let mut little_endian = [0; 8];
     little_endian[..width].copy_from_slice(size);
     let frame_size = u64::from_le_bytes(little_endian) + if width == 2 { 256 } else { 0 };
-    let checksum_bytes = if descriptor & 4 != 0 { 4 } else { 0 };
-    frame_size == u64::from(decoded) && blocks.len() >= 4 + checksum_bytes
+    frame_size == u64::from(decoded)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::{Value, json};
     use std::fs;
 
+    fn state(metadata: Value) -> Vec<u8> {
+        // One valid single-segment Zstandard frame containing the byte 'x'.
+        state_with_frame(metadata, b"\x28\xb5\x2f\xfd\x20\x01\x09\0\0x")
+    }
+
+    fn state_with_frame(metadata: Value, frame: &[u8]) -> Vec<u8> {
+        let metadata = serde_json::to_vec(&metadata).unwrap();
+        let mut state = b"XferJson\0".to_vec();
+        state.extend((metadata.len() as u64).to_le_bytes());
+        state.extend(metadata);
+        state.extend(b"\x01\0\0\0\x02\0\0\0");
+        state.extend(frame);
+        state
+    }
+
+    fn native_metadata(variant: Variant) -> Value {
+        json!({
+            "fileType": "SerumPreset",
+            "product": variant.state_product(),
+            "productVersion": "2.1.5",
+            "version": 11,
+            "hash": "0".repeat(32),
+        })
+    }
+
     fn carrier(variant: Variant, component: &str, product: &str, product_version: &str) -> Vec<u8> {
-        let metadata = serde_json::to_vec(&serde_json::json!({
+        let state = state(json!({
             "component": component,
             "product": product,
             "productVersion": product_version,
             "version": 11.0,
             "hash": "0".repeat(32),
-        }))
-        .unwrap();
-        let mut state = b"XferJson\0".to_vec();
-        state.extend((metadata.len() as u64).to_le_bytes());
-        state.extend(metadata);
-        // One valid single-segment Zstandard frame containing the byte 'x'.
-        state.extend(b"\x01\0\0\0\x02\0\0\0\x28\xb5\x2f\xfd\x20\x01\x09\0\0x");
+        }));
+        wrap_carrier(variant, &state)
+    }
+
+    fn wrap_carrier(variant: Variant, state: &[u8]) -> Vec<u8> {
         let mut preset = b"VST3\x01\0\0\0".to_vec();
         preset.extend(variant.class_uid().bytes().filter(|&byte| byte != b'-'));
         preset.extend(((HEADER_BYTES + state.len()) as u64).to_le_bytes());
-        preset.extend(&state);
+        preset.extend(state);
         preset.extend(b"List\x01\0\0\0Comp");
         preset.extend((HEADER_BYTES as u64).to_le_bytes());
         preset.extend((state.len() as u64).to_le_bytes());
         preset
+    }
+
+    #[test]
+    fn inspects_both_formats_and_variants_without_changing_the_file() {
+        let dir = tempfile::tempdir().unwrap();
+        for (variant, variant_name) in [(Variant::Instrument, "instrument"), (Variant::Fx, "fx")] {
+            for (extension, bytes, format, apply_method) in [
+                (
+                    "VSTPRESET",
+                    carrier(variant, "processor", variant.state_product(), "2.1.5"),
+                    "vst3_processor_preset",
+                    "serum2_preset_apply",
+                ),
+                (
+                    "SerumPreset",
+                    state(native_metadata(variant)),
+                    "serum_preset",
+                    "serum_editor",
+                ),
+            ] {
+                let path = dir.path().join(format!("{variant_name}.{extension}"));
+                fs::write(&path, &bytes).unwrap();
+                let inspected = serde_json::to_value(inspect_preset(&path).unwrap()).unwrap();
+                assert_eq!(
+                    inspected,
+                    json!({
+                        "format": format,
+                        "variant": variant_name,
+                        "product_version": "2.1.5",
+                        "schema_version": 11,
+                        "sha256": format!("{:x}", Sha256::digest(&bytes)),
+                        "size_bytes": bytes.len(),
+                        "apply_method": apply_method,
+                    })
+                );
+                assert_eq!(fs::read(path).unwrap(), bytes);
+            }
+        }
+    }
+
+    #[test]
+    fn inspection_rejects_wrong_extensions_metadata_and_versions() {
+        let dir = tempfile::tempdir().unwrap();
+        let native = dir.path().join("fixture.SerumPreset");
+        let vst = dir.path().join("fixture.vstpreset");
+        let variant = Variant::Instrument;
+        let invalid = |path: &Path, bytes: Vec<u8>| {
+            fs::write(path, bytes).unwrap();
+            assert_eq!(
+                inspect_preset(path).unwrap_err().code,
+                "invalid_serum_preset"
+            );
+        };
+        invalid(&vst, state(native_metadata(variant)));
+        invalid(
+            &native,
+            carrier(variant, "processor", variant.state_product(), "2.1.5"),
+        );
+        invalid(
+            &vst,
+            carrier(variant, "processor", variant.state_product(), "2.1.4"),
+        );
+        for (field, value) in [
+            ("component", Value::Null),
+            ("component", json!("processor")),
+            ("productVersion", json!("2.1.4")),
+            ("version", json!(12)),
+            ("fileType", json!("Processor")),
+            ("hash", json!("incorrect")),
+        ] {
+            let mut metadata = native_metadata(variant);
+            metadata[field] = value;
+            invalid(&native, state(metadata));
+        }
+        for path in [
+            PathBuf::from("relative.SerumPreset"),
+            dir.path().join("wrong.fxp"),
+        ] {
+            assert_eq!(inspect_preset(&path).unwrap_err().code, "invalid_argument");
+        }
+    }
+
+    #[test]
+    fn inspection_accepts_a_bounded_native_frame_without_an_embedded_size() {
+        let dir = tempfile::tempdir().unwrap();
+        let native = dir.path().join("fixture.SerumPreset");
+        let vst = dir.path().join("fixture.vstpreset");
+        let variant = Variant::Instrument;
+        let mut frame = *b"\x28\xb5\x2f\xfd\x04\x58\x09\0\0x\0\0\0\0";
+        fs::write(&native, state_with_frame(native_metadata(variant), &frame)).unwrap();
+        assert_eq!(
+            serde_json::to_value(inspect_preset(&native).unwrap()).unwrap()["format"],
+            "serum_preset"
+        );
+        let processor = state_with_frame(
+            json!({
+                "component": "processor",
+                "product": "Serum2",
+                "productVersion": "2.1.5",
+                "version": 11,
+                "hash": "0".repeat(32),
+            }),
+            &frame,
+        );
+        fs::write(&vst, wrap_carrier(variant, &processor)).unwrap();
+        assert_eq!(
+            inspect_preset(&vst).unwrap_err().code,
+            "invalid_serum_preset"
+        );
+        fs::write(
+            &native,
+            state_with_frame(native_metadata(variant), &frame[..13]),
+        )
+        .unwrap();
+        assert_eq!(
+            inspect_preset(&native).unwrap_err().code,
+            "invalid_serum_preset"
+        );
+        frame[5] = 0xff;
+        fs::write(&native, state_with_frame(native_metadata(variant), &frame)).unwrap();
+        assert_eq!(
+            inspect_preset(&native).unwrap_err().code,
+            "invalid_serum_preset"
+        );
     }
 
     #[test]
@@ -459,11 +713,11 @@ mod tests {
     fn larger_encoder_frames_may_declare_a_separate_bounded_window() {
         // A non-single-segment frame with a 1 KiB window and 256-byte output.
         let mut bytes = b"\x02\0\0\0\x28\xb5\x2f\xfd\x40\0\0\0\x03\x08\0x".to_vec();
-        assert!(valid_frame(&bytes, 256));
+        assert!(valid_frame(&bytes, 256, PresetFormat::Vst3ProcessorPreset));
         bytes[9] = 0xff;
-        assert!(!valid_frame(&bytes, 256));
+        assert!(!valid_frame(&bytes, 256, PresetFormat::Vst3ProcessorPreset));
         bytes[9] = 0;
         bytes[8] = 0;
-        assert!(!valid_frame(&bytes, 256));
+        assert!(!valid_frame(&bytes, 256, PresetFormat::Vst3ProcessorPreset));
     }
 }

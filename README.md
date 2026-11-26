@@ -248,6 +248,13 @@ resolved destination identifies the original Serum 2 instrument or the
 specific Serum 2 FX insert, even with multiple FX copies in the song.
 [Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
+Use `serum2_preset_inspect` with the absolute local `path` to identify a
+Serum 2.1.5 `.SerumPreset` or processor-only `.vstpreset`. The tool reports
+the instrument or FX variant, file SHA-256, and the matching load method.
+`serum_editor` means use **Menu → Load Preset**. This reads the container
+and state header. The effect of loading the preset still needs host readback.
+[Preset file verification](docs/evidence/2026-11-26-serum2-preset-inspection.md)
+
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
 `expected_sha256` in lowercase, current `expected_document`, and native
