@@ -2399,3 +2399,21 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   [#289](https://github.com/dev-universe/fender-studio-pro-mcp/pull/289)
 - 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건, 병합 대기
   68개. 전체 2~5일과 장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 15시 50분 Serum 네 저장본 재오픈과 그래프 재개
+
+- #287은 최신 head `385631b` 두 필수 검사 후 `b9908e5`에
+  병합했다. 567.4초. #288 최신 head `6b9e2b2`가 검사 중이다.
+  [#287](https://github.com/dev-universe/fender-studio-pro-mcp/pull/287)
+- R516 서명된 Serum 악기 및 FX 각각 Event Input 2, 16의
+  저장 보호 복사본을 새 앱에서 하나씩 열었다. 인스펙터 포트와
+  실제 목적지 UUID가 일치했다. FX 같은 모델 피어는 별도 UUID로
+  확인했다. FX Music 트랙 암과 모니터가 화면상 켜져 있었고,
+  MIDI 전송·재생·변경·저장을 하지 않았다. 36요청·197.966초,
+  앱 217.978초. 원본 및 복사본 바이트 일치, 18+9 원복.
+  [#290](https://github.com/dev-universe/fender-studio-pro-mcp/pull/290)
+- #288 뒤 #289→#290→#278→#281→#282 순이다. R517은 고정
+  SHARED-GRAPH 작업으로 돌아가 첫째 레인만 채운 Splitter 3의
+  기본 삭제 및 Undo와 전체 DSP 원복을 확인한다.
+- 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건, 병합 대기
+  68개. 전체 2~5일과 장비 대기, 지정 종료 시각 없음.
