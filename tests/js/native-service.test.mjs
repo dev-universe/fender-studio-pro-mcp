@@ -556,6 +556,110 @@ test('digest observations are read-only and an explicitly stale document blocks 
   assert.equal(calls, 1);
 });
 
+const addMaiTaiArgs = {
+  track: 'Selected Music track', expected_instance: instance.object_uid,
+  expected_folder: '22345678-1234-1234-1234-123456789ABC',
+  expected_graph: '32345678-1234-1234-1234-123456789ABC',
+  expected_child_slot: '42345678-1234-1234-1234-123456789ABC',
+  expected_child_instance: '52345678-1234-1234-1234-123456789ABC',
+};
+const multiDocumentToken = 'ndc1:0000000000000001:1';
+const addMaiTaiResult = {
+  operation: 'multi_add_mai_tai', outcome: 'applied_unverified', dispatch_attempted: true,
+  instrument: 'Mai Tai', graph_attachment_verified: false, undo_verified: false,
+  instance: { ...instance, class_uid: 'B9D410AD-E47D-495E-8AEE-10D2B2987CC7', native_class: 'AudioSynth', object_id: 'Multi' },
+};
+
+test('Multi Instrument insertion rechecks the lease and exact selected Device before native dispatch', () => {
+  const args = addMaiTaiArgs;
+  let leased = false, reply = 'valid', replaceDevice = false;
+  const calls = [];
+  const h = harness({ getObjectByName() { return {
+    capabilities() {
+      if (reply === 'replace-focus') replaceDevice = true;
+      return '{"ok":true,"api":"fender-mcp-native-v1","multi_add_mai_tai_api":"single_child_multi_v1"}';
+    },
+    request(target, body) {
+      assert.equal(target, h.device);
+      calls.push(JSON.parse(body));
+      if (reply === 'lost') throw new Error('lost reply');
+      if (reply === 'refused' || reply === 'contradictory') return JSON.stringify({
+        ok: false, outcome: 'not_applied', dispatch_attempted: reply === 'contradictory',
+        error: { code: 'multi_add_mai_tai_refused', message: 'The one-child graph changed' },
+      });
+      if (reply === 'malformed') return success({ ...addMaiTaiResult, instrument: 'Other' });
+      return success(addMaiTaiResult);
+    },
+  }; } });
+  h.component.instrumentOf = ({ track }, strict) => {
+    assert.equal(track, args.track);
+    assert.equal(strict, true);
+    return { device: replaceDevice ? {} : h.device };
+  };
+  h.component.bridge.pluginMultiAddMaiTaiLease = token => leased && token === multiDocumentToken;
+  const insert = (target = args) => h.component.pluginMultiAddMaiTai(target, multiDocumentToken);
+  assert.equal(insert().dispatch_attempted, false);
+  leased = true;
+  for (const invalid of [{ ...args, track: ' ' }, { ...args, class_id: args.expected_instance },
+    { ...args, expected_graph: args.expected_folder }])
+    assert.equal(insert(invalid).native_outcome, 'not_applied');
+  reply = 'replace-focus';
+  assert.equal(insert().native_outcome, 'not_applied');
+  assert.equal(calls.length, 0);
+  reply = 'valid';
+  replaceDevice = false;
+  const first = insert();
+  assert.equal(first.native_outcome, 'applied_unverified');
+  assert.equal(first.dispatch_attempted, true);
+  assert.equal(first.graph_attachment_verified, false);
+  assert.equal(first.undo_verified, false);
+  const { track: _track, ...ids } = args;
+  assert.deepEqual(calls, [{ operation: 'multi_add_mai_tai', document_token: multiDocumentToken, ...ids }]);
+  reply = 'refused';
+  const refusal = insert();
+  assert.equal(refusal.native_outcome, 'not_applied');
+  assert.equal(refusal.dispatch_attempted, false);
+  assert.equal(refusal.error.code, 'multi_add_mai_tai_refused');
+  for (reply of ['lost', 'malformed', 'contradictory']) {
+    const unknown = insert();
+    assert.equal(unknown.native_outcome, 'unknown');
+    assert.equal(unknown.dispatch_attempted, reply === 'lost' ? null : true);
+  }
+  assert.equal(calls.length, 5);
+});
+
+test('Multi Instrument insertion rejects stale or active document leases and replays a cached reply without invoking again', () => {
+  const h = bridgeHarness();
+  h.bridge.nativeDocument = { token: multiDocumentToken, open: true };
+  let count = 0, start = 0, record = 0;
+  h.bridge.transportPanel = () => ({ findParameter(name) {
+    const value = { start, record }[name];
+    return value === null ? null : { value };
+  } });
+  h.bridge.component = { pluginMultiAddMaiTai(args, token) {
+    assert.equal(args.track, addMaiTaiArgs.track);
+    assert.equal(token, multiDocumentToken);
+    count++;
+    return { ok: true, native_outcome: 'applied_unverified' };
+  } };
+  const scope = h.current();
+  const request = { op: 'pluginMultiAddMaiTai', args: addMaiTaiArgs, expectedSession: scope.session, expectedDocument: scope.document };
+  assert.equal(h.request({ ...request, expectedDocument: 'stale' }).code, 'document_changed');
+  for ([start, record] of [[1, 0], [0, true], [null, 0], [0, undefined]]) {
+    const refusal = h.request(request);
+    assert.equal(refusal.ok, true);
+    assert.equal(refusal.result.native_outcome, 'not_applied');
+    assert.equal(refusal.result.dispatch_attempted, false);
+  }
+  assert.equal(count, 0);
+  [start, record] = [0, false];
+  const attempted = h.request({ ...request, id: 'same-verified-document-request' });
+  h.write('request.json', { protocol: 2, ...request, id: attempted.id });
+  h.bridge.tick('contract');
+  assert.equal(h.read('response.json').result.native_outcome, 'applied_unverified');
+  assert.equal(count, 1);
+});
+
 test('Multi child DSP forwards exact identities and discards rows on a mismatched child or focus', () => {
   const args = { track: 'Multi fixture', expected_instance: instance.object_uid, child_slot: 'Inst01',
     expected_child_slot: '22345678-1234-1234-1234-123456789ABC',
