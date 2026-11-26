@@ -6,15 +6,15 @@ const SCOPE_TABLE: usize = 0x1b7c888;
 const ADD_ACTION_TABLE: usize = 0x1b7cc20;
 
 #[repr(C, align(16))]
-pub(in crate::native_script::request::node_inspect) struct ScopeStorage([u8; 0x50]);
+pub(in crate::native_script::request) struct ScopeStorage([u8; 0x50]);
 
-pub(in crate::native_script::request::node_inspect) struct RecordingScope {
+pub(in crate::native_script::request) struct RecordingScope {
     pub(super) object: *mut c_void,
     pub(super) finish: unsafe extern "C" fn(*mut c_void),
 }
 
 impl RecordingScope {
-    pub(in crate::native_script::request::node_inspect) fn new(
+    pub(in crate::native_script::request) fn new(
         object: *mut c_void,
         finish: unsafe extern "C" fn(*mut c_void),
     ) -> Self {
@@ -28,7 +28,7 @@ impl Drop for RecordingScope {
     }
 }
 
-pub(in crate::native_script::request::node_inspect) fn undo_available(
+pub(in crate::native_script::request) fn undo_available(
     image: usize,
     graph: *mut c_void,
 ) -> Result<(), String> {
@@ -77,7 +77,7 @@ fn check_wire(model: &Model, previous: *mut c_void, following: *mut c_void) -> R
 
 type SubmitAction = unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8;
 
-pub(in crate::native_script::request::node_inspect) fn recorded_submit(
+pub(in crate::native_script::request) fn recorded_submit(
     image: usize,
     scope: &RecordingScope,
     expected_table: usize,

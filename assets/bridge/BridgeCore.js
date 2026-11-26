@@ -141,7 +141,8 @@ class Bridge {
         const oneLaneSplitterRemove = req.op === "insertSplitterRemoveOneLaneNested";
         const nestedSplitterRemove = oneLaneSplitterRemove || req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
-        const scopeAssignment = req.op === "scopeSidechainAssignmentGet";
+        const scopeRemove = req.op === "scopeSidechainAssignmentRemove";
+        const scopeAssignment = scopeRemove || req.op === "scopeSidechainAssignmentGet";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -226,7 +227,9 @@ class Bridge {
             && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
                 || context.fileUrl !== afterContext.fileUrl || !this.insertGraphTransportStopped())) {
             code = "native_context_lost";
-            result = fail("The Scope assignment lease changed before publication");
+            result = scopeRemove ? { ok: false, native_outcome: "unknown",
+                error: { code: "scope_send_remove_context_changed", message: "The removal document changed" } }
+                : fail("The Scope assignment lease changed before publication");
         } else if (!isFail(result) && nestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -422,6 +425,7 @@ class Bridge {
             case "setInsertBypass": return this.fromComponent(c => c.setInsertBypass(args));
             case "sends": return this.fromComponent(c => c.sends(args));
             case "scopeSidechainAssignmentGet": return this.scopeSidechainAssignmentGet(args);
+            case "scopeSidechainAssignmentRemove": return this.scopeSidechainAssignmentGet(args, true);
             case "setSend": return this.fromComponent(c => c.setSend(args));
             case "setChannelLabel": return this.fromComponent(c => c.setChannelLabel(args));
             case "setChannelColor": return this.fromComponent(c => c.setChannelColor(args));
@@ -1747,7 +1751,10 @@ class Bridge {
         return { added: added, trackCount: uniqueTracks(list).length };
     }
 
-    scopeSidechainAssignmentGet(args) {
+    scopeSidechainAssignmentGet(args, remove = false) {
+        const failure = (message, unknown = false) => !remove ? fail(message)
+            : { ok: false, native_outcome: unknown ? "unknown" : "not_applied",
+                error: { code: "scope_sidechain_assignment_remove_failed", message } };
         const lease = this.requestContext;
         const leaseCurrent = () => {
             const current = this.context();
@@ -1757,12 +1764,14 @@ class Bridge {
         };
         const validName = name => typeof name === "string" && name.trim().length > 0
             && name.length <= 256 && !/[\u0000-\u001f\u007f-\u009f]/.test(name);
-        if (!args || Object.keys(args).sort().join(",") !== "expected_instance,scope_channel,source_channel"
+        const fields = remove ? "expected_instance,expected_send,scope_channel,source_channel"
+            : "expected_instance,scope_channel,source_channel";
+        if (!args || Object.keys(args).sort().join(",") !== fields
             || !validName(args.source_channel) || !validName(args.scope_channel)
             || args.source_channel === args.scope_channel) {
-            return fail("Scope assignment requires two distinct audio channel names and the exact instance");
+            return failure("Scope assignment requires two distinct audio channel names and the exact instance");
         }
-        if (!leaseCurrent()) return fail("Scope assignment requires a current native document and stopped transport");
+        if (!leaseCurrent()) return failure("Scope assignments require a current native document and stopped transport");
 
         const readChannels = () => {
             const mixer = docObject("Environment/MixerConsole");
@@ -1782,27 +1791,31 @@ class Bridge {
         };
 
         const channels = readChannels();
-        if (!channels || !leaseCurrent()) return fail("The exact source and Scope audio channels are unavailable");
+        if (!channels || !leaseCurrent()) return failure("The exact source and Scope audio channels are unavailable");
         return this.fromComponent(component => {
             const target = { channel: args.scope_channel, slot: 0, plugin: "Scope" };
             const plug = component.pluginOf(target);
             if (!plug || plug.error || plug.name !== "Scope" || !leaseCurrent())
-                return fail("The exact Scope insert at slot zero is unavailable");
-            const native = component.nativePluginRequest(plug.device, {
-                operation: "scope_sidechain_assignment_get", expected_instance: args.expected_instance,
-            }, channels.source);
+                return failure("The exact Scope insert at slot zero is unavailable");
+            const request = { operation: remove ? "scope_sidechain_assignment_remove" : "scope_sidechain_assignment_get",
+                expected_instance: args.expected_instance };
+            if (remove) request.expected_send = args.expected_send;
+            const native = component.nativePluginRequest(plug.device, request, channels.source);
             const afterChannels = readChannels();
             const afterPlug = component.pluginOf(target);
             if (!afterChannels || afterChannels.source !== channels.source || afterChannels.receiver !== channels.receiver
                 || !afterPlug || afterPlug.error || afterPlug.device !== plug.device || afterPlug.element !== plug.element
-                || !leaseCurrent()) return fail("The source, Scope or document binding changed");
+                || !leaseCurrent()) return failure("The source, Scope or document binding changed", true);
             if (!native || native.ok !== true) {
                 const reason = native && native.error && typeof native.error.message === "string"
                     ? native.error.message.slice(0, 200) : "The native Scope assignment is unavailable";
-                return fail(reason);
+                return failure(reason, !native || native.outcome !== "not_applied");
             }
+            if (remove) return { recorded: true, removed_send: native.removed_send,
+                native_outcome: "applied_unverified", scope_instance: args.expected_instance };
             return { state: native.state, scope: native.scope, source_channel: args.source_channel,
-                scope_channel: args.scope_channel, scope_slot: 0, scope_instance: args.expected_instance };
+                scope_channel: args.scope_channel, scope_slot: 0, scope_instance: args.expected_instance,
+                send_node: native.send_node ?? null };
         });
     }
 
