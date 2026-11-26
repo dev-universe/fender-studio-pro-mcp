@@ -126,3 +126,29 @@ The R590 run also opened the Edit menu during that interval. These trials
 establish an immediate history mismatch and leave its trigger open. All
 three closed without saving, matched both scratch digests and restored the
 18 managed files and changed app-profile files.
+
+R592 added a four-second delay with no intervening UI action. The observed
+request interval was 4.987 seconds. The next Undo was Send Slot Addition.
+It removed only the second source's Send and preserved the first Send and
+all Scope rows. R592 made 59 requests in 23.443 seconds, with a 49.609-second
+host session.
+
+R593 and R594 used private diagnostic builds of the same source. REA and
+Ghidra traced the action group and the host's retained Undo list. Craft
+Anything checked nine byte ranges against the same arm64 executable.
+Immediately after the native group finished, both traces showed a distinct
+Send Slot Addition at the head of the list. In R594, a separate native
+parameter edit was appended 27 host ticks later. It moved the Send Slot
+Addition one position below the head. The first stock Undo then changed
+only the second source's fader. Independent reads still found both Sends,
+and Send Slot Addition was now the first Undo entry. Applying that Undo
+removed only the new Send. The original Send and all 31 DSP rows remained
+exact. R594 made 74 requests in 40.408 seconds with a 74.691-second host
+session.
+
+R595 repeated the rapid sequence using the uninstrumented core
+`e371da9ed45a` and the same native UUID as R579. The two Undo actions
+again changed only the fader and then only the new Send. R595 made 74
+requests in 33.452 seconds with a 53.627-second host session. R592 through
+R595 closed without saving, matched both scratch digests and restored the
+18 managed files and the nine changed app-profile files per run.
