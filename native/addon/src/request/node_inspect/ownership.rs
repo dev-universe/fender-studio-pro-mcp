@@ -257,7 +257,7 @@ impl GraphOwnership {
         &self,
         [graph, splitter, merger, first, second]: [&str; 5],
         effect: &str,
-        branch_tail: Option<&str>,
+        branch_tails: [Option<&str>; 2],
     ) -> Result<(), String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) {
             return Err("insert graph UUID changed".into());
@@ -279,14 +279,14 @@ impl GraphOwnership {
                 "Expected Splitter, merger and two exact slot nodes in the same graph".into(),
             );
         };
-        let tail = match branch_tail {
-            Some(id) => match find(id) {
-                Some(GraphChild::Slot { device, .. }) => device.object_uid.as_deref(),
-                _ => return Err("The requested branch tail is not a bound slot".into()),
-            },
-            None => None,
-        };
-        if ![a.object_uid.as_deref(), b.object_uid.as_deref(), tail].contains(&Some(effect)) {
+        let mut bound = [a.object_uid.as_deref(), b.object_uid.as_deref()].contains(&Some(effect));
+        for id in branch_tails.into_iter().flatten() {
+            let Some(GraphChild::Slot { device, .. }) = find(id) else {
+                return Err("The requested branch tail is not a bound slot".into());
+            };
+            bound |= device.object_uid.as_deref() == Some(effect);
+        }
+        if !bound {
             return Err(
                 "The resolved effect does not belong to either bound Splitter branch".into(),
             );

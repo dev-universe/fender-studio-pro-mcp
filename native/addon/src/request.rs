@@ -738,10 +738,11 @@ impl Request {
                     second_branch_tail_node,
                     ..
                 } = self {
-                    if first_branch_tail_node.is_some() && second_branch_tail_node.is_some() {
-                        return Err("Specify at most one branch tail slot".into());
-                    }
-                    nodes.extend(first_branch_tail_node.as_ref().or(second_branch_tail_node.as_ref()));
+                    nodes.extend(
+                        [first_branch_tail_node.as_ref(), second_branch_tail_node.as_ref()]
+                            .into_iter()
+                            .flatten(),
+                    );
                 }
                 if ![expected_instance, expected_graph]
                     .into_iter()
