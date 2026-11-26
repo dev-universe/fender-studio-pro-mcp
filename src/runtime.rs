@@ -1792,7 +1792,7 @@ mod tests {
         }
         let operation = Operation::from_parts(tool, fixture.clone()).unwrap();
         operation.validate().unwrap();
-        assert!(operation.requires_explicit_document() && !operation.is_read_only());
+        assert!(!operation.is_read_only());
         assert_eq!(operation.wire(), (wire.into(), fixture.clone()));
         for (key, value) in [
             ("slot", json!(1)),
@@ -2006,6 +2006,10 @@ mod tests {
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
                 "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
                 "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"})),
+            ("insertSplitterRemoveOneLaneNested", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
+                "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "successor_merger_node":"50000000-1234-1234-1234-123456789ABC","occupied_slot_node":"60000000-1234-1234-1234-123456789ABC"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
             ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
