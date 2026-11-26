@@ -2251,13 +2251,13 @@ impl Operation {
                     &p.first_slot_node,
                     &p.second_slot_node,
                 ];
-                if p.first_branch_tail_node.is_some() && p.second_branch_tail_node.is_some() {
-                    return Err(invalid("Specify at most one branch tail slot"));
-                }
                 nodes.extend(
-                    p.first_branch_tail_node
-                        .as_deref()
-                        .or(p.second_branch_tail_node.as_deref()),
+                    [
+                        p.first_branch_tail_node.as_deref(),
+                        p.second_branch_tail_node.as_deref(),
+                    ]
+                    .into_iter()
+                    .flatten(),
                 );
                 validate_insert_graph_target(
                     &p.channel,
