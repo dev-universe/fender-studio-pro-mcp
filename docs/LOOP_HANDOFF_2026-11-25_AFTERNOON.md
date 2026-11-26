@@ -3075,3 +3075,38 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   표시 결과만으로 생산자 동기화나 직접 샘플 조회를 승인하지 않는다.
   고정 잔여 로컬 11, main 13, 장비 4. 전체 2~5일과 장비 대기,
   지정된 종료 시각 없음.
+
+## 11월 26일 22시 05분 Scope 우회와 비대칭 Splitter
+
+- #294는 헤드 `63041b6`의 두 검사 뒤 `67201cd`에
+  병합됐다. 761.3초. #295의 `bbd1c59`는 `01a3314`로 병합됐다.
+  549.3초. 다음 #311의 최신 헤드는 `c249f85`다.
+  [#294](https://github.com/dev-universe/fender-studio-pro-mcp/pull/294) ·
+  [#295](https://github.com/dev-universe/fender-studio-pro-mcp/pull/295)
+- R562에서 Tone Off 후 보존되던 Scope 파형은 정확한 호스트
+  슬롯 우회와 함께 평평해졌다. 우회 해제 뒤 두 화면이 바이트
+  단위로 일치했고 파형은 돌아오지 않았다. 일시적으로 Scope
+  31행의 편집 가능 여부만 바뀌고 raw 값은 유지됐다. 전체
+  DSP 41행과 라우팅 원복. 109요청·59.690초, 앱 120.693초.
+  REA/Ghidra에서 여덟 범위를 확인한 뒤 분석 세션도 종료했다.
+  실제 생산자 콜백 동기화와 원시 샘플 조회는 미완료다.
+  [#336](https://github.com/dev-universe/fender-studio-pro-mcp/pull/336)
+- R563에서 첫 레인 머리 Mixtool 2를 두 번째 레인 내부의
+  두 효과 사이로 옮겼다. 이전 successor ID로 보낸 두 번째
+  요청을 거부한 뒤 현재 10노드·12연결 및 DSP 288행의 불변을
+  확인했다. Undo 한 번으로 원래 2+2 배열을 복원했다.
+  296요청·64.899초, 앱 104.547초, 캡처 22개 해제.
+  [#337](https://github.com/dev-universe/fender-studio-pro-mcp/pull/337)
+- R564의 기본 제거 한 번은 1+3 레인을 Mixtool 3, Mixtool,
+  Mixtool 2, Mixtool 4 순서로 연결했다. 8노드·9연결과 DSP
+  288행, Undo로 정확한 1+3 구조를 확인했다. 299요청·104.823초,
+  앱 157.620초, 캡처 22개 해제.
+  [#338](https://github.com/dev-universe/fender-studio-pro-mcp/pull/338)
+- R562~R564 모두 앱·owner 종료, Save 없음, 보호 파일 해시 및
+  설치 18개·프로필 10개 일치. #336은 #327 뒤, #337·#338은
+  #334 뒤. `01a3314` 기준 열린 순번 85개를 합성했다.
+- 다음 R565는 `feature/splitter-ordered-continuations`에서
+  이전 요청을 유지하고 정확한 순서 UUID로 1+3·3+1 두 배치를
+  시험한다. Rust 1.88 오프라인 및 macOS 빌드 실행 중. 고정
+  잔여 로컬 11, main 13, 장비 4. 전체 2~5일 및 장비 대기,
+  지정 종료 시각 없음.
