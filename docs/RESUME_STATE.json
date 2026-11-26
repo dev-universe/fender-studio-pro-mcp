@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "cbc24eed5ec3621117d789bba7d9b16f2f04a14c",
+    "main_at_checkpoint": "ad31cb7a4dc82216df6ed7543792070f708b25d5",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -178,7 +178,8 @@
       "R463D",
       "R463E",
       "R469",
-      "R470"
+      "R470",
+      "R477"
     ],
     "merged_pull_requests": [
       109,
@@ -258,7 +259,14 @@
       259,
       256,
       245,
-      249
+      249,
+      262,
+      264,
+      260,
+      263,
+      173,
+      174,
+      175
     ],
     "open_pull_requests": [
       160,
@@ -274,9 +282,6 @@
       170,
       171,
       172,
-      173,
-      174,
-      175,
       176,
       177,
       178,
@@ -334,13 +339,11 @@
       252,
       254,
       258,
-      260,
       261,
-      262,
-      263,
-      264
+      265,
+      266
     ],
-    "remaining_builtin_units": 15,
+    "remaining_builtin_units": 14,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
@@ -349,7 +352,6 @@
     "remaining_builtin_units_after_local_verification": 11,
     "locally_qualified_fixed_units_pending_merge": [
       "CONTROL-CHORDER",
-      "CONTROL-INPUTFILTER",
       "SHARED-EVENT",
       "CONTROL-IMPACT"
     ]

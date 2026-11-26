@@ -1953,3 +1953,30 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   18개는 독립 해시를 다시 확인했다.
 - `main` 15개·로컬 11개, 이 안에 장비 의존 4건. 다음 검사 9~14분,
   전체 2~5일과 CI·장비 대기 예상. 지정 종료 시각 없음.
+
+## 11월 26일 09시 03분 Input Filter 병합과 Ampire 복원
+
+- 재개 때 #262, #264, #260, #263, #173, #174의 병합과 각 필수
+  검사 두 개를 원격에서 확인했다. #175도 최신 기준 `06a9579`에서
+  두 검사를 통과해 `ad31cb7`에 병합됐다. 갱신부터 818.5초였다.
+  Input Filter는 `main` 적격으로 옮겨 고정 잔여가 15→14개다.
+  [#175](https://github.com/dev-universe/fender-studio-pro-mcp/pull/175)
+- R476은 Xfer 서명 Serum 2 2.1.5 arm64 VST3의 instrument와 FX에
+  같은 Note Expression 인터페이스 진입점 두 개가 있음을 확인했다.
+  격리 조회는 두 클래스 모두 지원 목록을 얻기 전에 종료했다.
+  REA·Ghidra와 Craft-Anything·LLVM로 진입점 두 곳을 맞췄다.
+  분석 약 173.9초, Studio Pro 0회, 이벤트 쓰기 0회.
+  [#265](https://github.com/dev-universe/fender-studio-pro-mcp/pull/265)
+- R477은 8.1.1에서 FAT 순환과 캡슐 적용 후의 마이크 A 차이를
+  재현했다. Link을 끈 후 A가 준비값에 있어 B만 조정했다. Link을
+  다시 켜고 C를 복귀시켜 설정 89개 및 원래 2,297바이트 캡슐 해시를
+  맞췄다. 숨은 Link 해제 기준값은 최종 후 미확인이다. 처음에는
+  장치 재연결 대화상자로 두 요청에서 멈췄고 설정을 변경하지 않고
+  넘긴 뒤 새 owner를 붙였다. 125요청·12.182초, 앱 72.317초.
+  No Save, 종료 코드 0, 관리 파일 18개·프로필 10개 원복.
+  [#266](https://github.com/dev-universe/fender-studio-pro-mcp/pull/266)
+- #265의 현재 기준 `8958d0a` 검사 중. 다음 #266과 Impact·Chorder·
+  Shared Event 순이다. 현재 앱·owner 닫힘. 08시 54분 장치 목록에서
+  Volt 276 및 Keystation 88은 관찰되지 않았다. `main` 14개·로컬
+  11개, 장비 의존 4건. 다음 검사 9~14분, 전체 2~5일과 CI·장비 대기.
+  지정 종료 시각 없음.
