@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "adfd1b9a0c9aa8fab06d0980ed0c379cd987045e",
+    "main_at_checkpoint": "fcbcd3992dc395b7b800def298460491c481da7b",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -435,7 +435,8 @@
       347,
       346,
       328,
-      329
+      329,
+      330
     ],
     "open_pull_requests": [
       165,
@@ -508,7 +509,6 @@
       315,
       317,
       327,
-      330,
       331,
       332,
       333,
@@ -521,7 +521,8 @@
       341,
       344,
       348,
-      349
+      349,
+      350
     ],
     "remaining_builtin_units": 13,
     "remaining_hardware_units_within_builtin": 4,
@@ -541,7 +542,7 @@
         349
       ],
       "normal_managed_installation_restored": true,
-      "next": "Reuse R540 and R562 to investigate a producer-synchronized Scope capture observation. PR329 is on main. The current queue starts at PR330, and Scope PR348 and PR349 follow PR344."
+      "next": "R582 identified separate private lock domains and the current graph ownership still needs proof. Review the next supported SHARED-GRAPH gap. PR330 is on main, the queue starts at PR331 then CI PR350, and Scope PR348 and PR349 follow PR344."
     },
     "remaining_builtin_units_after_local_verification": 11,
     "locally_qualified_fixed_units_pending_merge": [

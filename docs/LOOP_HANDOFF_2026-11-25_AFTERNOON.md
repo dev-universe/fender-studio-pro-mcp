@@ -3334,3 +3334,25 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   확인한다. R540과 R562의 정적 분석을 재사용하고, 제작자와
   동일한 동기화 방식이 확인되기 전에는 DSP 메모리 읽기를
   제품 도구에 추가하지 않는다. 앱 및 MCP owner 종료.
+
+## 2026-11-27 0시 55분 Scope 잠금 대조와 CI 병목
+
+- R582는 같은 arm64 호스트에서 현재 엔진 락이 두 공개 그래프
+  컬렉션으로 전달되는 경로를 확인했다. 다른 생성자에서도 같은
+  CCL 클래스를 가진 별도 락을 동일한 슬롯에 배정했다. 정확한
+  Scope와 현재 공개 그래프의 락 대조가 여전히 필요하다. Ghidra
+  13개, LLVM 호출 9개, Craft 독립 바이트 구간 10개. 약 5분,
+  REA·Craft 종료, 앱과 owner 없이 검증했다.
+  [#241](https://github.com/dev-universe/fender-studio-pro-mcp/pull/241)
+- #330은 `4ea0520f`의 두 필수 검사 후 `fcbcd399`에 병합됐다.
+  570.3초. #331 다음에 CI 개선 #350을 병합 순서에 삽입했다.
+  직렬 코어 로그의 Python 560개는 533.413초였다. 로컬에서
+  정확히 같은 ID 집합 560개를 각각 한 번 실행했다. 네 프로세스
+  후보가 86.49초에 완료됐고 실패 전달도 확인했다. 호스팅 결과를
+  별도로 확인한다. 열린 PR 84개, 지정 종료 시각 없음.
+  [#330](https://github.com/dev-universe/fender-studio-pro-mcp/pull/330) ·
+  [#350](https://github.com/dev-universe/fender-studio-pro-mcp/pull/350)
+- 고정 잔여 로컬 11·main 13, 장비 의존 4. 0시 44분 USB·오디오에
+  Volt 276과 Keystation88 없음. 전체 2~5일과 장비 대기. 다음은
+  현재 제품 도구로 실제 확인 가능한 SHARED-GRAPH의 닫힌 범위를
+  대조해 새 검증이 필요한 연결을 고른다.
