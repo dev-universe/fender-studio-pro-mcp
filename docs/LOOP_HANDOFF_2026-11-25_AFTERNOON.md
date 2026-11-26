@@ -2212,3 +2212,25 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   동작과 Undo다. 앱·owner 닫힘 및 정상 설치 복구 확인.
 - 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건. 병합 대기 67개.
   전체 2~5일과 장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 14시 34분 Serum 검색 병합과 한 레인 제거 근거
+
+- Serum 검색 도구 #279는 `04c4eda`에서 두 필수 검사 통과 후
+  `3b010ad`에 병합됐다. 최신 기준 갱신부터 589.0초. #280은
+  새 head `0bf2214`에서 검사 중이다.
+  [#279](https://github.com/dev-universe/fender-studio-pro-mcp/pull/279)
+  [#280](https://github.com/dev-universe/fender-studio-pro-mcp/pull/280)
+- R500은 공개 slot move로 Splitter 3의 두 번째 레인에 효과 하나를
+  넣고 기본 제거 메뉴를 사용했다. 노드 8→6, 링크 10→7, 그 레인의
+  Mixtool들은 직렬로 남았다. 기본 편집 메뉴 Undo 한 번으로 노드와
+  링크, 자식 순서, DSP 144행을 정확히 복구했다. 173요청·141.526초,
+  앱 179.961초, 캡처 토큰 14개 해제 및 18+9 원복, 저장 없음.
+  [#281](https://github.com/dev-universe/fender-studio-pro-mcp/pull/281)
+- `feature/splitter-remove-one-lane`의 로컬 후보는 같은 8노드
+  유형, 순서 및 상호 연결, 정확한 피어 UUID를 요구하는 별도 MCP
+  제거 명령을 준비한다. 기존 빈 Splitter 명령의 거부·결과 및
+  오래된 확장 대비를 재사용한다. 다음 경계 R501은 같은 정확한
+  UUID로 원래 빈 구조를 거부한 뒤, 호스트에서 채워진 두 번째
+  레인을 제거하고 Undo하는 검증이다. 앱·owner 닫힘과 원복 확인.
+- 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건. 병합 대기 67개,
+  전체 2~5일과 장비 대기, 지정 종료 시각 없음.
