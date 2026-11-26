@@ -47,15 +47,30 @@ enum EditProfile {
     General,
     ExactToggle(&'static str),
     ExactInteger(IntegerEditProfile),
+    ExactFloatInteger(IntegerEditProfile),
 }
 impl EditProfile {
     fn validate(&self, description: &Description) -> Result<(), Error> {
-        if let Self::ExactInteger(profile) = self {
-            let integer = |v: Option<&NativeValue>| match v {
-                Some(NativeValue {
-                    variant_tag: 1,
-                    value: Value::Integer(n),
-                }) => Some(*n),
+        if let Self::ExactInteger(profile) | Self::ExactFloatInteger(profile) = self {
+            let integer = |raw: Option<&NativeValue>| match (self, raw) {
+                (
+                    Self::ExactInteger(_),
+                    Some(NativeValue {
+                        variant_tag: 1,
+                        value: Value::Integer(value),
+                    }),
+                ) => Some(*value),
+                (
+                    Self::ExactFloatInteger(_),
+                    Some(NativeValue {
+                        variant_tag: 2,
+                        value: Value::Float(value),
+                    }),
+                ) if value.abs() <= (1u64 << 53) as f64
+                    && (*value as i64 as f64).to_bits() == value.to_bits() =>
+                {
+                    Some(*value as i64)
+                }
                 _ => None,
             };
             let valid = description.name == profile.name
@@ -251,6 +266,20 @@ impl RawParameter {
             guard,
         )
     }
+    /// Observe an Integer parameter whose native Variant stores exact values as Float64.
+    pub fn pin_raw_integer_float_state<G: FnMut() -> Result<(), String>>(
+        self,
+        profile: IntegerEditProfile,
+        expected: i64,
+        guard: &mut G,
+    ) -> Result<ScalarReadLease, Error> {
+        self.pin_scalar_state(
+            EditProfile::ExactFloatInteger(profile),
+            Number::Integer(expected),
+            guard,
+        )
+    }
+
     fn pin_scalar_state<G: FnMut() -> Result<(), String>>(
         self,
         profile: EditProfile,

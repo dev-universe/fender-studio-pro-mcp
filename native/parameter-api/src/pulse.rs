@@ -93,6 +93,19 @@ impl RawParameter {
         &self,
         guard: &mut G,
     ) -> Result<PulseReceipt, PulseError> {
+        self.pulse_range_checked(guard, |_| Ok(()))
+    }
+
+    /// Runs one additional pre-dispatch check on the prepared action.
+    pub fn pulse_range_checked<G, C>(
+        &self,
+        guard: &mut G,
+        check_intent: C,
+    ) -> Result<PulseReceipt, PulseError>
+    where
+        G: FnMut() -> Result<(), String>,
+        C: FnOnce(&PulseState) -> Result<(), String>,
+    {
         let mut progress = Progress {
             phase: Phase::Prepared,
             before: None,
@@ -148,6 +161,7 @@ impl RawParameter {
                 number(&before.min)?,
                 before.min.variant_tag,
             )?);
+            check_intent(&before).map_err(Error::Guard)?;
             self.pulse_gate(object, owner.as_ref(), owner_pointer, &before, guard)?;
             let set: unsafe extern "C" fn(*mut c_void, *const Variant, u8) =
                 unsafe { ffi::method(self.parameter.raw(), 21) };
