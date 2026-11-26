@@ -366,6 +366,8 @@ enum Request {
         second_slot_node: String,
         #[serde(default)]
         first_branch_tail_node: Option<String>,
+        #[serde(default)]
+        second_branch_tail_node: Option<String>,
     },
     InsertSplitterRemoveEmptyNested {
         expected_instance: String,
@@ -732,9 +734,14 @@ impl Request {
                     nodes.push(occupied_slot_node);
                 }
                 if let Self::InsertSplitterRemove {
-                    first_branch_tail_node: Some(tail), ..
+                    first_branch_tail_node,
+                    second_branch_tail_node,
+                    ..
                 } = self {
-                    nodes.push(tail);
+                    if first_branch_tail_node.is_some() && second_branch_tail_node.is_some() {
+                        return Err("Specify at most one branch tail slot".into());
+                    }
+                    nodes.extend(first_branch_tail_node.as_ref().or(second_branch_tail_node.as_ref()));
                 }
                 if ![expected_instance, expected_graph]
                     .into_iter()
@@ -2711,6 +2718,7 @@ fn dispatch_device(
         first_slot_node,
         second_slot_node,
         first_branch_tail_node,
+        second_branch_tail_node,
         ..
     } = request
     {
@@ -2723,9 +2731,10 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
-            node_inspect::splitter_remove::Shape::OccupiedBranches(
-                first_branch_tail_node.as_deref(),
-            ),
+            node_inspect::splitter_remove::Shape::OccupiedBranches {
+                first_tail: first_branch_tail_node.as_deref(),
+                second_tail: second_branch_tail_node.as_deref(),
+            },
         );
     }
     if let Request::InsertSplitterRemoveEmptyNested {
