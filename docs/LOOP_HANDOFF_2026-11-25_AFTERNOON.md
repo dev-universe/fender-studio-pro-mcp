@@ -2543,3 +2543,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   기능을 추가하지 않는다.
 - DAW·owner 종료 상태. 고정 잔여 main 13개, 로컬 11개,
   장비 의존 4건. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 17시 03분 Serum 높은 채널과 Scope 화면 시간
+
+- R525는 REA/Ghidra의 ScopeView 등록·커서 경로를
+  Craft 20바이트 위치 7개와 대조했다. 228.353초.
+  화면 샘플 및 시간 표시가 폭과 좌표 변화에서 계산됨을
+  확인했다. 생산자 샘플 영역과 시작·완료 시간은 열려 있다.
+  [#299](https://github.com/dev-universe/fender-studio-pro-mcp/pull/299)
+- R526 서명 Serum 2 2.1.5에서 wire 채널 2→Event Input 2,
+  채널 16→Input 16의 CC74 제어는 각 수신 행으로 들어갔다.
+  Mod Wheel과 Pitch Bend는 양쪽 모두 전역 행이었다.
+  16개 루프백 메시지, 50행과 8단계. 최초 비교기는 중첩
+  값 표현까지 고정 메타데이터로 다뤘다. 재전송 없이 새
+  owner가 정적 메타데이터·2,622행 일치와 중심값 한 행의
+  5000→5000.30517578125를 독립 확인했다.
+- R526은 총 308요청·127.958초, 앱 190.519초. Input 1과
+  모니터 해제, 소스와 임시 서명 VST3 회수, 18+11 원복.
+  Save·노트·재생 없음. R527은 같은 시퀀스를 FX에 적용한다.
+  [#300](https://github.com/dev-universe/fender-studio-pro-mcp/pull/300)
+- #281 정확한 head `cc41908`의 두 검사 뒤 `1dfaac5`에
+  병합했다. 902.6초. #291 최신 `ef55faa` 검사 중이며
+  #300, #282 순이다. 73개가 현재 기준 오프라인 병합 점검에
+  통과했고 Pedalboard·FabFilter 열린 PR은 없다.
+  [#281](https://github.com/dev-universe/fender-studio-pro-mcp/pull/281)
+- 고정 잔여 main 13개, 로컬 11개, 장비 의존 4건, 병합 대기
+  73개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
