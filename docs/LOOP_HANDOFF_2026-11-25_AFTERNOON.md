@@ -2186,3 +2186,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   검증 가능성을 먼저 확인한다.
 - 앱·owner 닫힘과 설치 원복 확인. 고정 잔여 `main` 13개·로컬 11개,
   그중 장비 4건. 전체 2~5일과 장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 14시 25분 Serum 공장 목록 및 편집기 검증
+
+- #274와 #275는 최신 head의 필수 두 검사 뒤 각각 `f0d3bff`,
+  `5ab2fbb`에 병합됐다. 배포 준비부터 545.5초·441.4초.
+  [#274](https://github.com/dev-universe/fender-studio-pro-mcp/pull/274)
+  [#275](https://github.com/dev-universe/fender-studio-pro-mcp/pull/275)
+- R498의 읽기 전용 `serum2_factory_presets_list`는 실제 설치 라이브러리
+  악기 624개·FX 2개를 독립 파일 판독과 대조했다. 다섯 페이지와 탐색,
+  세 거부, 모든 원본 해시 일치. 2.974초. Rust 273·JS 444·Python 560.
+  #279는 최신 기준 `04c4eda`에서 두 필수 검사 중이다.
+  [#279](https://github.com/dev-universe/fender-studio-pro-mcp/pull/279)
+- R499는 Serum 2.1.5 서명본을 실제 8.1.1에 올려, 각 검색 결과를
+  공식 편집기의 Load Preset에서 한 번씩 열었다. 두 원본은 2.0.13/
+  스키마 5였다. 각각 2,623행에서 값 61·26개와 메타데이터만 23·16개가
+  바뀌었고 반대 인스턴스·믹서·타임라인과 파일은 일치했다.
+  203요청·177.941초, 앱 226.436초, 외부 MIDI·재생·저장 없음.
+  설치 18개·프로필 10개 검증 원복, 임시 서명 VST3 회수.
+  [#280](https://github.com/dev-universe/fender-studio-pro-mcp/pull/280)
+- #279→#280→#276→#277→#278 순으로 병합하고 이후 원래 Chorder와
+  Shared Event 순서를 이어간다. Ampire 전역 Volume·Pitch의 기존
+  실제 읽기와 바이너리 대조는 연결된 제어 대상을 확정하지 못했다.
+  다음 독립 실앱은 레인 한 개만 채워진 중첩 Splitter 삭제의 호스트
+  동작과 Undo다. 앱·owner 닫힘 및 정상 설치 복구 확인.
+- 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건. 병합 대기 67개.
+  전체 2~5일과 장비 대기, 지정 종료 시각 없음.
