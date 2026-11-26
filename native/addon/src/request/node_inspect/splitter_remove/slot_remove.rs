@@ -10,9 +10,9 @@ fn parent(node: *mut c_void) -> *mut c_void {
     unsafe { get(node) }
 }
 
-fn attached_effect_matches(node: *mut c_void, expected: &str) -> bool {
+fn object_id(node: *mut c_void) -> String {
     let get: unsafe extern "C" fn(*mut c_void) -> *const Uid = unsafe { method(node, 4) };
-    uid(unsafe { get(node) }) == expected
+    uid(unsafe { get(node) })
 }
 
 pub(in crate::native_script::request) fn dispatch(
@@ -66,6 +66,25 @@ pub(in crate::native_script::request) fn dispatch(
         let [preceding, removed, following] = primaries[..] else {
             return Err("Three adjacent slot nodes are required".into());
         };
+        let check_edges = || -> Result<(), String> {
+            if primaries
+                .iter()
+                .any(|&node| unsafe { field::<*mut c_void>(node, 0x178) } != graph)
+                || nodes.iter().any(|node| parent(node.0) != graph_node)
+                || adjacent(preceding, 0x1a8, 0x1b0)? != [removed]
+                || adjacent(removed, 0x188, 0x190)? != [preceding]
+                || adjacent(removed, 0x1a8, 0x1b0)? != [following]
+                || adjacent(following, 0x188, 0x190)? != [removed]
+            {
+                return Err(
+                    "The exact middle effect is no longer reciprocally linked to both neighbors"
+                        .into(),
+                );
+            }
+            Ok(())
+        };
+        guard()?;
+        check_edges()?;
 
         let names = constant_string().ok_or("Native String constants are unavailable")?;
         let slot_name = unsafe { names(c"Slot".as_ptr()) };
@@ -76,14 +95,21 @@ pub(in crate::native_script::request) fn dispatch(
         guard()?;
         let removed_node = NodePin::borrowed(nodes[1].0)?;
         let delegated_slot = removed_node.child(slot_name)?;
-        let removed_device = delegated_slot.child(device_name)?;
+        let slot_node = query(delegated_slot.node.0, &NODE)
+            .ok_or("The delegated slot has no native INode view")?;
+        let delegated_device = NodePin::borrowed(slot_node.0)?.child(device_name)?;
+        let removed_device = query(delegated_device.node.0, &NODE)
+            .ok_or("The removed effect has no native INode view")?;
         let native_slot = unsafe { field::<*mut c_void>(removed, 0x1f0) };
         let slot_owner = hold(native_slot).ok_or("The resolved native slot detached")?;
-        if table(slot_owner.0) != image + AUDIO_INSERT_SLOT
-            || !matches_identity(slot_owner.0, &delegated_slot._canonical)
-            || !attached_effect_matches(removed_device.node.0, removed_instance)
-        {
-            return Err("The delegated AudioInsertSlot or removed device changed".into());
+        if table(slot_owner.0) != image + AUDIO_INSERT_SLOT {
+            return Err("The verified AudioInsertSlot primary table changed".into());
+        }
+        if !matches_identity(slot_owner.0, &delegated_slot._canonical) {
+            return Err("The AudioInsertSlot is not the slot node's canonical delegate".into());
+        }
+        if object_id(removed_device.0) != removed_instance {
+            return Err("The exact delegated device UUID changed".into());
         }
         let owning_folder = unsafe { field::<*mut c_void>(slot_owner.0, 0x58) };
         if owning_folder.is_null() || !matches_identity(owning_folder, &route.folder._canonical) {
@@ -108,23 +134,14 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The exact slot removal entry no longer matches the verified image".into());
         }
         let check_shape = || -> Result<(), String> {
-            if primaries
-                .iter()
-                .any(|&node| unsafe { field::<*mut c_void>(node, 0x178) } != graph)
-                || nodes.iter().any(|node| parent(node.0) != graph_node)
-                || parent(removed_device.node.0) != delegated_slot.node.0
-                || parent(delegated_slot.node.0) != route.folder.node.0
+            check_edges()?;
+            if parent(removed_device.0) != slot_node.0
+                || parent(slot_node.0) != route.folder.node.0
                 || unsafe { field::<*mut c_void>(removed, 0x1f0) } != slot_owner.0
                 || unsafe { field::<*mut c_void>(slot_owner.0, 0x58) } != owning_folder
-                || adjacent(preceding, 0x1a8, 0x1b0)? != [removed]
-                || adjacent(removed, 0x188, 0x190)? != [preceding]
-                || adjacent(removed, 0x1a8, 0x1b0)? != [following]
-                || adjacent(following, 0x188, 0x190)? != [removed]
+                || object_id(removed_device.0) != removed_instance
             {
-                return Err(
-                    "The exact middle effect is no longer reciprocally linked to both neighbors"
-                        .into(),
-                );
+                return Err("The exact removed device or its Inserts ownership changed".into());
             }
             Ok(())
         };
