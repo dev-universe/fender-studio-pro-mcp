@@ -2471,3 +2471,27 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 일반 앱·owner 종료 및 관리 설치 원복. 고정 잔여 main 13개,
   로컬 11개, 장비 의존 4건, 병합 대기 70개. 전체 2~5일과
   장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 16시 31분 Ampire 독립 볼륨과 Serum 재오픈 병합
+
+- R521은 장치 재연결 대화상자 때문에 최초 2요청·9.041초에
+  편집 없이 중단했다. 정확한 테스트 곡을 확인한 새 owner에서
+  Black Panel의 Normal 및 Vibrato 볼륨을 각각 5.00→10.00→5.00으로
+  변경했다. 나머지 97행과 전역 Volume·Pitch 0을 독립 대조했다.
+  Black Panel 98행 및 원래 MCM 800 89행과 각 캡처 바이트
+  원복. 99요청·9.576초, 앱 71.920초, 캡처 5개 해제.
+  Save·MIDI·재생 없음. 관리 설치와 프로필 18+11 원복.
+  [#295](https://github.com/dev-universe/fender-studio-pro-mcp/pull/295)
+- #290 정확한 head `82623cf`에서 필수 두 검사 후 `9b5b134`에
+  병합했다. 547.7초. #278 최신 head `b82e7fa`의 두 검사가
+  진행 중이다. #293 문서는 #238과 #184의 실제 증거를 모두
+  반영하여 #184 뒤에 두었다. #295 추가 전 병합 순서 70개를
+  현재 기준에서 전부 오프라인 합치기로 점검했다.
+  [#290](https://github.com/dev-universe/fender-studio-pro-mcp/pull/290)
+  [#293](https://github.com/dev-universe/fender-studio-pro-mcp/pull/293)
+- R522는 이미 효과가 들어 있는 Splitter 레인에 또 다른 Mixtool을
+  정확한 효과-머저 연결로 이동하는 조건, 점유 레인을 빈 레인으로
+  지정했을 때의 거절, 독립 라우팅과 DSP 144행, 기본 Undo를
+  이어서 확인한다.
+- 고정 잔여 main 13개·로컬 11개, 장비 의존 4건, 병합 대기
+  70개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
