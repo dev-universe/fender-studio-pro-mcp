@@ -1025,6 +1025,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return this.insertGraphEdit("insert_slot_move", args);
     }
 
+    insertSlotRemove(args) {
+        return this.insertGraphEdit("insert_slot_remove", args);
+    }
+
     insertSplitterAdd(args) {
         return this.insertGraphEdit("insert_splitter_add", args);
     }

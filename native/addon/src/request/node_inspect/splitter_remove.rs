@@ -3,6 +3,9 @@ use super::ownership::GraphChildKind;
 use super::*;
 use std::rc::Rc;
 
+#[path = "splitter_remove/slot_remove.rs"]
+pub(in crate::native_script::request) mod slot_remove;
+
 const COMMAND_HANDLER: Uid = Uid {
     a: 0xcb8108a9,
     b: 0xdc88,
