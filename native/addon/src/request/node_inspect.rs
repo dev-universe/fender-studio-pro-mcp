@@ -224,6 +224,7 @@ pub(super) fn set_impact_output(
 /// Read-only metadata of a bridge-created object. This never authorizes a
 /// subsequent mutation and makes no claim that the auxiliary owns the Device.
 pub(super) enum Auxiliary {
+    ScopeSidechain(Box<super::scope_sidechain::Observation>),
     TypeMetadata(Inspection),
     InsertFolderAncestry {
         inspection: Inspection,
@@ -433,15 +434,14 @@ impl Auxiliary {
             }
         )
     }
-    fn inspection(&self) -> &Inspection {
-        match self {
+    pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        let inspection = match self {
+            Self::ScopeSidechain(observation) => return observation.check(ctx),
             Self::TypeMetadata(inspection) | Self::InsertFolderAncestry { inspection, .. } => {
                 inspection
             }
-        }
-    }
-    pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
-        self.inspection()
+        };
+        inspection
             .check(&mut || ctx.check())
             .map_err(|e| e.to_string())?;
         let observation = if let Self::InsertFolderAncestry {
@@ -465,19 +465,21 @@ impl Auxiliary {
         observation
     }
     pub(super) fn value(&self) -> Value {
-        let mut value = report(self.inspection().report(), Scope::Target);
-        value["mutation_capability"] = json!(false);
-        match self {
-            Self::TypeMetadata(_) => {
+        let mut value = match self {
+            Self::ScopeSidechain(observation) => return observation.value(),
+            Self::TypeMetadata(inspection) => {
+                let mut value = report(inspection.report(), Scope::Target);
                 value["coverage"] = json!("bounded_readonly_auxiliary_type_metadata");
                 value["scope"] = json!("auxiliary_type_observation");
                 value["limits"] = json!({"nodes":1,"depth":0,"ancestors":0,"children_per_node":1});
+                value
             }
             Self::InsertFolderAncestry {
+                inspection,
                 ancestor_matches_active_model,
                 document_environment,
-                ..
             } => {
+                let mut value = report(inspection.report(), Scope::Target);
                 value["coverage"] = json!("bounded_readonly_insert_folder_ancestor_metadata");
                 value["scope"] = json!("insert_folder_ancestry_observation");
                 value["limits"] = json!({"nodes":9,"depth":0,"ancestors":8,"children_per_node":1});
@@ -487,8 +489,10 @@ impl Auxiliary {
                 value["ancestor_matches_active_model"] = json!(ancestor_matches_active_model);
                 value["document_environment_observation"] = document_environment.value();
                 value["negative_match_scope"] = json!("no_match_in_bounded_parent_chain");
+                value
             }
-        }
+        };
+        value["mutation_capability"] = json!(false);
         value
     }
 }
