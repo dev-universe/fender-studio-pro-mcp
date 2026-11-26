@@ -66,6 +66,8 @@ pub enum Operation {
         alias = "plugin_multi_child_parameters"
     )]
     PluginMultiChildParameters(PluginMultiChildParameters),
+    #[serde(rename = "pluginMultiAddMaiTai", alias = "plugin_multi_add_mai_tai")]
+    PluginMultiAddMaiTai(PluginMultiAddMaiTai),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
     ExternalPortMenu(ExternalPortMenu),
     #[serde(rename = "externalStereoSendSet", alias = "external_stereo_send_set")]
@@ -96,6 +98,11 @@ pub enum Operation {
     InsertSlotMove(InsertSlotMove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
+    #[serde(
+        rename = "insertSplitterRemoveEmptyNested",
+        alias = "insert_splitter_remove_empty_nested"
+    )]
+    InsertSplitterRemoveEmptyNested(InsertSplitterRemoveEmptyNested),
     #[serde(rename = "insertSplitterAdd", alias = "insert_splitter_add")]
     InsertSplitterAdd(InsertSplitterAdd),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
@@ -468,6 +475,23 @@ pub struct PluginMultiChildParameters {
     pub offset: Option<u32>,
     #[schemars(range(min = 1, max = 128))]
     pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginMultiAddMaiTai {
+    #[schemars(length(min = 1, max = 512))]
+    pub track: String,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    #[schemars(length(equal = 36))]
+    pub expected_folder: String,
+    #[schemars(length(equal = 36))]
+    pub expected_graph: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_slot: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_instance: String,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -926,6 +950,22 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct InsertSplitterRemoveEmptyNested {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 0))]
+    pub slot: u32,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub splitter_node: String,
+    pub merger_node: String,
+    pub predecessor_slot_node: String,
+    pub successor_merger_node: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1606,6 +1646,7 @@ impl Operation {
                     | Self::ChorderChordsGet(_)
                     | Self::ChorderAudition(_)
                     | Self::PluginMultiChildParameters(_)
+                    | Self::PluginMultiAddMaiTai(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
@@ -2073,6 +2114,26 @@ impl Operation {
                     ],
                 )?;
             }
+            Self::InsertSplitterRemoveEmptyNested(p) => {
+                if p.slot != 0 || p.plugin != "Mixtool" {
+                    return Err(invalid(
+                        "Empty nested Splitter removal requires Mixtool in insert slot 0",
+                    ));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.splitter_node,
+                        &p.merger_node,
+                        &p.predecessor_slot_node,
+                        &p.successor_merger_node,
+                    ],
+                )?;
+            }
             Self::InsertChainState(p) => {
                 if p.include_routing.is_some()
                     && !matches!(p.action, InsertChainStateAction::Capture)
@@ -2370,6 +2431,34 @@ impl Operation {
                     return Err(invalid(
                         "Pagination applies only when parameter names is empty",
                     ));
+                }
+            }
+            Self::PluginMultiAddMaiTai(query) => {
+                if query.track.trim().is_empty()
+                    || query.track.encode_utf16().count() > 512
+                    || query.track.chars().any(char::is_control)
+                {
+                    return Err(invalid(
+                        "Multi Instrument insertion requires a bounded Music track name",
+                    ));
+                }
+                let ids = [
+                    query.expected_instance.as_str(),
+                    query.expected_folder.as_str(),
+                    query.expected_graph.as_str(),
+                    query.expected_child_slot.as_str(),
+                    query.expected_child_instance.as_str(),
+                ];
+                for (index, id) in ids.iter().copied().enumerate() {
+                    validate_instance_uid(Some(id))?;
+                    if id == "00000000-0000-0000-0000-000000000000"
+                        || id.bytes().any(|byte| byte.is_ascii_lowercase())
+                        || ids[..index].contains(&id)
+                    {
+                        return Err(invalid(
+                            "Multi Instrument insertion requires distinct canonical nonzero UUIDs",
+                        ));
+                    }
                 }
             }
             Self::PluginMultiChildParameters(query) => {
@@ -2810,6 +2899,8 @@ pub fn schema() -> Value {
     cv_structure_schema(&mut schema["$defs"]["PluginState"]);
     schema["allOf"] = json!([
         {"if":{"properties":{"operation":{"enum":["pluginState","plugin_state"]},"args":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]}},"required":["operation","args"]},"then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
+        {"if":{"properties":{"operation":{"enum":["pluginMultiAddMaiTai","plugin_multi_add_mai_tai"]}},"required":["operation"]},
+            "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
         {"if":{"properties":{"operation":{"enum":["pluginMultiChildParameters","plugin_multi_child_parameters"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}
     ]);
@@ -2819,6 +2910,47 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn multi_add_mai_tai_requires_a_track_distinct_owners_and_an_explicit_document() {
+        let args = json!({
+            "track": "Selected music track",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "expected_folder": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_graph": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_child_slot": "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+            "expected_child_instance": "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE"
+        });
+        let valid = Operation::from_parts("plugin_multi_add_mai_tai", args.clone()).unwrap();
+        assert!(!valid.is_read_only());
+        assert!(valid.requires_explicit_document());
+        assert!(valid.validate().is_ok());
+        assert_eq!(valid.wire(), ("pluginMultiAddMaiTai".into(), args.clone()));
+        for (field, value) in [
+            ("track", json!(" ")),
+            ("expected_graph", args["expected_folder"].clone()),
+            (
+                "expected_folder",
+                json!("BBBBBBBB-BBBB-4BBB-8BBB-bbbbbbbbbbbb"),
+            ),
+            (
+                "expected_child_slot",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("pluginMultiAddMaiTai", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut extra = args;
+        extra["class_id"] = json!(extra["expected_instance"]);
+        assert!(Operation::from_parts("pluginMultiAddMaiTai", extra).is_err());
+    }
 
     #[test]
     fn multi_child_dsp_pages_require_a_document_and_distinct_exact_ids() {

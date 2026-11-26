@@ -1021,6 +1021,8 @@ class NativePluginControls {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") return ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
+        if (operation === "insert_splitter_remove_empty_nested")
+            return ["splitter_node", "merger_node", "predecessor_slot_node", "successor_merger_node"];
         return null;
     }
 
@@ -1305,6 +1307,7 @@ class NativePluginControls {
             code: "serum2_preset_apply_failed", message: "The native Serum preset application could not be established",
         } });
         const insertGraphEdit = this.insertGraphNodeFields(request.operation) !== null;
+        const multiAddMaiTai = request.operation === "multi_add_mai_tai";
         try {
             if (insertGraphEdit && !this.insertGraphEditRequest(request)) throw new Error("invalid insert graph edit request");
             if (cvPresetApply && !this.cvPresetApplyRequest(request)) throw new Error("invalid fixed CV settings apply request");
@@ -1356,6 +1359,8 @@ class NativePluginControls {
                 if (stereoSendChange) return stereoSendUnavailable();
                 throw new Error("unsupported native API");
             }
+            if (multiAddMaiTai && capability.multi_add_mai_tai_api !== "single_child_multi_v1")
+                throw new Error("unsupported stock Multi Instrument insertion API");
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
             if (request.operation === "insert_slot_move" && request.branch !== undefined
@@ -1365,6 +1370,9 @@ class NativePluginControls {
                 throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
+            if (request.operation === "insert_splitter_remove_empty_nested"
+                && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
+                throw new Error("unsupported empty nested Splitter remove API");
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
                 return stereoSendUnavailable();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
@@ -1379,7 +1387,13 @@ class NativePluginControls {
                 if (stereoSendChange) return stereoSendUnavailable();
                 throw new Error("native request requires the current open document");
             }
-            const body = JSON.stringify(request);
+            let body;
+            if (multiAddMaiTai) {
+                const { track, ...nativeRequest } = request;
+                body = JSON.stringify(nativeRequest);
+            } else {
+                body = JSON.stringify(request);
+            }
             const vendorApply = request.operation === "fabfilter_preset_apply";
             if (vendorApply && capability.fabfilter_preset_apply_api !== "pro_q_4_file_v1")
                 throw new Error("unsupported FabFilter preset apply API");
@@ -1389,6 +1403,19 @@ class NativePluginControls {
                 if (!transport || transport.playing !== false || transport.recording !== false)
                     throw new Error("stop playback and recording before Chorder audition");
             }
+            if (multiAddMaiTai) {
+                const bridge = this.component.bridge;
+                if (!bridge || typeof bridge.pluginMultiAddMaiTaiLease !== "function"
+                    || bridge.pluginMultiAddMaiTaiLease(request.document_token) !== true)
+                    throw new Error("The document or stopped transport changed before insertion");
+                const current = this.component.instrumentOf({ track: request.track }, true);
+                if (current.error || current.device !== device)
+                    throw new Error("The selected track's native instrument changed before insertion");
+            }
+            if (request.operation === "insert_splitter_remove_empty_nested"
+                && (typeof this.component.bridge.insertGraphTransportStopped !== "function"
+                    || !this.component.bridge.insertGraphTransportStopped() || !this.sameContext(before)))
+                throw new Error("A current document with stopped playback and recording is required");
             dispatched = true;
             const result = this.parse(needsAuxiliary ? service.request(device, body, auxiliary) : service.request(device, body));
             parsed = result;
@@ -1479,6 +1506,11 @@ class NativePluginControls {
                 throw new Error("native action phase evidence unavailable");
             return result;
         } catch (error) {
+            if (multiAddMaiTai) return {
+                ok: false, outcome: dispatched ? "unknown" : "not_applied", dispatch_attempted: dispatched ? null : false,
+                error: { code: dispatched ? "multi_add_mai_tai_unknown" : "multi_add_mai_tai_refused",
+                    message: dispatched ? "The native Mai Tai insertion could not be confirmed" : String(error).slice(0, 512) },
+            };
             if (serum2Preset) return serum2Failure(dispatched ? "unknown" : "not_applied");
             if (cvPresetApply) return this.cvPresetApplyFailure(dispatched, parsed);
             if (cvStructure) return this.cvStructureFailure(dispatched,null);
