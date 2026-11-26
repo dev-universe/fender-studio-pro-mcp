@@ -1346,9 +1346,10 @@ class NativePluginControls {
             ok: false, outcome: "not_applied", diagnostic: stereoSendChangeTrace("native_wiring", false),
         });
         const cvStructure = request.operation === "cv_port_structure_inspect";
-        const scopeAssignment = request.operation === "scope_sidechain_assignment_get";
+        const scopeRemove = request.operation === "scope_sidechain_assignment_remove";
+        const scopeAssignment = scopeRemove || request.operation === "scope_sidechain_assignment_get";
         const scopeAssignmentFailure = () => ({
-            ok: false, outcome: "not_applied", error: {
+            ok: false, outcome: scopeRemove && dispatched ? "unknown" : "not_applied", error: {
                 code: "scope_sidechain_assignment_unavailable", message: "The exact Scope assignment could not be established",
             },
         });
@@ -1364,8 +1365,10 @@ class NativePluginControls {
         try {
             if (insertGraphEdit && !this.insertGraphEditRequest(request)) throw new Error("invalid insert graph edit request");
             if (cvPresetApply && !this.cvPresetApplyRequest(request)) throw new Error("invalid fixed CV settings apply request");
-            if (scopeAssignment && (!this.guiExact(request, ["operation", "expected_instance"])
-                || !this.insertChainUid(request.expected_instance))) return scopeAssignmentFailure();
+            if (scopeAssignment && (!this.guiExact(request, scopeRemove
+                ? ["operation", "expected_instance", "expected_send"] : ["operation", "expected_instance"])
+                || !this.insertChainUid(request.expected_instance)
+                || (scopeRemove && !this.insertChainUid(request.expected_send)))) return scopeAssignmentFailure();
             if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
@@ -1450,6 +1453,8 @@ class NativePluginControls {
                 return stereoSendUnavailable();
             if (scopeAssignment && capability.scope_sidechain_assignment_api !== "authored_scope_assignment_v1")
                 return scopeAssignmentFailure();
+            if (scopeRemove && capability.scope_sidechain_assignment_remove_api !== "recorded_scope_send_remove_v1")
+                return scopeAssignmentFailure();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
                 return serum2Failure("not_applied");
             if (cvPresetApply && capability.cv_preset_settings_apply_api !== "cv_primary_settings_v1")
@@ -1515,12 +1520,24 @@ class NativePluginControls {
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();
             if (processorState && !this.processorStateResult(result, request)) return this.processorStateFailure(processorState);
             if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
+            if (scopeAssignment && result.ok === false && ["not_applied", "unknown"].includes(result.outcome)
+                && result.error && typeof result.error.message === "string") return result;
+            if (scopeRemove) {
+                if (result.ok !== true || result.operation !== request.operation || result.outcome !== "applied_unverified"
+                    || result.recorded !== true || result.removed_send !== request.expected_send || !result.instance
+                    || result.instance.object_uid !== request.expected_instance
+                    || result.instance.native_class !== "AudioEffect"
+                    || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081"
+                    || result.error != null) return scopeAssignmentFailure();
+                return result;
+            }
             if (scopeAssignment && (result.ok !== true || result.operation !== request.operation
                 || result.outcome !== "observed" || result.scope !== "authored_native_assignment"
                 || !["source_absent", "source_unassigned", "assignment_mismatch", "assigned_to_exact_scope"].includes(result.state)
                 || !result.instance || result.instance.object_uid !== request.expected_instance
                 || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081"
-                || result.instance.native_class !== "AudioEffect" || result.error != null)) return scopeAssignmentFailure();
+                || result.instance.native_class !== "AudioEffect" || result.error != null
+                || (result.send_node != null && !this.insertChainUid(result.send_node)))) return scopeAssignmentFailure();
             if (chorderChords) {
                 if (result.ok === false) return this.chorderChordsFailure(result.error);
                 if (!this.chorderChordsResult(result, request)) throw new Error("invalid stored Chorder chord-page result");

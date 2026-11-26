@@ -1,6 +1,10 @@
 use super::*;
 use node_inspect::DocumentEnvironmentRoute;
+use node_inspect::slot_move::splitter_add::{
+    RecordingScope, ScopeStorage, recorded_submit, undo_available,
+};
 use std::ffi::CStr;
+use std::mem::MaybeUninit;
 
 const SCOPE_CLASS: &str = "36322412-AD90-4EE0-B63C-37929566B081";
 const MAX_CHILDREN: i32 = 32;
@@ -11,6 +15,35 @@ const INSERT_SLOT_LAYOUTS: [(usize, usize, usize); 2] = [
 const SIDECHAIN_PRIMARY: usize = 0x1b77470;
 const SIDECHAIN_UNKNOWN: usize = 0x1b77668;
 const SIDECHAIN_PORT_VIEW: usize = 0x1b77730;
+const SEND_LAYOUT: [usize; 3] = [0x1b9d960, 0x1b9de20, 0x1b9dee8];
+const SEND_RACK_LAYOUT: [usize; 3] = [0x1b9e520, 0x1b9e900, 0x1b9e9c8];
+const SLOT_EDIT_SCOPE: usize = 0x1bd9250;
+const ACTION_JOURNAL: Uid = Uid {
+    a: 0xd70f5dc5,
+    b: 0xd9bd,
+    c: 0x4230,
+    d: [0xb9, 0x08, 0xf5, 0x57, 0xcc, 0x41, 0x79, 0x3f],
+};
+
+unsafe fn field<T: Copy>(object: *mut c_void, offset: usize) -> T {
+    unsafe { object.cast::<u8>().add(offset).cast::<T>().read() }
+}
+
+fn send_primary(node: &Node, image: usize, layout: [usize; 3]) -> Result<*mut c_void, String> {
+    let [primary_table, canonical_table, node_table] = layout;
+    let view = node.raw().cast::<u8>();
+    if view.wrapping_sub(0x18).cast() != node.identity.0
+        || table(node.identity.0) != image + canonical_table
+        || table(node.raw()) != image + node_table
+    {
+        return Err("Unverified Send or rack interface layout".into());
+    }
+    let primary: *mut c_void = view.wrapping_sub(0x30).cast();
+    if table(primary) != image + primary_table {
+        return Err("Unverified Send or rack primary layout".into());
+    }
+    Ok(primary)
+}
 
 fn table(pointer: *mut c_void) -> usize {
     unsafe { *pointer.cast::<usize>() }
@@ -51,6 +84,16 @@ impl Node {
         let get: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
             unsafe { method(self.raw(), 9) };
         unsafe { get(self.raw(), index) }
+    }
+
+    fn object_id(&self) -> Result<String, String> {
+        let getter: unsafe extern "C" fn(*mut c_void) -> *const Uid =
+            unsafe { method(self.raw(), 4) };
+        let id = uid(unsafe { getter(self.raw()) });
+        if !valid_uid(&id) {
+            return Err("The Send has no canonical node UUID".into());
+        }
+        Ok(id)
     }
 
     fn has_id(&self, wanted: &str) -> Result<bool, String> {
@@ -223,6 +266,72 @@ impl ScopeEndpoint {
         ctx.check()
     }
 
+    fn independent_input(&self, ctx: &Context<'_>) -> Result<RetainedPort, String> {
+        self.check(ctx)?;
+        const EFFECT_PRIMARY: usize = 0x1b769b0;
+        const AUDIO_INPUT_PRIMARY: usize = 0x1b72270;
+        let effect = self.effect.0.cast::<u8>();
+        if table(effect.cast()) != self.image + EFFECT_PRIMARY {
+            return Err("The exact Scope effect layout is unavailable".into());
+        }
+        let shape = || unsafe {
+            // The pinned AudioEffect constructor and stock 0x100ba651c agree on these fields.
+            (
+                effect.add(0x1d8).cast::<*mut *mut c_void>().read(),
+                effect.add(0x1e0).cast::<i32>().read(),
+            )
+        };
+        let (items, count) = shape();
+        if items.is_null() || !(1..=8).contains(&count) {
+            return Err("Scope input collection is outside the fixed bound".into());
+        }
+        let mut entries = Vec::with_capacity(count as usize);
+        let mut selected = None;
+        for index in 0..count as usize {
+            let primary = unsafe { items.add(index).read() };
+            if primary.is_null() || entries.contains(&primary) {
+                return Err("Scope input collection has a missing or duplicate entry".into());
+            }
+            entries.push(primary);
+            let layout = table(primary).wrapping_sub(self.image);
+            if !matches!(layout, SIDECHAIN_PRIMARY | AUDIO_INPUT_PRIMARY) {
+                return Err("The Scope input collection is outside the verified layouts".into());
+            }
+            let kind = unsafe { primary.cast::<u8>().add(0x40).cast::<u32>().read() };
+            if kind == 1 {
+                if layout != SIDECHAIN_PRIMARY || selected.replace(primary).is_some() {
+                    return Err(
+                        "Scope input collection has multiple or unverified sidechain inputs".into(),
+                    );
+                }
+            } else if layout == SIDECHAIN_PRIMARY {
+                return Err("The sidechain input has an unverified kind".into());
+            }
+        }
+        let primary = selected
+            .ok_or("The live Scope has no unique sidechain input")?
+            .cast::<u8>();
+        let view: *mut c_void = primary.wrapping_add(0x30).cast();
+        if table(view) != self.image + SIDECHAIN_PORT_VIEW {
+            return Err("Unverified current Scope sidechain port facade".into());
+        }
+        let canonical =
+            query(view, &UNKNOWN).ok_or("Scope input canonical identity unavailable")?;
+        let retained = RetainedPort { view, canonical };
+        self.check(ctx)?;
+        if shape() != (items, count)
+            || !entries
+                .iter()
+                .enumerate()
+                .all(|(index, &entry)| unsafe { items.add(index).read() } == entry)
+            || !self.owns(&retained)?
+        {
+            return Err("The independently retained Scope input or its owner changed".into());
+        }
+        self.check(ctx)?;
+        Ok(retained)
+    }
+
     fn owns(&self, observed: &RetainedPort) -> Result<bool, String> {
         if table(observed.view) != self.image + SIDECHAIN_PORT_VIEW {
             return Ok(false);
@@ -266,6 +375,7 @@ fn sole_send_slot(
 }
 
 struct Send {
+    index: usize,
     parameter: Parameter,
     object: Owned,
     primary: *mut c_void,
@@ -334,7 +444,7 @@ impl Source {
                 if class_name(parameter.parameter.0) != "PortParam" {
                     return Err("source port parameter is not exact PortParam".into());
                 }
-                Some(Send::capture(parameter, image)?)
+                Some(Send::capture(index, parameter, image)?)
             }
         };
         drop(source);
@@ -380,7 +490,7 @@ struct RetainedPort {
 }
 
 impl Send {
-    fn capture(parameter: Parameter, image: usize) -> Result<Self, String> {
+    fn capture(index: usize, parameter: Parameter, image: usize) -> Result<Self, String> {
         let object =
             query(parameter.parameter.0, &OBJECT).ok_or("source PortParam IObject unavailable")?;
         // The pinned PortParam IObject dispatch thunk adjusts the receiver by -0x28.
@@ -398,6 +508,7 @@ impl Send {
             return Err("source PortParam fixed getter is unverified".into());
         }
         Ok(Self {
+            index,
             parameter,
             object,
             primary,
@@ -446,6 +557,8 @@ impl Ports {
 }
 
 pub(super) struct Observation {
+    input: Option<RetainedPort>,
+    send_id: Option<String>,
     initial: Ports,
     source: Source,
     scope: ScopeEndpoint,
@@ -476,10 +589,23 @@ impl Observation {
         })
     }
 
+    fn current_send_id(source: &Source) -> Option<String> {
+        source
+            .send
+            .as_ref()
+            .and_then(|send| source.rack_children[send.index].object_id().ok())
+    }
+
     pub(super) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
         let fresh = Self::ports(ctx, &self.source, &self.scope)?;
-        if !self.initial.matches(&fresh) {
+        if !self.initial.matches(&fresh) || Self::current_send_id(&self.source) != self.send_id {
             return Err("Scope sidechain assignment changed before publication".into());
+        }
+        if let Some(input) = &self.input {
+            let current = self.scope.independent_input(ctx)?;
+            if current.canonical.0 != input.canonical.0 || current.view != input.view {
+                return Err("The Scope sidechain input changed before publication".into());
+            }
         }
         Self::check_binding(ctx, &self.source, &self.scope)
     }
@@ -488,6 +614,7 @@ impl Observation {
         json!({
             "scope": "authored_native_assignment",
             "state": self.initial.classify(&self.source),
+            "send_node": self.send_id,
         })
     }
 
@@ -498,12 +625,175 @@ impl Observation {
         let scope = ScopeEndpoint::capture(ctx)?;
         let source = Source::capture(ctx, source, scope.image)?;
         let initial = Self::ports(ctx, &source, &scope)?;
+        let send_id = Self::current_send_id(&source);
         Ok(Self {
+            input: None,
+            send_id,
             initial,
             source,
             scope,
         })
     }
+
+    fn bind_input(&mut self, ctx: &Context<'_>) -> Result<(), String> {
+        let input = self.scope.independent_input(ctx)?;
+        if self.initial.exact_destination
+            && self
+                .initial
+                .assignment
+                .as_ref()
+                .is_none_or(|port| input.canonical.0 != port.canonical.0)
+        {
+            return Err(
+                "The assigned Send does not bind the independently owned Scope input".into(),
+            );
+        }
+        self.input = Some(input);
+        self.check(ctx)
+    }
+}
+
+pub(super) fn dispatch_remove(
+    ctx: Box<Context<'static>>,
+    source: Option<Owned>,
+    expected_send: &str,
+) -> Reply {
+    let mut dispatched = false;
+    let result = (|| -> Result<Observation, String> {
+        let source = source.ok_or("The current source channel is unavailable")?;
+        let fresh_source = query(source.0, &UNKNOWN).ok_or("The exact source channel detached")?;
+        let mut before = Observation::capture(&ctx, source)?;
+        if before.send_id.as_deref() != Some(expected_send) || !before.initial.exact_destination {
+            return Err("The exact Send UUID or Scope destination changed".into());
+        }
+        before.bind_input(&ctx)?;
+        let scope = &before.scope;
+        let source = &before.source;
+        let image = scope.image;
+        let send = source
+            .send
+            .as_ref()
+            .ok_or("There is no sole Send to remove")?;
+        let node = &source.rack_children[send.index];
+        let slot = send_primary(node, image, SEND_LAYOUT)?;
+        let rack = send_primary(&source.rack.node, image, SEND_RACK_LAYOUT)?;
+        let native_folder: Borrowed = unsafe { std::mem::transmute(image + 0xd737f4) };
+        let check_bound = || -> Result<(), String> {
+            before.check(&ctx)?;
+            if node.object_id()? != expected_send
+                || node.parent() != source.rack.node.raw()
+                || unsafe { field::<*mut c_void>(slot, 0x58) } != rack
+                || unsafe { native_folder(slot) } != rack
+            {
+                return Err("The Send is no longer bound to its exact source rack".into());
+            }
+            let slot_flags = unsafe { field::<u8>(slot, 0x1d0) };
+            let rack_flags = unsafe { field::<u8>(rack, 0x2ec) };
+            if rack_flags & 0x60 != 0x20 || slot_flags & 8 != 0 {
+                return Err("The exact Send does not support recorded removal".into());
+            }
+            ctx.check()
+        };
+        check_bound()?;
+        undo_available(image, slot)?;
+
+        let begin: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+            unsafe { std::mem::transmute(image + 0xd6c290) };
+        let begin_group: unsafe extern "C" fn(*mut c_void, *const PlainString, u8) -> *mut c_void =
+            unsafe { std::mem::transmute(image + 0xd6c924) };
+        let remove: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
+            unsafe { std::mem::transmute(image + 0xd6d27c) };
+        let finish: unsafe extern "C" fn(*mut c_void) =
+            unsafe { std::mem::transmute(image + 0xd6c4a4) };
+        let string = crate::constant_string().ok_or("Native host Strings are unavailable")?;
+        let empty = unsafe { string(c"".as_ptr()) };
+        if empty.is_null() {
+            return Err("An Undo label is unavailable".into());
+        }
+        let mut storage = MaybeUninit::<ScopeStorage>::uninit();
+        let scope_ptr = storage.as_mut_ptr().cast();
+        unsafe { begin(scope_ptr, slot) };
+        let recording = RecordingScope::new(scope_ptr, finish);
+        recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
+        let journal_of = || {
+            let manager = unsafe { field::<*mut c_void>(scope_ptr, 0x40) };
+            if manager.is_null() {
+                return std::ptr::null_mut();
+            }
+            let getter: Borrowed = unsafe { method(manager, 3) };
+            unsafe { getter(manager) }
+        };
+        let raw_journal = journal_of();
+        let journal =
+            query(raw_journal, &ACTION_JOURNAL).ok_or("The Send Undo journal is unavailable")?;
+        let last_edit: unsafe extern "C" fn(*mut c_void) -> i64 = unsafe { method(journal.0, 3) };
+        let performing: unsafe extern "C" fn(*mut c_void) -> u8 = unsafe { method(journal.0, 8) };
+        if unsafe { performing(journal.0) } != 0 {
+            return Err("The Send Undo journal is busy".into());
+        }
+        let previous_edit = unsafe { last_edit(journal.0) };
+        check_bound()?;
+        let group = unsafe { begin_group(scope_ptr, empty, 0) };
+        if group.is_null()
+            || group != unsafe { field::<*mut c_void>(image as *mut c_void, 0x1e834b0) }
+        {
+            return Err("The stock Send removal did not open a recorded Undo group".into());
+        }
+        recorded_submit(image, &recording, SLOT_EDIT_SCOPE)?;
+        check_bound()?;
+        if journal_of() != raw_journal {
+            return Err("The Send Undo journal changed before removal".into());
+        }
+        dispatched = true;
+        let accepted = unsafe { remove(scope_ptr, slot) } & 1 == 1;
+        drop(recording);
+        ctx.check()?;
+        if !accepted || unsafe { last_edit(journal.0) } == previous_edit {
+            return Err("The stock Send deletion did not advance its Undo journal".into());
+        }
+        let mut after = Observation::capture(&ctx, fresh_source)?;
+        after.bind_input(&ctx)?;
+        let siblings = source
+            .rack_children
+            .iter()
+            .enumerate()
+            .filter(|(index, _)| *index != send.index)
+            .map(|(_, sibling)| sibling.identity.0);
+        if after.source.send.is_some()
+            || after.input.as_ref().map(|port| port.canonical.0)
+                != before.input.as_ref().map(|port| port.canonical.0)
+            || after.source.rack.node.identity.0 != source.rack.node.identity.0
+            || !after
+                .source
+                .rack_children
+                .iter()
+                .map(|child| child.identity.0)
+                .eq(siblings)
+        {
+            return Err(
+                "The source rack or independent Scope endpoint changed after deletion".into(),
+            );
+        }
+        after.check(&ctx)?;
+        Ok(after)
+    })();
+    let mut reply = match result {
+        Ok(after) => {
+            let mut reply = Reply::unbound(json!({"ok": true, "outcome": "applied_unverified",
+                "operation": "scope_sidechain_assignment_remove", "instance": ctx.instance,
+                "removed_send": expected_send, "recorded": true}));
+            reply.auxiliary = Some(node_inspect::Auxiliary::ScopeSidechain(Box::new(after)));
+            reply.mutation = true;
+            reply
+        }
+        Err(reason) => Reply::error(
+            "scope_sidechain_assignment_remove_failed",
+            &reason,
+            if dispatched { "unknown" } else { "not_applied" },
+        ),
+    };
+    reply.context = Some(ctx);
+    reply
 }
 
 pub(super) fn dispatch(ctx: Box<Context<'static>>, source: Option<Owned>) -> Reply {
