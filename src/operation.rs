@@ -52,6 +52,11 @@ pub enum Operation {
         alias = "scope_sidechain_assignment_get"
     )]
     ScopeSidechainAssignmentGet(ScopeSidechainAssignmentGet),
+    #[serde(
+        rename = "scopeSidechainAssignmentRemove",
+        alias = "scope_sidechain_assignment_remove"
+    )]
+    ScopeSidechainAssignmentRemove(ScopeSidechainAssignmentRemove),
     #[serde(rename = "setSend", alias = "send_set")]
     SetSend(SendSet),
     #[serde(rename = "setInsertBypass", alias = "plugin_bypass")]
@@ -103,6 +108,8 @@ pub enum Operation {
     InsertChainState(InsertChainState),
     #[serde(rename = "insertSlotMove", alias = "insert_slot_move")]
     InsertSlotMove(InsertSlotMove),
+    #[serde(rename = "insertSlotRemove", alias = "insert_slot_remove")]
+    InsertSlotRemove(InsertSlotRemove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
     #[serde(
@@ -286,6 +293,15 @@ pub struct ScopeSidechainAssignmentGet {
     pub source_channel: String,
     pub scope_channel: String,
     pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeSidechainAssignmentRemove {
+    pub source_channel: String,
+    pub scope_channel: String,
+    pub expected_instance: String,
+    pub expected_send: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -936,6 +952,22 @@ pub struct InsertSlotMove {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct InsertSlotRemove {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub preceding_slot_node: String,
+    pub removed_slot_node: String,
+    pub following_slot_node: String,
+    pub expected_removed_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct InsertSplitterAdd {
     #[schemars(length(min = 1, max = 256))]
     pub channel: String,
@@ -968,6 +1000,9 @@ pub struct InsertSplitterRemove {
     /// The optional second effect on the second branch, immediately before the merger.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub second_branch_tail_node: Option<String>,
+    /// Ordered nodes after each branch head for a three-effect and a one-effect branch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch_continuations: Option<[Vec<String>; 2]>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1704,7 +1739,8 @@ impl Operation {
                         | PluginStateAction::ReadRumbleNamedParameters))
             || matches!(
                 self,
-                Self::ChorderLearningGet(_)
+                Self::InsertSlotRemove(_)
+                    | Self::ChorderLearningGet(_)
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
                     | Self::PluginMultiChildParameters(_)
@@ -1803,31 +1839,20 @@ impl Operation {
                     "Track name must contain 1 to 256 UTF-8 bytes without control characters",
                 ));
             }
+            Self::ScopeSidechainAssignmentRemove(query) => {
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
+                validate_scope_uid(&query.expected_send, "Send")?;
+            }
             Self::ScopeSidechainAssignmentGet(query) => {
-                if [&query.source_channel, &query.scope_channel]
-                    .into_iter()
-                    .any(|name| {
-                        name.trim().is_empty()
-                            || name.len() > 256
-                            || name.chars().any(char::is_control)
-                    })
-                    || query.source_channel == query.scope_channel
-                {
-                    return Err(invalid(
-                        "Scope assignment requires two distinct, bounded audio channel names",
-                    ));
-                }
-                validate_instance_uid(Some(&query.expected_instance))?;
-                if query.expected_instance == "00000000-0000-0000-0000-000000000000"
-                    || query
-                        .expected_instance
-                        .bytes()
-                        .any(|byte| byte.is_ascii_lowercase())
-                {
-                    return Err(invalid(
-                        "Scope assignment requires a nonzero canonical instance UUID",
-                    ));
-                }
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
             }
             Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,
             Self::SetSplitter(change) => {
@@ -2239,6 +2264,24 @@ impl Operation {
                     &[&p.source_node, &p.after_node, &p.following_node],
                 )?;
             }
+            Self::InsertSlotRemove(p) => {
+                if p.expected_removed_instance == p.expected_instance {
+                    return Err(invalid("The predecessor and removed effect must differ"));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.preceding_slot_node,
+                        &p.removed_slot_node,
+                        &p.following_slot_node,
+                        &p.expected_removed_instance,
+                    ],
+                )?;
+            }
             Self::InsertSplitterAdd(p) => {
                 validate_insert_graph_target(
                     &p.channel,
@@ -2264,6 +2307,17 @@ impl Operation {
                     .into_iter()
                     .flatten(),
                 );
+                if let Some(continuations) = &p.branch_continuations {
+                    if p.first_branch_tail_node.is_some()
+                        || p.second_branch_tail_node.is_some()
+                        || !matches!(continuations.each_ref().map(Vec::len), [2, 0] | [0, 2])
+                    {
+                        return Err(invalid(
+                            "Supply two ordered continuation nodes on exactly one branch without legacy tail fields",
+                        ));
+                    }
+                    nodes.extend(continuations.iter().flatten().map(String::as_str));
+                }
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
@@ -2911,6 +2965,32 @@ impl Operation {
     }
 }
 
+fn validate_scope_target(
+    source: &str,
+    receiver: &str,
+    instance: &str,
+) -> Result<(), OperationError> {
+    if [source, receiver].into_iter().any(|name| {
+        name.trim().is_empty() || name.len() > 256 || name.chars().any(char::is_control)
+    }) || source == receiver
+    {
+        return Err(invalid(
+            "Scope assignment requires two distinct, bounded audio channel names",
+        ));
+    }
+    validate_scope_uid(instance, "Scope instance")
+}
+
+fn validate_scope_uid(value: &str, name: &str) -> Result<(), OperationError> {
+    validate_instance_uid(Some(value))?;
+    if value == "00000000-0000-0000-0000-000000000000"
+        || value.bytes().any(|byte| byte.is_ascii_lowercase())
+    {
+        return Err(invalid(format!("{name} requires a nonzero canonical UUID")));
+    }
+    Ok(())
+}
+
 fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError> {
     if value.trim().is_empty() || value.len() > 256 || value.chars().any(char::is_control) {
         return Err(invalid(format!(
@@ -3090,6 +3170,53 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn splitter_removal_checks_ordered_continuation_shape_and_distinct_nodes() {
+        let head = "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE";
+        let middle = "12345678-1234-4AAB-8ABC-AABBCCDDEEFF";
+        let end = "33445566-1122-4ACC-8DEE-0123456789AB";
+        let args = json!({
+            "channel": "Scratch", "slot": 0, "plugin": "Mixtool",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "expected_graph": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "splitter_node": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "merger_node": "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+            "first_slot_node": head, "second_slot_node": "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF"
+        });
+        for valid in [json!([[], [middle, end]]), json!([[middle, end], []])] {
+            let mut request = args.clone();
+            request["branch_continuations"] = valid.clone();
+            let decoded = Operation::from_parts("insert_splitter_remove", request).unwrap();
+            assert!(decoded.validate().is_ok());
+            assert_eq!(decoded.wire().1["branch_continuations"], valid);
+        }
+        for invalid in [
+            json!([[], []]),
+            json!([[middle], [end]]),
+            json!([[middle, end], [head]]),
+            json!([[], [head, end]]),
+            json!([[], [middle, middle]]),
+        ] {
+            let mut request = args.clone();
+            request["branch_continuations"] = invalid;
+            assert!(
+                Operation::from_parts("insert_splitter_remove", request)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut mixed = args;
+        mixed["branch_continuations"] = json!([[], [middle, end]]);
+        mixed["first_branch_tail_node"] = json!("99AA88BB-77CC-4DDE-8FFE-0123456789AB");
+        assert!(
+            Operation::from_parts("insert_splitter_remove", mixed)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+    }
 
     #[test]
     fn multi_add_mai_tai_requires_a_track_distinct_owners_and_an_explicit_document() {

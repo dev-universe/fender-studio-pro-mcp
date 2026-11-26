@@ -537,6 +537,11 @@ fn execute(
             || (matches!(operation, Operation::ImpactOutputSet(_))
                 && response.ok
                 && impact_output_refused(&response.result))
+            || (matches!(operation, Operation::ScopeSidechainAssignmentRemove(_))
+                && response.ok
+                && response.result["ok"] == false
+                && response.result["native_outcome"] == "not_applied"
+                && response.result["error"]["code"] == "scope_sidechain_assignment_remove_failed")
             || [
                 "session_changed",
                 "document_changed",
@@ -2006,6 +2011,8 @@ mod tests {
 
     fn mutating_operations() -> Vec<Operation> {
         [
+            ("scopeSidechainAssignmentRemove", json!({"source_channel":"Scratch Source", "scope_channel":"Scratch Receiver",
+                "expected_instance":"12345678-1234-1234-1234-123456789ABC","expected_send":"12345678-1234-1234-1234-123456789ABD"})),
             ("serum2EventInputSet", json!({"track":"Scratch Keys","variant":"instrument",
                 "expected_instance":"01234567-89AB-4CDE-8123-456789ABCDEF","expected_event_input":1,"event_input":2})),
             ("setPanner", json!({"channel":"Scratch","param":"panX1","value":0.5})),
@@ -2025,6 +2032,10 @@ mod tests {
             ("insertSlotMove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","source_node":"20000000-1234-1234-1234-123456789ABC",
                 "after_node":"30000000-1234-1234-1234-123456789ABC","following_node":"40000000-1234-1234-1234-123456789ABC"})),
+            ("insertSlotRemove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","preceding_slot_node":"20000000-1234-1234-1234-123456789ABC",
+                "removed_slot_node":"30000000-1234-1234-1234-123456789ABC","following_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "expected_removed_instance":"50000000-1234-1234-1234-123456789ABC"})),
             ("pluginMultiAddMaiTai", json!({"track":"Selected music track","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_folder":"10000000-1234-1234-1234-123456789ABC","expected_graph":"20000000-1234-1234-1234-123456789ABC",
                 "expected_child_slot":"30000000-1234-1234-1234-123456789ABC","expected_child_instance":"40000000-1234-1234-1234-123456789ABC"})),

@@ -1036,6 +1036,8 @@ class NativePluginControls {
 
     insertGraphNodeFields(operation, value) {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
+        if (operation === "insert_slot_remove")
+            return ["preceding_slot_node", "removed_slot_node", "following_slot_node", "expected_removed_instance"];
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") {
             const fields = ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
@@ -1052,8 +1054,9 @@ class NativePluginControls {
     }
 
     insertGraphBranchFields(operation, value) {
-        return operation === "insert_slot_move" && value && Object.prototype.hasOwnProperty.call(value, "branch")
-            ? ["branch"] : [];
+        const key = operation === "insert_slot_move" ? "branch"
+            : operation === "insert_splitter_remove" ? "branch_continuations" : null;
+        return key && value && Object.prototype.hasOwnProperty.call(value, key) ? [key] : [];
     }
 
     insertGraphEditRequest(request) {
@@ -1061,9 +1064,25 @@ class NativePluginControls {
         if (!nodes) return false;
         const ids = ["expected_instance", "expected_graph"].concat(nodes);
         const branch = this.insertGraphBranchFields(request.operation, request);
-        return this.guiExact(request, ["operation"].concat(ids, branch))
-            && (!branch.length || this.guiInteger(request.branch, 0, 1)) && ids.every(key => this.insertChainUid(request[key]))
-            && new Set(nodes.map(key => request[key])).size === nodes.length;
+        if (!this.guiExact(request, ["operation"].concat(ids, branch))
+            || !ids.every(key => this.insertChainUid(request[key]))) return false;
+        const nodeIds = nodes.map(key => request[key]);
+        if (request.operation === "insert_slot_remove" && request.expected_removed_instance === request.expected_instance)
+            return false;
+        if (branch[0] === "branch" && !this.guiInteger(request.branch, 0, 1)) return false;
+        if (branch[0] === "branch_continuations") {
+            const ordered = request.branch_continuations;
+            if (request.first_branch_tail_node !== undefined || request.second_branch_tail_node !== undefined
+                || !Array.isArray(ordered) || ordered.length !== 2
+                || !Array.isArray(ordered[0]) || !Array.isArray(ordered[1])) return false;
+            const [first, second] = ordered;
+            if (!((first.length === 2 && second.length === 0) || (first.length === 0 && second.length === 2)))
+                return false;
+            const continuationIds = [...first, ...second];
+            if (!continuationIds.every(id => this.insertChainUid(id))) return false;
+            nodeIds.push(...continuationIds);
+        }
+        return new Set(nodeIds).size === nodeIds.length;
     }
 
     insertGraphEditResult(result, request) {
@@ -1077,7 +1096,9 @@ class NativePluginControls {
             this.insertGraphBranchFields(request.operation, request));
         return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(fields))
             && result.operation === request.operation && result.outcome === "applied_unverified"
-            && result.verified === false && fields.every(key => result[key] === request[key]);
+            && result.verified === false && fields.every(key => key === "branch_continuations"
+                ? JSON.stringify(result[key]) === JSON.stringify(request[key])
+                : result[key] === request[key]);
     }
 
     insertChainArguments(args) {
@@ -1325,9 +1346,10 @@ class NativePluginControls {
             ok: false, outcome: "not_applied", diagnostic: stereoSendChangeTrace("native_wiring", false),
         });
         const cvStructure = request.operation === "cv_port_structure_inspect";
-        const scopeAssignment = request.operation === "scope_sidechain_assignment_get";
+        const scopeRemove = request.operation === "scope_sidechain_assignment_remove";
+        const scopeAssignment = scopeRemove || request.operation === "scope_sidechain_assignment_get";
         const scopeAssignmentFailure = () => ({
-            ok: false, outcome: "not_applied", error: {
+            ok: false, outcome: scopeRemove && dispatched ? "unknown" : "not_applied", error: {
                 code: "scope_sidechain_assignment_unavailable", message: "The exact Scope assignment could not be established",
             },
         });
@@ -1343,8 +1365,10 @@ class NativePluginControls {
         try {
             if (insertGraphEdit && !this.insertGraphEditRequest(request)) throw new Error("invalid insert graph edit request");
             if (cvPresetApply && !this.cvPresetApplyRequest(request)) throw new Error("invalid fixed CV settings apply request");
-            if (scopeAssignment && (!this.guiExact(request, ["operation", "expected_instance"])
-                || !this.insertChainUid(request.expected_instance))) return scopeAssignmentFailure();
+            if (scopeAssignment && (!this.guiExact(request, scopeRemove
+                ? ["operation", "expected_instance", "expected_send"] : ["operation", "expected_instance"])
+                || !this.insertChainUid(request.expected_instance)
+                || (scopeRemove && !this.insertChainUid(request.expected_send)))) return scopeAssignmentFailure();
             if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
@@ -1397,6 +1421,8 @@ class NativePluginControls {
                 throw new Error("unsupported stock Multi Instrument insertion API");
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
+            if (request.operation === "insert_slot_remove" && capability.insert_slot_remove_api !== "middle_slot_remove_v1")
+                throw new Error("unsupported exact middle insert slot removal API");
             if (request.operation === "insert_slot_move" && request.branch !== undefined
                 && capability.insert_slot_empty_branch_api !== "same_graph_empty_branch_v1")
                 throw new Error("unsupported empty Splitter branch move API");
@@ -1414,6 +1440,9 @@ class NativePluginControls {
                 && request.second_branch_tail_node !== undefined
                 && capability.insert_splitter_remove_both_branch_tails_api !== "both_branch_tails_v1")
                 throw new Error("unsupported Splitter removal with two effects on each branch");
+            if (request.operation === "insert_splitter_remove" && request.branch_continuations !== undefined
+                && capability.insert_splitter_remove_ordered_continuations_api !== "three_effect_lane_v1")
+                throw new Error("unsupported Splitter removal with one three-effect branch");
             if (request.operation === "insert_splitter_remove_empty_nested"
                 && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
                 throw new Error("unsupported empty nested Splitter remove API");
@@ -1423,6 +1452,8 @@ class NativePluginControls {
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
                 return stereoSendUnavailable();
             if (scopeAssignment && capability.scope_sidechain_assignment_api !== "authored_scope_assignment_v1")
+                return scopeAssignmentFailure();
+            if (scopeRemove && capability.scope_sidechain_assignment_remove_api !== "recorded_scope_send_remove_v1")
                 return scopeAssignmentFailure();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
                 return serum2Failure("not_applied");
@@ -1489,12 +1520,24 @@ class NativePluginControls {
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();
             if (processorState && !this.processorStateResult(result, request)) return this.processorStateFailure(processorState);
             if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
+            if (scopeAssignment && result.ok === false && ["not_applied", "unknown"].includes(result.outcome)
+                && result.error && typeof result.error.message === "string") return result;
+            if (scopeRemove) {
+                if (result.ok !== true || result.operation !== request.operation || result.outcome !== "applied_unverified"
+                    || result.recorded !== true || result.removed_send !== request.expected_send || !result.instance
+                    || result.instance.object_uid !== request.expected_instance
+                    || result.instance.native_class !== "AudioEffect"
+                    || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081"
+                    || result.error != null) return scopeAssignmentFailure();
+                return result;
+            }
             if (scopeAssignment && (result.ok !== true || result.operation !== request.operation
                 || result.outcome !== "observed" || result.scope !== "authored_native_assignment"
                 || !["source_absent", "source_unassigned", "assignment_mismatch", "assigned_to_exact_scope"].includes(result.state)
                 || !result.instance || result.instance.object_uid !== request.expected_instance
                 || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081"
-                || result.instance.native_class !== "AudioEffect" || result.error != null)) return scopeAssignmentFailure();
+                || result.instance.native_class !== "AudioEffect" || result.error != null
+                || (result.send_node != null && !this.insertChainUid(result.send_node)))) return scopeAssignmentFailure();
             if (chorderChords) {
                 if (result.ok === false) return this.chorderChordsFailure(result.error);
                 if (!this.chorderChordsResult(result, request)) throw new Error("invalid stored Chorder chord-page result");

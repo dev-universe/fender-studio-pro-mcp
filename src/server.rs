@@ -329,10 +329,22 @@ impl McpServer {
                 "Observe whether the sole Send on one exact audio source channel is assigned to the exact stock Scope at insert slot 0 of another audio channel. Supply both unique channel names, the Scope instance UUID from plugin_inspect, and expected_document from host_status. Stop playback and recording first. Reports the authored assignment only.",
                 false,
             ),
+            named::<operation::ScopeSidechainAssignmentRemove>(
+                "scope_sidechain_assignment_remove",
+                "scopeSidechainAssignmentRemove",
+                "Remove the sole Send on the exact source audio channel when it is assigned to the bound stock Scope at receiver insert slot 0. Use scope_sidechain_assignment_get to obtain send_node and pass it as expected_send. Supply the current document token and exact Scope instance with transport stopped. The host records one Undo. Check the mixer Sends independently after a receipt or unknown outcome.",
+                true,
+            ),
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
                 "Move one bound effect slot in the current Inserts graph with its Routing tab open. For a move after an effect, supply the destination slot as after_node and its current successor as following_node. For an empty two-way Splitter branch, supply the Splitter as after_node, its merger as following_node, and the branch index (0 or 1). Read the new graph and parameters independently.",
+                true,
+            ),
+            named::<InsertSlotRemove>(
+                "insert_slot_remove",
+                "insertSlotRemove",
+                "Remove one bound effect between two adjacent effect slots in the same insert graph. Target the surviving predecessor with channel, slot, plugin and expected_instance. Supply the graph UUID, all three slot-node UUIDs in order, the removed effect instance UUID, and the current expected_document. Stop playback and recording. Independently verify the removed slot and remaining graph after dispatch.",
                 true,
             ),
             named::<InsertSplitterAdd>(
@@ -344,7 +356,7 @@ impl McpServer {
             named::<InsertSplitterRemove>(
                 "insert_splitter_remove",
                 "insertSplitterRemove",
-                "Remove one nested two-way Splitter with one effect on each branch and a shared merger. For each branch with two effects, supply its second slot directly before the merger as first_branch_tail_node or second_branch_tail_node. The two branches may each contain one or two bound effect slots. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
+                "Remove one nested two-way Splitter with a shared merger. For each branch with two effects, supply its second slot as first_branch_tail_node or second_branch_tail_node. For branches of lengths one and three, supply branch_continuations as ordered node IDs after each head, with two IDs in one list and the other list empty. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
                 true,
             ),
             named::<InsertSplitterRemoveEmptyNested>(
@@ -799,7 +811,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 69;
+    const EXPECTED_TOOL_COUNT: usize = 71;
 
     use super::*;
 
@@ -1538,6 +1550,7 @@ mod tests {
             "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
+            "insert_slot_remove",
             "insert_splitter_remove",
             "insert_splitter_remove_empty_nested",
             "insert_splitter_remove_one_lane_nested",

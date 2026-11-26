@@ -253,11 +253,36 @@ impl GraphOwnership {
         }
     }
 
+    pub(super) fn check_slot_remove_targets(
+        &self,
+        graph: &str,
+        [preceding, removed, following]: [&str; 3],
+        predecessor_effect: &str,
+        removed_effect: &str,
+    ) -> Result<(), String> {
+        let slot = |id: &str| {
+            self.value.children.iter().find_map(|child| match child {
+                GraphChild::Slot { node, device, .. } if node.object_uid.as_deref() == Some(id) => {
+                    device.object_uid.as_deref()
+                }
+                _ => None,
+            })
+        };
+        if self.value.graph.object_uid.as_deref() != Some(graph)
+            || slot(preceding) != Some(predecessor_effect)
+            || slot(removed) != Some(removed_effect)
+            || slot(following).is_none()
+        {
+            return Err("The exact predecessor, removed device or following slot changed".into());
+        }
+        Ok(())
+    }
+
     pub(super) fn check_splitter_remove_targets(
         &self,
         [graph, splitter, merger, first, second]: [&str; 5],
         effect: &str,
-        branch_tails: [Option<&str>; 2],
+        additional_nodes: &[&str],
     ) -> Result<(), String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) {
             return Err("insert graph UUID changed".into());
@@ -280,9 +305,9 @@ impl GraphOwnership {
             );
         };
         let mut bound = [a.object_uid.as_deref(), b.object_uid.as_deref()].contains(&Some(effect));
-        for id in branch_tails.into_iter().flatten() {
+        for &id in additional_nodes {
             let Some(GraphChild::Slot { device, .. }) = find(id) else {
-                return Err("The requested branch tail is not a bound slot".into());
+                return Err("An additional branch node is not a bound slot".into());
             };
             bound |= device.object_uid.as_deref() == Some(effect);
         }
