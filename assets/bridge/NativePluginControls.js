@@ -401,7 +401,8 @@ class NativePluginControls {
             || value.complete !== true || value.processor_count !== 26 || value.numeric_encoding !== "json_parsed_u64_i64_f64_bits_v1" || value.value_semantics !== "sequential_snapshot"
             || ["native_access_metadata_verified","mutation_capability","audio_verified","persistence_verified"].some(k=>value[k] !== false)
             || !this.guiExact(value.instance,["object_uid","class_uid","native_class","object_id"]) || value.instance.object_uid !== request.expected_instance
-            || value.instance.class_uid !== "B9D7536C-A010-457D-A182-36E5531164C9" || value.instance.native_class !== "AudioEffect" || value.instance.object_id !== "Rumble Native"
+            || value.instance.class_uid !== "B9D7536C-A010-457D-A182-36E5531164C9" || value.instance.native_class !== "AudioEffect"
+            || typeof value.instance.object_id !== "string" || value.instance.object_id.length === 0
             || ["capture_sha256","models_sha256","settings_sha256"].some(k=>typeof value[k] !== "string" || !/^[0-9a-f]{64}$/.test(value[k]))
             || !this.guiInteger(value.capture_byte_count,0,16777216) || !this.guiInteger(value.numeric_setting_count,0,256) || !Array.isArray(value.processors) || value.processors.length !== 26) return false;
         let count=0;

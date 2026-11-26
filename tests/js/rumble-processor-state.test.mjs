@@ -20,6 +20,24 @@ function erased(v) {assert.equal(v.ok,false);for(const k of ['processors','insta
 test('fixed processor-state reader keeps all26 identities and no capsule',()=>{
   const h=harness(),v=h.component.pluginState(target);assert.equal(v.ok,true);assert.equal(v.processors.length,26);assert.equal(v.native_access_metadata_verified,false);assert.equal(v.token,undefined);assert.deepEqual(h.calls,[{operation:'rumble_state_read',expected_instance:instance.object_uid}]);
 });
+test('a numbered Rumble insert keeps its native label and requires the exact identity', () => {
+  const duplicate = { ...instance, object_id: 'Rumble Native 2' };
+  const h = harness(() => ({ ...observation(), instance: duplicate }));
+  const result = h.component.pluginState({ ...target, slot: 1 });
+  assert.equal(result.ok, true);
+  assert.equal(result.instance.object_id, duplicate.object_id);
+  assert.equal(result.instance.object_uid, duplicate.object_uid);
+  assert.equal(result.processors.length, 26);
+
+  for (const identity of [
+    { ...duplicate, object_id: '' },
+    { ...duplicate, class_uid: '00000000-0000-0000-0000-000000000000' },
+    { ...duplicate, object_uid: '00000000-0000-0000-0000-000000000000' },
+  ]) {
+    const wrong = harness(() => ({ ...observation(), instance: identity }));
+    erased(wrong.component.pluginState({ ...target, slot: 1 }));
+  }
+});
 test('numeric wire checks retain exact integer bounds and finite float bits',()=>{
   const h=harness();for(const value of [{kind:'unsigned_integer',decimal:'18446744073709551615'},{kind:'signed_integer',decimal:'-9223372036854775808'},{kind:'float64',bits_hex:'8000000000000000'}])assert.equal(h.controls.rumbleStateNumber(value),true);
   for(const value of [{kind:'unsigned_integer',decimal:'18446744073709551616'},{kind:'unsigned_integer',decimal:'01'},{kind:'signed_integer',decimal:'0'},{kind:'signed_integer',decimal:'-9223372036854775809'},{kind:'float64',bits_hex:'7ff0000000000000'},{kind:'float64',bits_hex:'fff8000000000000'}])assert.equal(h.controls.rumbleStateNumber(value),false);
