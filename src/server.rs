@@ -314,7 +314,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state or read_mustang_state for direct serialized processor IDs and numeric settings of the corresponding effect, and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(
@@ -1196,7 +1196,7 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .len(),
-            8
+            9
         );
         assert!(
             named["required"]
@@ -1208,7 +1208,7 @@ mod tests {
     }
 
     #[test]
-    fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
+    fn plugin_state_schema_keeps_closed_actions_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
         assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
@@ -1223,6 +1223,7 @@ mod tests {
             json!([
                 "inspect_cv_port_structure",
                 "read_rumble_state",
+                "read_mustang_state",
                 "read_rumble_parameters",
                 "read_rumble_named_parameters",
                 "inspect_rumble_serialization",

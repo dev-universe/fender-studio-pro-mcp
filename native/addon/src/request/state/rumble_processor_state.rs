@@ -82,6 +82,7 @@ struct Processor {
 }
 struct Projection {
     processors: Vec<Processor>,
+    plugin: FenderProcessor,
 }
 fn identifier(name: &str) -> bool {
     !name.is_empty()
@@ -90,9 +91,9 @@ fn identifier(name: &str) -> bool {
         && name.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
 }
 impl Projection {
-    fn decode(bytes: &[u8]) -> Result<Self, String> {
-        let document = Document::decode(bytes)?;
-        let reject = || "Rumble processor schema unavailable".to_owned();
+    fn decode(bytes: &[u8], plugin: FenderProcessor) -> Result<Self, String> {
+        let document = Document::decode_for(bytes, plugin)?;
+        let reject = || format!("{} processor schema unavailable", plugin.profile().product);
         let mut processors = Vec::with_capacity(26);
         let mut total = 0;
         for (i, model) in document.models.iter().enumerate() {
@@ -121,14 +122,14 @@ impl Projection {
                 settings,
             });
         }
-        let projection = Self { processors };
+        let projection = Self { processors, plugin };
         debug_assert_eq!(projection.digests().0, document.models_sha256());
         Ok(projection)
     }
     fn digests(&self) -> (String, String) {
-        let mut models = rumble_model_manifest::model_hasher();
+        let mut models = rumble_model_manifest::model_hasher_for(self.plugin);
         let mut settings = Sha256::new();
-        settings.update(b"fsp.rumble.processor-settings.v1\0");
+        settings.update(self.plugin.profile().settings_domain);
         for p in &self.processors {
             for h in [&mut models, &mut settings] {
                 rumble_model_manifest::hash_record(h, &p.slot, &p.uid);
@@ -149,7 +150,7 @@ impl Projection {
         let (models, settings) = self.digests();
         json!({"processors":self.processors.iter().map(|p|json!({"slot":p.slot,"class_uid":p.class,"zero_guid":p.class==ZERO,"settings":p.settings.iter().map(|(name,value)|json!({"name":name,"value":value.wire()})).collect::<Vec<_>>()})).collect::<Vec<_>>(),"processor_count":26,"numeric_setting_count":self.processors.iter().map(|p|p.settings.len()).sum::<usize>(),"models_sha256":models,"settings_sha256":settings,"numeric_encoding":ENCODING,"complete":true,"scope":"direct_serialized_processor_ids_and_numeric_settings"})
     }
-    fn from_wire(value: &Value) -> Option<Self> {
+    fn from_wire(value: &Value, plugin: FenderProcessor) -> Option<Self> {
         let rows = value["processors"].as_array()?;
         if rows.len() != 26 {
             return None;
@@ -202,13 +203,18 @@ impl Projection {
         if value["numeric_setting_count"].as_u64() != Some(total) {
             return None;
         }
-        Some(Self { processors })
+        Some(Self { processors, plugin })
     }
 }
+#[cfg(test)]
 pub(super) fn read(bytes: &[u8]) -> Result<Value, String> {
-    Ok(Projection::decode(bytes)?.fields())
+    read_for(bytes, FenderProcessor::Rumble)
 }
-pub(super) fn valid_receipt(instance: &Value, value: &Value) -> bool {
+pub(super) fn read_for(bytes: &[u8], plugin: FenderProcessor) -> Result<Value, String> {
+    Ok(Projection::decode(bytes, plugin)?.fields())
+}
+pub(super) fn valid_receipt(instance: &Value, value: &Value, plugin: FenderProcessor) -> bool {
+    let profile = plugin.profile();
     let fields = [
         "ok",
         "outcome",
@@ -237,15 +243,15 @@ pub(super) fn valid_receipt(instance: &Value, value: &Value) -> bool {
         return false;
     };
     let mut adapted = value.clone();
-    adapted["plugin"] = json!("Rumble Native");
+    adapted["plugin"] = json!(profile.name);
     adapted["native_outcome"] = json!("observed");
     if obj.len() != fields.len()
         || !fields.iter().all(|k| obj.contains_key(*k))
         || adapted.to_string().len() > MAX_RESULT_BYTES
         || value["ok"] != true
         || value["outcome"] != "observed"
-        || value["operation"] != "rumble_model_state_read"
-        || value["schema"] != "rumble_processor_state_v1"
+        || value["operation"] != profile.receipt_operation
+        || value["schema"] != profile.schema
         || value["serialization"] != "component_alias_IStorable"
         || value["instance"] != *instance
         || value["source"] != "component_alias"
@@ -273,7 +279,7 @@ pub(super) fn valid_receipt(instance: &Value, value: &Value) -> bool {
     {
         return false;
     }
-    let Some(projection) = Projection::from_wire(value) else {
+    let Some(projection) = Projection::from_wire(value, plugin) else {
         return false;
     };
     let (m, s) = projection.digests();
@@ -333,6 +339,40 @@ mod tests {
             assert!(parse(&bad).is_err());
         }
     }
+    #[test]
+    fn mustang_processor_state_requires_its_own_wrapper_and_hash_domain() {
+        let mut wrapped = fixture();
+        let rumble = parse(&wrapped).unwrap();
+        assert!(
+            read_for(
+                &serde_json::to_vec(&wrapped).unwrap(),
+                FenderProcessor::Mustang
+            )
+            .is_err()
+        );
+        let profile = FenderProcessor::Mustang.profile();
+        wrapped["cid"] = json!(format!("{{{}}}", profile.class_uid));
+        assert!(
+            read_for(
+                &serde_json::to_vec(&wrapped).unwrap(),
+                FenderProcessor::Mustang
+            )
+            .is_err()
+        );
+        wrapped["classname"] = json!(profile.name);
+        assert!(parse(&wrapped).is_err());
+        let result = read_for(
+            &serde_json::to_vec(&wrapped).unwrap(),
+            FenderProcessor::Mustang,
+        )
+        .unwrap();
+        assert_eq!(result["processors"], rumble["processors"]);
+        assert_eq!(result["numeric_setting_count"], 1);
+        assert_ne!(result["models_sha256"], rumble["models_sha256"]);
+        assert_ne!(result["settings_sha256"], rumble["settings_sha256"]);
+        assert!(!result.to_string().contains("PRIVATE_MARKER"));
+    }
+
     #[test]
     fn rumble_processor_state_digest_is_projection_not_bytes() {
         let value = fixture();
