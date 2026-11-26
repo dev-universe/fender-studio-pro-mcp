@@ -3207,3 +3207,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   소스 Send 연결을 독립적으로 식별하는 경로를 검토한다.
   일반 연결 API의 완료 수는 유지한다. 로컬 11, main 13,
   장비 4. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 2026-11-26 23시 32분 Scope 사이드체인 할당 확인
+
+- #342의 정확한 arm64 잡은 실행 단계 없이 취소된 뒤 같은 SHA의
+  해당 잡만 다시 실행했다. 현재 `main`의 두 필수 검사 통과 후
+  `a943186d` 병합. 재시도 이후 243.8초. #343 arm64 통과 및 코어
+  검사 중, 다음 #345와 #346. [#342](https://github.com/dev-universe/fender-studio-pro-mcp/pull/342)
+- R571은 포트 조회와 포트 소유자 판별을 Ghidra 함수 15개,
+  Craft-Anything 바이트 범위 12개에서 검토했다. 읽기 대상의
+  exact Device·slot 검증과 Send port 반환의 수명 경계를 기록했다.
+  [#345](https://github.com/dev-universe/fender-studio-pro-mcp/pull/345)
+- R572A는 이전 스크래치 제목 가드에서 32요청·3.467초에 종료했다.
+  R572B의 실제 8.1.1 ARM64에서는 불일치 소스, 슬롯, 인스턴스,
+  문서 누락·변경을 거부했다. 기본 Scope UI로 할당하고 제거한
+  세 상태를 각각 두 번 읽었고, Send 및 DSP 31행을 따로 확인했다.
+  55요청·58.661초, 호스트 91.642초, No Save, 관리 파일 18개 및
+  프로필 11개 일치. 오디오 신호나 일반 그래프 연결 쓰기는 포함하지
+  않는다. [#346](https://github.com/dev-universe/fender-studio-pro-mcp/pull/346)
+- R573은 같은 범위를 유한한 읽기 전용 도구로 구현하고 실제 호스트
+  시험을 준비한다. 고정 네이티브 getter와 같은 문서 내 소유권을
+  검증하고 테스트 전후 지정 스크래치와 정상 설치를 보호한다.
+- GitHub의 열린 87개는 기능 브랜치 8개, 문서 브랜치 79개다. 현재
+  main 대상 81개, 선행 PR 대상 6개. 중복 제목이나 대기열 밖
+  PR은 발견되지 않았다. main의 strict 규칙은 Core offline와
+  macOS arm64 두 상태 검사를 요구한다. 로컬 미완 11, main 미완
+  13, 장비 의존 4, 전체 2~5일 및 장비 대기. 지정 종료 시각 없음.
