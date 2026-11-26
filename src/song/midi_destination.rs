@@ -4,13 +4,15 @@ use fender_routing_graph::{uid, unique_child};
 use serde::Serialize;
 use uuid::Uuid;
 
+use crate::serum::Variant;
+
 use super::{SavedPlugin, SavedTrack, XmlNode};
 
 const INPUT: &str = "MusicInput00";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SavedMidiDestination {
-    pub port: &'static str,
+    pub port: String,
     pub kind: String,
     pub plugin_name: String,
     pub plugin_instance_id: String,
@@ -60,11 +62,11 @@ pub(super) fn attach(
         let Some(channel) = music_channels.get(&id).copied().flatten() else {
             continue;
         };
-        let Some(owner) = destination_id(channel) else {
+        let Some((owner, port)) = destination(channel) else {
             continue;
         };
         if let Some(plugin) = instances.get(&owner).copied().flatten() {
-            track.midi_destination = resolved(plugin);
+            track.midi_destination = resolved(plugin, port);
         }
     }
 }
@@ -77,16 +79,13 @@ fn instance_id(raw: &str) -> Option<Uuid> {
     Uuid::parse_str(raw).ok().filter(|id| !id.is_nil())
 }
 
-fn destination_id(channel: &XmlNode) -> Option<Uuid> {
+fn destination(channel: &XmlNode) -> Option<(Uuid, &str)> {
     let connection = unique_child(channel, "destination").ok().flatten()?;
     if connection.name != "Connection" {
         return None;
     }
     let (id, port) = connection.attr("objectID")?.split_once('/')?;
-    if port != INPUT {
-        return None;
-    }
-    instance_id(id.strip_prefix('{')?.strip_suffix('}')?)
+    Some((instance_id(id.strip_prefix('{')?.strip_suffix('}')?)?, port))
 }
 
 fn index_channels<'a>(node: &'a XmlNode, channels: &mut BTreeMap<Uuid, Option<&'a XmlNode>>) {
@@ -107,18 +106,27 @@ fn index_unique<T>(index: &mut BTreeMap<Uuid, Option<T>>, id: Uuid, entry: T) {
         .or_insert(Some(entry));
 }
 
-fn resolved(plugin: &SavedPlugin) -> Option<SavedMidiDestination> {
+fn resolved(plugin: &SavedPlugin, port: &str) -> Option<SavedMidiDestination> {
     match (plugin.kind.as_str(), plugin.source_entry.as_str()) {
         ("instrument", "Devices/audiosynthfolder.xml") => {}
         ("insert" | "post_fader_insert", "Devices/audiomixer.xml")
             if plugin.channel.is_some() && plugin.slot.is_some() => {}
         _ => return None,
     }
-    if plugin.name.is_empty() || plugin.class_id.as_deref().and_then(instance_id).is_none() {
+    if plugin.name.is_empty() {
         return None;
     }
+    let class = plugin.class_id.as_deref().and_then(instance_id)?;
+    match (port, plugin.kind.as_str()) {
+        (INPUT, _) => {}
+        ("MusicInput01" | "MusicInput15", "instrument")
+            if Some(class) == instance_id(Variant::Instrument.class_uid()) => {}
+        ("MusicInput01" | "MusicInput15", "insert")
+            if Some(class) == instance_id(Variant::Fx.class_uid()) => {}
+        _ => return None,
+    }
     Some(SavedMidiDestination {
-        port: INPUT,
+        port: port.to_owned(),
         kind: plugin.kind.clone(),
         plugin_name: plugin.name.clone(),
         plugin_instance_id: plugin.instance_id.clone()?,

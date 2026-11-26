@@ -420,19 +420,29 @@ pub(super) fn rumble_models(
     ctx.check_document()?;
     Ok(snapshot)
 }
+#[cfg(test)]
 pub(super) fn read_rumble_state(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
+    read_processor_state(ctx, FenderProcessor::Rumble)
+}
+
+pub(super) fn read_processor_state(
+    ctx: &Context<'_>,
+    plugin: FenderProcessor,
+) -> Result<(Value, AliasLease), String> {
     ctx.check()?;
-    if ctx.instance.class_uid != "B9D7536C-A010-457D-A182-36E5531164C9"
+    let profile = plugin.profile();
+    // Studio Pro can append a number to the object label for duplicate inserts.
+    if ctx.instance.class_uid != profile.class_uid
         || ctx.instance.native_class != "AudioEffect"
-        || ctx.instance.object_id != "Rumble Native"
+        || ctx.instance.object_id.is_empty()
     {
-        return Err("The exact Rumble Native component is required".into());
+        return Err(format!("The exact {} component is required", profile.name));
     }
     let mut lease = AliasLease::capture(ctx)?;
-    lease.observation = ObservationKind::RumbleProcessorState;
+    lease.observation = ObservationKind::ProcessorState(plugin);
     let bytes = save(ctx, &lease, MAX_CAPSULE_BYTES)?;
-    let mut value = rumble_processor_state::read(&bytes)?;
-    let fields = json!({"ok":true,"outcome":"observed","operation":"rumble_model_state_read","schema":"rumble_processor_state_v1","serialization":"component_alias_IStorable","instance":ctx.instance,"source":"component_alias","capture_sha256":sha256(&bytes),"capture_byte_count":bytes.len(),"value_semantics":"sequential_snapshot","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false});
+    let mut value = rumble_processor_state::read_for(&bytes, plugin)?;
+    let fields = json!({"ok":true,"outcome":"observed","operation":profile.receipt_operation,"schema":profile.schema,"serialization":"component_alias_IStorable","instance":ctx.instance,"source":"component_alias","capture_sha256":sha256(&bytes),"capture_byte_count":bytes.len(),"value_semantics":"sequential_snapshot","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false});
     value
         .as_object_mut()
         .expect("projection")
@@ -440,19 +450,20 @@ pub(super) fn read_rumble_state(ctx: &Context<'_>) -> Result<(Value, AliasLease)
     lease.guard(ctx)?;
     ctx.check_document()?;
     let mut adapted = value.clone();
-    adapted["plugin"] = json!("Rumble Native");
+    adapted["plugin"] = json!(profile.name);
     adapted["native_outcome"] = json!("observed");
     if adapted.to_string().len() > rumble_processor_state::MAX_RESULT_BYTES
-        || !rumble_processor_state::valid_receipt(&json!(ctx.instance), &value)
+        || !rumble_processor_state::valid_receipt(&json!(ctx.instance), &value, plugin)
     {
-        return Err("Rumble processor receipt unavailable".into());
+        return Err(format!("{} processor receipt unavailable", profile.product));
     }
     Ok((value, lease))
 }
 pub(super) fn observation_failure(kind: ObservationKind) -> Value {
     match kind {
-        ObservationKind::RumbleProcessorState => {
-            json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_processor_state_unavailable","message":"The bounded Rumble processor-state observation was not established"}})
+        ObservationKind::ProcessorState(plugin) => {
+            let profile = plugin.profile();
+            json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false,"error":{"code":profile.error_code,"message":format!("The bounded {} processor-state observation was not established", profile.product)}})
         }
         _ => rumble_failure(),
     }
@@ -461,8 +472,8 @@ pub(super) fn valid_observation(kind: ObservationKind, instance: &Instance, valu
     match kind {
         ObservationKind::Ordinary => true,
         ObservationKind::RumbleStructure => valid_rumble_receipt(instance, value),
-        ObservationKind::RumbleProcessorState => {
-            rumble_processor_state::valid_receipt(&json!(instance), value)
+        ObservationKind::ProcessorState(plugin) => {
+            rumble_processor_state::valid_receipt(&json!(instance), value, plugin)
         }
         ObservationKind::RumbleParameters | ObservationKind::RumbleNamedParameters => false,
     }
@@ -475,10 +486,14 @@ pub(super) fn rumble_failure() -> Value {
         "audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_serialization_unavailable",
         "message":"The bounded Rumble serialization observation was not established"}})
 }
-pub(super) fn invalidate_rumble_serialization(value: &mut Value) {
-    if value["operation"] == "rumble_model_state_read" {
-        *value = observation_failure(ObservationKind::RumbleProcessorState);
-    } else if value["operation"] == "rumble_serialization_inspect" {
+pub(super) fn invalidate_serialized_observation(value: &mut Value) {
+    for plugin in [FenderProcessor::Rumble, FenderProcessor::Mustang] {
+        if value["operation"] == plugin.profile().receipt_operation {
+            *value = observation_failure(ObservationKind::ProcessorState(plugin));
+            return;
+        }
+    }
+    if value["operation"] == "rumble_serialization_inspect" {
         *value = rumble_failure();
     }
 }

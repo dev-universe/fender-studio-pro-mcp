@@ -2,11 +2,56 @@ use super::*;
 use crate::operation::{PluginState, PluginStateAction};
 use sha2::{Digest, Sha256};
 
-pub(super) fn requested(operation: &Operation) -> bool {
-    matches!(operation, Operation::PluginState(q) if matches!(q.action,PluginStateAction::ReadRumbleState))
+struct ProcessorStateProfile {
+    plugin: &'static str,
+    class_uid: &'static str,
+    operation: &'static str,
+    schema: &'static str,
+    unavailable_code: &'static str,
+    unavailable_message: &'static str,
+    model_domain: &'static [u8],
+    settings_domain: &'static [u8],
 }
-pub(super) fn invalidate(value: &mut Value) {
-    *value = json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false,"error":{"code":"rumble_processor_state_unavailable","message":"The bounded Rumble processor-state observation was not established"}});
+
+const RUMBLE: ProcessorStateProfile = ProcessorStateProfile {
+    plugin: "Rumble Native",
+    class_uid: "B9D7536C-A010-457D-A182-36E5531164C9",
+    operation: "rumble_model_state_read",
+    schema: "rumble_processor_state_v1",
+    unavailable_code: "rumble_processor_state_unavailable",
+    unavailable_message: "The bounded Rumble processor-state observation was not established",
+    model_domain: b"fsp.rumble.models.v1\0",
+    settings_domain: b"fsp.rumble.processor-settings.v1\0",
+};
+
+const MUSTANG: ProcessorStateProfile = ProcessorStateProfile {
+    plugin: "Mustang Native",
+    class_uid: "11B8AA91-9BED-4A7F-90F4-02C6A6C7AF34",
+    operation: "mustang_model_state_read",
+    schema: "mustang_processor_state_v1",
+    unavailable_code: "mustang_processor_state_unavailable",
+    unavailable_message: "The bounded Mustang processor-state observation was not established",
+    model_domain: b"fsp.mustang.models.v1\0",
+    settings_domain: b"fsp.mustang.processor-settings.v1\0",
+};
+
+fn profile(query: &PluginState) -> Option<&'static ProcessorStateProfile> {
+    match query.action {
+        PluginStateAction::ReadRumbleState => Some(&RUMBLE),
+        PluginStateAction::ReadMustangState => Some(&MUSTANG),
+        _ => None,
+    }
+}
+
+pub(super) fn requested(operation: &Operation) -> bool {
+    matches!(operation, Operation::PluginState(query) if profile(query).is_some())
+}
+
+pub(super) fn invalidate(query: &PluginState, value: &mut Value) {
+    let Some(profile) = profile(query) else {
+        return;
+    };
+    *value = json!({"ok":false,"outcome":"not_applied","native_outcome":"not_applied","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false,"error":{"code":profile.unavailable_code,"message":profile.unavailable_message}});
 }
 fn number(value: &Value) -> Option<(u8, [u8; 8])> {
     if value.as_object()?.len() != 2 {
@@ -40,13 +85,13 @@ fn number(value: &Value) -> Option<(u8, [u8; 8])> {
         _ => None,
     }
 }
-fn hashes(value: &Value) -> Option<(String, String)> {
+fn hashes(value: &Value, profile: &ProcessorStateProfile) -> Option<(String, String)> {
     let rows = value["processors"].as_array()?;
     if rows.len() != 26 {
         return None;
     }
-    let mut models = b"fsp.rumble.models.v1\0".to_vec();
-    let mut settings = b"fsp.rumble.processor-settings.v1\0".to_vec();
+    let mut models = profile.model_domain.to_vec();
+    let mut settings = profile.settings_domain.to_vec();
     let mut total = 0u64;
     for (i, row) in rows.iter().enumerate() {
         let slot = if i == 25 {
@@ -122,6 +167,9 @@ fn hashes(value: &Value) -> Option<(String, String)> {
     ))
 }
 pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
+    let Some(profile) = profile(query) else {
+        return false;
+    };
     let fields = [
         "ok",
         "outcome",
@@ -153,11 +201,12 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
         || value["ok"] != true
         || value["outcome"] != "observed"
         || value["native_outcome"] != "observed"
-        || value["operation"] != "rumble_model_state_read"
-        || value["schema"] != "rumble_processor_state_v1"
+        || value["operation"] != profile.operation
+        || value["schema"] != profile.schema
         || value["serialization"] != "component_alias_IStorable"
         || value["source"] != "component_alias"
-        || value["plugin"] != "Rumble Native"
+        || value["plugin"] != profile.plugin
+        || query.plugin != profile.plugin
         || value["scope"] != "direct_serialized_processor_ids_and_numeric_settings"
         || value["complete"] != true
         || value["processor_count"] != 26
@@ -176,9 +225,11 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
             &["object_uid", "class_uid", "native_class", "object_id"],
         )
         || value["instance"]["object_uid"] != query.expected_instance
-        || value["instance"]["class_uid"] != "B9D7536C-A010-457D-A182-36E5531164C9"
+        || value["instance"]["class_uid"] != profile.class_uid
         || value["instance"]["native_class"] != "AudioEffect"
-        || value["instance"]["object_id"] != "Rumble Native"
+        || value["instance"]["object_id"]
+            .as_str()
+            .is_none_or(str::is_empty)
         || value["capture_byte_count"]
             .as_u64()
             .is_none_or(|n| n > 16777216)
@@ -190,7 +241,7 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
     {
         return false;
     }
-    let Some((models, settings)) = hashes(value) else {
+    let Some((models, settings)) = hashes(value, profile) else {
         return false;
     };
     value["models_sha256"] == models && value["settings_sha256"] == settings
@@ -205,7 +256,7 @@ mod tests {
     fn receipt() -> Value {
         let rows=(0..26).map(|i|json!({"slot":if i==25 {"amp".to_owned()}else{format!("effect{}",i+1)},"class_uid":"00000000-0000-0000-0000-000000000000","zero_guid":true,"settings":[]})).collect::<Vec<_>>();
         let mut v = json!({"ok":true,"outcome":"observed","native_outcome":"observed","operation":"rumble_model_state_read","schema":"rumble_processor_state_v1","serialization":"component_alias_IStorable","instance":{"object_uid":query().expected_instance,"class_uid":"B9D7536C-A010-457D-A182-36E5531164C9","native_class":"AudioEffect","object_id":"Rumble Native"},"source":"component_alias","plugin":"Rumble Native","capture_sha256":"a".repeat(64),"capture_byte_count":100,"scope":"direct_serialized_processor_ids_and_numeric_settings","complete":true,"processors":rows,"processor_count":26,"numeric_setting_count":0,"numeric_encoding":"json_parsed_u64_i64_f64_bits_v1","value_semantics":"sequential_snapshot","native_access_metadata_verified":false,"mutation_capability":false,"audio_verified":false,"persistence_verified":false});
-        let (m, s) = hashes(&v).unwrap();
+        let (m, s) = hashes(&v, &RUMBLE).unwrap();
         v["models_sha256"] = json!(m);
         v["settings_sha256"] = json!(s);
         v
@@ -241,6 +292,48 @@ mod tests {
         let mut raw = v.clone();
         raw["capture_sha256"] = json!("b".repeat(64));
         assert!(valid_get(&query(), &raw));
+    }
+    #[test]
+    fn mustang_processor_state_rejects_rumble_identity_and_digest() {
+        let rumble = receipt();
+        let mut mustang = rumble.clone();
+        let mut mustang_query = query();
+        mustang_query.action = PluginStateAction::ReadMustangState;
+        mustang_query.plugin = MUSTANG.plugin.to_string();
+        assert!(!valid_get(&mustang_query, &mustang));
+        mustang["plugin"] = json!(MUSTANG.plugin);
+        mustang["operation"] = json!(MUSTANG.operation);
+        mustang["schema"] = json!(MUSTANG.schema);
+        mustang["instance"]["class_uid"] = json!(MUSTANG.class_uid);
+        mustang["instance"]["object_id"] = json!("Mustang Native 2");
+        assert!(!valid_get(&mustang_query, &mustang));
+        let (models, settings) = hashes(&mustang, &MUSTANG).unwrap();
+        assert_ne!(rumble["models_sha256"], models);
+        assert_ne!(rumble["settings_sha256"], settings);
+        mustang["models_sha256"] = json!(models);
+        mustang["settings_sha256"] = json!(settings);
+        assert!(valid_get(&mustang_query, &mustang));
+        assert!(!valid_get(&query(), &mustang));
+        super::super::invalidate_gui_evidence(&Operation::PluginState(mustang_query), &mut mustang);
+        assert_eq!(
+            mustang["error"]["code"],
+            "mustang_processor_state_unavailable"
+        );
+        assert!(mustang.get("processors").is_none());
+    }
+
+    #[test]
+    fn rumble_processor_state_preserves_numbered_instance_labels() {
+        let mut v = receipt();
+        v["instance"]["object_id"] = json!("Rumble Native 2");
+        assert!(valid_get(&query(), &v));
+
+        v["instance"]["object_uid"] = json!("22222222-2222-4222-8222-222222222222");
+        assert!(!valid_get(&query(), &v));
+
+        v["instance"]["object_uid"] = json!(query().expected_instance);
+        v["instance"]["object_id"] = json!("");
+        assert!(!valid_get(&query(), &v));
     }
     #[test]
     fn rumble_processor_state_numbers_are_canonical_and_exact() {

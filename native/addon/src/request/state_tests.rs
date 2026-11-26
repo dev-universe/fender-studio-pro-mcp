@@ -800,8 +800,10 @@ fn rumble_processor_state_transient_lease_and_late_erasure() {
     assert!(read_rumble_state(&ctx).is_err());
     assert_eq!(fixture.plugin.saves.load(Ordering::Acquire), 0);
     ctx.instance.native_class = "AudioEffect".into();
-    ctx.instance.object_id = "Rumble Native".into();
+    ctx.instance.object_id = "Rumble Native 2".into();
     let (value, lease) = read_rumble_state(&ctx).unwrap();
+    assert_eq!(value["instance"]["object_id"], "Rumble Native 2");
+    assert_eq!(value["instance"]["object_uid"], ctx.instance.object_uid);
     assert_eq!(live_count(), 0);
     assert_eq!(fixture.plugin.loads.load(Ordering::Acquire), 0);
     let mut reply = chord_reply(Box::new(ctx), value, lease);

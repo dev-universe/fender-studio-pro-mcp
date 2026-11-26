@@ -372,18 +372,32 @@ class NativePluginControls {
             && value.named_metadata_complete===metadata && value.access_metadata_complete===metadata && value.current_values_complete===(metadata&&currents);
     }
 
-    rumbleStateRequest(request) {
-        return this.guiExact(request,["operation","expected_instance"]) && request.operation === "rumble_state_read"
+    processorStateProfile(operation) {
+        if (operation === "rumble_state_read") return {
+            plugin: "Rumble Native", classUid: "B9D7536C-A010-457D-A182-36E5531164C9",
+            receipt: "rumble_model_state_read", schema: "rumble_processor_state_v1",
+            code: "rumble_processor_state_unavailable", product: "Rumble",
+        };
+        if (operation === "mustang_state_read") return {
+            plugin: "Mustang Native", classUid: "11B8AA91-9BED-4A7F-90F4-02C6A6C7AF34",
+            receipt: "mustang_model_state_read", schema: "mustang_processor_state_v1",
+            code: "mustang_processor_state_unavailable", product: "Mustang",
+        };
+        return null;
+    }
+
+    processorStateRequest(request) {
+        return this.guiExact(request,["operation","expected_instance"]) && this.processorStateProfile(request.operation) !== null
             && typeof request.expected_instance === "string" && /^[0-9A-F]{8}(?:-[0-9A-F]{4}){3}-[0-9A-F]{12}$/.test(request.expected_instance)
             && request.expected_instance !== "00000000-0000-0000-0000-000000000000";
     }
 
-    rumbleStateFailure() {
+    processorStateFailure(profile) {
         return {ok:false,outcome:"not_applied",native_outcome:"not_applied",native_access_metadata_verified:false,mutation_capability:false,audio_verified:false,persistence_verified:false,
-            error:{code:"rumble_processor_state_unavailable",message:"The bounded Rumble processor-state observation was not established"}};
+            error:{code:profile.code,message:"The bounded "+profile.product+" processor-state observation was not established"}};
     }
 
-    rumbleStateNumber(value) {
+    processorStateNumber(value) {
         if (!value || typeof value !== "object") return false;
         if (value.kind === "float64") return this.guiExact(value,["kind","bits_hex"]) && typeof value.bits_hex === "string" && /^[0-9a-f]{16}$/.test(value.bits_hex)
             && (parseInt(value.bits_hex.slice(0,3),16) & 2047) !== 2047;
@@ -393,15 +407,18 @@ class NativePluginControls {
         return false;
     }
 
-    rumbleStateResult(value,request) {
+    processorStateResult(value,request) {
+        const profile = this.processorStateProfile(request.operation);
+        if (!profile) return false;
         const fields=["ok","outcome","operation","schema","serialization","instance","source","capture_sha256","capture_byte_count","scope","complete","processors","processor_count","numeric_setting_count","models_sha256","settings_sha256","numeric_encoding","value_semantics","native_access_metadata_verified","mutation_capability","audio_verified","persistence_verified"];
-        if (!this.guiExact(value,fields) || this.rumbleSerializationBytes(Object.assign({},value,{plugin:"Rumble Native",native_outcome:"observed"})) > 32768
-            || value.ok !== true || value.outcome !== "observed" || value.operation !== "rumble_model_state_read" || value.schema !== "rumble_processor_state_v1"
+        if (!this.guiExact(value,fields) || this.rumbleSerializationBytes(Object.assign({},value,{plugin:profile.plugin,native_outcome:"observed"})) > 32768
+            || value.ok !== true || value.outcome !== "observed" || value.operation !== profile.receipt || value.schema !== profile.schema
             || value.serialization !== "component_alias_IStorable" || value.source !== "component_alias" || value.scope !== "direct_serialized_processor_ids_and_numeric_settings"
             || value.complete !== true || value.processor_count !== 26 || value.numeric_encoding !== "json_parsed_u64_i64_f64_bits_v1" || value.value_semantics !== "sequential_snapshot"
             || ["native_access_metadata_verified","mutation_capability","audio_verified","persistence_verified"].some(k=>value[k] !== false)
             || !this.guiExact(value.instance,["object_uid","class_uid","native_class","object_id"]) || value.instance.object_uid !== request.expected_instance
-            || value.instance.class_uid !== "B9D7536C-A010-457D-A182-36E5531164C9" || value.instance.native_class !== "AudioEffect" || value.instance.object_id !== "Rumble Native"
+            || value.instance.class_uid !== profile.classUid || value.instance.native_class !== "AudioEffect"
+            || typeof value.instance.object_id !== "string" || value.instance.object_id.length === 0
             || ["capture_sha256","models_sha256","settings_sha256"].some(k=>typeof value[k] !== "string" || !/^[0-9a-f]{64}$/.test(value[k]))
             || !this.guiInteger(value.capture_byte_count,0,16777216) || !this.guiInteger(value.numeric_setting_count,0,256) || !Array.isArray(value.processors) || value.processors.length !== 26) return false;
         let count=0;
@@ -412,7 +429,7 @@ class NativePluginControls {
                 || !Array.isArray(p.settings) || p.settings.length > 64) return false;
             let previous="";
             for (const item of p.settings) {
-                if (!this.guiExact(item,["name","value"]) || typeof item.name !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(item.name) || item.name <= previous || !this.rumbleStateNumber(item.value)) return false;
+                if (!this.guiExact(item,["name","value"]) || typeof item.name !== "string" || !/^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(item.name) || item.name <= previous || !this.processorStateNumber(item.value)) return false;
                 previous=item.name;count++;
             }
         }
@@ -1291,7 +1308,7 @@ class NativePluginControls {
         const guiLearningSet = request.operation === "edit_chorder_model";
         const chorderChords = request.operation === "chorder_chords_get";
         const rumbleSerialization = request.operation === "rumble_serialization_inspect";
-        const rumbleState = request.operation === "rumble_state_read";
+        const processorState = this.processorStateProfile(request.operation);
         const rumbleParameters = request.operation === "rumble_parameters_read";
         const rumbleNamedParameters = request.operation === "rumble_named_parameters_read";
         const externalMenu = request.operation === "external_port_menu";
@@ -1313,7 +1330,7 @@ class NativePluginControls {
             if (cvStructure && !this.cvStructureRequest(request)) throw new Error("invalid fixed CV structure request");
             if (rumbleNamedParameters && !this.rumbleNamedParametersRequest(request)) throw new Error("invalid fixed Rumble named request");
             if (rumbleParameters && !this.rumbleParametersRequest(request)) throw new Error("invalid fixed Rumble parameter request");
-            if (rumbleState && !this.rumbleStateRequest(request)) throw new Error("invalid fixed Rumble state request");
+            if (processorState && !this.processorStateRequest(request)) throw new Error("invalid fixed processor state request");
             if (rumbleSerialization && !this.rumbleSerializationRequest(request)) throw new Error("invalid fixed Rumble serialization request");
             if (externalMenu && !this.externalMenuRequest(request)) throw new Error("invalid fixed External menu request");
             if (stereoSendChange && (!this.guiExact(request, ["operation", "expected_instance", "destination"])
@@ -1437,7 +1454,7 @@ class NativePluginControls {
             }
             if (rumbleNamedParameters && !this.rumbleNamedParametersResult(result, request)) return this.rumbleNamedParametersFailure();
             if (rumbleParameters && !this.rumbleParametersResult(result, request)) return this.rumbleParametersFailure();
-            if (rumbleState && !this.rumbleStateResult(result, request)) return this.rumbleStateFailure();
+            if (processorState && !this.processorStateResult(result, request)) return this.processorStateFailure(processorState);
             if (rumbleSerialization && !this.rumbleSerializationResult(result, request)) return this.rumbleSerializationFailure();
             if (chorderChords) {
                 if (result.ok === false) return this.chorderChordsFailure(result.error);
@@ -1513,7 +1530,7 @@ class NativePluginControls {
             if (cvStructure) return this.cvStructureFailure(dispatched,null);
             if (rumbleNamedParameters) return this.rumbleNamedParametersFailure();
             if (rumbleParameters) return this.rumbleParametersFailure();
-            if (rumbleState) return this.rumbleStateFailure();
+            if (processorState) return this.processorStateFailure(processorState);
             if (rumbleSerialization) return this.rumbleSerializationFailure();
             if (externalMenu) return this.externalMenuFailure(dispatched, null);
             if (stereoSendChange) {
