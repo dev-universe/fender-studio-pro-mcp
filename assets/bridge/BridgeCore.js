@@ -216,6 +216,10 @@ class Bridge {
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = serum2PresetFailure(outcome, "The Serum target document changed before publication");
+        } else if (!isFail(result) && req.op === "serum2EventInputSet"
+            && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
+                || context.fileUrl !== afterContext.fileUrl)) {
+            result = { ok: false, native_outcome: "unknown", errors: ["The native document changed before route verification"] };
         } else if (!isFail(result) && emptyNestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -377,6 +381,7 @@ class Bridge {
             case "tracks": return this.tracks(args);
             case "trackFormats": return this.trackFormats();
             case "trackEventInput": return this.trackEventInput(args);
+            case "serum2EventInputSet": return this.serum2EventInputSet(args);
             case "selectTrack": return this.selectTrack(args);
             case "notes": return this.notes(args);
             case "editNotes": return this.editNotes(args);
@@ -945,6 +950,54 @@ class Bridge {
             // cannot be told apart once punch-in is on.
             autopunch: param("punchIn") ? { punchIn: !!val("punchIn"), any: !!val("punch") } : null,
         };
+    }
+
+    serum2EventInputSet(args) {
+        const failure = (outcome, message) => ({ ok: false, native_outcome: outcome, errors: [message] });
+        const product = args.variant === "instrument"
+            ? { name: "Serum 2", uid: "56534558-6673-5073-6572-756D20320000", type: "AudioSynth" }
+            : args.variant === "fx"
+            ? { name: "Serum 2 FX", uid: "56534558-6673-5173-6572-756D20322066", type: "AudioEffect" }
+            : null;
+        const selected = value => Number.isInteger(value) && value >= 1 && value <= 16;
+        if (!product || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || !selected(args.expected_event_input) || !selected(args.event_input) || args.expected_event_input === args.event_input)
+            return failure("not_applied", "Supply an exact Serum Music track, native instance, and distinct Event Inputs");
+        if (this.documentMode !== "native") return failure("not_applied", "The current native document is required");
+        const transport = this.transportState();
+        if (!transport || isFail(transport) || transport.playing !== false || transport.recording !== false)
+            return failure("not_applied", "Stop playback and recording before changing Event Input");
+        const expected = args.expected_instance.toUpperCase();
+        const target = { kind: "instrument", track: args.track, plugin: product.name, source: "dsp", expected_instance: expected };
+        const matchesInstance = () => {
+            const view = this.pluginInspect(target);
+            const native = view && view.native;
+            const now = native && native.instance;
+            return !isFail(view) && native && native.ok === true
+                && (native.outcome === undefined || native.outcome === "observed")
+                && native.source === "dsp" && now && now.class_uid === product.uid
+                && now.native_class === product.type && now.object_uid === expected;
+        };
+        if (!matchesInstance()) return failure("not_applied", "Select the Music track routed to the exact Serum instance");
+
+        const receipt = this.trackTask({ ops: [{ op: "serumEventInputSet", track: args.track,
+            before: args.expected_event_input, after: args.event_input }] });
+        const row = receipt && Array.isArray(receipt.results) && receipt.results.length === 1 ? receipt.results[0] : null;
+        if (row && row.op === "serumEventInputSet" && row.native_outcome === "not_applied" && typeof row.error === "string")
+            return failure("not_applied", row.error);
+        if (!row || row.op !== "serumEventInputSet" || row.native_outcome !== "applied_unverified"
+            || row.track !== args.track || row.before !== args.expected_event_input || row.after !== args.event_input
+            || row.same_owner !== true || row.selection_calls !== 1)
+            return failure("unknown", "The Event Input change was not confirmed. Read the current route.");
+        const observed = this.trackEventInput({ track: args.track });
+        if (isFail(observed) || !observed || observed.track !== args.track || observed.event_input !== args.event_input || !matchesInstance())
+            return failure("unknown", "The same Serum route could not be confirmed after dispatch");
+        return { ok: true, native_outcome: "applied_unverified", track: args.track, variant: args.variant,
+            instance: expected, class_uid: product.uid, before: row.before, after: observed.event_input,
+            same_owner: true, selection_calls: 1, readback: observed.label };
     }
 
     trackEventInput(args) {

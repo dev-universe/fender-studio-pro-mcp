@@ -245,6 +245,18 @@ destination instrument or FX. The recording input is a separate
 selector.
 [Live MCP lookup verification](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
 
+With the Music track selected, playback and recording stopped, and
+its record arm and monitor disabled, use `serum2_event_input_set` to
+change the Event Input on the currently routed Serum 2 instrument or
+FX instance. Supply the exact `track` name, `variant` (`instrument`
+or `fx`), the current `expected_document`, the exact
+`expected_instance` from
+`plugin_inspect`, the current `expected_event_input` from
+`track_event_input_get`, and the new one-based `event_input` from
+1 to 16. If the outcome is unknown, read the track route and instance
+again before dispatching another change.
+[Live MCP setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
+
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
 instance. Use `plugin_parameter_set` with `normalized` and `readback: true`.

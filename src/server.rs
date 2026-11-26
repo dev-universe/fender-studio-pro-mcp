@@ -215,6 +215,12 @@ impl McpServer {
                 "Load Xfer Records Serum 2 VST3 as a new Music track with target.variant instrument and target.track, or add Serum 2 FX VST3 to an existing mixer channel's Inserts with target.variant fx and target.channel. Uses one exact-class track edit. Read tracks_list or the channel inserts after the receipt. Inspect the current song before retrying an unknown outcome.",
                 true,
             ),
+            named::<crate::serum::EventInputSet>(
+                "serum2_event_input_set",
+                "serum2EventInputSet",
+                "Change the Event Input on the currently routed Serum 2 or Serum 2 FX instance. Use an exclusively selected Music track, stopped transport and disabled record arm and monitoring. Provide the current expected_document, exact expected_instance, expected_event_input from track_event_input_get, and a different event_input from 1 to 16. Inspect the current route before retrying an unknown outcome.",
+                true,
+            ),
             named::<SerumPresetApply>(
                 "serum2_preset_apply",
                 "serum2PresetApply",
@@ -779,7 +785,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 66;
+    const EXPECTED_TOOL_COUNT: usize = 67;
 
     use super::*;
 
@@ -1471,6 +1477,7 @@ mod tests {
         for name in [
             "track_select",
             "serum2_load",
+            "serum2_event_input_set",
             "serum2_preset_apply",
             "chorder_autofill_set",
             "channel_set",

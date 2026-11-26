@@ -113,6 +113,8 @@ pub enum Operation {
     FabfilterPresetApply(crate::fabfilter::PresetApply),
     #[serde(rename = "serum2PresetApply", alias = "serum2_preset_apply")]
     Serum2PresetApply(crate::serum::PresetApply),
+    #[serde(rename = "serum2EventInputSet", alias = "serum2_event_input_set")]
+    Serum2EventInputSet(crate::serum::EventInputSet),
     #[serde(rename = "pluginAction", alias = "plugin_action")]
     PluginAction(PluginAction),
     #[serde(rename = "editChorderAutofill", alias = "chorder_autofill_set")]
@@ -1665,6 +1667,7 @@ impl Operation {
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
+                    | Self::Serum2EventInputSet(_)
                     | Self::TrackEventInput(_)
             )
     }
@@ -1729,6 +1732,21 @@ impl Operation {
                 return Err(invalid(
                     "A channel name and finite raw panner value are required",
                 ));
+            }
+            Self::Serum2EventInputSet(change) => {
+                validate_instance_uid(Some(&change.expected_instance))?;
+                if change.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || change.track.trim().is_empty()
+                    || change.track.len() > 256
+                    || change.track.chars().any(char::is_control)
+                    || !(1..=16).contains(&change.expected_event_input)
+                    || !(1..=16).contains(&change.event_input)
+                    || change.expected_event_input == change.event_input
+                {
+                    return Err(invalid(
+                        "Supply an exact Music track and instance with distinct Event Inputs from 1 to 16",
+                    ));
+                }
             }
             Self::TrackEventInput(query)
                 if query.track.trim().is_empty()
