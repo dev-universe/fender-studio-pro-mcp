@@ -250,24 +250,45 @@ route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
 channels are 2 and 16. Both routes use the global rows for
 Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
 
-Use `track_event_input_get` with an exact Music track name and the
-`expected_document` from `host_status` to read its current numbered
-Event Input in Studio Pro. This is the track's output selector for the
-destination instrument or FX. The recording input is a separate
-selector.
-[Live MCP lookup verification](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+#### Change a Music track's Event Input
 
-With the Music track selected, playback and recording stopped, and
-its record arm and monitor disabled, use `serum2_event_input_set` to
-change the Event Input on the currently routed Serum 2 instrument or
-FX instance. Supply the exact `track` name, `variant` (`instrument`
-or `fx`), the current `expected_document`, the exact
-`expected_instance` from
-`plugin_inspect`, the current `expected_event_input` from
-`track_event_input_get`, and the new one-based `event_input` from
-1 to 16. If the outcome is unknown, read the track route and instance
-again before dispatching another change.
-[Live MCP setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
+This is the Music track's **Out** route to an already connected Serum instance.
+The same number can appear on several Serum instances. For Serum 2 FX, use
+the Music source track in the route commands and inspect the FX on its
+receiver's Audio channel.
+
+1. In Studio Pro, select only that Music track. Stop playback and recording,
+   and turn off the track's record arm and monitor.
+2. Read the current document with `host_status`. Call
+   `track_event_input_get` with the Music track name and that
+   `expected_document`. Keep the returned `event_input`.
+3. Get the destination's `native.instance.object_uid` with `plugin_inspect`.
+   For the FX case, match the Music source's destination UUID to the
+   insert's UUID as described below.
+4. Call `serum2_event_input_set` once. For example, to move the currently
+   routed instrument from Event Input 1 to 2, replace the two placeholder
+   strings with the values just read.
+
+   ```json
+   {
+     "track": "Serum Keys",
+     "variant": "instrument",
+     "expected_document": "<current document>",
+     "expected_instance": "<destination UUID>",
+     "expected_event_input": 1,
+     "event_input": 2
+   }
+   ```
+
+   For an FX destination, use `"variant": "fx"` and the Music source track's
+   exact name. Choose an Event Input from 1 through 16.
+5. Read the route again with `track_event_input_get` and confirm the
+   destination UUID with `plugin_inspect`. If the request returns an
+   unknown outcome, use those same fresh reads before any new request.
+
+[Live route lookup](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+[FX route lookup](docs/evidence/2026-11-26-serum2-fx-mcp-live-event-input.md)
+[Instrument and FX setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
 
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
@@ -279,9 +300,9 @@ To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
 `kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
 `expected_document`. Inspect the candidate FX insert by its exact channel
 and slot. Compare the two `native.instance.object_uid` values and use the
-matching UID as `expected_instance` on a fresh track inspection. Change
-the route with the track's **Out** menu in Studio Pro, then repeat the
-inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
+matching UID as `expected_instance` on a fresh track inspection. Use the
+track's **Out** menu when choosing a different destination instance, then
+repeat the inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
 
 To check the destination in a saved song, call `song_read` on the
 `.song` file and look for `midi_destination` on the source track. A
