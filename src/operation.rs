@@ -996,6 +996,9 @@ pub struct InsertSplitterRemove {
     /// The optional second effect on the second branch, immediately before the merger.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub second_branch_tail_node: Option<String>,
+    /// Ordered nodes after each branch head for a three-effect and a one-effect branch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch_continuations: Option<[Vec<String>; 2]>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2283,6 +2286,17 @@ impl Operation {
                     .into_iter()
                     .flatten(),
                 );
+                if let Some(continuations) = &p.branch_continuations {
+                    if p.first_branch_tail_node.is_some()
+                        || p.second_branch_tail_node.is_some()
+                        || !matches!(continuations.each_ref().map(Vec::len), [2, 0] | [0, 2])
+                    {
+                        return Err(invalid(
+                            "Supply two ordered continuation nodes on exactly one branch without legacy tail fields",
+                        ));
+                    }
+                    nodes.extend(continuations.iter().flatten().map(String::as_str));
+                }
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
@@ -3197,6 +3211,53 @@ mod tests {
                 "{field}"
             );
         }
+    }
+
+    #[test]
+    fn splitter_removal_checks_ordered_continuation_shape_and_distinct_nodes() {
+        let head = "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE";
+        let middle = "12345678-1234-4AAB-8ABC-AABBCCDDEEFF";
+        let end = "33445566-1122-4ACC-8DEE-0123456789AB";
+        let args = json!({
+            "channel": "Scratch", "slot": 0, "plugin": "Mixtool",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "expected_graph": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "splitter_node": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "merger_node": "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+            "first_slot_node": head, "second_slot_node": "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF"
+        });
+        for valid in [json!([[], [middle, end]]), json!([[middle, end], []])] {
+            let mut request = args.clone();
+            request["branch_continuations"] = valid.clone();
+            let decoded = Operation::from_parts("insert_splitter_remove", request).unwrap();
+            assert!(decoded.validate().is_ok());
+            assert_eq!(decoded.wire().1["branch_continuations"], valid);
+        }
+        for invalid in [
+            json!([[], []]),
+            json!([[middle], [end]]),
+            json!([[middle, end], [head]]),
+            json!([[], [head, end]]),
+            json!([[], [middle, middle]]),
+        ] {
+            let mut request = args.clone();
+            request["branch_continuations"] = invalid;
+            assert!(
+                Operation::from_parts("insert_splitter_remove", request)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut mixed = args;
+        mixed["branch_continuations"] = json!([[], [middle, end]]);
+        mixed["first_branch_tail_node"] = json!("99AA88BB-77CC-4DDE-8FFE-0123456789AB");
+        assert!(
+            Operation::from_parts("insert_splitter_remove", mixed)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
     }
 
     #[test]
