@@ -395,7 +395,9 @@ fn execute(
     if response.document != context.document
         || (matches!(
             operation,
-            Operation::ExternalPortMenu(_) | Operation::ExternalStereoSendSet(_)
+            Operation::ExternalPortMenu(_)
+                | Operation::ExternalStereoSendSet(_)
+                | Operation::Serum2EventInputSet(_)
         ) || parameter_readback_requested
             || multi_child_filter_env
             || cv_port_structure::requested(&operation)
@@ -421,6 +423,7 @@ fn execute(
         if operation.applies_cv_preset_settings()
             || parameter_readback_requested
             || multi_child_filter_env
+            || matches!(operation, Operation::Serum2EventInputSet(_))
         {
             response.result = Value::Null;
         } else {
@@ -545,6 +548,17 @@ fn execute(
                 "message": "The Filter Env receipt did not establish the exact child amount change"
             }]});
         }
+    }
+    if matches!(operation, Operation::Serum2EventInputSet(_))
+        && response.ok
+        && !matches!(
+            response.result["native_outcome"].as_str(),
+            Some("not_applied" | "unknown")
+        )
+        && !verify(&operation, &response.result)
+    {
+        response.result = json!({"ok":false,"native_outcome":"unknown",
+            "errors":["The route receipt did not prove the intended Serum Event Input change"]});
     }
     let soft_error = response.result.get("error").filter(|v| !v.is_null());
     let mut error = if !response.ok {
@@ -1623,6 +1637,19 @@ fn normalize_stereo_send_set_failure(result: &Value) -> Value {
 
 fn verify(operation: &Operation, result: &Value) -> bool {
     match operation {
+        Operation::Serum2EventInputSet(change) => {
+            result["ok"] == true
+                && result["native_outcome"] == "applied_unverified"
+                && result["track"] == change.track
+                && result["variant"] == json!(change.variant)
+                && result["instance"] == change.expected_instance.to_ascii_uppercase()
+                && result["class_uid"] == change.variant.class_uid()
+                && result["before"] == change.expected_event_input
+                && result["after"] == change.event_input
+                && result["same_owner"] == true
+                && result["selection_calls"] == 1
+                && result["readback"] == format!("Event Input {}", change.event_input)
+        }
         Operation::ExternalStereoSendSet(change) => {
             let (old, new) = change.destination.display();
             let before = &result["before"];
@@ -2118,6 +2145,8 @@ mod tests {
 
     fn mutating_operations() -> Vec<Operation> {
         [
+            ("serum2EventInputSet", json!({"track":"Scratch Keys","variant":"instrument",
+                "expected_instance":"01234567-89AB-4CDE-8123-456789ABCDEF","expected_event_input":1,"event_input":2})),
             ("setPanner", json!({"channel":"Scratch","param":"panX1","value":0.5})),
             ("setSplitter", json!({"channel":"Scratch","node":"Splitter","label":"Splitter","param":"numOutputs","value":2})),
             ("setSend", json!({"channel":"Scratch","index":0,"level":0.5})),
@@ -2223,6 +2252,7 @@ mod tests {
                 "hostProbe",
                 "song",
                 "tracks",
+                "trackEventInput",
                 "trackFormats",
                 "channels",
                 "panner",
