@@ -783,7 +783,6 @@ pub(super) fn dispatch_remove(
                 "operation": "scope_sidechain_assignment_remove", "instance": ctx.instance,
                 "removed_send": expected_send, "recorded": true}));
             reply.auxiliary = Some(node_inspect::Auxiliary::ScopeSidechain(Box::new(after)));
-            reply.mutation = true;
             reply
         }
         Err(reason) => Reply::error(
@@ -792,6 +791,7 @@ pub(super) fn dispatch_remove(
             if dispatched { "unknown" } else { "not_applied" },
         ),
     };
+    reply.mutation = dispatched;
     reply.context = Some(ctx);
     reply
 }
