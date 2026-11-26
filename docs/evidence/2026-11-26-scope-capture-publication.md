@@ -27,3 +27,23 @@ waveform qualification require an observation tied to one current Scope
 instance and its capture generation, format rate, frame, latch, valid count
 and configured window. A producer-owned publication or a capture-preserving
 read boundary remains open.
+
+## Lock identity on the published graph
+
+R582 checked the same arm64 host image. The real-time receiver thunk reaches
+the known render callback, and its direct graph-render call follows the
+engine-context lock acquisition. Publication passes this exact engine lock
+to the processors in two graph collections before storing the graph.
+
+The processor lock setter retains the incoming lock and replaces the prior
+pointer. The other processor constructors and the conditional stock task
+constructors examined here can populate that same field with independently
+allocated locks. These locks use the same CCL exclusive-lock class. The
+class or an available `ILockProvider` therefore cannot establish that a
+particular task is under the currently published engine lock. Binding a
+reader still requires the current graph, the exact Scope owner, and the
+identity of the lock or producer publication that covers the live state.
+
+This offline check compared nine direct call sites in LLVM and Ghidra,
+made 13 decompilation queries, and matched ten independent Craft Anything
+byte ranges. It made no DAW requests or graph lock acquisitions.
