@@ -3233,3 +3233,26 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   PR은 발견되지 않았다. main의 strict 규칙은 Core offline와
   macOS arm64 두 상태 검사를 요구한다. 로컬 미완 11, main 미완
   13, 장비 의존 4, 전체 2~5일 및 장비 대기. 지정 종료 시각 없음.
+
+## 2026-11-26 23시 45분 공개 Scope 읽기와 Send 편집 기록 경로
+
+- R573 `38c7a9a1`의 `scope_sidechain_assignment_get`은 실제
+  8.1.1에서 빈 상태·정확한 할당·제거 후 빈 상태를 각각 두 번
+  확인했다. 잘못된 소스·수신 채널·인스턴스와 문서 누락·변경을
+  거부했다. 믹서 Send와 Scope DSP 31행을 따로 비교했다.
+  55요청·98.674초, 호스트 128.385초, No Save, 설치 18개와
+  프로필 10개 일치. 코어 278, JS 454, Python 560, 네이티브
+  513개 및 패키지 빌드 통과. 신호 전달과 Send 쓰기는 검증
+  범위에 별도로 남긴다. [#347](https://github.com/dev-universe/fender-studio-pro-mcp/pull/347)
+- #343은 최신 기준의 두 검사를 통과하여 `215b64f1`에
+  병합됐다. 갱신부터 802.6초. 현재 #345 코어 통과 및 arm64
+  러너 대기. 이후 #346, #347 순서로 진행한다. #347을 포함한
+  후속 Splitter, Chorder, Multi의 capability 충돌을 로컬에서
+  해소했으며 각 격리 checkout의 검사를 진행 중이다.
+  [#343](https://github.com/dev-universe/fender-studio-pro-mcp/pull/343)
+- R574는 REA/Ghidra 21개 함수, Craft-Anything 14개 바이트 범위로
+  기본 Send 생성·제거·저널 연결을 확인했다. 다음은 Send가
+  생기기 전 정확한 Scope 입력을 보유하고, 이미 연결된 Scope와
+  교차 비교할 수 있는 읽기 전용 스크래치 진단이다. 앱과 MCP
+  owner, REA와 Craft 타깃 모두 닫혔다. 로컬 11, main 13,
+  장비 4. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
