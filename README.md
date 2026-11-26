@@ -159,6 +159,18 @@ transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
 Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
+### Mustang Native processor state
+
+Call `plugin_state` with `action: "read_mustang_state"`, the insert's
+`channel` and `slot`, `plugin: "Mustang Native"`, `expected_instance`
+from `plugin_inspect`, and `expected_document` from `host_status`.
+This reads the serialized processor class IDs and numeric settings for
+all 26 slots through the matching native extension. Compare
+`models_sha256` and `settings_sha256` across reads. The
+`capture_sha256` identifies one serialization and can differ when
+the two projections match. The read issues no token.
+[8.1.1 verification](docs/evidence/2026-11-26-mustang-processor-state.md)
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
