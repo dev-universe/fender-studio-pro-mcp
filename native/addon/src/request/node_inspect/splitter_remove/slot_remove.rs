@@ -1,9 +1,11 @@
 //! Remove one exact middle effect through the owning slot's stock observer.
 use super::*;
 
-const AUDIO_INSERT_SLOT: usize = 0x1b78948;
-const SLOT_HANDLER: usize = 0x1b78fe8;
-const SLOT_OBSERVER: usize = 0x1b78dc0;
+// The live routed adapter derives from AudioInsertSlot. Its primary and
+// observer tables differ from the base while its Device command is inherited.
+const ROUTED_AUDIO_INSERT_SLOT: usize = 0x1b90b50;
+const SLOT_HANDLER: usize = 0x1b911f0;
+const SLOT_OBSERVER: usize = 0x1b90fc8;
 
 fn parent(node: *mut c_void) -> *mut c_void {
     let get: Borrowed = unsafe { method(node, 6) };
@@ -102,8 +104,8 @@ pub(in crate::native_script::request) fn dispatch(
             .ok_or("The removed effect has no native INode view")?;
         let native_slot = unsafe { field::<*mut c_void>(removed, 0x1f0) };
         let slot_owner = hold(native_slot).ok_or("The resolved native slot detached")?;
-        if table(slot_owner.0) != image + AUDIO_INSERT_SLOT {
-            return Err("The verified AudioInsertSlot primary table changed".into());
+        if table(slot_owner.0) != image + ROUTED_AUDIO_INSERT_SLOT {
+            return Err("The verified routed AudioInsertSlot primary table changed".into());
         }
         if !matches_identity(slot_owner.0, &delegated_slot._canonical) {
             return Err("The AudioInsertSlot is not the slot node's canonical delegate".into());
@@ -128,7 +130,7 @@ pub(in crate::native_script::request) fn dispatch(
             || table(handler.0) != image + SLOT_HANDLER
             || check as usize != image + 0xbafc20
             || table(observer.0) != image + SLOT_OBSERVER
-            || notify as usize != image + 0xbaf52c
+            || notify as usize != image + 0xc2c280
             || (unsafe { method::<Borrowed>(slot_owner.0, 0x230 / 8) }) as usize != image + 0xd7e50c
         {
             return Err("The exact slot removal entry no longer matches the verified image".into());
