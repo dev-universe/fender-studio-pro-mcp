@@ -28,6 +28,19 @@ pub(crate) enum Variant {
     Fx,
 }
 
+#[derive(Clone, Debug, Deserialize, JsonSchema, Serialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct EventInputSet {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
+    pub variant: Variant,
+    pub expected_instance: String,
+    #[schemars(range(min = 1, max = 16))]
+    pub expected_event_input: u8,
+    #[schemars(range(min = 1, max = 16))]
+    pub event_input: u8,
+}
+
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum PresetFormat {

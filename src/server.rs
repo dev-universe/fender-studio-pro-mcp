@@ -215,6 +215,12 @@ impl McpServer {
                 "Load Xfer Records Serum 2 VST3 as a new Music track with target.variant instrument and target.track, or add Serum 2 FX VST3 to an existing mixer channel's Inserts with target.variant fx and target.channel. Uses one exact-class track edit. Read tracks_list or the channel inserts after the receipt. Inspect the current song before retrying an unknown outcome.",
                 true,
             ),
+            named::<crate::serum::EventInputSet>(
+                "serum2_event_input_set",
+                "serum2EventInputSet",
+                "Change the Event Input on the currently routed Serum 2 or Serum 2 FX instance. Use an exclusively selected Music track, stopped transport and disabled record arm and monitoring. Provide the current expected_document, exact expected_instance, expected_event_input from track_event_input_get, and a different event_input from 1 to 16. Inspect the current route before retrying an unknown outcome.",
+                true,
+            ),
             named::<SerumPresetApply>(
                 "serum2_preset_apply",
                 "serum2PresetApply",
@@ -308,7 +314,7 @@ impl McpServer {
             named::<PluginState>(
                 "plugin_state",
                 "pluginState",
-                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state for direct serialized Rumble processor IDs/numeric settings and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
+                "Run inspect_cv_port_structure for one fixed CV Instrument Output01 nested-parameter observation. It prepares and cleans a callback-sensitive native cache; it grants no routing or setter authority. Otherwise capture, restore or release a bounded in-memory plugin state, or read_rumble_named_parameters for bounded native Rumble descriptors associated with serialized sibling names, read_rumble_parameters for bounded native Rumble controller metadata, read_rumble_state or read_mustang_state for direct serialized processor IDs and numeric settings of the corresponding effect, and inspect_rumble_serialization for a bounded structure summary. These reads take no token and grant no native write authority. Requires the matching native extension. Inspect first and provide expected_instance. Capture returns an opaque token bound to this service and document. Recognized Pedalboard captures also return pedalboard_rack with the model class and payload fingerprint for each slot, or null fields for a vacant slot. Compare fingerprints across positions to observe serialized settings without reloading the plugin. Restore accepts only an issued token and requires independent parameter/model readback; a successful native load is applied_unverified. No preset file is written or imported.",
                 true,
             ),
             named::<InsertChainState>(
@@ -339,6 +345,12 @@ impl McpServer {
                 "insert_splitter_remove_empty_nested",
                 "insertSplitterRemoveEmptyNested",
                 "Remove the bound third Splitter whose two empty lanes lead to its paired merger in the verified nested Mixtool shape. Stop playback and recording. Supply the mixer channel, slot 0 Mixtool, its instance UUID, graph UUID, the two nodes to remove, and the predecessor slot and successor merger UUIDs. After acceptance or an unknown outcome, inspect the graph independently before further editing.",
+                true,
+            ),
+            named::<InsertSplitterRemoveOneLaneNested>(
+                "insert_splitter_remove_one_lane_nested",
+                "insertSplitterRemoveOneLaneNested",
+                "Remove the third Splitter in the verified nested Mixtool graph when one lane is empty and the other contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
                 true,
             ),
             named::<PluginPresets>(
@@ -779,7 +791,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 66;
+    const EXPECTED_TOOL_COUNT: usize = 68;
 
     use super::*;
 
@@ -1184,7 +1196,7 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .len(),
-            8
+            9
         );
         assert!(
             named["required"]
@@ -1196,7 +1208,7 @@ mod tests {
     }
 
     #[test]
-    fn named_rumble_schema_adds_only_one_action_and_preserves_tool_annotations() {
+    fn plugin_state_schema_keeps_closed_actions_and_preserves_tool_annotations() {
         let specs = McpServer::specs();
         assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
         let spec = specs
@@ -1211,6 +1223,7 @@ mod tests {
             json!([
                 "inspect_cv_port_structure",
                 "read_rumble_state",
+                "read_mustang_state",
                 "read_rumble_parameters",
                 "read_rumble_named_parameters",
                 "inspect_rumble_serialization",
@@ -1471,6 +1484,7 @@ mod tests {
         for name in [
             "track_select",
             "serum2_load",
+            "serum2_event_input_set",
             "serum2_preset_apply",
             "chorder_autofill_set",
             "channel_set",
@@ -1483,6 +1497,7 @@ mod tests {
             "insert_slot_move",
             "insert_splitter_remove",
             "insert_splitter_remove_empty_nested",
+            "insert_splitter_remove_one_lane_nested",
             "insert_splitter_add",
             "plugin_multi_add_mai_tai",
             "panner_set",

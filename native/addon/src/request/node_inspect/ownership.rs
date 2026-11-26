@@ -286,10 +286,11 @@ impl GraphOwnership {
         Ok(())
     }
 
-    pub(super) fn check_empty_splitter_remove_targets(
+    pub(super) fn check_nested_splitter_remove_targets(
         &self,
         [graph, splitter, merger, predecessor, successor]: [&str; 5],
         effect: &str,
+        occupied: Option<&str>,
     ) -> Result<[(&str, GraphChildKind); 8], String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) || self.value.children.len() != 8 {
             return Err("The expected eight-node insert graph changed".into());
@@ -314,8 +315,11 @@ impl GraphOwnership {
             || !matches!(matches(successor), Some(GraphChild::Merger { .. }))
             || !matches!(matches(predecessor), Some(GraphChild::Slot { device, .. })
                 if device.object_uid.as_deref() == Some(effect) && device.id == "Mixtool")
+            || occupied.is_some_and(|slot| {
+                slot == predecessor || !matches!(matches(slot), Some(GraphChild::Slot { .. }))
+            })
         {
-            return Err("The bound empty Splitter, mergers or preceding Mixtool changed".into());
+            return Err("The bound Splitter, mergers or Mixtool slots changed".into());
         }
 
         let mut devices = self.value.children.iter().filter_map(|child| match child {
@@ -324,7 +328,7 @@ impl GraphOwnership {
         });
         let (Some(first), Some(second), None) = (devices.next(), devices.next(), devices.next())
         else {
-            return Err("The verified empty nested shape requires two Mixtool effects".into());
+            return Err("The verified nested shape requires two Mixtool effects".into());
         };
         if first.object_uid == second.object_uid
             || [first, second].iter().any(|device| {
