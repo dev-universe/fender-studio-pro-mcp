@@ -57,6 +57,11 @@ pub enum Operation {
         alias = "scope_sidechain_assignment_remove"
     )]
     ScopeSidechainAssignmentRemove(ScopeSidechainAssignmentRemove),
+    #[serde(
+        rename = "scopeSidechainAssignmentCreate",
+        alias = "scope_sidechain_assignment_create"
+    )]
+    ScopeSidechainAssignmentCreate(ScopeSidechainAssignmentGet),
     #[serde(rename = "setSend", alias = "send_set")]
     SetSend(SendSet),
     #[serde(rename = "setInsertBypass", alias = "plugin_bypass")]
@@ -1891,7 +1896,8 @@ impl Operation {
                 )?;
                 validate_scope_uid(&query.expected_send, "Send")?;
             }
-            Self::ScopeSidechainAssignmentGet(query) => {
+            Self::ScopeSidechainAssignmentGet(query)
+            | Self::ScopeSidechainAssignmentCreate(query) => {
                 validate_scope_target(
                     &query.source_channel,
                     &query.scope_channel,

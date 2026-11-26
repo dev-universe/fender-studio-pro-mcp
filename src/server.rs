@@ -341,6 +341,12 @@ impl McpServer {
                 "Remove the sole Send on the exact source audio channel when it is assigned to the bound stock Scope at receiver insert slot 0. Use scope_sidechain_assignment_get to obtain send_node and pass it as expected_send. Supply the current document token and exact Scope instance with transport stopped. The host records one Undo. Check the mixer Sends independently after a receipt or unknown outcome.",
                 true,
             ),
+            named::<operation::ScopeSidechainAssignmentGet>(
+                "scope_sidechain_assignment_create",
+                "scopeSidechainAssignmentCreate",
+                "Create one 0 dB Send to the bound stock Scope at receiver insert slot 0. Use two distinct exact audio channels, an empty source Sends rack, the current document token and exact Scope instance. Stop transport and enable the Scope Sidechain header first. Check the assigned Send independently. Studio Pro records one Undo for creation.",
+                true,
+            ),
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
@@ -835,7 +841,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 73;
+    const EXPECTED_TOOL_COUNT: usize = 74;
 
     use super::*;
 
@@ -1646,6 +1652,8 @@ mod tests {
             "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
+            "scope_sidechain_assignment_create",
+            "scope_sidechain_assignment_remove",
             "insert_slot_remove",
             "insert_splitter_remove",
             "insert_splitter_remove_empty_nested",

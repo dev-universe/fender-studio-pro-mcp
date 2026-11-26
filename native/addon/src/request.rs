@@ -105,6 +105,9 @@ enum Request {
     ScopeSidechainAssignmentGet {
         expected_instance: String,
     },
+    ScopeSidechainAssignmentCreate {
+        expected_instance: String,
+    },
     ScopeSidechainAssignmentRemove {
         expected_instance: String,
         expected_send: String,
@@ -473,6 +476,7 @@ impl Request {
             | Self::InsertChainRestore { .. }
             | Self::ScopeSidechainAssignmentGet { .. }
             | Self::ScopeSidechainAssignmentRemove { .. }
+            | Self::ScopeSidechainAssignmentCreate { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
             | Self::InsertSlotRemove { .. }
@@ -486,6 +490,7 @@ impl Request {
         match self {
             Self::CvPortStructureInspect { expected_instance }
             | Self::ScopeSidechainAssignmentGet { expected_instance }
+            | Self::ScopeSidechainAssignmentCreate { expected_instance }
             | Self::ScopeSidechainAssignmentRemove {
                 expected_instance, ..
             }
@@ -1118,6 +1123,7 @@ impl Request {
                 | Self::InspectAux { .. }
                 | Self::ScopeSidechainAssignmentGet { .. }
                 | Self::ScopeSidechainAssignmentRemove { .. }
+                | Self::ScopeSidechainAssignmentCreate { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
                 | Self::InsertChainCapture { .. }
@@ -2098,6 +2104,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::PresetRelease { .. }
         | Request::ScopeSidechainAssignmentGet { .. }
         | Request::ScopeSidechainAssignmentRemove { .. }
+        | Request::ScopeSidechainAssignmentCreate { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
         | Request::InspectInsertFolderPresetPreflight { .. }
@@ -2753,6 +2760,9 @@ fn dispatch_device(
         };
         reply.context = Some(ctx);
         return reply;
+    }
+    if matches!(request, Request::ScopeSidechainAssignmentCreate { .. }) {
+        return scope_sidechain::dispatch_create(ctx, auxiliary);
     }
     if let Request::ScopeSidechainAssignmentRemove { expected_send, .. } = request {
         return scope_sidechain::dispatch_remove(ctx, auxiliary, &expected_send);

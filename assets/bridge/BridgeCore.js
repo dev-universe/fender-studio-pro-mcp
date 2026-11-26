@@ -142,8 +142,8 @@ class Bridge {
         const oneLaneSplitterRemove = req.op === "insertSplitterRemoveOneLaneNested";
         const nestedSplitterRemove = oneLaneSplitterRemove || req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
-        const scopeRemove = req.op === "scopeSidechainAssignmentRemove";
-        const scopeAssignment = scopeRemove || req.op === "scopeSidechainAssignmentGet";
+        const scopeEdit = req.op === "scopeSidechainAssignmentRemove" || req.op === "scopeSidechainAssignmentCreate";
+        const scopeAssignment = scopeEdit || req.op === "scopeSidechainAssignmentGet";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -234,8 +234,8 @@ class Bridge {
             && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
                 || context.fileUrl !== afterContext.fileUrl || !this.insertGraphTransportStopped())) {
             code = "native_context_lost";
-            result = scopeRemove ? { ok: false, native_outcome: "unknown",
-                error: { code: "scope_send_remove_context_changed", message: "The removal document changed" } }
+            result = scopeEdit ? { ok: false, native_outcome: "unknown",
+                error: { code: "scope_send_edit_context_changed", message: "The Scope Send document changed" } }
                 : fail("The Scope assignment lease changed before publication");
         } else if (!isFail(result) && nestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
@@ -432,7 +432,8 @@ class Bridge {
             case "setInsertBypass": return this.fromComponent(c => c.setInsertBypass(args));
             case "sends": return this.fromComponent(c => c.sends(args));
             case "scopeSidechainAssignmentGet": return this.scopeSidechainAssignmentGet(args);
-            case "scopeSidechainAssignmentRemove": return this.scopeSidechainAssignmentGet(args, true);
+            case "scopeSidechainAssignmentRemove": return this.scopeSidechainAssignmentGet(args, "remove");
+            case "scopeSidechainAssignmentCreate": return this.scopeSidechainAssignmentGet(args, "create");
             case "setSend": return this.fromComponent(c => c.setSend(args));
             case "setChannelLabel": return this.fromComponent(c => c.setChannelLabel(args));
             case "setChannelColor": return this.fromComponent(c => c.setChannelColor(args));
@@ -1766,10 +1767,11 @@ class Bridge {
         return { added: added, trackCount: uniqueTracks(list).length };
     }
 
-    scopeSidechainAssignmentGet(args, remove = false) {
-        const failure = (message, unknown = false) => !remove ? fail(message)
+    scopeSidechainAssignmentGet(args, edit = "get") {
+        const remove = edit === "remove";
+        const failure = (message, unknown = false) => edit === "get" ? fail(message)
             : { ok: false, native_outcome: unknown ? "unknown" : "not_applied",
-                error: { code: "scope_sidechain_assignment_remove_failed", message } };
+                error: { code: "scope_sidechain_assignment_" + edit + "_failed", message } };
         const lease = this.requestContext;
         const leaseCurrent = () => {
             const current = this.context();
@@ -1812,7 +1814,7 @@ class Bridge {
             const plug = component.pluginOf(target);
             if (!plug || plug.error || plug.name !== "Scope" || !leaseCurrent())
                 return failure("The exact Scope insert at slot zero is unavailable");
-            const request = { operation: remove ? "scope_sidechain_assignment_remove" : "scope_sidechain_assignment_get",
+            const request = { operation: "scope_sidechain_assignment_" + edit,
                 expected_instance: args.expected_instance };
             if (remove) request.expected_send = args.expected_send;
             const native = component.nativePluginRequest(plug.device, request, channels.source);
@@ -1826,7 +1828,8 @@ class Bridge {
                     ? native.error.message.slice(0, 200) : "The native Scope assignment is unavailable";
                 return failure(reason, !native || native.outcome !== "not_applied");
             }
-            if (remove) return { recorded: true, removed_send: native.removed_send,
+            if (edit !== "get") return { recorded: true,
+                [remove ? "removed_send" : "created_send"]: remove ? native.removed_send : native.created_send,
                 native_outcome: "applied_unverified", scope_instance: args.expected_instance };
             return { state: native.state, scope: native.scope, source_channel: args.source_channel,
                 scope_channel: args.scope_channel, scope_slot: 0, scope_instance: args.expected_instance,
