@@ -98,6 +98,8 @@ pub enum Operation {
     InsertChainState(InsertChainState),
     #[serde(rename = "insertSlotMove", alias = "insert_slot_move")]
     InsertSlotMove(InsertSlotMove),
+    #[serde(rename = "insertSlotRemove", alias = "insert_slot_remove")]
+    InsertSlotRemove(InsertSlotRemove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
     #[serde(
@@ -941,6 +943,22 @@ pub struct InsertSlotMove {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct InsertSlotRemove {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub preceding_slot_node: String,
+    pub removed_slot_node: String,
+    pub following_slot_node: String,
+    pub expected_removed_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct InsertSplitterAdd {
     #[schemars(length(min = 1, max = 256))]
     pub channel: String,
@@ -1712,7 +1730,8 @@ impl Operation {
                         | PluginStateAction::ReadRumbleNamedParameters))
             || matches!(
                 self,
-                Self::ChorderLearningGet(_)
+                Self::InsertSlotRemove(_)
+                    | Self::ChorderLearningGet(_)
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
                     | Self::ChorderAudition(_)
@@ -2235,6 +2254,24 @@ impl Operation {
                     &p.expected_instance,
                     &p.expected_graph,
                     &[&p.source_node, &p.after_node, &p.following_node],
+                )?;
+            }
+            Self::InsertSlotRemove(p) => {
+                if p.expected_removed_instance == p.expected_instance {
+                    return Err(invalid("The predecessor and removed effect must differ"));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.preceding_slot_node,
+                        &p.removed_slot_node,
+                        &p.following_slot_node,
+                        &p.expected_removed_instance,
+                    ],
                 )?;
             }
             Self::InsertSplitterAdd(p) => {

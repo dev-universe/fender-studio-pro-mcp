@@ -1036,6 +1036,8 @@ class NativePluginControls {
 
     insertGraphNodeFields(operation, value) {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
+        if (operation === "insert_slot_remove")
+            return ["preceding_slot_node", "removed_slot_node", "following_slot_node", "expected_removed_instance"];
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") {
             const fields = ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
@@ -1065,6 +1067,8 @@ class NativePluginControls {
         if (!this.guiExact(request, ["operation"].concat(ids, branch))
             || !ids.every(key => this.insertChainUid(request[key]))) return false;
         const nodeIds = nodes.map(key => request[key]);
+        if (request.operation === "insert_slot_remove" && request.expected_removed_instance === request.expected_instance)
+            return false;
         if (branch[0] === "branch" && !this.guiInteger(request.branch, 0, 1)) return false;
         if (branch[0] === "branch_continuations") {
             const ordered = request.branch_continuations;
@@ -1407,6 +1411,8 @@ class NativePluginControls {
                 throw new Error("unsupported stock Multi Instrument insertion API");
             if (request.operation === "insert_slot_move" && capability.insert_slot_move_api !== "same_graph_move_v1")
                 throw new Error("unsupported insert slot move API");
+            if (request.operation === "insert_slot_remove" && capability.insert_slot_remove_api !== "middle_slot_remove_v1")
+                throw new Error("unsupported exact middle insert slot removal API");
             if (request.operation === "insert_slot_move" && request.branch !== undefined
                 && capability.insert_slot_empty_branch_api !== "same_graph_empty_branch_v1")
                 throw new Error("unsupported empty Splitter branch move API");

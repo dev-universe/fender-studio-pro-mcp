@@ -240,7 +240,7 @@ class Bridge {
             code = "native_context_lost";
             result = fail("the native editor document lease changed before publication");
         }
-        if (!isFail(result) && ["insertChainState", "insertSlotMove", "insertSplitterRemove", "insertSplitterAdd"].includes(req.op)
+        if (!isFail(result) && ["insertChainState", "insertSlotMove", "insertSlotRemove", "insertSplitterRemove", "insertSplitterAdd"].includes(req.op)
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -428,6 +428,7 @@ class Bridge {
             case "pluginState": return this.fromComponent(c => c.pluginState(args));
             case "insertChainState": return this.fromComponent(c => c.insertChainState(args));
             case "insertSlotMove": return this.fromComponent(c => c.insertSlotMove(args));
+            case "insertSlotRemove": return this.fromComponent(c => c.insertSlotRemove(args));
             case "insertSplitterAdd": return this.fromComponent(c => c.insertSplitterAdd(args));
             case "insertSplitterRemove": return this.fromComponent(c => c.insertSplitterRemove(args));
             case "insertSplitterRemoveEmptyNested": return this.fromComponent(c => c.insertSplitterRemoveEmptyNested(args));

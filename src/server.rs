@@ -329,6 +329,12 @@ impl McpServer {
                 "Move one bound effect slot in the current Inserts graph with its Routing tab open. For a move after an effect, supply the destination slot as after_node and its current successor as following_node. For an empty two-way Splitter branch, supply the Splitter as after_node, its merger as following_node, and the branch index (0 or 1). Read the new graph and parameters independently.",
                 true,
             ),
+            named::<InsertSlotRemove>(
+                "insert_slot_remove",
+                "insertSlotRemove",
+                "Remove one bound effect between two adjacent effect slots in the same insert graph. Target the surviving predecessor with channel, slot, plugin and expected_instance. Supply the graph UUID, all three slot-node UUIDs in order, the removed effect instance UUID, and the current expected_document. Stop playback and recording. Independently verify the removed slot and remaining graph after dispatch.",
+                true,
+            ),
             named::<InsertSplitterAdd>(
                 "insert_splitter_add",
                 "insertSplitterAdd",
@@ -809,7 +815,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 69;
+    const EXPECTED_TOOL_COUNT: usize = 70;
 
     use super::*;
 
@@ -1544,6 +1550,7 @@ mod tests {
             "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
+            "insert_slot_remove",
             "insert_splitter_remove",
             "insert_splitter_remove_empty_nested",
             "insert_splitter_remove_one_lane_nested",

@@ -352,6 +352,14 @@ enum Request {
         following_node: String,
         branch: Option<u8>,
     },
+    InsertSlotRemove {
+        expected_instance: String,
+        expected_graph: String,
+        preceding_slot_node: String,
+        removed_slot_node: String,
+        following_slot_node: String,
+        expected_removed_instance: String,
+    },
     InsertSplitterAdd {
         expected_instance: String,
         expected_graph: String,
@@ -447,6 +455,7 @@ impl Request {
             | Self::InsertChainRestore { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
+            | Self::InsertSlotRemove { .. }
             | Self::InsertSplitterAdd { .. }
             | Self::InsertSplitterRemove { .. }
             | Self::InsertSplitterRemoveEmptyNested { .. }
@@ -484,6 +493,9 @@ impl Request {
                 expected_instance, ..
             } => Some(expected_instance.as_str()),
             Self::InsertSlotMove {
+                expected_instance, ..
+            }
+            | Self::InsertSlotRemove {
                 expected_instance, ..
             }
             | Self::InsertSplitterAdd {
@@ -654,6 +666,24 @@ impl Request {
                 ..
             } if !provenance || !matches!(port, external_menu::Port::Send) => {
                 Err("checkOnly requires provenance and fixed Stereo Send".into())
+            }
+            Self::InsertSlotRemove {
+                expected_instance,
+                expected_graph,
+                preceding_slot_node,
+                removed_slot_node,
+                following_slot_node,
+                expected_removed_instance,
+            } => {
+                let nodes = [preceding_slot_node, removed_slot_node, following_slot_node,
+                    expected_removed_instance];
+                if expected_instance == expected_removed_instance
+                    || ![expected_instance, expected_graph].into_iter().chain(nodes).all(|id| valid_uid(id))
+                    || nodes.iter().enumerate().any(|(index, id)| nodes[..index].contains(id))
+                {
+                    return Err("Middle slot removal requires six exact, bound identities".into());
+                }
+                Ok(())
             }
             Self::InsertSlotMove {
                 expected_instance,
@@ -2023,6 +2053,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainRestore { .. }
         | Request::InsertChainRelease { .. }
         | Request::InsertSlotMove { .. }
+        | Request::InsertSlotRemove { .. }
         | Request::InsertSplitterAdd { .. }
         | Request::InsertSplitterRemove { .. }
         | Request::InsertSplitterRemoveEmptyNested { .. }
@@ -2566,6 +2597,7 @@ fn dispatch_device(
             | Request::ImpactOutputSet { .. }
             | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
+            | Request::InsertSlotRemove { .. }
             | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterRemoveEmptyNested { .. }
@@ -2714,6 +2746,26 @@ fn dispatch_device(
             ctx,
             [&expected_graph, &source_node, &after_node, &following_node],
             branch,
+        );
+    }
+    if let Request::InsertSlotRemove {
+        expected_graph,
+        preceding_slot_node,
+        removed_slot_node,
+        following_slot_node,
+        expected_removed_instance,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::slot_remove::dispatch(
+            ctx,
+            &expected_graph,
+            [
+                &preceding_slot_node,
+                &removed_slot_node,
+                &following_slot_node,
+            ],
+            &expected_removed_instance,
         );
     }
     if let Request::InsertSplitterAdd {
