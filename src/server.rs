@@ -15,8 +15,8 @@ use crate::{
     operation::{self, Operation, Request, TrackEdit, TrackTask, schema},
     runtime::RuntimeHandle,
     serum::{
-        MidiMappingQuery as SerumMidiMappingQuery, PresetApply as SerumPresetApply,
-        Variant as SerumVariant,
+        FactoryPresetQuery, MidiMappingQuery as SerumMidiMappingQuery,
+        PresetApply as SerumPresetApply, Variant as SerumVariant,
     },
 };
 
@@ -472,6 +472,13 @@ impl McpServer {
             tool: Tool::new("serum2_preset_inspect", "Inspect an absolute .vstpreset or .SerumPreset path for Serum 2 or Serum 2 FX 2.1.5, schema 11. Checks the preset header and Zstandard frame bounds and reports the variant, file SHA-256 and applicable loader.", saved_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
+        let serum_factory_schema =
+            serde_json::to_value(schemars::schema_for!(FactoryPresetQuery)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("serum2_factory_presets_list", "Search the local Serum 2 and Serum 2 FX Factory library by preset name or relative path. Reads current or known legacy preset headers and returns paths for the Serum editor. Pass catalog_sha256 as expected_catalog with next_offset for subsequent pages. This does not load presets or open Studio Pro.", serum_factory_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         specs.push(ToolSpec {
             operation: None,
             tool: Tool::new("song_read", "Read a saved .song archive without editing it. Results are saved state, not unsaved live state; plugin parameter snapshots may be partial.", saved_schema.as_object().unwrap().clone()),
@@ -677,6 +684,19 @@ impl ServerHandler for McpServer {
             }
             .into());
         }
+        if request.name == "serum2_factory_presets_list" {
+            let query: FactoryPresetQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result =
+                tokio::task::spawn_blocking(move || crate::serum::list_factory_presets(&query))
+                    .await
+                    .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(page) => CallToolResult::structured(serde_json::to_value(page).unwrap()),
+                Err(error) => CallToolResult::structured_error(json!({"error":error})),
+            }
+            .into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -805,6 +825,25 @@ mod tests {
         assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
         assert_eq!(spec.tool.input_schema["required"], json!(["path"]));
         assert_eq!(spec.tool.input_schema["additionalProperties"], false);
+    }
+
+    #[test]
+    fn serum_factory_catalog_is_read_only_with_no_live_scope_or_path_argument() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_factory_presets_list")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        assert_eq!(spec.tool.input_schema["additionalProperties"], false);
+        assert_eq!(
+            spec.tool.input_schema["properties"]
+                .as_object()
+                .unwrap()
+                .keys()
+                .collect::<Vec<_>>(),
+            ["expected_catalog", "limit", "offset", "search", "variant"]
+        );
     }
 
     #[test]

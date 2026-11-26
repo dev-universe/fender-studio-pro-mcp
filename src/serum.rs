@@ -1,6 +1,6 @@
 use std::{
     collections::BTreeMap,
-    fs::OpenOptions,
+    fs::{File, OpenOptions},
     io::Read,
     path::{Path, PathBuf},
 };
@@ -11,6 +11,9 @@ use sha2::{Digest, Sha256};
 
 use crate::model::OperationError;
 
+mod factory;
+pub(crate) use factory::{FactoryPresetQuery, list_factory_presets};
+
 const MAX_FILE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_METADATA_BYTES: usize = 64 * 1024;
 const HEADER_BYTES: usize = 48;
@@ -18,7 +21,7 @@ const CHUNK_TABLE_BYTES: usize = 28;
 const REFERENCE_VERSION: &str = "2.1.5";
 const SCHEMA_VERSION: u8 = 11;
 
-#[derive(Clone, Copy, Debug, Deserialize, JsonSchema, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, JsonSchema, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum Variant {
     Instrument,
@@ -254,7 +257,7 @@ pub(crate) fn inspect_preset(path: &Path) -> Result<PresetInspection, OperationE
     })
 }
 
-fn read_preset_file(path: &Path, size_message: &str) -> Result<Vec<u8>, OperationError> {
+fn open_preset_file(path: &Path) -> Result<(File, u64), OperationError> {
     let mut options = OpenOptions::new();
     options.read(true);
     #[cfg(unix)]
@@ -268,13 +271,24 @@ fn read_preset_file(path: &Path, size_message: &str) -> Result<Vec<u8>, Operatio
             "Cannot open the local Serum preset as a regular file",
         )
     };
-    let input = options.open(path).map_err(|_| unavailable())?;
-    let metadata = input.metadata().map_err(|_| unavailable())?;
+    let file = options.open(path).map_err(|_| unavailable())?;
+    let metadata = file.metadata().map_err(|_| unavailable())?;
     if !metadata.is_file() {
         return Err(unavailable());
     }
+    Ok((file, metadata.len()))
+}
+
+fn read_preset_file(path: &Path, size_message: &str) -> Result<Vec<u8>, OperationError> {
+    let (input, size) = open_preset_file(path)?;
+    let unavailable = || {
+        OperationError::new(
+            "serum_preset_unavailable",
+            "Cannot open the local Serum preset as a regular file",
+        )
+    };
     let too_large = || OperationError::new("serum_preset_too_large", size_message);
-    if metadata.len() > MAX_FILE_BYTES as u64 {
+    if size > MAX_FILE_BYTES as u64 {
         return Err(too_large());
     }
     let mut bytes = Vec::new();
@@ -436,7 +450,7 @@ mod tests {
     use serde_json::{Value, json};
     use std::fs;
 
-    fn state(metadata: Value) -> Vec<u8> {
+    pub(super) fn state(metadata: Value) -> Vec<u8> {
         // One valid single-segment Zstandard frame containing the byte 'x'.
         state_with_frame(metadata, b"\x28\xb5\x2f\xfd\x20\x01\x09\0\0x")
     }
