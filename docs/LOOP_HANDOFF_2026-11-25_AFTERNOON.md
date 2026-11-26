@@ -3453,3 +3453,31 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   지정 종료 시각 없음.
   [#333](https://github.com/dev-universe/fender-studio-pro-mcp/pull/333) ·
   [#334](https://github.com/dev-universe/fender-studio-pro-mcp/pull/334)
+
+## 2026-11-27 2시 8분 Scope 생성 Undo 판정
+
+- R590은 선행 페이더와 새 Send 사이 12.887초 및 메뉴 읽기
+  이후, R592는 메뉴 조작 없이 4.987초 이후 생성 Undo를
+  단독 확인했다. R591은 0.960초에 생성한 뒤 맨 위에서
+  페이더 Undo를 확인해 제거 비교를 보류했다.
+- REA/Ghidra 및 Craft 9구간으로 Undo 그룹과 보관 목록을
+  대조했다. R593/R594 진단은 생성이 끝나는 시점에 새 Send
+  추가 항목이 올라왔고, R594에서 별도 파라미터 항목이
+  27 호스트 틱 뒤 이를 한 칸 내리는 것을 확인했다.
+- R594는 페이더 Undo 뒤 두 Send, 한 번 더 정확한 Send 추가
+  Undo 뒤 원래 Send만 남는 것을 읽었다. R595는 진단 코드가
+  없는 같은 배포 소스로 재현했다. R594 74/40.408초 및
+  호스트 74.691초, R595 74/33.452초 및 호스트 53.627초.
+  원래 Send와 Scope 31행 정확, 미저장 종료와 두 송 해시,
+  관리 18개·변경 프로필 9개 원복. 분석 대상과 앱·owner 종료.
+  [#349](https://github.com/dev-universe/fender-studio-pro-mcp/pull/349)
+- #349 `aed0af2f`의 증거와 README를 수정하고 검토 가능으로
+  전환했다. #337 macOS 잡이 시작 단계 없이 취소돼 해당 잡만
+  한 차례 다시 요청했다. 코어는 통과, macOS 재실행 중.
+  다음은 #348, #349, #177, #187 순서로 둔다. 최신 main과 열린
+  79개 PR의 동일 헤드 쌍을 사용한 시뮬레이션에서 전체 충돌이
+  없고 최종 트리가 같음을 검증했다. 열린 PR 79개 중 문서만 71개.
+  로컬 잔여 11·main 13·장비 4, 전체 2~5일과 장비 대기,
+  지정 종료 시각 없음.
+  [#337](https://github.com/dev-universe/fender-studio-pro-mcp/pull/337) ·
+  [#348](https://github.com/dev-universe/fender-studio-pro-mcp/pull/348)
