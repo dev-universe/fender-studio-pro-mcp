@@ -2592,3 +2592,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - DAW 및 owner 종료. 고정 잔여 main 13개, 로컬 11개,
   장비 의존 4건, 병합 대기 73개. 전체 2~5일과 장비 대기.
   지정 종료 시각 없음.
+
+## 11월 26일 17시 33분 현재 Event Input 분석과 공개 조회 PR
+
+- #300과 #301이 각각 정확한 head `7863262`, `7b2f247`의
+  두 필수 검사 후 main에 병합됐다. 최종 검사부터 병합까지
+  각각 825.7초, 576.8초. main은 `2d8db71`이다.
+  [#300](https://github.com/dev-universe/fender-studio-pro-mcp/pull/300)
+  [#301](https://github.com/dev-universe/fender-studio-pro-mcp/pull/301)
+- R528 공개 `serum2_midi_mapping` 조회에서 실제 8.1.1로
+  확인한 채널·Event Input 조합 두 개를 조회할 수 있다.
+  Pinned Rust 1.88 전체 검사에서 Rust 274, JavaScript 444,
+  Python 560건을 통과했다. 270.432초. 출시 바이너리 stdio
+  확인 1.154초로 두 플러그인의 12개 매핑과 호환 응답, 거부를
+  확인했다. #302 현재 기준 head `f768dd3` 필수 검사 중이다.
+  [#302](https://github.com/dev-universe/fender-studio-pro-mcp/pull/302)
+- R529는 Studio Pro 8.1.1 arm64의 현재 Event Input 조회
+  경로를 REA/Ghidra와 Craft-Anything 9개 위치로 대조했다.
+  `getDestinationChannel`은 단일 연결을 찾은 뒤 포트 소유
+  채널을 반환한다. `PortParam.getCurrentPort`는 독립 선택기
+  객체의 상태다. #303을 #302 다음에 배치했다. 다음 R530은
+  정확한 Serum 인스턴스를 바인딩하고 stock Inspector의 Input
+  1·2·16을 스크립트 조회와 대조한다.
+  [#303](https://github.com/dev-universe/fender-studio-pro-mcp/pull/303)
+- Studio Pro 메인과 MCP owner 종료, 정상 설치 복원 상태다.
+  고정 잔여 main 13개, 로컬 11개, 장비 의존 4건, 열린 PR
+  73개다. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
