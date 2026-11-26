@@ -223,11 +223,14 @@ can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
 [Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
 
-Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx` and
-`controller` set to 0–129. This offline reference covers CC 0–127, channel
-pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
-2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
-on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
+Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx`,
+`controller` set to 0–129, and the optional zero-based `channel` set to
+0–15. The default is the first MIDI channel, `channel: 0`. The arm64
+2.1.5 VST3 reference covers CC 0, CC 2–127 and channel pressure 128 on
+all 16 channels of input bus 0. CC 1 and pitch bend 129 are supported
+on the first channel. Resolve the returned `studio_pro_name` with
+`plugin_parameters` on the actual instance.
+[MIDI channel verification](docs/evidence/2026-11-26-serum2-midi-channels.md)
 
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
