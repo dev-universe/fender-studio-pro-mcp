@@ -2864,3 +2864,28 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   `vstservice` 정적 전달 경로 확인이다. 로컬 11·main 13·
   장비 의존 4, 열린 PR 78개. 전체 2~5일과 장비 대기,
   지정 종료 시각 없음. 앱·owner 종료와 기존 설치 유지.
+
+## 11월 26일 20시 16분 Serum 타이밍 병합과 실앱 검증
+
+- #292의 정확한 `b5c29ce`는 두 필수 검사 뒤
+  `75a5893`으로 병합됐다. 556.9초. Serum #319의
+  `6cad99b`도 741.7초에 `b3da382`로 병합됐다.
+  #318은 새 정확한 `6eb4b36`에서 필수 검사 중이다.
+  [#292](https://github.com/dev-universe/fender-studio-pro-mcp/pull/292) ·
+  [#319](https://github.com/dev-universe/fender-studio-pro-mcp/pull/319)
+- R546은 현재 8.1.1 arm64 VST3 어댑터의 문맥 조립과
+  실제 프로세서 슬롯 호출을 정적으로 연결했다. 헤더
+  오프셋 13개, 인터페이스 ID 2개, 명령 27개 대조.
+  [#320](https://github.com/dev-universe/fender-studio-pro-mcp/pull/320)
+- R547의 진단부는 컨트롤러가 없어 연결되지 않았다.
+  R547B에서 컨트롤러와 올바른 콘솔 채널로 FX는 확인했으나
+  악기의 버퍼는 정지 콜백으로 먼저 찼다. R547C는 두
+  진단 클래스에서 90 BPM·158블록과 147 BPM·338블록,
+  48 kHz/512프레임, 루프 한 번과 연속 인덱스 512 차이를
+  확인했다. null 문맥 및 마스크 질의 없음. 61요청·8.720초,
+  앱 41.919초, 저장 없이 종료, 18+10과 스캔 경로 원복.
+  [#321](https://github.com/dev-universe/fender-studio-pro-mcp/pull/321)
+- 다음은 같은 타이밍에 공식 Serum 프리셋의 소리 변화를
+  독립 대조할 수 있는지 기존 Ableton SDK 경로로 확인하는
+  단위다. 로컬 11·main 13·장비 의존 4, 열린 PR 78개.
+  전체 2~5일과 장비 대기. 지정 종료 시각 없음.
