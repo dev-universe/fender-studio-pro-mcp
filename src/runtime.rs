@@ -2017,6 +2017,7 @@ mod tests {
                 "hostProbe",
                 "song",
                 "tracks",
+                "trackEventInput",
                 "trackFormats",
                 "channels",
                 "panner",

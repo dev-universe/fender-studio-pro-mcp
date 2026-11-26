@@ -231,6 +231,36 @@ function mteTracks(context) {
 	return out;
 }
 
+function mteTrackEventInput(context, op) {
+    var result = { op: "eventInput" };
+    try {
+        if (typeof op.track !== "string" || !op.track.trim() || op.track.length > 256) {
+            result.error = "An exact Music track name is required";
+            return result;
+        }
+        var tracks = mteTracks(context).filter(function (track) { return track.name === op.track; });
+        if (tracks.length !== 1 || tracks[0].mediaType !== "Music") {
+            result.error = "The track name must resolve to one Music track";
+            return result;
+        }
+        var channel = tracks[0].channel;
+        var selector = mteFn(channel, "findParameter") ? channel.findParameter("outputPort") : null;
+        var port = mteFn(selector, "getCurrentPort") ? selector.getCurrentPort() : null;
+        var label = port && port.label;
+        var event = typeof label === "string" && /^Event Input ([1-9]|1[0-6])$/.exec(label);
+        if (!event || port.type !== 0) {
+            result.error = "The Music track output does not expose a numbered Event Input";
+            return result;
+        }
+        result.track = op.track;
+        result.event_input = Number(event[1]);
+        result.label = label;
+    } catch (_) {
+        result.error = "The Music track Event Input could not be read";
+    }
+    return result;
+}
+
 // JSON-safe view of a host object, for the eval probe (as the bridge's describe).
 function mteDescribe(value, depth) {
 	if (value === null || value === undefined) return value === undefined ? "<undefined>" : null;
@@ -262,6 +292,10 @@ function mteApply(context, ops, lease) {
 	for (var i = 0; i < ops.length; i++) {
 		var op = ops[i] || {};
 		var r = { op: op.op };
+		if (op.op === "eventInput") {
+			results.push(mteTrackEventInput(context, op));
+			continue;
+		}
 		if (op.op === "probe") {
 			r.context = mteShape(context, ["functions", "mainTrackList", "editor", "iterator"]);
 			r.functions = mteShape(fns, ["root", "moveToFolder", "colorizeEvent", "renameEvent", "addTrack", "removeTrack", "executeImmediately"]);

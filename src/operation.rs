@@ -21,6 +21,8 @@ pub enum Operation {
     Song(Empty),
     #[serde(rename = "tracks", alias = "tracks_list")]
     Tracks(TrackQuery),
+    #[serde(rename = "trackEventInput", alias = "track_event_input_get")]
+    TrackEventInput(TrackEventInput),
     #[serde(rename = "trackFormats", alias = "track_formats")]
     TrackFormats(Empty),
     #[serde(rename = "channels", alias = "channels_list")]
@@ -182,6 +184,13 @@ pub struct TrackQuery {
     pub name: Option<String>,
     pub events: Option<bool>,
     pub max_events: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TrackEventInput {
+    #[schemars(length(min = 1, max = 256))]
+    pub track: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
@@ -1573,6 +1582,7 @@ impl Operation {
             | Self::HostProbe(_)
             | Self::Song(_)
             | Self::Tracks(_)
+            | Self::TrackEventInput(_)
             | Self::TrackFormats(_)
             | Self::Channels(_)
             | Self::Panner(_)
@@ -1655,6 +1665,7 @@ impl Operation {
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
+                    | Self::TrackEventInput(_)
             )
     }
 
@@ -1717,6 +1728,15 @@ impl Operation {
             Self::SetPanner(p) if p.channel.trim().is_empty() || !p.value.is_finite() => {
                 return Err(invalid(
                     "A channel name and finite raw panner value are required",
+                ));
+            }
+            Self::TrackEventInput(query)
+                if query.track.trim().is_empty()
+                    || query.track.len() > 256
+                    || query.track.chars().any(char::is_control) =>
+            {
+                return Err(invalid(
+                    "Track name must contain 1 to 256 UTF-8 bytes without control characters",
                 ));
             }
             Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,

@@ -119,6 +119,12 @@ impl McpServer {
                 "Read tracks, selection, layers and events from the active session.",
                 false,
             ),
+            named::<TrackEventInput>(
+                "track_event_input_get",
+                "trackEventInput",
+                "Read the numbered Event Input currently selected in the output routing of a uniquely named Music track. Requires expected_document from host_status and the native Studio Pro document context. Read the instrument or FX separately when you need its instance identity.",
+                false,
+            ),
             named::<SelectTrack>(
                 "track_select",
                 "selectTrack",
@@ -496,7 +502,10 @@ fn named<T: JsonSchema>(
     let document_required = mutation
         || matches!(
             operation,
-            "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+            "chorderLearningGet"
+                | "chorderChordsGet"
+                | "pluginMultiChildParameters"
+                | "trackEventInput"
         );
     if document_required
         || matches!(
@@ -556,7 +565,10 @@ fn named<T: JsonSchema>(
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(
         operation,
-        "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+        "chorderLearningGet"
+            | "chorderChordsGet"
+            | "pluginMultiChildParameters"
+            | "trackEventInput"
     ) {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     } else if operation == "externalPortMenu" {
@@ -767,9 +779,45 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 65;
+    const EXPECTED_TOOL_COUNT: usize = 66;
 
     use super::*;
+
+    #[test]
+    fn track_event_input_exposes_a_document_scoped_read() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "track_event_input_get")
+            .unwrap();
+        assert_eq!(spec.operation, Some("trackEventInput"));
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        assert_eq!(spec.tool.input_schema["additionalProperties"], false);
+        assert_eq!(
+            spec.tool.input_schema["required"],
+            json!(["track", "expected_document"])
+        );
+
+        let operation =
+            Operation::from_parts("track_event_input_get", json!({"track":"Lead"})).unwrap();
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(
+            operation.wire(),
+            ("trackEventInput".into(), json!({"track":"Lead"}))
+        );
+        for invalid in [
+            json!({"track":""}),
+            json!({"track":" "}),
+            json!({"track":"Lead","value":2}),
+            json!({"track":"é".repeat(129)}),
+        ] {
+            assert!(
+                Operation::from_parts("track_event_input_get", invalid)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+    }
 
     #[test]
     fn multi_child_dsp_tool_exposes_two_slots_and_requires_live_identity() {
