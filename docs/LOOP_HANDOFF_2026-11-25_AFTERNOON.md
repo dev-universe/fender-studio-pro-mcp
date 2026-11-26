@@ -1997,3 +1997,20 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - #266의 최신 기준 `371874e` 검사 중이다. 그 뒤 #267·Impact·
   Chorder·Shared Event. `main` 14개·로컬 11개, 장비 의존 4건.
   다음 검사 9~14분, 전체 2~5일과 CI·장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 09시 20분 Serum 프리셋 파일 조회 구현
+
+- R479는 읽기 전용 `serum2_preset_inspect`를 추가한다. 2.1.5
+  스키마 11의 editor `.SerumPreset`과 처리부 전용 `.vstpreset`을
+  구분하고 제품과 SHA-256, 각 적용 방식을 알려 준다. 실제 네이티브
+  두 파일이 Zstandard 프레임 크기 필드를 생략해 해당 형식의
+  헤더 검사에만 허용했다. 본문 해석이나 호스트 적용은 별도다.
+- 앞서 확보한 두 형식·두 제품 4파일을 MCP stdio에서 맞췄고,
+  확장만 바꾼 파일·심볼릭 링크·용량 초과·상대 경로를 거부했다.
+  파일 SHA-256은 그대로였다. 구현 브랜치 생성부터 커밋까지
+  6분 47초, 실제 파일 확인 1.564초. Rust 269개·JS 441개 통과,
+  Rust 1.88 Clippy와 포맷 통과. 앱과 owner 닫힘.
+  [#268](https://github.com/dev-universe/fender-studio-pro-mcp/pull/268)
+- #266의 최신 기준은 macOS 통과·Core 대기다. 이어 #267·#268·
+  Impact 순으로 검사한다. `main` 14개·로컬 11개, 장비 의존 4건.
+  다음 검사 9~14분, 전체 2~5일과 CI·장비 대기. 지정 종료 시각 없음.
