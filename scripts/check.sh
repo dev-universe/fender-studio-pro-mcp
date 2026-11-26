@@ -16,4 +16,8 @@ cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked
 cargo build --locked --release
 node --test tests/js/*.test.mjs
-python3 -m unittest discover -s scripts -p 'test_*.py'
+if [[ ${GITHUB_ACTIONS:-} == true ]]; then
+  python3 scripts/run_offline_python_tests.py 4
+else
+  python3 -m unittest discover -s scripts -p 'test_*.py'
+fi
