@@ -12,4 +12,32 @@ R433 inspected the arm64 Ampire image shipped with Studio Pro 8.1.1 Build 113103
 
 The generic null behavior is consistent with the observed zero and blank values. The catalog’s enabled flag and the lack of a live wrapper class or pointer read leave the actual alias binding unresolved. The diagnostic’s self-reference was also present for the proven Wah and Speed pairs, so it cannot identify the state of a live alias. The factory scan covers the directly observed encoding on this image. Other host dispatch paths remain outside its scope.
 
-The current evidence supports documenting both global rows as unverified for mutation and audio. A future live trial would first need an actual provider, an exact child parameter and independent movement of the pair. This 10-minute-29-second investigation used existing live records and performed no new DAW operations.
+R433 took 10 minutes 29 seconds offline. The later R538 trial established
+raw write and readback for both global rows. In the R539C Black Panel
+render, changing those values stayed within measured repeat variation.
+A verified processing role on another model would require an exact
+provider, child parameter and independent movement of the pair.
+[R538 readback](https://github.com/dev-universe/fender-studio-pro-mcp/pull/311) ·
+[R539C renders](https://github.com/dev-universe/fender-studio-pro-mcp/pull/312)
+
+## Project save and cold reopen
+
+R586 used the same pinned candidate as R538 on Studio Pro 8.1.1 build
+113103 arm64. On one exact Black Panel instance, the amplifier's local
+Normal Volume changed from 5.00 to 10.00. Both global aliases were then
+set to raw 7500. Two native reads observed the two raw changes and the
+same other 96 stable rows. The component fingerprint matched the state
+with the local change alone.
+
+One stock Save wrote the owned scratch. Both aliases still returned 7500
+in the warm process. A new process reopened the archive with writes to the
+file denied. The same Ampire instance returned zero for both aliases with
+empty displays. Local Normal Volume stayed at 10.00. The other 96 rows,
+component fingerprint and saved archive digest matched the warm evidence.
+This is a saved-project result for the tested Black Panel configuration.
+
+The warm readback issued 67 requests in 24.623 seconds and the cold
+readback issued 18 in 2.310 seconds. Four captures were released. Both host
+processes exited normally after 56.534 and 49.414 seconds. The original
+archive, saved scratch, 18 managed files and 10 changed profile files were
+verified after restoration.
