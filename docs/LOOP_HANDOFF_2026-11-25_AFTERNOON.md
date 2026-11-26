@@ -3406,3 +3406,22 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   Keystation88을 USB/오디오에서 확인할 수 없었다. 지정 종료
   시각 없음. Scope 구조 증거를 보존하고 다음은 Ampire의 전역
   Volume/Pitch 별칭과 활성 페달 역할의 차이를 확인한다.
+
+## 2026-11-27 1시 30분 Ampire 전역 별칭의 저장 범위
+
+- R586은 이전 `ccfaec0`의 동일 Ampire 경로로 Black Panel Normal
+  Volume 5.00→10.00을 준비했다. 두 전역 별칭 각각 raw 7500은
+  온간 Save 뒤에도 읽혔다. 쓰기 금지 새 프로세스에서 두 전역은
+  빈 표시와 raw 0이며 Normal Volume 10.00, 기타 96행 및 구성
+  성분 지문은 일치했다. 과거 스템의 신호 결과와 프로젝트 지속성
+  근거를 분리했다. 67/24.623초 및 18/2.310초. 두 앱 56.534초와
+  49.414초, 캡처 4개 해제, 저장본·원본·정상 관리 18개·프로필
+  10개 확인 및 앱·owner 종료. [#223](https://github.com/dev-universe/fender-studio-pro-mcp/pull/223)
+- #332는 `8dcc51e6`에서 필수 두 검사 후 `66b6418f`에 병합됐다.
+  macOS 큐 대기를 포함해 1033.8초. #333 `224ab18f`의 최신 검사
+  두 개가 실행 중. 열린 PR 81개. [#332](https://github.com/dev-universe/fender-studio-pro-mcp/pull/332)
+- R587은 같은 Wah 모델을 두 슬롯에 준비해 전역 별칭이 어느
+  로컬 값을 읽고 한 번의 변경을 전달하는지 검증한다. 본래
+  캡슐과 두 슬롯 상태를 복원하고 초기 선택 순서의 영향도
+  분리한다. 고정 잔여 로컬 11·main 13, 장비 의존 4.
+  전체 2~5일 및 장비 대기. 지정 종료 시각 없음.
