@@ -254,7 +254,7 @@ fn check_shape(
     Ok(())
 }
 
-const EMPTY_SHAPE_CHANGED: &str = "The verified empty nested Splitter topology changed";
+const NESTED_SHAPE_CHANGED: &str = "The verified nested Splitter topology changed";
 
 struct Links<Node> {
     incoming: Vec<Node>,
@@ -265,23 +265,25 @@ fn same_incoming<Node: PartialEq>(actual: &[Node], expected: &[Node]) -> bool {
     actual.len() == expected.len() && expected.iter().all(|n| actual.contains(n))
 }
 
-fn empty_nested_topology<Node: Copy + PartialEq>(
+fn nested_topology<Node: Copy + PartialEq>(
     [target, paired, preceding, following]: [Node; 4],
+    occupied: Option<Node>,
     mut links: impl FnMut(Node) -> Result<Links<Node>, String>,
 ) -> Result<[Node; 8], String> {
     let preceding_links = links(preceding)?;
     let [inner] = preceding_links.incoming[..] else {
-        return Err(EMPTY_SHAPE_CHANGED.into());
+        return Err(NESTED_SHAPE_CHANGED.into());
     };
     let inner_links = links(inner)?;
-    let ([outer], [left, peer]) = (&inner_links.incoming[..], &inner_links.outgoing[..]) else {
-        return Err(EMPTY_SHAPE_CHANGED.into());
+    let ([outer], [left, other_lane]) = (&inner_links.incoming[..], &inner_links.outgoing[..])
+    else {
+        return Err(NESTED_SHAPE_CHANGED.into());
     };
     let outer = *outer;
-    let peer = *peer;
+    let peer = occupied.unwrap_or(*other_lane);
     let following_links = links(following)?;
     let [outer_merger] = following_links.outgoing[..] else {
-        return Err(EMPTY_SHAPE_CHANGED.into());
+        return Err(NESTED_SHAPE_CHANGED.into());
     };
     let nodes = [
         outer,
@@ -299,32 +301,42 @@ fn empty_nested_topology<Node: Copy + PartialEq>(
             .enumerate()
             .any(|(index, node)| nodes[..index].contains(node))
     {
-        return Err(EMPTY_SHAPE_CHANGED.into());
+        return Err(NESTED_SHAPE_CHANGED.into());
     }
     let target_links = links(target)?;
     let paired_links = links(paired)?;
     let peer_links = links(peer)?;
     let outer_links = links(outer)?;
     let outer_merger_links = links(outer_merger)?;
+    let inner_lanes_match = if occupied.is_some() {
+        *other_lane == following
+            && (target_links.outgoing == [paired, peer] || target_links.outgoing == [peer, paired])
+            && same_incoming(&paired_links.incoming, &[target, peer])
+            && peer_links.incoming == [target]
+            && peer_links.outgoing == [paired]
+            && same_incoming(&following_links.incoming, &[paired, inner])
+    } else {
+        target_links.outgoing == [paired, paired]
+            && (paired_links.incoming == [target] || paired_links.incoming == [target, target])
+            && peer_links.incoming == [inner]
+            && peer_links.outgoing == [following]
+            && same_incoming(&following_links.incoming, &[paired, peer])
+    };
     if preceding_links.outgoing != [target]
         || target_links.incoming != [preceding]
-        || target_links.outgoing != [paired, paired]
-        || !(paired_links.incoming == [target] || paired_links.incoming == [target, target])
+        || !inner_lanes_match
         || paired_links.outgoing != [following]
-        || peer_links.incoming != [inner]
-        || peer_links.outgoing != [following]
-        || !same_incoming(&following_links.incoming, &[paired, peer])
         || !outer_links.incoming.is_empty()
         || outer_links.outgoing != [inner, outer_merger]
         || !same_incoming(&outer_merger_links.incoming, &[outer, following])
         || !outer_merger_links.outgoing.is_empty()
     {
-        return Err(EMPTY_SHAPE_CHANGED.into());
+        return Err(NESTED_SHAPE_CHANGED.into());
     }
     Ok(nodes)
 }
 
-struct EmptyMember<'a> {
+struct NestedMember<'a> {
     id: &'a str,
     primary: *mut c_void,
     table: usize,
@@ -390,13 +402,13 @@ const SLOT_LAYOUTS: [GraphObjectLayout; 2] = [
     },
 ];
 
-struct EmptyGraph<'a> {
+struct NestedGraph<'a> {
     graph: *mut c_void,
     image: usize,
-    members: Vec<EmptyMember<'a>>,
+    members: Vec<NestedMember<'a>>,
 }
 
-impl<'a> EmptyGraph<'a> {
+impl<'a> NestedGraph<'a> {
     fn capture(
         ctx: &Context<'_>,
         route: &GraphRoute,
@@ -413,10 +425,10 @@ impl<'a> EmptyGraph<'a> {
         ctx.check()?;
         route.check()?;
         if unsafe { count(graph_node) } != 8 {
-            return Err(EMPTY_SHAPE_CHANGED.into());
+            return Err(NESTED_SHAPE_CHANGED.into());
         }
 
-        let mut members: Vec<EmptyMember<'_>> = Vec::with_capacity(expected.len());
+        let mut members: Vec<NestedMember<'_>> = Vec::with_capacity(expected.len());
         for (index, (id, kind)) in expected.into_iter().enumerate() {
             ctx.check()?;
             route.check()?;
@@ -448,7 +460,7 @@ impl<'a> EmptyGraph<'a> {
             if members.iter().any(|member| member.primary == primary) {
                 return Err("Two graph nodes share a primary pointer".into());
             }
-            members.push(EmptyMember {
+            members.push(NestedMember {
                 id,
                 primary,
                 table: table(primary),
@@ -464,17 +476,18 @@ impl<'a> EmptyGraph<'a> {
         })
     }
 
-    fn member(&self, id: &str) -> Result<&EmptyMember<'a>, String> {
+    fn member(&self, id: &str) -> Result<&NestedMember<'a>, String> {
         self.members
             .iter()
             .find(|member| member.id == id)
-            .ok_or_else(|| EMPTY_SHAPE_CHANGED.into())
+            .ok_or_else(|| NESTED_SHAPE_CHANGED.into())
     }
 
     fn check(
         &self,
         splitter: *mut c_void,
         [splitter_id, merger_id, preceding_id, following_id]: [&str; 4],
+        occupied_id: Option<&str>,
     ) -> Result<(), String> {
         if self.member(splitter_id)?.primary != splitter
             || table(self.graph) != self.image + GRAPH_TABLE
@@ -484,8 +497,13 @@ impl<'a> EmptyGraph<'a> {
         let paired = self.member(merger_id)?.primary;
         let preceding = self.member(preceding_id)?.primary;
         let following = self.member(following_id)?.primary;
-        let [outer, inner, _, _, peer, outer_merger, _, _] =
-            empty_nested_topology([splitter, paired, preceding, following], |object| {
+        let occupied = occupied_id
+            .map(|id| self.member(id).map(|member| member.primary))
+            .transpose()?;
+        let [outer, inner, _, _, peer, outer_merger, _, _] = nested_topology(
+            [splitter, paired, preceding, following],
+            occupied,
+            |object| {
                 let member = self
                     .members
                     .iter()
@@ -494,13 +512,14 @@ impl<'a> EmptyGraph<'a> {
                 if table(object) != member.table
                     || unsafe { field::<*mut c_void>(object, 0x178) } != self.graph
                 {
-                    return Err(EMPTY_SHAPE_CHANGED.into());
+                    return Err(NESTED_SHAPE_CHANGED.into());
                 }
                 Ok(Links {
                     incoming: bounded_links(object, 0x188, 0x190, 0)?,
                     outgoing: bounded_links(object, 0x1a8, 0x1b0, 0)?,
                 })
-            })?;
+            },
+        )?;
         if table(outer) != self.image + SPLITTER_TABLE
             || table(inner) != self.image + SPLITTER_TABLE
             || table(outer_merger) != self.image + MERGER_TABLE
@@ -518,7 +537,7 @@ impl<'a> EmptyGraph<'a> {
                     || field::<*mut c_void>(merger, 0x1d0) != node
             })
         {
-            return Err(EMPTY_SHAPE_CHANGED.into());
+            return Err(NESTED_SHAPE_CHANGED.into());
         }
         Ok(())
     }
@@ -526,19 +545,29 @@ impl<'a> EmptyGraph<'a> {
 
 enum Binding<'a> {
     Occupied([Owned; 4]),
-    Empty(EmptyGraph<'a>),
+    Nested(NestedGraph<'a>),
 }
 
 #[derive(Clone, Copy)]
-pub(in crate::native_script::request) enum Shape {
+pub(in crate::native_script::request) enum Shape<'a> {
     OccupiedBranches,
     EmptyNested,
+    OneLaneNested(&'a str),
+}
+
+impl<'a> Shape<'a> {
+    fn occupied_slot(self) -> Option<&'a str> {
+        match self {
+            Self::OneLaneNested(slot) => Some(slot),
+            Self::OccupiedBranches | Self::EmptyNested => None,
+        }
+    }
 }
 
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     ids @ [graph_id, splitter_id, merger_id, first_id, second_id]: [&str; 5],
-    shape: Shape,
+    shape: Shape<'_>,
 ) -> Reply {
     let mut dispatched = false;
     let result = (|| -> Result<(), String> {
@@ -559,15 +588,18 @@ pub(in crate::native_script::request) fn dispatch(
                 ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
                 Binding::Occupied(bound_nodes(&ctx, &route, nodes)?)
             }
-            Shape::EmptyNested => {
-                let members =
-                    ownership.check_empty_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
-                Binding::Empty(EmptyGraph::capture(&ctx, &route, image, members)?)
+            Shape::EmptyNested | Shape::OneLaneNested(_) => {
+                let members = ownership.check_nested_splitter_remove_targets(
+                    ids,
+                    &ctx.instance.object_uid,
+                    shape.occupied_slot(),
+                )?;
+                Binding::Nested(NestedGraph::capture(&ctx, &route, image, members)?)
             }
         };
         let identity = match &binding {
             Binding::Occupied(nodes) => &nodes[0],
-            Binding::Empty(graph) => &graph.member(splitter_id)?.canonical,
+            Binding::Nested(graph) => &graph.member(splitter_id)?.canonical,
         };
         let mut guard = || {
             ctx.check()?;
@@ -598,7 +630,7 @@ pub(in crate::native_script::request) fn dispatch(
         }
         let validate_shape = || match &binding {
             Binding::Occupied(nodes) => check_shape(image, &route, splitter, nodes),
-            Binding::Empty(graph) => graph.check(splitter, nodes),
+            Binding::Nested(graph) => graph.check(splitter, nodes, shape.occupied_slot()),
         };
         guard()?;
         validate_shape()?;
@@ -622,7 +654,7 @@ pub(in crate::native_script::request) fn dispatch(
         }
         guard()?;
         match &binding {
-            Binding::Empty(_) => {
+            Binding::Nested(_) => {
                 ownership.check_borrowed(&mut guard)?;
                 validate_shape()?;
             }
@@ -652,6 +684,12 @@ pub(in crate::native_script::request) fn dispatch(
             "predecessor_slot_node",
             "successor_merger_node",
         ),
+        Shape::OneLaneNested(_) => (
+            "insert_splitter_remove_one_lane_nested",
+            "insert_splitter_remove_one_lane_nested_rejected",
+            "predecessor_slot_node",
+            "successor_merger_node",
+        ),
     };
     let mut reply = match result {
         Ok(()) => {
@@ -662,6 +700,9 @@ pub(in crate::native_script::request) fn dispatch(
             });
             receipt[first_node] = json!(first_id);
             receipt[second_node] = json!(second_id);
+            if let Some(slot) = shape.occupied_slot() {
+                receipt["occupied_slot_node"] = json!(slot);
+            }
             Reply::unbound(receipt)
         }
         Err(reason) => Reply::error(
@@ -729,7 +770,15 @@ mod tests {
     }
 
     fn check(anchors: [u8; 4], graph: &[Links<u8>; 8]) -> Result<[u8; 8], String> {
-        empty_nested_topology(anchors, |id| {
+        check_lanes(anchors, None, graph)
+    }
+
+    fn check_lanes(
+        anchors: [u8; 4],
+        occupied: Option<u8>,
+        graph: &[Links<u8>; 8],
+    ) -> Result<[u8; 8], String> {
+        nested_topology(anchors, occupied, |id| {
             let links = graph.get(usize::from(id)).ok_or("unknown graph node")?;
             Ok(Links {
                 incoming: links.incoming.clone(),
@@ -746,6 +795,36 @@ mod tests {
         graph[6].incoming.push(3);
         graph[7].incoming.reverse();
         assert_eq!(check(anchors, &graph).unwrap(), [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn accepts_either_exact_occupied_lane_with_reciprocal_links() {
+        let anchors = [3, 6, 2, 7];
+        let mut graph = fixture();
+        graph[1].outgoing = vec![2, 7];
+        graph[3].outgoing = vec![6, 4];
+        graph[4] = Links {
+            incoming: vec![3],
+            outgoing: vec![6],
+        };
+        graph[6].incoming = vec![4, 3];
+        graph[7].incoming = vec![6, 1];
+        assert_eq!(
+            check_lanes(anchors, Some(4), &graph).unwrap(),
+            [0, 1, 2, 3, 4, 5, 6, 7]
+        );
+        assert!(check_lanes(anchors, Some(2), &graph).is_err());
+        assert!(check(anchors, &graph).is_err());
+        graph[3].outgoing.reverse();
+        assert_eq!(
+            check_lanes(anchors, Some(4), &graph).unwrap(),
+            [0, 1, 2, 3, 4, 5, 6, 7]
+        );
+        graph[3].outgoing = vec![4, 4];
+        assert!(check_lanes(anchors, Some(4), &graph).is_err());
+        graph[3].outgoing = vec![4, 6];
+        graph[4].outgoing = vec![7];
+        assert!(check_lanes(anchors, Some(4), &graph).is_err());
     }
 
     #[test]
