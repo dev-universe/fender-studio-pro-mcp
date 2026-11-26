@@ -310,7 +310,7 @@ fn nested_topology<Node: Copy + PartialEq>(
     let outer_merger_links = links(outer_merger)?;
     let inner_lanes_match = if occupied.is_some() {
         *other_lane == following
-            && target_links.outgoing == [paired, peer]
+            && (target_links.outgoing == [paired, peer] || target_links.outgoing == [peer, paired])
             && same_incoming(&paired_links.incoming, &[target, peer])
             && peer_links.incoming == [target]
             && peer_links.outgoing == [paired]
@@ -798,7 +798,7 @@ mod tests {
     }
 
     #[test]
-    fn requires_the_exact_second_occupied_lane_and_its_reciprocal_links() {
+    fn accepts_either_exact_occupied_lane_with_reciprocal_links() {
         let anchors = [3, 6, 2, 7];
         let mut graph = fixture();
         graph[1].outgoing = vec![2, 7];
@@ -816,8 +816,13 @@ mod tests {
         assert!(check_lanes(anchors, Some(2), &graph).is_err());
         assert!(check(anchors, &graph).is_err());
         graph[3].outgoing.reverse();
+        assert_eq!(
+            check_lanes(anchors, Some(4), &graph).unwrap(),
+            [0, 1, 2, 3, 4, 5, 6, 7]
+        );
+        graph[3].outgoing = vec![4, 4];
         assert!(check_lanes(anchors, Some(4), &graph).is_err());
-        graph[3].outgoing.reverse();
+        graph[3].outgoing = vec![4, 6];
         graph[4].outgoing = vec![7];
         assert!(check_lanes(anchors, Some(4), &graph).is_err());
     }
