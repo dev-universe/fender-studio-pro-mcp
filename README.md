@@ -436,7 +436,7 @@ In a separate Studio Pro 8.1.1 trial, one Save and a fresh process preserved the
 
 A live run checked 60 built-in plugin classes. Of those, 59 passed a representative parameter or graph edit with readback and restoration. Phase Meter passed an insert-slot bypass check. [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md)
 
-The reports record the tested settings and the remaining gaps in model, preset, and hardware coverage. Live DAW integration has been tested on Apple Silicon Macs. Windows, Intel Mac, and Linux remain unverified. [Live validation report](docs/VALIDATION.md), [Plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md)
+The workflow matrix tracks state readback, Save and reopen, events, and signal checks on Studio Pro 8.1.1. Live DAW integration has been tested on Apple Silicon Macs. Windows, Intel Mac, and Linux remain unverified. [Current workflow verification](docs/BUILTIN_PLUGINS.md#current-workflow-verification) · [Live validation report](docs/VALIDATION.md) · [Plugin-state validation](docs/PLUGIN_STATE_VALIDATION.md)
 
 The detailed notes include run outcomes, remaining gaps, and links to evidence. [Built-in plugin experiment notes](docs/BUILTIN_PLUGIN_EXPERIMENTS.md)
 
