@@ -129,7 +129,7 @@ class Bridge {
         let code = null;
         const context = this.context();
         const contextError = this.contextError;
-        const reads = ["ping", "context", "song", "tracks", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
@@ -157,7 +157,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
@@ -227,9 +227,10 @@ class Bridge {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
+        if (!isFail(result) && (req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
             && (context.open !== true || afterContext.open !== true
-                || context.document !== afterContext.document || context.session !== afterContext.session)) {
+                || context.document !== afterContext.document || context.session !== afterContext.session
+                || (req.op === "trackEventInput" && (this.documentMode !== "native" || context.fileUrl !== afterContext.fileUrl)))) {
             code = "native_context_lost";
             result = fail("the native editor document lease changed before publication");
         }
@@ -375,6 +376,7 @@ class Bridge {
             case "song": return this.song();
             case "tracks": return this.tracks(args);
             case "trackFormats": return this.trackFormats();
+            case "trackEventInput": return this.trackEventInput(args);
             case "selectTrack": return this.selectTrack(args);
             case "notes": return this.notes(args);
             case "editNotes": return this.editNotes(args);
@@ -943,6 +945,21 @@ class Bridge {
             // cannot be told apart once punch-in is on.
             autopunch: param("punchIn") ? { punchIn: !!val("punchIn"), any: !!val("punch") } : null,
         };
+    }
+
+    trackEventInput(args) {
+        if (typeof args.track !== "string" || !args.track.trim() || args.track.length > 256)
+            return fail("An exact Music track name is required");
+        if (this.documentMode !== "native") return fail("Native document context is required for the Event Input read");
+        const receipt = this.trackTask({ ops: [{ op: "eventInput", track: args.track }] });
+        if (isFail(receipt)) return receipt;
+        const row = Array.isArray(receipt.results) && receipt.results.length === 1 ? receipt.results[0] : null;
+        if (row && row.op === "eventInput" && typeof row.error === "string") return fail(row.error);
+        if (!row || row.op !== "eventInput" || row.track !== args.track
+            || !Number.isInteger(row.event_input) || row.event_input < 1 || row.event_input > 16
+            || row.label !== "Event Input " + row.event_input)
+            return fail("The track task did not confirm an Event Input");
+        return { track: row.track, event_input: row.event_input, label: row.label };
     }
 
     // Track edits through the "Fender MCP Track Edit" task (device/EditTasks): routing,

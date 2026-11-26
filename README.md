@@ -237,8 +237,13 @@ Set `event_input: 2` and `channel: 1`, or `event_input: 16` and
 route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
 channels are 2 and 16. Both routes use the global rows for
 Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
-This offline lookup reports the reference and leaves the live routing
-to Studio Pro.
+
+Use `track_event_input_get` with an exact Music track name and the
+`expected_document` from `host_status` to read its current numbered
+Event Input in Studio Pro. This is the track's output selector for the
+destination instrument or FX. The recording input is a separate
+selector.
+[Live MCP lookup verification](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
 
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
