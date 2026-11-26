@@ -2,7 +2,6 @@ use super::*;
 use serde_json::Map;
 
 pub(super) const CLASS: &str = "B9D7536C-A010-457D-A182-36E5531164C9";
-const MODEL_HASH_DOMAIN: &[u8] = b"fsp.rumble.models.v1\0";
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Model {
@@ -13,6 +12,7 @@ pub(super) struct Model {
 
 pub(super) struct Document {
     root: Value,
+    plugin: FenderProcessor,
     pub(super) models: Vec<Model>,
 }
 
@@ -50,8 +50,12 @@ pub(super) fn guid(text: &str) -> Option<(String, [u8; 16])> {
 }
 
 pub(super) fn model_hasher() -> Sha256 {
+    model_hasher_for(FenderProcessor::Rumble)
+}
+
+pub(super) fn model_hasher_for(plugin: FenderProcessor) -> Sha256 {
     let mut hash = Sha256::new();
-    hash.update(MODEL_HASH_DOMAIN);
+    hash.update(plugin.profile().model_domain);
     hash
 }
 
@@ -63,19 +67,24 @@ pub(super) fn hash_record(hash: &mut Sha256, slot: &str, uid: &[u8; 16]) {
 
 impl Document {
     pub(super) fn decode(bytes: &[u8]) -> Result<Self, String> {
+        Self::decode_for(bytes, FenderProcessor::Rumble)
+    }
+
+    pub(super) fn decode_for(bytes: &[u8], plugin: FenderProcessor) -> Result<Self, String> {
         let root = super::rumble_serialization::validated_json(bytes)?;
-        let reject = || "Rumble processor schema unavailable".to_owned();
+        let profile = plugin.profile();
+        let reject = || format!("{} processor schema unavailable", profile.product);
         let object = root.as_object().ok_or_else(reject)?;
         if object.len() != 4
             || !["cid", "classname", "parameters", "component"]
                 .iter()
                 .all(|k| object.contains_key(*k))
-            || root["classname"] != "Rumble Native"
+            || root["classname"] != profile.name
             || !root["component"].is_object()
             || guid(root["cid"].as_str().ok_or_else(reject)?)
                 .map(|g| g.0)
                 .as_deref()
-                != Some(CLASS)
+                != Some(profile.class_uid)
         {
             return Err(reject());
         }
@@ -102,7 +111,11 @@ impl Document {
             .ok_or_else(reject)?;
             models.push(Model { slot, class, uid });
         }
-        Ok(Self { root, models })
+        Ok(Self {
+            root,
+            plugin,
+            models,
+        })
     }
 
     pub(super) fn processor(&self, index: usize) -> &Map<String, Value> {
@@ -112,7 +125,7 @@ impl Document {
     }
 
     pub(super) fn models_sha256(&self) -> String {
-        let mut hash = model_hasher();
+        let mut hash = model_hasher_for(self.plugin);
         for model in &self.models {
             hash_record(&mut hash, &model.slot, &model.uid);
         }

@@ -231,6 +231,112 @@ function mteTracks(context) {
 	return out;
 }
 
+function mteTrackEventInput(context, op) {
+    var result = { op: "eventInput" };
+    try {
+        if (typeof op.track !== "string" || !op.track.trim() || op.track.length > 256) {
+            result.error = "An exact Music track name is required";
+            return result;
+        }
+        var tracks = mteTracks(context).filter(function (track) { return track.name === op.track; });
+        if (tracks.length !== 1 || tracks[0].mediaType !== "Music") {
+            result.error = "The track name must resolve to one Music track";
+            return result;
+        }
+        var channel = tracks[0].channel;
+        var selector = mteFn(channel, "findParameter") ? channel.findParameter("outputPort") : null;
+        var port = mteFn(selector, "getCurrentPort") ? selector.getCurrentPort() : null;
+        var label = port && port.label;
+        var event = typeof label === "string" && /^Event Input ([1-9]|1[0-6])$/.exec(label);
+        if (!event || port.type !== 0) {
+            result.error = "The Music track output does not expose a numbered Event Input";
+            return result;
+        }
+        result.track = op.track;
+        result.event_input = Number(event[1]);
+        result.label = label;
+    } catch (_) {
+        result.error = "The Music track Event Input could not be read";
+    }
+    return result;
+}
+
+function mteSerumEventInputSet(context, op, lease) {
+    var dispatched = false;
+    var refusal = function (message) {
+        return { op: "serumEventInputSet", native_outcome: dispatched ? "unknown" : "not_applied", error: message };
+    };
+    try {
+        if (typeof op.track !== "string" || !op.track.trim() || op.track.length > 256
+            || !Number.isInteger(op.before) || op.before < 1 || op.before > 16
+            || !Number.isInteger(op.after) || op.after < 1 || op.after > 16 || op.before === op.after)
+            return refusal("A Music track and distinct numbered Event Inputs are required");
+        if (!lease || !mcpNativeLeaseCurrent(lease)) return refusal("The native task document is unavailable");
+        var tracks = mteTracks(context).filter(function (track) { return track.name === op.track; });
+        if (tracks.length !== 1 || tracks[0].mediaType !== "Music")
+            return refusal("The track name must resolve to one Music track");
+        var channel = tracks[0].channel;
+        var record = channel && channel.recordUnit;
+        var stopped = function () {
+            return record && (record.recordArmed === false || record.recordArmed === 0)
+                && (record.monitorActive === false || record.monitorActive === 0);
+        };
+        if (!stopped()) return refusal("Disable record arm and input monitoring on the source track");
+        var selector = mteFn(channel, "findParameter") ? channel.findParameter("outputPort") : null;
+        var current = mteFn(selector, "getCurrentPort") ? selector.getCurrentPort() : null;
+        if (!current || current.type !== 0 || current.label !== "Event Input " + op.before)
+            return refusal("The current Event Input differs from expected_event_input");
+        var root = context.editor && context.editor.model && context.editor.model.root;
+        var environment = root && root.environment;
+        var service = Host.Objects && mteFn(Host.Objects, "getObjectByName")
+            ? Host.Objects.getObjectByName("FenderMcpNative") : null;
+        if (!mteFn(environment, "getPortList") || !mteFn(channel, "connectTo") || !mteFn(service, "eventPortSameOwner"))
+            return refusal("The fixed native Event Input owner check is unavailable");
+        var list = environment.getPortList("Music", 0);
+        var ports = Host.Classes.createInstance("Devices:PortParam");
+        if (!list || !mteFn(ports, "setPortList") || !mteFn(ports, "getNextPort"))
+            return refusal("The Music input-port inventory is unavailable");
+        ports.setPortList(list);
+        var foundCurrent = false;
+        var candidate = null;
+        var complete = false;
+        var seen = [];
+        for (var index = 0; index <= 256; index++) {
+            var port = ports.getNextPort(index);
+            if (!port) {
+                complete = true;
+                break;
+            }
+            if (index === 256 || seen.indexOf(port) >= 0) break;
+            seen.push(port);
+            if (port === current) foundCurrent = true;
+            if (port.type !== 0 || port.label !== "Event Input " + op.after) continue;
+            var text = service.eventPortSameOwner(current, port);
+            var proof = typeof text === "string" && text.length <= 2048 ? JSON.parse(text) : null;
+            if (!proof || proof.ok !== true || proof.outcome !== "observed" || typeof proof.same_owner !== "boolean")
+                return refusal("An input port owner could not be verified");
+            if (proof.same_owner) {
+                if (candidate) return refusal("The destination Event Input is ambiguous");
+                candidate = port;
+            }
+        }
+        if (!complete || !foundCurrent || !candidate) return refusal("No unique same-owner Event Input was found");
+        if (lease.expiresAt <= Date.now() || !mcpNativeLeaseCurrent(lease)
+            || tracks[0].channel !== channel || selector.getCurrentPort() !== current || !stopped())
+            return refusal("The source track changed before the route switch");
+
+        dispatched = true;
+        var applied = channel.connectTo(candidate);
+        if ((applied !== true && applied !== 1) || !mcpNativeLeaseCurrent(lease)
+            || selector.getCurrentPort() !== candidate)
+            return refusal("The host did not confirm the route switch");
+        return { op: "serumEventInputSet", native_outcome: "applied_unverified", track: op.track,
+                 before: op.before, after: op.after, same_owner: true, selection_calls: 1 };
+    } catch (_) {
+        return refusal("The exact Event Input route could not be confirmed");
+    }
+}
+
 // JSON-safe view of a host object, for the eval probe (as the bridge's describe).
 function mteDescribe(value, depth) {
 	if (value === null || value === undefined) return value === undefined ? "<undefined>" : null;
@@ -262,6 +368,14 @@ function mteApply(context, ops, lease) {
 	for (var i = 0; i < ops.length; i++) {
 		var op = ops[i] || {};
 		var r = { op: op.op };
+		if (op.op === "serumEventInputSet") {
+			results.push(mteSerumEventInputSet(context, op, lease));
+			continue;
+		}
+		if (op.op === "eventInput") {
+			results.push(mteTrackEventInput(context, op));
+			continue;
+		}
 		if (op.op === "probe") {
 			r.context = mteShape(context, ["functions", "mainTrackList", "editor", "iterator"]);
 			r.functions = mteShape(fns, ["root", "moveToFolder", "colorizeEvent", "renameEvent", "addTrack", "removeTrack", "executeImmediately"]);
