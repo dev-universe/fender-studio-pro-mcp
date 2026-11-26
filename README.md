@@ -223,11 +223,39 @@ can use **Menu → Load Preset** to open compatible `.SerumPreset` files.
 [Studio Pro verification](docs/evidence/2026-11-25-serum2-studio-pro.md)
 [Studio Pro editor audition](docs/evidence/2026-11-26-serum2-instrument-audition.md)
 
-Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx` and
-`controller` set to 0–129. This offline reference covers CC 0–127, channel
-pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
-2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
-on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
+Use `serum2_midi_mapping` with `variant` set to `instrument` or `fx`,
+`controller` set to 0–129, and the optional zero-based `channel` set to
+0–15. The default is the first MIDI channel, `channel: 0`. The arm64
+2.1.5 VST3 reference covers CC 0, CC 2–127 and channel pressure 128 on
+all 16 channels of input bus 0. CC 1 and pitch bend 129 are supported
+on the first channel. Resolve the returned `studio_pro_name` with
+`plugin_parameters` on the actual instance.
+[MIDI channel verification](docs/evidence/2026-11-26-serum2-midi-channels.md)
+
+Set `event_input: 2` and `channel: 1`, or `event_input: 16` and
+`channel: 15`, to look up the separately verified Studio Pro 8.1.1
+route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
+channels are 2 and 16. Both routes use the global rows for
+Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
+
+Use `track_event_input_get` with an exact Music track name and the
+`expected_document` from `host_status` to read its current numbered
+Event Input in Studio Pro. This is the track's output selector for the
+destination instrument or FX. The recording input is a separate
+selector.
+[Live MCP lookup verification](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+
+With the Music track selected, playback and recording stopped, and
+its record arm and monitor disabled, use `serum2_event_input_set` to
+change the Event Input on the currently routed Serum 2 instrument or
+FX instance. Supply the exact `track` name, `variant` (`instrument`
+or `fx`), the current `expected_document`, the exact
+`expected_instance` from
+`plugin_inspect`, the current `expected_event_input` from
+`track_event_input_get`, and the new one-based `event_input` from
+1 to 16. If the outcome is unknown, read the track route and instance
+again before dispatching another change.
+[Live MCP setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
 
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
@@ -397,7 +425,7 @@ These commands run without connecting to Studio Pro.
 
 `song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
 
-For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. For Serum 2 instruments and Serum 2 FX pre-fader inserts, the saved reader recognizes Event Input 1, 2 and 16. [Serum 2 instrument saved ports](docs/evidence/2026-11-26-serum2-saved-event-destinations.md) · [Serum 2 FX saved ports](docs/evidence/2026-11-26-serum2-fx-saved-event-destinations.md) · [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
 For a supported saved Impact instance, `song_read` and `song-read` include `instrument_outputs` on the plugin. Each output reports its saved enabled state, speaker layout and mixer channel ID and name when connected. The reader checks both the saved output descriptors and mixer membership. If those disagree, it reports a warning and leaves the output graph absent. The same fields were verified in Studio Pro 8.1.1 scratch copies with `Impact St 2` enabled and restored after reopening.
 

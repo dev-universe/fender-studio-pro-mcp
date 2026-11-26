@@ -119,6 +119,12 @@ impl McpServer {
                 "Read tracks, selection, layers and events from the active session.",
                 false,
             ),
+            named::<TrackEventInput>(
+                "track_event_input_get",
+                "trackEventInput",
+                "Read the numbered Event Input currently selected in the output routing of a uniquely named Music track. Requires expected_document from host_status and the native Studio Pro document context. Read the instrument or FX separately when you need its instance identity.",
+                false,
+            ),
             named::<SelectTrack>(
                 "track_select",
                 "selectTrack",
@@ -207,6 +213,12 @@ impl McpServer {
                 "serum2_load",
                 "trackTask",
                 "Load Xfer Records Serum 2 VST3 as a new Music track with target.variant instrument and target.track, or add Serum 2 FX VST3 to an existing mixer channel's Inserts with target.variant fx and target.channel. Uses one exact-class track edit. Read tracks_list or the channel inserts after the receipt. Inspect the current song before retrying an unknown outcome.",
+                true,
+            ),
+            named::<crate::serum::EventInputSet>(
+                "serum2_event_input_set",
+                "serum2EventInputSet",
+                "Change the Event Input on the currently routed Serum 2 or Serum 2 FX instance. Use an exclusively selected Music track, stopped transport and disabled record arm and monitoring. Provide the current expected_document, exact expected_instance, expected_event_input from track_event_input_get, and a different event_input from 1 to 16. Inspect the current route before retrying an unknown outcome.",
                 true,
             ),
             named::<SerumPresetApply>(
@@ -459,11 +471,12 @@ impl McpServer {
             tool: Tool::new("fabfilter_midi_mapping", "Look up the reference VST3 SDK mapping for a FabFilter controller on bus 0, channel 0. Use CC 0–127, channel pressure 128, pitch bend 129, or program change 130. Compare the reference version with your VST3 bundle and resolve the parameter on the current instance with plugin_parameters. This lookup does not inspect a live instance or send MIDI.", mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
-        let serum_mapping_schema =
+        let mut serum_mapping_schema =
             serde_json::to_value(schemars::schema_for!(SerumMidiMappingQuery)).unwrap();
+        serum_mapping_schema["properties"]["event_input"]["enum"] = json!([null, 2, 16]);
         specs.push(ToolSpec {
             operation: None,
-            tool: Tool::new("serum2_midi_mapping", "Look up the reference Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0, channel 0. Use CC 0–127, channel pressure 128, or pitch bend 129. Resolve the returned parameter name on the current version and instance with plugin_parameters. This is an offline lookup with no MIDI dispatch or instance inspection.", serum_mapping_schema.as_object().unwrap().clone())
+            tool: Tool::new("serum2_midi_mapping", "Look up the Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0. Use zero-based channel 0–15, with channel 0 as the default. The SDK reference covers CC 0, CC 2–127 and channel pressure 128 on all channels, plus CC 1 and pitch bend 129 on channel 0. Set event_input to 2 with channel 1 or to 16 with channel 15 for the separate Studio Pro 8.1.1 live-tested route reference for controllers 1, 74 and 129. Resolve the returned name with plugin_parameters on the current instance. This offline lookup sends no MIDI.", serum_mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
@@ -501,7 +514,10 @@ fn named<T: JsonSchema>(
     let document_required = mutation
         || matches!(
             operation,
-            "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+            "chorderLearningGet"
+                | "chorderChordsGet"
+                | "pluginMultiChildParameters"
+                | "trackEventInput"
         );
     if document_required
         || matches!(
@@ -561,7 +577,10 @@ fn named<T: JsonSchema>(
     let mut tool = Tool::new(name, description, schema.as_object().unwrap().clone());
     if matches!(
         operation,
-        "chorderLearningGet" | "chorderChordsGet" | "pluginMultiChildParameters"
+        "chorderLearningGet"
+            | "chorderChordsGet"
+            | "pluginMultiChildParameters"
+            | "trackEventInput"
     ) {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     } else if operation == "externalPortMenu" {
@@ -772,9 +791,45 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 66;
+    const EXPECTED_TOOL_COUNT: usize = 68;
 
     use super::*;
+
+    #[test]
+    fn track_event_input_exposes_a_document_scoped_read() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "track_event_input_get")
+            .unwrap();
+        assert_eq!(spec.operation, Some("trackEventInput"));
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        assert_eq!(spec.tool.input_schema["additionalProperties"], false);
+        assert_eq!(
+            spec.tool.input_schema["required"],
+            json!(["track", "expected_document"])
+        );
+
+        let operation =
+            Operation::from_parts("track_event_input_get", json!({"track":"Lead"})).unwrap();
+        assert!(operation.is_read_only());
+        assert!(operation.requires_explicit_document());
+        assert_eq!(
+            operation.wire(),
+            ("trackEventInput".into(), json!({"track":"Lead"}))
+        );
+        for invalid in [
+            json!({"track":""}),
+            json!({"track":" "}),
+            json!({"track":"Lead","value":2}),
+            json!({"track":"é".repeat(129)}),
+        ] {
+            assert!(
+                Operation::from_parts("track_event_input_get", invalid)
+                    .and_then(|operation| operation.validate())
+                    .is_err()
+            );
+        }
+    }
 
     #[test]
     fn multi_child_dsp_tool_exposes_two_slots_and_requires_live_identity() {
@@ -857,6 +912,8 @@ mod tests {
         let input = Value::Object((*spec.tool.input_schema).clone());
         assert_eq!(input["additionalProperties"], false);
         assert_eq!(input["properties"]["controller"]["maximum"], 129);
+        assert_eq!(input["properties"]["channel"]["maximum"], 15);
+        assert_eq!(input["properties"]["channel"]["default"], 0);
 
         for (controller, control, id) in [
             (0, "control_change", 500_000_000),
@@ -887,7 +944,7 @@ mod tests {
         for invalid in [
             json!({"variant":"instrument", "controller":-1}),
             json!({"variant":"other", "controller":1}),
-            json!({"variant":"fx", "controller":1, "channel":1}),
+            json!({"variant":"fx", "controller":1, "channel":-1}),
             json!({"variant":"fx", "controller":1, "expected_document":"older"}),
         ] {
             assert!(serde_json::from_value::<SerumMidiMappingQuery>(invalid).is_err());
@@ -895,6 +952,83 @@ mod tests {
         let unsupported: SerumMidiMappingQuery =
             serde_json::from_value(json!({"variant":"fx", "controller":130})).unwrap();
         assert!(unsupported.lookup().is_err());
+        for invalid in [
+            json!({"variant":"fx", "channel":16, "controller":0}),
+            json!({"variant":"fx", "channel":1, "controller":1}),
+            json!({"variant":"instrument", "channel":15, "controller":129}),
+        ] {
+            let query: SerumMidiMappingQuery = serde_json::from_value(invalid).unwrap();
+            assert!(query.lookup().is_err());
+        }
+        for (variant, channel, controller, id) in [
+            ("instrument", 1, 0, 501_000_000),
+            ("fx", 4, 64, 504_000_064),
+            ("instrument", 15, 127, 515_000_127),
+            ("fx", 15, 128, 515_000_128),
+        ] {
+            let query: SerumMidiMappingQuery = serde_json::from_value(json!({
+                "variant": variant, "channel": channel, "controller": controller
+            }))
+            .unwrap();
+            let mapping = query.lookup().unwrap();
+            assert_eq!(mapping["channel"], channel);
+            assert_eq!(mapping["parameter"]["vst3_id"], id);
+            assert_eq!(mapping["parameter"]["studio_pro_name"], format!("vstp{id}"));
+        }
+    }
+
+    #[test]
+    fn serum2_midi_reference_preserves_sdk_scope_and_bounds_studio_pro_routes() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_midi_mapping")
+            .unwrap();
+        assert_eq!(
+            spec.tool.input_schema["properties"]["event_input"]["enum"],
+            json!([null, 2, 16])
+        );
+
+        let lookup = |args| {
+            serde_json::from_value::<SerumMidiMappingQuery>(args)
+                .unwrap()
+                .lookup()
+        };
+        for variant in ["instrument", "fx"] {
+            for (channel, event_input, cc74_id) in [(1, 2, 501_000_074), (15, 16, 515_000_074)] {
+                for (controller, expected_id) in
+                    [(1, 516_000_000), (74, cc74_id), (129, 516_000_001)]
+                {
+                    let mapping = lookup(json!({
+                        "variant": variant, "controller": controller,
+                        "channel": channel, "event_input": event_input,
+                    }))
+                    .unwrap();
+                    assert_eq!(mapping["scope"], "reference_studio_pro_event_input");
+                    assert_eq!(mapping["channel"], channel);
+                    assert_eq!(mapping["event_input"], event_input);
+                    assert_eq!(mapping["wire_midi_channel"], channel + 1);
+                    assert_eq!(mapping["studio_pro_version"], "8.1.1");
+                    assert_eq!(mapping["studio_pro_build"], 113103);
+                    assert_eq!(mapping["parameter"]["vst3_id"], expected_id);
+                }
+            }
+        }
+
+        let sdk = lookup(json!({"variant": "fx", "controller": 74, "channel": 15})).unwrap();
+        assert_eq!(sdk["scope"], "reference_vst3_sdk_midi_mapping");
+        assert_eq!(sdk["parameter"]["vst3_id"], 515_000_074);
+        assert!(sdk.get("event_input").is_none());
+        assert!(sdk.get("wire_midi_channel").is_none());
+        for invalid in [
+            json!({"variant":"fx", "controller":1, "event_input":2}),
+            json!({"variant":"instrument", "controller":1, "channel":1, "event_input":16}),
+            json!({"variant":"fx", "controller":129, "channel":15, "event_input":2}),
+            json!({"variant":"instrument", "controller":74, "channel":1, "event_input":3}),
+            json!({"variant":"fx", "controller":2, "channel":1, "event_input":2}),
+            json!({"variant":"instrument", "controller":128, "channel":15, "event_input":16}),
+        ] {
+            assert!(lookup(invalid).is_err());
+        }
     }
 
     #[test]
@@ -1349,6 +1483,7 @@ mod tests {
         for name in [
             "track_select",
             "serum2_load",
+            "serum2_event_input_set",
             "serum2_preset_apply",
             "chorder_autofill_set",
             "channel_set",
