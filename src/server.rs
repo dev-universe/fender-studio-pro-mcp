@@ -338,7 +338,7 @@ impl McpServer {
             named::<InsertSplitterRemove>(
                 "insert_splitter_remove",
                 "insertSplitterRemove",
-                "Remove one nested two-way Splitter with one effect on each branch and a shared merger. With exactly two effects on one branch, supply that branch’s second slot directly before the merger as first_branch_tail_node or second_branch_tail_node. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
+                "Remove one nested two-way Splitter with one effect on each branch and a shared merger. For each branch with two effects, supply its second slot directly before the merger as first_branch_tail_node or second_branch_tail_node. The two branches may each contain one or two bound effect slots. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
                 true,
             ),
             named::<InsertSplitterRemoveEmptyNested>(
