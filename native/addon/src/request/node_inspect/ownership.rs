@@ -55,6 +55,13 @@ enum GraphChild {
     },
 }
 
+#[derive(Clone, Copy)]
+pub(super) enum GraphChildKind {
+    Splitter,
+    Merger,
+    Slot,
+}
+
 impl GraphChild {
     fn node(&self) -> &CopiedIdentity {
         match self {
@@ -279,6 +286,75 @@ impl GraphOwnership {
         Ok(())
     }
 
+    pub(super) fn check_empty_splitter_remove_targets(
+        &self,
+        [graph, splitter, merger, predecessor, successor]: [&str; 5],
+        effect: &str,
+    ) -> Result<[(&str, GraphChildKind); 8], String> {
+        if self.value.graph.object_uid.as_deref() != Some(graph) || self.value.children.len() != 8 {
+            return Err("The expected eight-node insert graph changed".into());
+        }
+        let unique = self
+            .value
+            .children
+            .iter()
+            .filter_map(|child| child.node().object_uid.as_deref())
+            .collect::<std::collections::HashSet<_>>();
+        if unique.len() != 8 || unique.contains(graph) || unique.contains(effect) {
+            return Err("The eight graph node identities must be distinct".into());
+        }
+        let matches = |identity: &str| {
+            self.value
+                .children
+                .iter()
+                .find(|child| child.node().object_uid.as_deref() == Some(identity))
+        };
+        if !matches!(matches(splitter), Some(GraphChild::Splitter { .. }))
+            || !matches!(matches(merger), Some(GraphChild::Merger { .. }))
+            || !matches!(matches(successor), Some(GraphChild::Merger { .. }))
+            || !matches!(matches(predecessor), Some(GraphChild::Slot { device, .. })
+                if device.object_uid.as_deref() == Some(effect) && device.id == "Mixtool")
+        {
+            return Err("The bound empty Splitter, mergers or preceding Mixtool changed".into());
+        }
+
+        let mut devices = self.value.children.iter().filter_map(|child| match child {
+            GraphChild::Slot { device, .. } => Some(device),
+            _ => None,
+        });
+        let (Some(first), Some(second), None) = (devices.next(), devices.next(), devices.next())
+        else {
+            return Err("The verified empty nested shape requires two Mixtool effects".into());
+        };
+        if first.object_uid == second.object_uid
+            || [first, second].iter().any(|device| {
+                device.native_class != "AudioEffect"
+                    || device.class_uid.as_deref() != Some("E4D7D911-0608-4B46-ABA3-2E345399A5AC")
+            })
+        {
+            return Err("The two Mixtool instances no longer match the verified graph".into());
+        }
+        self.value
+            .children
+            .iter()
+            .map(|child| {
+                let kind = match child {
+                    GraphChild::Splitter { .. } => GraphChildKind::Splitter,
+                    GraphChild::Merger { .. } => GraphChildKind::Merger,
+                    GraphChild::Slot { .. } => GraphChildKind::Slot,
+                };
+                child
+                    .node()
+                    .object_uid
+                    .as_deref()
+                    .map(|uid| (uid, kind))
+                    .ok_or("A graph child UUID is unavailable")
+            })
+            .collect::<Result<Vec<_>, _>>()?
+            .try_into()
+            .map_err(|_| "The eight graph children changed".into())
+    }
+
     pub(super) fn capture(
         ctx: &Context<'static>,
         route: &GraphRoute,
@@ -340,6 +416,12 @@ impl GraphOwnership {
             .map_err(|error| error.to_string())?;
         self.folder.check()?;
         guard()?;
+        self.check_borrowed(borrowed_guard)
+    }
+    pub(super) fn check_borrowed<B: FnMut() -> Result<(), String>>(
+        &self,
+        borrowed_guard: &mut B,
+    ) -> Result<(), String> {
         self.focused
             .check_borrowed_attachments(&mut || {
                 self.folder.check_borrowed_attachments()?;
