@@ -457,7 +457,7 @@ struct MethodDefinition {
 }
 // Immutable pointers into static strings; no cross-thread native calls.
 unsafe impl Sync for MethodDefinition {}
-static METHODS: [MethodDefinition; 4] = [
+static METHODS: [MethodDefinition; 5] = [
     MethodDefinition {
         name: c"capabilities".as_ptr(),
         args: c"".as_ptr(),
@@ -471,6 +471,11 @@ static METHODS: [MethodDefinition; 4] = [
     MethodDefinition {
         name: c"documentContext".as_ptr(),
         args: c"".as_ptr(),
+        result: c"string".as_ptr(),
+    },
+    MethodDefinition {
+        name: c"eventPortSameOwner".as_ptr(),
+        args: c"first: Object, second: Object".as_ptr(),
         result: c"string".as_ptr(),
     },
     MethodDefinition {
@@ -744,6 +749,61 @@ fn publish_reply(
     true
 }
 
+// Built-in 8.1.1 event-port interface. Both ports stay retained through the
+// comparison. Owner pointers are opaque and never returned to the caller.
+fn event_port_same_owner(msg: *mut c_void) -> request::NativeReply {
+    const PORT_INTERFACE: Uid = Uid {
+        a: 0x7d3d7a65,
+        b: 0x028b,
+        c: 0x4e65,
+        d: [0xbf, 0x43, 0xb5, 0x7f, 0xc1, 0x69, 0x55, 0xc9],
+    };
+    const INPUT_INTERFACE_TABLE: usize = 0x01bc_2a70;
+    const OWNER_ACCESSOR: usize = 0x00d9_b4ec;
+    let refused = || {
+        request::NativeReply::error(
+            "event_port_owner_unavailable",
+            "The fixed input port owner could not be verified",
+            "not_applied",
+        )
+    };
+    if !runtime_supported() {
+        return refused();
+    }
+    let image = unsafe { _dyld_get_image_header(0) } as usize;
+    let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
+        unsafe { method(msg, 5) };
+    let input_port = |index| {
+        let value = unsafe { arg(msg, index).as_ref() }?;
+        if value.kind & 15 != 4 || value.payload == 0 {
+            return None;
+        }
+        query(value.payload as *mut c_void, &PORT_INTERFACE)
+    };
+    let (Some(first), Some(second)) = (input_port(0), input_port(1)) else {
+        return refused();
+    };
+    let owner = |port: &Owned| {
+        let table = unsafe { *port.0.cast::<*const *const c_void>() };
+        if table as usize != image + INPUT_INTERFACE_TABLE {
+            return None;
+        }
+        let slot = unsafe { *table.add(3) };
+        if slot as usize != image + OWNER_ACCESSOR {
+            return None;
+        }
+        let accessor: Borrowed = unsafe { method(port.0, 3) };
+        let owner = unsafe { accessor(port.0) };
+        (!owner.is_null()).then_some(owner)
+    };
+    let (Some(first_owner), Some(second_owner)) = (owner(&first), owner(&second)) else {
+        return refused();
+    };
+    request::NativeReply::unbound(serde_json::json!({
+        "ok": true, "outcome": "observed", "same_owner": first_owner == second_owner
+    }))
+}
+
 unsafe extern "C" fn script_invoke(
     this: *mut c_void,
     out: *mut VariantOut,
@@ -777,7 +837,10 @@ unsafe extern "C" fn script_invoke(
         return 0;
     }
     let name = ascii(unsafe { (*id).text });
-    if name != "capabilities" && name != "request" && name != "documentContext" {
+    if !matches!(
+        name.as_str(),
+        "capabilities" | "request" | "documentContext" | "eventPortSameOwner"
+    ) {
         return 0;
     }
     if service.busy.swap(true, Ordering::AcqRel) {
@@ -789,10 +852,12 @@ unsafe extern "C" fn script_invoke(
     let count = unsafe { count(msg) };
     let reply = if name == "capabilities" && count == 0 {
         request::NativeReply::unbound(
-            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","stereo_send_set_api":"stereo_send_v1","document_context_api":"native_document_context_v1","multi_add_mai_tai_api":"single_child_multi_v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","gui_edit_api":"chorder_autofill_v1","gui_model_edit_api":request::gui_model_api(),"state_api":"component_alias_storable_v1","fabfilter_preset_apply_api":"pro_q_4_file_v1","serum2_preset_apply_api":"vst3_single_component_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","cv_preset_settings_apply_api":"cv_primary_settings_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_routing_api":"host_fxgraph_v1","insert_slot_move_api":"same_graph_move_v1","insert_slot_empty_branch_api":"same_graph_empty_branch_v1","insert_splitter_remove_api":"nested_splitter_remove_v1","insert_splitter_remove_empty_nested_api":"empty_nested_splitter_remove_v1","insert_splitter_add_api":"slot_merger_splitter_add_v1","insert_chain_limits":request::insert_chain::limits()}),
+            serde_json::json!({"ok":true,"api":"fender-mcp-native-v1","stereo_send_set_api":"stereo_send_v1","document_context_api":"native_document_context_v1","multi_add_mai_tai_api":"single_child_multi_v1","max_page_size":128,"max_request_bytes":16384,"max_response_bytes":262144,"abi":"ccl-5.1.2-fsp-8.1.1-arm64","exact_float_bits":true,"numeric_edit_api":"chorder_autofill_v1","gui_edit_api":"chorder_autofill_v1","gui_model_edit_api":request::gui_model_api(),"state_api":"component_alias_storable_v1","fabfilter_preset_apply_api":"pro_q_4_file_v1","serum2_preset_apply_api":"vst3_single_component_v1","state_limits":request::state::limits(),"preset_api":"guarded_slot_catalog_v1","cv_preset_settings_apply_api":"cv_primary_settings_v1","preset_limits":request::presets::limits(),"auxiliary_type_observation":true,"insert_folder_preset_preflight_observation":true,"insert_chain_api":"guarded_folder_collection_v1","insert_chain_routing_api":"host_fxgraph_v1","insert_slot_move_api":"same_graph_move_v1","insert_slot_empty_branch_api":"same_graph_empty_branch_v1","insert_splitter_remove_api":"nested_splitter_remove_v1","insert_splitter_remove_empty_nested_api":"empty_nested_splitter_remove_v1","insert_splitter_remove_one_lane_nested_api":"one_lane_nested_splitter_remove_v1","insert_splitter_add_api":"slot_merger_splitter_add_v1","insert_chain_limits":request::insert_chain::limits()}),
         )
     } else if name == "documentContext" && count == 0 {
         request::document_context::dispatch(owner, a)
+    } else if name == "eventPortSameOwner" && count == 2 {
+        event_port_same_owner(msg)
     } else if name == "request" && matches!(count, 2 | 3) {
         let arg: unsafe extern "C" fn(*mut c_void, i32) -> *const VariantOut =
             unsafe { method(msg, 5) };

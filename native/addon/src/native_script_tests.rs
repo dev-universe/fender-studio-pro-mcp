@@ -491,7 +491,9 @@ fn metadata_is_borrowed_stable_and_module_associated() {
     assert_eq!(ascii(METHODS[0].name), "capabilities");
     assert_eq!(ascii(METHODS[2].name), "documentContext");
     assert_eq!(ascii(METHODS[2].args), "");
-    assert!(METHODS[3].name.is_null());
+    assert_eq!(ascii(METHODS[3].name), "eventPortSameOwner");
+    assert_eq!(ascii(METHODS[3].args), "first: Object, second: Object");
+    assert!(METHODS[4].name.is_null());
     assert_eq!(
         ascii(METHODS[1].args),
         "target: Object, request: string, auxiliary: Object = null"
