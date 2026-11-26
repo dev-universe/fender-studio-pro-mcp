@@ -2720,3 +2720,30 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   [#310](https://github.com/dev-universe/fender-studio-pro-mcp/pull/310)
 - 앱·owner 종료. 고정 잔여 로컬 11·main 13·장비 의존 4,
   열린 PR 75개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 18시 55분 Ampire 전역 별칭의 값과 스템 확인
+
+- #307 최신 `0b255c6`의 두 검사 뒤 main `8eab977`에
+  병합했다. 1,149.5초. #310 최신 `c0e061d` 두 검사 뒤
+  #308·#309·#282로 이어간다.
+  [#307](https://github.com/dev-universe/fender-studio-pro-mcp/pull/307)
+- R538은 Black Panel에서 Volume과 Pitch의 raw 0→7500→0과
+  안정 98행·같은 컴포넌트 바이트를 확인했다. 첫 owner는 변경을
+  예상하지 않아 멈췄고 새 owner가 그대로인 인스턴스에서 다시
+  읽었다. 68요청·6.952초와 46요청·5.126초, 앱 96.688초,
+  캡처 6개 및 관리 18+프로필 10 원복.
+  [#311](https://github.com/dev-universe/fender-studio-pro-mcp/pull/311)
+- R539와 R539B는 macOS 파일 또는 출력 폴더 창에서 렌더 전
+  중단했다. 각 18+6 원복, 새 캐시 1개씩 정리. R539C는
+  24초·48 kHz·PCM24 스테레오 7개를 확보하고 분석했다.
+  Volume과 Pitch의 RMS 차이 +0.0063·+0.0118 dB는 반복
+  기준 편차 안에 들어갔다. 28개 창/채널 모두 440 Hz.
+  Ampire 출력 트림은 −9.5757 dB의 양성 대조였다.
+  98개 설정은 원복했지만 출력 트림의 컴포넌트는 2,401→2,441
+  바이트로 달랐다. 164요청·170.308초와 57요청·64.907초,
+  앱 333.755초, 캡처 7개 해제와 18+11 원복. Save 없음.
+  [#312](https://github.com/dev-universe/fender-studio-pro-mcp/pull/312)
+- 다음 R540은 R525의 Scope 표시·커서 근거에 이어 독립적인
+  캡처 상태 또는 생산자 증거를 찾는다. 앱·owner 종료,
+  고정 잔여 로컬 11·main 13·장비 의존 4, 열린 PR 76개.
+  전체 2~5일과 장비 대기. 지정 종료 시각 없음.
