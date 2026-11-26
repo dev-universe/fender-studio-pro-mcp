@@ -387,6 +387,24 @@ fn pulse_notifies_only_upper_and_observes_reset_without_verifying_effects() {
     }
 }
 #[test]
+fn rejected_button_intent_never_dispatches_either_edge() {
+    let fixture = Fixture::new(true);
+    let parameter = fixture.parameter();
+    let mut checks = 0;
+    let failure = parameter
+        .pulse_range_checked(&mut fixture.guard(), |prepared| {
+            checks += 1;
+            assert_eq!(prepared.kind, Kind::Toggle);
+            Err("the model changed".into())
+        })
+        .unwrap_err();
+    assert_eq!(checks, 1);
+    assert_eq!(failure.outcome, Outcome::NotApplied);
+    assert!(!failure.upper_dispatched && !failure.reset_dispatched);
+    assert!(fixture.parameter.writes.borrow().is_empty());
+}
+
+#[test]
 fn synchronous_upper_auto_reset_still_sends_sdk_unnotified_lower() {
     let f = Fixture::new(true);
     f.parameter.auto_reset.set(true);

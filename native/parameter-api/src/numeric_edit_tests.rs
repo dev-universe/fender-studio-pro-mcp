@@ -881,6 +881,38 @@ fn scalar_read_integer_requires_exact_selected_state_and_complete_profile() {
 }
 
 #[test]
+fn scalar_read_float_backed_integer_rejects_wrong_pitch_and_fractional_values() {
+    let env = TextEnv::new();
+    let profile = IntegerEditProfile {
+        name: "outerAliasName",
+        tag: 7,
+        min: 0,
+        max: 128,
+        default: 0,
+    };
+    for (raw, accepted) in [(62.0, true), (61.0, false), (62.5, false)] {
+        let (fixture, parameter) = Fixture::new(
+            &env,
+            1,
+            FakeValue::Number(Number::Float(raw)),
+            Number::Float(0.0),
+            Number::Float(128.0),
+            None,
+        );
+        fixture.p().edit.tag_override.set(Some(7));
+        let lease = parameter.pin_raw_integer_float_state(profile, 62, &mut fixture.guard());
+        assert_eq!(lease.is_ok(), accepted);
+        if let Ok(lease) = lease {
+            lease.check_borrowed().unwrap();
+            *fixture.p().value.borrow_mut() = FakeValue::Number(Number::Float(63.0));
+            assert!(lease.check_borrowed().is_err());
+        }
+        assert!(trace(&fixture).is_empty());
+        assert_eq!(fixture.p().writes.get(), 0);
+    }
+}
+
+#[test]
 fn scalar_read_terminal_checks_refuse_rebinding_and_typed_value_drift() {
     let env = TextEnv::new();
     for scenario in 0..5 {
