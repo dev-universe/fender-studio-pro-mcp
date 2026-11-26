@@ -2256,3 +2256,29 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 앱·owner 닫힘, 정상 설치 확인. 고정 `main` 13개·로컬 11개,
   장비 의존 4건, 병합 대기 67개. 전체 2~5일과 장비 대기,
   지정 종료 시각 없음.
+
+## 11월 26일 15시 01분 Ampire 원복과 Serum MIDI 조회 병합
+
+- #276은 정확한 head `4a8e9d0`에서 두 필수 검사 통과 후
+  `8be43e4`에 병합됐다. 기준 갱신부터 566.2초. FAT 저장본을
+  앱 종료 후 다시 열어 Link Off 및 Factory A/B/C를 확인했다.
+  [#276](https://github.com/dev-universe/fender-studio-pro-mcp/pull/276)
+- R502는 2.1.5 공식 서명 악기와 FX 각각 2,050개 매핑을 검증했다.
+  실제 8.1.1 R499 호스트 목록과 모든 MCP 조회 결과가 일치했다.
+  높은 채널의 CC1과 피치 벤드는 범위 밖이다. #283은 최신 head
+  `a083cd5`의 두 필수 검사 통과 후 `59568c8`에 병합됐다.
+  기준 갱신부터 567.3초, MCP 4,100개 조회와 64개 거부는 47.450초.
+  [#283](https://github.com/dev-universe/fender-studio-pro-mcp/pull/283)
+- R503 실제 악기의 Event Input 1은 와이어 채널 1과 2의 CC74를
+  같은 첫 DSP 행에 전달했다. 능동 111요청·75.814초 및 종료 전
+  독립 읽기 31요청·4.239초. #284는 최신 head `08541eb`에서
+  검사 중이다. 다음 순서는 #277, #278, #281, #282와 기존 Chorder
+  및 Shared Event다.
+  [#284](https://github.com/dev-universe/fender-studio-pro-mcp/pull/284)
+- R504는 Event Input 2 선택 시 데스크톱이 앱 창 좌표를 받지
+  않아 MIDI 전송 전에 중단했다. 61요청·200.373초. 테스트 곡
+  저장 없음. 일반 앱·owner 종료, 가상 MIDI 및 서명 VST3 회수,
+  관리 설치 18개와 프로필 11개 원복. 후속 R505는 서명된 8.1.1
+  기본 스크립트의 악기 연결 인자를 조사한다.
+- 고정 잔여 `main` 13개·로컬 11개, 장비 의존 4건, 병합 대기
+  67개. 전체 2~5일과 장비 대기, 지정 종료 시각 없음.
