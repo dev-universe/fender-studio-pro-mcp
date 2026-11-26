@@ -2435,3 +2435,39 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - #288 최신 head의 arm64는 통과했고 Core 검사 중이다. 고정
   잔여 `main` 13개·로컬 11개, 장비 의존 4건, 병합 대기 69개.
   전체 2~5일과 장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 16시 22분 Serum 저장 판독 병합과 그래프 저장 검증
+
+- #288은 정확한 head `6b9e2b2`에서 두 필수 검사를 통과하고
+  `209e28d`에 병합됐다. 818.1초. #289는 대상으로 main을
+  지정한 뒤 검사가 등록되지 않아 사설 작업 큐를 중단했다.
+  원격 head를 확인한 다음 소스 변경 없는 커밋으로 GitHub의
+  정규 검사를 다시 시작했다. 정확한 head `45e891d`에서
+  두 필수 검사 통과 후 `9992065`에 병합. 704.6초.
+  #290 최신 head `82623cf`에서는 두 검사가 실행 중이다.
+  [#288](https://github.com/dev-universe/fender-studio-pro-mcp/pull/288)
+  [#289](https://github.com/dev-universe/fender-studio-pro-mcp/pull/289)
+  [#290](https://github.com/dev-universe/fender-studio-pro-mcp/pull/290)
+- R518의 실제 8.1.1 후보는 두 레인 모두 비어 있을 때 차단되고
+  첫 레인만 채운 두 Mixtools를 이어서 보존했다. 독립 읽기
+  6노드·7연결·DSP 144행 일치. 기본 Undo는 정확한 순서와
+  링크를 복원했다. 181요청·148.994초, 앱 203.324초,
+  캡처 14개 해제, 저장 없음, 18+9 원복. #292는 #282 위에
+  쌓았다. #293은 당시 main 근거 링크 20개로 기본 플러그인
+  지원표를 정리했다.
+  [#292](https://github.com/dev-universe/fender-studio-pro-mcp/pull/292)
+  [#293](https://github.com/dev-universe/fender-studio-pro-mcp/pull/293)
+- R519는 첫 레인 삭제 후 공식 Save를 한 번 수행했다. 새 호스트의
+  6노드·7연결과 DSP 144행 및 영속 ID가 일치했다. 이전 문서와
+  그래프 ID 요청을 각 가드에서 거부하고 이후 독립 상태를 확인했다.
+  총 208요청·123.646초, 캡처 16개 해제와 18+9 원복,
+  재오픈 시 Save 없음. #294는 #292 다음이다.
+  [#294](https://github.com/dev-universe/fender-studio-pro-mcp/pull/294)
+- R520은 배송된 Ampire arm64의 Black Panel Normal/Vibrato
+  볼륨 등록 2개를 REA/Ghidra에서 확인했다. Craft-Anything의
+  세 위치 20바이트씩을 같은 원본에서 대조했다. 다음 R521은 소유
+  테스트 곡에서 두 볼륨만 차례로 변경하고 전역 Volume/Pitch와
+  독립 비교한다. 전역 바인딩 및 DSP 신호 시험은 열려 있다.
+- 일반 앱·owner 종료 및 관리 설치 원복. 고정 잔여 main 13개,
+  로컬 11개, 장비 의존 4건, 병합 대기 70개. 전체 2~5일과
+  장비 대기. 지정 종료 시각 없음.
