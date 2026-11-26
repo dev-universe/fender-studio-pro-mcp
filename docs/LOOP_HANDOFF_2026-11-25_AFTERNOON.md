@@ -2045,3 +2045,23 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   최신 브랜치 `6f84832`는 새 `main`에서 다시 확인한다.
   앱과 owner 닫힘. `main` 14개·로컬 11개, 장비 의존 4건.
   다음 검사 9~14분, 전체 2~5일과 CI·장비 대기. 지정 종료 없음.
+
+## 11월 26일 09시 31분 Serum Macro 병합과 Chorder 충돌 대비
+
+- #267은 최신 기준 `857a943` 두 필수 검사 통과 후 `409f03d`에
+  병합됐다. 546.0초. #268의 최신 기준 `3171ac2`로 두 검사 진행 중이다.
+  해당 헤드의 제품 소스가 로컬 검사와 R480에 사용한 소스와 같았다.
+  [#267](https://github.com/dev-universe/fender-studio-pro-mcp/pull/267)
+  [#268](https://github.com/dev-universe/fender-studio-pro-mcp/pull/268)
+- #177과 당시 `main`의 네 충돌에서 Chorder 가드와 Multi·Splitter
+  가드를 모두 살렸다. 로컬 `integration/chorder-audition-main`
+  `bf5096b`, 2분 50초, Rust 273개·JS 443개·네이티브 509개 통과.
+  #268과 함께 검사한 로컬 `integration/chorder-preset-check`의
+  `02f11c3`은 도구 수를 65로 맞춰 Rust 277개가 통과했다. 출시할 때
+  #268이 실제로 `main`에 포함됐는지 먼저 확인하고 최신 기준을
+  합친 뒤 #177의 기존 브랜치에 반영한다. 원격 #177은 아직 미변경이다.
+  [#177](https://github.com/dev-universe/fender-studio-pro-mcp/pull/177)
+- #191–194는 #268의 현재 트리와 병합 충돌이 없음을 미리 확인했다.
+  앱·owner 닫힘 및 관리 파일 18개 원래 해시 확인. `main` 14개·
+  로컬 11개이며 장비 의존 4건, 다음 검사 9~14분, 전체 2~5일과
+  CI·장비 대기다. 지정 종료 시각 없음.
