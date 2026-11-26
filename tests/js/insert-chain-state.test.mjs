@@ -434,6 +434,23 @@ test('nested Splitter removal binds both branches and rejects mismatched native 
   });
   wrongTail.component.pluginOf = () => ({ device, name: plugin });
   assert.equal(wrongTail.component.insertSplitterRemove(expanded).native_outcome, 'unknown');
+
+  const secondBranch = { ...args, second_branch_tail_node: tail };
+  assert.equal(qualified.component.insertSplitterRemove(secondBranch).native_outcome, 'not_applied');
+  assert.equal(qualified.calls.length, 1);
+
+  const secondCapabilities = { ...expandedCapabilities,
+    insert_splitter_remove_second_branch_tail_api: 'second_branch_tail_v1' };
+  const second = harness({ capabilityFields: secondCapabilities, nativeReply: success });
+  second.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(second.component.insertSplitterRemove({
+    ...secondBranch, first_branch_tail_node: '70000000-1234-1234-1234-123456789ABC',
+  }).native_outcome, 'not_applied');
+  assert.equal(second.calls.length, 0);
+  assert.equal(second.component.insertSplitterRemove(secondBranch).second_branch_tail_node, tail);
+  assert.deepEqual(JSON.parse(second.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids, second_branch_tail_node: tail,
+  });
 });
 
 test('Splitter insertion anchors one directed connection and rejects mismatched native receipts', () => {

@@ -1039,7 +1039,9 @@ class NativePluginControls {
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
         if (operation === "insert_splitter_remove") {
             const fields = ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
-            if (value && Object.prototype.hasOwnProperty.call(value, "first_branch_tail_node")) fields.push("first_branch_tail_node");
+            for (const field of ["first_branch_tail_node", "second_branch_tail_node"]) {
+                if (value && Object.prototype.hasOwnProperty.call(value, field)) fields.push(field);
+            }
             return fields;
         }
         if (operation === "insert_splitter_remove_empty_nested")
@@ -1060,6 +1062,7 @@ class NativePluginControls {
         const ids = ["expected_instance", "expected_graph"].concat(nodes);
         const branch = this.insertGraphBranchFields(request.operation, request);
         return this.guiExact(request, ["operation"].concat(ids, branch))
+            && !(nodes.includes("first_branch_tail_node") && nodes.includes("second_branch_tail_node"))
             && (!branch.length || this.guiInteger(request.branch, 0, 1)) && ids.every(key => this.insertChainUid(request[key]))
             && new Set(nodes.map(key => request[key])).size === nodes.length;
     }
@@ -1397,6 +1400,9 @@ class NativePluginControls {
             if (request.operation === "insert_splitter_remove" && request.first_branch_tail_node !== undefined
                 && capability.insert_splitter_remove_first_branch_tail_api !== "first_branch_tail_v1")
                 throw new Error("unsupported two-effect first Splitter branch removal API");
+            if (request.operation === "insert_splitter_remove" && request.second_branch_tail_node !== undefined
+                && capability.insert_splitter_remove_second_branch_tail_api !== "second_branch_tail_v1")
+                throw new Error("unsupported two-effect second Splitter branch removal API");
             if (request.operation === "insert_splitter_remove_empty_nested"
                 && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
                 throw new Error("unsupported empty nested Splitter remove API");
