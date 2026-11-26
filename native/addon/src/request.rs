@@ -359,6 +359,10 @@ enum Request {
         merger_node: String,
         first_slot_node: String,
         second_slot_node: String,
+        #[serde(default)]
+        first_branch_tail_node: Option<String>,
+        #[serde(default)]
+        second_branch_tail_node: Option<String>,
     },
     InsertSplitterRemoveEmptyNested {
         expected_instance: String,
@@ -697,6 +701,7 @@ impl Request {
                 merger_node,
                 first_slot_node: first,
                 second_slot_node: second,
+                ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance,
@@ -720,6 +725,17 @@ impl Request {
                     occupied_slot_node, ..
                 } = self {
                     nodes.push(occupied_slot_node);
+                }
+                if let Self::InsertSplitterRemove {
+                    first_branch_tail_node,
+                    second_branch_tail_node,
+                    ..
+                } = self {
+                    nodes.extend(
+                        [first_branch_tail_node.as_ref(), second_branch_tail_node.as_ref()]
+                            .into_iter()
+                            .flatten(),
+                    );
                 }
                 if ![expected_instance, expected_graph]
                     .into_iter()
@@ -2687,6 +2703,8 @@ fn dispatch_device(
         merger_node,
         first_slot_node,
         second_slot_node,
+        first_branch_tail_node,
+        second_branch_tail_node,
         ..
     } = request
     {
@@ -2699,7 +2717,10 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
-            node_inspect::splitter_remove::Shape::OccupiedBranches,
+            node_inspect::splitter_remove::Shape::OccupiedBranches {
+                first_tail: first_branch_tail_node.as_deref(),
+                second_tail: second_branch_tail_node.as_deref(),
+            },
         );
     }
     if let Request::InsertSplitterRemoveEmptyNested {

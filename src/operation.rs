@@ -949,6 +949,12 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+    /// The optional second effect on the first branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub first_branch_tail_node: Option<String>,
+    /// The optional second effect on the second branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub second_branch_tail_node: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -2203,18 +2209,27 @@ impl Operation {
                 )?;
             }
             Self::InsertSplitterRemove(p) => {
+                let mut nodes: Vec<&str> = vec![
+                    &p.splitter_node,
+                    &p.merger_node,
+                    &p.first_slot_node,
+                    &p.second_slot_node,
+                ];
+                nodes.extend(
+                    [
+                        p.first_branch_tail_node.as_deref(),
+                        p.second_branch_tail_node.as_deref(),
+                    ]
+                    .into_iter()
+                    .flatten(),
+                );
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
                     &p.plugin,
                     &p.expected_instance,
                     &p.expected_graph,
-                    &[
-                        &p.splitter_node,
-                        &p.merger_node,
-                        &p.first_slot_node,
-                        &p.second_slot_node,
-                    ],
+                    &nodes,
                 )?;
             }
             Self::InsertSplitterRemoveEmptyNested(p) => {
