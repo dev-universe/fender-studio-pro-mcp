@@ -129,7 +129,7 @@ class Bridge {
         let code = null;
         const context = this.context();
         const contextError = this.contextError;
-        const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "scopeSidechainAssignmentGet", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_mustang_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
@@ -141,6 +141,7 @@ class Bridge {
         const oneLaneSplitterRemove = req.op === "insertSplitterRemoveOneLaneNested";
         const nestedSplitterRemove = oneLaneSplitterRemove || req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
+        const scopeAssignment = req.op === "scopeSidechainAssignmentGet";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -158,7 +159,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || scopeAssignment || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
@@ -221,6 +222,11 @@ class Bridge {
             && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
                 || context.fileUrl !== afterContext.fileUrl)) {
             result = { ok: false, native_outcome: "unknown", errors: ["The native document changed before route verification"] };
+        } else if (!isFail(result) && scopeAssignment
+            && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
+                || context.fileUrl !== afterContext.fileUrl || !this.insertGraphTransportStopped())) {
+            code = "native_context_lost";
+            result = fail("The Scope assignment lease changed before publication");
         } else if (!isFail(result) && nestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -411,6 +417,7 @@ class Bridge {
             case "inserts": return this.fromComponent(c => c.inserts(args));
             case "setInsertBypass": return this.fromComponent(c => c.setInsertBypass(args));
             case "sends": return this.fromComponent(c => c.sends(args));
+            case "scopeSidechainAssignmentGet": return this.scopeSidechainAssignmentGet(args);
             case "setSend": return this.fromComponent(c => c.setSend(args));
             case "setChannelLabel": return this.fromComponent(c => c.setChannelLabel(args));
             case "setChannelColor": return this.fromComponent(c => c.setChannelColor(args));
@@ -1734,6 +1741,65 @@ class Bridge {
         if (isFail(r)) return r;
         const added = uniqueTracks(list).filter(t => before.indexOf(t) < 0).map(t => String(t.name));
         return { added: added, trackCount: uniqueTracks(list).length };
+    }
+
+    scopeSidechainAssignmentGet(args) {
+        const lease = this.requestContext;
+        const leaseCurrent = () => {
+            const current = this.context();
+            return !this.contextError && this.documentMode === "native"
+                && !!lease && lease.open === true && sameFixtureContext(lease, current)
+                && lease.fileUrl === current.fileUrl && this.insertGraphTransportStopped();
+        };
+        const validName = name => typeof name === "string" && name.trim().length > 0
+            && name.length <= 256 && !/[\u0000-\u001f\u007f-\u009f]/.test(name);
+        if (!args || Object.keys(args).sort().join(",") !== "expected_instance,scope_channel,source_channel"
+            || !validName(args.source_channel) || !validName(args.scope_channel)
+            || args.source_channel === args.scope_channel) {
+            return fail("Scope assignment requires two distinct audio channel names and the exact instance");
+        }
+        if (!leaseCurrent()) return fail("Scope assignment requires a current native document and stopped transport");
+
+        const readChannels = () => {
+            const mixer = docObject("Environment/MixerConsole");
+            if (!has(mixer, "getChannelList", "function")) return null;
+            const list = mixer.getChannelList(1);
+            if (!has(list, "getChannel", "function")) return null;
+            const count = list.numChannels;
+            if (!Number.isInteger(count) || count < 2 || count > 16) return null;
+            const all = Array.from({ length: count }, (_, index) => list.getChannel(index));
+            if (all.some(channel => !channel) || new Set(all).size !== count) return null;
+            const matches = name => all.filter(channel => channel.mediaType === "Audio" && channel.label === name);
+            const source = matches(args.source_channel);
+            const receiver = matches(args.scope_channel);
+            if (source.length !== 1 || receiver.length !== 1 || source[0] === receiver[0]
+                || list.numChannels !== count || !all.every((channel, index) => list.getChannel(index) === channel)) return null;
+            return { source: source[0], receiver: receiver[0] };
+        };
+
+        const channels = readChannels();
+        if (!channels || !leaseCurrent()) return fail("The exact source and Scope audio channels are unavailable");
+        return this.fromComponent(component => {
+            const target = { channel: args.scope_channel, slot: 0, plugin: "Scope" };
+            const plug = component.pluginOf(target);
+            if (!plug || plug.error || plug.name !== "Scope" || !leaseCurrent())
+                return fail("The exact Scope insert at slot zero is unavailable");
+            const native = component.nativePluginRequest(plug.device, {
+                operation: "scope_sidechain_assignment_get", expected_instance: args.expected_instance,
+            }, channels.source);
+            const afterChannels = readChannels();
+            const afterPlug = component.pluginOf(target);
+            if (!afterChannels || afterChannels.source !== channels.source || afterChannels.receiver !== channels.receiver
+                || !afterPlug || afterPlug.error || afterPlug.device !== plug.device || afterPlug.element !== plug.element
+                || !leaseCurrent()) return fail("The source, Scope or document binding changed");
+            if (!native || native.ok !== true) {
+                const reason = native && native.error && typeof native.error.message === "string"
+                    ? native.error.message.slice(0, 200) : "The native Scope assignment is unavailable";
+                return fail(reason);
+            }
+            return { state: native.state, scope: native.scope, source_channel: args.source_channel,
+                scope_channel: args.scope_channel, scope_slot: 0, scope_instance: args.expected_instance };
+        });
     }
 
     hostProbe(args) {

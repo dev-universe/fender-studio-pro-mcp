@@ -2124,6 +2124,7 @@ mod tests {
                 "pluginCatalog",
                 "inserts",
                 "sends",
+                "scopeSidechainAssignmentGet",
                 "pluginParams",
                 "pluginMultiChildParameters",
                 "pluginChoices",
