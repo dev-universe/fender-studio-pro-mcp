@@ -2947,3 +2947,37 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   FabFilter PR은 없다. 다음 R553은 Scope DSP·뷰 인터페이스
   경계에서 동기화된 조회를 찾는다. 로컬 11, main 13, 장비 4.
   전체 2~5일과 장비 대기, 지정 종료 시각 없음.
+
+## 11월 26일 21시 05분 Scope 노트 트리거와 Splitter 세 효과
+
+- #322는 최신 `1abe32f`의 두 검사 후 `33762e9`에 병합됐다.
+  805.9초. #323은 최신 `3657472`의 두 검사 후 `67e06f9`에
+  병합됐다. 569.8초. 다음 #324·#325·#326.
+  [#322](https://github.com/dev-universe/fender-studio-pro-mcp/pull/322) ·
+  [#323](https://github.com/dev-universe/fender-studio-pro-mcp/pull/323)
+- R553에서 Scope의 `8Note` 레코드 입력이 링 오프셋과
+  플래그를 작성하고 실제 수집 분기가 이 값을 소비하는 점을
+  확인했다. 이 입력과 별개의 저장 latch·샘플 수를 구분했다.
+  REA와 Ghidra 35개, Craft 24바이트 구간 10개, vtable rebase와
+  LLVM을 대조했다. 동기화된 직접 파형과 상태 조회는 미완료다.
+  전체 오프라인 약 5분, 분석 세션 닫힘.
+  [#327](https://github.com/dev-universe/fender-studio-pro-mcp/pull/327)
+- R554는 첫 레인 2개, 둘째 1개의 세 Mixtool을 가진 Splitter 3에서
+  기존 MCP 거부 및 그래프 불변, 기본 메뉴 제거 후 9/11에서
+  7/8로 감소, 세 인스턴스의 직렬 순서와 DSP 216행을 확인했다.
+  첫 예측에서 첫 레인의 끝과 두 번째 레인의 첫 슬롯 사이
+  링크를 빠뜨렸다. 새 owner에서 제거 재호출 없이 직렬 순서를
+  정확히 대조하고 Undo 1회로 9/11 및 216행을 복원했다.
+  194/80.778초, 53/23.632초, 앱 198.693초, 캡처 20개 해제,
+  전부 정상 종료·무저장·설치 18+10 원복.
+  [#328](https://github.com/dev-universe/fender-studio-pro-mcp/pull/328)
+- R555는 제품 후보 `489584d`의 `first_branch_tail_node`를
+  사용한다. 이전 1+1 API는 유지하고, 전달된 슬롯의 소유권,
+  순서와 양쪽 연결, 일치하는 브리지와 native capability를
+  검사한다. JS 22개 통과. CI의 Rust 1.88.0으로 전체 검사와
+  진단 패키지를 빌드 중이다. 실제 8.1.1의 두 거부, 유효한
+  제거 1회, Undo 1회가 다음이다.
+- #328 포함 81개 대기열 합치기 사전 검사 통과 당시의 기준은
+  `33762e9`였다. 앱·owner 종료 및 정상 설치. 고정 로컬
+  잔여 11, main 13, 장비 의존 4. 전체 2~5일과 장비 대기,
+  지정 종료 시각 없음.
