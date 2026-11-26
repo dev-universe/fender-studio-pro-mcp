@@ -412,9 +412,10 @@ pub(super) fn rumble_models(
 }
 pub(super) fn read_rumble_state(ctx: &Context<'_>) -> Result<(Value, AliasLease), String> {
     ctx.check()?;
+    // Studio Pro can append a number to the object label for duplicate inserts.
     if ctx.instance.class_uid != "B9D7536C-A010-457D-A182-36E5531164C9"
         || ctx.instance.native_class != "AudioEffect"
-        || ctx.instance.object_id != "Rumble Native"
+        || ctx.instance.object_id.is_empty()
     {
         return Err("The exact Rumble Native component is required".into());
     }
