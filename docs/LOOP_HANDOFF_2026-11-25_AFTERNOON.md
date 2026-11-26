@@ -1980,3 +1980,20 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   Volt 276 및 Keystation 88은 관찰되지 않았다. `main` 14개·로컬
   11개, 장비 의존 4건. 다음 검사 9~14분, 전체 2~5일과 CI·장비 대기.
   지정 종료 시각 없음.
+
+## 11월 26일 09시 11분 Serum Macro 16개 실제 검증
+
+- #265의 최신 기준 `8958d0a`는 필수 두 검사 통과 후
+  `179cfeb`에 병합됐다. 갱신과 병합 568.7초. 동작 범위는
+  SDK 인터페이스와 정적 진입점이며 Note Expression 실제 전달은
+  열려 있다. [#265](https://github.com/dev-universe/fender-studio-pro-mcp/pull/265)
+- R478은 Xfer 서명 2.1.5 VST3 instrument와 FX를 실제 8.1.1에
+  하나씩 넣고 Macro 1~8을 각 0→25%→0으로 확인했다. 독립 판독으로
+  매번 대상 행 한 개만 변했고 상대의 2,623개 값이 그대로였음을
+  확인했다. 각 원복 뒤 양쪽 2,623행이 모두 정확했다. 32쓰기,
+  1,917요청·206.946초, 앱 235.027초. MIDI·재생·Save 각 0.
+  Studio Pro와 owner 정상 종료, 임시 서명 VST3 제거, 관리 파일
+  18개·프로필 10개 원복. [#267](https://github.com/dev-universe/fender-studio-pro-mcp/pull/267)
+- #266의 최신 기준 `371874e` 검사 중이다. 그 뒤 #267·Impact·
+  Chorder·Shared Event. `main` 14개·로컬 11개, 장비 의존 4건.
+  다음 검사 9~14분, 전체 2~5일과 CI·장비 대기. 지정 종료 시각 없음.
