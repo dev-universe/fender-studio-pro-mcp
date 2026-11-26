@@ -379,6 +379,15 @@ enum Request {
         predecessor_slot_node: String,
         successor_merger_node: String,
     },
+    InsertSplitterRemoveOneLaneNested {
+        expected_instance: String,
+        expected_graph: String,
+        splitter_node: String,
+        merger_node: String,
+        predecessor_slot_node: String,
+        successor_merger_node: String,
+        occupied_slot_node: String,
+    },
 }
 impl Request {
     fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
@@ -439,7 +448,8 @@ impl Request {
             | Self::InsertSlotMove { .. }
             | Self::InsertSplitterAdd { .. }
             | Self::InsertSplitterRemove { .. }
-            | Self::InsertSplitterRemoveEmptyNested { .. } => Source::Auto,
+            | Self::InsertSplitterRemoveEmptyNested { .. }
+            | Self::InsertSplitterRemoveOneLaneNested { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
@@ -485,6 +495,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterRemoveOneLaneNested {
                 expected_instance, ..
             } => Some(expected_instance),
             Self::InsertChainCapture { .. }
@@ -725,11 +738,25 @@ impl Request {
                 merger_node,
                 predecessor_slot_node: first,
                 successor_merger_node: second,
+            }
+            | Self::InsertSplitterRemoveOneLaneNested {
+                expected_instance,
+                expected_graph,
+                splitter_node,
+                merger_node,
+                predecessor_slot_node: first,
+                successor_merger_node: second,
+                ..
             } => {
-                let nodes = [splitter_node, merger_node, first, second];
+                let mut nodes = vec![splitter_node, merger_node, first, second];
+                if let Self::InsertSplitterRemoveOneLaneNested {
+                    occupied_slot_node, ..
+                } = self {
+                    nodes.push(occupied_slot_node);
+                }
                 if ![expected_instance, expected_graph]
                     .into_iter()
-                    .chain(nodes)
+                    .chain(nodes.iter().copied())
                     .all(|id| valid_uid(id))
                     || nodes
                         .iter()
@@ -1949,7 +1976,8 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertSlotMove { .. }
         | Request::InsertSplitterAdd { .. }
         | Request::InsertSplitterRemove { .. }
-        | Request::InsertSplitterRemoveEmptyNested { .. } => {
+        | Request::InsertSplitterRemoveEmptyNested { .. }
+        | Request::InsertSplitterRemoveOneLaneNested { .. } => {
             Err("request requires its own dispatcher".into())
         }
     };
@@ -2496,6 +2524,7 @@ fn dispatch_device(
             | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterRemoveEmptyNested { .. }
+            | Request::InsertSplitterRemoveOneLaneNested { .. }
             | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
             | Request::ExternalStereoSendSet { .. }
@@ -2713,6 +2742,28 @@ fn dispatch_device(
                 &successor_merger_node,
             ],
             node_inspect::splitter_remove::Shape::EmptyNested,
+        );
+    }
+    if let Request::InsertSplitterRemoveOneLaneNested {
+        expected_graph,
+        splitter_node,
+        merger_node,
+        predecessor_slot_node,
+        successor_merger_node,
+        occupied_slot_node,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::dispatch(
+            ctx,
+            [
+                &expected_graph,
+                &splitter_node,
+                &merger_node,
+                &predecessor_slot_node,
+                &successor_merger_node,
+            ],
+            node_inspect::splitter_remove::Shape::OneLaneNested(&occupied_slot_node),
         );
     }
     if let Request::ExternalStereoSendSet { destination, .. } = request {
