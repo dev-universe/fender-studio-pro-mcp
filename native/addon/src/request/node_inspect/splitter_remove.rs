@@ -148,11 +148,7 @@ fn bounded_links(
     Ok(result)
 }
 
-fn bound_nodes(
-    ctx: &Context<'_>,
-    route: &GraphRoute,
-    ids: [&str; 4],
-) -> Result<[Owned; 4], String> {
+fn bound_nodes(ctx: &Context<'_>, route: &GraphRoute, ids: &[&str]) -> Result<Vec<Owned>, String> {
     let graph = route.graph.node.0;
     let count: Count = unsafe { method(graph, 8) };
     let child: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void = unsafe { method(graph, 9) };
@@ -160,7 +156,7 @@ fn bound_nodes(
     if !(4..=32).contains(&count) {
         return Err("Graph child count is outside the verified range".into());
     }
-    let mut targets = std::array::from_fn::<_, 4, _>(|_| None);
+    let mut targets = ids.iter().map(|_| None).collect::<Vec<_>>();
     for index in 0..count {
         ctx.check()?;
         let raw =
@@ -177,10 +173,10 @@ fn bound_nodes(
         }
         ctx.check()?;
     }
-    let [Some(splitter), Some(merger), Some(first), Some(second)] = targets else {
-        return Err("The required nested Splitter nodes are unavailable".into());
-    };
-    Ok([splitter, merger, first, second])
+    targets
+        .into_iter()
+        .collect::<Option<Vec<_>>>()
+        .ok_or_else(|| "The required nested Splitter nodes are unavailable".into())
 }
 
 fn matches_identity(object: *mut c_void, identity: &Owned) -> bool {
@@ -191,8 +187,12 @@ fn check_shape(
     image: usize,
     route: &GraphRoute,
     splitter: *mut c_void,
-    nodes: &[Owned; 4],
+    nodes: &[Owned],
+    tail_on_second_branch: bool,
 ) -> Result<(), String> {
+    let [_, merger_id, first_id, second_id, remaining @ ..] = nodes else {
+        return Err("The exact Splitter and lane identities are unavailable".into());
+    };
     // IUnknown is the comparison identity. The actual graph receiver is
     // reached through the primary Splitter object verified by the observer.
     let graph = unsafe { field::<*mut c_void>(splitter, 0x178) };
@@ -206,34 +206,59 @@ fn check_shape(
     let [first, second] = branches[..] else {
         return Err("The exact Splitter no longer has two branches".into());
     };
-    if [first, second].iter().any(|node| {
-        !SLOT_TABLES
+    let is_slot = |node| {
+        SLOT_TABLES
             .iter()
-            .any(|offset| table(*node) == image + offset)
-    }) || !matches_identity(first, &nodes[2])
-        || !matches_identity(second, &nodes[3])
+            .any(|offset| table(node) == image + offset)
+    };
+    if !is_slot(first)
+        || !is_slot(second)
+        || !matches_identity(first, first_id)
+        || !matches_identity(second, second_id)
     {
         return Err("The Splitter branches do not lead to the bound effect slots".into());
     }
-    let first_out = adjacent(first, 0x1a8, 0x1b0)?;
+    let [first_end, second_end] = match remaining {
+        [] => [first, second],
+        [tail_id] => {
+            let mut ends = [first, second];
+            let branch = usize::from(tail_on_second_branch);
+            let head = ends[branch];
+            let outgoing = adjacent(head, 0x1a8, 0x1b0)?;
+            let [tail] = outgoing[..] else {
+                return Err("The requested branch has no unique second effect".into());
+            };
+            if !is_slot(tail)
+                || !matches_identity(tail, tail_id)
+                || unsafe { field::<*mut c_void>(tail, 0x178) } != graph
+                || adjacent(tail, 0x188, 0x190)? != [head]
+            {
+                return Err("The requested second effect changed".into());
+            }
+            ends[branch] = tail;
+            ends
+        }
+        _ => return Err("At most one branch tail can be requested".into()),
+    };
+    let first_out = adjacent(first_end, 0x1a8, 0x1b0)?;
     let [merger] = first_out[..] else {
         return Err("The first Splitter branch has no exact merger".into());
     };
-    if !matches_identity(merger, &nodes[1])
+    if !matches_identity(merger, merger_id)
         || class_name(merger) != "AudioFXGraph::MergerNode"
         || [merger, first, second]
             .iter()
             .any(|node| unsafe { field::<*mut c_void>(*node, 0x178) } != graph)
         || adjacent(first, 0x188, 0x190)? != [splitter]
         || adjacent(second, 0x188, 0x190)? != [splitter]
-        || adjacent(second, 0x1a8, 0x1b0)? != [merger]
+        || adjacent(second_end, 0x1a8, 0x1b0)? != [merger]
     {
         return Err("The exact two-branch Splitter and merger shape changed".into());
     }
     let predecessor = adjacent(splitter, 0x188, 0x190)?;
     let successor = adjacent(merger, 0x1a8, 0x1b0)?;
     let merge_inputs = adjacent(merger, 0x188, 0x190)?;
-    if !merge_inputs.contains(&first) || !merge_inputs.contains(&second) {
+    if !merge_inputs.contains(&first_end) || !merge_inputs.contains(&second_end) {
         return Err("Another branch now reaches the expected merger".into());
     }
     if predecessor.len() != 1
@@ -544,13 +569,16 @@ impl<'a> NestedGraph<'a> {
 }
 
 enum Binding<'a> {
-    Occupied([Owned; 4]),
+    Occupied(Vec<Owned>),
     Nested(NestedGraph<'a>),
 }
 
 #[derive(Clone, Copy)]
 pub(in crate::native_script::request) enum Shape<'a> {
-    OccupiedBranches,
+    OccupiedBranches {
+        first_tail: Option<&'a str>,
+        second_tail: Option<&'a str>,
+    },
     EmptyNested,
     OneLaneNested(&'a str),
 }
@@ -559,7 +587,7 @@ impl<'a> Shape<'a> {
     fn occupied_slot(self) -> Option<&'a str> {
         match self {
             Self::OneLaneNested(slot) => Some(slot),
-            Self::OccupiedBranches | Self::EmptyNested => None,
+            Self::OccupiedBranches { .. } | Self::EmptyNested => None,
         }
     }
 }
@@ -584,9 +612,15 @@ pub(in crate::native_script::request) fn dispatch(
         let image = image as usize;
         let nodes = [splitter_id, merger_id, first_id, second_id];
         let binding = match shape {
-            Shape::OccupiedBranches => {
-                ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
-                Binding::Occupied(bound_nodes(&ctx, &route, nodes)?)
+            Shape::OccupiedBranches {
+                first_tail,
+                second_tail,
+            } => {
+                let tail = first_tail.or(second_tail);
+                ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid, tail)?;
+                let mut members = nodes.to_vec();
+                members.extend(tail);
+                Binding::Occupied(bound_nodes(&ctx, &route, &members)?)
             }
             Shape::EmptyNested | Shape::OneLaneNested(_) => {
                 let members = ownership.check_nested_splitter_remove_targets(
@@ -629,7 +663,19 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The primary Splitter receiver changed".into());
         }
         let validate_shape = || match &binding {
-            Binding::Occupied(nodes) => check_shape(image, &route, splitter, nodes),
+            Binding::Occupied(nodes) => check_shape(
+                image,
+                &route,
+                splitter,
+                nodes,
+                matches!(
+                    shape,
+                    Shape::OccupiedBranches {
+                        second_tail: Some(_),
+                        ..
+                    }
+                ),
+            ),
             Binding::Nested(graph) => graph.check(splitter, nodes, shape.occupied_slot()),
         };
         guard()?;
@@ -672,7 +718,7 @@ pub(in crate::native_script::request) fn dispatch(
         Ok(())
     })();
     let (operation, rejection, first_node, second_node) = match shape {
-        Shape::OccupiedBranches => (
+        Shape::OccupiedBranches { .. } => (
             "insert_splitter_remove",
             "insert_splitter_remove_rejected",
             "first_slot_node",
@@ -702,6 +748,18 @@ pub(in crate::native_script::request) fn dispatch(
             receipt[second_node] = json!(second_id);
             if let Some(slot) = shape.occupied_slot() {
                 receipt["occupied_slot_node"] = json!(slot);
+            }
+            if let Shape::OccupiedBranches {
+                first_tail,
+                second_tail,
+            } = shape
+            {
+                if let Some(tail) = first_tail {
+                    receipt["first_branch_tail_node"] = json!(tail);
+                }
+                if let Some(tail) = second_tail {
+                    receipt["second_branch_tail_node"] = json!(tail);
+                }
             }
             Reply::unbound(receipt)
         }
