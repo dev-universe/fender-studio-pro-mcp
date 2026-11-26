@@ -772,7 +772,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 65;
+    const EXPECTED_TOOL_COUNT: usize = 66;
 
     use super::*;
 
