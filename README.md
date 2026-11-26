@@ -335,9 +335,15 @@ before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+[Serum 2 FX demo preset recovery after reopen](docs/evidence/2026-11-26-serum2-fx-demo-delay-recovery.md)
 [Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
 [Serum 2 FX assigned Macro 1 audio verification](docs/evidence/2026-11-26-serum2-fx-macro-routing.md)
 [Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
+
+Keep the source preset when using the Serum 2 instrument demo. In Studio
+Pro 8.1.1, a saved song reopened with the original instrument and notes,
+but its saved demo state omitted the applied delay rack.
+[Demo song save and reopen verification](docs/evidence/2026-11-26-serum2-demo-delay-reopen.md)
 
 ### FabFilter preset library
 
@@ -465,6 +471,13 @@ For a supported saved Impact instance, `song_read` and `song-read` include `inst
 For saved pre-fader insert racks with supported Splitter routing, `song_read` and `song-read` include `mixer[].insert_routing.nodes`. The ordered `successors` show where each node sends audio. Slot nodes include their saved rack index, slot ID and device name. The file reader reflects the last save. A warning identifies a rack whose links or slots could not be verified. [Studio Pro 8.1.1 verification](docs/evidence/2026-11-20-saved-insert-routing.json)
 
 For the current insert rack, use `insert_chain_state` with `action: "capture"` and `include_routing: true`. Supply the mixer channel and current `expected_document`. Use `expected_folder` to pin the exact folder from `plugin_inspect`. `routing.status` is `observed` when the host capture includes supported directed links, `absent` for a capture without graph metadata, or `unavailable` when the metadata cannot be verified. Slot nodes show the captured plugin class name and slot ID. Release the capture token when finished. [Live 8.1.1 verification](docs/evidence/2026-11-20-live-insert-routing.json)
+
+Use `scope_sidechain_assignment_get` with two uniquely named audio channels and a stock
+Scope in the receiver's insert slot `0`. Stop transport, read `host_status` for
+`expected_document`, and read `plugin_inspect` for the Scope instance UUID. The
+tool observes whether the source's sole Send is absent, unassigned, assigned to this
+Scope, or assigned elsewhere. The verified native route supports up to 16 mixer-list
+entries. The result describes the authored assignment only.
 
 `insert_slot_move` moves an effect immediately after another slot in the same supported Inserts graph. Open that rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` to get the graph, slot-node and effect UUIDs. Use a fresh capture with `include_routing: true` to identify the destination slot's single current successor. Supply the source channel, rack slot, plugin and instance UUID, plus the graph UUID, source node, destination node, and destination's current successor UUID. Send canonical uppercase UUIDs and the current `expected_document`. The move is available on the tested Apple Silicon build of Studio Pro 8.1.1 with the matching native extension. After `applied_unverified`, read the graph and plugin values independently. One host Undo restored the two parallel branches, all graph and effect IDs, and all 144 reported values in the nested Splitter trial. Studio Pro kept the moved effect selected after Undo. [Nested slot move and Undo verification](docs/evidence/2026-11-20-insert-slot-move.json)
 
