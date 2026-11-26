@@ -257,6 +257,7 @@ impl GraphOwnership {
         &self,
         [graph, splitter, merger, first, second]: [&str; 5],
         effect: &str,
+        additional_nodes: &[&str],
     ) -> Result<(), String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) {
             return Err("insert graph UUID changed".into());
@@ -278,7 +279,14 @@ impl GraphOwnership {
                 "Expected Splitter, merger and two exact slot nodes in the same graph".into(),
             );
         };
-        if a.object_uid.as_deref() != Some(effect) && b.object_uid.as_deref() != Some(effect) {
+        let mut bound = [a.object_uid.as_deref(), b.object_uid.as_deref()].contains(&Some(effect));
+        for &id in additional_nodes {
+            let Some(GraphChild::Slot { device, .. }) = find(id) else {
+                return Err("An additional branch node is not a bound slot".into());
+            };
+            bound |= device.object_uid.as_deref() == Some(effect);
+        }
+        if !bound {
             return Err(
                 "The resolved effect does not belong to either bound Splitter branch".into(),
             );

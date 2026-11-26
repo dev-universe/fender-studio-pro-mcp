@@ -359,6 +359,12 @@ enum Request {
         merger_node: String,
         first_slot_node: String,
         second_slot_node: String,
+        #[serde(default)]
+        first_branch_tail_node: Option<String>,
+        #[serde(default)]
+        second_branch_tail_node: Option<String>,
+        #[serde(default)]
+        branch_continuations: Option<[Vec<String>; 2]>,
     },
     InsertSplitterRemoveEmptyNested {
         expected_instance: String,
@@ -697,6 +703,7 @@ impl Request {
                 merger_node,
                 first_slot_node: first,
                 second_slot_node: second,
+                ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance,
@@ -720,6 +727,27 @@ impl Request {
                     occupied_slot_node, ..
                 } = self {
                     nodes.push(occupied_slot_node);
+                }
+                if let Self::InsertSplitterRemove {
+                    first_branch_tail_node,
+                    second_branch_tail_node,
+                    branch_continuations,
+                    ..
+                } = self {
+                    if let Some(continuations) = branch_continuations {
+                        if first_branch_tail_node.is_some()
+                            || second_branch_tail_node.is_some()
+                            || !matches!(continuations.each_ref().map(Vec::len), [2, 0] | [0, 2])
+                        {
+                            return Err("Splitter removal requires exactly two ordered continuation nodes on one branch".into());
+                        }
+                        nodes.extend(continuations.iter().flatten());
+                    }
+                    nodes.extend(
+                        [first_branch_tail_node.as_ref(), second_branch_tail_node.as_ref()]
+                            .into_iter()
+                            .flatten(),
+                    );
                 }
                 if ![expected_instance, expected_graph]
                     .into_iter()
@@ -2687,6 +2715,9 @@ fn dispatch_device(
         merger_node,
         first_slot_node,
         second_slot_node,
+        first_branch_tail_node,
+        second_branch_tail_node,
+        branch_continuations,
         ..
     } = request
     {
@@ -2699,7 +2730,11 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
-            node_inspect::splitter_remove::Shape::OccupiedBranches,
+            node_inspect::splitter_remove::Shape::OccupiedBranches {
+                first_tail: first_branch_tail_node.as_deref(),
+                second_tail: second_branch_tail_node.as_deref(),
+                continuations: branch_continuations.as_ref(),
+            },
         );
     }
     if let Request::InsertSplitterRemoveEmptyNested {
