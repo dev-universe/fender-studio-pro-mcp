@@ -2693,3 +2693,30 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 원래 설치 및 사용자 프로필 복원, Studio Pro 메인과 owner
   종료. 고정 잔여 로컬 11·main 13·장비 의존 4, 열린 PR
   74개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 18시 32분 Serum·FX 공개 Event Input 변경
+
+- #306 최신 `0bd97ab`의 필수 검사 두 건을 확인하고
+  `a64fd79`에 병합했다. 552.7초. #307은 `0b255c6`에서
+  검사 중이며 #310, #308, #309 순으로 이어간다.
+  [#306](https://github.com/dev-universe/fender-studio-pro-mcp/pull/306)
+- R535B에서 정확한 Port 하위 테이블을 구분했다. R535C의
+  두 Serum과 Mai Tai는 각각 16·16·1개 소유 그룹을 형성했다.
+  비교 198개와 DSP 5,246행을 확인했고 158요청·39.103초였다.
+  두 시도 모두 경로 변경 없이 앱·owner 종료 및 18+10 원복을
+  확인했다.
+  [#309](https://github.com/dev-universe/fender-studio-pro-mcp/pull/309)
+- R536의 `serum2_event_input_set`는 같은 모델 두 인스턴스를
+  정확히 구분해 네 번 변경하고, 모델·UUID·현재 포트가 어긋난
+  세 요청을 거부했다. 252요청·49.848초. R537의 FX는 별도
+  Music 소스에서 세 번 변경했고 여덟 번 독립 조회했다.
+  오래된 포트와 Audio 트랙 직접 지정은 거부했다.
+  125요청·37.805초. 5,246행과 2,623행, 각 시험곡,
+  관리 18개 및 프로필 10개 원복을 확인했다.
+- 제품 PR #310을 열었다. Rust 275·JavaScript 449·Python 560
+  오프라인 검사는 391.45초, 네이티브 510건과 제품 릴리스 빌드도
+  통과했다. 다음 R538은 Ampire 별칭과 실제로 들리는 대조
+  컨트롤을 격리한 렌더로 구분한다.
+  [#310](https://github.com/dev-universe/fender-studio-pro-mcp/pull/310)
+- 앱·owner 종료. 고정 잔여 로컬 11·main 13·장비 의존 4,
+  열린 PR 75개. 전체 2~5일과 장비 대기. 지정 종료 시각 없음.
