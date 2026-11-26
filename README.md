@@ -474,6 +474,15 @@ The saved removal trial reopened the same song in a fresh Studio Pro session. Th
 
 `insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
 
+Use `insert_splitter_remove_one_lane_nested` with the same slot 0
+Mixtool and graph identifiers when the first lane of the third Splitter
+is empty and its second lane contains exactly one Mixtool. Add that
+effect's slot-node UUID as `occupied_slot_node`. Stop transport and
+inspect the graph independently after the request. In the verified
+shape, removal kept both effects connected in series. One host Undo
+restored the original topology and all 144 reported DSP values.
+[One-lane MCP removal verification](docs/evidence/2026-11-26-splitter-single-occupied-mcp.md)
+
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 
 In a separate Studio Pro 8.1.1 trial, one Save and a fresh process preserved the restored six-node parallel graph, both newly bound slot and effect IDs, and all 144 reported Mixtool values. An old-document restore request was refused before dispatch. [Restored chain persistence](docs/evidence/2026-11-26-restored-insert-chain-persistence.md)
