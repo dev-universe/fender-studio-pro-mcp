@@ -138,7 +138,8 @@ class Bridge {
         const multiAddMaiTai = req.op === "pluginMultiAddMaiTai";
         const impactOutputSet = req.op === "impactOutputSet";
         const chorderClear = req.op === "pluginAction" && req.args && req.args.action === "clear_chorder_selected";
-        const emptyNestedSplitterRemove = req.op === "insertSplitterRemoveEmptyNested";
+        const oneLaneSplitterRemove = req.op === "insertSplitterRemoveOneLaneNested";
+        const nestedSplitterRemove = oneLaneSplitterRemove || req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
@@ -216,11 +217,12 @@ class Bridge {
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = serum2PresetFailure(outcome, "The Serum target document changed before publication");
-        } else if (!isFail(result) && emptyNestedSplitterRemove
+        } else if (!isFail(result) && nestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = { ok: false, native_outcome: outcome, errors: [{
-                code: "insert_splitter_remove_empty_nested_context_changed",
+                code: oneLaneSplitterRemove ? "insert_splitter_remove_one_lane_nested_context_changed"
+                    : "insert_splitter_remove_empty_nested_context_changed",
                 message: "The Splitter target document changed before publication",
             }] };
         } else if (!isFail(result) && this.contextError) {
@@ -418,6 +420,7 @@ class Bridge {
             case "insertSplitterAdd": return this.fromComponent(c => c.insertSplitterAdd(args));
             case "insertSplitterRemove": return this.fromComponent(c => c.insertSplitterRemove(args));
             case "insertSplitterRemoveEmptyNested": return this.fromComponent(c => c.insertSplitterRemoveEmptyNested(args));
+            case "insertSplitterRemoveOneLaneNested": return this.fromComponent(c => c.insertSplitterRemoveOneLaneNested(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
