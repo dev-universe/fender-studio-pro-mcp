@@ -144,6 +144,18 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### Mustang Native processor state
+
+Call `plugin_state` with `action: "read_mustang_state"`, the insert's
+`channel` and `slot`, `plugin: "Mustang Native"`, `expected_instance`
+from `plugin_inspect`, and `expected_document` from `host_status`.
+This reads the serialized processor class IDs and numeric settings for
+all 26 slots through the matching native extension. Compare
+`models_sha256` and `settings_sha256` across reads. The
+`capture_sha256` identifies one serialization and can differ when
+the two projections match. The read issues no token.
+[8.1.1 verification](docs/evidence/2026-11-26-mustang-processor-state.md)
+
 ### Verify a parameter through a separate read
 
 Set `readback` to `true` on `plugin_parameter_set` with the canonical name from
@@ -232,6 +244,52 @@ on the first channel. Resolve the returned `studio_pro_name` with
 `plugin_parameters` on the actual instance.
 [MIDI channel verification](docs/evidence/2026-11-26-serum2-midi-channels.md)
 
+Set `event_input: 2` and `channel: 1`, or `event_input: 16` and
+`channel: 15`, to look up the separately verified Studio Pro 8.1.1
+route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
+channels are 2 and 16. Both routes use the global rows for
+Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
+
+#### Change a Music track's Event Input
+
+This is the Music track's **Out** route to an already connected Serum instance.
+The same number can appear on several Serum instances. For Serum 2 FX, use
+the Music source track in the route commands and inspect the FX on its
+receiver's Audio channel.
+
+1. In Studio Pro, select only that Music track. Stop playback and recording,
+   and turn off the track's record arm and monitor.
+2. Read the current document with `host_status`. Call
+   `track_event_input_get` with the Music track name and that
+   `expected_document`. Keep the returned `event_input`.
+3. Get the destination's `native.instance.object_uid` with `plugin_inspect`.
+   For the FX case, match the Music source's destination UUID to the
+   insert's UUID as described below.
+4. Call `serum2_event_input_set` once. For example, to move the currently
+   routed instrument from Event Input 1 to 2, replace the two placeholder
+   strings with the values just read.
+
+   ```json
+   {
+     "track": "Serum Keys",
+     "variant": "instrument",
+     "expected_document": "<current document>",
+     "expected_instance": "<destination UUID>",
+     "expected_event_input": 1,
+     "event_input": 2
+   }
+   ```
+
+   For an FX destination, use `"variant": "fx"` and the Music source track's
+   exact name. Choose an Event Input from 1 through 16.
+5. Read the route again with `track_event_input_get` and confirm the
+   destination UUID with `plugin_inspect`. If the request returns an
+   unknown outcome, use those same fresh reads before any new request.
+
+[Live route lookup](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+[FX route lookup](docs/evidence/2026-11-26-serum2-fx-mcp-live-event-input.md)
+[Instrument and FX setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
+
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
 instance. Use `plugin_parameter_set` with `normalized` and `readback: true`.
@@ -242,9 +300,9 @@ To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
 `kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
 `expected_document`. Inspect the candidate FX insert by its exact channel
 and slot. Compare the two `native.instance.object_uid` values and use the
-matching UID as `expected_instance` on a fresh track inspection. Change
-the route with the track's **Out** menu in Studio Pro, then repeat the
-inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
+matching UID as `expected_instance` on a fresh track inspection. Use the
+track's **Out** menu when choosing a different destination instance, then
+repeat the inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
 
 To check the destination in a saved song, call `song_read` on the
 `.song` file and look for `midi_destination` on the source track. A
@@ -277,9 +335,15 @@ before applying a preset. Use a separate `plugin_parameters` call to confirm
 any change. For an `unknown` receipt, read the target before retrying.
 Studio Pro displays the temporary file name for this processor-only import.
 [Direct preset verification](docs/evidence/2026-11-25-serum2-mcp-vst3-preset.md)
+[Serum 2 FX demo preset recovery after reopen](docs/evidence/2026-11-26-serum2-fx-demo-delay-recovery.md)
 [Serum 2 FX internal signal](docs/evidence/2026-11-26-serum2-fx-signal.md)
 [Serum 2 FX assigned Macro 1 audio verification](docs/evidence/2026-11-26-serum2-fx-macro-routing.md)
 [Serum 2 instrument virtual MIDI and pitch-bend center](docs/evidence/2026-11-26-serum2-live-midi.md)
+
+Keep the source preset when using the Serum 2 instrument demo. In Studio
+Pro 8.1.1, a saved song reopened with the original instrument and notes,
+but its saved demo state omitted the applied delay rack.
+[Demo song save and reopen verification](docs/evidence/2026-11-26-serum2-demo-delay-reopen.md)
 
 ### FabFilter preset library
 
@@ -400,7 +464,7 @@ These commands run without connecting to Studio Pro.
 
 `song-read` reads the last saved song. `audio-analyze` measures WAV loudness, peaks, RMS, and stereo levels. `local-catalog` finds candidate parameter names in the installed app's metadata. Audio and MIDI device inventory is also available from the CLI. [Hardware commands](docs/HARDWARE.md)
 
-For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. For Serum 2 instruments, the saved reader recognizes Event Input 1, 2 and 16. [Serum 2 instrument saved ports](docs/evidence/2026-11-26-serum2-saved-event-destinations.md) · [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+For a saved Music track with a supported plug-in destination, `song_read` and `song-read` include `tracks[].midi_destination`. The result identifies the saved plug-in instance and port, plus the channel and zero-based slot for an insert. The reader omits the field when the saved reference is ambiguous or unsupported. For Serum 2 instruments and Serum 2 FX pre-fader inserts, the saved reader recognizes Event Input 1, 2 and 16. [Serum 2 instrument saved ports](docs/evidence/2026-11-26-serum2-saved-event-destinations.md) · [Serum 2 FX saved ports](docs/evidence/2026-11-26-serum2-fx-saved-event-destinations.md) · [Serum 2 FX save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
 
 For a supported saved Impact instance, `song_read` and `song-read` include `instrument_outputs` on the plugin. Each output reports its saved enabled state, speaker layout and mixer channel ID and name when connected. The reader checks both the saved output descriptors and mixer membership. If those disagree, it reports a warning and leaves the output graph absent. The same fields were verified in Studio Pro 8.1.1 scratch copies with `Impact St 2` enabled and restored after reopening.
 
@@ -427,6 +491,15 @@ In Studio Pro 8.1.1, an added Splitter and both branches survived saving and res
 The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
 `insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
+
+Use `insert_splitter_remove_one_lane_nested` with the same slot 0
+Mixtool and graph identifiers when one lane of the third Splitter is
+empty and the other contains exactly one Mixtool. Add that
+effect's slot-node UUID as `occupied_slot_node`. Stop transport and
+inspect the graph independently after the request. In the verified
+shape, removal kept both effects connected in series. One host Undo
+restored the original topology and all 144 reported DSP values.
+[First- and second-lane MCP verification](docs/evidence/2026-11-26-nested-splitter-mcp-either-lane.md)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 
