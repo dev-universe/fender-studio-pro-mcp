@@ -978,6 +978,29 @@ pub struct PluginAction {
     pub plugin: String,
     pub expected_instance: String,
     pub action: PluginButtonAction,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "supplied_chorder_clear_guard"
+    )]
+    pub chorder_guard: Option<ChorderClearGuard>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderClearGuard {
+    pub expected_input_pitch: ChorderMidiPitch,
+    #[schemars(length(min = 64, max = 64), regex(pattern = "^[0-9a-f]{64}$"))]
+    pub expected_model_sha256: String,
+}
+
+fn supplied_chorder_clear_guard<'de, D>(
+    deserializer: D,
+) -> Result<Option<ChorderClearGuard>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    ChorderClearGuard::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1016,6 +1039,7 @@ pub enum PluginButtonAction {
     ResetMeterLoudness,
     ResetMinimumReduction,
     RetriggerScope,
+    ClearChorderSelected,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1635,6 +1659,7 @@ impl Operation {
             || self.inspects_cv_preset_settings()
             || self.applies_cv_preset_settings()
             || self.inspects_impact_outputs()
+            || matches!(self, Self::PluginAction(p) if matches!(p.action, PluginButtonAction::ClearChorderSelected))
             || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
@@ -1958,6 +1983,43 @@ impl Operation {
                 )?;
                 if p.plugin.trim().is_empty() {
                     return Err(invalid("An expected plugin class or instance is required"));
+                }
+                match (&p.action, &p.chorder_guard) {
+                    (PluginButtonAction::ClearChorderSelected, Some(guard))
+                        if p.plugin == "Chorder"
+                            && matches!(p.kind, Some(PluginKind::NoteEffect))
+                            && p.channel.is_none() =>
+                    {
+                        validate_chorder_target(
+                            p.track
+                                .as_deref()
+                                .ok_or_else(|| invalid("Chorder Clear requires a track"))?,
+                            p.slot
+                                .ok_or_else(|| invalid("Chorder Clear requires a slot"))?,
+                            &p.expected_instance,
+                        )?;
+                        if guard.expected_model_sha256.len() != 64
+                            || !guard
+                                .expected_model_sha256
+                                .bytes()
+                                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                        {
+                            return Err(invalid(
+                                "Chorder Clear requires the lowercase model SHA-256",
+                            ));
+                        }
+                    }
+                    (PluginButtonAction::ClearChorderSelected, _) => {
+                        return Err(invalid(
+                            "Chorder Clear requires the exact Note FX target and an input and model guard",
+                        ));
+                    }
+                    (_, Some(_)) => {
+                        return Err(invalid(
+                            "A Chorder guard is only valid for Clear Chorder Selected",
+                        ));
+                    }
+                    (_, None) => {}
                 }
             }
             Self::PedalboardSlotSwap(p) => {
@@ -3513,6 +3575,44 @@ mod tests {
         let mut invalid = base;
         invalid["address"] = json!(123);
         assert!(Operation::from_parts("impact_output_set", invalid).is_err());
+    }
+
+    #[test]
+    fn chorder_clear_accepts_only_an_exact_note_effect_and_model_guard() {
+        let base = json!({
+            "kind": "note_effect", "track": "Scratch", "slot": 0, "plugin": "Chorder",
+            "expected_instance": "12345678-1234-1234-1234-123456789ABC",
+            "action": "clear_chorder_selected",
+            "chorder_guard": {"expected_input_pitch": 61, "expected_model_sha256": "a".repeat(64)}
+        });
+        let operation = Operation::from_parts("plugin_action", base.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.requires_explicit_document());
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().1["chorder_guard"], base["chorder_guard"]);
+        for (field, value) in [
+            ("chorder_guard", Value::Null),
+            (
+                "chorder_guard",
+                json!({"expected_input_pitch": 128, "expected_model_sha256": "a".repeat(64)}),
+            ),
+            (
+                "chorder_guard",
+                json!({"expected_input_pitch": 61, "expected_model_sha256": "A".repeat(64)}),
+            ),
+            ("plugin", json!("Arpeggiator")),
+            ("kind", json!("instrument")),
+            ("action", json!("retrigger_scope")),
+        ] {
+            let mut invalid = base.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("plugin_action", invalid)
+                    .and_then(|operation| operation.validate())
+                    .is_err(),
+                "{field}"
+            );
+        }
     }
 
     #[test]

@@ -193,3 +193,59 @@ test('the bridge refuses missing audition context and discards acknowledgement a
   assert.equal(result.code, 'native_context_lost');
   assert.equal(calls, 1);
 });
+
+test('Chorder Clear forwards the exact input and stored model guards', () => {
+  const { component, calls, targets } = harness(() => ({
+    ok: true, outcome: 'applied_unverified', instance: { ...instance, native_class: 'MusicEffect' },
+    action: 'clear_chorder_selected', param: 'chorder.clear', source: 'dsp',
+    upper_dispatched: true, reset_dispatched: true, reset_verified: true,
+    before: { tag: 9 }, after: { tag: 9 }, effect_parameters: [], verified: false, effects_verified: false
+  }));
+  const args = {
+    kind: 'note_effect', plugin: 'Chorder', track: 'Scratch', slot: 0,
+    expected_instance: instance.object_uid, action: 'clear_chorder_selected',
+    chorder_guard: { expected_input_pitch: 61, expected_model_sha256: 'a'.repeat(64) }
+  };
+  for (const invalid of [
+    { ...args, slot: 16 },
+    { ...args, plugin: 'Arpeggiator' },
+    { ...args, chorder_guard: undefined },
+    { ...args, chorder_guard: { ...args.chorder_guard, expected_input_pitch: 128 } },
+    { ...args, chorder_guard: { ...args.chorder_guard, expected_model_sha256: 'A'.repeat(64) } },
+    { ...args, action: 'retrigger_scope' }
+  ]) {
+    assert.equal(component.pluginAction(invalid).native_outcome, 'not_applied');
+  }
+  assert.deepEqual(targets, []);
+  assert.deepEqual(calls, []);
+  const result = component.pluginAction(args);
+  assert.equal(result.native_outcome, 'applied_unverified');
+  assert.equal(result.effects_verified, false);
+  assert.deepEqual(calls, [{
+    operation: 'parameter_action', action: args.action, expected_instance: instance.object_uid,
+    chorder_guard: args.chorder_guard
+  }]);
+});
+
+test('guarded Clear preserves a pre-dispatch refusal and never promotes an uncertain action', () => {
+  const args = {
+    kind: 'note_effect', plugin: 'Chorder', track: 'Scratch', slot: 0,
+    expected_instance: instance.object_uid, action: 'clear_chorder_selected',
+    chorder_guard: { expected_input_pitch: 61, expected_model_sha256: 'a'.repeat(64) }
+  };
+  const reason = { code: 'chorder_selection_changed', message: 'selected input changed' };
+  for (const outcome of ['not_applied', 'unknown']) {
+    const { component } = harness(() => ({
+      ok: false, outcome, error: reason, instance: { ...instance, native_class: 'MusicEffect' },
+      upper_dispatched: outcome === 'unknown', reset_dispatched: false
+    }));
+    const result = component.pluginAction(args);
+    assert.equal(result.native_outcome, outcome);
+    if (outcome === 'not_applied') {
+      assert.equal(result.error, undefined);
+      assert.deepEqual(structuredClone(result.errors), [reason]);
+    } else {
+      assert.equal(result.error.code, reason.code);
+    }
+  }
+});

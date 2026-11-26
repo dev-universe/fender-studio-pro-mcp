@@ -1486,8 +1486,12 @@ class NativePluginControls {
                 throw new Error("invalid Pedalboard exchange receipt");
             if (result.ok && request.operation === "parameter_action"
                 && (result.action !== request.action || result.source !== "dsp" || result.outcome !== "applied_unverified"
-                    || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].indexOf(request.action) < 0
-                    || (request.action === "retrigger_scope"
+                    || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope", "clear_chorder_selected"].indexOf(request.action) < 0
+                    || (request.action === "clear_chorder_selected"
+                        ? result.instance.native_class !== "MusicEffect"
+                            || result.instance.class_uid !== "D2D9B002-12FC-4F1D-AFDA-70336D1DC108" || result.param !== "chorder.clear"
+                            || !result.before || result.before.tag !== 9 || !result.after || result.after.tag !== 9
+                        : request.action === "retrigger_scope"
                         ? result.instance.native_class !== "AudioEffect"
                             || result.instance.class_uid !== "36322412-AD90-4EE0-B63C-37929566B081" || result.param !== "trigRetrig"
                         : request.action === "reset_minimum_reduction"

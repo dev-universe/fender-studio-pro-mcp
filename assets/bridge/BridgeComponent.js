@@ -936,18 +936,42 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginAction(args) {
-        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action", "chorder_guard"];
+        const invalid = message => ({ native_outcome: "not_applied", errors: [{ code: "invalid_action", message }] });
+        const clearChorder = args.action === "clear_chorder_selected";
         if (Object.keys(args).some(key => fields.indexOf(key) < 0)
             || typeof args.plugin !== "string" || !args.plugin.trim()
             || typeof args.expected_instance !== "string" || !args.expected_instance
-            || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].indexOf(args.action) < 0)
-            return { native_outcome: "not_applied", errors: [{ code: "invalid_action", message: "a fixed action, expected plugin and native instance are required" }] };
+            || (!clearChorder && !["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].includes(args.action)))
+            return invalid("a fixed action, expected plugin and native instance are required");
+        const request = { operation: "parameter_action", action: args.action, expected_instance: args.expected_instance };
+        if (clearChorder) {
+            const controls = new NativePluginControls(this);
+            const guard = args.chorder_guard;
+            if (args.plugin !== "Chorder" || args.kind !== "note_effect" || args.channel != null
+                || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
+                || /[\x00-\x1f\x7f-\x9f]/.test(args.track) || !controls.guiInteger(args.slot, 0, 15)
+                || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+                || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+                || !controls.guiExact(guard, ["expected_input_pitch", "expected_model_sha256"])
+                || !controls.guiInteger(guard.expected_input_pitch, 0, 127)
+                || typeof guard.expected_model_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(guard.expected_model_sha256))
+                return invalid("Chorder Clear requires a bound Note FX slot, an input pitch and the lowercase model SHA-256");
+            request.chorder_guard = guard;
+        } else if (Object.prototype.hasOwnProperty.call(args, "chorder_guard")) {
+            return invalid("the Chorder guard only applies to Clear Chorder Selected");
+        }
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
-        const native = this.nativePluginRequest(plug.device, { operation: "parameter_action",
-            action: args.action, expected_instance: args.expected_instance });
+        const native = this.nativePluginRequest(plug.device, request);
         if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_required", message: "plugin actions require the matching native extension" }] };
-        return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        const result = Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        if (clearChorder && native.ok === false && native.outcome === "not_applied"
+            && native.upper_dispatched !== true && native.reset_dispatched !== true && native.error) {
+            result.errors = [native.error];
+            delete result.error;
+        }
+        return result;
     }
 
     pedalboardSlotSwap(args) {
