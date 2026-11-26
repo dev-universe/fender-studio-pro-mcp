@@ -63,6 +63,13 @@ struct ListSnapshot {
     name: String,
     tag: i32,
     count: u32,
+    index_kind: ListIndexKind,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ListIndexKind {
+    Integer,
+    Float,
 }
 
 impl RawParameter {
@@ -177,7 +184,10 @@ impl RawParameter {
         for index in offset..end {
             guard().map_err(Error::Guard)?;
             let mut output = NativeString::empty(self.text)?;
-            let value = Variant::number(Number::Integer(i64::from(index)), 1)?;
+            let value = match before.index_kind {
+                ListIndexKind::Integer => Variant::number(Number::Integer(i64::from(index)), 1)?,
+                ListIndexKind::Float => Variant::number(Number::Float(f64::from(index)), 2)?,
+            };
             let copied = (|| {
                 // Empty-string construction may itself reenter the host.
                 guard().map_err(Error::Guard)?;
@@ -222,24 +232,35 @@ impl RawParameter {
         let object = self.parameter.query(&ffi::OBJECT)?;
         let min = value::read(&object, self.text, Property::Min)?;
         let max = value::read(&object, self.text, Property::Max)?;
-        let count = match (
-            min.as_ref().map(|v| &v.value),
-            max.as_ref().map(|v| &v.value),
+        let (max, index_kind) = match (
+            min.as_ref().map(|bound| &bound.value),
+            max.as_ref().map(|bound| &bound.value),
         ) {
-            (Some(Value::Integer(0)), Some(Value::Integer(-1))) => 0,
-            (Some(Value::Integer(0)), Some(Value::Integer(max))) if *max >= 0 => {
-                if *max >= i64::from(MAX_LIST_CHOICES) {
-                    return Err(Error::InvalidData("choice count exceeds 1000000"));
-                }
-                *max as u32 + 1
+            (Some(Value::Integer(0)), Some(Value::Integer(max))) => {
+                (*max as f64, ListIndexKind::Integer)
             }
+            (Some(Value::Float(0.0)), Some(Value::Float(max))) => (*max, ListIndexKind::Float),
             _ => {
                 return Err(Error::InvalidData(
-                    "List choices require integer bounds 0..max",
+                    "List choices require zero-based integral bounds",
                 ));
             }
         };
-        Ok(ListSnapshot { name, tag, count })
+        if !max.is_finite() || max < -1.0 || max.fract() != 0.0 {
+            return Err(Error::InvalidData(
+                "List choices require zero-based integral bounds",
+            ));
+        }
+        if max >= f64::from(MAX_LIST_CHOICES) {
+            return Err(Error::InvalidData("choice count exceeds 1000000"));
+        }
+        // All admitted bounds are exact integers within the checked u32 range.
+        Ok(ListSnapshot {
+            name,
+            tag,
+            count: (max + 1.0) as u32,
+            index_kind,
+        })
     }
     pub(crate) fn check_thread(&self) -> Result<(), Error> {
         if thread::current().id() == self.thread {
