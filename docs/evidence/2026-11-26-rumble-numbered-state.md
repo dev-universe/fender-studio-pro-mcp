@@ -22,7 +22,7 @@ the middle slot with the upstream peer's ID returned `not_applied`
 and supplied no processor data. Native and server-side request checks
 still bind reads to the current document and the requested instance.
 The serialized component class, native class ID, processor layout,
-stage-retained identity, and response digest checks remained in effect.
+retained device and document identity, and response digest checks remained in effect.
 The state read remained read-only and returned no token.
 
 R490 made 186 requests in 19.992 seconds and exited normally after
