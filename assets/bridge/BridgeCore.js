@@ -135,8 +135,10 @@ class Bridge {
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";
+        const multiAddMaiTai = req.op === "pluginMultiAddMaiTai";
         const impactOutputSet = req.op === "impactOutputSet";
         const chorderClear = req.op === "pluginAction" && req.args && req.args.action === "clear_chorder_selected";
+        const emptyNestedSplitterRemove = req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
@@ -172,6 +174,8 @@ class Bridge {
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
                 }] }
+                : multiAddMaiTai
+                ? pluginMultiAddMaiTaiFailure("unknown", "The native Mai Tai insertion outcome could not be established")
                 : serum2Preset
                 ? serum2PresetFailure("unknown", "The Serum preset application could not be established")
                 : cvPresetApply
@@ -205,10 +209,20 @@ class Bridge {
                 code: "cv_preset_settings_context_changed",
                 message: "The CV preset settings document lease changed before publication",
             }] };
+        } else if (!isFail(result) && multiAddMaiTai
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            result = pluginMultiAddMaiTaiFailure("unknown", "The target document changed before publication");
         } else if (!isFail(result) && serum2Preset
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = serum2PresetFailure(outcome, "The Serum target document changed before publication");
+        } else if (!isFail(result) && emptyNestedSplitterRemove
+            && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
+            const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = { ok: false, native_outcome: outcome, errors: [{
+                code: "insert_splitter_remove_empty_nested_context_changed",
+                message: "The Splitter target document changed before publication",
+            }] };
         } else if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
@@ -403,10 +417,12 @@ class Bridge {
             case "insertSlotMove": return this.fromComponent(c => c.insertSlotMove(args));
             case "insertSplitterAdd": return this.fromComponent(c => c.insertSplitterAdd(args));
             case "insertSplitterRemove": return this.fromComponent(c => c.insertSplitterRemove(args));
+            case "insertSplitterRemoveEmptyNested": return this.fromComponent(c => c.insertSplitterRemoveEmptyNested(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginMultiChildParameters": return this.fromComponent(c => c.pluginMultiChildParameters(args));
+            case "pluginMultiAddMaiTai": return this.pluginMultiAddMaiTai(args);
             case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
             case "serum2PresetApply": return this.serum2PresetApply(args);
             case "pluginModels": return this.fromComponent(c => c.pluginModels(args));
@@ -427,6 +443,30 @@ class Bridge {
             case "impactOutputSet": return this.fromComponent(c => c.impactOutputSet(args));
             default: return fail("unknown op: " + op);
         }
+    }
+
+    pluginMultiAddMaiTai(args) {
+        const token = this.nativeDocument && this.nativeDocument.token;
+        if (!this.component || typeof this.component.pluginMultiAddMaiTai !== "function"
+            || !this.pluginMultiAddMaiTaiLease(token))
+            return pluginMultiAddMaiTaiFailure("not_applied", "The current native document and stopped transport are required");
+        return this.component.pluginMultiAddMaiTai(args, token);
+    }
+
+    pluginMultiAddMaiTaiLease(token) {
+        const expected = this.requestContext;
+        if (!expected || expected.open !== true || typeof token !== "string"
+            || !this.nativeDocument || this.nativeDocument.open !== true || this.nativeDocument.token !== token)
+            return false;
+        const panel = this.transportPanel();
+        if (!panel) return false;
+        const start = panel.findParameter("start");
+        const record = panel.findParameter("record");
+        const stopped = value => value === false || value === 0;
+        if (!start || !record || !stopped(start.value) || !stopped(record.value)) return false;
+        const current = this.context();
+        return !this.contextError && sameFixtureContext(expected, current) && expected.fileUrl === current.fileUrl
+            && this.nativeDocument && this.nativeDocument.open === true && this.nativeDocument.token === token;
     }
 
     serum2PresetApply(args) {
@@ -875,6 +915,14 @@ class Bridge {
     transportPanel() {
         const tp = docObject("Environment/TransportPanel");
         return tp && has(tp, "findParameter", "function") ? tp : null;
+    }
+
+    insertGraphTransportStopped() {
+        const transport = this.transportPanel();
+        return !!transport && ["start", "record"].every(name => {
+            const param = transport.findParameter(name);
+            return !!param && (param.value === false || param.value === 0);
+        });
     }
 
     transportState() {
@@ -1709,6 +1757,12 @@ function stereoSendChangeFailure(outcome, diagnostic) {
     return { ok: false, native_outcome: outcome, diagnostic, errors: [{
         code: "stereo_send_set_unconfirmed", message: "The logical Stereo Send change could not be verified",
     }] };
+}
+
+function pluginMultiAddMaiTaiFailure(outcome, message) {
+    const refused = outcome === "not_applied";
+    return { ok: false, outcome, native_outcome: outcome, dispatch_attempted: refused ? false : null,
+        error: { code: refused ? "multi_add_mai_tai_refused" : "multi_add_mai_tai_unknown", message } };
 }
 
 function sameFixtureContext(a, b) {

@@ -14,7 +14,10 @@ use crate::{
     fabfilter::{MidiMappingQuery, PresetApply, PresetQuery},
     operation::{self, Operation, Request, TrackEdit, TrackTask, schema},
     runtime::RuntimeHandle,
-    serum::{PresetApply as SerumPresetApply, Variant as SerumVariant},
+    serum::{
+        MidiMappingQuery as SerumMidiMappingQuery, PresetApply as SerumPresetApply,
+        Variant as SerumVariant,
+    },
 };
 
 #[derive(Clone)]
@@ -230,6 +233,12 @@ impl McpServer {
                 "Read named parameters, or enumerate a native page when names is empty. Follow next_offset until null with the same expected_document, expected_instance and source. complete means one page covers its current provider. source level_meter enumerates only six registered Level Meter GUI settings and requires Level Meter, expected_document and expected_instance. Native enumeration requires the matching optional extension; metadata fallback is partial.",
                 false,
             ),
+            named::<crate::operation::PluginMultiAddMaiTai>(
+                "plugin_multi_add_mai_tai",
+                "pluginMultiAddMaiTai",
+                "Add a second stock Mai Tai in parallel to an exact Multi Instrument with one existing Mai Tai with the supported three-node graph ownership shape. Select the unique Music track and stop playback and recording. Bind the current document, parent device, Instruments folder, Graph, original Inst01 slot and its Mai Tai Device. First call plugin_inspect with kind instrument and the selected track to obtain the Multi Instrument identity. Then repeat with plugin, expected_instance, include_nodes=true, and node_scope=plugin_controller. An accepted call is applied_unverified. Independently inspect both children, graph and mixer. After an explicit Undo, read fresh bindings before issuing a new request. Stop on an unknown outcome.",
+                true,
+            ),
             named::<PluginMultiChildParameters>(
                 "plugin_multi_child_parameters",
                 "pluginMultiChildParameters",
@@ -318,6 +327,12 @@ impl McpServer {
                 "insert_splitter_remove",
                 "insertSplitterRemove",
                 "Remove one nested two-way Splitter with a single effect on each branch and a shared merger. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the two slot-node UUIDs in branch order. Inspect and capture the graph first, then independently verify the affected links and effects.",
+                true,
+            ),
+            named::<InsertSplitterRemoveEmptyNested>(
+                "insert_splitter_remove_empty_nested",
+                "insertSplitterRemoveEmptyNested",
+                "Remove the bound third Splitter whose two empty lanes lead to its paired merger in the verified nested Mixtool shape. Stop playback and recording. Supply the mixer channel, slot 0 Mixtool, its instance UUID, graph UUID, the two nodes to remove, and the predecessor slot and successor merger UUIDs. After acceptance or an unknown outcome, inspect the graph independently before further editing.",
                 true,
             ),
             named::<PluginPresets>(
@@ -438,7 +453,19 @@ impl McpServer {
             tool: Tool::new("fabfilter_midi_mapping", "Look up the reference VST3 SDK mapping for a FabFilter controller on bus 0, channel 0. Use CC 0–127, channel pressure 128, pitch bend 129, or program change 130. Compare the reference version with your VST3 bundle and resolve the parameter on the current instance with plugin_parameters. This lookup does not inspect a live instance or send MIDI.", mapping_schema.as_object().unwrap().clone())
                 .with_annotations(ToolAnnotations::default().read_only(true)),
         });
+        let serum_mapping_schema =
+            serde_json::to_value(schemars::schema_for!(SerumMidiMappingQuery)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("serum2_midi_mapping", "Look up the reference Serum 2 or Serum 2 FX VST3 2.1.5 mapping on bus 0, channel 0. Use CC 0–127, channel pressure 128, or pitch bend 129. Resolve the returned parameter name on the current version and instance with plugin_parameters. This is an offline lookup with no MIDI dispatch or instance inspection.", serum_mapping_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         let saved_schema = serde_json::to_value(schemars::schema_for!(FileQuery)).unwrap();
+        specs.push(ToolSpec {
+            operation: None,
+            tool: Tool::new("serum2_preset_inspect", "Inspect an absolute .vstpreset or .SerumPreset path for Serum 2 or Serum 2 FX 2.1.5, schema 11. Checks the preset header and Zstandard frame bounds and reports the variant, file SHA-256 and applicable loader.", saved_schema.as_object().unwrap().clone())
+                .with_annotations(ToolAnnotations::default().read_only(true)),
+        });
         specs.push(ToolSpec {
             operation: None,
             tool: Tool::new("song_read", "Read a saved .song archive without editing it. Results are saved state, not unsaved live state; plugin parameter snapshots may be partial.", saved_schema.as_object().unwrap().clone()),
@@ -621,6 +648,29 @@ impl ServerHandler for McpServer {
                 .map_err(|error| ErrorData::invalid_params(error, None))?;
             return Ok(CallToolResult::structured(serde_json::to_value(mapping).unwrap()).into());
         }
+        if request.name == "serum2_midi_mapping" {
+            let query: SerumMidiMappingQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let mapping = query
+                .lookup()
+                .map_err(|error| ErrorData::invalid_params(error, None))?;
+            return Ok(CallToolResult::structured(mapping).into());
+        }
+        if request.name == "serum2_preset_inspect" {
+            let query: FileQuery = serde_json::from_value(Value::Object(args))
+                .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
+            let result =
+                tokio::task::spawn_blocking(move || crate::serum::inspect_preset(&query.path))
+                    .await
+                    .map_err(|error| ErrorData::internal_error(error.to_string(), None))?;
+            return Ok(match result {
+                Ok(inspection) => {
+                    CallToolResult::structured(serde_json::to_value(inspection).unwrap())
+                }
+                Err(error) => CallToolResult::structured_error(json!({"error":error})),
+            }
+            .into());
+        }
         if request.name == "song_read" {
             let query: FileQuery = serde_json::from_value(Value::Object(args))
                 .map_err(|error| ErrorData::invalid_params(error.to_string(), None))?;
@@ -696,7 +746,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 60;
+    const EXPECTED_TOOL_COUNT: usize = 64;
 
     use super::*;
 
@@ -737,6 +787,69 @@ mod tests {
                 ])
                 && rule["then"]["required"] == json!(["expected_document"])
         }));
+    }
+
+    #[test]
+    fn serum2_preset_inspection_accepts_only_a_path_without_live_routing() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_preset_inspect")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        assert_eq!(spec.tool.input_schema["required"], json!(["path"]));
+        assert_eq!(spec.tool.input_schema["additionalProperties"], false);
+    }
+
+    #[test]
+    fn serum2_midi_reference_is_read_only_and_channel_bounded() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "serum2_midi_mapping")
+            .unwrap();
+        assert!(spec.operation.is_none());
+        assert_eq!(spec.tool.annotations.unwrap().read_only_hint, Some(true));
+        let input = Value::Object((*spec.tool.input_schema).clone());
+        assert_eq!(input["additionalProperties"], false);
+        assert_eq!(input["properties"]["controller"]["maximum"], 129);
+
+        for (controller, control, id) in [
+            (0, "control_change", 500_000_000),
+            (1, "control_change", 516_000_000),
+            (127, "control_change", 500_000_127),
+            (128, "channel_pressure", 500_000_128),
+            (129, "pitch_bend", 516_000_001),
+        ] {
+            let lookup = |variant| {
+                serde_json::from_value::<SerumMidiMappingQuery>(
+                    json!({"variant": variant, "controller": controller}),
+                )
+                .unwrap()
+                .lookup()
+                .unwrap()
+            };
+            let instrument = lookup("instrument");
+            let fx = lookup("fx");
+            assert_eq!(instrument["bus"], 0);
+            assert_eq!(instrument["channel"], 0);
+            assert_eq!(instrument["reference_version"], "2.1.5");
+            assert_ne!(instrument["class_uid"], fx["class_uid"]);
+            assert_eq!(fx["control"], control);
+            assert_eq!(instrument["parameter"], fx["parameter"]);
+            assert_eq!(fx["parameter"]["vst3_id"], id);
+            assert_eq!(fx["parameter"]["studio_pro_name"], format!("vstp{id}"));
+        }
+        for invalid in [
+            json!({"variant":"instrument", "controller":-1}),
+            json!({"variant":"other", "controller":1}),
+            json!({"variant":"fx", "controller":1, "channel":1}),
+            json!({"variant":"fx", "controller":1, "expected_document":"older"}),
+        ] {
+            assert!(serde_json::from_value::<SerumMidiMappingQuery>(invalid).is_err());
+        }
+        let unsupported: SerumMidiMappingQuery =
+            serde_json::from_value(json!({"variant":"fx", "controller":130})).unwrap();
+        assert!(unsupported.lookup().is_err());
     }
 
     #[test]
@@ -1202,7 +1315,9 @@ mod tests {
             "insert_chain_state",
             "insert_slot_move",
             "insert_splitter_remove",
+            "insert_splitter_remove_empty_nested",
             "insert_splitter_add",
+            "plugin_multi_add_mai_tai",
             "panner_set",
             "splitter_set",
         ] {
