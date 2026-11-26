@@ -558,6 +558,11 @@ fn execute(
                 && response.result["ok"] == false
                 && response.result["native_outcome"] == "not_applied"
                 && response.result["error"]["code"] == "scope_sidechain_assignment_remove_failed")
+            || (matches!(operation, Operation::ScopeSidechainAssignmentCreate(_))
+                && response.ok
+                && response.result["ok"] == false
+                && response.result["native_outcome"] == "not_applied"
+                && response.result["error"]["code"] == "scope_sidechain_assignment_create_failed")
             || [
                 "session_changed",
                 "document_changed",
@@ -2027,6 +2032,8 @@ mod tests {
 
     fn mutating_operations() -> Vec<Operation> {
         [
+            ("scopeSidechainAssignmentCreate", json!({"source_channel":"Scratch Source", "scope_channel":"Scratch Receiver",
+                "expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
             ("scopeSidechainAssignmentRemove", json!({"source_channel":"Scratch Source", "scope_channel":"Scratch Receiver",
                 "expected_instance":"12345678-1234-1234-1234-123456789ABC","expected_send":"12345678-1234-1234-1234-123456789ABD"})),
             ("serum2EventInputSet", json!({"track":"Scratch Keys","variant":"instrument",
