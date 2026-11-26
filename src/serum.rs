@@ -73,6 +73,10 @@ pub(crate) struct PresetInspection {
 #[serde(deny_unknown_fields)]
 pub(crate) struct MidiMappingQuery {
     variant: Variant,
+    /// Zero-based MIDI channel, defaulting to the first channel.
+    #[serde(default)]
+    #[schemars(range(max = 15))]
+    channel: u8,
     /// Reference MIDI 1.0 controller number (CC 0–127, channel pressure 128, pitch bend 129).
     #[schemars(range(max = 129))]
     controller: u8,
@@ -80,12 +84,22 @@ pub(crate) struct MidiMappingQuery {
 
 impl MidiMappingQuery {
     pub(crate) fn lookup(self) -> Result<serde_json::Value, &'static str> {
-        let (control, vst3_id) = match self.controller {
-            1 => ("control_change", 516_000_000),
-            0..=127 => ("control_change", 500_000_000 + u32::from(self.controller)),
-            128 => ("channel_pressure", 500_000_128),
-            129 => ("pitch_bend", 516_000_001),
+        if self.channel > 15 {
+            return Err("channel must be a zero-based MIDI channel in 0..15");
+        }
+        let control = match self.controller {
+            0..=127 => "control_change",
+            128 => "channel_pressure",
+            129 => "pitch_bend",
             _ => return Err("controller must be in the reference MIDI range 0..129"),
+        };
+        let vst3_id = match (self.channel, self.controller) {
+            (0, 1) => 516_000_000,
+            (0, 129) => 516_000_001,
+            (_, 1 | 129) => return Err("CC 1 and pitch bend are qualified only on channel 0"),
+            (channel, controller) => {
+                500_000_000 + u32::from(channel) * 1_000_000 + u32::from(controller)
+            }
         };
         Ok(serde_json::json!({
             "scope": "reference_vst3_sdk_midi_mapping",
@@ -95,7 +109,7 @@ impl MidiMappingQuery {
             "reference_architecture": "arm64",
             "class_uid": self.variant.class_uid(),
             "bus": 0,
-            "channel": 0,
+            "channel": self.channel,
             "controller": self.controller,
             "control": control,
             "parameter": {
