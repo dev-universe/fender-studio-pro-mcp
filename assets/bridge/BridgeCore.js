@@ -131,7 +131,7 @@ class Bridge {
         const contextError = this.contextError;
         const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
-        const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_rumble_parameters");
+        const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_mustang_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";

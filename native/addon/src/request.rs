@@ -266,6 +266,9 @@ enum Request {
     RumbleStateRead {
         expected_instance: String,
     },
+    MustangStateRead {
+        expected_instance: String,
+    },
     RumbleSerializationInspect {
         expected_instance: String,
     },
@@ -370,6 +373,8 @@ enum Request {
         merger_node: String,
         first_slot_node: String,
         second_slot_node: String,
+        #[serde(default)]
+        first_branch_tail_node: Option<String>,
     },
     InsertSplitterRemoveEmptyNested {
         expected_instance: String,
@@ -431,6 +436,7 @@ impl Request {
             | Self::RumbleParametersRead { .. }
             | Self::RumbleNamedParametersRead { .. }
             | Self::RumbleStateRead { .. }
+            | Self::MustangStateRead { .. }
             | Self::RumbleSerializationInspect { .. }
             | Self::StateRestore { .. }
             | Self::StateRelease { .. }
@@ -527,6 +533,7 @@ impl Request {
             | Self::RumbleParametersRead { expected_instance }
             | Self::RumbleNamedParametersRead { expected_instance }
             | Self::RumbleStateRead { expected_instance }
+            | Self::MustangStateRead { expected_instance }
             | Self::RumbleSerializationInspect { expected_instance }
             | Self::ModelCatalog {
                 expected_instance, ..
@@ -730,6 +737,7 @@ impl Request {
                 merger_node,
                 first_slot_node: first,
                 second_slot_node: second,
+                ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance,
@@ -753,6 +761,11 @@ impl Request {
                     occupied_slot_node, ..
                 } = self {
                     nodes.push(occupied_slot_node);
+                }
+                if let Self::InsertSplitterRemove {
+                    first_branch_tail_node: Some(tail), ..
+                } = self {
+                    nodes.push(tail);
                 }
                 if ![expected_instance, expected_graph]
                     .into_iter()
@@ -1507,10 +1520,54 @@ fn dsp_provider(ctx: &Context<'_>, metadata: DspParameters) -> Result<Provider, 
     Ok(Provider::Dsp(DspProvider { metadata, direct }))
 }
 #[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum FenderProcessor {
+    Rumble,
+    Mustang,
+}
+
+struct FenderProcessorProfile {
+    name: &'static str,
+    class_uid: &'static str,
+    schema: &'static str,
+    receipt_operation: &'static str,
+    error_code: &'static str,
+    product: &'static str,
+    model_domain: &'static [u8],
+    settings_domain: &'static [u8],
+}
+
+impl FenderProcessor {
+    fn profile(self) -> FenderProcessorProfile {
+        match self {
+            Self::Rumble => FenderProcessorProfile {
+                name: "Rumble Native",
+                class_uid: "B9D7536C-A010-457D-A182-36E5531164C9",
+                schema: "rumble_processor_state_v1",
+                receipt_operation: "rumble_model_state_read",
+                error_code: "rumble_processor_state_unavailable",
+                product: "Rumble",
+                model_domain: b"fsp.rumble.models.v1\0",
+                settings_domain: b"fsp.rumble.processor-settings.v1\0",
+            },
+            Self::Mustang => FenderProcessorProfile {
+                name: "Mustang Native",
+                class_uid: "11B8AA91-9BED-4A7F-90F4-02C6A6C7AF34",
+                schema: "mustang_processor_state_v1",
+                receipt_operation: "mustang_model_state_read",
+                error_code: "mustang_processor_state_unavailable",
+                product: "Mustang",
+                model_domain: b"fsp.mustang.models.v1\0",
+                settings_domain: b"fsp.mustang.processor-settings.v1\0",
+            },
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum ObservationKind {
     Ordinary,
     RumbleStructure,
-    RumbleProcessorState,
+    ProcessorState(FenderProcessor),
     RumbleParameters,
     RumbleNamedParameters,
 }
@@ -1955,6 +2012,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::RumbleParametersRead { .. }
         | Request::RumbleNamedParametersRead { .. }
         | Request::RumbleStateRead { .. }
+        | Request::MustangStateRead { .. }
         | Request::RumbleSerializationInspect { .. }
         | Request::ModelCatalog { .. }
         | Request::FabfilterPresetApply { .. }
@@ -2227,7 +2285,7 @@ impl Reply {
         if self.rumble_inspection() {
             self.value = self.rumble_failure();
         } else {
-            state::invalidate_rumble_serialization(&mut self.value);
+            state::invalidate_serialized_observation(&mut self.value);
         }
         owner_inspect::invalidate(&mut self.value);
         gui_parameter::invalidate(&mut self.value);
@@ -2708,6 +2766,7 @@ fn dispatch_device(
         merger_node,
         first_slot_node,
         second_slot_node,
+        first_branch_tail_node,
         ..
     } = request
     {
@@ -2720,7 +2779,9 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
-            node_inspect::splitter_remove::Shape::OccupiedBranches,
+            node_inspect::splitter_remove::Shape::OccupiedBranches(
+                first_branch_tail_node.as_deref(),
+            ),
         );
     }
     if let Request::InsertSplitterRemoveEmptyNested {
@@ -3005,11 +3066,16 @@ fn dispatch_device(
             mutation: false,
         };
     }
-    if let Request::RumbleStateRead { .. } = request {
-        let (value, provider) = match state::read_rumble_state(&ctx) {
+    if let Request::RumbleStateRead { .. } | Request::MustangStateRead { .. } = request {
+        let plugin = if matches!(request, Request::MustangStateRead { .. }) {
+            FenderProcessor::Mustang
+        } else {
+            FenderProcessor::Rumble
+        };
+        let (value, provider) = match state::read_processor_state(&ctx, plugin) {
             Ok((value, alias)) => (value, Some(Provider::State(alias))),
             Err(_) => (
-                state::observation_failure(state::ObservationKind::RumbleProcessorState),
+                state::observation_failure(ObservationKind::ProcessorState(plugin)),
                 None,
             ),
         };

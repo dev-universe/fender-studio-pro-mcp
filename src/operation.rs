@@ -904,6 +904,7 @@ impl<'de> Deserialize<'de> for PluginState {
 pub enum PluginStateAction {
     InspectCvPortStructure,
     ReadRumbleState,
+    ReadMustangState,
     ReadRumbleParameters,
     ReadRumbleNamedParameters,
     InspectRumbleSerialization,
@@ -989,6 +990,9 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+    /// The optional second effect on the first branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub first_branch_tail_node: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1675,6 +1679,7 @@ impl Operation {
                     p.action,
                     PluginStateAction::InspectRumbleSerialization
                         | PluginStateAction::ReadRumbleState
+                        | PluginStateAction::ReadMustangState
                         | PluginStateAction::ReadRumbleParameters
                         | PluginStateAction::ReadRumbleNamedParameters
                 )
@@ -1719,6 +1724,7 @@ impl Operation {
             || matches!(self, Self::PluginAction(p) if matches!(p.action, PluginButtonAction::ClearChorderSelected))
             || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
+                        | PluginStateAction::ReadMustangState
                         | PluginStateAction::ReadRumbleParameters
                         | PluginStateAction::ReadRumbleNamedParameters))
             || matches!(
@@ -2213,6 +2219,20 @@ impl Operation {
                             return Err(invalid("Rumble parameters require an effect target"));
                         }
                     }
+                    PluginStateAction::ReadMustangState => {
+                        if p.token.is_some()
+                            || p.plugin != "Mustang Native"
+                            || !matches!(p.kind, None | Some(PluginKind::Effect))
+                            || p.expected_instance == "00000000-0000-0000-0000-000000000000"
+                            || p.expected_instance
+                                .bytes()
+                                .any(|byte| byte.is_ascii_lowercase())
+                        {
+                            return Err(invalid(
+                                "Mustang processor state requires an exact Mustang Native effect and canonical instance, with no token",
+                            ));
+                        }
+                    }
                     PluginStateAction::Capture if p.token.is_none() => {}
                     PluginStateAction::Restore | PluginStateAction::Release if valid_token => {}
                     _ => {
@@ -2246,18 +2266,20 @@ impl Operation {
                 )?;
             }
             Self::InsertSplitterRemove(p) => {
+                let mut nodes: Vec<&str> = vec![
+                    &p.splitter_node,
+                    &p.merger_node,
+                    &p.first_slot_node,
+                    &p.second_slot_node,
+                ];
+                nodes.extend(p.first_branch_tail_node.as_deref());
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
                     &p.plugin,
                     &p.expected_instance,
                     &p.expected_graph,
-                    &[
-                        &p.splitter_node,
-                        &p.merger_node,
-                        &p.first_slot_node,
-                        &p.second_slot_node,
-                    ],
+                    &nodes,
                 )?;
             }
             Self::InsertSplitterRemoveEmptyNested(p) => {
@@ -4424,6 +4446,37 @@ mod tests {
             let mut bad = base.clone();
             bad[key] = json!("private");
             assert!(Operation::from_parts("plugin_state", bad).is_err());
+        }
+    }
+
+    #[test]
+    fn mustang_processor_state_requires_an_exact_effect_and_document() {
+        let base = json!({"channel":"Scratch","slot":0,"plugin":"Mustang Native","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"read_mustang_state"});
+        let op = Operation::from_parts("plugin_state", base.clone()).unwrap();
+        assert!(op.validate().is_ok());
+        assert!(op.is_read_only());
+        assert!(op.requires_explicit_document());
+        for (key, value) in [
+            ("token", json!("private")),
+            ("plugin", json!("Rumble Native")),
+            (
+                "expected_instance",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+            (
+                "expected_instance",
+                json!("12345678-1234-1234-1234-123456789abc"),
+            ),
+            ("kind", json!("instrument")),
+        ] {
+            let mut bad = base.clone();
+            bad[key] = value;
+            assert!(
+                Operation::from_parts("plugin_state", bad)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
         }
     }
 

@@ -144,6 +144,18 @@ sh native/build.sh
 
 Open Studio Pro and the scratch song, then start the MCP client. For native reads and writes, carry the returned `instance.object_uid` as `expected_instance`. Enumerate parameters again after changing models, pads, or plugin focus. [Native add-on guide](native/addon/README.md)
 
+### Mustang Native processor state
+
+Call `plugin_state` with `action: "read_mustang_state"`, the insert's
+`channel` and `slot`, `plugin: "Mustang Native"`, `expected_instance`
+from `plugin_inspect`, and `expected_document` from `host_status`.
+This reads the serialized processor class IDs and numeric settings for
+all 26 slots through the matching native extension. Compare
+`models_sha256` and `settings_sha256` across reads. The
+`capture_sha256` identifies one serialization and can differ when
+the two projections match. The read issues no token.
+[8.1.1 verification](docs/evidence/2026-11-26-mustang-processor-state.md)
+
 ### Verify a parameter through a separate read
 
 Set `readback` to `true` on `plugin_parameter_set` with the canonical name from
@@ -269,24 +281,45 @@ route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
 channels are 2 and 16. Both routes use the global rows for
 Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
 
-Use `track_event_input_get` with an exact Music track name and the
-`expected_document` from `host_status` to read its current numbered
-Event Input in Studio Pro. This is the track's output selector for the
-destination instrument or FX. The recording input is a separate
-selector.
-[Live MCP lookup verification](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+#### Change a Music track's Event Input
 
-With the Music track selected, playback and recording stopped, and
-its record arm and monitor disabled, use `serum2_event_input_set` to
-change the Event Input on the currently routed Serum 2 instrument or
-FX instance. Supply the exact `track` name, `variant` (`instrument`
-or `fx`), the current `expected_document`, the exact
-`expected_instance` from
-`plugin_inspect`, the current `expected_event_input` from
-`track_event_input_get`, and the new one-based `event_input` from
-1 to 16. If the outcome is unknown, read the track route and instance
-again before dispatching another change.
-[Live MCP setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
+This is the Music track's **Out** route to an already connected Serum instance.
+The same number can appear on several Serum instances. For Serum 2 FX, use
+the Music source track in the route commands and inspect the FX on its
+receiver's Audio channel.
+
+1. In Studio Pro, select only that Music track. Stop playback and recording,
+   and turn off the track's record arm and monitor.
+2. Read the current document with `host_status`. Call
+   `track_event_input_get` with the Music track name and that
+   `expected_document`. Keep the returned `event_input`.
+3. Get the destination's `native.instance.object_uid` with `plugin_inspect`.
+   For the FX case, match the Music source's destination UUID to the
+   insert's UUID as described below.
+4. Call `serum2_event_input_set` once. For example, to move the currently
+   routed instrument from Event Input 1 to 2, replace the two placeholder
+   strings with the values just read.
+
+   ```json
+   {
+     "track": "Serum Keys",
+     "variant": "instrument",
+     "expected_document": "<current document>",
+     "expected_instance": "<destination UUID>",
+     "expected_event_input": 1,
+     "event_input": 2
+   }
+   ```
+
+   For an FX destination, use `"variant": "fx"` and the Music source track's
+   exact name. Choose an Event Input from 1 through 16.
+5. Read the route again with `track_event_input_get` and confirm the
+   destination UUID with `plugin_inspect`. If the request returns an
+   unknown outcome, use those same fresh reads before any new request.
+
+[Live route lookup](docs/evidence/2026-11-26-serum-mcp-live-event-input.md)
+[FX route lookup](docs/evidence/2026-11-26-serum2-fx-mcp-live-event-input.md)
+[Instrument and FX setter verification](docs/evidence/2026-11-26-serum-mcp-event-input-set.md)
 
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
@@ -298,9 +331,9 @@ To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
 `kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
 `expected_document`. Inspect the candidate FX insert by its exact channel
 and slot. Compare the two `native.instance.object_uid` values and use the
-matching UID as `expected_instance` on a fresh track inspection. Change
-the route with the track's **Out** menu in Studio Pro, then repeat the
-inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
+matching UID as `expected_instance` on a fresh track inspection. Use the
+track's **Out** menu when choosing a different destination instance, then
+repeat the inspection. [Live destination verification](docs/evidence/2026-11-26-serum2-fx-live-destination.md)
 
 To check the destination in a saved song, call `song_read` on the
 `.song` file and look for `midi_destination` on the source track. A
@@ -478,20 +511,20 @@ After reopening a song, obtain a fresh document binding and read the current ins
 
 In Studio Pro 8.1.1, an added Splitter and both branches survived saving and restarting Studio Pro. The reopened rack matched all eight nodes, ten directed links, and 144 Mixtool values. Studio Pro issued new live document, insert folder, and graph bindings. Requests with the old document or graph were refused. [Splitter insertion persistence](docs/evidence/2026-11-24-insert-splitter-add-persistence.json)
 
-`insert_splitter_remove` removes a supported inner Splitter and its merger. Each of its two ordered branches must contain one effect slot, and the other outer branch must lead directly to the outer merger. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json)
+`insert_splitter_remove` removes a supported inner Splitter and its merger. The other outer branch must lead directly to the outer merger. Supply both branch head slot-node UUIDs. By default each branch contains one effect. For exactly two effects on the first branch, supply its second slot-node UUID as `first_branch_tail_node`. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json) [Three-effect removal verification](docs/evidence/2026-11-26-splitter-three-effect-mcp-remove.md)
 
 The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
 `insert_splitter_remove_empty_nested` removes the third Splitter and its paired merger in the supported nested Mixtool graph. Both lanes of the third Splitter must lead directly to its merger. Stop playback and recording, open the rack’s Routing tab, and bind slot 0 Mixtool with `plugin_inspect` and a fresh routing capture. Supply `channel`, `slot`, `plugin`, `expected_instance`, `expected_graph`, `splitter_node`, `merger_node`, `predecessor_slot_node`, `successor_merger_node`, and the current `expected_document`. Use canonical uppercase UUIDs. Inspect the links and effect values independently after `applied_unverified` or an unknown outcome before attempting any further edit. In Studio Pro 8.1.1 for Apple Silicon, the two Mixtools stayed in parallel and all 144 reported values survived one Save and a fresh process. [Empty nested Splitter removal verification](docs/evidence/2026-11-26-empty-nested-splitter-public.md)
 
 Use `insert_splitter_remove_one_lane_nested` with the same slot 0
-Mixtool and graph identifiers when the first lane of the third Splitter
-is empty and its second lane contains exactly one Mixtool. Add that
+Mixtool and graph identifiers when one lane of the third Splitter is
+empty and the other contains exactly one Mixtool. Add that
 effect's slot-node UUID as `occupied_slot_node`. Stop transport and
 inspect the graph independently after the request. In the verified
 shape, removal kept both effects connected in series. One host Undo
 restored the original topology and all 144 reported DSP values.
-[One-lane MCP removal verification](docs/evidence/2026-11-26-splitter-single-occupied-mcp.md)
+[First- and second-lane MCP verification](docs/evidence/2026-11-26-nested-splitter-mcp-either-lane.md)
 
 After `insert_chain_state` restores a captured chain, read the current routing and bind the current slot and plugin instance IDs again. Studio Pro may replace both IDs. The `applied_unverified` receipt confirms the host accepted the load. Compare the current connections and plugin values to verify the result. [Nested restoration verification](docs/evidence/2026-11-20-insert-chain-restore.json)
 

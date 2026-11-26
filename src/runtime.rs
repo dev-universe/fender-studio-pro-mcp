@@ -493,7 +493,7 @@ fn execute(
         && rumble_processor_state::requested(&operation)
         && (!response.ok || !rumble_processor_state::valid_get(query, &response.result))
     {
-        rumble_processor_state::invalidate(&mut response.result);
+        rumble_processor_state::invalidate(query, &mut response.result);
     }
     if let Operation::PluginState(query) = &operation
         && rumble_parameters::requested(&operation)
@@ -1375,8 +1375,10 @@ fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
         rumble_parameters::invalidate(result);
         return;
     }
-    if rumble_processor_state::requested(operation) {
-        rumble_processor_state::invalidate(result);
+    if let Operation::PluginState(query) = operation
+        && rumble_processor_state::requested(operation)
+    {
+        rumble_processor_state::invalidate(query, result);
         return;
     }
     if rumble_serialization::requested(operation) {
