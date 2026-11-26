@@ -47,6 +47,11 @@ pub enum Operation {
     Inserts(ChannelQuery),
     #[serde(rename = "sends")]
     Sends(ChannelQuery),
+    #[serde(
+        rename = "scopeSidechainAssignmentGet",
+        alias = "scope_sidechain_assignment_get"
+    )]
+    ScopeSidechainAssignmentGet(ScopeSidechainAssignmentGet),
     #[serde(rename = "setSend", alias = "send_set")]
     SetSend(SendSet),
     #[serde(rename = "setInsertBypass", alias = "plugin_bypass")]
@@ -273,6 +278,14 @@ pub enum PannerField {
     PanX1,
     PanX2,
     PanWidth,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeSidechainAssignmentGet {
+    pub source_channel: String,
+    pub scope_channel: String,
+    pub expected_instance: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -949,6 +962,12 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+    /// The optional second effect on the first branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub first_branch_tail_node: Option<String>,
+    /// The optional second effect on the second branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub second_branch_tail_node: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1618,6 +1637,7 @@ impl Operation {
             | Self::PluginCatalog(_)
             | Self::Inserts(_)
             | Self::Sends(_)
+            | Self::ScopeSidechainAssignmentGet(_)
             | Self::PluginParams(_)
             | Self::PluginMultiChildParameters(_)
             | Self::PluginChoices(_)
@@ -1694,6 +1714,7 @@ impl Operation {
                     | Self::Serum2PresetApply(_)
                     | Self::Serum2EventInputSet(_)
                     | Self::TrackEventInput(_)
+                    | Self::ScopeSidechainAssignmentGet(_)
             )
     }
 
@@ -1781,6 +1802,32 @@ impl Operation {
                 return Err(invalid(
                     "Track name must contain 1 to 256 UTF-8 bytes without control characters",
                 ));
+            }
+            Self::ScopeSidechainAssignmentGet(query) => {
+                if [&query.source_channel, &query.scope_channel]
+                    .into_iter()
+                    .any(|name| {
+                        name.trim().is_empty()
+                            || name.len() > 256
+                            || name.chars().any(char::is_control)
+                    })
+                    || query.source_channel == query.scope_channel
+                {
+                    return Err(invalid(
+                        "Scope assignment requires two distinct, bounded audio channel names",
+                    ));
+                }
+                validate_instance_uid(Some(&query.expected_instance))?;
+                if query.expected_instance == "00000000-0000-0000-0000-000000000000"
+                    || query
+                        .expected_instance
+                        .bytes()
+                        .any(|byte| byte.is_ascii_lowercase())
+                {
+                    return Err(invalid(
+                        "Scope assignment requires a nonzero canonical instance UUID",
+                    ));
+                }
             }
             Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,
             Self::SetSplitter(change) => {
@@ -2203,18 +2250,27 @@ impl Operation {
                 )?;
             }
             Self::InsertSplitterRemove(p) => {
+                let mut nodes: Vec<&str> = vec![
+                    &p.splitter_node,
+                    &p.merger_node,
+                    &p.first_slot_node,
+                    &p.second_slot_node,
+                ];
+                nodes.extend(
+                    [
+                        p.first_branch_tail_node.as_deref(),
+                        p.second_branch_tail_node.as_deref(),
+                    ]
+                    .into_iter()
+                    .flatten(),
+                );
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
                     &p.plugin,
                     &p.expected_instance,
                     &p.expected_graph,
-                    &[
-                        &p.splitter_node,
-                        &p.merger_node,
-                        &p.first_slot_node,
-                        &p.second_slot_node,
-                    ],
+                    &nodes,
                 )?;
             }
             Self::InsertSplitterRemoveEmptyNested(p) => {
