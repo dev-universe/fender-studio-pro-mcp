@@ -1024,6 +1024,8 @@ class NativePluginControls {
         if (operation === "insert_splitter_remove") return ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
         if (operation === "insert_splitter_remove_empty_nested")
             return ["splitter_node", "merger_node", "predecessor_slot_node", "successor_merger_node"];
+        if (operation === "insert_splitter_remove_one_lane_nested")
+            return ["splitter_node", "merger_node", "predecessor_slot_node", "successor_merger_node", "occupied_slot_node"];
         return null;
     }
 
@@ -1308,6 +1310,8 @@ class NativePluginControls {
             code: "serum2_preset_apply_failed", message: "The native Serum preset application could not be established",
         } });
         const insertGraphEdit = this.insertGraphNodeFields(request.operation) !== null;
+        const nestedSplitterRemove = request.operation === "insert_splitter_remove_empty_nested"
+            || request.operation === "insert_splitter_remove_one_lane_nested";
         const multiAddMaiTai = request.operation === "multi_add_mai_tai";
         try {
             if (insertGraphEdit && !this.insertGraphEditRequest(request)) throw new Error("invalid insert graph edit request");
@@ -1374,6 +1378,9 @@ class NativePluginControls {
             if (request.operation === "insert_splitter_remove_empty_nested"
                 && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
                 throw new Error("unsupported empty nested Splitter remove API");
+            if (request.operation === "insert_splitter_remove_one_lane_nested"
+                && capability.insert_splitter_remove_one_lane_nested_api !== "one_lane_nested_splitter_remove_v1")
+                throw new Error("unsupported one-lane nested Splitter remove API");
             if (stereoSendChange && capability.stereo_send_set_api !== "stereo_send_v1")
                 return stereoSendUnavailable();
             if (serum2Preset && capability.serum2_preset_apply_api !== "vst3_single_component_v1")
@@ -1413,7 +1420,7 @@ class NativePluginControls {
                 if (current.error || current.device !== device)
                     throw new Error("The selected track's native instrument changed before insertion");
             }
-            if (request.operation === "insert_splitter_remove_empty_nested"
+            if (nestedSplitterRemove
                 && (typeof this.component.bridge.insertGraphTransportStopped !== "function"
                     || !this.component.bridge.insertGraphTransportStopped() || !this.sameContext(before)))
                 throw new Error("A current document with stopped playback and recording is required");
