@@ -1,11 +1,20 @@
-//! Remove one exact middle effect through the owning slot's stock observer.
+//! Remove one exact middle effect through Studio Pro's recorded action.
+use super::super::slot_move::splitter_add::{
+    RecordingScope, ScopeStorage, recorded_submit, undo_available,
+};
 use super::*;
+use std::mem::MaybeUninit;
 
-// The live routed adapter derives from AudioInsertSlot. Its primary and
-// observer tables differ from the base while its Device command is inherited.
+// The live routed adapter derives from AudioInsertSlot and inherits Device commands.
 const ROUTED_AUDIO_INSERT_SLOT: usize = 0x1b90b50;
 const SLOT_HANDLER: usize = 0x1b911f0;
-const SLOT_OBSERVER: usize = 0x1b90fc8;
+const SLOT_EDIT_SCOPE: usize = 0x1bd9250;
+const ACTION_JOURNAL: Uid = Uid {
+    a: 0xd70f5dc5,
+    b: 0xd9bd,
+    c: 0x4230,
+    d: [0xb9, 0x08, 0xf5, 0x57, 0xcc, 0x41, 0x79, 0x3f],
+};
 
 fn parent(node: *mut c_void) -> *mut c_void {
     let get: Borrowed = unsafe { method(node, 6) };
@@ -119,21 +128,15 @@ pub(in crate::native_script::request) fn dispatch(
         }
         let handler = query(slot_owner.0, &COMMAND_HANDLER)
             .ok_or("The slot command handler is unavailable")?;
-        let observer =
-            query(slot_owner.0, &OBSERVER).ok_or("The slot message receiver is unavailable")?;
         let check: unsafe extern "C" fn(*mut c_void, *const CheckCommand) -> u8 =
             unsafe { method(handler.0, 4) };
-        let notify: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) =
-            unsafe { method(observer.0, 3) };
         if handler.0 != slot_owner.0.cast::<u8>().wrapping_add(0x90).cast()
-            || observer.0 != slot_owner.0.cast::<u8>().wrapping_add(0x20).cast()
             || table(handler.0) != image + SLOT_HANDLER
             || check as usize != image + 0xbafc20
-            || table(observer.0) != image + SLOT_OBSERVER
-            || notify as usize != image + 0xc2c280
-            || (unsafe { method::<Borrowed>(slot_owner.0, 0x230 / 8) }) as usize != image + 0xd7e50c
         {
-            return Err("The exact slot removal entry no longer matches the verified image".into());
+            return Err(
+                "The exact slot command handler no longer matches the verified image".into(),
+            );
         }
         let check_shape = || -> Result<(), String> {
             check_edges()?;
@@ -154,23 +157,87 @@ pub(in crate::native_script::request) fn dispatch(
             flags: 1,
             padding: 0,
         };
-        let message = Rc::new(RemoveMessage {
-            vtable: &REMOVE_MESSAGE,
-            id: cstring(ctx.api, c"removeSelf")?,
-        });
-        let message = Owned(Rc::into_raw(message).cast_mut().cast());
         ownership.check(&mut guard, &mut || ctx.check())?;
         check_shape()?;
         if unsafe { check(handler.0, &command) } != 1 {
             return Err("The bound slot did not approve Device / Remove".into());
         }
+        let native_folder: Borrowed = unsafe { std::mem::transmute(image + 0xd737f4) };
+        if unsafe { native_folder(slot_owner.0) } != owning_folder {
+            return Err("The recorded action resolved a different owning folder".into());
+        }
+        let check_recorded_branch = || -> Result<(), String> {
+            let folder_flags = unsafe { field::<u8>(owning_folder, 0x2ec) };
+            let slot_flags = unsafe { field::<u8>(slot_owner.0, 0x1d0) };
+            if folder_flags & 0x60 != 0x20 || slot_flags & 8 != 0 {
+                return Err("The slot does not support recorded removal".into());
+            }
+            Ok(())
+        };
+        check_recorded_branch()?;
+
+        // The stock observer constructs this scope and loops over selection.
+        // Use its explicit per-slot helper with the already bound target.
+        let begin_scope: unsafe extern "C" fn(*mut c_void, *mut c_void) =
+            unsafe { std::mem::transmute(image + 0xd6c290) };
+        let begin_group: unsafe extern "C" fn(*mut c_void, *const PlainString, u8) -> *mut c_void =
+            unsafe { std::mem::transmute(image + 0xd6c924) };
+        let remove: unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8 =
+            unsafe { std::mem::transmute(image + 0xd6d27c) };
+        let finish: unsafe extern "C" fn(*mut c_void) =
+            unsafe { std::mem::transmute(image + 0xd6c4a4) };
+        let empty = unsafe { names(c"".as_ptr()) };
+        if empty.is_null() {
+            return Err("The empty host String is unavailable".into());
+        }
         ownership.check(&mut guard, &mut || ctx.check())?;
         check_shape()?;
-        // Device / Remove can act on selection. Deliver removeSelf only to
-        // the exact retained slot observer after the stock check-only call.
-        dispatched = true;
-        unsafe { notify(observer.0, std::ptr::null_mut(), message.0) };
+        undo_available(image, graph)?;
+        let mut storage = MaybeUninit::<ScopeStorage>::uninit();
+        let scope_ptr = storage.as_mut_ptr().cast();
+        unsafe { begin_scope(scope_ptr, slot_owner.0) };
+        let scope = RecordingScope::new(scope_ptr, finish);
+        recorded_submit(image, &scope, SLOT_EDIT_SCOPE)?;
+        let get_journal = || {
+            let owner = unsafe { field::<*mut c_void>(scope_ptr, 0x40) };
+            if owner.is_null() {
+                return std::ptr::null_mut();
+            }
+            let get: Borrowed = unsafe { method(owner, 3) };
+            unsafe { get(owner) }
+        };
+        let raw_journal = get_journal();
+        let journal =
+            query(raw_journal, &ACTION_JOURNAL).ok_or("The recorded journal is unavailable")?;
+        let last_edit: unsafe extern "C" fn(*mut c_void) -> i64 = unsafe { method(journal.0, 3) };
+        let is_performing: unsafe extern "C" fn(*mut c_void) -> u8 =
+            unsafe { method(journal.0, 8) };
+        if unsafe { is_performing(journal.0) } != 0 {
+            return Err("The host Undo journal is already performing an action".into());
+        }
+        let before_edit = unsafe { last_edit(journal.0) };
         guard()?;
+        check_shape()?;
+        let group = unsafe { begin_group(scope_ptr, empty, 0) };
+        if group.is_null()
+            || group != unsafe { field::<*mut c_void>(image as *mut c_void, 0x1e834b0) }
+        {
+            return Err("The native removal action could not open its recorded group".into());
+        }
+        recorded_submit(image, &scope, SLOT_EDIT_SCOPE)?;
+        ownership.check(&mut guard, &mut || ctx.check())?;
+        check_shape()?;
+        check_recorded_branch()?;
+        if get_journal() != raw_journal {
+            return Err("The host Undo journal changed before removal".into());
+        }
+        dispatched = true;
+        let accepted = unsafe { remove(scope_ptr, slot_owner.0) } & 1 == 1;
+        drop(scope);
+        guard()?;
+        if !accepted || unsafe { last_edit(journal.0) } == before_edit {
+            return Err("The host did not confirm a recorded removal action".into());
+        }
         if adjacent(preceding, 0x1a8, 0x1b0)? != [following]
             || adjacent(following, 0x188, 0x190)? != [preceding]
         {
