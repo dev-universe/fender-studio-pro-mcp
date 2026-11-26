@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "40740ce5b886993d2f7d7478e487ba9741610191",
+    "main_at_checkpoint": "cea56d0a10e2860366c242dcf17d20251899408c",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -493,7 +493,8 @@
       337,
       338,
       339,
-      340
+      340,
+      341
     ],
     "remaining_builtin_units": 13,
     "remaining_hardware_units_within_builtin": 4,
@@ -504,15 +505,17 @@
     "last_verified_unit": {
       "trials": [
         "R565",
-        "R566"
+        "R566",
+        "R567"
       ],
-      "result": "Ordered continuation requests refuse wrong order and remove both 1+3 and 3+1 branches with 288 DSP rows preserved and exact native Undo. Native middle effect removal reconnects its neighbors, preserves the sibling lane and 216 surviving rows, and one host Undo restores all original identifiers and 288 rows.",
+      "result": "Ordered continuation removal and stock middle removal preserve unrelated graph and DSP ownership and are exactly undone. R567 independently identifies the check-only Device / Remove handler and the exact owning-slot removeSelf receiver on the supported arm64 image.",
       "pull_requests": [
         339,
-        340
+        340,
+        341
       ],
       "normal_managed_installation_restored": true,
-      "next": "R567 traces the stock ProcessGraph Remove command receiver for an exact routed effect. Public individual deletion and generic connection operations remain open. The release frontier is PR312."
+      "next": "R568 tests public exact middle deletion from candidate 83526d9a in an owned scratch song. Guard refusals, independent graph and DSP readback and one native Undo are required. PR312 merged; the release frontier is PR335. Generic connection scope remains open."
     },
     "remaining_builtin_units_after_local_verification": 11,
     "locally_qualified_fixed_units_pending_merge": [

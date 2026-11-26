@@ -3142,3 +3142,19 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   경로를 검증한다. 기능으로 공개하기 전 명령과 대상 및 Undo를
   연결해야 한다. 고정 잔여 로컬 11, main 13, 장비 4.
   전체 예상 2~5일과 장비 대기. 지정된 종료 시각 없음.
+
+## 11월 26일 22시 37분 개별 슬롯 삭제 명령 경로
+
+- #312의 정확한 `e1244f3`이 두 필수 검사를 통과했고,
+  1,179.8초 뒤 `cea56d0a`에 병합됐다. 다음 #335 검사 중.
+  [#312](https://github.com/dev-universe/fender-studio-pro-mcp/pull/312)
+- R567은 arm64 본체에서 `Device / Remove`의 확인 전용 핸들러와
+  정확한 소유 슬롯의 `removeSelf` 수신자를 분리했다. REA/Ghidra,
+  LLVM 및 Craft-Anything의 13개 비교 창을 맞췄다. 10분 14초,
+  Studio Pro 실행이나 명령 호출 없음. [#341](https://github.com/dev-universe/fender-studio-pro-mcp/pull/341)
+- R568 후보 `83526d9a`는 앞·가운데·뒤 슬롯과 대상 Device를
+  각각 바인딩한다. 실제 8.1.1에서 잘못된 대상과 이웃의 거부,
+  정확한 한 슬롯 제거, 독립 그래프 및 DSP 읽기, 기본 Undo를
+  검증할 차례다. 앱 및 MCP owner는 닫힌 상태에서 준비했다.
+  고정 잔여 로컬 11, main 13, 장비 4. 전체 2~5일과 장비 대기,
+  지정 종료 시각 없음.
