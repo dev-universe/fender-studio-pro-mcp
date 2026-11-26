@@ -178,7 +178,9 @@ pub(super) fn valid_get(query: &PluginState, value: &Value) -> bool {
         || value["instance"]["object_uid"] != query.expected_instance
         || value["instance"]["class_uid"] != "B9D7536C-A010-457D-A182-36E5531164C9"
         || value["instance"]["native_class"] != "AudioEffect"
-        || value["instance"]["object_id"] != "Rumble Native"
+        || value["instance"]["object_id"]
+            .as_str()
+            .is_none_or(str::is_empty)
         || value["capture_byte_count"]
             .as_u64()
             .is_none_or(|n| n > 16777216)
@@ -241,6 +243,19 @@ mod tests {
         let mut raw = v.clone();
         raw["capture_sha256"] = json!("b".repeat(64));
         assert!(valid_get(&query(), &raw));
+    }
+    #[test]
+    fn rumble_processor_state_preserves_numbered_instance_labels() {
+        let mut v = receipt();
+        v["instance"]["object_id"] = json!("Rumble Native 2");
+        assert!(valid_get(&query(), &v));
+
+        v["instance"]["object_uid"] = json!("22222222-2222-4222-8222-222222222222");
+        assert!(!valid_get(&query(), &v));
+
+        v["instance"]["object_uid"] = json!(query().expected_instance);
+        v["instance"]["object_id"] = json!("");
+        assert!(!valid_get(&query(), &v));
     }
     #[test]
     fn rumble_processor_state_numbers_are_canonical_and_exact() {
