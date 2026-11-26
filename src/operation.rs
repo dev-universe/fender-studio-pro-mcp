@@ -66,6 +66,8 @@ pub enum Operation {
         alias = "plugin_multi_child_parameters"
     )]
     PluginMultiChildParameters(PluginMultiChildParameters),
+    #[serde(rename = "pluginMultiAddMaiTai", alias = "plugin_multi_add_mai_tai")]
+    PluginMultiAddMaiTai(PluginMultiAddMaiTai),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
     ExternalPortMenu(ExternalPortMenu),
     #[serde(rename = "externalStereoSendSet", alias = "external_stereo_send_set")]
@@ -96,6 +98,11 @@ pub enum Operation {
     InsertSlotMove(InsertSlotMove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
+    #[serde(
+        rename = "insertSplitterRemoveEmptyNested",
+        alias = "insert_splitter_remove_empty_nested"
+    )]
+    InsertSplitterRemoveEmptyNested(InsertSplitterRemoveEmptyNested),
     #[serde(rename = "insertSplitterAdd", alias = "insert_splitter_add")]
     InsertSplitterAdd(InsertSplitterAdd),
     #[serde(rename = "pluginPresets", alias = "plugin_presets")]
@@ -466,6 +473,23 @@ pub struct PluginMultiChildParameters {
     pub offset: Option<u32>,
     #[schemars(range(min = 1, max = 128))]
     pub limit: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PluginMultiAddMaiTai {
+    #[schemars(length(min = 1, max = 512))]
+    pub track: String,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    #[schemars(length(equal = 36))]
+    pub expected_folder: String,
+    #[schemars(length(equal = 36))]
+    pub expected_graph: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_slot: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_instance: String,
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, JsonSchema)]
@@ -912,6 +936,22 @@ pub struct InsertSplitterRemove {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct InsertSplitterRemoveEmptyNested {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    #[schemars(range(min = 0, max = 0))]
+    pub slot: u32,
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub splitter_node: String,
+    pub merger_node: String,
+    pub predecessor_slot_node: String,
+    pub successor_merger_node: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct PluginAction {
     pub channel: Option<String>,
     pub slot: Option<u32>,
@@ -920,6 +960,29 @@ pub struct PluginAction {
     pub plugin: String,
     pub expected_instance: String,
     pub action: PluginButtonAction,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "supplied_chorder_clear_guard"
+    )]
+    pub chorder_guard: Option<ChorderClearGuard>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ChorderClearGuard {
+    pub expected_input_pitch: ChorderMidiPitch,
+    #[schemars(length(min = 64, max = 64), regex(pattern = "^[0-9a-f]{64}$"))]
+    pub expected_model_sha256: String,
+}
+
+fn supplied_chorder_clear_guard<'de, D>(
+    deserializer: D,
+) -> Result<Option<ChorderClearGuard>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    ChorderClearGuard::deserialize(deserializer).map(Some)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -958,6 +1021,7 @@ pub enum PluginButtonAction {
     ResetMeterLoudness,
     ResetMinimumReduction,
     RetriggerScope,
+    ClearChorderSelected,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1576,6 +1640,7 @@ impl Operation {
             || self.inspects_cv_preset_settings()
             || self.applies_cv_preset_settings()
             || self.inspects_impact_outputs()
+            || matches!(self, Self::PluginAction(p) if matches!(p.action, PluginButtonAction::ClearChorderSelected))
             || matches!(self, Self::PluginInspect(p) if matches!(p.node_scope, Some(NodeScope::CvPorts | NodeScope::CvPortParameters | NodeScope::CvPresetTarget)))
             || matches!(self, Self::PluginState(p) if matches!(p.action, PluginStateAction::InspectRumbleSerialization | PluginStateAction::ReadRumbleState
                         | PluginStateAction::ReadRumbleParameters
@@ -1586,6 +1651,7 @@ impl Operation {
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
                     | Self::PluginMultiChildParameters(_)
+                    | Self::PluginMultiAddMaiTai(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
@@ -1882,6 +1948,43 @@ impl Operation {
                 if p.plugin.trim().is_empty() {
                     return Err(invalid("An expected plugin class or instance is required"));
                 }
+                match (&p.action, &p.chorder_guard) {
+                    (PluginButtonAction::ClearChorderSelected, Some(guard))
+                        if p.plugin == "Chorder"
+                            && matches!(p.kind, Some(PluginKind::NoteEffect))
+                            && p.channel.is_none() =>
+                    {
+                        validate_chorder_target(
+                            p.track
+                                .as_deref()
+                                .ok_or_else(|| invalid("Chorder Clear requires a track"))?,
+                            p.slot
+                                .ok_or_else(|| invalid("Chorder Clear requires a slot"))?,
+                            &p.expected_instance,
+                        )?;
+                        if guard.expected_model_sha256.len() != 64
+                            || !guard
+                                .expected_model_sha256
+                                .bytes()
+                                .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                        {
+                            return Err(invalid(
+                                "Chorder Clear requires the lowercase model SHA-256",
+                            ));
+                        }
+                    }
+                    (PluginButtonAction::ClearChorderSelected, _) => {
+                        return Err(invalid(
+                            "Chorder Clear requires the exact Note FX target and an input and model guard",
+                        ));
+                    }
+                    (_, Some(_)) => {
+                        return Err(invalid(
+                            "A Chorder guard is only valid for Clear Chorder Selected",
+                        ));
+                    }
+                    (_, None) => {}
+                }
             }
             Self::PedalboardSlotSwap(p) => {
                 validate_instance_uid(Some(&p.expected_instance))?;
@@ -2034,6 +2137,26 @@ impl Operation {
                         &p.merger_node,
                         &p.first_slot_node,
                         &p.second_slot_node,
+                    ],
+                )?;
+            }
+            Self::InsertSplitterRemoveEmptyNested(p) => {
+                if p.slot != 0 || p.plugin != "Mixtool" {
+                    return Err(invalid(
+                        "Empty nested Splitter removal requires Mixtool in insert slot 0",
+                    ));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.splitter_node,
+                        &p.merger_node,
+                        &p.predecessor_slot_node,
+                        &p.successor_merger_node,
                     ],
                 )?;
             }
@@ -2334,6 +2457,34 @@ impl Operation {
                     return Err(invalid(
                         "Pagination applies only when parameter names is empty",
                     ));
+                }
+            }
+            Self::PluginMultiAddMaiTai(query) => {
+                if query.track.trim().is_empty()
+                    || query.track.encode_utf16().count() > 512
+                    || query.track.chars().any(char::is_control)
+                {
+                    return Err(invalid(
+                        "Multi Instrument insertion requires a bounded Music track name",
+                    ));
+                }
+                let ids = [
+                    query.expected_instance.as_str(),
+                    query.expected_folder.as_str(),
+                    query.expected_graph.as_str(),
+                    query.expected_child_slot.as_str(),
+                    query.expected_child_instance.as_str(),
+                ];
+                for (index, id) in ids.iter().copied().enumerate() {
+                    validate_instance_uid(Some(id))?;
+                    if id == "00000000-0000-0000-0000-000000000000"
+                        || id.bytes().any(|byte| byte.is_ascii_lowercase())
+                        || ids[..index].contains(&id)
+                    {
+                        return Err(invalid(
+                            "Multi Instrument insertion requires distinct canonical nonzero UUIDs",
+                        ));
+                    }
                 }
             }
             Self::PluginMultiChildParameters(query) => {
@@ -2774,6 +2925,8 @@ pub fn schema() -> Value {
     cv_structure_schema(&mut schema["$defs"]["PluginState"]);
     schema["allOf"] = json!([
         {"if":{"properties":{"operation":{"enum":["pluginState","plugin_state"]},"args":{"properties":{"action":{"const":"inspect_cv_port_structure"}},"required":["action"]}},"required":["operation","args"]},"then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
+        {"if":{"properties":{"operation":{"enum":["pluginMultiAddMaiTai","plugin_multi_add_mai_tai"]}},"required":["operation"]},
+            "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
         {"if":{"properties":{"operation":{"enum":["pluginMultiChildParameters","plugin_multi_child_parameters"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}
     ]);
@@ -2783,6 +2936,47 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn multi_add_mai_tai_requires_a_track_distinct_owners_and_an_explicit_document() {
+        let args = json!({
+            "track": "Selected music track",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "expected_folder": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_graph": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_child_slot": "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+            "expected_child_instance": "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE"
+        });
+        let valid = Operation::from_parts("plugin_multi_add_mai_tai", args.clone()).unwrap();
+        assert!(!valid.is_read_only());
+        assert!(valid.requires_explicit_document());
+        assert!(valid.validate().is_ok());
+        assert_eq!(valid.wire(), ("pluginMultiAddMaiTai".into(), args.clone()));
+        for (field, value) in [
+            ("track", json!(" ")),
+            ("expected_graph", args["expected_folder"].clone()),
+            (
+                "expected_folder",
+                json!("BBBBBBBB-BBBB-4BBB-8BBB-bbbbbbbbbbbb"),
+            ),
+            (
+                "expected_child_slot",
+                json!("00000000-0000-0000-0000-000000000000"),
+            ),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("pluginMultiAddMaiTai", invalid)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut extra = args;
+        extra["class_id"] = json!(extra["expected_instance"]);
+        assert!(Operation::from_parts("pluginMultiAddMaiTai", extra).is_err());
+    }
 
     #[test]
     fn multi_child_dsp_pages_require_a_document_and_distinct_exact_ids() {
@@ -3345,6 +3539,44 @@ mod tests {
         let mut invalid = base;
         invalid["address"] = json!(123);
         assert!(Operation::from_parts("impact_output_set", invalid).is_err());
+    }
+
+    #[test]
+    fn chorder_clear_accepts_only_an_exact_note_effect_and_model_guard() {
+        let base = json!({
+            "kind": "note_effect", "track": "Scratch", "slot": 0, "plugin": "Chorder",
+            "expected_instance": "12345678-1234-1234-1234-123456789ABC",
+            "action": "clear_chorder_selected",
+            "chorder_guard": {"expected_input_pitch": 61, "expected_model_sha256": "a".repeat(64)}
+        });
+        let operation = Operation::from_parts("plugin_action", base.clone()).unwrap();
+        operation.validate().unwrap();
+        assert!(operation.requires_explicit_document());
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire().1["chorder_guard"], base["chorder_guard"]);
+        for (field, value) in [
+            ("chorder_guard", Value::Null),
+            (
+                "chorder_guard",
+                json!({"expected_input_pitch": 128, "expected_model_sha256": "a".repeat(64)}),
+            ),
+            (
+                "chorder_guard",
+                json!({"expected_input_pitch": 61, "expected_model_sha256": "A".repeat(64)}),
+            ),
+            ("plugin", json!("Arpeggiator")),
+            ("kind", json!("instrument")),
+            ("action", json!("retrigger_scope")),
+        ] {
+            let mut invalid = base.clone();
+            invalid[field] = value;
+            assert!(
+                Operation::from_parts("plugin_action", invalid)
+                    .and_then(|operation| operation.validate())
+                    .is_err(),
+                "{field}"
+            );
+        }
     }
 
     #[test]

@@ -1,4 +1,5 @@
 //! Synchronous delivery of Studio Pro's fixed Splitter remove message.
+use super::ownership::GraphChildKind;
 use super::*;
 use std::rc::Rc;
 
@@ -22,6 +23,7 @@ const MESSAGE: Uid = Uid {
 };
 const GRAPH_TABLE: usize = 0x1b7abb8;
 const SPLITTER_TABLE: usize = 0x1b7b110;
+const MERGER_TABLE: usize = 0x1b7b6e8;
 const SLOT_TABLES: [usize; 2] = [0x1be18d8, 0x1bccdb8];
 
 #[repr(C)]
@@ -122,9 +124,21 @@ fn table(object: *mut c_void) -> usize {
 }
 
 fn adjacent(object: *mut c_void, pointer: usize, count: usize) -> Result<Vec<*mut c_void>, String> {
+    bounded_links(object, pointer, count, 1)
+}
+
+fn bounded_links(
+    object: *mut c_void,
+    pointer: usize,
+    count: usize,
+    minimum: i32,
+) -> Result<Vec<*mut c_void>, String> {
     let count = unsafe { field::<i32>(object, count) };
+    if count == 0 && minimum == 0 {
+        return Ok(Vec::new());
+    }
     let members = unsafe { field::<*const *mut c_void>(object, pointer) };
-    if !(1..=2).contains(&count) || members.is_null() {
+    if !(minimum..=2).contains(&count) || members.is_null() {
         return Err("The expected narrow nested routing edge changed".into());
     }
     let result = unsafe { std::slice::from_raw_parts(members, count as usize) }.to_vec();
@@ -240,9 +254,291 @@ fn check_shape(
     Ok(())
 }
 
+const EMPTY_SHAPE_CHANGED: &str = "The verified empty nested Splitter topology changed";
+
+struct Links<Node> {
+    incoming: Vec<Node>,
+    outgoing: Vec<Node>,
+}
+
+fn same_incoming<Node: PartialEq>(actual: &[Node], expected: &[Node]) -> bool {
+    actual.len() == expected.len() && expected.iter().all(|n| actual.contains(n))
+}
+
+fn empty_nested_topology<Node: Copy + PartialEq>(
+    [target, paired, preceding, following]: [Node; 4],
+    mut links: impl FnMut(Node) -> Result<Links<Node>, String>,
+) -> Result<[Node; 8], String> {
+    let preceding_links = links(preceding)?;
+    let [inner] = preceding_links.incoming[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let inner_links = links(inner)?;
+    let ([outer], [left, peer]) = (&inner_links.incoming[..], &inner_links.outgoing[..]) else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let outer = *outer;
+    let peer = *peer;
+    let following_links = links(following)?;
+    let [outer_merger] = following_links.outgoing[..] else {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    };
+    let nodes = [
+        outer,
+        inner,
+        preceding,
+        target,
+        peer,
+        outer_merger,
+        paired,
+        following,
+    ];
+    if *left != preceding
+        || nodes
+            .iter()
+            .enumerate()
+            .any(|(index, node)| nodes[..index].contains(node))
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    let target_links = links(target)?;
+    let paired_links = links(paired)?;
+    let peer_links = links(peer)?;
+    let outer_links = links(outer)?;
+    let outer_merger_links = links(outer_merger)?;
+    if preceding_links.outgoing != [target]
+        || target_links.incoming != [preceding]
+        || target_links.outgoing != [paired, paired]
+        || !(paired_links.incoming == [target] || paired_links.incoming == [target, target])
+        || paired_links.outgoing != [following]
+        || peer_links.incoming != [inner]
+        || peer_links.outgoing != [following]
+        || !same_incoming(&following_links.incoming, &[paired, peer])
+        || !outer_links.incoming.is_empty()
+        || outer_links.outgoing != [inner, outer_merger]
+        || !same_incoming(&outer_merger_links.incoming, &[outer, following])
+        || !outer_merger_links.outgoing.is_empty()
+    {
+        return Err(EMPTY_SHAPE_CHANGED.into());
+    }
+    Ok(nodes)
+}
+
+struct EmptyMember<'a> {
+    id: &'a str,
+    primary: *mut c_void,
+    table: usize,
+    _child: Owned,
+    _node: Owned,
+    canonical: Owned,
+}
+
+struct GraphObjectLayout {
+    primary: usize,
+    node: usize,
+    canonical: usize,
+}
+
+impl GraphObjectLayout {
+    fn primary(
+        &self,
+        image: usize,
+        node: *mut c_void,
+        canonical: *mut c_void,
+    ) -> Option<*mut c_void> {
+        // The verified 8.1.1 QueryInterface paths return INode at +0x30
+        // and IUnknown at +0x18. The two retained interfaces must agree
+        // before recovering and checking the primary address.
+        if node.is_null()
+            || canonical.is_null()
+            || node.cast::<u8>().wrapping_sub(0x18).cast() != canonical
+            || table(node) != image + self.node
+            || table(canonical) != image + self.canonical
+        {
+            return None;
+        }
+        let primary = unsafe { node.cast::<u8>().sub(0x30).cast() };
+        (table(primary) == image + self.primary).then_some(primary)
+    }
+}
+
+const GRAPH_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: GRAPH_TABLE,
+    node: 0x1b7af00,
+    canonical: 0x1b7ae38,
+};
+const SPLITTER_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: SPLITTER_TABLE,
+    node: 0x1b7b4a8,
+    canonical: 0x1b7b3e0,
+};
+const MERGER_LAYOUT: GraphObjectLayout = GraphObjectLayout {
+    primary: MERGER_TABLE,
+    node: 0x1b7ba80,
+    canonical: 0x1b7b9b8,
+};
+const SLOT_LAYOUTS: [GraphObjectLayout; 2] = [
+    GraphObjectLayout {
+        primary: SLOT_TABLES[0],
+        node: 0x1be1c70,
+        canonical: 0x1be1ba8,
+    },
+    GraphObjectLayout {
+        primary: SLOT_TABLES[1],
+        node: 0x1bcd150,
+        canonical: 0x1bcd088,
+    },
+];
+
+struct EmptyGraph<'a> {
+    graph: *mut c_void,
+    image: usize,
+    members: Vec<EmptyMember<'a>>,
+}
+
+impl<'a> EmptyGraph<'a> {
+    fn capture(
+        ctx: &Context<'_>,
+        route: &GraphRoute,
+        image: usize,
+        expected: [(&'a str, GraphChildKind); 8],
+    ) -> Result<Self, String> {
+        let graph_node = route.graph.node.0;
+        let graph = GRAPH_LAYOUT
+            .primary(image, graph_node, route.graph._canonical.0)
+            .ok_or("The retained insert graph primary interface changed")?;
+        let count: Count = unsafe { method(graph_node, 8) };
+        let child: unsafe extern "C" fn(*mut c_void, i32) -> *mut c_void =
+            unsafe { method(graph_node, 9) };
+        ctx.check()?;
+        route.check()?;
+        if unsafe { count(graph_node) } != 8 {
+            return Err(EMPTY_SHAPE_CHANGED.into());
+        }
+
+        let mut members: Vec<EmptyMember<'_>> = Vec::with_capacity(expected.len());
+        for (index, (id, kind)) in expected.into_iter().enumerate() {
+            ctx.check()?;
+            route.check()?;
+            let child = hold(unsafe { child(graph_node, index as i32) })
+                .ok_or("The exact graph child detached")?;
+            let node = query(child.0, &NODE).ok_or("The graph child has no INode interface")?;
+            let canonical =
+                query(child.0, &UNKNOWN).ok_or("The graph child has no canonical identity")?;
+            let read_uid: unsafe extern "C" fn(*mut c_void) -> *const Uid =
+                unsafe { method(node.0, 4) };
+            let parent: Borrowed = unsafe { method(node.0, 6) };
+            if uid(unsafe { read_uid(node.0) }) != id
+                || unsafe { parent(node.0) } != graph_node
+                || members
+                    .iter()
+                    .any(|member| member.canonical.0 == canonical.0)
+            {
+                return Err("The retained graph child identity or ownership changed".into());
+            }
+            let supported: &[GraphObjectLayout] = match kind {
+                GraphChildKind::Splitter => &[SPLITTER_LAYOUT],
+                GraphChildKind::Merger => &[MERGER_LAYOUT],
+                GraphChildKind::Slot => &SLOT_LAYOUTS,
+            };
+            let primary = supported
+                .iter()
+                .find_map(|layout| layout.primary(image, node.0, canonical.0))
+                .ok_or("The retained graph child primary interface changed")?;
+            if members.iter().any(|member| member.primary == primary) {
+                return Err("Two graph nodes share a primary pointer".into());
+            }
+            members.push(EmptyMember {
+                id,
+                primary,
+                table: table(primary),
+                _child: child,
+                _node: node,
+                canonical,
+            });
+        }
+        Ok(Self {
+            graph,
+            image,
+            members,
+        })
+    }
+
+    fn member(&self, id: &str) -> Result<&EmptyMember<'a>, String> {
+        self.members
+            .iter()
+            .find(|member| member.id == id)
+            .ok_or_else(|| EMPTY_SHAPE_CHANGED.into())
+    }
+
+    fn check(
+        &self,
+        splitter: *mut c_void,
+        [splitter_id, merger_id, preceding_id, following_id]: [&str; 4],
+    ) -> Result<(), String> {
+        if self.member(splitter_id)?.primary != splitter
+            || table(self.graph) != self.image + GRAPH_TABLE
+        {
+            return Err("The Splitter observer is not on the retained primary".into());
+        }
+        let paired = self.member(merger_id)?.primary;
+        let preceding = self.member(preceding_id)?.primary;
+        let following = self.member(following_id)?.primary;
+        let [outer, inner, _, _, peer, outer_merger, _, _] =
+            empty_nested_topology([splitter, paired, preceding, following], |object| {
+                let member = self
+                    .members
+                    .iter()
+                    .find(|member| member.primary == object)
+                    .ok_or("An insert edge does not lead to a retained graph child")?;
+                if table(object) != member.table
+                    || unsafe { field::<*mut c_void>(object, 0x178) } != self.graph
+                {
+                    return Err(EMPTY_SHAPE_CHANGED.into());
+                }
+                Ok(Links {
+                    incoming: bounded_links(object, 0x188, 0x190, 0)?,
+                    outgoing: bounded_links(object, 0x1a8, 0x1b0, 0)?,
+                })
+            })?;
+        if table(outer) != self.image + SPLITTER_TABLE
+            || table(inner) != self.image + SPLITTER_TABLE
+            || table(outer_merger) != self.image + MERGER_TABLE
+            || !SLOT_TABLES
+                .iter()
+                .any(|offset| table(peer) == self.image + offset)
+            || [
+                (outer, outer_merger),
+                (inner, following),
+                (splitter, paired),
+            ]
+            .iter()
+            .any(|&(node, merger)| unsafe {
+                field::<*mut c_void>(node, 0x1e0) != merger
+                    || field::<*mut c_void>(merger, 0x1d0) != node
+            })
+        {
+            return Err(EMPTY_SHAPE_CHANGED.into());
+        }
+        Ok(())
+    }
+}
+
+enum Binding<'a> {
+    Occupied([Owned; 4]),
+    Empty(EmptyGraph<'a>),
+}
+
+#[derive(Clone, Copy)]
+pub(in crate::native_script::request) enum Shape {
+    OccupiedBranches,
+    EmptyNested,
+}
+
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     ids @ [graph_id, splitter_id, merger_id, first_id, second_id]: [&str; 5],
+    shape: Shape,
 ) -> Reply {
     let mut dispatched = false;
     let result = (|| -> Result<(), String> {
@@ -256,18 +552,32 @@ pub(in crate::native_script::request) fn dispatch(
         else {
             return Err("Graph ownership could not be established".into());
         };
-        ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
         let image = image as usize;
-        let nodes = bound_nodes(&ctx, &route, [splitter_id, merger_id, first_id, second_id])?;
+        let nodes = [splitter_id, merger_id, first_id, second_id];
+        let binding = match shape {
+            Shape::OccupiedBranches => {
+                ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
+                Binding::Occupied(bound_nodes(&ctx, &route, nodes)?)
+            }
+            Shape::EmptyNested => {
+                let members =
+                    ownership.check_empty_splitter_remove_targets(ids, &ctx.instance.object_uid)?;
+                Binding::Empty(EmptyGraph::capture(&ctx, &route, image, members)?)
+            }
+        };
+        let identity = match &binding {
+            Binding::Occupied(nodes) => &nodes[0],
+            Binding::Empty(graph) => &graph.member(splitter_id)?.canonical,
+        };
         let mut guard = || {
             ctx.check()?;
             route.check()
         };
         guard()?;
         let interpret =
-            query(nodes[0].0, &COMMAND_HANDLER).ok_or("Splitter command handler unavailable")?;
+            query(identity.0, &COMMAND_HANDLER).ok_or("Splitter command handler unavailable")?;
         let observer =
-            query(nodes[0].0, &OBSERVER).ok_or("Splitter message receiver unavailable")?;
+            query(identity.0, &OBSERVER).ok_or("Splitter message receiver unavailable")?;
         let check: unsafe extern "C" fn(*mut c_void, *const CheckCommand) -> u8 =
             unsafe { method(interpret.0, 4) };
         let notify: unsafe extern "C" fn(*mut c_void, *mut c_void, *mut c_void) =
@@ -281,11 +591,17 @@ pub(in crate::native_script::request) fn dispatch(
         }
         // The matched notify thunk subtracts 0x20 from its receiver.
         let splitter = unsafe { observer.0.cast::<u8>().sub(0x20).cast() };
-        if table(splitter) != image + SPLITTER_TABLE || !matches_identity(splitter, &nodes[0]) {
+        if let Binding::Occupied(nodes) = &binding
+            && (table(splitter) != image + SPLITTER_TABLE || !matches_identity(splitter, &nodes[0]))
+        {
             return Err("The primary Splitter receiver changed".into());
         }
+        let validate_shape = || match &binding {
+            Binding::Occupied(nodes) => check_shape(image, &route, splitter, nodes),
+            Binding::Empty(graph) => graph.check(splitter, nodes),
+        };
         guard()?;
-        check_shape(image, &route, splitter, &nodes)?;
+        validate_shape()?;
         guard()?;
         let command = CheckCommand {
             category: cstring(ctx.api, c"Splitter")?,
@@ -305,8 +621,16 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The bound Splitter did not recognize its Remove command".into());
         }
         guard()?;
-        check_shape(image, &route, splitter, &nodes)?;
-        guard()?;
+        match &binding {
+            Binding::Empty(_) => {
+                ownership.check_borrowed(&mut guard)?;
+                validate_shape()?;
+            }
+            Binding::Occupied(_) => {
+                validate_shape()?;
+                guard()?;
+            }
+        }
         // The normal menu schedules this fixed message. Deliver it to the same
         // pinned observer under the current document guard instead of queuing it.
         dispatched = true;
@@ -315,15 +639,33 @@ pub(in crate::native_script::request) fn dispatch(
         route.check()?;
         Ok(())
     })();
-    let mut reply = match result {
-        Ok(()) => Reply::unbound(json!({
-            "ok":true,"outcome":"applied_unverified","operation":"insert_splitter_remove",
-            "verified":false,"instance":ctx.instance,"expected_instance":ctx.instance.object_uid,
-            "expected_graph":graph_id,"splitter_node":splitter_id,"merger_node":merger_id,
-            "first_slot_node":first_id,"second_slot_node":second_id
-        })),
-        Err(reason) => Reply::error(
+    let (operation, rejection, first_node, second_node) = match shape {
+        Shape::OccupiedBranches => (
+            "insert_splitter_remove",
             "insert_splitter_remove_rejected",
+            "first_slot_node",
+            "second_slot_node",
+        ),
+        Shape::EmptyNested => (
+            "insert_splitter_remove_empty_nested",
+            "insert_splitter_remove_empty_nested_rejected",
+            "predecessor_slot_node",
+            "successor_merger_node",
+        ),
+    };
+    let mut reply = match result {
+        Ok(()) => {
+            let mut receipt = json!({
+                "ok":true,"outcome":"applied_unverified","operation":operation,
+                "verified":false,"instance":ctx.instance,"expected_instance":ctx.instance.object_uid,
+                "expected_graph":graph_id,"splitter_node":splitter_id,"merger_node":merger_id
+            });
+            receipt[first_node] = json!(first_id);
+            receipt[second_node] = json!(second_id);
+            Reply::unbound(receipt)
+        }
+        Err(reason) => Reply::error(
+            rejection,
             &reason,
             if dispatched { "unknown" } else { "not_applied" },
         ),
@@ -331,4 +673,104 @@ pub(in crate::native_script::request) fn dispatch(
     reply.mutation = dispatched;
     reply.context = Some(ctx);
     reply
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resolves_only_the_primary_of_two_matching_retained_interfaces() {
+        let image = 0x100000000;
+        for layout in [GRAPH_LAYOUT, SPLITTER_LAYOUT, MERGER_LAYOUT]
+            .iter()
+            .chain(&SLOT_LAYOUTS)
+        {
+            let mut object = [0usize; 7];
+            object[0] = image + layout.primary;
+            object[3] = image + layout.canonical;
+            object[6] = image + layout.node;
+            let primary = object.as_mut_ptr().cast::<c_void>();
+            let node = object.as_mut_ptr().wrapping_add(6).cast();
+            let canonical = object.as_mut_ptr().wrapping_add(3).cast();
+            assert_eq!(layout.primary(image, node, canonical), Some(primary));
+            let mut other_identity = image + layout.canonical;
+            assert_eq!(
+                layout.primary(image, node, std::ptr::addr_of_mut!(other_identity).cast()),
+                None
+            );
+            assert_eq!(layout.primary(image, canonical, node), None);
+            object[6] = image + layout.canonical;
+            assert_eq!(layout.primary(image, node, canonical), None);
+            object[6] = image + layout.node;
+            object[3] = image + layout.node;
+            assert_eq!(layout.primary(image, node, canonical), None);
+            object[3] = image + layout.canonical;
+            object[0] = image + layout.node;
+            assert_eq!(layout.primary(image, node, canonical), None);
+        }
+    }
+
+    fn fixture() -> [Links<u8>; 8] {
+        [
+            (&[][..], &[1, 5][..]),
+            (&[0], &[2, 4]),
+            (&[1], &[3]),
+            (&[2], &[6, 6]),
+            (&[1], &[7]),
+            (&[0, 7], &[]),
+            (&[3], &[7]),
+            (&[6, 4], &[5]),
+        ]
+        .map(|(incoming, outgoing)| Links {
+            incoming: incoming.to_vec(),
+            outgoing: outgoing.to_vec(),
+        })
+    }
+
+    fn check(anchors: [u8; 4], graph: &[Links<u8>; 8]) -> Result<[u8; 8], String> {
+        empty_nested_topology(anchors, |id| {
+            let links = graph.get(usize::from(id)).ok_or("unknown graph node")?;
+            Ok(Links {
+                incoming: links.incoming.clone(),
+                outgoing: links.outgoing.clone(),
+            })
+        })
+    }
+
+    #[test]
+    fn accepts_exact_empty_lanes_with_one_retained_peer() {
+        let mut graph = fixture();
+        let anchors = [3, 6, 2, 7];
+        assert_eq!(check(anchors, &graph).unwrap(), [0, 1, 2, 3, 4, 5, 6, 7]);
+        graph[6].incoming.push(3);
+        graph[7].incoming.reverse();
+        assert_eq!(check(anchors, &graph).unwrap(), [0, 1, 2, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn refuses_wrong_anchors_and_unverified_layouts() {
+        for anchors in [[1, 6, 2, 7], [3, 7, 2, 6], [3, 6, 4, 7], [3, 6, 2, 5]] {
+            assert!(check(anchors, &fixture()).is_err());
+        }
+
+        let anchors = [3, 6, 2, 7];
+        for (node, outgoing) in [
+            (0, vec![5, 1]),
+            (1, vec![4, 2]),
+            (2, vec![3, 7]),
+            (3, vec![4, 6]),
+            (4, vec![6]),
+            (5, vec![3]),
+            (6, vec![5]),
+            (7, vec![0]),
+        ] {
+            let mut graph = fixture();
+            graph[node].outgoing = outgoing;
+            assert!(check(anchors, &graph).is_err());
+        }
+        let mut graph = fixture();
+        graph[6].incoming.push(4);
+        assert!(check(anchors, &graph).is_err());
+    }
 }

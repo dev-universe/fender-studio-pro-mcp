@@ -148,6 +148,14 @@ enum Request {
         source: Source,
         expected_instance: Option<String>,
     },
+    MultiAddMaiTai {
+        document_token: String,
+        expected_instance: String,
+        expected_folder: String,
+        expected_graph: String,
+        expected_child_slot: String,
+        expected_child_instance: String,
+    },
     MultiChildParameters {
         expected_instance: String,
         child_slot: alias_controller::multi_child::Slot,
@@ -196,6 +204,8 @@ enum Request {
     ParameterAction {
         action: action::Action,
         expected_instance: String,
+        #[serde(default, deserialize_with = "action::supplied_clear_guard")]
+        chorder_guard: Option<action::ClearGuard>,
     },
     ModelCatalog {
         catalog: catalog::Kind,
@@ -348,6 +358,14 @@ enum Request {
         first_slot_node: String,
         second_slot_node: String,
     },
+    InsertSplitterRemoveEmptyNested {
+        expected_instance: String,
+        expected_graph: String,
+        splitter_node: String,
+        merger_node: String,
+        predecessor_slot_node: String,
+        successor_merger_node: String,
+    },
 }
 impl Request {
     fn rumble_retrieval(&self) -> Option<alias_controller::rumble_parameters::Retrieval> {
@@ -371,7 +389,8 @@ impl Request {
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
             | Self::ChorderLearningGet { .. }
-            | Self::MultiChildParameters { .. } => Source::Dsp,
+            | Self::MultiChildParameters { .. }
+            | Self::MultiAddMaiTai { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
             | Self::Parameters { source, .. }
@@ -404,12 +423,16 @@ impl Request {
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
             | Self::InsertSplitterAdd { .. }
-            | Self::InsertSplitterRemove { .. } => Source::Auto,
+            | Self::InsertSplitterRemove { .. }
+            | Self::InsertSplitterRemoveEmptyNested { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::MultiAddMaiTai {
+                expected_instance, ..
+            }
             | Self::MultiChildParameters {
                 expected_instance, ..
             }
@@ -441,6 +464,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::InsertSplitterRemove {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance, ..
             } => Some(expected_instance),
             Self::InsertChainCapture { .. }
@@ -554,6 +580,9 @@ impl Request {
             }
         }
         match self {
+            Self::ParameterAction { action, chorder_guard, .. } => {
+                action::validate_clear_intent(*action, chorder_guard.as_ref())
+            }
             Self::MultiChildParameters {
                 expected_instance,
                 expected_child_slot,
@@ -649,15 +678,18 @@ impl Request {
                 expected_graph,
                 splitter_node,
                 merger_node,
-                first_slot_node,
-                second_slot_node,
+                first_slot_node: first,
+                second_slot_node: second,
+            }
+            | Self::InsertSplitterRemoveEmptyNested {
+                expected_instance,
+                expected_graph,
+                splitter_node,
+                merger_node,
+                predecessor_slot_node: first,
+                successor_merger_node: second,
             } => {
-                let nodes = [
-                    splitter_node,
-                    merger_node,
-                    first_slot_node,
-                    second_slot_node,
-                ];
+                let nodes = [splitter_node, merger_node, first, second];
                 if ![expected_instance, expected_graph]
                     .into_iter()
                     .chain(nodes)
@@ -1843,6 +1875,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::MultiChildParameters { .. }
+        | Request::MultiAddMaiTai { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
         | Request::EditChorderAutofill { .. }
@@ -1872,7 +1905,10 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainRelease { .. }
         | Request::InsertSlotMove { .. }
         | Request::InsertSplitterAdd { .. }
-        | Request::InsertSplitterRemove { .. } => Err("request requires its own dispatcher".into()),
+        | Request::InsertSplitterRemove { .. }
+        | Request::InsertSplitterRemoveEmptyNested { .. } => {
+            Err("request requires its own dispatcher".into())
+        }
     };
     match result.and_then(|value| {
         provider.check()?;
@@ -2032,6 +2068,16 @@ impl Reply {
     }
     pub(super) fn error(code: &str, message: &str, outcome: &str) -> Self {
         Self::unbound(error(code, message, outcome))
+    }
+    fn multi_add_mai_tai_error(message: &str, dispatched: bool) -> Self {
+        let (code, outcome) = if dispatched {
+            ("multi_add_mai_tai_unknown", "unknown")
+        } else {
+            ("multi_add_mai_tai_refused", "not_applied")
+        };
+        let mut reply = Self::error(code, message, outcome);
+        reply.value["dispatch_attempted"] = json!(dispatched);
+        reply
     }
     fn rumble_kind(&self) -> state::ObservationKind {
         match &self.provider {
@@ -2379,9 +2425,13 @@ fn dispatch_device(
     auxiliary: Option<Owned>,
     a: &'static Api,
 ) -> Reply {
+    let multi_add_mai_tai = matches!(request, Request::MultiAddMaiTai { .. });
     let ctx = match Context::capture(service, target, request.expected(), a) {
         Ok(ctx) => Box::new(ctx),
         Err(e) => {
+            if multi_add_mai_tai {
+                return Reply::multi_add_mai_tai_error(&e, false);
+            }
             return if let Some(retrieval) = request.rumble_retrieval() {
                 Reply::unbound(retrieval.failure())
             } else {
@@ -2396,7 +2446,9 @@ fn dispatch_device(
             | Request::ImpactOutputSet { .. }
             | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
+            | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
+            | Request::InsertSplitterRemoveEmptyNested { .. }
             | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
             | Request::ExternalStereoSendSet { .. }
@@ -2416,6 +2468,9 @@ fn dispatch_device(
         .and_then(|_| presets::expire(&ctx))
         .and_then(|_| insert_chain::expire(&ctx))
     {
+        if multi_add_mai_tai {
+            return Reply::multi_add_mai_tai_error(&reason, false);
+        }
         return Reply {
             value: if let Some(retrieval) = request.rumble_retrieval() {
                 retrieval.failure()
@@ -2485,6 +2540,24 @@ fn dispatch_device(
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
     }
+    if let Request::MultiAddMaiTai {
+        document_token,
+        expected_folder,
+        expected_graph,
+        expected_child_slot,
+        expected_child_instance,
+        ..
+    } = request
+    {
+        return alias_controller::multi_child::dispatch_add_mai_tai(
+            ctx,
+            &document_token,
+            &expected_folder,
+            &expected_graph,
+            expected_child_slot,
+            &expected_child_instance,
+        );
+    }
     if let Request::MultiChildParameters {
         child_slot,
         expected_child_slot,
@@ -2548,6 +2621,28 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
+            node_inspect::splitter_remove::Shape::OccupiedBranches,
+        );
+    }
+    if let Request::InsertSplitterRemoveEmptyNested {
+        expected_graph,
+        splitter_node,
+        merger_node,
+        predecessor_slot_node,
+        successor_merger_node,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::dispatch(
+            ctx,
+            [
+                &expected_graph,
+                &splitter_node,
+                &merger_node,
+                &predecessor_slot_node,
+                &successor_merger_node,
+            ],
+            node_inspect::splitter_remove::Shape::EmptyNested,
         );
     }
     if let Request::ExternalStereoSendSet { destination, .. } = request {
@@ -3189,8 +3284,13 @@ fn dispatch_device(
                         None,
                     ),
                 },
-                Request::ParameterAction { action, .. } => {
-                    let (value, lease) = action::execute(&ctx, &provider, action);
+                Request::ParameterAction {
+                    action,
+                    chorder_guard,
+                    ..
+                } => {
+                    let (value, lease) =
+                        action::execute(&ctx, &provider, action, chorder_guard.as_ref());
                     (value, None, lease)
                 }
                 request => (execute(&ctx, request, &provider), None, None),
