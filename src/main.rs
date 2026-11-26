@@ -1,5 +1,6 @@
 mod audio;
 mod bridge;
+mod chorder_audition;
 mod config;
 mod fabfilter;
 mod hardware;

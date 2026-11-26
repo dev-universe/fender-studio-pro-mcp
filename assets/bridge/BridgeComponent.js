@@ -661,6 +661,38 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return native;
     }
 
+    pluginMultiChildFilterEnvSet(args) {
+        const failure = (outcome, error) => ({ ok: false, native_outcome: outcome, errors: [error] });
+        const refuse = message => failure("not_applied", { code: "multi_child_filter_env_refused", message });
+        const controls = new NativePluginControls(this);
+        if (!controls.guiExact(args, ["track", "expected_instance", "child_slot", "expected_child_slot",
+            "expected_child_instance", "expected_float_bits", "float_bits"])
+            || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512
+            || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || typeof args.expected_float_bits !== "string" || typeof args.float_bits !== "string")
+            return refuse("A selected Multi Instrument track and exact child amount are required");
+        const { track, ...fields } = args;
+        const request = { ...fields, operation: "multi_child_filter_env_set",
+            expected_float_bits: fields.expected_float_bits.toUpperCase(), float_bits: fields.float_bits.toUpperCase() };
+        if (!controls.multiChildFilterEnvRequest(request))
+            return refuse("Distinct live parent, slot and child UUIDs and two valid Float64 bit strings are required");
+        const target = { track };
+        const plug = this.instrumentOf(target);
+        if (!plug || plug.error) return refuse("Select the unique target Music track with Multi Instrument");
+        const stillFocused = () => {
+            const current = this.instrumentOf(target);
+            return current && !current.error && current.device === plug.device
+                && current.component === plug.component && current.element === plug.element;
+        };
+        const native = controls.request(plug.device, request, undefined, stillFocused);
+        if (native.ok === false) return failure(native.outcome, native.error);
+        if (!stillFocused()) {
+            return failure("unknown", { code: "multi_child_filter_env_unconfirmed",
+                message: "The active child amount or selected track could not be confirmed after native dispatch" });
+        }
+        return { ...native, native_outcome: native.outcome };
+    }
+
     pluginModels(args) {
         const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "catalog", "offset", "limit"];
         const uid = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/;
@@ -861,6 +893,31 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return result;
     }
 
+    chorderAuditionLane(args, stopped) {
+        const refuse = code => ({ ok: false, native_outcome: "not_applied", error: { code: code } });
+        const controls = new NativePluginControls(this);
+        if (!controls.guiExact(args, ["track", "slot", "expected_instance", "phase"])
+            || typeof args.track !== "string" || !args.track.trim()
+            || args.track.length > 256 || /[\x00-\x1f\x7f-\x9f]/.test(args.track)
+            || !controls.guiInteger(args.slot, 0, 15)
+            || typeof args.expected_instance !== "string"
+            || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+            || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+            || !["preflight", "observe", "press", "release"].includes(args.phase)) return refuse("chorder_audition_target");
+        const plug = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!plug || plug.error || plug.name !== "Chorder") return refuse("chorder_audition_target");
+        if (["preflight", "press"].includes(args.phase) && !stopped()) return refuse("chorder_audition_transport");
+        const native = this.nativePluginRequest(plug.device, {
+            operation: "chorder_audition_lane", expected_instance: args.expected_instance, phase: args.phase
+        });
+        if (!native) return { ok: false, native_outcome: "unknown" };
+        const current = this.pluginOf({ kind: "note_effect", track: args.track, slot: args.slot, plugin: "Chorder" });
+        if (!current || current.error || current.name !== plug.name || current.device !== plug.device
+            || current.component !== plug.component || current.element !== plug.element)
+            return { ok: false, native_outcome: "unknown" };
+        return Object.assign({}, native, { native_outcome: native.outcome });
+    }
+
     chorderChordsGet(args) {
         const controls = new NativePluginControls(this);
         const fields = ["track", "slot", "expected_instance", "offset", "limit"];
@@ -1025,6 +1082,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return this.insertGraphEdit("insert_slot_move", args);
     }
 
+    insertSlotRemove(args) {
+        return this.insertGraphEdit("insert_slot_remove", args);
+    }
+
     insertSplitterAdd(args) {
         return this.insertGraphEdit("insert_splitter_add", args);
     }
@@ -1048,7 +1109,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const refuse = message => fail("not_applied", operation + "_refused", message);
         if (typeof NativePluginControls !== "function") return refuse("The matching native extension is required");
         const controls = new NativePluginControls(this);
-        const nodeFields = controls.insertGraphNodeFields(operation);
+        const nodeFields = controls.insertGraphNodeFields(operation, args);
         if (!nodeFields) return refuse("Unsupported insert graph operation");
         const requestFields = ["expected_instance", "expected_graph"].concat(nodeFields,
             controls.insertGraphBranchFields(operation, args));

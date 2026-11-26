@@ -1,4 +1,5 @@
 use super::*;
+use std::ffi::CStr;
 
 #[path = "multi_child/add_mai_tai.rs"]
 mod add_mai_tai;
@@ -9,6 +10,31 @@ const INSTRUMENTS: &str = "8BECF8A0-B995-4376-BFDD-1BFCC373C5FD";
 const MAI_TAI: &str = "B625F134-4485-4A50-A3C8-C9CF0C5495E1";
 const MAX_CHILDREN: i32 = 32;
 const INSTRUMENTS_INDEX: i32 = 0;
+const FILTER_ENV_NAME: &CStr = c"modulationTable.cell1.amount";
+const FILTER_ENV_TAG: i32 = 208;
+pub(in crate::native_script::request) const FILTER_ENV_OPERATION: &str =
+    "multi_child_filter_env_set";
+
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(try_from = "String")]
+pub(in crate::native_script::request) struct AmountBits(u64);
+
+impl TryFrom<String> for AmountBits {
+    type Error = &'static str;
+
+    fn try_from(bits: String) -> Result<Self, Self::Error> {
+        const INVALID: &str =
+            "Filter Env amount must be 16 hexadecimal digits encoding a finite Float64 in 0..10000";
+        if bits.len() != 16 || !bits.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Err(INVALID);
+        }
+        let raw = u64::from_str_radix(&bits, 16).map_err(|_| INVALID)?;
+        if !(0.0..=10000.0).contains(&f64::from_bits(raw)) {
+            return Err(INVALID);
+        }
+        Ok(Self(raw))
+    }
+}
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 pub(in crate::native_script::request) enum Slot {
@@ -264,6 +290,172 @@ impl Binding {
     }
 }
 
+pub(in crate::native_script::request) enum Proof {
+    Route(Binding),
+    FilterEnv(FilterEnvBinding),
+}
+
+impl Proof {
+    pub(in crate::native_script::request) fn check(&self, ctx: &Context<'_>) -> Result<(), String> {
+        match self {
+            Self::Route(binding) => binding.check(ctx),
+            Self::FilterEnv(binding) => binding.check_publication(ctx),
+        }
+    }
+}
+
+pub(in crate::native_script::request) struct FilterEnvBinding {
+    parameter: RawParameter,
+    controller: Controller,
+    route: Binding,
+    description: parameters::Description,
+    desired: AmountBits,
+}
+
+fn float_bits(value: Option<&parameters::NativeValue>) -> Option<u64> {
+    match value {
+        Some(parameters::NativeValue {
+            variant_tag: 2,
+            value: parameters::Value::Float(value),
+        }) if value.is_finite() => Some(value.to_bits()),
+        _ => None,
+    }
+}
+
+fn is_filter_env(description: &parameters::Description) -> bool {
+    description.name.as_bytes() == FILTER_ENV_NAME.to_bytes()
+        && description.tag == FILTER_ENV_TAG
+        && description.kind == parameters::Kind::Float
+        && description.enabled
+        && !description.read_only
+        && description.support.raw_number
+        && float_bits(description.min.as_ref()) == Some(0.0f64.to_bits())
+        && float_bits(description.max.as_ref()) == Some(10000.0f64.to_bits())
+        && float_bits(description.raw.as_ref()).is_some()
+}
+
+impl FilterEnvBinding {
+    fn resolve(
+        ctx: &Context<'_>,
+        slot: Slot,
+        slot_uid: String,
+        child_uid: &str,
+        desired: AmountBits,
+    ) -> Result<Self, String> {
+        let route = Binding::resolve(ctx, slot, slot_uid, child_uid)?;
+        let controller = Controller::direct(route.device.object.0)?;
+        route.check(ctx)?;
+        let parameter = controller.find(
+            FILTER_ENV_NAME
+                .to_str()
+                .expect("ASCII Filter Env parameter name"),
+            ctx.api,
+        )?;
+        route.check(ctx)?;
+        let description = parameter.describe().map_err(|error| error.to_string())?;
+        if !is_filter_env(&description) {
+            return Err("The exact writable Filter Env Float metadata was unavailable".into());
+        }
+        let binding = Self {
+            parameter,
+            controller,
+            route,
+            description,
+            desired,
+        };
+        binding.check_attachment(ctx)?;
+        Ok(binding)
+    }
+
+    fn check_attachment(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.controller.check()?;
+        self.route.check(ctx)?;
+        self.parameter
+            .check_structure_header(&self.description)
+            .map_err(|error| error.to_string())?;
+        if self.controller.find_borrowed(FILTER_ENV_NAME)
+            != self.parameter.as_borrowed_raw().as_ptr()
+        {
+            return Err("The bound Mai Tai Filter Env parameter was replaced".into());
+        }
+        ctx.check()
+    }
+
+    fn check_publication(&self, ctx: &Context<'_>) -> Result<(), String> {
+        self.check_attachment(ctx)?;
+        let value = self
+            .parameter
+            .pin_float()
+            .map_err(|error| error.to_string())?;
+        self.check_attachment(ctx)?;
+        let bits = value.bits().map_err(|error| error.to_string())?;
+        drop(value);
+        self.check_attachment(ctx)?;
+        if bits != self.desired.0 {
+            return Err("The Filter Env value changed before publication".into());
+        }
+        Ok(())
+    }
+}
+
+pub(in crate::native_script::request) fn dispatch_filter_env(
+    ctx: Box<Context<'static>>,
+    slot: Slot,
+    slot_uid: String,
+    child_uid: &str,
+    expected: AmountBits,
+    desired: AmountBits,
+) -> Reply {
+    let mut reply = match FilterEnvBinding::resolve(&ctx, slot, slot_uid, child_uid, desired) {
+        Err(reason) => Reply::error("multi_child_filter_env_guard", &reason, "not_applied"),
+        Ok(binding) => {
+            let mut guard = || binding.check_attachment(&ctx);
+            match binding.parameter.set_raw_float_if(
+                expected.0,
+                f64::from_bits(desired.0),
+                &mut guard,
+                &mut || Ok(()),
+            ) {
+                Ok(write)
+                    if write.verified
+                        && is_filter_env(&write.before)
+                        && is_filter_env(&write.after)
+                        && float_bits(write.before.raw.as_ref()) == Some(expected.0)
+                        && float_bits(write.after.raw.as_ref()) == Some(desired.0) =>
+                {
+                    let mut reply = Reply::unbound(json!({
+                        "ok": true, "outcome": "applied_unverified", "operation": FILTER_ENV_OPERATION,
+                        "source": "dsp", "parameter": binding.description.name,
+                        "instance": ctx.instance, "child_slot": slot,
+                        "child_slot_uid": binding.route.slot_uid, "child_instance": binding.route.child,
+                        "before_float_bits": format!("{:016X}", expected.0),
+                        "after_float_bits": format!("{:016X}", desired.0),
+                    }));
+                    reply.provider =
+                        Some(Provider::MultiChild(Box::new(Proof::FilterEnv(binding))));
+                    reply
+                }
+                Ok(_) => Reply::error(
+                    "multi_child_filter_env_readback",
+                    "The Filter Env setter did not return exact before and after values",
+                    "unknown",
+                ),
+                Err(failed) => Reply::error(
+                    "multi_child_filter_env_write",
+                    &failed.error.to_string(),
+                    match failed.outcome {
+                        parameters::Outcome::NotApplied => "not_applied",
+                        parameters::Outcome::Unknown => "unknown",
+                    },
+                ),
+            }
+        }
+    };
+    reply.context = Some(ctx);
+    reply.mutation = true;
+    reply
+}
+
 pub(in crate::native_script::request) fn dispatch(
     ctx: Box<Context<'static>>,
     slot: Slot,
@@ -300,7 +492,7 @@ pub(in crate::native_script::request) fn dispatch(
     let mut reply = match result {
         Ok((value, binding)) => {
             let mut reply = Reply::unbound(value);
-            reply.provider = Some(Provider::MultiChild(Box::new(binding)));
+            reply.provider = Some(Provider::MultiChild(Box::new(Proof::Route(binding))));
             reply
         }
         Err(reason) => Reply::error("multi_child_parameters_unavailable", &reason, "not_applied"),

@@ -47,6 +47,21 @@ pub enum Operation {
     Inserts(ChannelQuery),
     #[serde(rename = "sends")]
     Sends(ChannelQuery),
+    #[serde(
+        rename = "scopeSidechainAssignmentGet",
+        alias = "scope_sidechain_assignment_get"
+    )]
+    ScopeSidechainAssignmentGet(ScopeSidechainAssignmentGet),
+    #[serde(
+        rename = "scopeSidechainAssignmentRemove",
+        alias = "scope_sidechain_assignment_remove"
+    )]
+    ScopeSidechainAssignmentRemove(ScopeSidechainAssignmentRemove),
+    #[serde(
+        rename = "scopeSidechainAssignmentCreate",
+        alias = "scope_sidechain_assignment_create"
+    )]
+    ScopeSidechainAssignmentCreate(ScopeSidechainAssignmentGet),
     #[serde(rename = "setSend", alias = "send_set")]
     SetSend(SendSet),
     #[serde(rename = "setInsertBypass", alias = "plugin_bypass")]
@@ -68,6 +83,11 @@ pub enum Operation {
         alias = "plugin_multi_child_parameters"
     )]
     PluginMultiChildParameters(PluginMultiChildParameters),
+    #[serde(
+        rename = "pluginMultiChildFilterEnvSet",
+        alias = "plugin_multi_child_filter_env_set"
+    )]
+    PluginMultiChildFilterEnvSet(PluginMultiChildFilterEnvSet),
     #[serde(rename = "pluginMultiAddMaiTai", alias = "plugin_multi_add_mai_tai")]
     PluginMultiAddMaiTai(PluginMultiAddMaiTai),
     #[serde(rename = "externalPortMenu", alias = "external_port_menu")]
@@ -98,6 +118,8 @@ pub enum Operation {
     InsertChainState(InsertChainState),
     #[serde(rename = "insertSlotMove", alias = "insert_slot_move")]
     InsertSlotMove(InsertSlotMove),
+    #[serde(rename = "insertSlotRemove", alias = "insert_slot_remove")]
+    InsertSlotRemove(InsertSlotRemove),
     #[serde(rename = "insertSplitterRemove", alias = "insert_splitter_remove")]
     InsertSplitterRemove(InsertSplitterRemove),
     #[serde(
@@ -128,6 +150,8 @@ pub enum Operation {
     ChorderLearningGet(ChorderLearningGet),
     #[serde(rename = "chorderChordsGet", alias = "chorder_chords_get")]
     ChorderChordsGet(ChorderChordsGet),
+    #[serde(rename = "chorderAudition", alias = "chorder_audition")]
+    ChorderAudition(ChorderAudition),
     #[serde(rename = "chorderLearningSet", alias = "chorder_learning_set")]
     ChorderLearningSet(ChorderLearningSet),
     #[serde(rename = "setPluginParam", alias = "plugin_parameter_set")]
@@ -273,6 +297,23 @@ pub enum PannerField {
     PanX1,
     PanX2,
     PanWidth,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeSidechainAssignmentGet {
+    pub source_channel: String,
+    pub scope_channel: String,
+    pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeSidechainAssignmentRemove {
+    pub source_channel: String,
+    pub scope_channel: String,
+    pub expected_instance: String,
+    pub expected_send: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -493,6 +534,24 @@ pub struct PluginMultiChildParameters {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct PluginMultiChildFilterEnvSet {
+    #[schemars(length(min = 1, max = 512))]
+    pub track: String,
+    #[schemars(length(equal = 36))]
+    pub expected_instance: String,
+    pub child_slot: MultiChildSlot,
+    #[schemars(length(equal = 36))]
+    pub expected_child_slot: String,
+    #[schemars(length(equal = 36))]
+    pub expected_child_instance: String,
+    #[schemars(regex(pattern = "^[0-9a-fA-F]{16}$"))]
+    pub expected_float_bits: String,
+    #[schemars(regex(pattern = "^[0-9a-fA-F]{16}$"))]
+    pub float_bits: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct PluginMultiAddMaiTai {
     #[schemars(length(min = 1, max = 512))]
     pub track: String,
@@ -669,6 +728,22 @@ pub struct ChorderChordsGet {
     pub offset: u32,
     #[schemars(range(min = 1, max = 16))]
     pub limit: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "action", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ChorderAudition {
+    Prepare {
+        track: String,
+        slot: u32,
+        expected_instance: String,
+    },
+    Play {
+        permit: String,
+    },
+    Status {
+        permit: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -923,6 +998,22 @@ pub struct InsertSlotMove {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+pub struct InsertSlotRemove {
+    #[schemars(length(min = 1, max = 256))]
+    pub channel: String,
+    pub slot: u32,
+    #[schemars(length(min = 1, max = 256))]
+    pub plugin: String,
+    pub expected_instance: String,
+    pub expected_graph: String,
+    pub preceding_slot_node: String,
+    pub removed_slot_node: String,
+    pub following_slot_node: String,
+    pub expected_removed_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
 pub struct InsertSplitterAdd {
     #[schemars(length(min = 1, max = 256))]
     pub channel: String,
@@ -949,6 +1040,15 @@ pub struct InsertSplitterRemove {
     pub merger_node: String,
     pub first_slot_node: String,
     pub second_slot_node: String,
+    /// The optional second effect on the first branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub first_branch_tail_node: Option<String>,
+    /// The optional second effect on the second branch, immediately before the merger.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub second_branch_tail_node: Option<String>,
+    /// Ordered nodes after each branch head for a three-effect and a one-effect branch.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub branch_continuations: Option<[Vec<String>; 2]>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1618,12 +1718,14 @@ impl Operation {
             | Self::PluginCatalog(_)
             | Self::Inserts(_)
             | Self::Sends(_)
+            | Self::ScopeSidechainAssignmentGet(_)
             | Self::PluginParams(_)
             | Self::PluginMultiChildParameters(_)
             | Self::PluginChoices(_)
             | Self::PluginParameterDetails(_)
             | Self::ChorderLearningGet(_)
             | Self::ChorderChordsGet(_)
+            | Self::ChorderAudition(ChorderAudition::Status { .. })
             | Self::PluginParameterFormat(_)
             | Self::PluginParameterDigest(_)
             | Self::PluginModels(_)
@@ -1684,16 +1786,20 @@ impl Operation {
                         | PluginStateAction::ReadRumbleNamedParameters))
             || matches!(
                 self,
-                Self::ChorderLearningGet(_)
+                Self::InsertSlotRemove(_)
+                    | Self::ChorderLearningGet(_)
                     | Self::ChorderLearningSet(_)
                     | Self::ChorderChordsGet(_)
+                    | Self::ChorderAudition(_)
                     | Self::PluginMultiChildParameters(_)
+                    | Self::PluginMultiChildFilterEnvSet(_)
                     | Self::PluginMultiAddMaiTai(_)
                     | Self::ExternalPortMenu(_)
                     | Self::ExternalStereoSendSet(_)
                     | Self::Serum2PresetApply(_)
                     | Self::Serum2EventInputSet(_)
                     | Self::TrackEventInput(_)
+                    | Self::ScopeSidechainAssignmentGet(_)
             )
     }
 
@@ -1781,6 +1887,22 @@ impl Operation {
                 return Err(invalid(
                     "Track name must contain 1 to 256 UTF-8 bytes without control characters",
                 ));
+            }
+            Self::ScopeSidechainAssignmentRemove(query) => {
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
+                validate_scope_uid(&query.expected_send, "Send")?;
+            }
+            Self::ScopeSidechainAssignmentGet(query)
+            | Self::ScopeSidechainAssignmentCreate(query) => {
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
             }
             Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,
             Self::SetSplitter(change) => {
@@ -1891,6 +2013,22 @@ impl Operation {
                 if p.offset > 127 || !(1..=16).contains(&p.limit) {
                     return Err(invalid(
                         "Chorder chord pages require offset 0..127 and limit 1..16",
+                    ));
+                }
+            }
+            Self::ChorderAudition(ChorderAudition::Prepare {
+                track,
+                slot,
+                expected_instance,
+            }) => validate_chorder_target(track, *slot, expected_instance)?,
+            Self::ChorderAudition(
+                ChorderAudition::Play { permit } | ChorderAudition::Status { permit },
+            ) => {
+                if !uuid::Uuid::parse_str(permit)
+                    .is_ok_and(|id| id.get_version_num() == 4 && id.to_string() == *permit)
+                {
+                    return Err(invalid(
+                        "Chorder audition requires a canonical owner-issued permit",
                     ));
                 }
             }
@@ -2192,6 +2330,24 @@ impl Operation {
                     &[&p.source_node, &p.after_node, &p.following_node],
                 )?;
             }
+            Self::InsertSlotRemove(p) => {
+                if p.expected_removed_instance == p.expected_instance {
+                    return Err(invalid("The predecessor and removed effect must differ"));
+                }
+                validate_insert_graph_target(
+                    &p.channel,
+                    p.slot,
+                    &p.plugin,
+                    &p.expected_instance,
+                    &p.expected_graph,
+                    &[
+                        &p.preceding_slot_node,
+                        &p.removed_slot_node,
+                        &p.following_slot_node,
+                        &p.expected_removed_instance,
+                    ],
+                )?;
+            }
             Self::InsertSplitterAdd(p) => {
                 validate_insert_graph_target(
                     &p.channel,
@@ -2203,18 +2359,38 @@ impl Operation {
                 )?;
             }
             Self::InsertSplitterRemove(p) => {
+                let mut nodes: Vec<&str> = vec![
+                    &p.splitter_node,
+                    &p.merger_node,
+                    &p.first_slot_node,
+                    &p.second_slot_node,
+                ];
+                nodes.extend(
+                    [
+                        p.first_branch_tail_node.as_deref(),
+                        p.second_branch_tail_node.as_deref(),
+                    ]
+                    .into_iter()
+                    .flatten(),
+                );
+                if let Some(continuations) = &p.branch_continuations {
+                    if p.first_branch_tail_node.is_some()
+                        || p.second_branch_tail_node.is_some()
+                        || !matches!(continuations.each_ref().map(Vec::len), [2, 0] | [0, 2])
+                    {
+                        return Err(invalid(
+                            "Supply two ordered continuation nodes on exactly one branch without legacy tail fields",
+                        ));
+                    }
+                    nodes.extend(continuations.iter().flatten().map(String::as_str));
+                }
                 validate_insert_graph_target(
                     &p.channel,
                     p.slot,
                     &p.plugin,
                     &p.expected_instance,
                     &p.expected_graph,
-                    &[
-                        &p.splitter_node,
-                        &p.merger_node,
-                        &p.first_slot_node,
-                        &p.second_slot_node,
-                    ],
+                    &nodes,
                 )?;
             }
             Self::InsertSplitterRemoveEmptyNested(p) => {
@@ -2586,34 +2762,50 @@ impl Operation {
                 }
             }
             Self::PluginMultiChildParameters(query) => {
-                if query.track.trim().is_empty()
-                    || query.track.len() > 512
-                    || query.track.chars().any(char::is_control)
-                {
-                    return Err(invalid("An exact Multi Instrument track name is required"));
-                }
-                let uids = [
-                    &query.expected_instance,
-                    &query.expected_child_slot,
-                    &query.expected_child_instance,
-                ];
-                for (index, uid) in uids.iter().enumerate() {
-                    if validate_instance_uid(Some(uid)).is_err()
-                        || uid.as_str() == "00000000-0000-0000-0000-000000000000"
-                        || uid.bytes().any(|b| b.is_ascii_lowercase())
-                        || uids[..index].contains(uid)
-                    {
-                        return Err(invalid(
-                            "Multi Instrument, child slot and child Device require three distinct nonzero canonical native UUIDs",
-                        ));
-                    }
-                }
+                validate_multi_child_target(
+                    &query.track,
+                    [
+                        &query.expected_instance,
+                        &query.expected_child_slot,
+                        &query.expected_child_instance,
+                    ],
+                )?;
                 if query.offset.is_some_and(|offset| offset > 1_000_000)
                     || query.limit.is_some_and(|limit| !(1..=128).contains(&limit))
                 {
                     return Err(invalid(
                         "Native parameter pages require offset 0..1000000 and limit 1..128",
                     ));
+                }
+            }
+            Self::PluginMultiChildFilterEnvSet(change) => {
+                validate_multi_child_target(
+                    &change.track,
+                    [
+                        &change.expected_instance,
+                        &change.expected_child_slot,
+                        &change.expected_child_instance,
+                    ],
+                )?;
+                let amount = |bits: &str| {
+                    if bits.len() != 16 || !bits.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+                        return None;
+                    }
+                    let raw = u64::from_str_radix(bits, 16).ok()?;
+                    (0.0..=10000.0)
+                        .contains(&f64::from_bits(raw))
+                        .then_some(raw)
+                };
+                match (
+                    amount(&change.expected_float_bits),
+                    amount(&change.float_bits),
+                ) {
+                    (Some(expected), Some(desired)) if expected != desired => {}
+                    _ => {
+                        return Err(invalid(
+                            "Filter Env requires two distinct Float64 bit strings with finite values in 0..10000",
+                        ));
+                    }
                 }
             }
             Self::PluginParameterDetails(p) => {
@@ -2855,6 +3047,32 @@ impl Operation {
     }
 }
 
+fn validate_scope_target(
+    source: &str,
+    receiver: &str,
+    instance: &str,
+) -> Result<(), OperationError> {
+    if [source, receiver].into_iter().any(|name| {
+        name.trim().is_empty() || name.len() > 256 || name.chars().any(char::is_control)
+    }) || source == receiver
+    {
+        return Err(invalid(
+            "Scope assignment requires two distinct, bounded audio channel names",
+        ));
+    }
+    validate_scope_uid(instance, "Scope instance")
+}
+
+fn validate_scope_uid(value: &str, name: &str) -> Result<(), OperationError> {
+    validate_instance_uid(Some(value))?;
+    if value == "00000000-0000-0000-0000-000000000000"
+        || value.bytes().any(|byte| byte.is_ascii_lowercase())
+    {
+        return Err(invalid(format!("{name} requires a nonzero canonical UUID")));
+    }
+    Ok(())
+}
+
 fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError> {
     if value.trim().is_empty() || value.len() > 256 || value.chars().any(char::is_control) {
         return Err(invalid(format!(
@@ -2926,6 +3144,24 @@ fn validate_insert_graph_target(
         .any(|(index, node)| nodes[..index].contains(node))
     {
         return Err(invalid("Insert graph nodes must differ"));
+    }
+    Ok(())
+}
+
+fn validate_multi_child_target(track: &str, uids: [&str; 3]) -> Result<(), OperationError> {
+    if track.trim().is_empty() || track.len() > 512 || track.chars().any(char::is_control) {
+        return Err(invalid("An exact Multi Instrument track name is required"));
+    }
+    for (index, uid) in uids.iter().enumerate() {
+        if validate_instance_uid(Some(uid)).is_err()
+            || *uid == "00000000-0000-0000-0000-000000000000"
+            || uid.bytes().any(|b| b.is_ascii_lowercase())
+            || uids[..index].contains(uid)
+        {
+            return Err(invalid(
+                "Multi Instrument, child slot and child Device require three distinct nonzero canonical native UUIDs",
+            ));
+        }
     }
     Ok(())
 }
@@ -3026,6 +3262,8 @@ pub fn schema() -> Value {
         {"if":{"properties":{"operation":{"enum":["pluginMultiAddMaiTai","plugin_multi_add_mai_tai"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
         {"if":{"properties":{"operation":{"enum":["pluginMultiChildParameters","plugin_multi_child_parameters"]}},"required":["operation"]},
+            "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}},
+        {"if":{"properties":{"operation":{"enum":["pluginMultiChildFilterEnvSet","plugin_multi_child_filter_env_set"]}},"required":["operation"]},
             "then":{"required":["expected_document"],"properties":{"expected_document":{"type":"string","minLength":1,"pattern":"\\S"}}}}
     ]);
     schema
@@ -3034,6 +3272,106 @@ pub fn schema() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn multi_child_filter_env_requires_a_document_and_distinct_bounded_bits() {
+        let args = json!({
+            "track": "Multi Fixture",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot": "Inst02",
+            "expected_child_slot": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits": "40b549fe36300000",
+            "float_bits": "40B38BA513300000"
+        });
+        let parse = |args| Operation::from_parts("plugin_multi_child_filter_env_set", args);
+        let mut request = Request {
+            operation: parse(args.clone()).unwrap(),
+            expected_document: None,
+        };
+        assert!(!request.operation.is_read_only());
+        assert!(request.operation.requires_explicit_document());
+        assert_eq!(
+            request.operation.wire(),
+            ("pluginMultiChildFilterEnvSet".into(), args.clone())
+        );
+        assert_eq!(
+            crate::runtime::validate_request(&request).unwrap_err().code,
+            "missing_precondition"
+        );
+        request.expected_document = Some("live-document".into());
+        assert!(crate::runtime::validate_request(&request).is_ok());
+
+        for (field, invalid) in [
+            ("child_slot", json!("Inst03")),
+            (
+                "expected_child_slot",
+                args["expected_child_instance"].clone(),
+            ),
+            ("expected_float_bits", json!(5)),
+            ("expected_float_bits", json!("7FF8000000000000")),
+            ("float_bits", json!("7FF0000000000000")),
+            ("float_bits", json!("BFF0000000000000")),
+            ("float_bits", json!("40C3880000000001")),
+            ("float_bits", json!("40B549FE36300000")),
+            ("float_bits", json!("0X00000000000000")),
+            ("param", json!("filter.cutoff")),
+        ] {
+            let mut invalid_args = args.clone();
+            invalid_args[field] = invalid;
+            assert!(
+                parse(invalid_args).and_then(|op| op.validate()).is_err(),
+                "{field}"
+            );
+        }
+    }
+
+    #[test]
+    fn splitter_removal_checks_ordered_continuation_shape_and_distinct_nodes() {
+        let head = "EEEEEEEE-EEEE-4EEE-8EEE-EEEEEEEEEEEE";
+        let middle = "12345678-1234-4AAB-8ABC-AABBCCDDEEFF";
+        let end = "33445566-1122-4ACC-8DEE-0123456789AB";
+        let args = json!({
+            "channel": "Scratch", "slot": 0, "plugin": "Mixtool",
+            "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "expected_graph": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "splitter_node": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "merger_node": "DDDDDDDD-DDDD-4DDD-8DDD-DDDDDDDDDDDD",
+            "first_slot_node": head, "second_slot_node": "FFFFFFFF-FFFF-4FFF-8FFF-FFFFFFFFFFFF"
+        });
+        for valid in [json!([[], [middle, end]]), json!([[middle, end], []])] {
+            let mut request = args.clone();
+            request["branch_continuations"] = valid.clone();
+            let decoded = Operation::from_parts("insert_splitter_remove", request).unwrap();
+            assert!(decoded.validate().is_ok());
+            assert_eq!(decoded.wire().1["branch_continuations"], valid);
+        }
+        for invalid in [
+            json!([[], []]),
+            json!([[middle], [end]]),
+            json!([[middle, end], [head]]),
+            json!([[], [head, end]]),
+            json!([[], [middle, middle]]),
+        ] {
+            let mut request = args.clone();
+            request["branch_continuations"] = invalid;
+            assert!(
+                Operation::from_parts("insert_splitter_remove", request)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        let mut mixed = args;
+        mixed["branch_continuations"] = json!([[], [middle, end]]);
+        mixed["first_branch_tail_node"] = json!("99AA88BB-77CC-4DDE-8FFE-0123456789AB");
+        assert!(
+            Operation::from_parts("insert_splitter_remove", mixed)
+                .unwrap()
+                .validate()
+                .is_err()
+        );
+    }
 
     #[test]
     fn multi_add_mai_tai_requires_a_track_distinct_owners_and_an_explicit_document() {

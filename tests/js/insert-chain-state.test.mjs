@@ -410,6 +410,125 @@ test('nested Splitter removal binds both branches and rejects mismatched native 
   assert.equal(result.native_outcome, 'unknown');
   assert.equal(result.splitter_node, undefined);
   assert.equal(stale.calls.length, 1);
+
+  const tail = '60000000-1234-1234-1234-123456789ABC';
+  const expanded = { ...args, first_branch_tail_node: tail };
+  assert.equal(good.component.insertSplitterRemove(expanded).native_outcome, 'not_applied');
+  assert.equal(good.calls.length, 1);
+
+  const expandedCapabilities = { ...capabilityFields,
+    insert_splitter_remove_first_branch_tail_api: 'first_branch_tail_v1' };
+  const qualified = harness({ capabilityFields: expandedCapabilities, nativeReply: success });
+  qualified.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(qualified.component.insertSplitterRemove({
+    ...expanded, first_branch_tail_node: args.second_slot_node,
+  }).native_outcome, 'not_applied');
+  assert.equal(qualified.calls.length, 0);
+  assert.equal(qualified.component.insertSplitterRemove(expanded).first_branch_tail_node, tail);
+  assert.deepEqual(JSON.parse(qualified.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids, first_branch_tail_node: tail,
+  });
+
+  const wrongTail = harness({ capabilityFields: expandedCapabilities,
+    nativeReply: body => ({ ...success(body), first_branch_tail_node: args.first_slot_node }),
+  });
+  wrongTail.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(wrongTail.component.insertSplitterRemove(expanded).native_outcome, 'unknown');
+
+  const secondBranch = { ...args, second_branch_tail_node: tail };
+  assert.equal(qualified.component.insertSplitterRemove(secondBranch).native_outcome, 'not_applied');
+  assert.equal(qualified.calls.length, 1);
+
+  const secondCapabilities = { ...expandedCapabilities,
+    insert_splitter_remove_second_branch_tail_api: 'second_branch_tail_v1' };
+  const second = harness({ capabilityFields: secondCapabilities, nativeReply: success });
+  second.component.pluginOf = () => ({ device, name: plugin });
+  const firstTail = '70000000-1234-1234-1234-123456789ABC';
+  const bothTails = { ...secondBranch, first_branch_tail_node: firstTail };
+  assert.equal(second.component.insertSplitterRemove(bothTails).native_outcome, 'not_applied');
+  assert.equal(second.calls.length, 0);
+  assert.equal(second.component.insertSplitterRemove(secondBranch).second_branch_tail_node, tail);
+  assert.deepEqual(JSON.parse(second.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids, second_branch_tail_node: tail,
+  });
+
+  const both = harness({ capabilityFields: { ...secondCapabilities,
+    insert_splitter_remove_both_branch_tails_api: 'both_branch_tails_v1' }, nativeReply: success });
+  both.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(both.component.insertSplitterRemove({
+    ...bothTails, first_branch_tail_node: tail,
+  }).native_outcome, 'not_applied');
+  assert.equal(both.calls.length, 0);
+  assert.equal(both.component.insertSplitterRemove(bothTails).native_outcome, 'applied_unverified');
+  assert.deepEqual(JSON.parse(both.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids,
+    first_branch_tail_node: firstTail, second_branch_tail_node: tail,
+  });
+  const ordered = { ...args, branch_continuations: [[], [firstTail, tail]] };
+  assert.equal(both.component.insertSplitterRemove(ordered).native_outcome, 'not_applied');
+  assert.equal(both.calls.length, 1);
+  const orderedCapabilities = { ...capabilityFields,
+    insert_splitter_remove_ordered_continuations_api: 'three_effect_lane_v1' };
+  const continuation = harness({ capabilityFields: orderedCapabilities, nativeReply: success });
+  continuation.component.pluginOf = () => ({ device, name: plugin });
+  for (const bad of [
+    { ...ordered, second_branch_tail_node: tail },
+    { ...ordered, branch_continuations: [[], [tail]] },
+    { ...ordered, branch_continuations: [[firstTail], [tail]] },
+    { ...ordered, branch_continuations: [[], [args.second_slot_node, tail]] },
+    { ...ordered, branch_continuations: [[], [, tail]] },
+  ]) {
+    assert.equal(continuation.component.insertSplitterRemove(bad).native_outcome, 'not_applied');
+  }
+  assert.equal(continuation.calls.length, 0);
+  assert.equal(continuation.component.insertSplitterRemove(ordered).native_outcome, 'applied_unverified');
+  assert.deepEqual(JSON.parse(continuation.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids, branch_continuations: ordered.branch_continuations,
+  });
+  const reordered = harness({ capabilityFields: orderedCapabilities,
+    nativeReply: body => ({ ...success(body), branch_continuations: [[], [tail, firstTail]] }) });
+  reordered.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(reordered.component.insertSplitterRemove(ordered).native_outcome, 'unknown');
+  assert.equal(reordered.calls.length, 1);
+});
+
+test('middle slot removal binds a survivor and an exact removed effect', () => {
+  const args = { channel: 'Scratch', slot: 0, plugin: 'Mixtool', expected_instance: folderUid,
+    expected_graph: '10000000-1234-1234-1234-123456789ABC',
+    preceding_slot_node: '20000000-1234-1234-1234-123456789ABC',
+    removed_slot_node: '30000000-1234-1234-1234-123456789ABC',
+    following_slot_node: '40000000-1234-1234-1234-123456789ABC',
+    expected_removed_instance: '50000000-1234-1234-1234-123456789ABC' };
+  const { channel, slot, plugin, ...ids } = args;
+  const instance = { object_uid: folderUid, class_uid: 'E4D7D911-0608-4B46-ABA3-2E345399A5AC',
+    native_class: 'AudioEffect', object_id: 'Mixtool' };
+  const capabilityFields = { insert_slot_remove_api: 'middle_slot_remove_v1' };
+  const result = body => ({ ...body, instance, ok: true, verified: false, outcome: 'applied_unverified' });
+  const device = {};
+  const supported = harness({ capabilityFields, nativeReply: result });
+  supported.component.pluginOf = target => {
+    assert.deepEqual({ channel: target.channel, slot: target.slot, plugin: target.plugin }, { channel, slot, plugin });
+    return { device, name: plugin };
+  };
+  assert.equal(supported.component.insertSlotRemove({
+    ...args, expected_removed_instance: args.expected_instance,
+  }).native_outcome, 'not_applied');
+  assert.equal(supported.component.insertSlotRemove({
+    ...args, following_slot_node: args.removed_slot_node,
+  }).native_outcome, 'not_applied');
+  assert.equal(supported.calls.length, 0);
+  assert.equal(supported.component.insertSlotRemove(args).native_outcome, 'applied_unverified');
+  assert.deepEqual(JSON.parse(supported.calls[0][1]), { operation: 'insert_slot_remove', ...ids });
+
+  const old = harness({ capabilityFields: { insert_slot_move_api: 'same_graph_move_v1' } });
+  old.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(old.component.insertSlotRemove(args).native_outcome, 'not_applied');
+  assert.equal(old.calls.length, 0);
+  const wrong = harness({ capabilityFields,
+    nativeReply: body => ({ ...result(body), expected_removed_instance: args.expected_instance }) });
+  wrong.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(wrong.component.insertSlotRemove(args).native_outcome, 'unknown');
+  assert.equal(wrong.calls.length, 1);
 });
 
 test('Splitter insertion anchors one directed connection and rejects mismatched native receipts', () => {

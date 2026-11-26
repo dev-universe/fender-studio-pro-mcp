@@ -6,11 +6,20 @@ const SCOPE_TABLE: usize = 0x1b7c888;
 const ADD_ACTION_TABLE: usize = 0x1b7cc20;
 
 #[repr(C, align(16))]
-struct ScopeStorage([u8; 0x50]);
+pub(in crate::native_script::request) struct ScopeStorage([u8; 0x50]);
 
-struct RecordingScope {
-    object: *mut c_void,
-    finish: unsafe extern "C" fn(*mut c_void),
+pub(in crate::native_script::request) struct RecordingScope {
+    pub(super) object: *mut c_void,
+    pub(super) finish: unsafe extern "C" fn(*mut c_void),
+}
+
+impl RecordingScope {
+    pub(in crate::native_script::request) fn new(
+        object: *mut c_void,
+        finish: unsafe extern "C" fn(*mut c_void),
+    ) -> Self {
+        Self { object, finish }
+    }
 }
 
 impl Drop for RecordingScope {
@@ -19,7 +28,10 @@ impl Drop for RecordingScope {
     }
 }
 
-fn undo_available(image: usize, graph: *mut c_void) -> Result<(), String> {
+pub(in crate::native_script::request) fn undo_available(
+    image: usize,
+    graph: *mut c_void,
+) -> Result<(), String> {
     let undo_owner: Borrowed = unsafe { method(graph, 0x148 / 8) };
     let graph_root: Borrowed = unsafe { method(graph, 0x150 / 8) };
     if undo_owner as usize != image + 0x15a0e38 || graph_root as usize != image + 0x15a0e60 {
@@ -65,11 +77,15 @@ fn check_wire(model: &Model, previous: *mut c_void, following: *mut c_void) -> R
 
 type SubmitAction = unsafe extern "C" fn(*mut c_void, *mut c_void) -> u8;
 
-fn recorded_submit(image: usize, scope: &RecordingScope) -> Result<SubmitAction, String> {
+pub(in crate::native_script::request) fn recorded_submit(
+    image: usize,
+    scope: &RecordingScope,
+    expected_table: usize,
+) -> Result<SubmitAction, String> {
     let scope_ptr = scope.object;
     let submit: SubmitAction = unsafe { method(scope_ptr, 0xe8 / 8) };
     let globals = image as *mut c_void;
-    if table(scope_ptr) != image + SCOPE_TABLE
+    if table(scope_ptr) != image + expected_table
         || submit as usize != image + 0x1316d9c
         || unsafe { field::<*mut c_void>(globals, 0x1e834a8) } != scope_ptr
         || unsafe { field::<i32>(globals, 0x1e834c0) } != 1
@@ -157,11 +173,8 @@ pub(in crate::native_script::request) fn dispatch(
         let mut storage = MaybeUninit::<ScopeStorage>::uninit();
         let scope_ptr = storage.as_mut_ptr().cast();
         unsafe { edit(scope_ptr, graph) };
-        let scope = RecordingScope {
-            object: scope_ptr,
-            finish,
-        };
-        recorded_submit(image, &scope)?;
+        let scope = RecordingScope::new(scope_ptr, finish);
+        recorded_submit(image, &scope, SCOPE_TABLE)?;
         guard()?;
         check_wire(&model, after, following)?;
         let allocation = unsafe { allocate(0x1f0) };
@@ -177,7 +190,7 @@ pub(in crate::native_script::request) fn dispatch(
         }
         guard()?;
         check_wire(&model, after, following)?;
-        let submit = recorded_submit(image, &scope)?;
+        let submit = recorded_submit(image, &scope, SCOPE_TABLE)?;
         let allocation = unsafe { allocate(0x1e0) };
         if allocation.is_null() {
             return Err("Studio Pro could not allocate a Splitter action".into());

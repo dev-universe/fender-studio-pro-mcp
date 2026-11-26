@@ -171,6 +171,37 @@ transient mismatch from the DSP source on FabFilter Pro-G 1.42. External Effect
 Stereo's phase switch matched the controller read after changing and restoring it.
 [Live verification](docs/evidence/2026-11-20-plugin-parameter-readback.json)
 
+### Set a Mai Tai child Filter Env amount
+
+On Studio Pro 8.1.1 with the matching macOS arm64 add-on, stop playback and
+recording and select the Multi Instrument Music track. Use `plugin_inspect`
+with `include_nodes: true` and `node_scope: "plugin_controller"` to find the
+parent, the `Inst01` or `Inst02` slot, and its live Mai Tai Device. Read
+`modulationTable.cell1.amount` with `plugin_multi_child_parameters`.
+
+Pass `track`, `expected_document`, `expected_instance`, `child_slot`,
+`expected_child_slot`, and `expected_child_instance` to
+`plugin_multi_child_filter_env_set`. Set `expected_float_bits` to the
+observed `native_value.data.bits_hex` and pass the new value as `float_bits`.
+Both strings encode distinct Float64 values in 0 through 10000.
+
+The add-on compares the original bits before the setter. After
+`applied_unverified`, read the same child again. If the reply is
+`outcome_unknown`, read the current state before making another change.
+The receipt covers the one child amount. Inspect the parent or the other
+child separately when those values matter.
+[Live recovery verification](docs/evidence/2026-11-25-multi-child-filter-env.md)
+
+### Chorder audition
+
+On Studio Pro 8.1.1 with the matching native add-on, `chorder_audition` auditions MIDI 60 on one Chorder Note FX. Stop playback and recording, turn Chorder Learn off, then select the target Music track and inspect the exact Note FX slot and native instance UID. Use the current document token from `host_status` and keep the same MCP server session for all three actions.
+
+1. Call `chorder_audition` with `action: "prepare"`, the `track`, zero-based `slot`, `expected_instance`, and `expected_document`. The owner returns a permit valid for 15 seconds.
+2. Call again with `action: "play"`, the `permit` and the same `expected_document`. The owner issues one guarded press and one guarded release and separately observes the held and neutral DSP states. The receipt verifies the local Chorder key lane.
+3. To retrieve an interrupted reply, call with `action: "status"`, the same `permit`, and `expected_document`. Status reads the owner's record even after the active song changes. A replay returns history with no new key event. A new successful prepare supersedes the last permit.
+
+A missing press acknowledgement yields `outcome_unknown`. Inspect the original Chorder and clear the key using Studio Pro if necessary. The owner requires a fresh neutral observation of the original binding before permitting another audition. A later neutral observation preserves the recorded unknown outcome, and an owner restart discards permit history and requires a fresh neutral preflight on the requested target.
+
 ### CV Instrument preset settings
 
 Use `plugin_presets` with `kind: "instrument"` and `plugin: "CV Instrument"`
@@ -472,6 +503,25 @@ For saved pre-fader insert racks with supported Splitter routing, `song_read` an
 
 For the current insert rack, use `insert_chain_state` with `action: "capture"` and `include_routing: true`. Supply the mixer channel and current `expected_document`. Use `expected_folder` to pin the exact folder from `plugin_inspect`. `routing.status` is `observed` when the host capture includes supported directed links, `absent` for a capture without graph metadata, or `unavailable` when the metadata cannot be verified. Slot nodes show the captured plugin class name and slot ID. Release the capture token when finished. [Live 8.1.1 verification](docs/evidence/2026-11-20-live-insert-routing.json)
 
+Use `scope_sidechain_assignment_get` with two uniquely named audio channels and a stock
+Scope in the receiver's insert slot `0`. Stop transport, read `host_status` for
+`expected_document`, and read `plugin_inspect` for the Scope instance UUID. The
+tool observes whether the source's sole Send is absent, unassigned, assigned to this
+Scope, or assigned elsewhere. The verified native route supports up to 16 mixer-list
+entries. The result describes the authored assignment only.
+
+Use `scope_sidechain_assignment_create` to connect an empty source Sends rack
+to that Scope at 0 dB. Enable the Scope Sidechain header and stop transport first.
+Supply the exact channels, Scope instance and current document. Verify the Send
+and assignment independently. Studio Pro records a Send Slot Addition in the
+Undo history. A preceding mixer edit can finish recording after the Send, so
+check the active Undo entry before using it.
+
+Use `scope_sidechain_assignment_remove` to remove the sole Send assigned to that
+Scope. Pass the same document, channels and Scope instance plus the read tool's
+`send_node` as `expected_send`. Keep transport stopped. After the result, read the
+assignment and mixer Sends again. Studio Pro records one Undo for the removal.
+
 `insert_slot_move` moves an effect immediately after another slot in the same supported Inserts graph. Open that rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` to get the graph, slot-node and effect UUIDs. Use a fresh capture with `include_routing: true` to identify the destination slot's single current successor. Supply the source channel, rack slot, plugin and instance UUID, plus the graph UUID, source node, destination node, and destination's current successor UUID. Send canonical uppercase UUIDs and the current `expected_document`. The move is available on the tested Apple Silicon build of Studio Pro 8.1.1 with the matching native extension. After `applied_unverified`, read the graph and plugin values independently. One host Undo restored the two parallel branches, all graph and effect IDs, and all 144 reported values in the nested Splitter trial. Studio Pro kept the moved effect selected after Undo. [Nested slot move and Undo verification](docs/evidence/2026-11-20-insert-slot-move.json)
 
 A separate save and restart trial kept both Mixtools in series in the inner Splitter branch. The reopened Routing screen, seven directed links and 144 reported values matched the saved song. [Saved nested slot move verification](docs/evidence/2026-11-24-insert-slot-move-persistence.json)
@@ -486,7 +536,9 @@ After reopening a song, obtain a fresh document binding and read the current ins
 
 In Studio Pro 8.1.1, an added Splitter and both branches survived saving and restarting Studio Pro. The reopened rack matched all eight nodes, ten directed links, and 144 Mixtool values. Studio Pro issued new live document, insert folder, and graph bindings. Requests with the old document or graph were refused. [Splitter insertion persistence](docs/evidence/2026-11-24-insert-splitter-add-persistence.json)
 
-`insert_splitter_remove` removes a supported inner Splitter and its merger. Each of its two ordered branches must contain one effect slot, and the other outer branch must lead directly to the outer merger. After removal the two effects remain connected in series. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json)
+`insert_slot_remove` removes one effect between two adjacent effect slots in the same supported Inserts graph. Stop playback and recording, then read the graph and owner UUIDs with `plugin_inspect` using `include_nodes: true` and `node_scope: "graph"`, and take a fresh `insert_chain_state` capture with routing. Bind the surviving predecessor with its `channel`, `slot`, `plugin` and `expected_instance`. Supply the current `expected_document`, `expected_graph`, `preceding_slot_node`, `removed_slot_node`, `following_slot_node` and `expected_removed_instance`. Use canonical uppercase UUIDs. After dispatch, independently read the graph and effect values before issuing another edit. On the verified Apple Silicon build of Studio Pro 8.1.1, the operation removed the middle Mixtool in one branch. One native Undo restored its graph, effect identities and all 288 DSP values. [Exact slot removal and Undo verification](docs/evidence/2026-11-26-routed-slot-removal-public.md)
+
+`insert_splitter_remove` removes a supported inner Splitter and its merger. The other outer branch must lead directly to the outer merger. Supply both branch head slot-node UUIDs. By default each branch contains one effect. For a branch with exactly two effects, supply its second slot-node UUID as `first_branch_tail_node` or `second_branch_tail_node` according to the branch. Supply both tail UUIDs when both branches have exactly two effects. When one branch contains three effects and the other contains one, use `branch_continuations`. This is a pair of lists containing node UUIDs after each branch head in routing order. Use an empty list for the one-effect branch, such as `[[], ["SECOND_BRANCH_MIDDLE_UUID", "SECOND_BRANCH_END_UUID"]]`. The continuation form uses neither individual tail field. The surviving effects connect in series in first-branch order followed by second-branch order. Use `plugin_inspect` with `node_scope: "graph"` and a fresh `insert_chain_state` capture with routing to bind the graph and ordered branch nodes. Choose either branch effect as the anchor and supply its `channel`, `slot`, `plugin` and `expected_instance`. Also supply `expected_graph`, `splitter_node`, `merger_node`, `first_slot_node`, `second_slot_node` and the current `expected_document`. Use canonical uppercase UUIDs. The tested Apple Silicon build of Studio Pro 8.1.1 and matching native extension support the operation with the Routing editor closed. Check links and effect values independently after `applied_unverified`. One host Undo restored the original parallel branches, IDs and all 144 reported values in the Mixtool trial. Studio Pro selected the second effect after Undo. [Nested Splitter removal and Undo verification](docs/evidence/2026-11-20-insert-splitter-remove.json) [Three-effect removal verification](docs/evidence/2026-11-26-splitter-three-effect-mcp-remove.md) · [Second branch verification](docs/evidence/2026-11-26-splitter-second-branch-mcp-remove.md) · [Both branches verification](docs/evidence/2026-11-26-splitter-four-effects-mcp-remove.md) · [Three-effect branch verification](docs/evidence/2026-11-26-splitter-ordered-continuations-mcp-remove.md)
 
 The saved removal trial reopened the same song in a fresh Studio Pro session. The Routing editor showed the two Mixtools connected in series, and all 144 reported values matched the saved graph. Requests using the previous document or graph binding were refused before mutation. [Saved nested Splitter removal verification](docs/evidence/2026-11-24-insert-splitter-remove-persistence.json)
 
