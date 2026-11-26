@@ -94,3 +94,35 @@ The trial made eleven requests in 1.768 seconds. The two native IDs,
 31 Scope DSP rows and saved digest matched. The host exited successfully
 after 37.704 seconds, with the 18 managed files and app profile verified
 after restoration.
+
+## Immediate Undo with a second source
+
+R589, R590 and R591 used the same native UUID as R579. All three opened
+write-protected copies of the saved R580 assignment and added an empty,
+silent second source. The original source kept its exact Send UUID, level,
+mute and destination. All 31 Scope DSP rows matched through the observations.
+
+R589 observed two correct Sends after creation. A wrong-source Send UUID was
+refused. Removing the exact second Send and undoing the removal restored its
+UUID. The next Undo changed only the preceding fader and left both Sends.
+A fresh MCP owner independently read both Sends and the changed fader.
+
+R590 observed the existing fader Undo between setting the fader and creating
+the second Send. Studio Pro then displayed the Send Slot Addition entry.
+One Undo removed only the new Send. The previous fader Undo remained in the
+menu, the fader stayed at its set value, and the original Send was unchanged.
+R590 made 60 requests in 42.956 seconds with a 100.052-second host session.
+
+R591 observed the missing addition entry before any attempt to remove the
+second Send. The creation receipt reported a recorded edit, and independent
+reads confirmed the exact second Send. Reopening the Edit menu still showed
+the fader as the latest Undo. The planned stock-removal comparison stopped
+at that point. R591 made 44 requests in 36.994 seconds with a 57.587-second
+host session.
+
+The observed request intervals between the fader and the new Send were
+0.987 seconds in R589, 12.887 seconds in R590 and 0.960 seconds in R591.
+The R590 run also opened the Edit menu during that interval. These trials
+establish an immediate history mismatch and leave its trigger open. All
+three closed without saving, matched both scratch digests and restored the
+18 managed files and changed app-profile files.
