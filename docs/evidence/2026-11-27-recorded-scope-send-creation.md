@@ -30,7 +30,7 @@ R579 completed 78 requests in 115.223 seconds and the host exited successfully
 after 164.377 seconds. The scratch closed without saving and its digest
 matched. All 18 managed files and 10 app-profile files matched after
 restoration. This trial covers the authored assignment, exact slot edits and
-Undo. Signal delivery and cold reopening are separate observations.
+Undo.
 
 ## Saved assignment after a cold reopen
 
@@ -43,10 +43,31 @@ Studio Pro then exited and a separate process reopened the saved bytes with
 writes to the scratch blocked. A fresh MCP owner refused the old document
 token. Two reads observed the same Scope instance UUID and Send UUID. The mixer
 reported the same destination, level and mute state, and all 31 Scope DSP rows
-matched. The cold file digest was identical to the saved digest. This did
-not exercise signal delivery.
+matched. The cold file digest was identical to the saved digest.
 
 The warm phase made 60 requests in 50.646 seconds with one Save. The cold
 phase made 11 requests in 1.794 seconds with no Save. Both host exits were
 successful. The source scratch, 18 managed files and 10 profile files were
 reverified or restored.
+
+## Signal through the authored Send
+
+R581B used the shipping core at `7fc42b48e579` with the same native add-on
+UUID and a fresh scratch. A stock Tone Generator supplied the source while
+transport was stopped and Main was muted. The Scope trigger used trace A,
+which read Side Left alongside trace C. Trace B read Main Right. An earlier
+attempt left the trigger on a silent Main input and was inconclusive.
+
+At 440 Hz before creation, all three traces were flat. The public create
+tool then authored one 0 dB, unmuted Send. An independent assignment read
+confirmed the exact Scope input. The Scope editor showed periodic traces on
+Side Left and a flat Main Right. Changing the Tone Generator to 880 Hz
+approximately doubled the number of periods on the same 800-sample display.
+The Scope editor supplied the signal observation.
+
+The trial disabled the Tone Generator, removed the exact Send and confirmed
+both Send racks were empty. It then disabled the stock Sidechain header and
+restored all 41 tracked Scope and Tone DSP rows. R581B completed 130 requests
+in 59.331 seconds and the host exited successfully after 204.550 seconds.
+The original scratch digest, 18 managed files and 10 app-profile files were
+verified after closing without saving.
