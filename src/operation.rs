@@ -52,6 +52,11 @@ pub enum Operation {
         alias = "scope_sidechain_assignment_get"
     )]
     ScopeSidechainAssignmentGet(ScopeSidechainAssignmentGet),
+    #[serde(
+        rename = "scopeSidechainAssignmentRemove",
+        alias = "scope_sidechain_assignment_remove"
+    )]
+    ScopeSidechainAssignmentRemove(ScopeSidechainAssignmentRemove),
     #[serde(rename = "setSend", alias = "send_set")]
     SetSend(SendSet),
     #[serde(rename = "setInsertBypass", alias = "plugin_bypass")]
@@ -295,6 +300,15 @@ pub struct ScopeSidechainAssignmentGet {
     pub source_channel: String,
     pub scope_channel: String,
     pub expected_instance: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeSidechainAssignmentRemove {
+    pub source_channel: String,
+    pub scope_channel: String,
+    pub expected_instance: String,
+    pub expected_send: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1869,31 +1883,20 @@ impl Operation {
                     "Track name must contain 1 to 256 UTF-8 bytes without control characters",
                 ));
             }
+            Self::ScopeSidechainAssignmentRemove(query) => {
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
+                validate_scope_uid(&query.expected_send, "Send")?;
+            }
             Self::ScopeSidechainAssignmentGet(query) => {
-                if [&query.source_channel, &query.scope_channel]
-                    .into_iter()
-                    .any(|name| {
-                        name.trim().is_empty()
-                            || name.len() > 256
-                            || name.chars().any(char::is_control)
-                    })
-                    || query.source_channel == query.scope_channel
-                {
-                    return Err(invalid(
-                        "Scope assignment requires two distinct, bounded audio channel names",
-                    ));
-                }
-                validate_instance_uid(Some(&query.expected_instance))?;
-                if query.expected_instance == "00000000-0000-0000-0000-000000000000"
-                    || query
-                        .expected_instance
-                        .bytes()
-                        .any(|byte| byte.is_ascii_lowercase())
-                {
-                    return Err(invalid(
-                        "Scope assignment requires a nonzero canonical instance UUID",
-                    ));
-                }
+                validate_scope_target(
+                    &query.source_channel,
+                    &query.scope_channel,
+                    &query.expected_instance,
+                )?;
             }
             Self::Splitters(query) => validate_splitter_name(&query.channel, "channel")?,
             Self::SetSplitter(change) => {
@@ -3036,6 +3039,32 @@ impl Operation {
         }
         Ok(())
     }
+}
+
+fn validate_scope_target(
+    source: &str,
+    receiver: &str,
+    instance: &str,
+) -> Result<(), OperationError> {
+    if [source, receiver].into_iter().any(|name| {
+        name.trim().is_empty() || name.len() > 256 || name.chars().any(char::is_control)
+    }) || source == receiver
+    {
+        return Err(invalid(
+            "Scope assignment requires two distinct, bounded audio channel names",
+        ));
+    }
+    validate_scope_uid(instance, "Scope instance")
+}
+
+fn validate_scope_uid(value: &str, name: &str) -> Result<(), OperationError> {
+    validate_instance_uid(Some(value))?;
+    if value == "00000000-0000-0000-0000-000000000000"
+        || value.bytes().any(|byte| byte.is_ascii_lowercase())
+    {
+        return Err(invalid(format!("{name} requires a nonzero canonical UUID")));
+    }
+    Ok(())
 }
 
 fn validate_splitter_name(value: &str, field: &str) -> Result<(), OperationError> {

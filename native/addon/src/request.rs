@@ -105,6 +105,10 @@ enum Request {
     ScopeSidechainAssignmentGet {
         expected_instance: String,
     },
+    ScopeSidechainAssignmentRemove {
+        expected_instance: String,
+        expected_send: String,
+    },
     CvPortStructureInspect {
         expected_instance: String,
     },
@@ -468,6 +472,7 @@ impl Request {
             | Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
             | Self::ScopeSidechainAssignmentGet { .. }
+            | Self::ScopeSidechainAssignmentRemove { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
             | Self::InsertSlotRemove { .. }
@@ -481,6 +486,9 @@ impl Request {
         match self {
             Self::CvPortStructureInspect { expected_instance }
             | Self::ScopeSidechainAssignmentGet { expected_instance }
+            | Self::ScopeSidechainAssignmentRemove {
+                expected_instance, ..
+            }
             | Self::MultiAddMaiTai {
                 expected_instance, ..
             }
@@ -612,6 +620,10 @@ impl Request {
         }
     }
     fn validate(&self) -> Result<(), String> {
+        if matches!(self, Self::ScopeSidechainAssignmentRemove { expected_send, .. } if !valid_uid(expected_send))
+        {
+            return Err("The exact current Send UUID is required".into());
+        }
         if self.source() == Source::LevelMeter {
             if self.expected().is_none()
                 || !matches!(
@@ -1105,6 +1117,7 @@ impl Request {
             } | Self::Serum2PresetApply { .. }
                 | Self::InspectAux { .. }
                 | Self::ScopeSidechainAssignmentGet { .. }
+                | Self::ScopeSidechainAssignmentRemove { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
                 | Self::InsertChainCapture { .. }
@@ -2084,6 +2097,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ApplyCvPresetSettings { .. }
         | Request::PresetRelease { .. }
         | Request::ScopeSidechainAssignmentGet { .. }
+        | Request::ScopeSidechainAssignmentRemove { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
         | Request::InspectInsertFolderPresetPreflight { .. }
@@ -2739,6 +2753,9 @@ fn dispatch_device(
         };
         reply.context = Some(ctx);
         return reply;
+    }
+    if let Request::ScopeSidechainAssignmentRemove { expected_send, .. } = request {
+        return scope_sidechain::dispatch_remove(ctx, auxiliary, &expected_send);
     }
     if matches!(request, Request::ScopeSidechainAssignmentGet { .. }) {
         return scope_sidechain::dispatch(ctx, auxiliary);

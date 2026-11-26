@@ -335,6 +335,12 @@ impl McpServer {
                 "Observe whether the sole Send on one exact audio source channel is assigned to the exact stock Scope at insert slot 0 of another audio channel. Supply both unique channel names, the Scope instance UUID from plugin_inspect, and expected_document from host_status. Stop playback and recording first. Reports the authored assignment only.",
                 false,
             ),
+            named::<operation::ScopeSidechainAssignmentRemove>(
+                "scope_sidechain_assignment_remove",
+                "scopeSidechainAssignmentRemove",
+                "Remove the sole Send on the exact source audio channel when it is assigned to the bound stock Scope at receiver insert slot 0. Use scope_sidechain_assignment_get to obtain send_node and pass it as expected_send. Supply the current document token and exact Scope instance with transport stopped. The host records one Undo. Check the mixer Sends independently after a receipt or unknown outcome.",
+                true,
+            ),
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
@@ -829,7 +835,7 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 72;
+    const EXPECTED_TOOL_COUNT: usize = 73;
 
     use super::*;
 

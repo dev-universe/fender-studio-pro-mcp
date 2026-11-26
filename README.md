@@ -510,6 +510,11 @@ tool observes whether the source's sole Send is absent, unassigned, assigned to 
 Scope, or assigned elsewhere. The verified native route supports up to 16 mixer-list
 entries. The result describes the authored assignment only.
 
+Use `scope_sidechain_assignment_remove` to remove the sole Send assigned to that
+Scope. Pass the same document, channels and Scope instance plus the read tool's
+`send_node` as `expected_send`. Keep transport stopped. After the result, read the
+assignment and mixer Sends again. Studio Pro records one Undo for the removal.
+
 `insert_slot_move` moves an effect immediately after another slot in the same supported Inserts graph. Open that rack's Routing tab. Use `plugin_inspect` with `node_scope: "graph"` to get the graph, slot-node and effect UUIDs. Use a fresh capture with `include_routing: true` to identify the destination slot's single current successor. Supply the source channel, rack slot, plugin and instance UUID, plus the graph UUID, source node, destination node, and destination's current successor UUID. Send canonical uppercase UUIDs and the current `expected_document`. The move is available on the tested Apple Silicon build of Studio Pro 8.1.1 with the matching native extension. After `applied_unverified`, read the graph and plugin values independently. One host Undo restored the two parallel branches, all graph and effect IDs, and all 144 reported values in the nested Splitter trial. Studio Pro kept the moved effect selected after Undo. [Nested slot move and Undo verification](docs/evidence/2026-11-20-insert-slot-move.json)
 
 A separate save and restart trial kept both Mixtools in series in the inner Splitter branch. The reopened Routing screen, seven directed links and 144 reported values matched the saved song. [Saved nested slot move verification](docs/evidence/2026-11-24-insert-slot-move-persistence.json)
