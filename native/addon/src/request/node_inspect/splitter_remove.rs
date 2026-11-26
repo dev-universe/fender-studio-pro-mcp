@@ -188,7 +188,7 @@ fn check_shape(
     route: &GraphRoute,
     splitter: *mut c_void,
     nodes: &[Owned],
-    branch_has_tail: [bool; 2],
+    continuation_counts: [usize; 2],
 ) -> Result<(), String> {
     let [_, merger_id, first_id, second_id, remaining @ ..] = nodes else {
         return Err("The exact Splitter and lane identities are unavailable".into());
@@ -219,29 +219,28 @@ fn check_shape(
         return Err("The Splitter branches do not lead to the bound effect slots".into());
     }
     let mut ends = [first, second];
-    let mut tails = remaining.iter();
-    for (end, has_tail) in ends.iter_mut().zip(branch_has_tail) {
-        if !has_tail {
-            continue;
+    let mut continuations = remaining.iter();
+    for (end, count) in ends.iter_mut().zip(continuation_counts) {
+        for _ in 0..count {
+            let expected = continuations
+                .next()
+                .ok_or("The requested continuation node is unavailable")?;
+            let outgoing = adjacent(*end, 0x1a8, 0x1b0)?;
+            let [next] = outgoing[..] else {
+                return Err("The requested branch has no unique next effect".into());
+            };
+            if !is_slot(next)
+                || !matches_identity(next, expected)
+                || unsafe { field::<*mut c_void>(next, 0x178) } != graph
+                || adjacent(next, 0x188, 0x190)? != [*end]
+            {
+                return Err("The requested next effect changed".into());
+            }
+            *end = next;
         }
-        let tail_id = tails
-            .next()
-            .ok_or("The requested branch tail is unavailable")?;
-        let outgoing = adjacent(*end, 0x1a8, 0x1b0)?;
-        let [tail] = outgoing[..] else {
-            return Err("The requested branch has no unique second effect".into());
-        };
-        if !is_slot(tail)
-            || !matches_identity(tail, tail_id)
-            || unsafe { field::<*mut c_void>(tail, 0x178) } != graph
-            || adjacent(tail, 0x188, 0x190)? != [*end]
-        {
-            return Err("The requested second effect changed".into());
-        }
-        *end = tail;
     }
-    if tails.next().is_some() {
-        return Err("The requested tail count does not match the two branches".into());
+    if continuations.next().is_some() {
+        return Err("The continuation count does not match the two branches".into());
     }
     let [first_end, second_end] = ends;
     let first_out = adjacent(first_end, 0x1a8, 0x1b0)?;
@@ -582,12 +581,30 @@ pub(in crate::native_script::request) enum Shape<'a> {
     OccupiedBranches {
         first_tail: Option<&'a str>,
         second_tail: Option<&'a str>,
+        continuations: Option<&'a [Vec<String>; 2]>,
     },
     EmptyNested,
     OneLaneNested(&'a str),
 }
 
 impl<'a> Shape<'a> {
+    fn branch_continuations(self) -> [Vec<&'a str>; 2] {
+        match self {
+            Self::OccupiedBranches {
+                continuations: Some(ordered),
+                ..
+            } => ordered
+                .each_ref()
+                .map(|branch| branch.iter().map(String::as_str).collect()),
+            Self::OccupiedBranches {
+                first_tail,
+                second_tail,
+                continuations: None,
+            } => [first_tail, second_tail].map(|tail| tail.into_iter().collect()),
+            _ => [Vec::new(), Vec::new()],
+        }
+    }
+
     fn occupied_slot(self) -> Option<&'a str> {
         match self {
             Self::OneLaneNested(slot) => Some(slot),
@@ -614,16 +631,16 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("Graph ownership could not be established".into());
         };
         let image = image as usize;
-        let nodes = [splitter_id, merger_id, first_id, second_id];
+        let branch_continuations = shape.branch_continuations();
         let binding = match shape {
-            Shape::OccupiedBranches {
-                first_tail,
-                second_tail,
-            } => {
-                let tails = [first_tail, second_tail];
-                ownership.check_splitter_remove_targets(ids, &ctx.instance.object_uid, tails)?;
-                let mut members = nodes.to_vec();
-                members.extend(tails.into_iter().flatten());
+            Shape::OccupiedBranches { .. } => {
+                let mut members = vec![splitter_id, merger_id, first_id, second_id];
+                members.extend(branch_continuations.iter().flatten().copied());
+                ownership.check_splitter_remove_targets(
+                    ids,
+                    &ctx.instance.object_uid,
+                    &members[4..],
+                )?;
                 Binding::Occupied(bound_nodes(&ctx, &route, &members)?)
             }
             Shape::EmptyNested | Shape::OneLaneNested(_) => {
@@ -667,20 +684,18 @@ pub(in crate::native_script::request) fn dispatch(
             return Err("The primary Splitter receiver changed".into());
         }
         let validate_shape = || match (&binding, shape) {
-            (
-                Binding::Occupied(nodes),
-                Shape::OccupiedBranches {
-                    first_tail,
-                    second_tail,
-                },
-            ) => check_shape(
+            (Binding::Occupied(nodes), Shape::OccupiedBranches { .. }) => check_shape(
                 image,
                 &route,
                 splitter,
                 nodes,
-                [first_tail.is_some(), second_tail.is_some()],
+                branch_continuations.each_ref().map(Vec::len),
             ),
-            (Binding::Nested(graph), _) => graph.check(splitter, nodes, shape.occupied_slot()),
+            (Binding::Nested(graph), _) => graph.check(
+                splitter,
+                [splitter_id, merger_id, first_id, second_id],
+                shape.occupied_slot(),
+            ),
             _ => Err("The bound Splitter removal shape changed".into()),
         };
         guard()?;
@@ -757,6 +772,7 @@ pub(in crate::native_script::request) fn dispatch(
             if let Shape::OccupiedBranches {
                 first_tail,
                 second_tail,
+                continuations,
             } = shape
             {
                 if let Some(tail) = first_tail {
@@ -764,6 +780,9 @@ pub(in crate::native_script::request) fn dispatch(
                 }
                 if let Some(tail) = second_tail {
                     receipt["second_branch_tail_node"] = json!(tail);
+                }
+                if let Some(ordered) = continuations {
+                    receipt["branch_continuations"] = json!(ordered);
                 }
             }
             Reply::unbound(receipt)

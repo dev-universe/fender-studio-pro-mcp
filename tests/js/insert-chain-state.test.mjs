@@ -464,6 +464,32 @@ test('nested Splitter removal binds both branches and rejects mismatched native 
     operation: 'insert_splitter_remove', ...ids,
     first_branch_tail_node: firstTail, second_branch_tail_node: tail,
   });
+  const ordered = { ...args, branch_continuations: [[], [firstTail, tail]] };
+  assert.equal(both.component.insertSplitterRemove(ordered).native_outcome, 'not_applied');
+  assert.equal(both.calls.length, 1);
+  const orderedCapabilities = { ...capabilityFields,
+    insert_splitter_remove_ordered_continuations_api: 'three_effect_lane_v1' };
+  const continuation = harness({ capabilityFields: orderedCapabilities, nativeReply: success });
+  continuation.component.pluginOf = () => ({ device, name: plugin });
+  for (const bad of [
+    { ...ordered, second_branch_tail_node: tail },
+    { ...ordered, branch_continuations: [[], [tail]] },
+    { ...ordered, branch_continuations: [[firstTail], [tail]] },
+    { ...ordered, branch_continuations: [[], [args.second_slot_node, tail]] },
+    { ...ordered, branch_continuations: [[], [, tail]] },
+  ]) {
+    assert.equal(continuation.component.insertSplitterRemove(bad).native_outcome, 'not_applied');
+  }
+  assert.equal(continuation.calls.length, 0);
+  assert.equal(continuation.component.insertSplitterRemove(ordered).native_outcome, 'applied_unverified');
+  assert.deepEqual(JSON.parse(continuation.calls[0][1]), {
+    operation: 'insert_splitter_remove', ...ids, branch_continuations: ordered.branch_continuations,
+  });
+  const reordered = harness({ capabilityFields: orderedCapabilities,
+    nativeReply: body => ({ ...success(body), branch_continuations: [[], [tail, firstTail]] }) });
+  reordered.component.pluginOf = () => ({ device, name: plugin });
+  assert.equal(reordered.component.insertSplitterRemove(ordered).native_outcome, 'unknown');
+  assert.equal(reordered.calls.length, 1);
 });
 
 test('Splitter insertion anchors one directed connection and rejects mismatched native receipts', () => {

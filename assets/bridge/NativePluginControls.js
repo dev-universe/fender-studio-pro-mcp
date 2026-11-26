@@ -1052,8 +1052,9 @@ class NativePluginControls {
     }
 
     insertGraphBranchFields(operation, value) {
-        return operation === "insert_slot_move" && value && Object.prototype.hasOwnProperty.call(value, "branch")
-            ? ["branch"] : [];
+        const key = operation === "insert_slot_move" ? "branch"
+            : operation === "insert_splitter_remove" ? "branch_continuations" : null;
+        return key && value && Object.prototype.hasOwnProperty.call(value, key) ? [key] : [];
     }
 
     insertGraphEditRequest(request) {
@@ -1061,9 +1062,23 @@ class NativePluginControls {
         if (!nodes) return false;
         const ids = ["expected_instance", "expected_graph"].concat(nodes);
         const branch = this.insertGraphBranchFields(request.operation, request);
-        return this.guiExact(request, ["operation"].concat(ids, branch))
-            && (!branch.length || this.guiInteger(request.branch, 0, 1)) && ids.every(key => this.insertChainUid(request[key]))
-            && new Set(nodes.map(key => request[key])).size === nodes.length;
+        if (!this.guiExact(request, ["operation"].concat(ids, branch))
+            || !ids.every(key => this.insertChainUid(request[key]))) return false;
+        const nodeIds = nodes.map(key => request[key]);
+        if (branch[0] === "branch" && !this.guiInteger(request.branch, 0, 1)) return false;
+        if (branch[0] === "branch_continuations") {
+            const ordered = request.branch_continuations;
+            if (request.first_branch_tail_node !== undefined || request.second_branch_tail_node !== undefined
+                || !Array.isArray(ordered) || ordered.length !== 2
+                || !Array.isArray(ordered[0]) || !Array.isArray(ordered[1])) return false;
+            const [first, second] = ordered;
+            if (!((first.length === 2 && second.length === 0) || (first.length === 0 && second.length === 2)))
+                return false;
+            const continuationIds = [...first, ...second];
+            if (!continuationIds.every(id => this.insertChainUid(id))) return false;
+            nodeIds.push(...continuationIds);
+        }
+        return new Set(nodeIds).size === nodeIds.length;
     }
 
     insertGraphEditResult(result, request) {
@@ -1077,7 +1092,9 @@ class NativePluginControls {
             this.insertGraphBranchFields(request.operation, request));
         return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(fields))
             && result.operation === request.operation && result.outcome === "applied_unverified"
-            && result.verified === false && fields.every(key => result[key] === request[key]);
+            && result.verified === false && fields.every(key => key === "branch_continuations"
+                ? JSON.stringify(result[key]) === JSON.stringify(request[key])
+                : result[key] === request[key]);
     }
 
     insertChainArguments(args) {
@@ -1406,6 +1423,9 @@ class NativePluginControls {
                 && request.second_branch_tail_node !== undefined
                 && capability.insert_splitter_remove_both_branch_tails_api !== "both_branch_tails_v1")
                 throw new Error("unsupported Splitter removal with two effects on each branch");
+            if (request.operation === "insert_splitter_remove" && request.branch_continuations !== undefined
+                && capability.insert_splitter_remove_ordered_continuations_api !== "three_effect_lane_v1")
+                throw new Error("unsupported Splitter removal with one three-effect branch");
             if (request.operation === "insert_splitter_remove_empty_nested"
                 && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
                 throw new Error("unsupported empty nested Splitter remove API");
