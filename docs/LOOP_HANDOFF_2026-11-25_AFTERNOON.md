@@ -2747,3 +2747,22 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   캡처 상태 또는 생산자 증거를 찾는다. 앱·owner 종료,
   고정 잔여 로컬 11·main 13·장비 의존 4, 열린 PR 76개.
   전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 19시 02분 Serum 변경 병합과 Scope 완료 판정
+
+- #310 최신 `c0e061d`의 두 필수 검사 뒤 main `60fa634`에
+  병합했다. 1,043.4초. #308은 최신 `4e6926b` 검사 중이며
+  #309가 다음이다.
+  [#310](https://github.com/dev-universe/fender-studio-pro-mcp/pull/310)
+- R540은 Oneshot·Retrigger의 라이브 카탈로그 태그를 원본
+  바이너리에서 대조했다. 두 경로가 호출하는 재준비는
+  latch를 지우고 기존 샘플 수를 직접 쓰지 않는다. 다음
+  처리 콜백은 창이 가득 찼는지, latch가 살아 있는지, 프로그램
+  모드가 Hold 조건을 만족하는지를 확인한다. REA/Ghidra 18개,
+  Craft 바이트 10곳, 독립 명령어 27개와 rebase 3개를 확인했다.
+  약 272초, 앱 실행 없음. 동기화된 직접 읽기는 미완료다.
+  [#313](https://github.com/dev-universe/fender-studio-pro-mcp/pull/313)
+- 다음 R541은 R522~R524와 겹치지 않는 일반 그래프 연결을
+  시험한다. 분석 세션 및 앱·owner 종료, 정상 설치 원복.
+  고정 잔여 로컬 11·main 13·장비 의존 4, 열린 PR 76개.
+  전체 2~5일과 장비 대기. 지정 종료 시각 없음.
