@@ -117,11 +117,12 @@ fn resolved(plugin: &SavedPlugin, port: &str) -> Option<SavedMidiDestination> {
         return None;
     }
     let class = plugin.class_id.as_deref().and_then(instance_id)?;
-    match port {
-        INPUT => {}
-        "MusicInput01" | "MusicInput15"
-            if plugin.kind == "instrument"
-                && Some(class) == instance_id(Variant::Instrument.class_uid()) => {}
+    match (port, plugin.kind.as_str()) {
+        (INPUT, _) => {}
+        ("MusicInput01" | "MusicInput15", "instrument")
+            if Some(class) == instance_id(Variant::Instrument.class_uid()) => {}
+        ("MusicInput01" | "MusicInput15", "insert")
+            if Some(class) == instance_id(Variant::Fx.class_uid()) => {}
         _ => return None,
     }
     Some(SavedMidiDestination {
