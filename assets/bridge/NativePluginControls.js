@@ -1034,10 +1034,14 @@ class NativePluginControls {
             && value !== "00000000-0000-0000-0000-000000000000";
     }
 
-    insertGraphNodeFields(operation) {
+    insertGraphNodeFields(operation, value) {
         if (operation === "insert_slot_move") return ["source_node", "after_node", "following_node"];
         if (operation === "insert_splitter_add") return ["after_node", "following_node"];
-        if (operation === "insert_splitter_remove") return ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
+        if (operation === "insert_splitter_remove") {
+            const fields = ["splitter_node", "merger_node", "first_slot_node", "second_slot_node"];
+            if (value && Object.prototype.hasOwnProperty.call(value, "first_branch_tail_node")) fields.push("first_branch_tail_node");
+            return fields;
+        }
         if (operation === "insert_splitter_remove_empty_nested")
             return ["splitter_node", "merger_node", "predecessor_slot_node", "successor_merger_node"];
         if (operation === "insert_splitter_remove_one_lane_nested")
@@ -1051,7 +1055,7 @@ class NativePluginControls {
     }
 
     insertGraphEditRequest(request) {
-        const nodes = request && this.insertGraphNodeFields(request.operation);
+        const nodes = request && this.insertGraphNodeFields(request.operation, request);
         if (!nodes) return false;
         const ids = ["expected_instance", "expected_graph"].concat(nodes);
         const branch = this.insertGraphBranchFields(request.operation, request);
@@ -1067,7 +1071,7 @@ class NativePluginControls {
                 && typeof result.error.code === "string" && typeof result.error.message === "string"
                 && result.error.code.length <= 64 && result.error.message.length <= 512;
         }
-        const fields = ["expected_instance", "expected_graph"].concat(this.insertGraphNodeFields(request.operation),
+        const fields = ["expected_instance", "expected_graph"].concat(this.insertGraphNodeFields(request.operation, request),
             this.insertGraphBranchFields(request.operation, request));
         return this.guiExact(result, ["ok", "outcome", "operation", "verified", "instance"].concat(fields))
             && result.operation === request.operation && result.outcome === "applied_unverified"
@@ -1398,6 +1402,9 @@ class NativePluginControls {
                 throw new Error("unsupported insert Splitter add API");
             if (request.operation === "insert_splitter_remove" && capability.insert_splitter_remove_api !== "nested_splitter_remove_v1")
                 throw new Error("unsupported insert Splitter remove API");
+            if (request.operation === "insert_splitter_remove" && request.first_branch_tail_node !== undefined
+                && capability.insert_splitter_remove_first_branch_tail_api !== "first_branch_tail_v1")
+                throw new Error("unsupported two-effect first Splitter branch removal API");
             if (request.operation === "insert_splitter_remove_empty_nested"
                 && capability.insert_splitter_remove_empty_nested_api !== "empty_nested_splitter_remove_v1")
                 throw new Error("unsupported empty nested Splitter remove API");

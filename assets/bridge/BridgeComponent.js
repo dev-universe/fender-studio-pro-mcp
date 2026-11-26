@@ -1048,7 +1048,7 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         const refuse = message => fail("not_applied", operation + "_refused", message);
         if (typeof NativePluginControls !== "function") return refuse("The matching native extension is required");
         const controls = new NativePluginControls(this);
-        const nodeFields = controls.insertGraphNodeFields(operation);
+        const nodeFields = controls.insertGraphNodeFields(operation, args);
         if (!nodeFields) return refuse("Unsupported insert graph operation");
         const requestFields = ["expected_instance", "expected_graph"].concat(nodeFields,
             controls.insertGraphBranchFields(operation, args));
