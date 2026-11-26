@@ -18,3 +18,23 @@ than the limit, and a relative path. All eight calls and the tool listing
 completed in 1.564 seconds, with normal server exit. The checks cover the
 file envelope and state header. Decoding or validating the preset body,
 and observing its applied settings in the host, are separate checks.
+
+R480 exercised the inspected SHA-256 as the application precondition
+in Studio Pro 8.1.1 build 113103 on macOS arm64. The candidate MCP
+server read each processor-only carrier, then applied it once to the
+matching instance of the signed Serum 2 2.1.5 VST3. Each host receipt
+matched the expected instance and digest. Both source files stayed
+unchanged.
+
+The first comparison stopped after counting changed FX access flags
+as value changes. A fresh owner rebound the same session, document
+and both native instances without reapplying. Its independent
+2,623-row reads matched the post-apply snapshots. The instrument had
+15 changed values. FX had 13 changed values and 16 additional rows
+whose values matched while their access changed from writable to
+read-only. Each peer matched its prior state after the other apply.
+
+The two owners made 229 requests in 25.807 seconds. Studio Pro ran
+for 106.606 seconds and closed without Save, MIDI or playback. The
+temporary signed VST3 was retired, and 18 managed files and 10
+profile files were restored and verified.
