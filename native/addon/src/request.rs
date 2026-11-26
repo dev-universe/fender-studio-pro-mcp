@@ -203,6 +203,8 @@ enum Request {
     ParameterAction {
         action: action::Action,
         expected_instance: String,
+        #[serde(default, deserialize_with = "action::supplied_clear_guard")]
+        chorder_guard: Option<action::ClearGuard>,
     },
     ModelCatalog {
         catalog: catalog::Kind,
@@ -577,6 +579,9 @@ impl Request {
             }
         }
         match self {
+            Self::ParameterAction { action, chorder_guard, .. } => {
+                action::validate_clear_intent(*action, chorder_guard.as_ref())
+            }
             Self::MultiChildParameters {
                 expected_instance,
                 expected_child_slot,
@@ -3278,8 +3283,13 @@ fn dispatch_device(
                         None,
                     ),
                 },
-                Request::ParameterAction { action, .. } => {
-                    let (value, lease) = action::execute(&ctx, &provider, action);
+                Request::ParameterAction {
+                    action,
+                    chorder_guard,
+                    ..
+                } => {
+                    let (value, lease) =
+                        action::execute(&ctx, &provider, action, chorder_guard.as_ref());
                     (value, None, lease)
                 }
                 request => (execute(&ctx, request, &provider), None, None),

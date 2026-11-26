@@ -284,7 +284,7 @@ impl McpServer {
             named::<PluginAction>(
                 "plugin_action",
                 "pluginAction",
-                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
+                "Run a fixed native button action on the expected instance. swap_filter_frequencies supports only the exact Expander, Gate and Compressor classes. reset_meter_hold and reset_meter_loudness support only the exact Level Meter class. reset_minimum_reduction supports only the exact Limiter and Compressor classes. retrigger_scope supports only the exact Scope class. Its pulse does not verify waveform acquisition. clear_chorder_selected requires the exact Chorder Note FX instance, current document, Learn Mode, an expected_input_pitch and expected_model_sha256 in chorder_guard. Get the digest from chorder_chords_get. Read the stored model again after the action. A pulse or its own Toggle reset never verifies the separate effect. Meter reset effects require a separate independent non-neutral accumulator witness; the action receipt does not establish that effect. Never retry an unknown outcome.",
                 true,
             ),
             named::<PedalboardSlotSwap>(
@@ -1360,7 +1360,7 @@ mod tests {
     }
 
     #[test]
-    fn button_action_schema_is_the_closed_five_action_set() {
+    fn button_action_schema_lists_only_registered_actions() {
         let specs = McpServer::specs();
         let tool = &specs
             .iter()
@@ -1374,7 +1374,8 @@ mod tests {
                 "reset_meter_hold",
                 "reset_meter_loudness",
                 "reset_minimum_reduction",
-                "retrigger_scope"
+                "retrigger_scope",
+                "clear_chorder_selected"
             ])
         );
         assert_eq!(tool.input_schema["additionalProperties"], false);
