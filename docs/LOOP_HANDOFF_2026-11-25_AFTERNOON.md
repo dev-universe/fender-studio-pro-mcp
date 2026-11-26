@@ -3381,3 +3381,28 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   이후 장치별 포트 연결 및 별도 연결 편집의 증거를 확인한다.
   고정 로컬 11·main 13·장비 4. 전체 2~5일과 장비 대기,
   지정 종료 시각 없음.
+
+## 2026-11-27 1시 21분 Scope 포트 소유권과 CI 대기열
+
+- #331 `ab39a13f`가 두 최신 필수 검사 이후 `14fa1db4`에
+  병합됐다. 466.9초. #332 `8dcc51e6`은 코어 통과 후 arm64
+  실행 대기. 열린 82개 중 72개는 문서만 편집한다. 67개는
+  두 검사 통과 이력이 있으나 현재 `main`을 포함한 통과 헤드는
+  아직 없다. 7개는 선행 브랜치가 있다.
+  [#331](https://github.com/dev-universe/fender-studio-pro-mcp/pull/331) ·
+  [#332](https://github.com/dev-universe/fender-studio-pro-mcp/pull/332)
+- R584는 AudioSendSlot에서 소유 프로세서와 AudioOutput으로 이어지는
+  구성과 실제 SideChainInput 연결 경로를 찾아 함수 20개·rebases
+  9개·Craft 11구간을 대조했다. 분석 세션 모두 닫힘.
+- R585 첫 읽기는 공개 브리지가 비공개 진단 값을 투영하지 않아
+  멈췄다. 앱 41.461초·No Save와 정상 설치 및 프로필 원복.
+  R585B는 새 읽기 전용 호스트에서 동일 Send와 Scope가 출력
+  kind/index 0/0, 입력 1/1임을 두 번 확인했다. 각 포트 락은 비어
+  있었다. DSP 31행, 송 해시 유지, 11요청·1.768초 및 호스트
+  37.704초, 설치 18개·바뀐 프로필 9개 원복, 앱과 owner 종료.
+  동기화된 양방향 연결 목록은 별도 조건으로 남긴다.
+  [#349](https://github.com/dev-universe/fender-studio-pro-mcp/pull/349)
+- 고정 로컬 11·main 13·장비 4. 1시 18분에도 Volt 276과
+  Keystation88을 USB/오디오에서 확인할 수 없었다. 지정 종료
+  시각 없음. Scope 구조 증거를 보존하고 다음은 Ampire의 전역
+  Volume/Pitch 별칭과 활성 페달 역할의 차이를 확인한다.
