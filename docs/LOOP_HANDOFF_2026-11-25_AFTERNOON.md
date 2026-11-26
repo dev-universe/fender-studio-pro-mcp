@@ -2837,3 +2837,30 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
 - 잔여 로컬 11·main 13·장비 의존 4, 열린 PR 77개.
   다음 실앱 10~20분, 전체 2~5일과 장비 대기. 지정 종료
   시각 없음. 현재 앱·owner 종료 상태와 기존 관리 설치 확인.
+
+## 11월 26일 19시 55분 Mustang 읽기와 Serum VST3 타이밍
+
+- R544는 실제 8.1.1 Build 113103의 Mustang에서 네 번
+  조회해 슬롯 26개, 숫자 설정 20개, 채워진 슬롯 3개와
+  독립 DSP 39개가 일치했다. 3,518바이트 캡처 여섯 개는
+  SHA-256이 모두 달랐다. 전체 응답 일치 가정으로 첫
+  비교기가 멈췄고 새 owner가 같은 문서에서 구조·설정,
+  4개 거부와 두 토큰 해제를 확인했다. 23요청·2.963초,
+  18요청·2.411초, 앱 93.891초. 저장 없음, 18+11 원복.
+  [#318](https://github.com/dev-universe/fender-studio-pro-mcp/pull/318)
+- #282가 현재 기준 `8c792f5`에서 두 필수 검사를 통과해
+  `7f4393c`로 510.6초에 병합됐다. #292의
+  `b5c29ce` 두 검사 다음에 Serum #319를 순서에 넣었다.
+  [#282](https://github.com/dev-universe/fender-studio-pro-mcp/pull/282)
+- R545는 공식 서명 Serum 2 2.1.5 instrument·FX의
+  arm64·x86_64 VST3 네 조회에서 타이밍 요청 마스크
+  `0x456`을 확인했다. REA/Ghidra, Craft Anything과
+  Mach-O 대조에서 arm64 명령 18개, Intel 게터 명령 5개와
+  상태·음악 위치·템포·루프 읽기를 확인했다. 약 7분.
+  앱이나 오디오 처리 실행은 없었다.
+  [#319](https://github.com/dev-universe/fender-studio-pro-mcp/pull/319)
+- #172의 MCP 설명 병합 충돌은 Scope 캡처 범위와 Mustang
+  조회 내용을 모두 유지했다. 다음은 R546의 실제 설치
+  `vstservice` 정적 전달 경로 확인이다. 로컬 11·main 13·
+  장비 의존 4, 열린 PR 78개. 전체 2~5일과 장비 대기,
+  지정 종료 시각 없음. 앱·owner 종료와 기존 설치 유지.
