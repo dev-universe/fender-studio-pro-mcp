@@ -3481,3 +3481,16 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   지정 종료 시각 없음.
   [#337](https://github.com/dev-universe/fender-studio-pro-mcp/pull/337) ·
   [#348](https://github.com/dev-universe/fender-studio-pro-mcp/pull/348)
+
+## 2026-11-27 2시 10분 필수 검사와 병합
+
+- #337 `506adabe`의 macOS 재실행과 기존 코어가 모두 통과했다.
+  원격 `main`은 정확한 PR 트리의 `a826a9c2`를 가리킨다.
+  재실행 요청에서 병합까지 471.1초였다. 열린 PR 78개 중
+  70개가 문서만 바꾼다. [#337](https://github.com/dev-universe/fender-studio-pro-mcp/pull/337)
+- #348 `574c7989`는 위 `main`을 포함하고 코어 실행 중,
+  macOS 대기 중이다. 이 뒤 #349, #177, #187 순서로 진행한다.
+  이 검사와 병합 처리는 현재 로컬 모니터가 수행한다.
+  앱과 MCP owner는 닫힌 상태이며 Volt 276과 Keystation은
+  이 시점에도 감지되지 않았다.
+  [#348](https://github.com/dev-universe/fender-studio-pro-mcp/pull/348)

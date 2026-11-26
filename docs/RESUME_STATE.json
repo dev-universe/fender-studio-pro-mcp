@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "e0e7f0115053a108e505d01d3cc351782f877793",
+    "main_at_checkpoint": "a826a9c23cbec6a0b5699672d7bf2d3bee10ff5d",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -456,7 +456,8 @@
       331,
       332,
       333,
-      334
+      334,
+      337
     ],
     "open_pull_requests": [
       165,
@@ -530,7 +531,6 @@
       317,
       327,
       336,
-      337,
       338,
       339,
       340,
@@ -560,7 +560,7 @@
         349
       ],
       "normal_managed_installation_restored": true,
-      "next": "Complete PR337 current-base checks. The next release units are PR348 and PR349, then PR177 and PR187, with the same exact final tree verified across all 79 open heads. Continue outstanding graph, plugin and hardware units on the main-based branches."
+      "next": "PR337 merged. PR348 is running checks on 574c7989 against current main; next PR349, PR177 and PR187. The prior 79-head release-order simulation matched the exact final tree. Continue outstanding graph, plugin and hardware units on the main-based branches."
     },
     "remaining_builtin_units_after_local_verification": 11,
     "locally_qualified_fixed_units_pending_merge": [
