@@ -39,3 +39,17 @@ resumed from the observed residual state and handled 134 requests in
 13.840 seconds. Three temporary captures were released. The host closed
 without Save after 131.843 seconds. The scratch digest, 18 managed files,
 and ten changed app-profile files were verified after restoration.
+
+R588 disabled slot 2 while both Wah Wah models were still selected. The
+global control continued to read and change slot 2. Re-enabling slot 2
+restored the prepared pair. Removing that model retargeted the global
+control to the surviving slot 3. In each case a write to raw 6250 changed
+only the selected global and local rows, and the original marker returned.
+After removing the two models, the empty-display global shadow at 7500
+and the vacant activation flags were cleared. All 89 original stable rows
+and the component fingerprint matched.
+
+R588 handled 181 requests in 17.416 seconds and released two captures.
+The scratch remained byte-identical with no Save, the host exited after
+67.678 seconds, and the installation and ten changed profile files were
+verified after restoration.
