@@ -2065,3 +2065,19 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   앱·owner 닫힘 및 관리 파일 18개 원래 해시 확인. `main` 14개·
   로컬 11개이며 장비 의존 4건, 다음 검사 9~14분, 전체 2~5일과
   CI·장비 대기다. 지정 종료 시각 없음.
+
+## 11월 26일 09시 39분 Serum 프리셋 조회 병합과 Chorder 갱신
+
+- #268의 최신 `3171ac2`가 필수 두 검사를 통과해 `2323a11`에
+  병합됐다. 547.6초. `serum2_preset_inspect`가 `main`에 있다.
+  [#268](https://github.com/dev-universe/fender-studio-pro-mcp/pull/268)
+- 정확한 새 `main`을 합친 Chorder 트리가 로컬에서 277 Rust 검사를
+  통과한 통합 트리와 동일했다. 기존 #177 브랜치를 fast-forward로
+  `8d07e42`까지 갱신했다. 대기열에서 차례가 오면 그때의 `main`을
+  기준으로 필수 검사 두 개를 확인한다. [#177](https://github.com/dev-universe/fender-studio-pro-mcp/pull/177)
+- #191은 `a6008e2` 기준 검사 중이며 #192–194가 이어진다.
+  로컬 병합 점검 프로세스 실행 중. Studio Pro·owner 종료,
+  관리 파일 18개 원본 해시 확인. 신선 장치 목록에서 Volt 276과
+  Keystation 88이 관찰되지 않았다. `main` 14개·로컬 11개, 장비
+  의존 4건. 다음 검사 9~14분, 전체 2~5일과 CI·장비 대기,
+  지정 종료 시각 없음.
