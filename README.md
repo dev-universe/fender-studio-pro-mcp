@@ -233,6 +233,7 @@ For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
 instance. Use `plugin_parameter_set` with `normalized` and `readback: true`.
 [Macro readback and restoration](docs/evidence/2026-11-26-serum2-macro-readback.md)
+[Assigned Macro 1 audio verification](docs/evidence/2026-11-26-serum2-macro-routing.md)
 
 To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
 `kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
