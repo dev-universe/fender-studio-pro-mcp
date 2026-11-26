@@ -9,6 +9,7 @@ pub(super) enum Action {
     ResetMeterLoudness,
     ResetMinimumReduction,
     RetriggerScope,
+    ClearChorderSelected,
 }
 impl Action {
     fn name(self) -> &'static str {
@@ -18,9 +19,47 @@ impl Action {
             Self::ResetMeterLoudness => "reset_meter_loudness",
             Self::ResetMinimumReduction => "reset_minimum_reduction",
             Self::RetriggerScope => "retrigger_scope",
+            Self::ClearChorderSelected => "clear_chorder_selected",
         }
     }
 }
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct ClearGuard {
+    expected_input_pitch: u8,
+    expected_model_sha256: String,
+}
+
+pub(super) fn supplied_clear_guard<'de, D>(deserializer: D) -> Result<Option<ClearGuard>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    ClearGuard::deserialize(deserializer).map(Some)
+}
+
+pub(super) fn validate_clear_intent(
+    action: Action,
+    guard: Option<&ClearGuard>,
+) -> Result<(), String> {
+    match (action, guard) {
+        (Action::ClearChorderSelected, Some(guard))
+            if guard.expected_input_pitch <= 127
+                && guard.expected_model_sha256.len() == 64
+                && guard
+                    .expected_model_sha256
+                    .bytes()
+                    .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte)) =>
+        {
+            Ok(())
+        }
+        (Action::ClearChorderSelected, _) => {
+            Err("Chorder Clear requires an expected MIDI pitch and lowercase model SHA-256".into())
+        }
+        (_, Some(_)) => Err("A Chorder guard is only valid for Clear Chorder Selected".into()),
+        (_, None) => Ok(()),
+    }
+}
+
 #[derive(Clone, Copy)]
 struct Spec {
     parameter: &'static CStr,
@@ -69,6 +108,11 @@ fn registered(class_uid: &str, action: Action) -> Result<Spec, String> {
             parameter: c"trigRetrig",
             effects: &[],
             expected_tag: Some(1398043218),
+        }),
+        ("D2D9B002-12FC-4F1D-AFDA-70336D1DC108", Action::ClearChorderSelected) => Ok(Spec {
+            parameter: c"chorder.clear",
+            effects: &[],
+            expected_tag: Some(9),
         }),
         _ => Err("button action is not registered for this exact native class".into()),
     }
@@ -141,17 +185,17 @@ impl ActionLease {
             let get_tag: unsafe extern "C" fn(*mut c_void) -> i32 = unsafe { method(current, 13) };
             let tag = unsafe { get_tag(current) };
             if tag != expected_tag {
-                return Err("registered meter reset tag changed".into());
+                return Err("registered button tag changed".into());
             }
             let get_name: unsafe extern "C" fn(*mut c_void) -> *const PlainCString =
                 unsafe { method(current, 4) };
             let actual = unsafe { get_name(current) };
             if actual.is_null() || unsafe { (*actual).text }.is_null() {
-                return Err("registered meter reset name changed".into());
+                return Err("registered button name changed".into());
             }
             for (index, expected) in self.name.to_bytes_with_nul().iter().enumerate() {
                 if unsafe { *(*actual).text.add(index) } as u8 != *expected {
-                    return Err("registered meter reset name changed".into());
+                    return Err("registered button name changed".into());
                 }
             }
         }
@@ -178,17 +222,26 @@ pub(super) fn execute(
     ctx: &Context<'_>,
     provider: &Provider,
     action: Action,
+    chorder_guard: Option<&ClearGuard>,
 ) -> (Value, Option<ActionLease>) {
+    if let Err(reason) = validate_clear_intent(action, chorder_guard) {
+        return (refused(action, "invalid_action", &reason), None);
+    }
     let spec = match registered(&ctx.instance.class_uid, action) {
         Ok(spec) => spec,
         Err(reason) => return (refused(action, "unregistered_action", &reason), None),
     };
-    if spec.expected_tag.is_some() && ctx.instance.native_class != "AudioEffect" {
+    let native_class = if action == Action::ClearChorderSelected {
+        "MusicEffect"
+    } else {
+        "AudioEffect"
+    };
+    if spec.expected_tag.is_some() && ctx.instance.native_class != native_class {
         return (
             refused(
                 action,
                 "unregistered_action",
-                "meter resets require the exact AudioEffect class",
+                "the button requires the registered native class",
             ),
             None,
         );
@@ -206,10 +259,93 @@ pub(super) fn execute(
             );
         }
     };
-    run(controller, ctx.api, action, spec, &mut || {
+    let mut guard = || {
         controller.check()?;
         ctx.check()
-    })
+    };
+    let Some(clear) = chorder_guard else {
+        return run(controller, ctx.api, action, spec, &mut guard);
+    };
+    let selection =
+        match ClearSelection::capture(controller, ctx, clear.expected_input_pitch, &mut guard) {
+            Ok(selection) => selection,
+            Err(reason) => return (refused(action, "chorder_selection_changed", &reason), None),
+        };
+    run_checked(
+        controller,
+        ctx.api,
+        action,
+        spec,
+        &mut || {
+            guard()?;
+            selection.check()
+        },
+        |button| {
+            if button.value != button.min {
+                return Err("Chorder Clear is already active".into());
+            }
+            let (observed, alias) =
+                chorder_chords::get(ctx, u32::from(clear.expected_input_pitch), 1)
+                    .map_err(|failure| failure.message().to_owned())?;
+            drop(alias);
+            ctx.check()?;
+            selection.check()?;
+            if observed["model_sha256"] != clear.expected_model_sha256.as_str() {
+                return Err("Chorder model SHA-256 changed".into());
+            }
+            Ok(())
+        },
+    )
+}
+
+struct ClearSelection {
+    mode: parameters::ScalarReadLease,
+    input: parameters::ScalarReadLease,
+}
+impl ClearSelection {
+    fn capture<G: FnMut() -> Result<(), String>>(
+        controller: &Controller,
+        ctx: &Context<'_>,
+        expected_pitch: u8,
+        guard: &mut G,
+    ) -> Result<Self, String> {
+        const MODE: &str = "chorder.learnMode";
+        const INPUT: parameters::IntegerEditProfile = parameters::IntegerEditProfile {
+            name: "chorder.learnInputPitch",
+            tag: 7,
+            min: 0,
+            max: 128,
+            default: 0,
+        };
+
+        guard()?;
+        let mode = controller
+            .find(MODE, ctx.api)?
+            .pin_raw_toggle_state(MODE, true, guard)
+            .map_err(|error| error.to_string())?;
+        if mode.description().tag != 6 {
+            return Err("Chorder Learn Mode tag changed".into());
+        }
+        guard()?;
+        // The DSP selector uses zero for no selection and MIDI pitch + 1 for a key.
+        let input = controller
+            .find(INPUT.name, ctx.api)?
+            .pin_raw_integer_float_state(INPUT, i64::from(expected_pitch) + 1, guard)
+            .map_err(|error| error.to_string())?;
+        let selection = Self { mode, input };
+        selection.check()?;
+        guard()?;
+        Ok(selection)
+    }
+
+    fn check(&self) -> Result<(), String> {
+        self.mode
+            .check_borrowed()
+            .map_err(|error| error.to_string())?;
+        self.input
+            .check_borrowed()
+            .map_err(|error| error.to_string())
+    }
 }
 fn run<G: FnMut() -> Result<(), String>>(
     controller: &Controller,
@@ -218,6 +354,21 @@ fn run<G: FnMut() -> Result<(), String>>(
     spec: Spec,
     guard: &mut G,
 ) -> (Value, Option<ActionLease>) {
+    run_checked(controller, api, action, spec, guard, |_| Ok(()))
+}
+
+fn run_checked<G, C>(
+    controller: &Controller,
+    api: &Api,
+    action: Action,
+    spec: Spec,
+    guard: &mut G,
+    check_intent: C,
+) -> (Value, Option<ActionLease>)
+where
+    G: FnMut() -> Result<(), String>,
+    C: FnOnce(&parameters::PulseState) -> Result<(), String>,
+{
     let parameter = match guard()
         .and_then(|_| controller.find(spec.parameter.to_str().expect("fixed ASCII parameter"), api))
     {
@@ -237,7 +388,7 @@ fn run<G: FnMut() -> Result<(), String>>(
     };
     let result = lease
         .parameter
-        .pulse_range(&mut || lease.check(controller, guard));
+        .pulse_range_checked(&mut || lease.check(controller, guard), check_intent);
     let mut value = match result {
         Ok(receipt) => json!({
             "ok":true,"outcome":"applied_unverified","verified":false,"effects_verified":false,

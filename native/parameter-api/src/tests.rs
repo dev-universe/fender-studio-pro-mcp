@@ -1471,6 +1471,30 @@ fn list_choice_pages_read_unicode_labels_without_selecting_any_index() {
     );
 }
 #[test]
+fn floating_list_bounds_use_float_formatting_without_selection() {
+    let env = TextEnv::new();
+    let (fixture, parameter) = Fixture::new(
+        &env,
+        4,
+        FakeValue::Number(Number::Float(0.0)),
+        Number::Float(0.0),
+        Number::Float(15.0),
+        None,
+    );
+    fixture.p().format.enabled.set(true);
+
+    let page = parameter.list_choices(14, 8, &mut fixture.guard()).unwrap();
+
+    assert_eq!((page.count, page.offset, page.next), (16, 14, None));
+    assert_eq!(page.choices[0].index, 14);
+    assert_eq!(page.choices[1].index, 15);
+    assert_eq!(
+        *fixture.p().format.values.borrow(),
+        [Number::Float(14.0), Number::Float(15.0)]
+    );
+    assert_eq!(fixture.p().writes.get(), 0);
+}
+#[test]
 fn empty_list_choices_have_zero_count_and_remain_nonwritable() {
     let env = TextEnv::new();
     let (f, p) = list_fixture(&env, -1, -1);
@@ -1528,6 +1552,20 @@ fn choice_reads_allow_readonly_disabled_lists_but_reject_other_types_and_bounds(
     );
     assert!(fractp.list_choices(0, 1, &mut fraction.guard()).is_err());
     assert!(fraction.p().choice_calls.borrow().is_empty());
+    for max in [1.5, -2.0, 1_000_000.0] {
+        let (fixture, parameter) = Fixture::new(
+            &env,
+            4,
+            FakeValue::Number(Number::Float(0.0)),
+            Number::Float(0.0),
+            Number::Float(max),
+            None,
+        );
+        fixture.p().format.enabled.set(true);
+        assert!(parameter.list_choices(0, 1, &mut fixture.guard()).is_err());
+        assert!(fixture.p().format.values.borrow().is_empty());
+        assert_eq!(fixture.p().writes.get(), 0);
+    }
 }
 #[test]
 fn choice_copy_errors_and_invalid_utf16_or_missing_termination_discard_page() {

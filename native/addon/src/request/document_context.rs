@@ -216,6 +216,18 @@ impl Snapshot {
     }
 }
 
+pub(super) fn check_current_token(ctx: &Context<'_>, token: &str) -> Result<(), String> {
+    ctx.check()?;
+    let registry = unsafe { &*(*ctx.service).document_context.get() };
+    if !registry.observed
+        || registry.identity.as_ref().map(|owner| owner.0) != Some(ctx.document._identity.0)
+        || registry.token() != token
+    {
+        return Err("native document token changed".into());
+    }
+    Ok(())
+}
+
 fn transition(snapshot: &Snapshot) -> Result<(u64, u64, String), String> {
     snapshot.check()?;
     let service = unsafe { &*snapshot.service };

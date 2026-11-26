@@ -284,6 +284,23 @@ fn execute(
             });
         }
     };
+    if let Operation::PluginMultiAddMaiTai(change) = &operation {
+        return Ok(multi_add_mai_tai_receipt(
+            change, &context, response, request_id, started,
+        ));
+    }
+    if let Operation::InsertSplitterRemoveEmptyNested(args) = &operation {
+        let (outcome, result, error) = empty_splitter_remove_result(args, &context, &response);
+        return Ok(Receipt {
+            request_id,
+            outcome,
+            session: Some(response.session),
+            document: Some(response.document),
+            result,
+            error,
+            elapsed_ms: started.elapsed().as_millis(),
+        });
+    }
     if let (Operation::MidiProgramPartAdd(change), Some(staged)) = (&operation, staged_program) {
         let (outcome, result, error) =
             midi_program_part::classify(change, &staged.basename, &context, &response);
@@ -623,10 +640,254 @@ fn execute(
     })
 }
 
+fn multi_add_mai_tai_receipt(
+    change: &crate::operation::PluginMultiAddMaiTai,
+    context: &HostContext,
+    response: WireResponse,
+    request_id: String,
+    started: Instant,
+) -> Receipt {
+    let (outcome, result, error) = multi_add_mai_tai_result(change, context, &response);
+    Receipt {
+        request_id,
+        outcome,
+        session: Some(response.session),
+        document: Some(response.document),
+        result,
+        error,
+        elapsed_ms: started.elapsed().as_millis(),
+    }
+}
+
+fn multi_add_mai_tai_result(
+    change: &crate::operation::PluginMultiAddMaiTai,
+    context: &HostContext,
+    response: &WireResponse,
+) -> (Outcome, Value, Option<OperationError>) {
+    let value = &response.result;
+    let bound = response.session == context.session && response.document == context.document;
+    let clean = response.ok && response.code.is_none() && response.error.is_none();
+    if !response.ok
+        && value.is_null()
+        && matches!(
+            response.code.as_deref(),
+            Some(
+                "session_changed"
+                    | "document_changed"
+                    | "missing_precondition"
+                    | "context_required"
+                    | "protocol_mismatch"
+            )
+        )
+    {
+        return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
+    }
+    if bound
+        && clean
+        && exact_gui_object(
+            value,
+            &[
+                "ok",
+                "outcome",
+                "native_outcome",
+                "dispatch_attempted",
+                "error",
+            ],
+        )
+        && value["ok"] == false
+        && value["outcome"] == "not_applied"
+        && value["native_outcome"] == "not_applied"
+        && value["dispatch_attempted"] == false
+        && exact_gui_object(&value["error"], &["code", "message"])
+        && value["error"]["code"] == "multi_add_mai_tai_refused"
+        && let Some(message) = value["error"]["message"].as_str()
+        && !message.is_empty()
+        && message.encode_utf16().count() <= 512
+    {
+        return (
+            Outcome::NotApplied,
+            value.clone(),
+            Some(OperationError::new("multi_add_mai_tai_refused", message)),
+        );
+    }
+    let instance = &value["instance"];
+    if bound
+        && clean
+        && exact_gui_object(
+            value,
+            &[
+                "ok",
+                "outcome",
+                "native_outcome",
+                "operation",
+                "instance",
+                "dispatch_attempted",
+                "instrument",
+                "graph_attachment_verified",
+                "undo_verified",
+            ],
+        )
+        && value["ok"] == true
+        && value["outcome"] == "applied_unverified"
+        && value["native_outcome"] == "applied_unverified"
+        && value["operation"] == "multi_add_mai_tai"
+        && value["instrument"] == "Mai Tai"
+        && value["dispatch_attempted"] == true
+        && value["graph_attachment_verified"] == false
+        && value["undo_verified"] == false
+        && exact_gui_object(
+            instance,
+            &["object_uid", "class_uid", "native_class", "object_id"],
+        )
+        && instance["object_uid"] == change.expected_instance
+        && instance["class_uid"] == "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
+        && instance["native_class"] == "AudioSynth"
+        && instance["object_id"]
+            .as_str()
+            .is_some_and(|id| !id.is_empty() && id.encode_utf16().count() <= 512)
+    {
+        return (Outcome::AppliedUnverified, value.clone(), None);
+    }
+    let message = "The native Mai Tai insertion could not be confirmed. Read the current Multi Instrument before making another edit.";
+    let dispatch_attempted =
+        (bound && clean && value["dispatch_attempted"] == true).then_some(true);
+    (
+        Outcome::Unknown,
+        json!({"ok":false,"outcome":"unknown","native_outcome":"unknown","dispatch_attempted":dispatch_attempted,
+            "error":{"code":"multi_add_mai_tai_unknown","message":message}}),
+        Some(OperationError::new("multi_add_mai_tai_unknown", message)),
+    )
+}
+
 fn exact_gui_object(value: &Value, fields: &[&str]) -> bool {
     value.as_object().is_some_and(|object| {
         object.len() == fields.len() && fields.iter().all(|field| object.contains_key(*field))
     })
+}
+
+fn valid_empty_splitter_remove_receipt(
+    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+    context: &HostContext,
+    response: &WireResponse,
+) -> bool {
+    if response.session != context.session
+        || response.document != context.document
+        || response.error.is_some()
+        || response.code.is_some()
+    {
+        return false;
+    }
+    let result = &response.result;
+    if result["ok"] == false {
+        return exact_gui_object(result, &["ok", "native_outcome", "errors"])
+            && matches!(
+                result["native_outcome"].as_str(),
+                Some("not_applied" | "unknown")
+            )
+            && result["errors"].as_array().is_some_and(|errors| {
+                matches!(errors.as_slice(), [error] if exact_gui_object(error, &["code", "message"])
+                && matches!(error["code"].as_str(), Some(
+                    "insert_splitter_remove_empty_nested_refused" |
+                    "insert_splitter_remove_empty_nested_failed" |
+                    "insert_splitter_remove_empty_nested_context_changed"
+                ))
+                && error["message"].as_str().is_some_and(|s| {
+                    !s.is_empty() && s.encode_utf16().count() <= 512
+                }))
+            });
+    }
+    let identifiers = [
+        ("expected_instance", &args.expected_instance),
+        ("expected_graph", &args.expected_graph),
+        ("splitter_node", &args.splitter_node),
+        ("merger_node", &args.merger_node),
+        ("predecessor_slot_node", &args.predecessor_slot_node),
+        ("successor_merger_node", &args.successor_merger_node),
+    ];
+    let instance = &result["instance"];
+    exact_gui_object(
+        result,
+        &[
+            "ok",
+            "native_outcome",
+            "outcome",
+            "operation",
+            "verified",
+            "instance",
+            "expected_instance",
+            "expected_graph",
+            "splitter_node",
+            "merger_node",
+            "predecessor_slot_node",
+            "successor_merger_node",
+        ],
+    ) && result["ok"] == true
+        && result["outcome"] == "applied_unverified"
+        && result["native_outcome"] == "applied_unverified"
+        && result["operation"] == "insert_splitter_remove_empty_nested"
+        && result["verified"] == false
+        && identifiers
+            .iter()
+            .all(|&(key, id)| result[key] == id.as_str())
+        && exact_gui_object(
+            instance,
+            &["object_id", "native_class", "class_uid", "object_uid"],
+        )
+        && instance["native_class"] == "AudioEffect"
+        && instance["class_uid"] == "E4D7D911-0608-4B46-ABA3-2E345399A5AC"
+        && instance["object_uid"] == args.expected_instance.as_str()
+        && instance["object_id"] == "Mixtool"
+}
+
+fn empty_splitter_remove_result(
+    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+    context: &HostContext,
+    response: &WireResponse,
+) -> (Outcome, Value, Option<OperationError>) {
+    let result = &response.result;
+    if !response.ok
+        && result.is_null()
+        && response.session == context.session
+        && matches!(
+            response.code.as_deref(),
+            Some(
+                "document_changed"
+                    | "missing_precondition"
+                    | "context_required"
+                    | "protocol_mismatch"
+            )
+        )
+        && response
+            .error
+            .as_ref()
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.is_empty() && s.encode_utf16().count() <= 512)
+    {
+        return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
+    }
+    if response.ok && valid_empty_splitter_remove_receipt(args, context, response) {
+        if result["ok"] == true {
+            return (Outcome::AppliedUnverified, result.clone(), None);
+        }
+        if result["native_outcome"] == "not_applied" {
+            return (
+                Outcome::NotApplied,
+                result.clone(),
+                Some(OperationError::new(
+                    "native_rejected",
+                    "The exact empty nested Splitter was refused before removal",
+                )),
+            );
+        }
+    }
+    let message = "Read the exact insert graph before making another edit";
+    (
+        Outcome::Unknown,
+        json!({"ok":false,"native_outcome":"unknown","errors":[{
+            "code":"empty_splitter_remove_unconfirmed","message":message
+        }]}),
+        Some(OperationError::new("outcome_unknown", message)),
+    )
 }
 
 fn gui_number(value: &Value) -> Option<f64> {
@@ -1621,6 +1882,132 @@ mod tests {
     }
 
     #[test]
+    fn empty_splitter_remove_requires_exact_anchors_and_a_bound_receipt() {
+        let tool = "insert_splitter_remove_empty_nested";
+        let fixture = json!({
+            "channel":"Scratch", "slot":0, "plugin":"Mixtool",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC",
+            "expected_graph":"10000000-1234-1234-1234-123456789ABC",
+            "splitter_node":"20000000-1234-1234-1234-123456789ABC",
+            "merger_node":"30000000-1234-1234-1234-123456789ABC",
+            "predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+            "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"
+        });
+        let operation = Operation::from_parts(tool, fixture.clone()).unwrap();
+        operation.validate().unwrap();
+        assert_eq!(
+            operation.wire(),
+            ("insertSplitterRemoveEmptyNested".into(), fixture.clone())
+        );
+        for (key, value) in [
+            ("slot", json!(1)),
+            ("plugin", json!("Mixtool 2")),
+            ("predecessor_slot_node", fixture["splitter_node"].clone()),
+            (
+                "successor_merger_node",
+                json!("50000000-1234-1234-1234-123456789abc"),
+            ),
+        ] {
+            let mut wrong = fixture.clone();
+            wrong[key] = value;
+            assert!(
+                Operation::from_parts(tool, wrong)
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+        }
+        assert!(Operation::from_parts("insert_splitter_remove", fixture.clone()).is_err());
+        let Operation::InsertSplitterRemoveEmptyNested(args) = operation else {
+            unreachable!()
+        };
+        let context = HostContext {
+            session: "session".into(),
+            document: "session:1".into(),
+            open: true,
+            title: None,
+            file_url: None,
+            protocol: 2,
+        };
+        let mut success = fixture;
+        for key in ["slot", "channel", "plugin"] {
+            success.as_object_mut().unwrap().remove(key);
+        }
+        success["ok"] = json!(true);
+        success["verified"] = json!(false);
+        success["operation"] = json!(tool);
+        success["outcome"] = json!("applied_unverified");
+        success["native_outcome"] = json!("applied_unverified");
+        success["instance"] = json!({"object_uid":args.expected_instance,
+            "class_uid":"E4D7D911-0608-4B46-ABA3-2E345399A5AC","object_id":"Mixtool",
+            "native_class":"AudioEffect"});
+        let mut response = WireResponse {
+            protocol: 2,
+            id: "receipt".into(),
+            session: context.session.clone(),
+            document: context.document.clone(),
+            ok: true,
+            result: success.clone(),
+            error: None,
+            code: None,
+        };
+        assert!(valid_empty_splitter_remove_receipt(
+            &args, &context, &response
+        ));
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::AppliedUnverified);
+        assert_eq!(result, success);
+        assert!(error.is_none());
+
+        for (key, value) in [
+            ("verified", json!(true)),
+            ("successor_merger_node", success["merger_node"].clone()),
+            ("native_outcome", json!("applied_verified")),
+            ("instance", json!({"object_uid":args.expected_instance})),
+        ] {
+            response.result = success.clone();
+            response.result[key] = value;
+            assert!(!valid_empty_splitter_remove_receipt(
+                &args, &context, &response
+            ));
+        }
+        response.result = success;
+        response.document = "session:2".into();
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert_eq!(result["ok"], false);
+        assert!(result.get("splitter_node").is_none() && result.get("instance").is_none());
+        assert_eq!(error.unwrap().code, "outcome_unknown");
+        response.ok = false;
+        response.code = Some("document_changed".into());
+        response.error = Some(json!("The active document changed"));
+        let (outcome, result, _) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::Unknown);
+        assert!(result.get("splitter_node").is_none());
+        response.result = Value::Null;
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert!(result.is_null());
+        assert_eq!(error.unwrap().code, "document_changed");
+
+        response.document = context.document.clone();
+        response.ok = true;
+        response.code = None;
+        response.error = None;
+        response.result = json!({"ok":false,"native_outcome":"not_applied","errors":[{
+            "code":"insert_splitter_remove_empty_nested_failed","message":"Topology changed"
+        }]});
+        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        assert_eq!(outcome, Outcome::NotApplied);
+        assert_eq!(result, response.result);
+        assert_eq!(error.unwrap().code, "native_rejected");
+        response.result["errors"] = json!([]);
+        assert!(!valid_empty_splitter_remove_receipt(
+            &args, &context, &response
+        ));
+    }
+
+    #[test]
     fn impact_outputs_require_a_bound_instrument_and_ordered_complete_observation() {
         let uid = "12345678-1234-1234-1234-123456789ABC";
         let args = json!({"kind":"instrument","track":"Scratch Impact","plugin":"Impact",
@@ -1693,6 +2080,9 @@ mod tests {
             ("insertSlotMove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","source_node":"20000000-1234-1234-1234-123456789ABC",
                 "after_node":"30000000-1234-1234-1234-123456789ABC","following_node":"40000000-1234-1234-1234-123456789ABC"})),
+            ("pluginMultiAddMaiTai", json!({"track":"Selected music track","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_folder":"10000000-1234-1234-1234-123456789ABC","expected_graph":"20000000-1234-1234-1234-123456789ABC",
+                "expected_child_slot":"30000000-1234-1234-1234-123456789ABC","expected_child_instance":"40000000-1234-1234-1234-123456789ABC"})),
             ("insertSplitterAdd", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","after_node":"20000000-1234-1234-1234-123456789ABC",
                 "following_node":"30000000-1234-1234-1234-123456789ABC"})),
@@ -1700,6 +2090,10 @@ mod tests {
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
                 "merger_node":"30000000-1234-1234-1234-123456789ABC","first_slot_node":"40000000-1234-1234-1234-123456789ABC",
                 "second_slot_node":"50000000-1234-1234-1234-123456789ABC"})),
+            ("insertSplitterRemoveEmptyNested", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
+                "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
             ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
@@ -1802,6 +2196,80 @@ mod tests {
                 .collect::<std::collections::BTreeSet<_>>(),
             registered
         );
+    }
+
+    #[test]
+    fn stock_mai_tai_serialized_receipt_distinguishes_refusal_from_uncertain_dispatch() {
+        let Operation::PluginMultiAddMaiTai(change) = mutating_operations()
+            .into_iter()
+            .find(|operation| matches!(operation, Operation::PluginMultiAddMaiTai(_)))
+            .unwrap()
+        else {
+            unreachable!()
+        };
+        let context = HostContext {
+            session: "bridge-session".into(),
+            document: "bridge-session:1".into(),
+            open: true,
+            title: None,
+            file_url: None,
+            protocol: 2,
+        };
+        let acknowledged = json!({
+            "ok": true, "operation": "multi_add_mai_tai", "outcome": "applied_unverified",
+            "native_outcome": "applied_unverified","dispatch_attempted": true,
+            "instrument": "Mai Tai", "graph_attachment_verified": false, "undo_verified": false,
+            "instance": {
+                "object_uid":change.expected_instance,"class_uid":"B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+                "native_class":"AudioSynth","object_id":"Multi"
+            },
+        });
+        let refused = json!({
+            "ok":false, "outcome":"not_applied", "native_outcome":"not_applied", "dispatch_attempted":false,
+            "error":{"code":"multi_add_mai_tai_refused","message":"the expected native plugin instance is unavailable"}
+        });
+        let receipt = |result, session: &str, document: &str| {
+            serde_json::to_value(multi_add_mai_tai_receipt(
+                &change,
+                &context,
+                WireResponse {
+                    protocol: 2,
+                    id: "wire-id".into(),
+                    session: session.into(),
+                    document: document.into(),
+                    ok: true,
+                    result,
+                    error: None,
+                    code: None,
+                },
+                "owner-id".into(),
+                Instant::now(),
+            ))
+            .unwrap()
+        };
+        let ack = receipt(acknowledged.clone(), &context.session, &context.document);
+        assert_eq!(ack["request_id"], "owner-id");
+        assert_eq!(ack["outcome"], "applied_unverified");
+        assert!(ack.get("error").is_none());
+        let rejected = receipt(refused.clone(), &context.session, &context.document);
+        assert_eq!(rejected["outcome"], "not_applied");
+        assert_eq!(rejected["error"]["code"], "multi_add_mai_tai_refused");
+        assert_eq!(rejected["result"]["dispatch_attempted"], false);
+        let mut contradictory = refused.clone();
+        contradictory["dispatch_attempted"] = json!(true);
+        let mut malformed = acknowledged.clone();
+        malformed["graph_attachment_verified"] = json!(true);
+        for reply in [
+            receipt(contradictory, &context.session, &context.document),
+            receipt(malformed, &context.session, &context.document),
+            receipt(acknowledged, &context.session, "bridge-session:2"),
+            receipt(refused, "unbound-session", &context.document),
+            receipt(Value::Null, &context.session, &context.document),
+        ] {
+            assert_eq!(reply["outcome"], "outcome_unknown");
+            assert_eq!(reply["error"]["code"], "multi_add_mai_tai_unknown");
+            assert!(reply["result"].get("instance").is_none());
+        }
     }
 
     #[test]

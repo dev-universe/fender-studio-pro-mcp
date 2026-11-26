@@ -560,7 +560,7 @@ fn meter_reset_requires_audio_effect_and_direct_dsp_before_lookup() {
         }
         .into();
         context.instance.native_class = "Controller".into();
-        let (value, lease) = execute(&context, &provider, action);
+        let (value, lease) = execute(&context, &provider, action, None);
         assert_eq!(value["outcome"], "not_applied");
         assert!(lease.is_none());
         context.instance.native_class = "AudioEffect".into();
@@ -568,7 +568,7 @@ fn meter_reset_requires_audio_effect_and_direct_dsp_before_lookup() {
             unreachable!()
         };
         let provider = Provider::Controller(controller);
-        let (value, lease) = execute(&context, &provider, action);
+        let (value, lease) = execute(&context, &provider, action, None);
         assert_eq!(value["error"]["code"], "unsupported_source");
         assert!(lease.is_none());
         assert_eq!(fixture.lookup.find_calls.get(), 0);
@@ -965,7 +965,7 @@ fn unregistered_classes_and_non_dsp_providers_never_find_a_button() {
     let mut context = host.context();
     let fixture = Fixture::new();
     let provider = fixture.provider();
-    let (value, lease) = execute(&context, &provider, Action::SwapFilterFrequencies);
+    let (value, lease) = execute(&context, &provider, Action::SwapFilterFrequencies, None);
     assert_eq!(value["error"]["code"], "unregistered_action");
     assert_eq!(value["outcome"], "not_applied");
     assert_eq!(value["upper_dispatched"], false);
@@ -976,7 +976,7 @@ fn unregistered_classes_and_non_dsp_providers_never_find_a_button() {
     };
     let provider = Provider::Controller(controller);
     context.instance.class_uid = "831A0046-BD71-45BF-A419-6FC90D6E9F2F".into();
-    let (value, lease) = execute(&context, &provider, Action::SwapFilterFrequencies);
+    let (value, lease) = execute(&context, &provider, Action::SwapFilterFrequencies, None);
     assert_eq!(value["error"]["code"], "unsupported_source");
     assert_eq!(value["outcome"], "not_applied");
     assert_eq!(value["upper_dispatched"], false);
@@ -1272,4 +1272,39 @@ fn scope_retrigger_is_registered_only_for_the_exact_scope_and_canonical_button()
         drop(lease);
         drop(provider);
     }
+}
+
+#[test]
+fn chorder_clear_requires_an_exact_guard_at_the_native_boundary() {
+    let guard = ClearGuard {
+        expected_input_pitch: 61,
+        expected_model_sha256: "a".repeat(64),
+    };
+    assert!(validate_clear_intent(Action::ClearChorderSelected, Some(&guard)).is_ok());
+    assert!(validate_clear_intent(Action::ClearChorderSelected, None).is_err());
+    assert!(validate_clear_intent(Action::RetriggerScope, Some(&guard)).is_err());
+    for invalid in [
+        ClearGuard {
+            expected_input_pitch: 128,
+            expected_model_sha256: "a".repeat(64),
+        },
+        ClearGuard {
+            expected_input_pitch: 61,
+            expected_model_sha256: "A".repeat(64),
+        },
+        ClearGuard {
+            expected_input_pitch: 61,
+            expected_model_sha256: "a".repeat(63),
+        },
+    ] {
+        assert!(validate_clear_intent(Action::ClearChorderSelected, Some(&invalid)).is_err());
+    }
+    let spec = registered(
+        "D2D9B002-12FC-4F1D-AFDA-70336D1DC108",
+        Action::ClearChorderSelected,
+    )
+    .unwrap();
+    assert_eq!(spec.parameter, c"chorder.clear");
+    assert_eq!(spec.expected_tag, Some(9));
+    assert!(registered("Chorder", Action::ClearChorderSelected).is_err());
 }

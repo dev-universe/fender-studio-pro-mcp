@@ -1,6 +1,10 @@
 use super::*;
 use std::ffi::CStr;
 
+#[path = "multi_child/add_mai_tai.rs"]
+mod add_mai_tai;
+pub(in crate::native_script::request) use add_mai_tai::dispatch as dispatch_add_mai_tai;
+
 const MULTI: &str = "B9D410AD-E47D-495E-8AEE-10D2B2987CC7";
 const INSTRUMENTS: &str = "8BECF8A0-B995-4376-BFDD-1BFCC373C5FD";
 const MAI_TAI: &str = "B625F134-4485-4A50-A3C8-C9CF0C5495E1";

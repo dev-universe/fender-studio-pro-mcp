@@ -376,13 +376,15 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return { name: identity.name, instanceName: label, device: dev, component: comp, element: null };
     }
 
-    instrumentOf(args) {
+    instrumentOf(args, requireUniqueTrack = false) {
         const wanted = String(args.track || args.channel || "");
         if (!wanted || !this.bridge) return { error: "instrument target requires a selected track" };
         const tracks = this.bridge.tracks({ events: false });
         if (!Array.isArray(tracks)) return { error: "track state is unavailable" };
         const selected = tracks.filter(t => t.selected && t.mediaType === "Music");
-        if (selected.length !== 1 || selected[0].name !== wanted) return { error: "select the unique target instrument track first" };
+        if (selected.length !== 1 || selected[0].name !== wanted
+            || (requireUniqueTrack && tracks.filter(t => t.mediaType === "Music" && t.name === wanted).length !== 1))
+            return { error: "select the unique target instrument track first" };
         const model = this.hostComponent && this.hostComponent.model;
         const root = model && model.root;
         const music = root && typeof root.find === "function" ? root.find("music") : null;
@@ -571,6 +573,48 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         if (!native) return { error: "parameter digests require the matching native extension" };
         if (!native.ok) return { error: native.error && native.error.message || "native parameter digest unavailable" };
         return Object.assign({}, native, { plugin: plug.name });
+    }
+
+    pluginMultiAddMaiTai(args, token) {
+        const fields = ["expected_instance", "expected_folder", "expected_graph",
+            "expected_child_slot", "expected_child_instance"];
+        const uid = /^[0-9A-F]{8}(-[0-9A-F]{4}){3}-[0-9A-F]{12}$/;
+        const fail = (outcome, message, dispatchAttempted) => ({
+            ok: false, outcome, native_outcome: outcome, dispatch_attempted: dispatchAttempted,
+            error: { code: outcome === "not_applied" ? "multi_add_mai_tai_refused" : "multi_add_mai_tai_unknown", message },
+        });
+        const refused = message => fail("not_applied", message, false);
+        const unknown = dispatchAttempted => fail("unknown", "The native Mai Tai insertion outcome could not be established", dispatchAttempted);
+        if (!args || typeof args.track !== "string" || !args.track.trim() || args.track.length > 512
+            || /[\u0000-\u001f\u007f-\u009f]/.test(args.track) || typeof token !== "string"
+            || Object.keys(args).some(name => name !== "track" && !fields.includes(name)))
+            return refused("The selected Music track and five distinct native UIDs are required");
+        const ids = fields.map(field => args[field]);
+        if (ids.some(id => typeof id !== "string" || !uid.test(id) || id === "00000000-0000-0000-0000-000000000000")
+            || ids.some((id, index) => ids.indexOf(id) !== index))
+            return refused("The selected Music track and five distinct native UIDs are required");
+        const plug = this.instrumentOf({ track: args.track }, true);
+        if (plug.error) return refused(plug.error);
+        const request = { operation: "multi_add_mai_tai", document_token: token, track: args.track };
+        fields.forEach(field => { request[field] = args[field]; });
+        const native = this.nativePluginRequest(plug.device, request);
+        if (native === null) return refused("The matching native extension is required");
+        if (native && Object.keys(native).length === 4 && native.ok === false && native.outcome === "not_applied"
+            && native.dispatch_attempted === false && native.error && native.error.code === "multi_add_mai_tai_refused"
+            && typeof native.error.message === "string" && native.error.message)
+            return refused(native.error.message.slice(0, 512));
+        if (!native || Object.keys(native).length !== 8 || native.ok !== true || native.operation !== request.operation || native.outcome !== "applied_unverified"
+            || native.dispatch_attempted !== true || native.instrument !== "Mai Tai" || native.error !== undefined
+            || native.graph_attachment_verified !== false || native.undo_verified !== false
+            || !native.instance || native.instance.object_uid !== args.expected_instance
+            || native.instance.class_uid !== "B9D410AD-E47D-495E-8AEE-10D2B2987CC7"
+            || native.instance.native_class !== "AudioSynth" || typeof native.instance.object_id !== "string"
+            || !native.instance.object_id || native.instance.object_id.length > 512)
+            return unknown(native && native.dispatch_attempted === true ? true : null);
+        const { object_uid, class_uid, native_class, object_id } = native.instance;
+        return { ok: true, outcome: "applied_unverified", native_outcome: "applied_unverified",
+            operation: request.operation, instance: { object_uid, class_uid, native_class, object_id },
+            dispatch_attempted: true, instrument: "Mai Tai", graph_attachment_verified: false, undo_verified: false };
     }
 
     pluginMultiChildParameters(args) {
@@ -924,18 +968,42 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
     }
 
     pluginAction(args) {
-        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action"];
+        const fields = ["channel", "slot", "kind", "track", "plugin", "expected_instance", "action", "chorder_guard"];
+        const invalid = message => ({ native_outcome: "not_applied", errors: [{ code: "invalid_action", message }] });
+        const clearChorder = args.action === "clear_chorder_selected";
         if (Object.keys(args).some(key => fields.indexOf(key) < 0)
             || typeof args.plugin !== "string" || !args.plugin.trim()
             || typeof args.expected_instance !== "string" || !args.expected_instance
-            || ["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].indexOf(args.action) < 0)
-            return { native_outcome: "not_applied", errors: [{ code: "invalid_action", message: "a fixed action, expected plugin and native instance are required" }] };
+            || (!clearChorder && !["swap_filter_frequencies", "reset_meter_hold", "reset_meter_loudness", "reset_minimum_reduction", "retrigger_scope"].includes(args.action)))
+            return invalid("a fixed action, expected plugin and native instance are required");
+        const request = { operation: "parameter_action", action: args.action, expected_instance: args.expected_instance };
+        if (clearChorder) {
+            const controls = new NativePluginControls(this);
+            const guard = args.chorder_guard;
+            if (args.plugin !== "Chorder" || args.kind !== "note_effect" || args.channel != null
+                || typeof args.track !== "string" || !args.track.trim() || args.track.length > 256
+                || /[\x00-\x1f\x7f-\x9f]/.test(args.track) || !controls.guiInteger(args.slot, 0, 15)
+                || !/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(args.expected_instance)
+                || args.expected_instance === "00000000-0000-0000-0000-000000000000"
+                || !controls.guiExact(guard, ["expected_input_pitch", "expected_model_sha256"])
+                || !controls.guiInteger(guard.expected_input_pitch, 0, 127)
+                || typeof guard.expected_model_sha256 !== "string" || !/^[0-9a-f]{64}$/.test(guard.expected_model_sha256))
+                return invalid("Chorder Clear requires a bound Note FX slot, an input pitch and the lowercase model SHA-256");
+            request.chorder_guard = guard;
+        } else if (Object.prototype.hasOwnProperty.call(args, "chorder_guard")) {
+            return invalid("the Chorder guard only applies to Clear Chorder Selected");
+        }
         const plug = this.pluginOf(args);
         if (plug.error) return plug;
-        const native = this.nativePluginRequest(plug.device, { operation: "parameter_action",
-            action: args.action, expected_instance: args.expected_instance });
+        const native = this.nativePluginRequest(plug.device, request);
         if (!native) return { native_outcome: "not_applied", errors: [{ code: "native_required", message: "plugin actions require the matching native extension" }] };
-        return Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        const result = Object.assign({}, native, { plugin: plug.name, native_outcome: native.outcome });
+        if (clearChorder && native.ok === false && native.outcome === "not_applied"
+            && native.upper_dispatched !== true && native.reset_dispatched !== true && native.error) {
+            result.errors = [native.error];
+            delete result.error;
+        }
+        return result;
     }
 
     pedalboardSlotSwap(args) {
@@ -1022,6 +1090,10 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
         return this.insertGraphEdit("insert_splitter_remove", args);
     }
 
+    insertSplitterRemoveEmptyNested(args) {
+        return this.insertGraphEdit("insert_splitter_remove_empty_nested", args);
+    }
+
     insertGraphEdit(operation, args) {
         const fail = (outcome, code, message) => ({
             ok: false, native_outcome: outcome, errors: [{ code, message }]
@@ -1038,6 +1110,8 @@ class BridgeComponent extends PreSonus.ControlSurfaceComponent {
             && !/[\x00-\x1f\x7f-\x9f]/.test(value);
         if (!controls.guiExact(args, fields) || !validName(args.channel) || !validName(args.plugin)
             || !controls.guiInteger(args.slot, 0, 15)) return refuse("Supply an exact insert effect and graph nodes");
+        if (operation === "insert_splitter_remove_empty_nested" && (args.slot !== 0 || args.plugin !== "Mixtool"))
+            return refuse("Empty nested Splitter removal requires Mixtool in insert slot 0");
         const request = { operation };
         for (const key of requestFields) request[key] = args[key];
         if (!controls.insertGraphEditRequest(request)) return refuse("Supply distinct graph nodes with canonical UUIDs");
