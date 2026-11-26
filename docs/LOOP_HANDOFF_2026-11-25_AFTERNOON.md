@@ -2889,3 +2889,31 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   독립 대조할 수 있는지 기존 Ableton SDK 경로로 확인하는
   단위다. 로컬 11·main 13·장비 의존 4, 열린 PR 78개.
   전체 2~5일과 장비 대기. 지정 종료 시각 없음.
+
+## 11월 26일 20시 35분 스튜디오의 Serum 딜레이 확인
+
+- #318은 정확한 `6eb4b36`에 대한 필수 검사 두 개 후
+  `9fcb449`로 병합됐다. 575.5초. #320도 `e1fc057`의
+  두 검사 뒤 `91793e4`로 병합됐다. 639.1초.
+  #321·#322·#323·#324가 다음 검사 순서다.
+  [#318](https://github.com/dev-universe/fender-studio-pro-mcp/pull/318) ·
+  [#320](https://github.com/dev-universe/fender-studio-pro-mcp/pull/320)
+- R548은 서명 Serum 2·FX 2.1.5의 격리 SDK 30회와
+  동일 반복 6회로 90·120·147 BPM의 딜레이를 확인했다.
+  SDK 기준 고정 11,950샘플, 8분음표 15,998·11,998·9,793.
+  [#322](https://github.com/dev-universe/fender-studio-pro-mcp/pull/322)
+- R549의 실제 8.1.1 FX와 R550의 실제 악기는 모두 90·147
+  BPM에서 8분음표 15,998·9,795샘플, 고정 11,950·11,951
+  샘플이었다. 각 SDK 기준과 2샘플 이내다. R549의 첫 비교기는
+  receipt에 전체 인스턴스 객체가 있다고 잘못 가정했다.
+  새 owner는 클래스·인스턴스 UUID와 해시를 대조하고 dry를
+  재적용하지 않았다. R549 25+95요청·15.923초, 앱 111.063초.
+  R550 108요청·13.732초, 앱 48.258초. 모두 저장 없음,
+  각 18+10 및 스캔 경로 원복.
+  [#323](https://github.com/dev-universe/fender-studio-pro-mcp/pull/323) ·
+  [#324](https://github.com/dev-universe/fender-studio-pro-mcp/pull/324)
+- R551은 소유 시험 곡에 한 번 저장하고 별도 읽기 전용
+  앱에서 열어 실제 딜레이의 상태와 출력을 확인한다.
+  앱·owner 종료. 20시 30분에 Volt/Keystation 미감지.
+  로컬 11·main 13·장비 의존 4. 전체 2~5일과 장비 대기.
+  지정 종료 시각 없음.
