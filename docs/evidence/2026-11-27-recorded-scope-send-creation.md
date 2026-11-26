@@ -71,3 +71,26 @@ restored all 41 tracked Scope and Tone DSP rows. R581B completed 130 requests
 in 59.331 seconds and the host exited successfully after 204.550 seconds.
 The original scratch digest, 18 managed files and 10 app-profile files were
 verified after closing without saving.
+
+## Native port ownership of the saved assignment
+
+R584 traced the stock Send slot through its owned processor to the
+AudioOutput and its typed connection call. The Scope input callback takes
+that output. Both endpoint classes have count and indexed accessors for
+their own connection lists. The comparison used 20 Ghidra queries, nine
+loader rebases and eleven Craft Anything byte ranges from the same arm64
+host image.
+
+R585B used a private read-only candidate and reopened a copy of the R580
+archive. Two observations matched the exact Send output to its slot and
+processor, and the Scope input to its effect. The source was kind 0 and
+owner-local index 0. The destination was kind 1 and owner-local index 1.
+The lock provider field was empty on both observed ports. This establishes
+the endpoint layout for this saved assignment. Direct reciprocal list
+observation still requires an established synchronization and lifetime
+contract for the two lists.
+
+The trial made eleven requests in 1.768 seconds. The two native IDs,
+31 Scope DSP rows and saved digest matched. The host exited successfully
+after 37.704 seconds, with the 18 managed files and app profile verified
+after restoration.
