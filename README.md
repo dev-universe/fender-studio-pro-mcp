@@ -239,6 +239,11 @@ pressure 128 and pitch bend 129 on input bus 0, channel 0 of the arm64
 2.1.5 VST3. Resolve the returned `studio_pro_name` with `plugin_parameters`
 on the actual instance. [MIDI mapping verification](docs/evidence/2026-11-26-serum2-midi-reference.md)
 
+For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
+`vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
+instance. Use `plugin_parameter_set` with `normalized` and `readback: true`.
+[Macro readback and restoration](docs/evidence/2026-11-26-serum2-macro-readback.md)
+
 To check a Music track routed to Serum 2 FX, call `plugin_inspect` with
 `kind: "instrument"`, the exact `track`, `source: "dsp"`, and the current
 `expected_document`. Inspect the candidate FX insert by its exact channel
@@ -252,6 +257,13 @@ To check the destination in a saved song, call `song_read` on the
 resolved destination identifies the original Serum 2 instrument or the
 specific Serum 2 FX insert, even with multiple FX copies in the song.
 [Save and reopen verification](docs/evidence/2026-11-26-serum2-fx-midi-persistence.md)
+
+Use `serum2_preset_inspect` with the absolute local `path` to identify a
+Serum 2.1.5 `.SerumPreset` or processor-only `.vstpreset`. The tool reports
+the instrument or FX variant, file SHA-256, and the matching load method.
+`serum_editor` means use **Menu → Load Preset**. This reads the container
+and state header. The effect of loading the preset still needs host readback.
+[Preset file verification](docs/evidence/2026-11-26-serum2-preset-inspection.md)
 
 Use `serum2_preset_apply` to apply a processor-only `.vstpreset` file for
 Serum 2 or Serum 2 FX 2.1.5. Supply the absolute local `path`, file
