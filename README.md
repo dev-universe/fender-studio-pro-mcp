@@ -232,6 +232,14 @@ on the first channel. Resolve the returned `studio_pro_name` with
 `plugin_parameters` on the actual instance.
 [MIDI channel verification](docs/evidence/2026-11-26-serum2-midi-channels.md)
 
+Set `event_input: 2` and `channel: 1`, or `event_input: 16` and
+`channel: 15`, to look up the separately verified Studio Pro 8.1.1
+route for CC 1, CC 74 or pitch bend 129. The corresponding MIDI wire
+channels are 2 and 16. Both routes use the global rows for
+Mod Wheel and Pitch Bend. CC 74 uses the selected port's own row.
+This offline lookup reports the reference and leaves the live routing
+to Studio Pro.
+
 For Macro 1–8 in Serum 2 and Serum 2 FX 2.1.5, resolve
 `vstp7000000` through `vstp7007000` in steps of 1000 on the exact DSP
 instance. Use `plugin_parameter_set` with `normalized` and `readback: true`.
