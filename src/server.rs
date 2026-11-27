@@ -257,6 +257,12 @@ impl McpServer {
                 "Read a native DSP parameter page for a Mai Tai child in Multi Instrument slot Inst01 or Inst02. On the exclusively selected Music track, call plugin_inspect with include_nodes=true and node_scope=plugin_controller to find the current parent, child slot and Device UUIDs. Supply all three UUIDs and expected_document for every page. Offset defaults to 0 and limit to 64. Follow next_offset until null. Pages are sequential observations.",
                 false,
             ),
+            named::<PluginMultiChildFilterEnvSet>(
+                "plugin_multi_child_filter_env_set",
+                "pluginMultiChildFilterEnvSet",
+                "Set modulationTable.cell1.amount on one exact Mai Tai child in Multi Instrument slot Inst01 or Inst02. Requires a selected Music track, stopped playback and recording, the current document, and the live parent, slot and Device UUIDs. Pass two distinct Float64 hex values in 0..10000. Read expected_float_bits from the child's native_value.data.bits_hex. The setter compares it before dispatch. After applied_unverified, read the child again.",
+                true,
+            ),
             named::<PluginParams>(
                 "plugin_inspect",
                 "pluginInspect",
@@ -323,10 +329,34 @@ impl McpServer {
                 "Capture, restore or release the whole Inserts folder of one exact mixer channel with the matching native extension. Every action requires expected_document. Capture issues a private opaque token; restore and release require that same token. Optional expected_folder pins its native folder UUID. Set include_routing=true on capture to read the host-authored Splitter, merger and slot links when present. A successful load remains applied_unverified and requires independent graph and per-part parameter/model readback. No caller file path, URL, bytes or plugin slot is accepted.",
                 true,
             ),
+            named::<operation::ScopeSidechainAssignmentGet>(
+                "scope_sidechain_assignment_get",
+                "scopeSidechainAssignmentGet",
+                "Observe whether the sole Send on one exact audio source channel is assigned to the exact stock Scope at insert slot 0 of another audio channel. Supply both unique channel names, the Scope instance UUID from plugin_inspect, and expected_document from host_status. Stop playback and recording first. Reports the authored assignment only.",
+                false,
+            ),
+            named::<operation::ScopeSidechainAssignmentRemove>(
+                "scope_sidechain_assignment_remove",
+                "scopeSidechainAssignmentRemove",
+                "Remove the sole Send on the exact source audio channel when it is assigned to the bound stock Scope at receiver insert slot 0. Use scope_sidechain_assignment_get to obtain send_node and pass it as expected_send. Supply the current document token and exact Scope instance with transport stopped. The host records one Undo. Check the mixer Sends independently after a receipt or unknown outcome.",
+                true,
+            ),
+            named::<operation::ScopeSidechainAssignmentGet>(
+                "scope_sidechain_assignment_create",
+                "scopeSidechainAssignmentCreate",
+                "Create one 0 dB Send to the bound stock Scope at receiver insert slot 0. Use two distinct exact audio channels, an empty source Sends rack, the current document token and exact Scope instance. Stop transport and enable the Scope Sidechain header first. Check the assigned Send independently. Studio Pro records one Undo for creation.",
+                true,
+            ),
             named::<InsertSlotMove>(
                 "insert_slot_move",
                 "insertSlotMove",
                 "Move one bound effect slot in the current Inserts graph with its Routing tab open. For a move after an effect, supply the destination slot as after_node and its current successor as following_node. For an empty two-way Splitter branch, supply the Splitter as after_node, its merger as following_node, and the branch index (0 or 1). Read the new graph and parameters independently.",
+                true,
+            ),
+            named::<InsertSlotRemove>(
+                "insert_slot_remove",
+                "insertSlotRemove",
+                "Remove one bound effect between two adjacent effect slots in the same insert graph. Target the surviving predecessor with channel, slot, plugin and expected_instance. Supply the graph UUID, all three slot-node UUIDs in order, the removed effect instance UUID, and the current expected_document. Stop playback and recording. Independently verify the removed slot and remaining graph after dispatch.",
                 true,
             ),
             named::<InsertSplitterAdd>(
@@ -338,13 +368,19 @@ impl McpServer {
             named::<InsertSplitterRemove>(
                 "insert_splitter_remove",
                 "insertSplitterRemove",
-                "Remove one nested two-way Splitter with a single effect on each branch and a shared merger. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the two slot-node UUIDs in branch order. Inspect and capture the graph first, then independently verify the affected links and effects.",
+                "Remove one nested two-way Splitter with a shared merger. For each branch with two effects, supply its second slot as first_branch_tail_node or second_branch_tail_node. For branches of lengths one and three, supply branch_continuations as ordered node IDs after each head, with two IDs in one list and the other list empty. Supply the mixer channel, one branch effect and instance UUID, the graph UUID, the Splitter and merger UUIDs, and the branch head slot-node UUIDs in order. Inspect the current graph first and independently verify the new links and effects.",
                 true,
             ),
             named::<InsertSplitterRemoveEmptyNested>(
                 "insert_splitter_remove_empty_nested",
                 "insertSplitterRemoveEmptyNested",
                 "Remove the bound third Splitter whose two empty lanes lead to its paired merger in the verified nested Mixtool shape. Stop playback and recording. Supply the mixer channel, slot 0 Mixtool, its instance UUID, graph UUID, the two nodes to remove, and the predecessor slot and successor merger UUIDs. After acceptance or an unknown outcome, inspect the graph independently before further editing.",
+                true,
+            ),
+            named::<InsertSplitterRemoveOneLaneNested>(
+                "insert_splitter_remove_one_lane_nested",
+                "insertSplitterRemoveOneLaneNested",
+                "Remove the third Splitter in the verified nested Mixtool graph when one lane is empty and the other contains one Mixtool. The two effects then connect in series. Stop playback and recording, open the rack's Routing tab, and bind insert slot 0 Mixtool and each graph node, including occupied_slot_node. Read the exact graph independently after acceptance or an unknown outcome.",
                 true,
             ),
             named::<PluginPresets>(
@@ -394,6 +430,12 @@ impl McpServer {
                 "chorderChordsGet",
                 "Read a page of stored Chorder input chords from the exact Note FX instance. Requires the current document, instance, offset 0..127 and limit 1..16. Empty inputs are explicit. Compare model and capture digests across pages because each page is a fresh sequential observation. No GUI, imported XML, file path, mutation, audio or persistence claim is supplied.",
                 false,
+            ),
+            named::<ChorderAudition>(
+                "chorder_audition",
+                "chorderAudition",
+                "Prepare, play or inspect one short-lived permit for finite MIDI 60 audition on exact Chorder Note FX. Prepare requires track, slot and expected_instance with stopped transport and Learn off. Play and status require the permit and the same expected_document. Status reads the owner history. An unknown press is quarantined and never retried. Verification covers the local Chorder key lane.",
+                true,
             ),
             named::<ChorderLearningSet>(
                 "chorder_learning_set",
@@ -512,6 +554,7 @@ fn named<T: JsonSchema>(
                 | "chorderChordsGet"
                 | "pluginMultiChildParameters"
                 | "trackEventInput"
+                | "scopeSidechainAssignmentGet"
         );
     if document_required
         || matches!(
@@ -535,6 +578,18 @@ fn named<T: JsonSchema>(
             .as_array_mut()
             .unwrap()
             .push(json!("expected_document"));
+    }
+    if operation == "chorderAudition" {
+        let document_schema = schema["properties"]["expected_document"].clone();
+        if let Some(variants) = schema["oneOf"].as_array_mut() {
+            for variant in variants {
+                variant["properties"]["expected_document"] = document_schema.clone();
+                variant["required"]
+                    .as_array_mut()
+                    .unwrap()
+                    .push(json!("expected_document"));
+            }
+        }
     }
     if operation == "pluginInspect" {
         schema["allOf"] = json!([{
@@ -575,6 +630,7 @@ fn named<T: JsonSchema>(
             | "chorderChordsGet"
             | "pluginMultiChildParameters"
             | "trackEventInput"
+            | "scopeSidechainAssignmentGet"
     ) {
         tool = tool.with_annotations(ToolAnnotations::default().read_only(true));
     } else if operation == "externalPortMenu" {
@@ -785,9 +841,50 @@ impl ServerHandler for McpServer {
 
 #[cfg(test)]
 mod tests {
-    const EXPECTED_TOOL_COUNT: usize = 67;
+    const EXPECTED_TOOL_COUNT: usize = 74;
 
     use super::*;
+
+    #[test]
+    fn multi_child_filter_env_tool_schema_admits_only_the_closed_comparison() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "plugin_multi_child_filter_env_set")
+            .unwrap();
+        assert_eq!(spec.operation, Some("pluginMultiChildFilterEnvSet"));
+        let schema = &spec.tool.input_schema;
+        assert_eq!(schema["additionalProperties"], false);
+        assert_eq!(
+            schema["$defs"]["MultiChildSlot"]["enum"],
+            json!(["Inst01", "Inst02"])
+        );
+        assert_eq!(
+            schema["required"],
+            json!([
+                "track",
+                "expected_instance",
+                "child_slot",
+                "expected_child_slot",
+                "expected_child_instance",
+                "expected_float_bits",
+                "float_bits",
+                "expected_document"
+            ])
+        );
+        assert_eq!(
+            schema["properties"]["expected_float_bits"]["pattern"],
+            "^[0-9a-fA-F]{16}$"
+        );
+        let union = crate::operation::schema();
+        assert!(union["allOf"].as_array().unwrap().iter().any(|rule| {
+            rule["if"]["properties"]["operation"]["enum"]
+                == json!([
+                    "pluginMultiChildFilterEnvSet",
+                    "plugin_multi_child_filter_env_set"
+                ])
+                && rule["then"]["required"] == json!(["expected_document"])
+        }));
+    }
 
     #[test]
     fn track_event_input_exposes_a_document_scoped_read() {
@@ -1164,6 +1261,41 @@ mod tests {
     }
 
     #[test]
+    fn scope_sidechain_has_a_read_only_schema_with_a_required_document() {
+        let specs = McpServer::specs();
+        let tool = &specs
+            .iter()
+            .find(|spec| spec.tool.name == "scope_sidechain_assignment_get")
+            .unwrap()
+            .tool;
+        assert_eq!(
+            tool.input_schema["required"],
+            json!([
+                "source_channel",
+                "scope_channel",
+                "expected_instance",
+                "expected_document"
+            ])
+        );
+        assert_eq!(tool.input_schema["additionalProperties"], false);
+        assert_eq!(
+            tool.annotations.as_ref().and_then(|a| a.read_only_hint),
+            Some(true)
+        );
+        let arguments = json!({
+            "source_channel":"Source","scope_channel":"Receiver",
+            "expected_instance":"12345678-1234-1234-1234-123456789ABC"
+        });
+        let valid =
+            Operation::from_parts("scope_sidechain_assignment_get", arguments.clone()).unwrap();
+        assert!(valid.is_read_only() && valid.requires_explicit_document());
+        let mut invalid = arguments;
+        invalid["scope_channel"] = invalid["source_channel"].clone();
+        let parsed = Operation::from_parts("scope_sidechain_assignment_get", invalid).unwrap();
+        assert!(parsed.validate().is_err());
+    }
+
+    #[test]
     fn cv_structure_schema_keeps_tool_count_and_a_mutating_fixed_action() {
         let specs = McpServer::specs();
         assert_eq!(specs.len(), EXPECTED_TOOL_COUNT);
@@ -1436,6 +1568,37 @@ mod tests {
     }
 
     #[test]
+    fn chorder_audition_has_closed_document_bound_action_shapes() {
+        let spec = McpServer::specs()
+            .into_iter()
+            .find(|spec| spec.tool.name == "chorder_audition")
+            .unwrap();
+        assert_eq!(spec.operation, Some("chorderAudition"));
+        let schema = Value::Object((*spec.tool.input_schema).clone());
+        let variants = schema["oneOf"].as_array().unwrap();
+        assert_eq!(variants.len(), 3);
+        for variant in variants {
+            let properties = &variant["properties"];
+            let action = properties["action"]["const"].as_str().unwrap();
+            assert_eq!(variant["additionalProperties"], false);
+            assert!(properties.get("expected_document").is_some());
+            assert!(
+                variant["required"]
+                    .as_array()
+                    .unwrap()
+                    .contains(&json!("expected_document"))
+            );
+            for field in ["track", "slot", "expected_instance"] {
+                assert_eq!(properties.get(field).is_some(), action == "prepare");
+            }
+            assert_eq!(properties.get("permit").is_some(), action != "prepare");
+        }
+        assert!(Operation::from_parts("chorderAudition", json!({
+            "action":"status","permit":"e1973f51-0000-4000-8000-000000000001","track":"extra"
+        })).is_err());
+    }
+
+    #[test]
     fn chorder_chords_tool_requires_all_paging_fields_and_explicit_document() {
         let spec = McpServer::specs()
             .into_iter()
@@ -1489,8 +1652,12 @@ mod tests {
             "pedalboard_slot_swap",
             "insert_chain_state",
             "insert_slot_move",
+            "scope_sidechain_assignment_create",
+            "scope_sidechain_assignment_remove",
+            "insert_slot_remove",
             "insert_splitter_remove",
             "insert_splitter_remove_empty_nested",
+            "insert_splitter_remove_one_lane_nested",
             "insert_splitter_add",
             "plugin_multi_add_mai_tai",
             "panner_set",

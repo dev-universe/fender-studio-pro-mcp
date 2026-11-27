@@ -253,10 +253,36 @@ impl GraphOwnership {
         }
     }
 
+    pub(super) fn check_slot_remove_targets(
+        &self,
+        graph: &str,
+        [preceding, removed, following]: [&str; 3],
+        predecessor_effect: &str,
+        removed_effect: &str,
+    ) -> Result<(), String> {
+        let slot = |id: &str| {
+            self.value.children.iter().find_map(|child| match child {
+                GraphChild::Slot { node, device, .. } if node.object_uid.as_deref() == Some(id) => {
+                    device.object_uid.as_deref()
+                }
+                _ => None,
+            })
+        };
+        if self.value.graph.object_uid.as_deref() != Some(graph)
+            || slot(preceding) != Some(predecessor_effect)
+            || slot(removed) != Some(removed_effect)
+            || slot(following).is_none()
+        {
+            return Err("The exact predecessor, removed device or following slot changed".into());
+        }
+        Ok(())
+    }
+
     pub(super) fn check_splitter_remove_targets(
         &self,
         [graph, splitter, merger, first, second]: [&str; 5],
         effect: &str,
+        additional_nodes: &[&str],
     ) -> Result<(), String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) {
             return Err("insert graph UUID changed".into());
@@ -278,7 +304,14 @@ impl GraphOwnership {
                 "Expected Splitter, merger and two exact slot nodes in the same graph".into(),
             );
         };
-        if a.object_uid.as_deref() != Some(effect) && b.object_uid.as_deref() != Some(effect) {
+        let mut bound = [a.object_uid.as_deref(), b.object_uid.as_deref()].contains(&Some(effect));
+        for &id in additional_nodes {
+            let Some(GraphChild::Slot { device, .. }) = find(id) else {
+                return Err("An additional branch node is not a bound slot".into());
+            };
+            bound |= device.object_uid.as_deref() == Some(effect);
+        }
+        if !bound {
             return Err(
                 "The resolved effect does not belong to either bound Splitter branch".into(),
             );
@@ -286,10 +319,11 @@ impl GraphOwnership {
         Ok(())
     }
 
-    pub(super) fn check_empty_splitter_remove_targets(
+    pub(super) fn check_nested_splitter_remove_targets(
         &self,
         [graph, splitter, merger, predecessor, successor]: [&str; 5],
         effect: &str,
+        occupied: Option<&str>,
     ) -> Result<[(&str, GraphChildKind); 8], String> {
         if self.value.graph.object_uid.as_deref() != Some(graph) || self.value.children.len() != 8 {
             return Err("The expected eight-node insert graph changed".into());
@@ -314,8 +348,11 @@ impl GraphOwnership {
             || !matches!(matches(successor), Some(GraphChild::Merger { .. }))
             || !matches!(matches(predecessor), Some(GraphChild::Slot { device, .. })
                 if device.object_uid.as_deref() == Some(effect) && device.id == "Mixtool")
+            || occupied.is_some_and(|slot| {
+                slot == predecessor || !matches!(matches(slot), Some(GraphChild::Slot { .. }))
+            })
         {
-            return Err("The bound empty Splitter, mergers or preceding Mixtool changed".into());
+            return Err("The bound Splitter, mergers or Mixtool slots changed".into());
         }
 
         let mut devices = self.value.children.iter().filter_map(|child| match child {
@@ -324,7 +361,7 @@ impl GraphOwnership {
         });
         let (Some(first), Some(second), None) = (devices.next(), devices.next(), devices.next())
         else {
-            return Err("The verified empty nested shape requires two Mixtool effects".into());
+            return Err("The verified nested shape requires two Mixtool effects".into());
         };
         if first.object_uid == second.object_uid
             || [first, second].iter().any(|device| {

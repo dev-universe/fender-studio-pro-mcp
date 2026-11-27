@@ -63,12 +63,18 @@ impl RuntimeHandle {
                     }
                 };
                 let mut local_catalog = None;
+                let mut audition = crate::chorder_audition::Ledger::default();
                 while let Ok(envelope) = receiver.recv() {
                     if envelope.reply.is_closed() {
                         continue;
                     }
-                    let result =
-                        execute(&mut bridge, &mut midi, &mut local_catalog, envelope.request);
+                    let result = execute(
+                        &mut bridge,
+                        &mut midi,
+                        &mut local_catalog,
+                        &mut audition,
+                        envelope.request,
+                    );
                     let _ = envelope.reply.send(result);
                 }
             })
@@ -125,10 +131,20 @@ fn execute(
     bridge: &mut Bridge,
     midi: &mut MidiWakeup,
     local_catalog: &mut Option<crate::plugin_catalog::LocalCatalog>,
+    audition: &mut crate::chorder_audition::Ledger,
     request: Request,
 ) -> Result<Receipt, OperationError> {
     let started = Instant::now();
     let request_id = Uuid::new_v4().to_string();
+    if let Operation::ChorderAudition(action) = request.operation {
+        return Ok(audition.handle(
+            action,
+            request.expected_document.as_deref().unwrap_or_default(),
+            request_id,
+            started,
+            &mut crate::chorder_audition::BridgeLane { bridge, midi },
+        ));
+    }
     let mut operation = request.operation;
     let read_only = operation.is_read_only();
     let context_response = bridge.transact("context", &json!({}), None, None, midi);
@@ -273,8 +289,18 @@ fn execute(
             change, &context, response, request_id, started,
         ));
     }
-    if let Operation::InsertSplitterRemoveEmptyNested(args) = &operation {
-        let (outcome, result, error) = empty_splitter_remove_result(args, &context, &response);
+    let nested_splitter_tool = match &operation {
+        Operation::InsertSplitterRemoveEmptyNested(_) => {
+            Some("insert_splitter_remove_empty_nested")
+        }
+        Operation::InsertSplitterRemoveOneLaneNested(_) => {
+            Some("insert_splitter_remove_one_lane_nested")
+        }
+        _ => None,
+    };
+    if let Some(tool) = nested_splitter_tool {
+        let (outcome, result, error) =
+            nested_splitter_remove_result(tool, &args, &context, &response);
         return Ok(Receipt {
             request_id,
             outcome,
@@ -365,6 +391,7 @@ fn execute(
     }
     let parameter_readback_requested =
         matches!(&operation, Operation::SetPluginParam(change) if change.readback == Some(true));
+    let multi_child_filter_env = matches!(operation, Operation::PluginMultiChildFilterEnvSet(_));
     if response.document != context.document
         || (matches!(
             operation,
@@ -372,6 +399,7 @@ fn execute(
                 | Operation::ExternalStereoSendSet(_)
                 | Operation::Serum2EventInputSet(_)
         ) || parameter_readback_requested
+            || multi_child_filter_env
             || cv_port_structure::requested(&operation)
             || cv_preset_target_requested(&operation)
             || operation.inspects_impact_outputs()
@@ -385,8 +413,16 @@ fn execute(
     {
         let cv_apply_refused =
             operation.applies_cv_preset_settings() && cv_preset_apply::refused(&response);
+        let multi_child_refused = multi_child_filter_env
+            && if response.ok {
+                valid_filter_env_failure(&response.result)
+                    && response.result["native_outcome"] == "not_applied"
+            } else {
+                response.code.as_deref() == Some("document_changed")
+            };
         if operation.applies_cv_preset_settings()
             || parameter_readback_requested
+            || multi_child_filter_env
             || matches!(operation, Operation::Serum2EventInputSet(_))
         {
             response.result = Value::Null;
@@ -395,7 +431,7 @@ fn execute(
         }
         return Ok(Receipt {
             request_id,
-            outcome: if read_only || cv_apply_refused {
+            outcome: if read_only || cv_apply_refused || multi_child_refused {
                 Outcome::NotApplied
             } else {
                 Outcome::Unknown
@@ -501,6 +537,18 @@ fn execute(
     {
         response.result = normalize_stereo_send_set_failure(&response.result);
     }
+    if let Operation::PluginMultiChildFilterEnvSet(change) = &operation {
+        if !response.ok {
+            response.result = Value::Null;
+        } else if !valid_filter_env_ack(change, &response.result)
+            && !valid_filter_env_failure(&response.result)
+        {
+            response.result = json!({"ok": false, "native_outcome": "unknown", "errors": [{
+                "code": "invalid_multi_child_filter_env_receipt",
+                "message": "The Filter Env receipt did not establish the exact child amount change"
+            }]});
+        }
+    }
     if matches!(operation, Operation::Serum2EventInputSet(_))
         && response.ok
         && !matches!(
@@ -527,6 +575,16 @@ fn execute(
             || (matches!(operation, Operation::ImpactOutputSet(_))
                 && response.ok
                 && impact_output_refused(&response.result))
+            || (matches!(operation, Operation::ScopeSidechainAssignmentRemove(_))
+                && response.ok
+                && response.result["ok"] == false
+                && response.result["native_outcome"] == "not_applied"
+                && response.result["error"]["code"] == "scope_sidechain_assignment_remove_failed")
+            || (matches!(operation, Operation::ScopeSidechainAssignmentCreate(_))
+                && response.ok
+                && response.result["ok"] == false
+                && response.result["native_outcome"] == "not_applied"
+                && response.result["error"]["code"] == "scope_sidechain_assignment_create_failed")
             || [
                 "session_changed",
                 "document_changed",
@@ -741,8 +799,9 @@ fn exact_gui_object(value: &Value, fields: &[&str]) -> bool {
     })
 }
 
-fn valid_empty_splitter_remove_receipt(
-    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+fn valid_nested_splitter_remove_receipt(
+    tool: &str,
+    args: &Value,
     context: &HostContext,
     response: &WireResponse,
 ) -> bool {
@@ -762,61 +821,54 @@ fn valid_empty_splitter_remove_receipt(
             )
             && result["errors"].as_array().is_some_and(|errors| {
                 matches!(errors.as_slice(), [error] if exact_gui_object(error, &["code", "message"])
-                && matches!(error["code"].as_str(), Some(
-                    "insert_splitter_remove_empty_nested_refused" |
-                    "insert_splitter_remove_empty_nested_failed" |
-                    "insert_splitter_remove_empty_nested_context_changed"
-                ))
+                && matches!(error["code"].as_str().and_then(|code| code.strip_prefix(tool)),
+                    Some("_refused" | "_failed" | "_context_changed"))
                 && error["message"].as_str().is_some_and(|s| {
                     !s.is_empty() && s.encode_utf16().count() <= 512
                 }))
             });
     }
-    let identifiers = [
-        ("expected_instance", &args.expected_instance),
-        ("expected_graph", &args.expected_graph),
-        ("splitter_node", &args.splitter_node),
-        ("merger_node", &args.merger_node),
-        ("predecessor_slot_node", &args.predecessor_slot_node),
-        ("successor_merger_node", &args.successor_merger_node),
+    let mut identifiers = vec![
+        "expected_instance",
+        "expected_graph",
+        "splitter_node",
+        "merger_node",
+        "predecessor_slot_node",
+        "successor_merger_node",
     ];
+    if tool == "insert_splitter_remove_one_lane_nested" {
+        identifiers.push("occupied_slot_node");
+    }
+    let mut fields = vec![
+        "ok",
+        "native_outcome",
+        "outcome",
+        "operation",
+        "verified",
+        "instance",
+    ];
+    fields.extend_from_slice(&identifiers);
     let instance = &result["instance"];
-    exact_gui_object(
-        result,
-        &[
-            "ok",
-            "native_outcome",
-            "outcome",
-            "operation",
-            "verified",
-            "instance",
-            "expected_instance",
-            "expected_graph",
-            "splitter_node",
-            "merger_node",
-            "predecessor_slot_node",
-            "successor_merger_node",
-        ],
-    ) && result["ok"] == true
+    exact_gui_object(result, &fields)
+        && result["ok"] == true
         && result["outcome"] == "applied_unverified"
         && result["native_outcome"] == "applied_unverified"
-        && result["operation"] == "insert_splitter_remove_empty_nested"
+        && result["operation"] == tool
         && result["verified"] == false
-        && identifiers
-            .iter()
-            .all(|&(key, id)| result[key] == id.as_str())
+        && identifiers.iter().all(|&key| result[key] == args[key])
         && exact_gui_object(
             instance,
             &["object_id", "native_class", "class_uid", "object_uid"],
         )
         && instance["native_class"] == "AudioEffect"
         && instance["class_uid"] == "E4D7D911-0608-4B46-ABA3-2E345399A5AC"
-        && instance["object_uid"] == args.expected_instance.as_str()
+        && instance["object_uid"] == args["expected_instance"]
         && instance["object_id"] == "Mixtool"
 }
 
-fn empty_splitter_remove_result(
-    args: &crate::operation::InsertSplitterRemoveEmptyNested,
+fn nested_splitter_remove_result(
+    tool: &str,
+    args: &Value,
     context: &HostContext,
     response: &WireResponse,
 ) -> (Outcome, Value, Option<OperationError>) {
@@ -841,7 +893,7 @@ fn empty_splitter_remove_result(
     {
         return (Outcome::NotApplied, Value::Null, Some(host_error(response)));
     }
-    if response.ok && valid_empty_splitter_remove_receipt(args, context, response) {
+    if response.ok && valid_nested_splitter_remove_receipt(tool, args, context, response) {
         if result["ok"] == true {
             return (Outcome::AppliedUnverified, result.clone(), None);
         }
@@ -851,7 +903,11 @@ fn empty_splitter_remove_result(
                 result.clone(),
                 Some(OperationError::new(
                     "native_rejected",
-                    "The exact empty nested Splitter was refused before removal",
+                    if tool == "insert_splitter_remove_empty_nested" {
+                        "The exact empty nested Splitter was refused before removal"
+                    } else {
+                        "The exact one-lane nested Splitter was refused before removal"
+                    },
                 )),
             );
         }
@@ -860,7 +916,12 @@ fn empty_splitter_remove_result(
     (
         Outcome::Unknown,
         json!({"ok":false,"native_outcome":"unknown","errors":[{
-            "code":"empty_splitter_remove_unconfirmed","message":message
+            "code": if tool == "insert_splitter_remove_empty_nested" {
+                "empty_splitter_remove_unconfirmed"
+            } else {
+                "one_lane_splitter_remove_unconfirmed"
+            },
+            "message":message
         }]}),
         Some(OperationError::new("outcome_unknown", message)),
     )
@@ -1367,6 +1428,65 @@ fn invalidate_gui_evidence(operation: &Operation, result: &mut Value) {
     }
 }
 
+fn valid_filter_env_ack(
+    change: &crate::operation::PluginMultiChildFilterEnvSet,
+    value: &Value,
+) -> bool {
+    let identity = |key: &str, uid: &str, class: &str| {
+        let instance = &value[key];
+        instance.as_object().is_some_and(|fields| fields.len() == 4)
+            && instance["object_uid"] == uid
+            && instance["class_uid"] == class
+            && instance["native_class"] == "AudioSynth"
+            && instance["object_id"].is_string()
+    };
+    value.as_object().is_some_and(|fields| fields.len() == 12)
+        && value["ok"] == true
+        && value["outcome"] == "applied_unverified"
+        && value["native_outcome"] == "applied_unverified"
+        && value["operation"] == "multi_child_filter_env_set"
+        && value["source"] == "dsp"
+        && value["parameter"] == "modulationTable.cell1.amount"
+        && identity(
+            "instance",
+            &change.expected_instance,
+            "B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+        )
+        && value["child_slot"] == json!(change.child_slot)
+        && value["child_slot_uid"] == change.expected_child_slot
+        && identity(
+            "child_instance",
+            &change.expected_child_instance,
+            "B625F134-4485-4A50-A3C8-C9CF0C5495E1",
+        )
+        && value["before_float_bits"] == change.expected_float_bits.to_ascii_uppercase()
+        && value["after_float_bits"] == change.float_bits.to_ascii_uppercase()
+}
+
+fn valid_filter_env_failure(value: &Value) -> bool {
+    value.as_object().is_some_and(|fields| fields.len() == 3)
+        && value["ok"] == false
+        && matches!(
+            value["native_outcome"].as_str(),
+            Some("not_applied" | "unknown")
+        )
+        && value["errors"].as_array().is_some_and(|errors| {
+            let [error] = errors.as_slice() else {
+                return false;
+            };
+            error.as_object().is_some_and(|fields| fields.len() == 2)
+                && error["code"].as_str().is_some_and(|code| {
+                    (1..=64).contains(&code.len())
+                        && code
+                            .bytes()
+                            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+                })
+                && error["message"]
+                    .as_str()
+                    .is_some_and(|message| message.encode_utf16().count() <= 512)
+        })
+}
+
 fn mutation_outcome(value: &Value) -> Outcome {
     if let Some(outcome) = value.get("native_outcome").and_then(Value::as_str) {
         match outcome {
@@ -1770,9 +1890,69 @@ mod tests {
     use super::*;
 
     #[test]
-    fn empty_splitter_remove_requires_exact_anchors_and_a_bound_receipt() {
-        let tool = "insert_splitter_remove_empty_nested";
-        let fixture = json!({
+    fn multi_child_filter_env_rejects_receipts_with_an_unbound_target_or_bits() {
+        let change = serde_json::from_value(json!({
+            "track": "Multi Fixture", "expected_instance": "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot": "Inst02", "expected_child_slot": "BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance": "CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits": "40b549fe36300000", "float_bits": "40B38BA513300000"
+        }))
+        .unwrap();
+        let clean = json!({
+            "ok":true, "outcome":"applied_unverified", "native_outcome":"applied_unverified",
+            "operation":"multi_child_filter_env_set", "source":"dsp", "parameter":"modulationTable.cell1.amount",
+            "instance":{"object_uid":"AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA","class_uid":"B9D410AD-E47D-495E-8AEE-10D2B2987CC7",
+                "native_class":"AudioSynth","object_id":"Parent preset"},
+            "child_slot":"Inst02", "child_slot_uid":"BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "child_instance":{"object_uid":"CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC","class_uid":"B625F134-4485-4A50-A3C8-C9CF0C5495E1",
+                "native_class":"AudioSynth","object_id":"Child preset"},
+            "before_float_bits":"40B549FE36300000", "after_float_bits":"40B38BA513300000"
+        });
+        assert!(valid_filter_env_ack(&change, &clean));
+        assert_eq!(mutation_outcome(&clean), Outcome::AppliedUnverified);
+        for (field, wrong) in [
+            ("child_slot", json!("Inst01")),
+            ("before_float_bits", json!("40B38BA513300000")),
+            ("after_float_bits", json!("40B549FE36300000")),
+            ("native_outcome", json!("applied_verified")),
+        ] {
+            let mut wrong_receipt = clean.clone();
+            wrong_receipt[field] = wrong;
+            assert!(!valid_filter_env_ack(&change, &wrong_receipt), "{field}");
+        }
+        let mut wrong_child = clean.clone();
+        wrong_child["child_instance"]["object_uid"] = clean["instance"]["object_uid"].clone();
+        assert!(!valid_filter_env_ack(&change, &wrong_child));
+
+        let mut refusal = json!({"ok":false,"native_outcome":"not_applied","errors":[
+            {"code":"multi_child_filter_env_write","message":"Expected value changed"}
+        ]});
+        assert!(valid_filter_env_failure(&refusal));
+        assert_eq!(mutation_outcome(&refusal), Outcome::NotApplied);
+        refusal["after_float_bits"] = clean["after_float_bits"].clone();
+        assert!(!valid_filter_env_failure(&refusal));
+    }
+
+    #[test]
+    fn nested_splitter_remove_requires_exact_anchors_and_a_bound_receipt() {
+        for (tool, wire, occupied) in [
+            (
+                "insert_splitter_remove_empty_nested",
+                "insertSplitterRemoveEmptyNested",
+                None,
+            ),
+            (
+                "insert_splitter_remove_one_lane_nested",
+                "insertSplitterRemoveOneLaneNested",
+                Some("60000000-1234-1234-1234-123456789ABC"),
+            ),
+        ] {
+            check_nested_splitter_remove(tool, wire, occupied);
+        }
+    }
+
+    fn check_nested_splitter_remove(tool: &str, wire: &str, occupied: Option<&str>) {
+        let mut fixture = json!({
             "channel":"Scratch", "slot":0, "plugin":"Mixtool",
             "expected_instance":"12345678-1234-1234-1234-123456789ABC",
             "expected_graph":"10000000-1234-1234-1234-123456789ABC",
@@ -1781,12 +1961,21 @@ mod tests {
             "predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
             "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"
         });
+        if let Some(slot) = occupied {
+            assert!(Operation::from_parts(tool, fixture.clone()).is_err());
+            fixture["occupied_slot_node"] = fixture["predecessor_slot_node"].clone();
+            assert!(
+                Operation::from_parts(tool, fixture.clone())
+                    .unwrap()
+                    .validate()
+                    .is_err()
+            );
+            fixture["occupied_slot_node"] = json!(slot);
+        }
         let operation = Operation::from_parts(tool, fixture.clone()).unwrap();
         operation.validate().unwrap();
-        assert_eq!(
-            operation.wire(),
-            ("insertSplitterRemoveEmptyNested".into(), fixture.clone())
-        );
+        assert!(!operation.is_read_only());
+        assert_eq!(operation.wire(), (wire.into(), fixture.clone()));
         for (key, value) in [
             ("slot", json!(1)),
             ("plugin", json!("Mixtool 2")),
@@ -1806,9 +1995,7 @@ mod tests {
             );
         }
         assert!(Operation::from_parts("insert_splitter_remove", fixture.clone()).is_err());
-        let Operation::InsertSplitterRemoveEmptyNested(args) = operation else {
-            unreachable!()
-        };
+        let (_, args) = operation.wire();
         let context = HostContext {
             session: "session".into(),
             document: "session:1".into(),
@@ -1826,7 +2013,7 @@ mod tests {
         success["operation"] = json!(tool);
         success["outcome"] = json!("applied_unverified");
         success["native_outcome"] = json!("applied_unverified");
-        success["instance"] = json!({"object_uid":args.expected_instance,
+        success["instance"] = json!({"object_uid":args["expected_instance"],
             "class_uid":"E4D7D911-0608-4B46-ABA3-2E345399A5AC","object_id":"Mixtool",
             "native_class":"AudioEffect"});
         let mut response = WireResponse {
@@ -1839,10 +2026,11 @@ mod tests {
             error: None,
             code: None,
         };
-        assert!(valid_empty_splitter_remove_receipt(
-            &args, &context, &response
+        assert!(valid_nested_splitter_remove_receipt(
+            tool, &args, &context, &response
         ));
-        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        let (outcome, result, error) =
+            nested_splitter_remove_result(tool, &args, &context, &response);
         assert_eq!(outcome, Outcome::AppliedUnverified);
         assert_eq!(result, success);
         assert!(error.is_none());
@@ -1851,17 +2039,33 @@ mod tests {
             ("verified", json!(true)),
             ("successor_merger_node", success["merger_node"].clone()),
             ("native_outcome", json!("applied_verified")),
-            ("instance", json!({"object_uid":args.expected_instance})),
+            ("instance", json!({"object_uid":args["expected_instance"]})),
         ] {
             response.result = success.clone();
             response.result[key] = value;
-            assert!(!valid_empty_splitter_remove_receipt(
-                &args, &context, &response
+            assert!(!valid_nested_splitter_remove_receipt(
+                tool, &args, &context, &response
+            ));
+        }
+        if occupied.is_some() {
+            response.result = success.clone();
+            response
+                .result
+                .as_object_mut()
+                .unwrap()
+                .remove("occupied_slot_node");
+            assert!(!valid_nested_splitter_remove_receipt(
+                tool, &args, &context, &response
+            ));
+            response.result["occupied_slot_node"] = success["predecessor_slot_node"].clone();
+            assert!(!valid_nested_splitter_remove_receipt(
+                tool, &args, &context, &response
             ));
         }
         response.result = success;
         response.document = "session:2".into();
-        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        let (outcome, result, error) =
+            nested_splitter_remove_result(tool, &args, &context, &response);
         assert_eq!(outcome, Outcome::Unknown);
         assert_eq!(result["ok"], false);
         assert!(result.get("splitter_node").is_none() && result.get("instance").is_none());
@@ -1869,11 +2073,12 @@ mod tests {
         response.ok = false;
         response.code = Some("document_changed".into());
         response.error = Some(json!("The active document changed"));
-        let (outcome, result, _) = empty_splitter_remove_result(&args, &context, &response);
+        let (outcome, result, _) = nested_splitter_remove_result(tool, &args, &context, &response);
         assert_eq!(outcome, Outcome::Unknown);
         assert!(result.get("splitter_node").is_none());
         response.result = Value::Null;
-        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        let (outcome, result, error) =
+            nested_splitter_remove_result(tool, &args, &context, &response);
         assert_eq!(outcome, Outcome::NotApplied);
         assert!(result.is_null());
         assert_eq!(error.unwrap().code, "document_changed");
@@ -1883,15 +2088,16 @@ mod tests {
         response.code = None;
         response.error = None;
         response.result = json!({"ok":false,"native_outcome":"not_applied","errors":[{
-            "code":"insert_splitter_remove_empty_nested_failed","message":"Topology changed"
+            "code":format!("{tool}_failed"),"message":"Topology changed"
         }]});
-        let (outcome, result, error) = empty_splitter_remove_result(&args, &context, &response);
+        let (outcome, result, error) =
+            nested_splitter_remove_result(tool, &args, &context, &response);
         assert_eq!(outcome, Outcome::NotApplied);
         assert_eq!(result, response.result);
         assert_eq!(error.unwrap().code, "native_rejected");
         response.result["errors"] = json!([]);
-        assert!(!valid_empty_splitter_remove_receipt(
-            &args, &context, &response
+        assert!(!valid_nested_splitter_remove_receipt(
+            tool, &args, &context, &response
         ));
     }
 
@@ -1951,6 +2157,10 @@ mod tests {
 
     fn mutating_operations() -> Vec<Operation> {
         [
+            ("scopeSidechainAssignmentCreate", json!({"source_channel":"Scratch Source", "scope_channel":"Scratch Receiver",
+                "expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
+            ("scopeSidechainAssignmentRemove", json!({"source_channel":"Scratch Source", "scope_channel":"Scratch Receiver",
+                "expected_instance":"12345678-1234-1234-1234-123456789ABC","expected_send":"12345678-1234-1234-1234-123456789ABD"})),
             ("serum2EventInputSet", json!({"track":"Scratch Keys","variant":"instrument",
                 "expected_instance":"01234567-89AB-4CDE-8123-456789ABCDEF","expected_event_input":1,"event_input":2})),
             ("setPanner", json!({"channel":"Scratch","param":"panX1","value":0.5})),
@@ -1970,6 +2180,10 @@ mod tests {
             ("insertSlotMove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","source_node":"20000000-1234-1234-1234-123456789ABC",
                 "after_node":"30000000-1234-1234-1234-123456789ABC","following_node":"40000000-1234-1234-1234-123456789ABC"})),
+            ("insertSlotRemove", json!({"channel":"Scratch","slot":1,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","preceding_slot_node":"20000000-1234-1234-1234-123456789ABC",
+                "removed_slot_node":"30000000-1234-1234-1234-123456789ABC","following_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "expected_removed_instance":"50000000-1234-1234-1234-123456789ABC"})),
             ("pluginMultiAddMaiTai", json!({"track":"Selected music track","expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "expected_folder":"10000000-1234-1234-1234-123456789ABC","expected_graph":"20000000-1234-1234-1234-123456789ABC",
                 "expected_child_slot":"30000000-1234-1234-1234-123456789ABC","expected_child_instance":"40000000-1234-1234-1234-123456789ABC"})),
@@ -1984,6 +2198,10 @@ mod tests {
                 "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
                 "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
                 "successor_merger_node":"50000000-1234-1234-1234-123456789ABC"})),
+            ("insertSplitterRemoveOneLaneNested", json!({"channel":"Scratch","slot":0,"plugin":"Mixtool","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "expected_graph":"10000000-1234-1234-1234-123456789ABC","splitter_node":"20000000-1234-1234-1234-123456789ABC",
+                "merger_node":"30000000-1234-1234-1234-123456789ABC","predecessor_slot_node":"40000000-1234-1234-1234-123456789ABC",
+                "successor_merger_node":"50000000-1234-1234-1234-123456789ABC","occupied_slot_node":"60000000-1234-1234-1234-123456789ABC"})),
             ("pluginPresets", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"list"})),
             ("pluginAction", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","expected_instance":"12345678-1234-1234-1234-123456789ABC","action":"reset_meter_hold"})),
             ("fabfilterPresetApply", json!({"product":"Pro-Q 4","index":0,"expected_catalog":"0".repeat(64),"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
@@ -1992,8 +2210,12 @@ mod tests {
             ("pedalboardSlotSwap", json!({"channel":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC",
                 "first_slot":1,"second_slot":2,"expected_first_model":"Compressor","expected_second_model":"Reverb"})),
             ("impactOutputSet", json!({"track":"Scratch Impact","expected_instance":"12345678-1234-1234-1234-123456789ABC","output_index":1,"output_name":"Impact St 2","expected_active":false,"active":true})),
+            ("chorderAudition", json!({"action":"prepare","track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC"})),
             ("editChorderAutofill", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","enabled":true})),
             ("chorderLearningSet", json!({"track":"Scratch","slot":0,"expected_instance":"12345678-1234-1234-1234-123456789ABC","change":{"kind":"learn_mode","enabled":true}})),
+            ("pluginMultiChildFilterEnvSet", json!({"track":"Scratch","expected_instance":"12345678-1234-1234-1234-123456789ABC",
+                "child_slot":"Inst01","expected_child_slot":"22345678-1234-1234-1234-123456789ABC","expected_child_instance":"32345678-1234-1234-1234-123456789ABC",
+                "expected_float_bits":"3FF0000000000000","float_bits":"4000000000000000"})),
             ("setPluginParam", json!({"channel":"Scratch","slot":0,"plugin":"Phase Meter","param":"gain","value":0})),
             ("setChannel", json!({"channel":"Scratch","field":"mute","value":true})),
             ("setChannelLabel", json!({"channel":"Scratch","name":"Scratch"})),
@@ -2061,6 +2283,7 @@ mod tests {
                 "pluginCatalog",
                 "inserts",
                 "sends",
+                "scopeSidechainAssignmentGet",
                 "pluginParams",
                 "pluginMultiChildParameters",
                 "pluginChoices",

@@ -16,6 +16,8 @@ mod alias_controller;
 use alias_controller::catalog;
 #[path = "request/capabilities.rs"]
 mod capabilities;
+#[path = "request/chorder_audition.rs"]
+mod chorder_audition;
 #[path = "request/chorder_chords.rs"]
 mod chorder_chords;
 #[path = "request/details.rs"]
@@ -51,6 +53,8 @@ mod numeric_edit;
 mod owner_inspect;
 #[path = "request/presets.rs"]
 pub(super) mod presets;
+#[path = "request/scope_sidechain.rs"]
+mod scope_sidechain;
 #[path = "request/state.rs"]
 pub(super) mod state;
 
@@ -99,6 +103,16 @@ fn supplied_string<'de, D: serde::Deserializer<'de>>(
 #[derive(Debug, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Request {
+    ScopeSidechainAssignmentGet {
+        expected_instance: String,
+    },
+    ScopeSidechainAssignmentCreate {
+        expected_instance: String,
+    },
+    ScopeSidechainAssignmentRemove {
+        expected_instance: String,
+        expected_send: String,
+    },
     CvPortStructureInspect {
         expected_instance: String,
     },
@@ -165,6 +179,14 @@ enum Request {
         offset: u32,
         #[serde(default = "default_limit")]
         limit: u32,
+    },
+    MultiChildFilterEnvSet {
+        expected_instance: String,
+        child_slot: alias_controller::multi_child::Slot,
+        expected_child_slot: String,
+        expected_child_instance: String,
+        expected_float_bits: alias_controller::multi_child::AmountBits,
+        float_bits: alias_controller::multi_child::AmountBits,
     },
     Choices {
         param: String,
@@ -234,6 +256,10 @@ enum Request {
     ChorderChordsGet {
         offset: u32,
         limit: u32,
+        expected_instance: String,
+    },
+    ChorderAuditionLane {
+        phase: chorder_audition::Phase,
         expected_instance: String,
     },
     SetParameter {
@@ -347,6 +373,14 @@ enum Request {
         following_node: String,
         branch: Option<u8>,
     },
+    InsertSlotRemove {
+        expected_instance: String,
+        expected_graph: String,
+        preceding_slot_node: String,
+        removed_slot_node: String,
+        following_slot_node: String,
+        expected_removed_instance: String,
+    },
     InsertSplitterAdd {
         expected_instance: String,
         expected_graph: String,
@@ -360,6 +394,12 @@ enum Request {
         merger_node: String,
         first_slot_node: String,
         second_slot_node: String,
+        #[serde(default)]
+        first_branch_tail_node: Option<String>,
+        #[serde(default)]
+        second_branch_tail_node: Option<String>,
+        #[serde(default)]
+        branch_continuations: Option<[Vec<String>; 2]>,
     },
     InsertSplitterRemoveEmptyNested {
         expected_instance: String,
@@ -368,6 +408,15 @@ enum Request {
         merger_node: String,
         predecessor_slot_node: String,
         successor_merger_node: String,
+    },
+    InsertSplitterRemoveOneLaneNested {
+        expected_instance: String,
+        expected_graph: String,
+        splitter_node: String,
+        merger_node: String,
+        predecessor_slot_node: String,
+        successor_merger_node: String,
+        occupied_slot_node: String,
     },
 }
 impl Request {
@@ -392,7 +441,9 @@ impl Request {
             | Self::EditChorderAutofill { .. }
             | Self::EditChorderModel { .. }
             | Self::ChorderLearningGet { .. }
+            | Self::ChorderAuditionLane { .. }
             | Self::MultiChildParameters { .. }
+            | Self::MultiChildFilterEnvSet { .. }
             | Self::MultiAddMaiTai { .. } => Source::Dsp,
             Self::ModelCatalog { .. } => Source::Auto,
             Self::Inspect { source, .. }
@@ -424,20 +475,33 @@ impl Request {
             | Self::InspectInsertFolderPresetPreflight { .. }
             | Self::InsertChainCapture { .. }
             | Self::InsertChainRestore { .. }
+            | Self::ScopeSidechainAssignmentGet { .. }
+            | Self::ScopeSidechainAssignmentRemove { .. }
+            | Self::ScopeSidechainAssignmentCreate { .. }
             | Self::InsertChainRelease { .. }
             | Self::InsertSlotMove { .. }
+            | Self::InsertSlotRemove { .. }
             | Self::InsertSplitterAdd { .. }
             | Self::InsertSplitterRemove { .. }
-            | Self::InsertSplitterRemoveEmptyNested { .. } => Source::Auto,
+            | Self::InsertSplitterRemoveEmptyNested { .. }
+            | Self::InsertSplitterRemoveOneLaneNested { .. } => Source::Auto,
         }
     }
     fn expected(&self) -> Option<&str> {
         match self {
             Self::CvPortStructureInspect { expected_instance }
+            | Self::ScopeSidechainAssignmentGet { expected_instance }
+            | Self::ScopeSidechainAssignmentCreate { expected_instance }
+            | Self::ScopeSidechainAssignmentRemove {
+                expected_instance, ..
+            }
             | Self::MultiAddMaiTai {
                 expected_instance, ..
             }
             | Self::MultiChildParameters {
+                expected_instance, ..
+            }
+            | Self::MultiChildFilterEnvSet {
                 expected_instance, ..
             }
             | Self::ImpactOutputSet {
@@ -464,6 +528,9 @@ impl Request {
             Self::InsertSlotMove {
                 expected_instance, ..
             }
+            | Self::InsertSlotRemove {
+                expected_instance, ..
+            }
             | Self::InsertSplitterAdd {
                 expected_instance, ..
             }
@@ -471,6 +538,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
+                expected_instance, ..
+            }
+            | Self::InsertSplitterRemoveOneLaneNested {
                 expected_instance, ..
             } => Some(expected_instance),
             Self::InsertChainCapture { .. }
@@ -492,6 +562,9 @@ impl Request {
                 expected_instance, ..
             }
             | Self::ChorderChordsGet {
+                expected_instance, ..
+            }
+            | Self::ChorderAuditionLane {
                 expected_instance, ..
             }
             | Self::RumbleParametersRead { expected_instance }
@@ -553,6 +626,10 @@ impl Request {
         }
     }
     fn validate(&self) -> Result<(), String> {
+        if matches!(self, Self::ScopeSidechainAssignmentRemove { expected_send, .. } if !valid_uid(expected_send))
+        {
+            return Err("The exact current Send UUID is required".into());
+        }
         if self.source() == Source::LevelMeter {
             if self.expected().is_none()
                 || !matches!(
@@ -605,6 +682,22 @@ impl Request {
             {
                 Err("Multi Instrument child DSP requires distinct exact identity and bounded paging".into())
             }
+            Self::MultiChildFilterEnvSet {
+                expected_instance,
+                expected_child_slot,
+                expected_child_instance,
+                expected_float_bits,
+                float_bits,
+                ..
+            } if !valid_uid(expected_child_slot)
+                || !valid_uid(expected_child_instance)
+                || expected_instance == expected_child_slot
+                || expected_instance == expected_child_instance
+                || expected_child_slot == expected_child_instance
+                || expected_float_bits == float_bits =>
+            {
+                Err("Filter Env requires three distinct exact identities and different amount bits".into())
+            }
             Self::ImpactOutputSet {
                 output_index,
                 output_name,
@@ -626,6 +719,24 @@ impl Request {
                 ..
             } if !provenance || !matches!(port, external_menu::Port::Send) => {
                 Err("checkOnly requires provenance and fixed Stereo Send".into())
+            }
+            Self::InsertSlotRemove {
+                expected_instance,
+                expected_graph,
+                preceding_slot_node,
+                removed_slot_node,
+                following_slot_node,
+                expected_removed_instance,
+            } => {
+                let nodes = [preceding_slot_node, removed_slot_node, following_slot_node,
+                    expected_removed_instance];
+                if expected_instance == expected_removed_instance
+                    || ![expected_instance, expected_graph].into_iter().chain(nodes).all(|id| valid_uid(id))
+                    || nodes.iter().enumerate().any(|(index, id)| nodes[..index].contains(id))
+                {
+                    return Err("Middle slot removal requires six exact, bound identities".into());
+                }
+                Ok(())
             }
             Self::InsertSlotMove {
                 expected_instance,
@@ -685,6 +796,7 @@ impl Request {
                 merger_node,
                 first_slot_node: first,
                 second_slot_node: second,
+                ..
             }
             | Self::InsertSplitterRemoveEmptyNested {
                 expected_instance,
@@ -693,11 +805,46 @@ impl Request {
                 merger_node,
                 predecessor_slot_node: first,
                 successor_merger_node: second,
+            }
+            | Self::InsertSplitterRemoveOneLaneNested {
+                expected_instance,
+                expected_graph,
+                splitter_node,
+                merger_node,
+                predecessor_slot_node: first,
+                successor_merger_node: second,
+                ..
             } => {
-                let nodes = [splitter_node, merger_node, first, second];
+                let mut nodes = vec![splitter_node, merger_node, first, second];
+                if let Self::InsertSplitterRemoveOneLaneNested {
+                    occupied_slot_node, ..
+                } = self {
+                    nodes.push(occupied_slot_node);
+                }
+                if let Self::InsertSplitterRemove {
+                    first_branch_tail_node,
+                    second_branch_tail_node,
+                    branch_continuations,
+                    ..
+                } = self {
+                    if let Some(continuations) = branch_continuations {
+                        if first_branch_tail_node.is_some()
+                            || second_branch_tail_node.is_some()
+                            || !matches!(continuations.each_ref().map(Vec::len), [2, 0] | [0, 2])
+                        {
+                            return Err("Splitter removal requires exactly two ordered continuation nodes on one branch".into());
+                        }
+                        nodes.extend(continuations.iter().flatten());
+                    }
+                    nodes.extend(
+                        [first_branch_tail_node.as_ref(), second_branch_tail_node.as_ref()]
+                            .into_iter()
+                            .flatten(),
+                    );
+                }
                 if ![expected_instance, expected_graph]
                     .into_iter()
-                    .chain(nodes)
+                    .chain(nodes.iter().copied())
                     .all(|id| valid_uid(id))
                     || nodes
                         .iter()
@@ -975,6 +1122,9 @@ impl Request {
                 ..
             } | Self::Serum2PresetApply { .. }
                 | Self::InspectAux { .. }
+                | Self::ScopeSidechainAssignmentGet { .. }
+                | Self::ScopeSidechainAssignmentRemove { .. }
+                | Self::ScopeSidechainAssignmentCreate { .. }
                 | Self::InspectInsertFolderAncestry { .. }
                 | Self::InspectInsertFolderPresetPreflight { .. }
                 | Self::InsertChainCapture { .. }
@@ -1283,15 +1433,17 @@ impl Controller {
     }
     fn find(&self, name: &str, a: &Api) -> Result<RawParameter, String> {
         let text = CString::new(name).map_err(|_| "parameter contains NUL")?;
-        // Borrowed CString representation, valid for this synchronous call;
-        // dynamic parameter names are never interned in a process-wide cache.
+        self.parameter(self.find_borrowed(&text), a)
+    }
+    fn find_borrowed(&self, text: &std::ffi::CStr) -> *mut c_void {
+        // Borrowed CString representation, valid for this synchronous call.
         let name = PlainCString {
             text: text.as_ptr(),
             owner: ptr::null_mut(),
         };
         let get: unsafe extern "C" fn(*mut c_void, *const PlainCString) -> *mut c_void =
             unsafe { method(self.handle.0, 5) };
-        self.parameter(unsafe { get(self.handle.0, &name) }, a)
+        unsafe { get(self.handle.0, &name) }
     }
     fn parameter(&self, p: *mut c_void, a: &Api) -> Result<RawParameter, String> {
         let owned = hold(p).ok_or("native controller parameter unavailable")?;
@@ -1500,7 +1652,7 @@ pub(super) enum ObservationKind {
 
 enum Provider {
     Dsp(DspProvider),
-    MultiChild(Box<alias_controller::multi_child::Binding>),
+    MultiChild(Box<alias_controller::multi_child::Proof>),
     DspValue(Controller),
     Controller(Controller),
     State(state::AliasLease),
@@ -1860,6 +2012,9 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         return settings.execute(ctx, request);
     }
     let result: Result<Value, String> = match request {
+        Request::ChorderAuditionLane { phase, .. } => {
+            return chorder_audition::execute(ctx, provider, phase);
+        }
         Request::Inspect { .. } => (|| {
             let mut value = match provider {
                 Provider::Dsp(p) => p.metadata.count().map(|count| json!({"reported_count":count,"coverage":"direct_device_dsp_provider","native_setter":p.direct.is_ok(),"native_setter_scope":"direct_device_named_parameter"})).map_err(|e| e.to_string())?,
@@ -1924,6 +2079,7 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::ExternalPortMenu { .. }
         | Request::ExternalStereoSendSet { .. }
         | Request::MultiChildParameters { .. }
+        | Request::MultiChildFilterEnvSet { .. }
         | Request::MultiAddMaiTai { .. }
         | Request::ParameterAction { .. }
         | Request::EditNumericParameter { .. }
@@ -1947,6 +2103,9 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InspectCvPresetSettings { .. }
         | Request::ApplyCvPresetSettings { .. }
         | Request::PresetRelease { .. }
+        | Request::ScopeSidechainAssignmentGet { .. }
+        | Request::ScopeSidechainAssignmentRemove { .. }
+        | Request::ScopeSidechainAssignmentCreate { .. }
         | Request::InspectAux { .. }
         | Request::InspectInsertFolderAncestry { .. }
         | Request::InspectInsertFolderPresetPreflight { .. }
@@ -1954,9 +2113,11 @@ fn execute(ctx: &Context<'_>, request: Request, provider: &Provider) -> Value {
         | Request::InsertChainRestore { .. }
         | Request::InsertChainRelease { .. }
         | Request::InsertSlotMove { .. }
+        | Request::InsertSlotRemove { .. }
         | Request::InsertSplitterAdd { .. }
         | Request::InsertSplitterRemove { .. }
-        | Request::InsertSplitterRemoveEmptyNested { .. } => {
+        | Request::InsertSplitterRemoveEmptyNested { .. }
+        | Request::InsertSplitterRemoveOneLaneNested { .. } => {
             Err("request requires its own dispatcher".into())
         }
     };
@@ -2168,7 +2329,10 @@ impl Reply {
     }
 
     fn invalidate(&mut self, message: String) {
-        if self.value["operation"] == "multi_child_parameters" {
+        if matches!(
+            self.value["operation"].as_str(),
+            Some("multi_child_parameters" | "scope_sidechain_assignment_get")
+        ) {
             self.value = error("context_changed_before_receipt", &message, "not_applied");
             return;
         }
@@ -2179,6 +2343,10 @@ impl Reply {
         } else {
             "not_applied"
         };
+        if self.value["operation"] == alias_controller::multi_child::FILTER_ENV_OPERATION {
+            self.value = error("context_changed_before_receipt", &message, outcome);
+            return;
+        }
         if let Some(edit) = self.edit.as_ref() {
             self.value["edit_phase"] = json!(edit.phase());
         }
@@ -2496,16 +2664,23 @@ fn dispatch_device(
             | Request::ImpactOutputSet { .. }
             | Request::PedalboardSlotSwap { .. }
             | Request::InsertSlotMove { .. }
+            | Request::InsertSlotRemove { .. }
             | Request::MultiAddMaiTai { .. }
             | Request::InsertSplitterRemove { .. }
             | Request::InsertSplitterRemoveEmptyNested { .. }
+            | Request::InsertSplitterRemoveOneLaneNested { .. }
             | Request::InsertSplitterAdd { .. }
             | Request::ExternalPortMenu { .. }
             | Request::ExternalStereoSendSet { .. }
             | Request::SetParameter { .. }
+            | Request::MultiChildFilterEnvSet { .. }
             | Request::EditNumericParameter { .. }
             | Request::EditChorderAutofill { .. }
             | Request::EditChorderModel { .. }
+            | Request::ChorderAuditionLane {
+                phase: chorder_audition::Phase::Press | chorder_audition::Phase::Release,
+                ..
+            }
             | Request::ParameterAction { .. }
             | Request::FabfilterPresetApply { .. }
             | Request::Serum2PresetApply { .. }
@@ -2587,6 +2762,15 @@ fn dispatch_device(
         reply.context = Some(ctx);
         return reply;
     }
+    if matches!(request, Request::ScopeSidechainAssignmentCreate { .. }) {
+        return scope_sidechain::dispatch_create(ctx, auxiliary);
+    }
+    if let Request::ScopeSidechainAssignmentRemove { expected_send, .. } = request {
+        return scope_sidechain::dispatch_remove(ctx, auxiliary, &expected_send);
+    }
+    if matches!(request, Request::ScopeSidechainAssignmentGet { .. }) {
+        return scope_sidechain::dispatch(ctx, auxiliary);
+    }
     if matches!(request, Request::CvPortStructureInspect { .. }) {
         return node_inspect::cv_ports::structure::dispatch(ctx);
     }
@@ -2626,6 +2810,24 @@ fn dispatch_device(
             limit,
         );
     }
+    if let Request::MultiChildFilterEnvSet {
+        child_slot,
+        expected_child_slot,
+        expected_child_instance,
+        expected_float_bits,
+        float_bits,
+        ..
+    } = request
+    {
+        return alias_controller::multi_child::dispatch_filter_env(
+            ctx,
+            child_slot,
+            expected_child_slot,
+            &expected_child_instance,
+            expected_float_bits,
+            float_bits,
+        );
+    }
     if let Request::InsertSlotMove {
         expected_graph,
         source_node,
@@ -2639,6 +2841,26 @@ fn dispatch_device(
             ctx,
             [&expected_graph, &source_node, &after_node, &following_node],
             branch,
+        );
+    }
+    if let Request::InsertSlotRemove {
+        expected_graph,
+        preceding_slot_node,
+        removed_slot_node,
+        following_slot_node,
+        expected_removed_instance,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::slot_remove::dispatch(
+            ctx,
+            &expected_graph,
+            [
+                &preceding_slot_node,
+                &removed_slot_node,
+                &following_slot_node,
+            ],
+            &expected_removed_instance,
         );
     }
     if let Request::InsertSplitterAdd {
@@ -2659,6 +2881,9 @@ fn dispatch_device(
         merger_node,
         first_slot_node,
         second_slot_node,
+        first_branch_tail_node,
+        second_branch_tail_node,
+        branch_continuations,
         ..
     } = request
     {
@@ -2671,7 +2896,11 @@ fn dispatch_device(
                 &first_slot_node,
                 &second_slot_node,
             ],
-            node_inspect::splitter_remove::Shape::OccupiedBranches,
+            node_inspect::splitter_remove::Shape::OccupiedBranches {
+                first_tail: first_branch_tail_node.as_deref(),
+                second_tail: second_branch_tail_node.as_deref(),
+                continuations: branch_continuations.as_ref(),
+            },
         );
     }
     if let Request::InsertSplitterRemoveEmptyNested {
@@ -2693,6 +2922,28 @@ fn dispatch_device(
                 &successor_merger_node,
             ],
             node_inspect::splitter_remove::Shape::EmptyNested,
+        );
+    }
+    if let Request::InsertSplitterRemoveOneLaneNested {
+        expected_graph,
+        splitter_node,
+        merger_node,
+        predecessor_slot_node,
+        successor_merger_node,
+        occupied_slot_node,
+        ..
+    } = request
+    {
+        return node_inspect::splitter_remove::dispatch(
+            ctx,
+            [
+                &expected_graph,
+                &splitter_node,
+                &merger_node,
+                &predecessor_slot_node,
+                &successor_merger_node,
+            ],
+            node_inspect::splitter_remove::Shape::OneLaneNested(&occupied_slot_node),
         );
     }
     if let Request::ExternalStereoSendSet { destination, .. } = request {
@@ -3307,6 +3558,7 @@ fn dispatch_device(
             | Request::SetParameter { .. }
             | Request::ParameterAction { .. }
             | Request::ParameterDetails { .. }
+            | Request::ChorderAuditionLane { .. }
             | Request::FormatValues { .. }
     );
     let node_scope = match &request {
@@ -3765,6 +4017,55 @@ mod tests {
         r.validate()?;
         Ok(r)
     }
+    #[test]
+    fn filter_env_native_request_rejects_crossed_identities_and_unbounded_amounts() {
+        let args = json!({
+            "operation":"multi_child_filter_env_set",
+            "expected_instance":"AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA",
+            "child_slot":"Inst02", "expected_child_slot":"BBBBBBBB-BBBB-4BBB-8BBB-BBBBBBBBBBBB",
+            "expected_child_instance":"CCCCCCCC-CCCC-4CCC-8CCC-CCCCCCCCCCCC",
+            "expected_float_bits":"40b549fe36300000", "float_bits":"40B38BA513300000"
+        });
+        assert!(matches!(
+            parse(args.clone()).unwrap(),
+            Request::MultiChildFilterEnvSet { .. }
+        ));
+        for (field, invalid_value) in [
+            ("child_slot", json!("Inst03")),
+            ("expected_instance", args["expected_child_slot"].clone()),
+            (
+                "expected_child_instance",
+                args["expected_child_slot"].clone(),
+            ),
+            ("expected_float_bits", json!("40B38BA513300000")),
+            ("float_bits", json!("7FF8000000000000")),
+            ("float_bits", json!("40C3880000000001")),
+            ("float_bits", json!(5000)),
+            ("param", json!("filter.cutoff")),
+        ] {
+            let mut invalid = args.clone();
+            invalid[field] = invalid_value;
+            assert!(parse(invalid).is_err(), "{field}");
+        }
+    }
+
+    #[test]
+    fn filter_env_publication_loss_discards_both_bits() {
+        let mut reply = Reply::unbound(json!({
+            "ok":true, "outcome":"applied_unverified", "operation":"multi_child_filter_env_set",
+            "before_float_bits":"40B549FE36300000", "after_float_bits":"40B38BA513300000"
+        }));
+        reply.mutation = true;
+        reply.invalidate("Child attachment changed".into());
+        assert_eq!(
+            reply.value,
+            json!({
+                "ok":false, "outcome":"unknown",
+                "error":{"code":"context_changed_before_receipt","message":"Child attachment changed"}
+            })
+        );
+    }
+
     #[test]
     fn request_schema_is_finite_and_operation_specific() {
         for operation in ["inspect", "parameters"] {

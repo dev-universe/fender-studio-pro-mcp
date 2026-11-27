@@ -129,17 +129,21 @@ class Bridge {
         let code = null;
         const context = this.context();
         const contextError = this.contextError;
-        const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "meters", "listCommands"];
+        const reads = ["ping", "context", "song", "tracks", "trackEventInput", "trackFormats", "channels", "panner", "splitters", "notes", "plugins", "pluginCatalog", "pluginInspect", "hostProbe", "pluginParams", "pluginChoices", "pluginParameterDetails", "pluginParameterFormat", "pluginParameterDigest", "pluginMultiChildParameters", "pluginModels", "chorderLearningGet", "chorderChordsGet", "inserts", "sends", "scopeSidechainAssignmentGet", "meters", "listCommands"];
         const rumbleNamedParameters = req.op === "pluginState" && req.args && req.args.action === "read_rumble_named_parameters";
         const rumbleSerialization = rumbleNamedParameters || req.op === "pluginState" && req.args && (req.args.action === "inspect_rumble_serialization" || req.args.action === "read_rumble_state" || req.args.action === "read_mustang_state" || req.args.action === "read_rumble_parameters");
         const nodeScope = req.op === "pluginInspect" && req.args ? req.args.node_scope : null;
         const impactOutputs = nodeScope === "impact_outputs";
         const multiChildParameters = req.op === "pluginMultiChildParameters";
+        const multiChildFilterEnv = req.op === "pluginMultiChildFilterEnvSet";
         const multiAddMaiTai = req.op === "pluginMultiAddMaiTai";
         const impactOutputSet = req.op === "impactOutputSet";
         const chorderClear = req.op === "pluginAction" && req.args && req.args.action === "clear_chorder_selected";
-        const emptyNestedSplitterRemove = req.op === "insertSplitterRemoveEmptyNested";
+        const oneLaneSplitterRemove = req.op === "insertSplitterRemoveOneLaneNested";
+        const nestedSplitterRemove = oneLaneSplitterRemove || req.op === "insertSplitterRemoveEmptyNested";
         const serum2Preset = req.op === "serum2PresetApply";
+        const scopeEdit = req.op === "scopeSidechainAssignmentRemove" || req.op === "scopeSidechainAssignmentCreate";
+        const scopeAssignment = scopeEdit || req.op === "scopeSidechainAssignmentGet";
         const cvPresetSettings = req.op === "pluginPresets" && req.args && req.args.action === "inspect_cv_preset_settings";
         const cvPresetApply = req.op === "pluginPresets" && req.args && req.args.action === "apply_cv_preset_settings";
         const readOnly = rumbleSerialization || cvPresetSettings || reads.indexOf(req.op) >= 0 || (req.op === "command" && req.args && req.args.checkOnly === true);
@@ -157,7 +161,7 @@ class Bridge {
             } else if (req.expectedDocument && req.expectedDocument !== context.document) {
                 code = "document_changed";
                 result = fail("the active document changed");
-            } else if ((!readOnly || req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
+            } else if ((!readOnly || req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderChordsGet" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || scopeAssignment || ["cv_ports", "cv_port_parameters", "cv_preset_target"].includes(nodeScope)) && (!req.expectedSession || !req.expectedDocument)) {
                 code = "context_required";
                 result = fail("this operation requires expectedSession and expectedDocument from context");
             } else {
@@ -174,6 +178,8 @@ class Bridge {
                 ? { ok: false, native_outcome: "unknown", errors: [{
                     code: "impact_output_dispatch_failed", message: "The Impact output change could not be established",
                 }] }
+                : multiChildFilterEnv
+                ? multiChildFilterEnvFailure("unknown", "The Mai Tai Filter Env change could not be established")
                 : multiAddMaiTai
                 ? pluginMultiAddMaiTaiFailure("unknown", "The native Mai Tai insertion outcome could not be established")
                 : serum2Preset
@@ -200,6 +206,10 @@ class Bridge {
             result = { ok: false, native_outcome: outcome, errors: [{
                 code: "impact_output_context_changed", message: "The Impact output document changed before publication",
             }] };
+        } else if (!isFail(result) && multiChildFilterEnv
+            && (this.contextError || !sameFixtureContext(context, afterContext))) {
+            const outcome = result && result.ok === false && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
+            result = multiChildFilterEnvFailure(outcome, "The Multi Instrument document changed before publication");
         } else if (!isFail(result) && cvPresetApply
             && (this.contextError || context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
@@ -220,25 +230,33 @@ class Bridge {
             && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
                 || context.fileUrl !== afterContext.fileUrl)) {
             result = { ok: false, native_outcome: "unknown", errors: ["The native document changed before route verification"] };
-        } else if (!isFail(result) && emptyNestedSplitterRemove
+        } else if (!isFail(result) && scopeAssignment
+            && (this.contextError || this.documentMode !== "native" || !sameFixtureContext(context, afterContext)
+                || context.fileUrl !== afterContext.fileUrl || !this.insertGraphTransportStopped())) {
+            code = "native_context_lost";
+            result = scopeEdit ? { ok: false, native_outcome: "unknown",
+                error: { code: "scope_send_edit_context_changed", message: "The Scope Send document changed" } }
+                : fail("The Scope assignment lease changed before publication");
+        } else if (!isFail(result) && nestedSplitterRemove
             && (this.contextError || !sameFixtureContext(context, afterContext) || context.fileUrl !== afterContext.fileUrl)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
             result = { ok: false, native_outcome: outcome, errors: [{
-                code: "insert_splitter_remove_empty_nested_context_changed",
+                code: oneLaneSplitterRemove ? "insert_splitter_remove_one_lane_nested_context_changed"
+                    : "insert_splitter_remove_empty_nested_context_changed",
                 message: "The Splitter target document changed before publication",
             }] };
         } else if (!isFail(result) && this.contextError) {
             code = "native_context_lost";
             result = fail("native document context was lost before publication");
         }
-        if (!isFail(result) && (req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
+        if (!isFail(result) && (req.op === "trackEventInput" || req.op === "chorderLearningGet" || req.op === "chorderLearningSet" || req.op === "chorderChordsGet" || req.op === "chorderAuditionLane" || req.op === "externalPortMenu" || rumbleSerialization || cvPresetSettings || impactOutputs || multiChildParameters || nodeScope === "cv_preset_target")
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session
                 || (req.op === "trackEventInput" && (this.documentMode !== "native" || context.fileUrl !== afterContext.fileUrl)))) {
             code = "native_context_lost";
             result = fail("the native editor document lease changed before publication");
         }
-        if (!isFail(result) && ["insertChainState", "insertSlotMove", "insertSplitterRemove", "insertSplitterAdd"].includes(req.op)
+        if (!isFail(result) && ["insertChainState", "insertSlotMove", "insertSlotRemove", "insertSplitterRemove", "insertSplitterAdd"].includes(req.op)
             && (context.open !== true || afterContext.open !== true
                 || context.document !== afterContext.document || context.session !== afterContext.session)) {
             const outcome = result && result.native_outcome === "not_applied" ? "not_applied" : "unknown";
@@ -364,6 +382,10 @@ class Bridge {
             case "externalPortMenu": return this.fromComponent(c => c.externalPortMenu(args));
             case "externalStereoSendSet": return this.externalStereoSendSet(args);
             case "chorderChordsGet": return this.fromComponent(c => c.chorderChordsGet(args));
+            case "chorderAuditionLane": return this.fromComponent(c => c.chorderAuditionLane(args, () => {
+                const transport = this.song().transport;
+                return transport && transport.playing === false && transport.recording === false;
+            }));
             case "chorderLearningGet": return this.fromComponent(c => c.chorderLearningGet(args));
             case "chorderLearningSet": return this.fromComponent(c => c.chorderLearningSet(args));
             case "ping": return { pong: true, context: this.context(), session: this.session, time: Date.now() };
@@ -409,6 +431,9 @@ class Bridge {
             case "inserts": return this.fromComponent(c => c.inserts(args));
             case "setInsertBypass": return this.fromComponent(c => c.setInsertBypass(args));
             case "sends": return this.fromComponent(c => c.sends(args));
+            case "scopeSidechainAssignmentGet": return this.scopeSidechainAssignmentGet(args);
+            case "scopeSidechainAssignmentRemove": return this.scopeSidechainAssignmentGet(args, "remove");
+            case "scopeSidechainAssignmentCreate": return this.scopeSidechainAssignmentGet(args, "create");
             case "setSend": return this.fromComponent(c => c.setSend(args));
             case "setChannelLabel": return this.fromComponent(c => c.setChannelLabel(args));
             case "setChannelColor": return this.fromComponent(c => c.setChannelColor(args));
@@ -422,13 +447,23 @@ class Bridge {
             case "pluginState": return this.fromComponent(c => c.pluginState(args));
             case "insertChainState": return this.fromComponent(c => c.insertChainState(args));
             case "insertSlotMove": return this.fromComponent(c => c.insertSlotMove(args));
+            case "insertSlotRemove": return this.fromComponent(c => c.insertSlotRemove(args));
             case "insertSplitterAdd": return this.fromComponent(c => c.insertSplitterAdd(args));
             case "insertSplitterRemove": return this.fromComponent(c => c.insertSplitterRemove(args));
             case "insertSplitterRemoveEmptyNested": return this.fromComponent(c => c.insertSplitterRemoveEmptyNested(args));
+            case "insertSplitterRemoveOneLaneNested": return this.fromComponent(c => c.insertSplitterRemoveOneLaneNested(args));
             case "pluginParameterDetails": return this.fromComponent(c => c.pluginParameterDetails(args));
             case "pluginParameterFormat": return this.fromComponent(c => c.pluginParameterFormat(args));
             case "pluginParameterDigest": return this.fromComponent(c => c.pluginParameterDigest(args));
             case "pluginMultiChildParameters": return this.fromComponent(c => c.pluginMultiChildParameters(args));
+            case "pluginMultiChildFilterEnvSet": {
+                const transport = this.song().transport;
+                if (!transport || transport.playing !== false || transport.recording !== false)
+                    return multiChildFilterEnvFailure("not_applied", "Stop playback and recording before setting Mai Tai Filter Env");
+                if (!this.component || typeof this.component.pluginMultiChildFilterEnvSet !== "function")
+                    return multiChildFilterEnvFailure("not_applied", "The matching control surface is required");
+                return this.component.pluginMultiChildFilterEnvSet(args);
+            }
             case "pluginMultiAddMaiTai": return this.pluginMultiAddMaiTai(args);
             case "fabfilterPresetApply": return this.fromComponent(c => c.fabfilterPresetApply(args));
             case "serum2PresetApply": return this.serum2PresetApply(args);
@@ -1732,6 +1767,76 @@ class Bridge {
         return { added: added, trackCount: uniqueTracks(list).length };
     }
 
+    scopeSidechainAssignmentGet(args, edit = "get") {
+        const remove = edit === "remove";
+        const failure = (message, unknown = false) => edit === "get" ? fail(message)
+            : { ok: false, native_outcome: unknown ? "unknown" : "not_applied",
+                error: { code: "scope_sidechain_assignment_" + edit + "_failed", message } };
+        const lease = this.requestContext;
+        const leaseCurrent = () => {
+            const current = this.context();
+            return !this.contextError && this.documentMode === "native"
+                && !!lease && lease.open === true && sameFixtureContext(lease, current)
+                && lease.fileUrl === current.fileUrl && this.insertGraphTransportStopped();
+        };
+        const validName = name => typeof name === "string" && name.trim().length > 0
+            && name.length <= 256 && !/[\u0000-\u001f\u007f-\u009f]/.test(name);
+        const fields = remove ? "expected_instance,expected_send,scope_channel,source_channel"
+            : "expected_instance,scope_channel,source_channel";
+        if (!args || Object.keys(args).sort().join(",") !== fields
+            || !validName(args.source_channel) || !validName(args.scope_channel)
+            || args.source_channel === args.scope_channel) {
+            return failure("Scope assignment requires two distinct audio channel names and the exact instance");
+        }
+        if (!leaseCurrent()) return failure("Scope assignments require a current native document and stopped transport");
+
+        const readChannels = () => {
+            const mixer = docObject("Environment/MixerConsole");
+            if (!has(mixer, "getChannelList", "function")) return null;
+            const list = mixer.getChannelList(1);
+            if (!has(list, "getChannel", "function")) return null;
+            const count = list.numChannels;
+            if (!Number.isInteger(count) || count < 2 || count > 16) return null;
+            const all = Array.from({ length: count }, (_, index) => list.getChannel(index));
+            if (all.some(channel => !channel) || new Set(all).size !== count) return null;
+            const matches = name => all.filter(channel => channel.mediaType === "Audio" && channel.label === name);
+            const source = matches(args.source_channel);
+            const receiver = matches(args.scope_channel);
+            if (source.length !== 1 || receiver.length !== 1 || source[0] === receiver[0]
+                || list.numChannels !== count || !all.every((channel, index) => list.getChannel(index) === channel)) return null;
+            return { source: source[0], receiver: receiver[0] };
+        };
+
+        const channels = readChannels();
+        if (!channels || !leaseCurrent()) return failure("The exact source and Scope audio channels are unavailable");
+        return this.fromComponent(component => {
+            const target = { channel: args.scope_channel, slot: 0, plugin: "Scope" };
+            const plug = component.pluginOf(target);
+            if (!plug || plug.error || plug.name !== "Scope" || !leaseCurrent())
+                return failure("The exact Scope insert at slot zero is unavailable");
+            const request = { operation: "scope_sidechain_assignment_" + edit,
+                expected_instance: args.expected_instance };
+            if (remove) request.expected_send = args.expected_send;
+            const native = component.nativePluginRequest(plug.device, request, channels.source);
+            const afterChannels = readChannels();
+            const afterPlug = component.pluginOf(target);
+            if (!afterChannels || afterChannels.source !== channels.source || afterChannels.receiver !== channels.receiver
+                || !afterPlug || afterPlug.error || afterPlug.device !== plug.device || afterPlug.element !== plug.element
+                || !leaseCurrent()) return failure("The source, Scope or document binding changed", true);
+            if (!native || native.ok !== true) {
+                const reason = native && native.error && typeof native.error.message === "string"
+                    ? native.error.message.slice(0, 200) : "The native Scope assignment is unavailable";
+                return failure(reason, !native || native.outcome !== "not_applied");
+            }
+            if (edit !== "get") return { recorded: true,
+                [remove ? "removed_send" : "created_send"]: remove ? native.removed_send : native.created_send,
+                native_outcome: "applied_unverified", scope_instance: args.expected_instance };
+            return { state: native.state, scope: native.scope, source_channel: args.source_channel,
+                scope_channel: args.scope_channel, scope_slot: 0, scope_instance: args.expected_instance,
+                send_node: native.send_node ?? null };
+        });
+    }
+
     hostProbe(args) {
         const root = docObject("");
         const env = docObject("Environment");
@@ -1847,6 +1952,10 @@ const kMidiProgramInstruments = {
     twin_2: { name: "Twin 2", classUid: "3E1E04C5-8250-42D1-B34E-D3F6779D00D2" },
     twin_3: { name: "Twin 3", classUid: "91AF218E-111A-44CB-ABFE-F7CB065FF157" }
 };
+
+function multiChildFilterEnvFailure(outcome, message) {
+    return { ok: false, native_outcome: outcome, errors: [{ code: "multi_child_filter_env_unconfirmed", message }] };
+}
 
 function serum2PresetFailure(outcome, message) {
     return { ok: false, native_outcome: outcome, errors: [{ code: "serum2_preset_apply_failed", message }] };
