@@ -1,0 +1,83 @@
+# Scope capture data and host lifecycle
+
+R451 inspected the exact macOS arm64 Studio Pro 8.1.1 build 113103 host
+and stock Scope binary. The static observations matched 22 Ghidra functions,
+39 instruction anchors, nine loader rebases, five strings and 17 independent
+Craft Anything byte ranges. This inspection made zero live host requests.
+
+The Scope processing callback forwards this block's size and input/output
+lane descriptions. The capture routine receives its retained capture context.
+The callback path supplied no absolute frame or device timestamp to that
+routine. Acquisition updates its filled count and rewrites the display
+projection in place. It clears the dirty marker before rewriting the display
+values. The renderer reads the retained display projection directly. The
+observed marker indicates a display update and supplies no completion receipt
+or immutable observation for another caller.
+
+| Existing path | Observed contract |
+| --- | --- |
+| Engine graph lifecycle | Changes active state and invokes processor lifecycle callbacks. No Scope-specific payload is returned. |
+| Engine publication lock | Protects the published graph during rendering. Some host timing fields are updated before the callback tries the lock. The lock domain for all relevant Scope writers remains unverified. |
+| `suspendProcessing` | A locked setter on the device pad-section component. |
+| Graph and processing-error notifications | Carry their notification identifiers. No Scope capture fields were observed. |
+
+The [earlier capture and display results](2026-11-26-scope-capture-display.md)
+still apply to their tested settings and screenshots. Direct status and raw
+waveform qualification require an observation tied to one current Scope
+instance and its capture generation, format rate, frame, latch, valid count
+and configured window. A producer-owned publication or a capture-preserving
+read boundary remains open.
+
+## Lock identity on the published graph
+
+R582 checked the same arm64 host image. The real-time receiver thunk reaches
+the known render callback, and its direct graph-render call follows the
+engine-context lock acquisition. Publication passes this exact engine lock
+to the processors in two graph collections before storing the graph.
+
+The processor lock setter retains the incoming lock and replaces the prior
+pointer. The other processor constructors and the conditional stock task
+constructors examined here can populate that same field with independently
+allocated locks. These locks use the same CCL exclusive-lock class. The
+class or an available `ILockProvider` therefore cannot establish that a
+particular task is under the currently published engine lock. Binding a
+reader still requires the current graph, the exact Scope owner, and the
+identity of the lock or producer publication that covers the live state.
+
+This offline check compared nine direct call sites in LLVM and Ghidra,
+made 13 decompilation queries, and matched ten independent Craft Anything
+byte ranges. It made no DAW requests or graph lock acquisitions.
+
+## Engine context selection
+
+R597 traced the document initialization and the published engine owner's
+context-selection path in the same arm64 host. The initialization stores
+the engine owner's interface at document offset `0x3c8`. It stores the
+owner's view at `+0x30`, rather than a graph or lock pointer.
+
+That engine owner allocates two separate processing contexts. Each context
+constructor creates its own lock at `+0x48`. The stock mixer route looks up
+its exact render participant in the primary and secondary context lists.
+The lookup returns the matching context or null. A separate constructor
+can allocate the same context class outside the pair. The owner reference
+and context class alone therefore cannot identify the lock that covers a
+particular Scope processor.
+
+This inspection checked 23 Ghidra decompilation queries, LLVM call sites,
+and 14 Craft Anything byte ranges. It made no DAW requests. A stable
+participant-to-context binding and a capture-preserving, synchronized
+read of Scope's current data remain open.
+
+R598 reopened the write-protected saved Scope Send fixture in Studio Pro
+8.1.1. Two independent reads of the exact Scope and Send identified one
+engine owner with two distinct contexts and two distinct non-null locks.
+The retained Scope effect did not expose the standard lock-provider
+interface in either observation. The effect facade alone cannot establish
+a lock for its capture data. A read through an owning processor would
+still need publication and lifetime evidence.
+
+The trial made 11 requests in 1.857 seconds with 31 Scope DSP rows and
+both native IDs matching the saved fixture. It acquired no lock and read
+no waveform samples. The host exited after 27.770 seconds with the
+original and saved scratch bytes unchanged. All 18 managed files and
+nine changed profile files were restored.
