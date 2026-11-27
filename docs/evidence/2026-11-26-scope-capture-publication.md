@@ -47,3 +47,23 @@ identity of the lock or producer publication that covers the live state.
 This offline check compared nine direct call sites in LLVM and Ghidra,
 made 13 decompilation queries, and matched ten independent Craft Anything
 byte ranges. It made no DAW requests or graph lock acquisitions.
+
+## Engine context selection
+
+R597 traced the document initialization and the published engine owner's
+context-selection path in the same arm64 host. The initialization stores
+the engine owner's interface at document offset `0x3c8`. It stores the
+owner's view at `+0x30`, rather than a graph or lock pointer.
+
+That engine owner allocates two separate processing contexts. Each context
+constructor creates its own lock at `+0x48`. The stock mixer route looks up
+its exact render participant in the primary and secondary context lists.
+The lookup returns the matching context or null. A separate constructor
+can allocate the same context class outside the pair. The owner reference
+and context class alone therefore cannot identify the lock that covers a
+particular Scope processor.
+
+This inspection checked 23 Ghidra decompilation queries, LLVM call sites,
+and 14 Craft Anything byte ranges. It made no DAW requests. A stable
+participant-to-context binding and a capture-preserving, synchronized
+read of Scope's current data remain open.
