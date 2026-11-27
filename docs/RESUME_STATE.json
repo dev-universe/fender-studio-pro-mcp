@@ -6,7 +6,7 @@
   "resume_document": "docs/LOOP_HANDOFF_2026-11-25_AFTERNOON.md",
   "nov25_development_resume": {
     "verified_host_build": "113103",
-    "main_at_checkpoint": "36345284b3c0a7bc8f5e15300264aa0c74ee6563",
+    "main_at_checkpoint": "3bfc3786954866aa7181c71a532bb1637967daf1",
     "closed_studio_pro_trials": [
       "R320",
       "R321A",
@@ -466,9 +466,10 @@
       187,
       338,
       351,
-      352
+      352,
+      172
     ],
-    "open_pull_requests": [172, 353, 354, 355, 356, 357],
+    "open_pull_requests": [353, 354, 355, 356, 357],
     "consolidated_documentation_prs": {
       "351": [184, 217, 238, 293],
       "352": [165, 166, 167],
@@ -494,7 +495,7 @@
         353
       ],
       "normal_managed_installation_restored": true,
-      "next": "PR352 merged. PR172 is testing current head 782f884d; then check and land PR353–PR357. Continue matching the exact Scope effect to the owning processing task and current published engine context before any capture-memory read. Volt 276 and Keystation remain absent."
+      "next": "PR172 merged from tested head 782f884d. PR353 is checking current head 07b34d08, followed by PR354–PR357. Continue matching the exact Scope effect to the owning processing task and current published engine context before any capture-memory read. Volt 276 and Keystation remain absent."
     },
     "remaining_builtin_units_after_local_verification": 11,
     "locally_qualified_fixed_units_pending_merge": []
