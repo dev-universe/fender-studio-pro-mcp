@@ -446,6 +446,7 @@ fn saved_bytes_are_frozen_reusable_and_never_claim_semantic_verification() {
         "4ba69735ca53765ed6a709edb56c6ea236b7193a3b29a6b390c346f0f4340e4e"
     );
     assert_eq!(saved["verified"], false);
+    assert!(saved.get("scope_state_coverage").is_none());
     let token = saved["token"].as_str().unwrap();
     assert!(valid_token(token));
     drop(lease);
@@ -455,6 +456,7 @@ fn saved_bytes_are_frozen_reusable_and_never_claim_semantic_verification() {
         assert_eq!(restored["load_accepted"], true);
         assert_eq!(restored["verified"], false);
         assert_eq!(restored["outcome"], "applied_unverified");
+        assert!(restored.get("scope_state_coverage").is_none());
         assert_eq!(&*unsafe { &*plugin }.bytes.lock().unwrap(), b"state");
         drop(lease);
     }
@@ -462,6 +464,40 @@ fn saved_bytes_are_frozen_reusable_and_never_claim_semantic_verification() {
     assert_eq!(restore(&ctx, token).0["outcome"], "not_applied");
     drop(ctx);
 }
+
+#[test]
+fn scope_capsules_report_trace_coverage_for_capture_and_accepted_restore() {
+    let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
+    let mut fixture = Fixture::new();
+    fixture.device.class = Uid {
+        a: 0x36322412,
+        b: 0xad90,
+        c: 0x4ee0,
+        d: [0xb6, 0x3c, 0x37, 0x92, 0x95, 0x66, 0xb0, 0x81],
+    };
+    let mut ctx = fixture.context();
+    ctx.instance.native_class = "AudioEffect".into();
+    ctx.instance.object_id = "Scope 2".into();
+    let coverage = json!({
+        "capsule_includes_live_trace": false,
+        "restore_may_clear_held_trace": true,
+    });
+    let (saved, lease) = capture(&ctx).unwrap();
+    assert_eq!(saved["scope_state_coverage"], coverage);
+    drop(lease);
+    let token = saved["token"].as_str().unwrap();
+    let (restored, lease) = restore(&ctx, token);
+    assert_eq!(restored["load_accepted"], true);
+    assert_eq!(restored["verified"], false);
+    assert_eq!(restored["scope_state_coverage"], coverage);
+    drop(lease);
+    let released = release(&ctx, token).unwrap();
+    assert!(released.get("scope_state_coverage").is_none());
+    let (refused, _) = restore(&ctx, token);
+    assert_eq!(refused["outcome"], "not_applied");
+    assert!(refused.get("scope_state_coverage").is_none());
+}
+
 #[test]
 fn state_tokens_are_bound_to_device_and_expire_with_document_identity() {
     let _serial = super::super::super::tests::TEST_LOCK.lock().unwrap();
