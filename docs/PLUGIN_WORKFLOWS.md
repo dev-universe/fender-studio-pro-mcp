@@ -113,7 +113,7 @@ On Studio Pro 8.1.1 with the matching native extension, Scope `plugin_state`
 capture and accepted restore return `scope_state_coverage`. The capsule covers
 component settings. Its `capsule_includes_live_trace` field is `false` and
 `restore_may_clear_held_trace` is `true`. Read the settings independently after
-restore. [Held trace verification](evidence/2026-11-25-scope-state-coverage.md)
+restore. [Scope capsule verification](evidence/2026-11-25-scope-state-coverage.md)
 
 ## Live Impact outputs
 
