@@ -67,3 +67,17 @@ This inspection checked 23 Ghidra decompilation queries, LLVM call sites,
 and 14 Craft Anything byte ranges. It made no DAW requests. A stable
 participant-to-context binding and a capture-preserving, synchronized
 read of Scope's current data remain open.
+
+R598 reopened the write-protected saved Scope Send fixture in Studio Pro
+8.1.1. Two independent reads of the exact Scope and Send identified one
+engine owner with two distinct contexts and two distinct non-null locks.
+The retained Scope effect did not expose the standard lock-provider
+interface in either observation. The effect facade alone cannot establish
+a lock for its capture data. A read through an owning processor would
+still need publication and lifetime evidence.
+
+The trial made 11 requests in 1.857 seconds with 31 Scope DSP rows and
+both native IDs matching the saved fixture. It acquired no lock and read
+no waveform samples. The host exited after 27.770 seconds with the
+original and saved scratch bytes unchanged. All 18 managed files and
+nine changed profile files were restored.
