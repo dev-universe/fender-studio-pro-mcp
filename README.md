@@ -1,17 +1,19 @@
 <h1 align="center">Fender Studio Pro MCP</h1>
 
-<h2 align="center">그래서 이게 뭔가요?</h2>
-<p align="center">Fender Studio Pro에서 하는 대부분(이 되도록 열심히 노력 중)의 작업들을 채팅으로 AI에게 부탁할 수 있게 해주는 도구입니다.</p>
+<p align="center"><strong>English</strong> · <a href="README.ko.md">Korean</a></p>
 
+<h2 align="center">What is this?</h2>
 <p align="center">Control Fender Studio Pro from an MCP-compatible AI client.<br>
 Experimental · Live-tested on Studio Pro 8.1.1 (Build 113103) on Apple Silicon Macs</p>
 
-<p align="center">
-  <a href="#quick-start">Quick start</a> ·
-  <a href="#usage">Usage</a> ·
-  <a href="#optional-native-add-on">Native add-on</a> ·
-  <a href="#project-docs">Docs</a>
-</p>
+- [Quick start](#quick-start)
+- [Usage](#usage)
+- [Supported plugins](#supported-plugins)
+- [Native add-on](#optional-native-add-on)
+- [Inspect files offline](#inspect-files-offline)
+- [Validation](#validation)
+- [Project docs](#project-docs)
+- [License](#license)
 
 ## Quick start
 
@@ -96,6 +98,65 @@ To control an instrument on a track, read its exact name with `tracks_list`. Cal
 | Apply FabFilter presets or set up MIDI mapping | [FabFilter workflows](docs/PLUGIN_WORKFLOWS.md#fabfilter-preset-library) |
 | Control Multi Instrument, Chorder, CV, Impact or External Effect | [Plugin workflows](docs/PLUGIN_WORKFLOWS.md) |
 | Edit nested Splitters and Scope Sends | [Insert routing and Scope sidechain](docs/INSERT_ROUTING.md) |
+
+## Supported plugins
+
+These plugins have verified MCP operations in Studio Pro 8.1.1 (Build 113103) on Apple Silicon. The available operations vary by plugin. The linked guides list the tested settings, builds, and limitations. Some operations require the [native add-on](#optional-native-add-on).
+
+### Studio Pro built-ins
+
+The live tests covered 60 built-in classes. Phase Meter support covers insert-slot bypass. [Built-in plugin matrix](docs/BUILTIN_PLUGINS.md)
+
+| Category | Plugins |
+| --- | --- |
+| Instruments | CV Instrument, Impact, Mai Tai, Mojito, Multi Instrument, Presence, SampleOne |
+| Note FX | Arpeggiator, Chorder, Input Filter, Repeater |
+| Amps and pedals | Ampire, Mustang Native, Pedalboard, Rumble Native |
+| EQ, dynamics, and distortion | Bitcrusher, Channel Strip, Compressor, De-Esser, Expander, Fat Channel, Gate, Limiter, Multiband Dynamics, Pro EQ, RedlightDist, Tricomp |
+| Filter, modulation, and vocal effects | Autofilter, Chorus, Flanger, Phaser, Rotor, Vocoder, Voice FX, Vocal Tune, X-Trem |
+| Delay and reverb | Analog Delay, Beat Delay, Groove Delay, IR Maker, Mixverb, Open AIR, Room Reverb, Studio Verb, Surround Delay |
+| Metering and utilities | Binaural Pan, Dual Pan, Level Meter, Mixtool, Phase Meter, Scope, Spectrum Meter, Tone Generator, Tuner, VU Meter |
+| External effects | External Effect Mono, External Effect Stereo |
+| Routing, Mix FX, and spatial | Console Shaper, Splitter, Surround Panner |
+
+### Third-party VST3 plugins
+
+#### FabFilter
+
+The 23 products below have verified preset workflows. Parameter and MIDI coverage varies by product. [FabFilter preset library](docs/PLUGIN_WORKFLOWS.md#fabfilter-preset-library) · [MIDI controller mapping](docs/PLUGIN_WORKFLOWS.md#fabfilter-midi-controller-mapping)
+
+- Micro
+- One
+- Pro-C 2
+- Pro-C 3
+- Pro-DS
+- Pro-G
+- Pro-L
+- Pro-L 2
+- Pro-MB
+- Pro-Q 2
+- Pro-Q 3
+- Pro-Q 4
+- Pro-R
+- Pro-R 2
+- Saturn
+- Saturn 2
+- Simplon
+- Timeless 2
+- Timeless 3
+- Twin 2
+- Twin 3
+- Volcano 2
+- Volcano 3
+
+#### Xfer Records Serum 2
+
+Preset application and MIDI routing were verified on version 2.1.5. [Serum 2 and Serum 2 FX workflows](docs/PLUGIN_WORKFLOWS.md#serum-2-and-serum-2-fx)
+
+- Serum 2
+- Serum 2 FX
+
+This list will grow as more plugins are verified.
 
 ## Optional native add-on
 
