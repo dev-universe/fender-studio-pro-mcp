@@ -63,3 +63,25 @@ outcomes separately.
 Keep songs, audio, raw app logs, private paths, credentials, and proprietary app
 resources out of commits and public reports. Use small synthetic fixtures for
 reproductions. Preserve MIT notices on copied bridge and EditTask assets.
+
+## Check and publish the project site
+
+Run `python3 scripts/check_pages.py` to check the two language pages,
+search metadata, sitemap, and links to repository evidence. The Core
+offline checks run the same script.
+
+After merging a verified site change into `main`, publish its exact
+`site/` tree to the existing `gh-pages` branch.
+
+```sh
+git fetch origin main gh-pages
+pages_tree=$(git rev-parse origin/main:site)
+pages_parent=$(git rev-parse origin/gh-pages)
+pages_revision=$(git rev-parse --short origin/main)
+pages_commit=$(git commit-tree "$pages_tree" -p "$pages_parent" -m "Publish Pages from $pages_revision")
+git push origin "$pages_commit:refs/heads/gh-pages"
+```
+
+Check both languages and the sitemap on the public project site after
+the Pages build. The host-level `robots.txt` lives in
+[the dev-universe Pages repository](https://github.com/dev-universe/dev-universe.github.io/blob/main/robots.txt).

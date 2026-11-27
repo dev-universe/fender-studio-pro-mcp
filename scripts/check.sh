@@ -15,6 +15,8 @@ for check_tool in cargo node python3; do
   fi
 done
 
+python3 scripts/check_pages.py
+
 cargo fmt --check
 cargo clippy --locked --all-targets -- -D warnings
 cargo test --locked

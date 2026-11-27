@@ -1,0 +1,18 @@
+# Fender Studio Pro MCP
+
+> Independent MIT-licensed Model Context Protocol server for editing tracks and MIDI, controlling the mixer, and automating supported plug-ins in Fender Studio Pro. Live verification covers Studio Pro 8.1.1 build 113103 on Apple Silicon Macs.
+
+## Start here
+
+- [English](https://dev-universe.github.io/fender-studio-pro-mcp/)
+- [한국어](https://dev-universe.github.io/fender-studio-pro-mcp/ko/)
+- [Install and verify the connection](https://github.com/dev-universe/fender-studio-pro-mcp#quick-start)
+- [Source and license](https://github.com/dev-universe/fender-studio-pro-mcp)
+
+## Verified support
+
+- [Complete plug-in list](https://github.com/dev-universe/fender-studio-pro-mcp#supported-plugins)
+- [Studio Pro built-in verification matrix](https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/BUILTIN_PLUGINS.md)
+- [FabFilter preset workflows](https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/PLUGIN_WORKFLOWS.md#fabfilter-preset-library)
+- [Serum 2 and Serum 2 FX on VST3](https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/PLUGIN_WORKFLOWS.md#serum-2-and-serum-2-fx)
+- [Live validation and evidence](https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/VALIDATION.md)

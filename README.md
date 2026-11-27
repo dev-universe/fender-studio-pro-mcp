@@ -6,6 +6,8 @@
 <p align="center">Control Fender Studio Pro from an MCP-compatible AI client.<br>
 Experimental · Live-tested on Studio Pro 8.1.1 (Build 113103) on Apple Silicon Macs</p>
 
+<p align="center"><a href="https://dev-universe.github.io/fender-studio-pro-mcp/">Project website</a></p>
+
 - [Quick start](#quick-start)
 - [Usage](#usage)
 - [Supported plugins](#supported-plugins)

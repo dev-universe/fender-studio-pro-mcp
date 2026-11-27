@@ -6,6 +6,8 @@
 <p align="center">Fender Studio Pro에서 트랙을 편집하거나 믹서를 조절하는 일을 채팅으로 AI에게 부탁할 수 있게 해주는 도구입니다.<br>
 실험적 프로젝트이며 Apple Silicon Mac의 Studio Pro 8.1.1 (빌드 113103)에서 검증했습니다.</p>
 
+<p align="center"><a href="https://dev-universe.github.io/fender-studio-pro-mcp/ko/">프로젝트 사이트</a></p>
+
 - [빠른 시작](#빠른-시작)
 - [사용 방법](#사용-방법)
 - [지원 플러그인](#지원-플러그인)

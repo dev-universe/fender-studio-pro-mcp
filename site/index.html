@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fender Studio Pro MCP | AI Control for Studio Pro</title>
+  <meta name="description" content="Control tracks, MIDI notes, the mixer, and supported VST3 plug-ins in Fender Studio Pro from an MCP client. See setup, compatibility, and live verification.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://dev-universe.github.io/fender-studio-pro-mcp/">
+  <link rel="alternate" hreflang="en" href="https://dev-universe.github.io/fender-studio-pro-mcp/">
+  <link rel="alternate" hreflang="ko" href="https://dev-universe.github.io/fender-studio-pro-mcp/ko/">
+  <link rel="alternate" hreflang="x-default" href="https://dev-universe.github.io/fender-studio-pro-mcp/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Fender Studio Pro MCP">
+  <meta property="og:title" content="Fender Studio Pro MCP | AI Control for Studio Pro">
+  <meta property="og:description" content="A local MCP server for track edits, mixer control, and verified Studio Pro plug-in workflows on Apple Silicon.">
+  <meta property="og:url" content="https://dev-universe.github.io/fender-studio-pro-mcp/">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:image" content="https://dev-universe.github.io/fender-studio-pro-mcp/assets/studio-mixer.jpg">
+  <meta property="og:image:alt" content="Amber-lit faders on a recording console">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="stylesheet" href="assets/style.css">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareSourceCode",
+      "@id": "https://dev-universe.github.io/fender-studio-pro-mcp/#software",
+      "name": "Fender Studio Pro MCP",
+      "description": "An independent, open-source MCP server for track editing, mixer control, and plug-in automation in Fender Studio Pro.",
+      "url": "https://dev-universe.github.io/fender-studio-pro-mcp/",
+      "inLanguage": "en",
+      "codeRepository": "https://github.com/dev-universe/fender-studio-pro-mcp",
+      "license": "https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/LICENSE",
+      "programmingLanguage": ["Rust", "JavaScript"],
+      "runtimePlatform": "Apple Silicon macOS with Fender Studio Pro 8.1.1"
+    }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="./"><span class="mark" aria-hidden="true">✳</span> Studio Pro MCP</a>
+      <nav aria-label="Main navigation">
+        <a class="nav-section" href="#compatibility">Compatibility</a>
+        <a class="nav-section" href="#faq">FAQ</a>
+        <a class="language" href="ko/" hreflang="ko" lang="ko">한국어</a>
+        <a class="repo" href="https://github.com/dev-universe/fender-studio-pro-mcp">GitHub</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="title">
+      <div class="hero-copy">
+        <h1 id="title">Fender <br>Studio Pro <span>MCP</span></h1>
+        <p>Edit tracks and MIDI notes, adjust the mixer, and control supported plug-ins in Fender Studio Pro from your AI client.</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/dev-universe/fender-studio-pro-mcp#quick-start">Installation guide</a>
+          <a class="button secondary" href="#compatibility">Supported plug-ins</a>
+        </div>
+      </div>
+      <figure class="hero-media">
+        <img src="assets/studio-mixer.jpg" alt="Amber-lit faders on a recording console" width="1200" height="800" fetchpriority="high">
+      </figure>
+    </section>
+
+    <section id="compatibility" class="compatibility">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>What works today</h2>
+          <p>Live-tested on <strong>Studio Pro 8.1.1</strong> (build 113103)<br class="wide"> on Apple Silicon Macs.</p>
+        </div>
+        <dl class="support">
+          <div class="support-row">
+            <dt><span>Studio Pro</span><strong>Built-in plug-ins</strong></dt>
+            <dd>
+              <p>Verified operations across 60 built-in classes, including Ampire, Pedalboard, Impact, and Scope. Phase Meter verification covers insert-slot bypass.</p>
+              <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/BUILTIN_PLUGINS.md">Built-in verification matrix</a>
+            </dd>
+          </div>
+          <div class="support-row">
+            <dt><span>FabFilter</span><strong>23 VST3 products</strong></dt>
+            <dd>
+              <p>Verified preset workflows include Pro-Q 4, Pro-MB, Pro-C 3, Pro-R 2, Saturn 2, and Twin 3. Parameter and MIDI support varies by product.</p>
+              <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/PLUGIN_WORKFLOWS.md#fabfilter-preset-library">FabFilter workflows</a>
+            </dd>
+          </div>
+          <div class="support-row">
+            <dt><span>Xfer Records</span><strong>Serum 2 and Serum 2 FX</strong></dt>
+            <dd>
+              <p>Verified VST3 insertion, MIDI routing, and processor-only preset application on both 2.1.5 plug-ins.</p>
+              <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/PLUGIN_WORKFLOWS.md#serum-2-and-serum-2-fx">Serum 2 workflows and evidence</a>
+            </dd>
+          </div>
+        </dl>
+        <a class="all-support" href="https://github.com/dev-universe/fender-studio-pro-mcp#supported-plugins">See the complete plug-in list</a>
+      </div>
+    </section>
+
+    <section id="faq" class="wrap faq">
+      <h2>Common questions</h2>
+      <div class="answers">
+        <section>
+          <h3>What is Fender Studio Pro MCP?</h3>
+          <p>It is an independent, open-source Model Context Protocol server. A local MCP client connects to an installed bridge in Studio Pro and calls tools for editing and reading the current song.</p>
+          <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/ARCHITECTURE.md">How the bridge works</a>
+        </section>
+        <section>
+          <h3>Which computers and app versions are verified?</h3>
+          <p>Live verification covers macOS on Apple Silicon with Fender Studio Pro 8.1.1, build 113103. Windows, Intel Macs, and Linux are outside the verified host scope.</p>
+          <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/VALIDATION.md">Live validation report</a>
+        </section>
+        <section>
+          <h3>What do I need to connect?</h3>
+          <p>Build the local server, install the Studio Pro bridge, and configure a control surface. Use an MCP client that supports local stdio servers and run the live connection check with a scratch song open.</p>
+          <a href="https://github.com/dev-universe/fender-studio-pro-mcp#quick-start">Step-by-step setup</a>
+        </section>
+        <section>
+          <h3>When do I need the native add-on?</h3>
+          <p>Install it for native plug-in parameter access, supported state and preset operations, and advanced insert routing. The add-on targets the verified Apple Silicon host build.</p>
+          <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/docs/INSTALLATION.md">Native add-on installation</a>
+        </section>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap footer-inner">
+      <p>Independent open-source project · <a href="https://github.com/dev-universe/fender-studio-pro-mcp/blob/main/LICENSE">MIT license</a><br><small>Fender Studio Pro and Studio One are trademarks of their respective owners.</small></p>
+      <a href="https://github.com/dev-universe/fender-studio-pro-mcp">Source repository</a>
+    </div>
+  </footer>
+</body>
+</html>
