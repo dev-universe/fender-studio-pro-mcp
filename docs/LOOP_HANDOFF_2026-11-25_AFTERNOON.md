@@ -3494,3 +3494,24 @@ CV 프리셋·CV 제어, External Mono, External Stereo, 물리 키다.
   앱과 MCP owner는 닫힌 상태이며 Volt 276과 Keystation은
   이 시점에도 감지되지 않았다.
   [#348](https://github.com/dev-universe/fender-studio-pro-mcp/pull/348)
+
+## 2026-11-27 오전 문서 PR 정리와 Scope 상태 검증 재개
+
+- #348은 `b2c85652`, #349는 `6b3afef9`에 최신 헤드의
+  필수 두 검사를 통과해 병합됐다. #177, #187 및 #338도
+  병합돼 현재 문서 작업의 기준은 `88d83447`이다.
+- 기존 문서 PR 70개와 최근 main 대비 문서만 바꾸는 #293을
+  기능별 7개로 통합했다. 기존 순서와 기능별 순서의 트리가
+  동일함을 확인했고, 이동한 자료의 블롭과 내부 링크를 확인했다.
+  원본 71개는 새 PR에 번호를 연결한 뒤 닫았으며 브랜치는 보존했다.
+- [#351](https://github.com/dev-universe/fender-studio-pro-mcp/pull/351)은
+  README를 577→144줄로 정리하고 한국어 소개를 중앙 정렬했다.
+  GitHub 렌더러, 내부 링크와 앵커 209개, 셸·JSON 예시를 확인했다.
+  세부 기능, 라우팅 및 설치는 연결된 가이드에 있다.
+  문서 묶음은 #352 Chorder, #353 Scope, #354 Multi Instrument,
+  #355 Ampire, #356 Mustang·Rumble, #357 Inserts다.
+- 다음 코드 단위는 #172의 Scope 캡슐 범위 응답이다.
+  기존 R382 증거를 유지하고 원래 README에 추가하던 문단을
+  플러그인 가이드에 옮겼다. 현재 메인에서 검사 및 실앱 회귀를
+  확인한 뒤 기존 PR을 갱신한다. 같은 기능의 후속 문서는 같은 PR에
+  반영하며, 이미 병합된 검증 문서는 기능별로 모은다.
