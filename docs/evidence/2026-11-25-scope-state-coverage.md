@@ -19,3 +19,14 @@ closed without saving after 31.025 seconds, and the scratch bytes,
 18 managed installation files and 10 application settings files matched
 their originals. The separate trial had already verified what restore does
 to an actual held waveform. [Held trace verification](https://github.com/dev-universe/fender-studio-pro-mcp/pull/171)
+
+R596 repeated the test on the consolidated branch, against the installed
+8.1.1 build 113103. Capture and accepted restore reported the same Scope
+coverage. The Tone Generator observations and all releases omitted the
+Scope field. The independent comparison matched the Scope and peer
+fingerprints and all 41 original DSP rows. Four tokens were released.
+
+The test made 42 requests in 4.038 seconds. Studio Pro closed without
+saving after 28.326 seconds. The scratch bytes matched, and the 18
+managed installation files and 10 changed profile files were restored.
+Eight focused core tests and eight focused native tests passed.
