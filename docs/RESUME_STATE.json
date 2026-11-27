@@ -478,7 +478,7 @@
       "356": [176, 178, 179, 317],
       "357": [196, 205, 213, 229, 234, 235, 239, 298, 314, 315, 340, 341, 344]
     },
-    "remaining_builtin_units": 13,
+    "remaining_builtin_units": 11,
     "remaining_hardware_units_within_builtin": 4,
     "normal_managed_installation_restored": true,
     "app_closed_observed": true,
