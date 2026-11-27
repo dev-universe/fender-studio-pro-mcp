@@ -6,6 +6,10 @@ vulnerability, follow [SECURITY.md](SECURITY.md) and keep the report private.
 Use a branch and pull request title without `codex`. Describe the behavior you
 changed, the checks you ran, and any results you could not verify.
 
+Give concurrent changes separate worktrees and build directories. After merge,
+preserve validation artifacts and close the worktree using the
+[worktree cleanup procedure](docs/MCP_DEVELOPMENT.md#작업을-병합한-뒤-워크트리를-정리한다).
+
 ## Run the offline checks
 
 Install Rust 1.88.0 with `rustfmt` and `clippy`, Node.js 24, and Python 3. From the
@@ -16,19 +20,23 @@ RUSTUP_TOOLCHAIN=1.88.0 bash scripts/check.sh
 ```
 
 The script checks Rust formatting, Clippy, tests, a release build, JavaScript
-tests, and Python tests. It does not need a DAW or an SDK.
+tests, and Python tests. Local runs show free space on the checkout volume before
+the build. The script needs no DAW or SDK.
 
 For native changes, use a macOS arm64 machine. Run the library tests and build
 the package without installing or loading it.
 
 ```sh
-for crate in parameter-api editor-api node-api dsp-api preset-api; do
-	cargo +1.88.0 fmt --manifest-path "native/$crate/Cargo.toml" -- --check
-	cargo +1.88.0 test --manifest-path "native/$crate/Cargo.toml"
-done
-cargo +1.88.0 fmt --manifest-path native/addon/Cargo.toml -- --check
-cargo +1.88.0 test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
-sh native/build.sh
+(
+	export CARGO_TARGET_DIR="$PWD/target/native-addon"
+	for crate in parameter-api editor-api node-api dsp-api preset-api; do
+		cargo +1.88.0 fmt --manifest-path "native/$crate/Cargo.toml" -- --check
+		cargo +1.88.0 test --manifest-path "native/$crate/Cargo.toml"
+	done
+	cargo +1.88.0 fmt --manifest-path native/addon/Cargo.toml -- --check
+	cargo +1.88.0 test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
+	sh native/build.sh
+)
 ```
 
 The add-on tests run serially with optimization because they share mock host

@@ -4,6 +4,10 @@ set -euo pipefail
 check_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$check_root"
 
+if [[ -z "${CI:-}" ]]; then
+  df -Pk "$check_root"
+fi
+
 for check_tool in cargo node python3; do
   if ! command -v "$check_tool" >/dev/null 2>&1; then
     printf 'Required development tool is missing: %s\n' "$check_tool" >&2
