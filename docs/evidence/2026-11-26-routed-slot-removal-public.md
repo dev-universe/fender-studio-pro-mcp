@@ -24,3 +24,33 @@ neighbors on this bound routed Inserts graph family. Another document
 requires a fresh ownership and routing read before editing.
 
 [Recorded action trace](https://github.com/dev-universe/fender-studio-pro-mcp/pull/343)
+
+## Saved middle-slot removal and cold reopen
+
+R583 tested the public candidate at `b1b1c7a1d0b0` on Studio Pro 8.1.1
+build 113103 arm64. The same supported middle-slot edit left Splitter 3 in
+place. Mixtool 3 remained in its own lane. Mixtool and Mixtool 4 became
+adjacent, and Mixtool 2 was gone. Independent native and archive reads
+agreed on nine nodes and eleven ordered links. The native DSP inventory
+contained 216 rows.
+
+One stock Save wrote only the owned scratch. The saved archive passed the
+integrity check and matched the live slot IDs and display order. The first
+warm checker still expected a different fixture's display names. A fresh
+MCP owner compared the two recorded pre-Save observations against complete
+post-Save reads on the same document and confirmed exact equality without
+another write.
+
+A new process reopened the saved bytes under a file-write denial. A fresh
+MCP owner rejected the previous document token. A later check used the
+three current slot and device identities with the obsolete graph UUID and
+received a pre-dispatch rejection. Its before and after reads matched the
+warm slot/device IDs, routing, enumerated order and all 216 DSP rows. The
+live graph and folder carried new session-scoped IDs. The saved digest held
+through the cold trial, and the protected source digest also matched.
+
+The warm phases made 327 and 32 requests in 110.778 and 3.549 seconds.
+The cold phases made 30 and 54 requests in 3.386 and 5.383 seconds. All
+32 temporary captures were released. Both hosts exited successfully after
+244.754 and 127.910 seconds. The 18 managed files and app profile were
+reverified after restoration. The cold phase made zero Saves.
