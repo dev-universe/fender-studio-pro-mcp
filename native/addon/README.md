@@ -428,10 +428,16 @@ counts, not song titles, parameter values or native addresses.
 
 ## Build and verification
 
+Run the commands from the root of your assigned worktree. Use the native build
+directory for tests, Clippy, and packaging.
+
 ```sh
-cargo +1.88.0 test --manifest-path native/addon/Cargo.toml
-cargo +1.88.0 clippy --manifest-path native/addon/Cargo.toml --all-targets -- -D warnings
-sh native/build.sh
+(
+	export CARGO_TARGET_DIR="$PWD/target/native-addon"
+	cargo +1.88.0 test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
+	cargo +1.88.0 clippy --manifest-path native/addon/Cargo.toml --all-targets -- -D warnings
+	sh native/build.sh
+)
 ```
 
 The build writes the four-file `artifacts/native/fender-studio-pro-mcp.native.mac`

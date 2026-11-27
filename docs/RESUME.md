@@ -5,6 +5,7 @@
 1. `feature/cv-structured-lifecycle`의 [현재 상태 파일](https://github.com/dev-universe/fender-studio-pro-mcp/blob/feature/cv-structured-lifecycle/docs/RESUME_STATE.json)에서 `status`와 `resume_document`를 읽는다. 작업 브랜치는 유지하고 최신 원격 기록을 확인한다.
 2. `resume_document`가 가리키는 문서를 **같은 브랜치의 같은 커밋**에서 연다. 마지막 검증, 다음 작업, 열린 PR, 설치와 정리 상태에 해당하는 절부터 읽는다. 추가 정보가 필요하면 그 절이 가리키는 증거를 읽는다.
 3. GitHub의 PR 헤드와 검사, 앱·플러그인 설치, 제어권과 장치를 새로 확인한다. 실앱 작업에는 새 세션·문서·인스턴스를 묶는다. 이전 마감과 장치 상태는 해당 날짜의 기록이다.
+4. `git worktree list --porcelain`과 `df -Pk "$PWD"`로 배정된 워크트리와 여유 공간을 확인한다. 인수인계의 워크트리를 재사용하고, 머지가 끝난 단위에서 보류된 정리는 [워크트리 정리 절차](MCP_DEVELOPMENT.md#작업을-병합한-뒤-워크트리를-정리한다)대로 마무리한다.
 
 저장소에서 확인할 때는 아래처럼 상태 파일을 가져온 커밋을 고정한다.
 

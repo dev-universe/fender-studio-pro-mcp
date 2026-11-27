@@ -12,6 +12,9 @@ if [ "$#" -gt 1 ]; then
     echo "Usage: sh native/build.sh [output-directory]" >&2
     exit 2
 fi
+if [ -z "${CI:-}" ]; then
+    df -Pk "$repo_root"
+fi
 if [ -n "${CCL_FRAMEWORK_SOURCE:-}" ]; then
     sh "$native_root/addon/checks/check_sdk.sh" "$CCL_FRAMEWORK_SOURCE"
     sh "$native_root/parameter-api/checks/check_sdk.sh" "$CCL_FRAMEWORK_SOURCE"

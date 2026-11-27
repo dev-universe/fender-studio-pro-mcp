@@ -9,7 +9,7 @@ The active [GitHub Actions workflow](../.github/workflows/ci.yml) runs on pull r
 
 The workflow uses read-only tokens and full commit SHA pins for GitHub-owned Actions. It does not install Studio Pro, launch the DAW, use signing credentials or publish packages. The repository requires approval for all external contributors' workflow runs. Current results belong to the [Actions page](https://github.com/dev-universe/fender-studio-pro-mcp/actions); a workflow file alone is not a passing run.
 
-Run the server and embedded-script checks locally from the repository root.
+Run the local checks from the worktree assigned to your change.
 
 ```sh
 rustup toolchain install 1.88.0 --profile minimal --component rustfmt --component clippy
@@ -18,17 +18,9 @@ RUSTUP_TOOLCHAIN=1.88.0 bash scripts/check.sh
 
 The script requires Cargo, Node.js and Python 3. It checks Rust formatting, runs Clippy with warnings denied, runs Rust tests, builds the release binary, executes the actual bridge and EditTask assets in Node.js VM contract tests, and runs the offline Python suite. VM tests simulate host objects; they do not establish actual DAW behavior.
 
-On the supported macOS arm64 host, also run the separate native crates.
-
-```sh
-for crate in parameter-api editor-api node-api dsp-api preset-api; do
-  cargo +1.88.0 fmt --manifest-path "native/$crate/Cargo.toml" -- --check
-  cargo +1.88.0 test --manifest-path "native/$crate/Cargo.toml"
-done
-cargo +1.88.0 fmt --manifest-path native/addon/Cargo.toml -- --check
-cargo +1.88.0 test --locked --release --manifest-path native/addon/Cargo.toml -- --test-threads=1
-sh native/build.sh
-```
+On macOS arm64, run the native tests and package build in the same worktree.
+The [local native commands](../CONTRIBUTING.md#run-the-offline-checks)
+reuse that worktree's `target/native-addon/` directory.
 
 The add-on's bounded large-capsule test exceeded its real two-second budget in a loaded local debug run. The CI uses an optimized serial test build without raising that budget. Two test assertions compared addresses of distinct C string literals; they now compare the metadata text, allowing the optimized suite to pass all 448 tests. A pre-existing `observe` dead-code warning in native external-menu code remains documented; the root server's Clippy gate still denies warnings.
 
